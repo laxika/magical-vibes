@@ -29,6 +29,9 @@ import java.util.UUID;
 
 public sealed interface PermanentChoiceContext extends PendingInteraction {
 
+    /** Chooses the recipient of damage redirected from the controller's creatures. */
+    record RedirectCreatureDamage(UUID controllerId) implements PermanentChoiceContext {}
+
     /** Celestial Judgment: the controller chooses one creature for each distinct battlefield power. */
     record CelestialJudgmentChoice(List<Integer> powers, int powerIndex, List<UUID> chosenIds,
                                    String sourceName) implements PermanentChoiceContext {
@@ -1850,7 +1853,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                   StackEntryType spellType, List<Card> cardsToBottom,
-                                  Integer discoverValue, UUID ownerIdOverride) implements PermanentChoiceContext {
+                                  Integer discoverValue, UUID ownerIdOverride, Zone sourceZone) implements PermanentChoiceContext {
+        public LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                      StackEntryType spellType, List<Card> cardsToBottom,
+                                      Integer discoverValue, UUID ownerIdOverride) {
+            this(cardToCast, controllerId, spellEffects, spellType, cardsToBottom,
+                    discoverValue, ownerIdOverride, Zone.LIBRARY);
+        }
         public LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                       StackEntryType spellType) {
             this(cardToCast, controllerId, spellEffects, spellType, null, null, null);

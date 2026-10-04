@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -330,6 +331,11 @@ public class AutoPassService {
                 }
                 gameData.priorityPassedBy.clear();
                 continue;
+            }
+
+            Set<TurnStep> stopSteps = gameData.playerAutoStopSteps.get(stackPriorityHolder);
+            if (stopSteps != null && stopSteps.contains(gameData.currentStep)) {
+                return;
             }
 
             boolean canRespond = gameQueryService.withQueryScope(gameData, () -> {

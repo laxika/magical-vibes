@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -154,7 +155,7 @@ class EnduranceTest extends BaseCardTest {
         harness.setHand(player1, List.of(greenCard, new Endurance()));
         harness.setGraveyard(player2, List.of(graveyardCard));
 
-        harness.castInstantWithAlternateExileFromHand(player1, 1, null, 0);
+        harness.castInstantWithAlternateExileFromHand(player1, 1, (UUID) null, 0);
         resolveAllTriggers();
         harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();

@@ -57,7 +57,6 @@ class GiantGrowthTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(bear.getPowerModifier()).isEqualTo(0);
@@ -129,5 +128,29 @@ class GiantGrowthTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Multiple Giant Growth spells stack and all boosts expire at cleanup")
+    void multipleBoostsStackAndExpireTogether() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GiantGrowth(), new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(bear.getEffectivePower()).isEqualTo(8);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(8);
+        assertThat(otherBear.getEffectivePower()).isEqualTo(2);
+        assertThat(otherBear.getEffectiveToughness()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Giant Growth");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
     }
 }

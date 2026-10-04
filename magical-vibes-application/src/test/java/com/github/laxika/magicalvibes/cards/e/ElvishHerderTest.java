@@ -113,7 +113,7 @@ class ElvishHerderTest extends BaseCardTest {
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         Permanent herder = harness.addToBattlefieldAndReturn(player1, new ElvishHerder());
         herder.setSummoningSick(true);
-        herder.setTapped(true);
+        herder.tap();
         Permanent first = addCreatureReady(player1, new BullHippo());
         Permanent second = addCreatureReady(player2, new BullHippo());
         harness.addMana(player1, ManaColor.GREEN, 2);

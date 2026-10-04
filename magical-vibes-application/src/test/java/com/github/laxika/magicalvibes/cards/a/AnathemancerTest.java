@@ -101,6 +101,7 @@ class AnathemancerTest extends BaseCardTest {
     void unearthedCreatureIsExiledAtNextEndStep() {
         unearthTargetingOpponent();
 
+        declareAttackers(List.of());
         harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 

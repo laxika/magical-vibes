@@ -101,10 +101,7 @@ class GoblinWarchiefTest extends BaseCardTest {
     void goblinSpellsCostOneLess() {
         harness.addToBattlefield(player1, new GoblinWarchief());
         // Goblin Elite Infantry costs {1}{R} — with {1} reduction it should cost just {R}
-        harness.setHand(player1, List.of(new GoblinEliteInfantry()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GoblinEliteInfantry(), "{R}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Goblin Elite Infantry");
@@ -154,10 +151,7 @@ class GoblinWarchiefTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GoblinWarchief());
         // Goblin Warchief itself costs {1}{R}{R} — with {2} reduction the {1} generic is fully reduced,
         // cost is {R}{R} (generic cost cannot go below 0)
-        harness.setHand(player1, List.of(new GoblinWarchief()));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GoblinWarchief(), "{R}{R}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Goblin Warchief");
@@ -169,14 +163,66 @@ class GoblinWarchiefTest extends BaseCardTest {
     @DisplayName("Goblin cast with cost reduction enters with haste from Warchief")
     void castGoblinWithCostReductionGetsHaste() {
         harness.addToBattlefield(player1, new GoblinWarchief());
-        harness.setHand(player1, List.of(new GoblinEliteInfantry()));
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GoblinEliteInfantry(), "{R}");
         harness.passBothPriorities();
 
         Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
 
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Multiple Warchiefs cannot reduce colored mana requirements")
+    void reductionsDoNotRemoveColoredMana() {
+        harness.addToBattlefield(player1, new GoblinWarchief());
+        harness.addToBattlefield(player1, new GoblinWarchief());
+        harness.setHand(player1, List.of(new GoblinWarchief()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cost reduction ends when the Warchief leaves")
+    void costReductionEndsWhenWarchiefLeaves() {
+        Permanent warchief = harness.addToBattlefieldAndReturn(player1, new GoblinWarchief());
+        gd.playerBattlefields.get(player1.getId()).remove(warchief);
+        harness.setHand(player1, List.of(new GoblinEliteInfantry()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A remaining Warchief continues granting haste after another leaves")
+    void hasteRemainsWithAnotherWarchief() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GoblinWarchief());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GoblinWarchief());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinEliteInfantry());
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.hasKeyword(gd, second, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A Warchief in hand does not reduce its own casting cost")
+    void noCostReductionFromHand() {
+        harness.setHand(player1, List.of(new GoblinWarchief()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfTheVoid;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -19,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GiftsUngiven.class, Island.class, Forest.class, Mountain.class, Plains.class, Swamp.class})
+@CardUsed({GiftsUngiven.class, Island.class, Forest.class, Mountain.class, Plains.class, Swamp.class,
+        LeylineOfTheVoid.class})
 class GiftsUngivenTest extends BaseCardTest {
 
     private void castGiftsUngiven(List<Card> library) {
@@ -27,8 +29,7 @@ class GiftsUngivenTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GiftsUngiven()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
     }
 
     private void pickFromLibrary(String name) {
@@ -202,6 +203,48 @@ class GiftsUngivenTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Gifts Ungiven");
+    }
+
+    @Test
+    @DisplayName("Leyline of the Void exiles the chosen cards while the remaining cards go to hand")
+    void chosenCardsRespectGraveyardReplacement() {
+        harness.addToBattlefield(player2, new LeylineOfTheVoid());
+        Card island = new Island();
+        Card mountain = new Mountain();
+        Card forest = new Forest();
+        Card plains = new Plains();
+        castGiftsUngiven(List.of(island, mountain, forest, plains));
+
+        pickFromLibrary("Island");
+        pickFromLibrary("Mountain");
+        pickFromLibrary("Forest");
+        pickFromLibrary("Plains");
+        harness.handleMultipleCardsChosen(player2, List.of(island.getId(), mountain.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(island, mountain);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(island, mountain);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(forest, plains);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The caster cannot make the targeted opponent's choice")
+    void casterCannotChooseTheGraveyardCards() {
+        Card island = new Island();
+        Card mountain = new Mountain();
+        castGiftsUngiven(List.of(island, mountain));
+        pickFromLibrary("Island");
+        pickFromLibrary("Mountain");
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(island.getId(), mountain.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(opponentChoice().playerId()).isEqualTo(player2.getId());
+        harness.handleMultipleCardsChosen(player2, List.of(island.getId(), mountain.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(island, mountain);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
     @Test

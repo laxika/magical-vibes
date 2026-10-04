@@ -153,9 +153,9 @@ class ForatogTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent foratog = harness.addToBattlefieldAndReturn(player1, new Foratog());
         foratog.setSummoningSick(true);
-        foratog.setTapped(true);
+        foratog.tap();
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 1);

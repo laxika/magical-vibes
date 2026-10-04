@@ -84,6 +84,7 @@ class AmblingStormshellTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.castFromHand(player1, new AmblingStormshell(), "{3}{U}{U}");
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(shell.isTapped()).isFalse();
     }

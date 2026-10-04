@@ -93,11 +93,38 @@ class GoblinGardenerTest extends BaseCardTest {
 
         UUID gardenerId = harness.getPermanentId(player1, "Goblin Gardener");
 
-        harness.castInstant(player2, 0, gardenerId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, gardenerId);
 
         harness.assertInGraveyard(player1, "Goblin Gardener");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Death trigger destroys only the chosen land when both players control lands")
+    void destroysOnlyChosenLand() {
+        Permanent gardener = harness.addToBattlefieldAndReturn(player1, new GoblinGardener());
+        Permanent ownForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opposingForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, gardener.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(ownForest.getId(), opposingForest.getId());
+        harness.assertInGraveyard(player1, "Goblin Gardener");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Forest");
+
+        harness.handlePermanentChosen(player1, opposingForest.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
         assertThat(gd.stack).isEmpty();
     }
 }

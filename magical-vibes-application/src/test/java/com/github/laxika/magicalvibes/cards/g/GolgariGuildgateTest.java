@@ -7,14 +7,18 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestHarness;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GolgariGuildgate.class})
 class GolgariGuildgateTest extends BaseCardTest {
 
     @Test
@@ -45,31 +49,72 @@ class GolgariGuildgateTest extends BaseCardTest {
         assertThat(choice.options()).containsExactlyInAnyOrder("BLACK", "GREEN");
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"BLACK", "GREEN"})
     @DisplayName("Choosing a color adds one mana of that color and taps the land")
-    void choosingColorAddsThatMana() {
-        for (String color : new String[]{"BLACK", "GREEN"}) {
-            harness = new GameTestHarness();
-            player1 = harness.getPlayer1();
-            harness.skipMulligan();
+    void choosingColorAddsThatMana(ManaColor manaColor) {
+        Permanent guildgate = addGuildgateReady(player1);
 
-            Permanent guildgate = addGuildgateReady(player1);
-            GameData gd = harness.getGameData();
-            ManaColor manaColor = ManaColor.valueOf(color);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, manaColor.name());
 
-            harness.activateAbility(player1, 0, 0, null, null);
-            harness.handleListChoice(player1, color);
-
-            assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(1);
-            assertThat(guildgate.isTapped()).isTrue();
-            assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(manaColor)).isEqualTo(1);
+        for (ManaColor otherColor : ManaColor.values()) {
+            if (otherColor != manaColor) {
+                assertThat(gd.playerManaPools.get(player1.getId()).get(otherColor)).isZero();
+            }
         }
+        assertThat(guildgate.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addGuildgateReady(Player player) {
-        Permanent perm = new Permanent(new GolgariGuildgate());
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new GolgariGuildgate());
+    }
+
+    @Test
+    @DisplayName("A tapped Guildgate cannot produce mana")
+    void tappedLandCannotProduceMana() {
+        Permanent guildgate = harness.enterBattlefieldAndReturn(player1, new GolgariGuildgate());
+
+        assertThat(guildgate.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An untapped land can produce mana even when newly controlled")
+    void newlyControlledLandCanProduceMana() {
+        Permanent guildgate = harness.addToBattlefieldAndReturn(player1, new GolgariGuildgate());
+        guildgate.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(guildgate.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Guildgate that entered tapped produces mana after untapping")
+    void producesManaAfterUntapping() {
+        Permanent guildgate = harness.enterBattlefieldAndReturn(player1, new GolgariGuildgate());
+
+        harness.performUntapStep(player1);
+        assertThat(guildgate.isTapped()).isFalse();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(guildgate.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
 }

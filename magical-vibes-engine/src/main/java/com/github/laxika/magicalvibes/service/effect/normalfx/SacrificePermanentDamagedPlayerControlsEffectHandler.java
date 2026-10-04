@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -23,6 +24,8 @@ public class SacrificePermanentDamagedPlayerControlsEffectHandler implements Nor
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final GameQueryService gameQueryService;
+    private final DestructionSupport destructionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,6 +35,15 @@ public class SacrificePermanentDamagedPlayerControlsEffectHandler implements Nor
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SacrificePermanentDamagedPlayerControlsEffect) effect;
+
+        if (e.damagedPlayerId() != null) {
+            Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+            if (target != null && e.damagedPlayerId().equals(
+                    gameQueryService.findPermanentController(gameData, target.getId()))) {
+                destructionSupport.sacrificeAndLog(gameData, target, e.damagedPlayerId());
+            }
+            return;
+        }
 
         UUID defenderId = entry.getTargetId();
         UUID controllerId = entry.getControllerId();

@@ -77,7 +77,7 @@ class FlowstoneCrusherTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent crusher = harness.addToBattlefieldAndReturn(player1, new FlowstoneCrusher());
         crusher.setSummoningSick(true);
-        crusher.setTapped(true);
+        crusher.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

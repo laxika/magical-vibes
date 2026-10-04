@@ -78,7 +78,7 @@ class AnnoyedAltisaurTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(skipped, hit);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         resolveAllTriggers();
-        assertThat(findPermanent(player1, "Grizzly Bears")).isNull();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(findPermanent(player1, "Annoyed Altisaur")).isNotNull();
     }
 

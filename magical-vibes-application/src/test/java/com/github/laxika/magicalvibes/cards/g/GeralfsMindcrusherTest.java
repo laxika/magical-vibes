@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,32 +17,15 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({GeralfsMindcrusher.class, LightningBolt.class, GrafdiggersCage.class})
 class GeralfsMindcrusherTest extends BaseCardTest {
-
-    /** Resolves the stack until the game pauses for input or the stack empties. */
-    private void resolveUntilInputOrEmpty() {
-        for (int i = 0; i < 12; i++) {
-            GameData gd = harness.getGameData();
-            if (gd.interaction.isAwaitingInput() || gd.stack.isEmpty()) {
-                return;
-            }
-            harness.passBothPriorities();
-        }
-    }
-
-    private Permanent mindcrusherOnBattlefield() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Geralf's Mindcrusher"))
-                .findFirst().orElse(null);
-    }
 
     private void castMindcrusher(UUID targetPlayerId) {
         harness.setHand(player1, List.of(new GeralfsMindcrusher()));
         harness.addMana(player1, ManaColor.BLUE, 6);
-        harness.getGameService().playCard(gd, player1, 0, 0, targetPlayerId, null);
+        harness.castCreature(player1, 0, targetPlayerId);
     }
 
-    // ===== Resolving creature spell =====
 
     @Test
     @DisplayName("Resolving puts Geralf's Mindcrusher on battlefield with ETB trigger on stack")
@@ -57,7 +40,6 @@ class GeralfsMindcrusherTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
     }
 
-    // ===== ETB mill =====
 
     @Test
     @DisplayName("ETB trigger mills five cards from target player's library")
@@ -107,7 +89,6 @@ class GeralfsMindcrusherTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
     }
 
-    // ===== Undying =====
 
     @Test
     @DisplayName("Undying returns Geralf's Mindcrusher with a +1/+1 counter when it dies with no counters")
@@ -119,14 +100,14 @@ class GeralfsMindcrusherTest extends BaseCardTest {
         // Two bolts (3 + 3 = 6) to kill the 5/5.
         UUID mindcrusherId = harness.getPermanentId(player1, "Geralf's Mindcrusher");
         harness.castInstant(player1, 0, mindcrusherId);
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
         harness.castInstant(player1, 0, mindcrusherId);
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         // Undying returned it with a +1/+1 counter and its ETB ability now asks for a target.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
-        Permanent mindcrusher = mindcrusherOnBattlefield();
+        Permanent mindcrusher = findPermanent(player1, "Geralf's Mindcrusher");
         assertThat(mindcrusher).isNotNull();
         assertThat(mindcrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(mindcrusher.getEffectivePower()).isEqualTo(6);
@@ -146,14 +127,14 @@ class GeralfsMindcrusherTest extends BaseCardTest {
 
         UUID mindcrusherId = harness.getPermanentId(player1, "Geralf's Mindcrusher");
         harness.castInstant(player1, 0, mindcrusherId);
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
         harness.castInstant(player1, 0, mindcrusherId);
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         // Choose the opponent as the target of the returned Mindcrusher's ETB mill.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(5);
     }
@@ -168,13 +149,71 @@ class GeralfsMindcrusherTest extends BaseCardTest {
 
         // Two bolts (3 + 3 = 6 damage) to kill the 6/6.
         harness.castInstant(player1, 0, mindcrusher.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
         harness.castInstant(player1, 0, mindcrusher.getId());
-        resolveUntilInputOrEmpty();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Geralf's Mindcrusher");
         harness.assertNotOnBattlefield(player1, "Geralf's Mindcrusher");
+    }
+
+    @Test
+    @DisplayName("Milling an empty library does not cause a player to lose")
+    void emptyLibraryCanBeMilled() {
+        harness.setLibrary(player2, List.of());
+
+        castMindcrusher(player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Grafdigger's Cage prevents undying from returning Mindcrusher")
+    void cagePreventsUndyingReturn() {
+        harness.addToBattlefield(player1, new GrafdiggersCage());
+        Permanent mindcrusher = harness.addToBattlefieldAndReturn(player1, new GeralfsMindcrusher());
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, mindcrusher.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, mindcrusher.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Geralf's Mindcrusher");
+        harness.assertNotOnBattlefield(player1, "Geralf's Mindcrusher");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Undying is controlled by the creature's controller at death and returns it to its owner")
+    void undyingOfOpponentOwnedCreatureUsesControllerAtDeath() {
+        GeralfsMindcrusher card = new GeralfsMindcrusher();
+        card.setOwnerId(player2.getId());
+        Permanent mindcrusher = harness.addToBattlefieldAndReturn(player1, card);
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, mindcrusher.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, mindcrusher.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player2, "Geralf's Mindcrusher");
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Geralf's Mindcrusher");
+        harness.handlePermanentChosen(player2, player1.getId());
+        resolveAllTriggers();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7);
     }
 }

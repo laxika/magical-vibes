@@ -84,7 +84,7 @@ class FaceOfFearTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent face = harness.addToBattlefieldAndReturn(player1, new FaceOfFear());
-        face.setTapped(true);
+        face.tap();
         harness.setHand(player1, List.of(new FaceOfFear(), new Forest()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

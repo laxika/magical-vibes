@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GoldenRatio.class, GrizzlyBears.class, LlanowarElves.class, ShivanDragon.class,
+        Shock.class, GiantGrowth.class})
 class GoldenRatioTest extends BaseCardTest {
 
     @Test
@@ -48,12 +51,56 @@ class GoldenRatioTest extends BaseCardTest {
     }
 
     private void castGoldenRatio(Player player) {
-        harness.setHand(player, List.of(new GoldenRatio()));
-        harness.addMana(player, ManaColor.GREEN, 1);
-        harness.addMana(player, ManaColor.BLUE, 1);
-        harness.addMana(player, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player, 0, 0);
+        harness.castFromHand(player, new GoldenRatio(), "{1}{G}{U}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Opposing creatures with unique powers do not increase the draw count")
+    void ignoresUniqueOpposingCreaturePowers() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player2, new ShivanDragon());
+        stockLibrary(player1, 4);
+
+        castGoldenRatio(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("A power increase in response can separate previously equal powers")
+    void countsModifiedPowersAtResolution() {
+        var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        stockLibrary(player1, 4);
+        harness.castFromHand(player1, new GoldenRatio(), "{1}{G}{U}");
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A power increase in response can merge previously different powers")
+    void countsEqualModifiedPowersOnlyOnce() {
+        var bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new ShivanDragon());
+        stockLibrary(player1, 4);
+        harness.castFromHand(player1, new GoldenRatio(), "{1}{G}{U}");
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
     }
 
     private void stockLibrary(Player player, int count) {

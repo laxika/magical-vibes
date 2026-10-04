@@ -155,6 +155,7 @@ class AnuridBrushhopperTest extends BaseCardTest {
     void activationDuringEndStepWaitsForNextTurn() {
         addCreatureReady(player1, new AnuridBrushhopper());
         harness.setHand(player1, List.of(new GiantWarthog(), new GiantWarthog()));
+        declareAttackers(List.of());
         harness.passUntil(player1, TurnStep.END_STEP);
 
         harness.activateAbility(player1, 0, null, null);

@@ -129,7 +129,7 @@ class FieryHellhoundTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent hellhound = harness.addToBattlefieldAndReturn(player1, new FieryHellhound());
         hellhound.setSummoningSick(true);
-        hellhound.setTapped(true);
+        hellhound.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

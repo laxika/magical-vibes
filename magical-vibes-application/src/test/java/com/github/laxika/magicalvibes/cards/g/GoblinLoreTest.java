@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.Card;
 
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -93,6 +95,51 @@ class GoblinLoreTest extends BaseCardTest {
         // Graveyard has Goblin Lore + 2 discarded
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+    @Test
+    @DisplayName("Drawing exactly the remaining four cards does not cause a loss")
+    void drawingExactlyFourRemainingCardsDoesNotCauseLoss() {
+        harness.setLibrary(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        harness.castFromHand(player1, new GoblinLore(), "{1}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Existing hand cards remain eligible and only the controller draws and discards")
+    void resolvesWithExistingHandWithoutAffectingOpponent() {
+        List<Card> originalHand = List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+        List<Card> drawnCards = List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+        GrizzlyBears opponentCard = new GrizzlyBears();
+        harness.setHand(player2, List.of(opponentCard));
+        int opponentLibrarySize = gd.playerDecks.get(player2.getId()).size();
+        harness.setLibrary(player1, drawnCards);
+
+        harness.castFromHand(player1, new GoblinLore(), "{1}{R}");
+        harness.setHand(player1, originalHand);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        List<Card> remainingAndDiscarded = new ArrayList<>(gd.playerHands.get(player1.getId()));
+        gd.playerGraveyards.get(player1.getId()).stream()
+                .filter(card -> !(card instanceof GoblinLore))
+                .forEach(remainingAndDiscarded::add);
+        List<Card> expectedCards = new ArrayList<>(originalHand);
+        expectedCards.addAll(drawnCards);
+        assertThat(remainingAndDiscarded).containsExactlyInAnyOrderElementsOf(expectedCards);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(opponentLibrarySize);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
 

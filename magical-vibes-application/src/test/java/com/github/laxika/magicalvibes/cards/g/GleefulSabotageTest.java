@@ -128,4 +128,102 @@ class GleefulSabotageTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Raking Canopy");
         harness.assertInGraveyard(player2, "Raking Canopy");
     }
+
+    @Test
+    void conspireCanTapSummoningSickCreaturesAndKeepOriginalTarget() {
+        harness.addToBattlefield(player2, new BlightSickle());
+        harness.addToBattlefield(player2, new RakingCanopy());
+        harness.setHand(player1, List.of(new GleefulSabotage()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new JuvenileGloomwidow());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new JuvenileGloomwidow());
+        first.setSummoningSick(true);
+        second.setSummoningSick(true);
+
+        harness.castWithConspire(player1, 0, harness.getPermanentId(player2, "Blight Sickle"),
+                List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        harness.assertInGraveyard(player2, "Blight Sickle");
+        harness.assertOnBattlefield(player2, "Raking Canopy");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof GleefulSabotage).hasSize(1);
+    }
+
+    @Test
+    void conspireIsOptionalEvenWithEligibleCreatures() {
+        harness.addToBattlefield(player2, new BlightSickle());
+        Permanent first = addCreatureReady(player1, new JuvenileGloomwidow());
+        Permanent second = addCreatureReady(player1, new JuvenileGloomwidow());
+        harness.setHand(player1, List.of(new GleefulSabotage()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Blight Sickle"));
+
+        harness.assertInGraveyard(player2, "Blight Sickle");
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void conspireRejectsSameCreatureTwice() {
+        harness.addToBattlefield(player2, new BlightSickle());
+        Permanent creature = addCreatureReady(player1, new JuvenileGloomwidow());
+        harness.setHand(player1, List.of(new GleefulSabotage()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castWithConspire(player1, 0,
+                harness.getPermanentId(player2, "Blight Sickle"),
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    void conspireRejectsTappedCreatureWithoutTappingOtherCreature() {
+        harness.addToBattlefield(player2, new BlightSickle());
+        Permanent first = addCreatureReady(player1, new JuvenileGloomwidow());
+        Permanent second = addCreatureReady(player1, new JuvenileGloomwidow());
+        second.tap();
+        harness.setHand(player1, List.of(new GleefulSabotage()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castWithConspire(player1, 0,
+                harness.getPermanentId(player2, "Blight Sickle"), List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(first.isTapped()).isFalse();
+    }
+
+    @Test
+    void conspireRejectsOpponentsCreature() {
+        harness.addToBattlefield(player2, new BlightSickle());
+        Permanent own = addCreatureReady(player1, new JuvenileGloomwidow());
+        Permanent opposing = addCreatureReady(player2, new JuvenileGloomwidow());
+        harness.setHand(player1, List.of(new GleefulSabotage()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castWithConspire(player1, 0,
+                harness.getPermanentId(player2, "Blight Sickle"), List.of(own.getId(), opposing.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(own.isTapped()).isFalse();
+        assertThat(opposing.isTapped()).isFalse();
+    }
+
+    @Test
+    void canDestroyControllersOwnPermanent() {
+        harness.addToBattlefield(player1, new RakingCanopy());
+        harness.setHand(player1, List.of(new GleefulSabotage()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Raking Canopy"));
+
+        harness.assertNotOnBattlefield(player1, "Raking Canopy");
+        harness.assertInGraveyard(player1, "Raking Canopy");
+    }
 }

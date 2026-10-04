@@ -60,12 +60,14 @@ class AshlingTheLimitlessTest extends BaseCardTest {
 
     @Test
     void payingAllFiveColorsKeepsTheTokenAndHasteExpiresAfterTheTurn() {
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new AshlingTheLimitless());
         harness.setHand(player1, List.of(new AirElemental()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castCreatureWithEvoke(player1, 0, null);
         resolveAllTriggers();
         Permanent token = findPermanent(player1, "Air Elemental");
+        harness.setHand(player1, List.of());
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
@@ -73,7 +75,7 @@ class AshlingTheLimitlessTest extends BaseCardTest {
                 ManaColor.RED, ManaColor.GREEN)) {
             harness.addMana(player1, color, 1);
         }
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(findPermanent(player1, "Air Elemental").getId()).isEqualTo(token.getId());
         harness.passUntil(player2, TurnStep.UPKEEP);
@@ -155,8 +157,8 @@ class AshlingTheLimitlessTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AshlingTheLimitless());
         Permanent ashling = findPermanent(player1, "Ashling, the Limitless");
         assertThat(harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, ashling)).isTrue();
-        harness.getTriggerCollectionService().checkAllyPermanentSacrificedTriggers(
-                gd, player1.getId(), ashling.getCard());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkAllyPermanentSacrificedTriggers(
+                gd, player1.getId(), ashling.getCard()));
         resolveAllTriggers();
 
         Permanent token = findPermanent(player1, "Ashling, the Limitless");

@@ -146,7 +146,7 @@ class FireDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped Mountains still count toward the damage")
     void countsTappedMountains() {
-        harness.addToBattlefieldAndReturn(player1, new Mountain()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Mountain()).tap();
         var target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castFireDragon(player2, "Grizzly Bears");
         harness.passBothPriorities();

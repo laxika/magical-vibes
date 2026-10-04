@@ -153,7 +153,7 @@ class FarrelitePriestTest extends BaseCardTest {
     void tappedSummoningSickPriestCanActivateManaAbility() {
         Permanent priest = harness.addToBattlefieldAndReturn(player1, new FarrelitePriest());
         priest.setSummoningSick(true);
-        priest.setTapped(true);
+        priest.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);

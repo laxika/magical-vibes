@@ -106,7 +106,7 @@ class DrunauCorpseTrawlerTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent trawler = harness.addToBattlefieldAndReturn(player1, new DrunauCorpseTrawler());
         trawler.setSummoningSick(true);
-        trawler.setTapped(true);
+        trawler.tap();
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbility(player1, 0, null, trawler.getId());

@@ -40,6 +40,10 @@ public class ReturnTriggeringCardToOwnerHandEffectHandler implements NormalEffec
         if (dyingCardId == null || recipientId == null) {
             return;
         }
+        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(dyingCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+            return;
+        }
 
         List<Card> graveyard = gameData.playerGraveyards.get(recipientId);
         if (graveyard == null) {

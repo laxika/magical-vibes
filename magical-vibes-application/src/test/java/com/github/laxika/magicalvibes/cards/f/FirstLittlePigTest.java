@@ -26,7 +26,7 @@ class FirstLittlePigTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
-        assertThat(gd.playerExiledCards.get(player2.getId())).contains(artifact);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(artifact);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(pig);
         assertThat(pig.isTapped()).isFalse();
     }
@@ -43,7 +43,7 @@ class FirstLittlePigTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(enchantment);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(enchantment);
     }
 
     @Test

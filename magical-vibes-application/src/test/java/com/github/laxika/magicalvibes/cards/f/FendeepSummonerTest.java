@@ -150,7 +150,7 @@ class FendeepSummonerTest extends BaseCardTest {
     @DisplayName("A tapped Summoner cannot activate again")
     void cannotActivateWhileTapped() {
         Permanent summoner = addCreatureReady(player1, new FendeepSummoner());
-        summoner.setTapped(true);
+        summoner.tap();
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(

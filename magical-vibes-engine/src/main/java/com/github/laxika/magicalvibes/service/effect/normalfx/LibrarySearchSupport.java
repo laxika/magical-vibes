@@ -888,7 +888,7 @@ public class LibrarySearchSupport {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
                     if (effect instanceof OpponentSearchesTopCardsInsteadEffect restriction) {
                         limit = Math.min(limit, restriction.count());
                     }

@@ -63,7 +63,7 @@ class FiendBinderTest extends BaseCardTest {
     void tappedCreatureIsLegalTarget() {
         addCreatureReady(player1, new FiendBinder());
         Permanent target = addCreatureReady(player2, new FiendBinder());
-        target.setTapped(true);
+        target.tap();
 
         declareAttackers(player1, List.of(0));
         assertThat(gd.interaction.permanentChoiceContext())

@@ -207,13 +207,14 @@ public class PreventDamageFromChosenSourceEffectHandler implements NormalEffectH
             }
         });
         for (StackEntry stackEntry : gameData.stack) {
-            if (!isSpell(stackEntry.getEntryType())) {
-                continue;
-            }
-            Permanent source = new Permanent(stackEntry.getCard());
+            boolean spell = isSpell(stackEntry.getEntryType());
+            Permanent source = spell ? new Permanent(stackEntry.getCard())
+                    : stackEntry.getSourcePermanentSnapshot();
+            if (source == null) continue;
             if (sourceFilter == null
                     || predicateEvaluationService.matchesPermanentPredicate(gameData, source, sourceFilter)) {
-                validIds.add(stackEntry.getTargetableId());
+                UUID sourceId = spell ? stackEntry.getTargetableId() : source.getId();
+                if (!validIds.contains(sourceId)) validIds.add(sourceId);
             }
         }
         return validIds;

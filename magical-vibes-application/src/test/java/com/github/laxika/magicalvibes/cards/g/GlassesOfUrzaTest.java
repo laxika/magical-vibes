@@ -58,6 +58,43 @@ class GlassesOfUrzaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Looks at the hand at resolution, without revealing it on activation")
+    void looksAtCurrentHandOnlyOnResolution() {
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player1, new GlassesOfUrza());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player2, List.of(bears));
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains("Grizzly Bears"));
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(bears);
+    }
+
+    @Test
+    @DisplayName("The other player's activation shows the hand only to that controller")
+    void otherControllerLooksPrivately() {
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player2, new GlassesOfUrza());
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains("Grizzly Bears"));
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(log -> log.contains("Grizzly Bears"));
+    }
+
+    @Test
     @DisplayName("Can target self to look at own hand")
     void canTargetSelf() {
         addCreatureReady(player1, new GlassesOfUrza());

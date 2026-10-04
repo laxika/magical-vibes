@@ -97,7 +97,7 @@ class EnervateTest extends BaseCardTest {
     @DisplayName("An already tapped target still allows the delayed draw")
     void tappedTargetStillDraws() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
-        bears.setTapped(true);
+        bears.tap();
         BalduvianBears drawnCard = new BalduvianBears();
         harness.setLibrary(player1, List.of(drawnCard));
         harness.setHand(player1, List.of(new Enervate()));

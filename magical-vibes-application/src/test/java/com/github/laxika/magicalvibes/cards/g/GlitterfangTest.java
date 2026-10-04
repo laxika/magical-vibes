@@ -64,4 +64,51 @@ class GlitterfangTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(fang);
         assertThat(gd.playerHands.get(player2.getId())).doesNotContain(fang);
     }
+
+    @Test
+    @DisplayName("Can attack on the turn it enters the battlefield")
+    void canAttackOnTurnItEnters() {
+        var fang = harness.addToBattlefieldAndReturn(player1, new Glitterfang());
+        fang.setSummoningSick(true);
+
+        assertThat(als.canAttack(gd, fang, player1.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each Glitterfang returns only itself")
+    void eachCopyReturnsOnlyItself() {
+        Glitterfang first = new Glitterfang();
+        Glitterfang second = new Glitterfang();
+        harness.addToBattlefield(player1, first);
+        harness.addToBattlefield(player2, second);
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Glitterfang");
+        harness.assertNotOnBattlefield(player2, "Glitterfang");
+        assertThat(gd.playerHands.get(player1.getId())).contains(first).doesNotContain(second);
+        assertThat(gd.playerHands.get(player2.getId())).contains(second).doesNotContain(first);
+    }
+
+    @Test
+    @DisplayName("A Glitterfang entering after the end step begins does not return that step")
+    void enteringAfterEndStepBeginsDoesNotTrigger() {
+        Glitterfang first = new Glitterfang();
+        Glitterfang lateArrival = new Glitterfang();
+        harness.addToBattlefield(player1, first);
+
+        advanceToEndStep(player1);
+        harness.enterBattlefieldAndReturn(player1, lateArrival);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(first).doesNotContain(lateArrival);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard()).containsExactly(lateArrival);
+    }
 }

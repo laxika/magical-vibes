@@ -1207,17 +1207,13 @@ public class GraveyardChoiceHandlerService {
                             "Selected card is no longer in your graveyard"));
 
             gameData.interaction.clearAwaitingInput();
-            permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, chosenCardId);
-            exileService.exileCard(gameData, player.getId(), chosenCard);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " exiles ", chosenCard, " from their graveyard."));
-            int nonlandCardsExiled = eachPlayerExileContext.nonlandCardsExiled()
-                    + (chosenCard.hasType(CardType.LAND) ? 0 : 1);
+            Map<UUID, UUID> chosenCardIds = new java.util.LinkedHashMap<>(eachPlayerExileContext.chosenCardIds());
+            chosenCardIds.put(player.getId(), chosenCard.getId());
             gameData.graveyardTargetOperation.eachPlayerExilesCardFromGraveyard =
                     new GraveyardTargetOperationState.EachPlayerExilesCardFromGraveyardContext(
                             eachPlayerExileContext.controllerId(), eachPlayerExileContext.sourcePermanentId(),
                             eachPlayerExileContext.thenEffect(), eachPlayerExileContext.remainingPlayerIds(),
-                            null, nonlandCardsExiled);
+                            null, chosenCardIds);
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             return;
         }

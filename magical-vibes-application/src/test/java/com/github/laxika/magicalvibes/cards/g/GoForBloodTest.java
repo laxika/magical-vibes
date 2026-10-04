@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GoForBlood.class, GrizzlyBears.class, HillGiant.class})
@@ -23,8 +24,7 @@ class GoForBloodTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GoForBlood()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castSorcery(player1, 0, List.of(ownCreature.getId(), opposingCreature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(ownCreature.getId(), opposingCreature.getId()));
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Hill Giant");
@@ -55,6 +55,66 @@ class GoForBloodTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Go for Blood");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void rejectsSecondCreatureYouControl() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        harness.setHand(player1, List.of(new GoForBlood()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature you don't control");
+    }
+
+    @Test
+    void bothCreaturesDealLethalDamage() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GoForBlood()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(first.getId(), second.getId()));
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void neitherCreatureDealsDamageWhenOneTargetLeaves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player1, List.of(new GoForBlood()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(second.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player1, "Go for Blood");
+    }
+
+    @Test
+    void cyclingDiscardsBeforeDrawing() {
+        harness.setHand(player1, List.of(new GoForBlood()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Go for Blood");
+        harness.assertNotInHand(player1, "Go for Blood");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+
+        harness.passBothPriorities();
+
         harness.assertInHand(player1, "Grizzly Bears");
     }
 }

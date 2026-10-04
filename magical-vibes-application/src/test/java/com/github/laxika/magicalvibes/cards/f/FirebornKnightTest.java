@@ -116,7 +116,7 @@ class FirebornKnightTest extends BaseCardTest {
     void tappedSummoningSickKnightCanActivate() {
         Permanent knight = harness.addToBattlefieldAndReturn(player1, new FirebornKnight());
         knight.setSummoningSick(true);
-        knight.setTapped(true);
+        knight.tap();
         addFourMana(ManaColor.WHITE);
 
         activatePump();

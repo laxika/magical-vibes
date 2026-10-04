@@ -709,7 +709,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         List<Permanent> toRemove = new ArrayList<>();
         for (Permanent perm : battlefield) {
-            if (perm.getCard().getName().equals(legendRule.cardName()) && !perm.getId().equals(permanentId)) {
+            if (legendRule.cardName().equals(gameQueryService.getEffectiveName(gameData, perm)) && !perm.getId().equals(permanentId)) {
                 toRemove.add(perm);
             }
         }
@@ -2398,6 +2398,15 @@ public class PermanentChoiceBattlefieldHandlerService {
         Permanent permanent = gameQueryService.findPermanentById(gameData, sourceId);
         if (permanent != null) {
             return permanent.getCard();
+        }
+        Card abilitySource = gameData.stack.stream()
+                .filter(entry -> sourceId.equals(entry.getSourcePermanentId())
+                        || entry.getSourcePermanentSnapshot() != null
+                        && entry.getSourcePermanentSnapshot().getId().equals(sourceId))
+                .map(StackEntry::getCard)
+                .findFirst().orElse(null);
+        if (abilitySource != null) {
+            return abilitySource;
         }
         return gameData.stack.stream()
                 .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY

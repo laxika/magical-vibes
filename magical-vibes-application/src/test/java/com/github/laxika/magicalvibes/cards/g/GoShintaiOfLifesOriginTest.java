@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HondenOfLifesWeb;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -18,17 +19,13 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoShintaiOfLifesOrigin.class, HondenOfLifesWeb.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({GoShintaiOfLifesOrigin.class, HondenOfLifesWeb.class, GloriousAnthem.class, GrizzlyBears.class, Pacifism.class})
 class GoShintaiOfLifesOriginTest extends BaseCardTest {
 
     @Test
     @DisplayName("Its own entry creates a 1/1 colorless Shrine enchantment creature token")
     void ownEntryCreatesShrineToken() {
-        GoShintaiOfLifesOrigin card = new GoShintaiOfLifesOrigin();
-        harness.setHand(player1, List.of(card));
-        addFiveColorMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GoShintaiOfLifesOrigin(), "{3}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -39,6 +36,8 @@ class GoShintaiOfLifesOriginTest extends BaseCardTest {
         assertThat(token.getCard().getColors()).isEmpty();
         assertThat(token.getCard().hasType(CardType.CREATURE)).isTrue();
         assertThat(token.getCard().hasType(CardType.ENCHANTMENT)).isTrue();
+        assertThat(token.getCard().getSubtypes()).contains(CardSubtype.SHRINE);
+        assertThat(gd.stack).isEmpty();
         assertThat(token.getEffectivePower()).isEqualTo(1);
         assertThat(token.getEffectiveToughness()).isEqualTo(1);
     }
@@ -82,6 +81,100 @@ class GoShintaiOfLifesOriginTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void opponentShrineDoesNotTrigger() {
+        harness.addToBattlefield(player1, new GoShintaiOfLifesOrigin());
+
+        harness.enterBattlefieldAndReturn(player2, new HondenOfLifesWeb());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Shrine")).isEmpty();
+    }
+
+    @Test
+    void nonShrineEnchantmentDoesNotTrigger() {
+        harness.addToBattlefield(player1, new GoShintaiOfLifesOrigin());
+
+        harness.enterBattlefieldAndReturn(player1, new GloriousAnthem());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Shrine")).isEmpty();
+    }
+
+    @Test
+    void returnedShrineTriggersTokenCreation() {
+        addReadySource();
+        Card shrine = new HondenOfLifesWeb();
+        harness.setGraveyard(player1, List.of(shrine));
+        addFiveColorMana();
+
+        harness.activateAbility(player1, 0, 0, null, shrine.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Honden of Life's Web");
+        assertThat(findPermanents(player1, "Shrine")).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void rejectsEnchantmentInOpponentsGraveyard() {
+        addReadySource();
+        Card enchantment = new GloriousAnthem();
+        harness.setGraveyard(player2, List.of(enchantment));
+        addFiveColorMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, enchantment.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void returnedAuraChoosesLegalAttachment() {
+        Permanent source = addReadySource();
+        Card aura = new Pacifism();
+        harness.setGraveyard(player1, List.of(aura));
+        addFiveColorMana();
+
+        harness.activateAbility(player1, 0, 0, null, aura.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, source.getId());
+
+        Permanent returnedAura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(aura.getId()))
+                .findFirst().orElseThrow();
+        assertThat(returnedAura.getAttachedTo()).isEqualTo(source.getId());
+        harness.assertNotInGraveyard(player1, "Pacifism");
+    }
+
+    @Test
+    void summoningSickSourceCannotActivateTapAbility() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GoShintaiOfLifesOrigin());
+        source.setSummoningSick(true);
+        Card enchantment = new GloriousAnthem();
+        harness.setGraveyard(player1, List.of(enchantment));
+        addFiveColorMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, enchantment.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void tappedSourceCannotActivateTapAbility() {
+        Permanent source = addReadySource();
+        source.tap();
+        Card enchantment = new GloriousAnthem();
+        harness.setGraveyard(player1, List.of(enchantment));
+        addFiveColorMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, enchantment.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
     }
 

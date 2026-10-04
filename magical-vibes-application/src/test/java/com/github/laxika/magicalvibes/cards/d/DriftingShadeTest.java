@@ -113,7 +113,7 @@ class DriftingShadeTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent shade = harness.addToBattlefieldAndReturn(player1, new DriftingShade());
         shade.setSummoningSick(true);
-        shade.setTapped(true);
+        shade.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

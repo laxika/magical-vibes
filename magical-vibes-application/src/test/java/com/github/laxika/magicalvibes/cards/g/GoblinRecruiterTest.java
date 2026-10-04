@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AvenMindcensor;
 import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
+import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -17,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoblinRecruiter.class, GoblinHero.class, WindDrake.class})
+@CardUsed({GoblinRecruiter.class, GoblinHero.class, WindDrake.class,
+        AvenMindcensor.class, ObNixilisUnshackled.class, PsychogenicProbe.class})
 class GoblinRecruiterTest extends BaseCardTest {
 
     @Test
@@ -160,12 +162,75 @@ class GoblinRecruiterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @CardUsed(PsychogenicProbe.class)
+    @DisplayName("An empty library still shuffles and triggers Psychogenic Probe")
+    void emptyLibraryStillTriggersShuffleAbility() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        harness.setLibrary(player1, List.of());
+
+        setupAndCast();
+        resolveEtb();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed(PsychogenicProbe.class)
+    @DisplayName("Choosing the entire library still triggers a shuffle before ordering the Goblins")
+    void choosingEntireLibraryStillTriggersShuffle() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        Card goblinA = new GoblinHero();
+        Card goblinB = new GoblinRecruiter();
+        harness.setLibrary(player1, List.of(goblinA, goblinB));
+
+        setupAndCast();
+        resolveEtb();
+        harness.handleMultipleCardsChosen(player1, List.of(goblinA.getId(), goblinB.getId()));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(goblinB, goblinA);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed(AvenMindcensor.class)
+    @DisplayName("A top-four search can find visible Goblins but not Goblins below the fourth card")
+    void restrictedSearchFindsOnlyVisibleGoblins() {
+        harness.addToBattlefield(player2, new AvenMindcensor());
+        Card visibleGoblin = new GoblinHero();
+        Card hiddenGoblin = new GoblinRecruiter();
+        Card drakeA = new WindDrake();
+        Card drakeB = new WindDrake();
+        Card drakeC = new WindDrake();
+        harness.setLibrary(player1, List.of(drakeA, drakeB, drakeC, visibleGoblin, hiddenGoblin));
+
+        setupAndCast();
+        resolveEtb();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SearchLibraryToTopChoice.class).pool())
+                .containsExactly(visibleGoblin);
+        harness.handleMultipleCardsChosen(player1, List.of(visibleGoblin.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(visibleGoblin);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(drakeA, drakeB, drakeC, visibleGoblin, hiddenGoblin);
+        assertThat(gameLogContains("reveals " + visibleGoblin.getName())).isTrue();
+    }
+
     private void setupAndCast() {
         harness.castFromHand(player1, new GoblinRecruiter(), "{1}{R}");
     }
 
     private void resolveEtb() {
-        harness.passBothPriorities(); // Resolve creature spell → ETB trigger on stack
-        harness.passBothPriorities(); // Resolve ETB trigger → search-to-top choice
+        resolveAllTriggers();
     }
 }

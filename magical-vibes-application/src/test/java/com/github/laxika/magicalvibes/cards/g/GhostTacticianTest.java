@@ -85,4 +85,59 @@ class GhostTacticianTest extends BaseCardTest {
 
         assertThat(lateCreature.getPowerModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("Costs are paid before resolution and creatures entering in response are boosted")
+    void paysCostsBeforeBoostingCreaturesPresentAtResolution() {
+        Permanent tactician = addCreatureReady(player1, new GhostTactician());
+        harness.setHand(player1, List.of(new SerraSphinx()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(tactician.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Serra Sphinx");
+        harness.assertNotInHand(player1, "Serra Sphinx");
+        assertThat(tactician.getPowerModifier()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        Permanent newcomer = addCreatureReady(player1, new SerraSphinx());
+        harness.passBothPriorities();
+
+        assertThat(tactician.getPowerModifier()).isEqualTo(1);
+        assertThat(newcomer.getPowerModifier()).isEqualTo(1);
+        assertThat(newcomer.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Ghost Tactician cannot activate its ability")
+    void cannotActivateWhileTapped() {
+        Permanent tactician = addCreatureReady(player1, new GhostTactician());
+        tactician.setTapped(true);
+        harness.setHand(player1, List.of(new SerraSphinx()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        harness.assertInHand(player1, "Serra Sphinx");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Ghost Tactician cannot activate its ability")
+    void cannotActivateWithSummoningSickness() {
+        Permanent tactician = addCreatureReady(player1, new GhostTactician());
+        tactician.setSummoningSick(true);
+        harness.setHand(player1, List.of(new SerraSphinx()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(tactician.isTapped()).isFalse();
+        harness.assertInHand(player1, "Serra Sphinx");
+        assertThat(gd.stack).isEmpty();
+    }
 }

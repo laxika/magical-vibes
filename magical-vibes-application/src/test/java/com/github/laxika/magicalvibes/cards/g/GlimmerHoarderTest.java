@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.a.AngelOfSuffering;
 import com.github.laxika.magicalvibes.cards.a.AphemiaTheCacophony;
 import com.github.laxika.magicalvibes.cards.b.BalemurkLeech;
+import com.github.laxika.magicalvibes.cards.c.ChitinousCrawler;
 import com.github.laxika.magicalvibes.cards.d.DefilerOfFlesh;
-import com.github.laxika.magicalvibes.cards.g.GravebreakerLamia;
+import com.github.laxika.magicalvibes.cards.m.MindwrackHarpy;
+import com.github.laxika.magicalvibes.cards.p.PuppetRaiser;
 import com.github.laxika.magicalvibes.cards.s.StarvingRevenant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -19,7 +21,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GlimmerHoarder.class, AngelOfSuffering.class, AphemiaTheCacophony.class,
-        BalemurkLeech.class, DefilerOfFlesh.class, GravebreakerLamia.class, StarvingRevenant.class})
+        BalemurkLeech.class, ChitinousCrawler.class, DefilerOfFlesh.class, GravebreakerLamia.class,
+        MindwrackHarpy.class, PuppetRaiser.class, StarvingRevenant.class})
 class GlimmerHoarderTest extends BaseCardTest {
 
     @Test
@@ -58,11 +61,50 @@ class GlimmerHoarderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    void untappingBeforeResolutionPreventsLifeLossAndDraft() {
+        int originalHandSize = gd.playerHands.get(player1.getId()).size();
+        Permanent hoarder = harness.addToBattlefieldAndReturn(player1, new GlimmerHoarder());
+        hoarder.tap();
+        advanceToPostcombatMain(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        hoarder.untap();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(originalHandSize);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void tappedSurvivorDoesNotTriggerDuringOpponentsTurn() {
+        Permanent hoarder = harness.addToBattlefieldAndReturn(player1, new GlimmerHoarder());
+        hoarder.tap();
+
+        advanceToPostcombatMain(player2);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void tappingAfterMainPhaseBeginsDoesNotCreateATrigger() {
+        Permanent hoarder = harness.addToBattlefieldAndReturn(player1, new GlimmerHoarder());
+
+        advanceToPostcombatMain(player1);
+        hoarder.tap();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void advanceToPostcombatMain(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(activePlayer, TurnStep.POSTCOMBAT_MAIN);
     }
 }

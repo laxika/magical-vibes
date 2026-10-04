@@ -107,4 +107,58 @@ class GoblinRimerunnerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("Snow-Covered Mountain mana pays for haste while the source is tapped")
+    void snowLandPaysForHasteWhileTapped() {
+        Permanent rimerunner = harness.addToBattlefieldAndReturn(player1, new GoblinRimerunner());
+        rimerunner.setTapped(true);
+        Permanent other = addCreatureReady(player1, new GoblinRimerunner());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new SnowCoveredMountain());
+
+        harness.tapPermanent(player1, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gqs.hasKeyword(gd, rimerunner, Keyword.HASTE)).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, rimerunner, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isFalse();
+        assertThat(rimerunner.isTapped()).isTrue();
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Without haste a summoning-sick Rimerunner cannot pay the tap cost")
+    void summoningSicknessPreventsTapAbility() {
+        Permanent rimerunner = harness.addToBattlefieldAndReturn(player1, new GoblinRimerunner());
+        Permanent target = addCreatureReady(player2, new GoblinRimerunner());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(rimerunner.isTapped()).isFalse();
+        assertThat(target.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Tap ability can target its own source and expires at end of turn")
+    void tapAbilityCanTargetSelfAndExpires() {
+        Permanent rimerunner = addCreatureReady(player1, new GoblinRimerunner());
+
+        harness.activateAbility(player1, 0, 0, null, rimerunner.getId());
+        assertThat(rimerunner.isTapped()).isTrue();
+        assertThat(rimerunner.isCantBlockThisTurn()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(rimerunner.isCantBlockThisTurn()).isTrue();
+
+        gd.expireEndOfTurnFloatingEffects();
+        rimerunner.resetModifiers();
+
+        assertThat(rimerunner.isCantBlockThisTurn()).isFalse();
+    }
 }

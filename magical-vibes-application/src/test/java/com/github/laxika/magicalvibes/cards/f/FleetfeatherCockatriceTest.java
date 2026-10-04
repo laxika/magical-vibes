@@ -83,7 +83,7 @@ class FleetfeatherCockatriceTest extends BaseCardTest {
     void monstrosityWorksWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent cockatrice = harness.addToBattlefieldAndReturn(player1, new FleetfeatherCockatrice());
         cockatrice.setSummoningSick(true);
-        cockatrice.setTapped(true);
+        cockatrice.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
         addMonstrosityMana(player1);

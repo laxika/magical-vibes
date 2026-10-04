@@ -1,30 +1,33 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.m.MelirasKeepers;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianRager;
+import com.github.laxika.magicalvibes.cards.p.PlagueMyr;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({GoreVassal.class, PhyrexianRager.class, PlagueMyr.class, GoForTheThroat.class, MelirasKeepers.class})
 class GoreVassalTest extends BaseCardTest {
-
-    // ===== Activation sacrifices and puts ability on stack =====
 
     @Test
     @DisplayName("Activating sacrifices Gore Vassal and puts ability on stack")
     void activatingSacrificesAndPutsOnStack() {
-        addReadyGoreVassal(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addCreatureReady(player1, new GoreVassal());
+        harness.addToBattlefield(player2, new PhyrexianRager());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Phyrexian Rager");
         harness.activateAbility(player1, 0, null, targetId);
 
         // Gore Vassal should be sacrificed
@@ -38,68 +41,60 @@ class GoreVassalTest extends BaseCardTest {
         assertThat(entry.getCard().getName()).isEqualTo("Gore Vassal");
     }
 
-    // ===== Puts -1/-1 counter and regenerates if toughness >= 1 =====
-
     @Test
     @DisplayName("Puts -1/-1 counter on 2/2 creature and regenerates it (toughness becomes 1)")
     void putsCounterAndRegeneratesOnSurvivingCreature() {
-        addReadyGoreVassal(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addCreatureReady(player1, new GoreVassal());
+        harness.addToBattlefield(player2, new PhyrexianRager());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Phyrexian Rager");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = findPermanent(player2, "Phyrexian Rager");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
         assertThat(bears.getRegenerationShield()).isEqualTo(1);
     }
 
-    // ===== Does NOT regenerate if toughness < 1 =====
-
     @Test
     @DisplayName("Puts -1/-1 counter on 1/1 creature, does not regenerate (toughness becomes 0), creature dies")
     void doesNotRegenerateWhenToughnessDropsToZero() {
-        addReadyGoreVassal(player1);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        addCreatureReady(player1, new GoreVassal());
+        harness.addToBattlefield(player2, new PlagueMyr());
 
-        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
+        UUID targetId = harness.getPermanentId(player2, "Plague Myr");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        // Llanowar Elves should be dead (0 toughness, no regen shield to save it)
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        // Plague Myr should be dead (0 toughness, no regen shield to save it)
+        harness.assertNotOnBattlefield(player2, "Plague Myr");
+        harness.assertInGraveyard(player2, "Plague Myr");
     }
-
-    // ===== Can target own creature =====
 
     @Test
     @DisplayName("Can target own creature to give it a regeneration shield")
     void canTargetOwnCreature() {
-        addReadyGoreVassal(player1);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GoreVassal());
+        harness.addToBattlefield(player1, new PhyrexianRager());
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player1, "Phyrexian Rager");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = findPermanent(player1, "Phyrexian Rager");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(bears.getRegenerationShield()).isEqualTo(1);
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Ability fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        addReadyGoreVassal(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        addCreatureReady(player1, new GoreVassal());
+        harness.addToBattlefield(player2, new PhyrexianRager());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Phyrexian Rager");
         harness.activateAbility(player1, 0, null, targetId);
 
         // Remove target before resolution
@@ -110,13 +105,84 @@ class GoreVassalTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Regenerates a creature even when counters cannot be put on it")
+    void regeneratesWhenCounterPlacementIsImpossible() {
+        harness.addToBattlefield(player1, new GoreVassal());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new MelirasKeepers());
 
-    private Permanent addReadyGoreVassal(Player player) {
-        GoreVassal card = new GoreVassal();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can activate while summoning sick and tapped because the cost only sacrifices")
+    void canActivateWhileSummoningSickAndTapped() {
+        Permanent vassal = harness.addToBattlefieldAndReturn(player1, new GoreVassal());
+        vassal.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PhyrexianRager());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Gore Vassal");
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can target itself but the sacrificed target is illegal at resolution")
+    void canTargetItself() {
+        Permanent vassal = harness.addToBattlefieldAndReturn(player1, new GoreVassal());
+
+        harness.activateAbility(player1, 0, null, vassal.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Gore Vassal");
+        harness.assertInGraveyard(player1, "Gore Vassal");
+        assertThat(gd.stack).isEmpty();
+        assertThat(vassal.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThat(vassal.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("The regeneration shield replaces subsequent destruction")
+    void shieldReplacesDestruction() {
+        harness.addToBattlefield(player1, new GoreVassal());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PhyrexianRager());
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        harness.setHand(player1, List.of(new GoForTheThroat()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Phyrexian Rager");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The shield is created before lethal marked damage is checked")
+    void regeneratesBeforeLethalDamageStateBasedAction() {
+        harness.addToBattlefield(player1, new GoreVassal());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PhyrexianRager());
+        target.setMarkedDamage(1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Phyrexian Rager");
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.isTapped()).isTrue();
     }
 }

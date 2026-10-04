@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -67,7 +68,9 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class MayCastHandlerService {
+    private final AdditionalSpellCostService additionalSpellCostService;
 
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDividedDamageSupport dealDividedDamageSupport;
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -541,7 +544,10 @@ public class MayCastHandlerService {
                         if (predicateEvaluationService.matchesPermanentPredicate(p, filter.predicate(), filterContext)) {
                             validTargets.add(p.getId());
                         }
-                    } else if (gameQueryService.isCreature(gameData, p)) {
+                    } else if (gameQueryService.isCreature(gameData, p)
+                            || gameQueryService.isPlaneswalker(gameData, p)
+                            && spellEffects.stream().anyMatch(e -> e instanceof com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect divided
+                            && (divided.canTargetPlayers() || divided.canTargetPlaneswalkers()))) {
                         validTargets.add(p.getId());
                     }
                 }
@@ -655,6 +661,12 @@ public class MayCastHandlerService {
             accepted = false;
         }
 
+        if (accepted && !additionalSpellCostService.satisfiable(gameData, player.getId(), cardToCast)) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " can't be cast because its additional cost cannot be paid."));
+            accepted = false;
+        }
+
         if (accepted) {
             // Verify the card is still in a graveyard matching the scope
             Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, cardToCast.getId());
@@ -698,10 +710,6 @@ public class MayCastHandlerService {
 
                         if (validTargets.isEmpty()) {
                             // No valid targets — card goes to owner's graveyard
-                            if (exileInsteadOfGraveyard) {
-                                permanentRemovalService.removeCardFromGraveyardById(gameData, cardToCast.getId());
-                                gameData.addToExile(graveyardOwnerId, cardToCast);
-                            }
                             gameLogService.append(gameData, GameLog.cardThen(cardToCast, " has no valid targets."));
                             log.info("Game {} - {} cast-from-graveyard has no valid targets", gameData.id, cardToCast.getName());
                         } else {
@@ -1886,6 +1894,17 @@ public class MayCastHandlerService {
             return;
         }
 
+        if ((EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast))
+                && buildValidSpellTargets(gameData, cardToCast, cardToCast.getEffects(EffectSlot.SPELL),
+                player.getId(), 0, false).isEmpty()) {
+            queueDeclineEffect(gameData, ability);
+            if (scryIfDeclined) queueScryFallback(gameData);
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " has no legal targets and remains in hand."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         // Remove remaining may-cast-from-hand abilities (only cast one spell)
         if (pendingEffectType != null) {
             gameData.pendingMayAbilities.removeIf(pma ->
@@ -2046,7 +2065,10 @@ public class MayCastHandlerService {
                 ? List.of()
                 : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
 
-        if (EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card)) {
+        boolean zeroDividedDamage = "madness".equals(costLabel)
+                && EffectResolution.needsDamageDistribution(spellEffects)
+                && dealDividedDamageSupport.damageAssignedToSingleTarget(gameData, spellEffects, playerId, xValue, true) == 0;
+        if (!zeroDividedDamage && (EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card))) {
             boolean castForMadnessCost = "madness".equals(costLabel);
             List<UUID> validTargets = buildValidSpellTargets(gameData, card, spellEffects, player.getId(),
                     xValue, castForMadnessCost);

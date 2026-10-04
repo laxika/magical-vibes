@@ -80,12 +80,14 @@ class AvabruckCaretakerTest extends BaseCardTest {
         Permanent caretaker = harness.enterBattlefieldAndReturn(player1, new AvabruckCaretaker());
 
         gd.spellsCastLastTurn.clear();
+        gd.previousTurnActivePlayerId = player1.getId();
         harness.performUntapStep(player2);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
         assertThat(caretaker.getCard()).isInstanceOf(HollowhengeHuntmaster.class);
 
         gd.spellsCastLastTurn.put(player2.getId(), 2);
+        gd.previousTurnActivePlayerId = player2.getId();
         harness.performUntapStep(player1);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
@@ -98,6 +100,7 @@ class AvabruckCaretakerTest extends BaseCardTest {
         Permanent caretaker = harness.enterBattlefieldAndReturn(player1, new AvabruckCaretaker());
         gd.spellsCastLastTurn.put(player1.getId(), 1);
 
+        gd.previousTurnActivePlayerId = player1.getId();
         harness.performUntapStep(player2);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
@@ -111,6 +114,7 @@ class AvabruckCaretakerTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         gd.spellsCastLastTurn.put(player1.getId(), 2);
 
+        gd.previousTurnActivePlayerId = player1.getId();
         harness.performUntapStep(player2);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
@@ -124,6 +128,7 @@ class AvabruckCaretakerTest extends BaseCardTest {
         Permanent huntmaster = harness.enterBattlefieldAndReturn(player1, new AvabruckCaretaker());
         gd.spellsCastLastTurn.put(player2.getId(), 2);
 
+        gd.previousTurnActivePlayerId = player1.getId();
         harness.performUntapStep(player2);
 
         assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);

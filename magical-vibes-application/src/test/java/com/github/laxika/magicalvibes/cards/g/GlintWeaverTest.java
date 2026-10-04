@@ -46,6 +46,85 @@ class GlintWeaverTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
     }
 
+    @Test
+    @DisplayName("ETB asks for targets and distribution before resolving")
+    void choosesTargetsWhenTriggerGoesOnStack() {
+        harness.setLife(player1, 20);
+        castGlintWeaver();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Three targets each receive one counter")
+    void distributesAcrossThreeTargets() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GlintWeaver());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GlintWeaver());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new GlintWeaver());
+        gd.pendingETBDamageAssignments = Map.of(first.getId(), 1, second.getId(), 1, third.getId(), 1);
+        harness.setLife(player1, 20);
+
+        castGlintWeaver();
+        resolveGlintWeaver();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(third.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 24);
+    }
+
+    @Test
+    @DisplayName("Two targets may receive an unequal distribution")
+    void distributesTwoAndOneCounters() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GlintWeaver());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GlintWeaver());
+        gd.pendingETBDamageAssignments = Map.of(first.getId(), 2, second.getId(), 1);
+        harness.setLife(player1, 20);
+
+        castGlintWeaver();
+        resolveGlintWeaver();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 25);
+    }
+
+    @Test
+    @DisplayName("No life is gained when every target leaves before resolution")
+    void allTargetsLeavingPreventsLifeGain() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GlintWeaver());
+        gd.pendingETBDamageAssignments = Map.of(target.getId(), 3);
+        harness.setLife(player1, 20);
+        castGlintWeaver();
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Counters assigned to a departed target are not redistributed")
+    void partialResolutionPreservesDistribution() {
+        Permanent surviving = harness.addToBattlefieldAndReturn(player1, new GlintWeaver());
+        Permanent departing = harness.addToBattlefieldAndReturn(player2, new GlintWeaver());
+        gd.pendingETBDamageAssignments = Map.of(surviving.getId(), 1, departing.getId(), 2);
+        harness.setLife(player1, 20);
+        castGlintWeaver();
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(departing);
+        gd.playerGraveyards.get(player2.getId()).add(departing.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(surviving.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 24);
+    }
+
     private void castGlintWeaver() {
         harness.setHand(player1, List.of(new GlintWeaver()));
         harness.addMana(player1, ManaColor.GREEN, 2);

@@ -47,7 +47,7 @@ class EngineRatTest extends BaseCardTest {
     void tappedRatCanActivateRepeatedly() {
         Permanent rat = harness.addToBattlefieldAndReturn(player1, new EngineRat());
         rat.setSummoningSick(true);
-        rat.setTapped(true);
+        rat.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 10);
         harness.addMana(player1, ManaColor.BLACK, 2);
 

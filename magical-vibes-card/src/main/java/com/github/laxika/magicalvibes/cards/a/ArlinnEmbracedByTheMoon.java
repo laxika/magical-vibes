@@ -27,7 +27,7 @@ public class ArlinnEmbracedByTheMoon extends Card {
                 +1,
                 List.of(
                         new BoostAllOwnCreaturesEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES)
                 ),
                 "+1: Creatures you control get +1/+1 and gain trample until end of turn."
         ));

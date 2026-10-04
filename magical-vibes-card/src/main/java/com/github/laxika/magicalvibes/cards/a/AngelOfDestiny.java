@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
@@ -27,7 +26,7 @@ public class AngelOfDestiny extends Card {
 
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
                 new ConditionalEffect(
-                        new ControllerLifeAtLeast(GameData.STARTING_LIFE_TOTAL + 15),
+                        new ControllerLifeAtLeast(15, true),
                         new EachPlayerAttackedBySourceLosesGameEffect()));
     }
 }

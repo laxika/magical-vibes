@@ -92,7 +92,7 @@ class ExorcistTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent exorcist = addCreatureReady(player1, new Exorcist());
-        exorcist.setTapped(true);
+        exorcist.tap();
         Permanent target = addCreatureReady(player2, new MarshGoblins());
         addWhiteAbilityMana();
 

@@ -17,6 +17,26 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({GiantStrength.class, TrainedArmodon.class, LotusPetal.class})
 class GiantStrengthTest extends BaseCardTest {
     @Test
+    @DisplayName("Two Giant Strength auras stack their bonuses on the same creature")
+    void multipleAurasStackTheirBoosts() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new TrainedArmodon());
+        harness.setHand(player1, List.of(new GiantStrength(), new GiantStrength()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof GiantStrength)
+                .hasSize(2)
+                .allMatch(permanent -> creature.getId().equals(permanent.getAttachedTo()));
+    }
+
+    @Test
     @DisplayName("Enchanted creature gets +2/+2")
     void enchantedCreatureGetsBoost() {
         Permanent bearsPerm = addCreatureReady(player1, new TrainedArmodon());

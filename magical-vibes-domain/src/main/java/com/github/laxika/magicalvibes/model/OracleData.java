@@ -26,5 +26,16 @@ public record OracleData(
         Set<Keyword> keywords,
         Integer loyalty,
         Integer defense,
-        String watermark
-) {}
+        String watermark,
+        Integer combinedManaValue
+) {
+    public OracleData(String name, CardType type, Set<CardType> additionalTypes, String manaCost,
+                      CardColor color, List<CardColor> colors, List<CardColor> colorIdentity,
+                      Set<CardSupertype> supertypes, List<CardSubtype> subtypes, String cardText,
+                      Integer power, Integer toughness, Set<Keyword> keywords, Integer loyalty,
+                      Integer defense, String watermark) {
+        this(name, type, additionalTypes, manaCost, color, colors, colorIdentity, supertypes,
+                subtypes, cardText, power, toughness, keywords, loyalty, defense, watermark, null);
+    }
+
+}

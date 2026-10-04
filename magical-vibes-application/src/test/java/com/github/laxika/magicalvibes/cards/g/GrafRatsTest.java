@@ -132,6 +132,96 @@ class GrafRatsTest extends BaseCardTest {
         assertThat(gd.exiledCards).anyMatch(c -> c.card().getId().equals(rats.getId()));
     }
 
+    @Test
+    void tokenSourceIsExiledButCannotMeld() {
+        GrafRats token = new GrafRats();
+        token.setToken(true);
+        MidnightScavengers scavengers = new MidnightScavengers();
+        harness.addToBattlefield(player1, token);
+        harness.addToBattlefield(player1, scavengers);
+
+        advanceToBeginningOfCombat();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Chittering Host");
+        harness.assertNotOnBattlefield(player1, "Graf Rats");
+        harness.assertNotOnBattlefield(player1, "Midnight Scavengers");
+        assertThat(gd.exiledCards).anyMatch(c -> c.card().getId().equals(scavengers.getId()));
+    }
+
+    @Test
+    void controllerChoosesWhichPartnerToMeld() {
+        harness.addToBattlefield(player1, new GrafRats());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MidnightScavengers());
+        Permanent chosen = harness.addToBattlefieldAndReturn(player1, new MidnightScavengers());
+
+        advanceToBeginningOfCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        Permanent host = findPermanent(player1, "Chittering Host");
+        assertThat(host.getMeldComponentCards()).contains(chosen.getOriginalCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first).doesNotContain(chosen);
+    }
+
+    @Test
+    void doesNotTriggerOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new GrafRats());
+        harness.addToBattlefield(player1, new MidnightScavengers());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Graf Rats");
+        harness.assertOnBattlefield(player1, "Midnight Scavengers");
+    }
+
+    @Test
+    void doesNotTriggerWithPartnerOwnedByOpponent() {
+        harness.addToBattlefield(player1, new GrafRats());
+        MidnightScavengers scavengers = new MidnightScavengers();
+        scavengers.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, scavengers);
+
+        advanceToBeginningOfCombat();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Graf Rats");
+        harness.assertOnBattlefield(player1, "Midnight Scavengers");
+    }
+
+    @Test
+    void doesNotTriggerWhenSourceIsOwnedByOpponent() {
+        GrafRats rats = new GrafRats();
+        rats.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, rats);
+        harness.addToBattlefield(player1, new MidnightScavengers());
+
+        advanceToBeginningOfCombat();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Graf Rats");
+        harness.assertOnBattlefield(player1, "Midnight Scavengers");
+    }
+
+    @Test
+    void sourceLeavingBeforeResolutionPreventsPartnerFromBeingExiled() {
+        Permanent rats = harness.addToBattlefieldAndReturn(player1, new GrafRats());
+        harness.addToBattlefield(player1, new MidnightScavengers());
+        advanceToBeginningOfCombat();
+        assertThat(gd.stack).isNotEmpty();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, rats));
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Midnight Scavengers");
+        harness.assertNotOnBattlefield(player1, "Chittering Host");
+    }
+
     private void advanceToBeginningOfCombat() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

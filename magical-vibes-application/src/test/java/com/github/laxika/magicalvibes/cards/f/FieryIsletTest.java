@@ -163,7 +163,7 @@ class Mh1FieryIsletTest extends BaseCardTest {
     @DisplayName("A tapped Fiery Islet cannot activate either ability")
     void tappedLandCannotActivateEitherAbility() {
         Permanent islet = harness.addToBattlefieldAndReturn(player1, new FieryIslet());
-        islet.setTapped(true);
+        islet.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 

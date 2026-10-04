@@ -60,7 +60,9 @@ public final class FaceOracleMapper {
                 // Hero of Akros) enters as its back face and needs that face's starting loyalty.
                 isBackFace && !isPlaneswalker(parsed) ? null : CardDataSupport.parseInt(face.loyalty()),
                 isBackFace ? null : CardDataSupport.parseInt(face.defense()),
-                isBackFace ? null : blankToNull(face.watermark()));
+                isBackFace ? null : blankToNull(face.watermark()),
+                !isBackFace && "split".equals(face.layout()) && face.manaValue() != null
+                        ? new java.math.BigDecimal(face.manaValue()).intValueExact() : null);
     }
 
     private static boolean isPlaneswalker(TypeLineParser.ParsedTypeLine parsed) {

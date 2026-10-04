@@ -132,7 +132,7 @@ class FortifyingProvisionsTest extends BaseCardTest {
     void foodRequiresTapCost() {
         harness.castFromHand(player1, new FortifyingProvisions(), "{2}{W}");
         resolveAllTriggers();
-        findPermanent(player1, "Food").setTapped(true);
+        findPermanent(player1, "Food").tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))

@@ -41,7 +41,9 @@ public class BecomeCopyOfTargetCreatureEffectHandler implements NormalEffectHand
                 entry.getControllerId(),
                 List.of((BecomeCopyOfTargetCreatureEffect) effect),
                 entry.getCard().getName() + " — You may have this creature become a copy of " + targetPerm.getCard().getName() + ".",
-                targetId
+                targetId,
+                null,
+                entry.getSourcePermanentId()
         ));
         log.info("Game {} - {} become-copy may choice queued for target {}",
                 gameData.id, entry.getCard().getName(), targetPerm.getCard().getName());

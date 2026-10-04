@@ -190,6 +190,9 @@ class ArchmageAscensionTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInHand(player1, "Stonework Puma");
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
     }
 
     private Permanent addAscension() {

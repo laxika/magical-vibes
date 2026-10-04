@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AvenArcher;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.s.SeasClaim;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GracefulAntelope.class, Mountain.class, AvenArcher.class})
+@CardUsed({GracefulAntelope.class, Mountain.class, AvenArcher.class, SeasClaim.class})
 class GracefulAntelopeTest extends BaseCardTest {
 
     @Test
@@ -102,6 +104,68 @@ class GracefulAntelopeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.MOUNTAIN);
+    }
+
+    @Test
+    @DisplayName("The trigger can change your own land and its mana production")
+    void ownLandProducesWhiteInsteadOfRed() {
+        attackWithAntelope(player1);
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+
+        resolveCombatAndTrigger();
+        harness.handlePermanentChosen(player1, mountain.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(mountain));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("A land changed into a Plains makes the Antelope unblockable")
+    void changedLandEnablesPlainswalk() {
+        Permanent antelope = attackWithAntelope(player1);
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+
+        resolveCombatAndTrigger();
+        harness.handlePermanentChosen(player1, mountain.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        Permanent blocker = addCreatureReady(player2, new AvenArcher());
+
+        prepareDeclareBlockers();
+        antelope.setAttacking(true);
+        antelope.setAttackTarget(player2.getId());
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(antelope)))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A resolving trigger overrides a land Aura attached after the Antelope entered")
+    void resolvedLandChangeUsesResolutionTimestamp() {
+        Permanent antelope = harness.enterBattlefieldAndReturn(player1, new GracefulAntelope());
+        antelope.setSummoningSick(false);
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.setHand(player1, List.of(new SeasClaim()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, mountain.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.ISLAND);
+
+        antelope.setAttacking(true);
+        antelope.setAttackTarget(player2.getId());
+        resolveCombatAndTrigger();
+        harness.handlePermanentChosen(player1, mountain.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.PLAINS);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, antelope));
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.ISLAND);
     }
 
     private Permanent attackWithAntelope(Player player) {

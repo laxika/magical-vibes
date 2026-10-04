@@ -19,8 +19,7 @@ class GliderKidsTest extends BaseCardTest {
     void enteringBattlefieldStartsScryOne() {
         castGliderKids();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
@@ -32,13 +31,46 @@ class GliderKidsTest extends BaseCardTest {
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card originalTop = deck.getFirst();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.getGameService().handleInteractionAnswer(
                 gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
 
         assertThat(deck.getFirst()).isNotSameAs(originalTop);
         assertThat(deck.getLast()).isSameAs(originalTop);
+    }
+
+    @Test
+    void scryCanKeepTopCardWithoutChangingEitherLibrary() {
+        Card top = new GliderKids();
+        Card next = new GliderKids();
+        Card opponentsTop = new GliderKids();
+        harness.setLibrary(player1, List.of(top, next));
+        harness.setLibrary(player2, List.of(opponentsTop));
+        castGliderKids();
+
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(top);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, next);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsTop);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void scryWithEmptyLibraryCompletesWithoutPromptOrDrawing() {
+        harness.setLibrary(player1, List.of());
+        castGliderKids();
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(permanent -> assertThat(permanent.getCard()).isInstanceOf(GliderKids.class));
     }
 
     private void castGliderKids() {

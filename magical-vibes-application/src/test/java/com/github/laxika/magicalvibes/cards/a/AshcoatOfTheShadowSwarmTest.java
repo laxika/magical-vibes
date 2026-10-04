@@ -110,6 +110,7 @@ class AshcoatOfTheShadowSwarmTest extends BaseCardTest {
     @Test
     @DisplayName("Rats milled by the ability can be returned immediately")
     void returnsNewlyMilledRats() {
+        harness.setHand(player1, List.of());
         addCreatureReady(player1, new AshcoatOfTheShadowSwarm());
         Card firstRat = new BogRats();
         Card secondRat = new BogRats();
@@ -153,6 +154,7 @@ class AshcoatOfTheShadowSwarmTest extends BaseCardTest {
     @Test
     @DisplayName("The controller may stop after returning one Rat")
     void mayReturnOnlyOneRat() {
+        harness.setHand(player1, List.of());
         addCreatureReady(player1, new AshcoatOfTheShadowSwarm());
         Card firstRat = new BogRats();
         Card secondRat = new BogRats();

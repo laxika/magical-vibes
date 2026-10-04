@@ -82,6 +82,35 @@ class GoblinMasonsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Sacrificing Goblin Masons requires destroying its controller's only Wall")
+    void sacrificeDestroysControllersWall() {
+        Permanent masons = addCreatureReady(player2, new GoblinMasons());
+        Permanent wall = addCreatureReady(player2, new WallOfGlare());
+
+        setupPlayer2Active();
+        harness.setHand(player2, List.of(new RecklessAbandon()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castSorceryWithSacrifice(player2, 0, player1.getId(), masons.getId());
+
+        harness.assertInGraveyard(player2, "Goblin Masons");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(wall.getId());
+
+        harness.handlePermanentChosen(player2, wall.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Wall of Glare");
+        harness.assertInGraveyard(player2, "Wall of Glare");
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+    }
+
     private void setupPlayer2Active() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

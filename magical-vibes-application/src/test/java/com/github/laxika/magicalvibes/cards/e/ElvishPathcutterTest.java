@@ -25,7 +25,7 @@ class ElvishPathcutterTest extends BaseCardTest {
     void canTargetItselfWhileTappedAndSummoningSick() {
         Permanent pathcutter = harness.addToBattlefieldAndReturn(player1, new ElvishPathcutter());
         pathcutter.setSummoningSick(true);
-        pathcutter.setTapped(true);
+        pathcutter.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

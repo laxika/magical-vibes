@@ -28,6 +28,7 @@ import java.util.UUID;
  * {@code thenEffectTargetId} preserves a pre-bound permanent reference for that reflexive effect.
  * {@code thenEffectUsesDiscardedManaValue} supplies the discarded card's mana value as X while
  * choosing and resolving a targeted reflexive effect.
+ * {@code pendingSpellCast} completes a queued exile cast after its mandatory discard payment.
  */
 public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                               List<UUID> remainingEachPlayerDiscards,
@@ -46,7 +47,30 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                               UUID thenEffectSourcePermanentId,
                               Permanent thenEffectSourcePermanentSnapshot,
                               int thenEffectEventValue, UUID discardedCardSelectionControllerId, List<UUID> discardedCardIds,
+                              boolean resolveThenDuringSameResolution, StackEntry pendingSpellCast) {
+    /** Compatibility constructor without a pending spell cast. */
+    public DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
+                              List<UUID> remainingEachPlayerDiscards,
+                              UUID eachPlayerControllerId, int eachPlayerAmount,
+                              int graveyardReturnCount, List<Integer> eachPlayerAmounts,
+                              UUID boostPermanentId, int boostPower, int boostToughness,
+                              Card thenEffectSourceCard, CardEffect thenEffect, CardPredicate thenEffectCondition,
+                              Permanent enteringPermanent, UUID enteringControllerId,
+                              UUID plusOnePlusOneCounterPermanentId, int plusOnePlusOneCounterAmount,
+                              UUID thenEffectTargetId, boolean plaguecrafter,
+                              int eachPlayerNoDiscardCount, boolean thenEffectUsesDiscardedManaValue,
+                              UUID rummageDrawPlayerId,
+                              CardType thenEffectAlternateCardType,
+                              CardEffect thenEffectAlternate,
+                              boolean targetOpponentsDiscardThenDraw,
+                              UUID thenEffectSourcePermanentId,
+                              Permanent thenEffectSourcePermanentSnapshot,
+                              int thenEffectEventValue, UUID discardedCardSelectionControllerId, List<UUID> discardedCardIds,
                               boolean resolveThenDuringSameResolution) {
+        this(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards, eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts, boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect, thenEffectCondition, enteringPermanent, enteringControllerId, plusOnePlusOneCounterPermanentId, plusOnePlusOneCounterAmount, thenEffectTargetId, plaguecrafter, eachPlayerNoDiscardCount, thenEffectUsesDiscardedManaValue, rummageDrawPlayerId, thenEffectAlternateCardType, thenEffectAlternate, targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId, thenEffectSourcePermanentSnapshot, thenEffectEventValue, discardedCardSelectionControllerId, discardedCardIds, resolveThenDuringSameResolution, null);
+    }
+
+
     public DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                               List<UUID> remainingEachPlayerDiscards,
                               UUID eachPlayerControllerId, int eachPlayerAmount,
@@ -345,9 +369,14 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 null, null, null, permanent, controllerId, null, 0, null, false, 0, false);
     }
 
+    /** Completes an exile cast after its mandatory discard cost is paid. */
+    public DiscardFollowUp withPendingSpellCast(StackEntry pendingCast) {
+        return new DiscardFollowUp(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards, eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts, boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect, thenEffectCondition, enteringPermanent, enteringControllerId, plusOnePlusOneCounterPermanentId, plusOnePlusOneCounterAmount, thenEffectTargetId, plaguecrafter, eachPlayerNoDiscardCount, thenEffectUsesDiscardedManaValue, rummageDrawPlayerId, thenEffectAlternateCardType, thenEffectAlternate, targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId, thenEffectSourcePermanentSnapshot, thenEffectEventValue, discardedCardSelectionControllerId, discardedCardIds, resolveThenDuringSameResolution, pendingCast);
+    }
+
     /** Selects whether the discard rider continues the current spell resolution. */
     public DiscardFollowUp withSameResolutionContinuation(boolean enabled) {
-        return new DiscardFollowUp(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards, eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts, boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect, thenEffectCondition, enteringPermanent, enteringControllerId, plusOnePlusOneCounterPermanentId, plusOnePlusOneCounterAmount, thenEffectTargetId, plaguecrafter, eachPlayerNoDiscardCount, thenEffectUsesDiscardedManaValue, rummageDrawPlayerId, thenEffectAlternateCardType, thenEffectAlternate, targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId, thenEffectSourcePermanentSnapshot, thenEffectEventValue, discardedCardSelectionControllerId, discardedCardIds, enabled);
+        return new DiscardFollowUp(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards, eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts, boostPermanentId, boostPower, boostToughness, thenEffectSourceCard, thenEffect, thenEffectCondition, enteringPermanent, enteringControllerId, plusOnePlusOneCounterPermanentId, plusOnePlusOneCounterAmount, thenEffectTargetId, plaguecrafter, eachPlayerNoDiscardCount, thenEffectUsesDiscardedManaValue, rummageDrawPlayerId, thenEffectAlternateCardType, thenEffectAlternate, targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId, thenEffectSourcePermanentSnapshot, thenEffectEventValue, discardedCardSelectionControllerId, discardedCardIds, enabled, pendingSpellCast);
     }
 
     public DiscardFollowUp withSourceContext(UUID sourcePermanentId,
@@ -362,7 +391,7 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 thenEffectUsesDiscardedManaValue, rummageDrawPlayerId,
                 thenEffectAlternateCardType, thenEffectAlternate,
                 targetOpponentsDiscardThenDraw, sourcePermanentId,
-                sourcePermanentSnapshot, eventValue, discardedCardSelectionControllerId, discardedCardIds, resolveThenDuringSameResolution);
+                sourcePermanentSnapshot, eventValue, discardedCardSelectionControllerId, discardedCardIds, resolveThenDuringSameResolution, pendingSpellCast);
     }
 
     /** The same reflexive discard follow-up with a fixed draw count performed first. */
@@ -377,7 +406,7 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 thenEffectAlternateCardType, thenEffectAlternate,
                 targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId,
                 thenEffectSourcePermanentSnapshot, thenEffectEventValue,
-                discardedCardSelectionControllerId, discardedCardIds, resolveThenDuringSameResolution);
+                discardedCardSelectionControllerId, discardedCardIds, resolveThenDuringSameResolution, pendingSpellCast);
     }
 
     /**
@@ -395,7 +424,7 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 thenEffectUsesDiscardedManaValue, rummageDrawPlayerId,
                 thenEffectAlternateCardType, thenEffectAlternate,
                 targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId,
-                thenEffectSourcePermanentSnapshot, thenEffectEventValue, discardedCardSelectionControllerId, discardedCardIds, resolveThenDuringSameResolution);
+                thenEffectSourcePermanentSnapshot, thenEffectEventValue, discardedCardSelectionControllerId, discardedCardIds, resolveThenDuringSameResolution, pendingSpellCast);
     }
 
     /** Records an opponent who had no card to discard. */
@@ -409,7 +438,7 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 eachPlayerNoDiscardCount + 1, thenEffectUsesDiscardedManaValue,
                 rummageDrawPlayerId, thenEffectAlternateCardType, thenEffectAlternate,
                 targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId,
-                thenEffectSourcePermanentSnapshot, thenEffectEventValue, discardedCardSelectionControllerId, discardedCardIds, resolveThenDuringSameResolution);
+                thenEffectSourcePermanentSnapshot, thenEffectEventValue, discardedCardSelectionControllerId, discardedCardIds, resolveThenDuringSameResolution, pendingSpellCast);
     }
     public static DiscardFollowUp chooseDiscardedLandForBattlefield(UUID controllerId) {
         return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(), null, 0, 0,
@@ -430,6 +459,6 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 rummageDrawPlayerId, thenEffectAlternateCardType, thenEffectAlternate,
                 targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId,
                 thenEffectSourcePermanentSnapshot, thenEffectEventValue,
-                discardedCardSelectionControllerId, updatedCardIds, resolveThenDuringSameResolution);
+                discardedCardSelectionControllerId, updatedCardIds, resolveThenDuringSameResolution, pendingSpellCast);
     }
 }

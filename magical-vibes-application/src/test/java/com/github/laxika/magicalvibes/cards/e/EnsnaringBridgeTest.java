@@ -36,7 +36,7 @@ class EnsnaringBridgeTest extends BaseCardTest {
     @DisplayName("A tapped Bridge still restricts attacks")
     void tappedBridgeStillRestrictsAttacks() {
         harness.addToBattlefield(player1, new EnsnaringBridge());
-        findPermanent(player1, "Ensnaring Bridge").setTapped(true);
+        findPermanent(player1, "Ensnaring Bridge").tap();
         harness.setHand(player1, List.of());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 

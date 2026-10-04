@@ -134,6 +134,8 @@ class AzlaskTheSwellingScourgeTest extends BaseCardTest {
 
     @Test
     void grantsSpawnAbilitiesWithNoExperienceAndTheyExpireAtEndOfTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent azlask = addCreatureReady(player1, new AzlaskTheSwellingScourge());
         harness.enterBattlefieldAndReturn(player1, new KozileksPredator());
         resolveAllTriggers();
@@ -153,6 +155,8 @@ class AzlaskTheSwellingScourgeTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, spawn, Keyword.INDESTRUCTIBLE)).isFalse();
         Permanent nextDefender = addCreatureReady(player2, new GrizzlyBears());
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+        gs.declareAttackers(gd, player2, List.of());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(spawn)));
         resolveAllTriggers();

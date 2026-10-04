@@ -112,7 +112,7 @@ class ExoticOrchardTest extends BaseCardTest {
     @DisplayName("Tapped opposing lands still contribute their mana colors")
     void tappedOpponentLandContributesColor() {
         harness.addToBattlefield(player1, new ExoticOrchard());
-        harness.addToBattlefieldAndReturn(player2, new Forest()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new Forest()).tap();
 
         harness.activateAbility(player1, 0, null, null);
 

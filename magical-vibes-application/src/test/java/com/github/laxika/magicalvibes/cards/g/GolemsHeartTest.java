@@ -1,44 +1,39 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.a.AccordersShield;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GolemsHeart.class, AccordersShield.class, CarapaceForger.class, Memnite.class})
 class GolemsHeartTest extends BaseCardTest {
-
-    // ===== Controller casts artifact spell =====
 
     @Test
     @DisplayName("Controller casts artifact spell, accepts may ability, gains 1 life")
     void controllerCastsArtifactAndAccepts() {
         harness.addToBattlefield(player1, new GolemsHeart());
-        harness.setHand(player1, List.of(new Spellbook()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new AccordersShield(), "{0}");
 
-        // Player1 should be prompted for may ability
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        // The choice is made as the trigger resolves.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 
-        // Triggered ability should be on the stack
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getCard().getName().equals("Golem's Heart"));
-
-        // Resolve the triggered ability
-        harness.passBothPriorities();
         // Resolve the artifact spell
         harness.passBothPriorities();
 
@@ -49,12 +44,13 @@ class GolemsHeartTest extends BaseCardTest {
     @DisplayName("Controller casts artifact spell, declines may ability, no life gain")
     void controllerCastsArtifactAndDeclines() {
         harness.addToBattlefield(player1, new GolemsHeart());
-        harness.setHand(player1, List.of(new Spellbook()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new AccordersShield(), "{0}");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         // No triggered ability on stack
@@ -67,8 +63,6 @@ class GolemsHeartTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
-    // ===== Opponent casts artifact spell =====
-
     @Test
     @DisplayName("Opponent casts artifact spell, controller accepts may ability, gains 1 life")
     void opponentCastsArtifactControllerAccepts() {
@@ -78,35 +72,31 @@ class GolemsHeartTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new Spellbook()));
-        harness.addMana(player2, ManaColor.WHITE, 1);
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castArtifact(player2, 0);
+        harness.castFromHand(player2, new AccordersShield(), "{0}");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
 
         // Player1 (controller of Golem's Heart) should be prompted
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 
-        // Resolve the triggered ability and then the artifact spell
-        harness.passBothPriorities(); // resolve triggered ability
+        // Resolve the artifact spell
         harness.passBothPriorities(); // resolve artifact spell
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
     }
 
-    // ===== Non-artifact spell does NOT trigger =====
-
     @Test
     @DisplayName("Non-artifact spell does not trigger Golem's Heart")
     void nonArtifactSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new GolemsHeart());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CarapaceForger(), "{1}{G}");
 
         // Should not be awaiting may ability
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -115,24 +105,15 @@ class GolemsHeartTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
 
-    // ===== Multiple Golem's Hearts =====
-
     @Test
     @DisplayName("Multiple Golem's Hearts each trigger independently")
     void multipleHeartsEachTrigger() {
         harness.addToBattlefield(player1, new GolemsHeart());
         harness.addToBattlefield(player1, new GolemsHeart());
-        harness.setHand(player1, List.of(new Spellbook()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castArtifact(player1, 0);
-
-        // First heart prompt
-        harness.handleMayAbilityChosen(player1, true);
-        // Second heart prompt
-        harness.handleMayAbilityChosen(player1, true);
+        harness.castFromHand(player1, new AccordersShield(), "{0}");
 
         // Two triggered abilities on the stack (plus the artifact spell)
         long triggeredCount = gd.stack.stream()
@@ -142,24 +123,61 @@ class GolemsHeartTest extends BaseCardTest {
 
         // Resolve all
         harness.passBothPriorities(); // resolve second triggered ability
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities(); // resolve first triggered ability
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities(); // resolve artifact spell
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
     }
 
-    // ===== No trigger when not on battlefield =====
-
     @Test
     @DisplayName("Golem's Heart does not trigger when not on the battlefield")
     void doesNotTriggerWhenNotOnBattlefield() {
-        harness.setHand(player1, List.of(new Spellbook()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new AccordersShield(), "{0}");
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
+    }
+
+    @Test
+    void artifactCreatureTriggersAndGainsLifeBeforeCreatureResolves() {
+        harness.addToBattlefield(player1, new GolemsHeart());
+        harness.castFromHand(player1, new Memnite(), "{0}");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player1, "Memnite");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Memnite");
+    }
+
+    @Test
+    void heartDoesNotTriggerForItsOwnCast() {
+        harness.castFromHand(player1, new GolemsHeart(), "{2}");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Golem's Heart");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void puttingArtifactOntoBattlefieldDoesNotTrigger() {
+        harness.addToBattlefield(player1, new GolemsHeart());
+        harness.enterBattlefieldAndReturn(player1, new Memnite());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
     }
 }

@@ -89,7 +89,7 @@ class EnslavedDwarfTest extends BaseCardTest {
     @DisplayName("Sacrifice and mana are paid before the ability resolves, even when the Dwarf is tapped and summoning sick")
     void paysCostsBeforeResolutionWithoutTapRequirement() {
         Permanent dwarf = harness.addToBattlefieldAndReturn(player1, new EnslavedDwarf());
-        dwarf.setTapped(true);
+        dwarf.tap();
         dwarf.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new SengirVampire());
         int originalPower = gqs.getEffectivePower(gd, target);

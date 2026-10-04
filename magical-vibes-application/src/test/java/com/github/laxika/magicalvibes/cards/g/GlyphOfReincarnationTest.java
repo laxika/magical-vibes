@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.c.ClergyOfTheHolyNimbus;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfTheVoid;
 import com.github.laxika.magicalvibes.cards.w.WallOfGlare;
 import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.model.Card;
@@ -23,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GlyphOfReincarnation.class, WallOfGlare.class, WallOfWood.class, GrizzlyBears.class,
-        LlanowarElves.class, ClergyOfTheHolyNimbus.class, Forest.class})
+        LlanowarElves.class, ClergyOfTheHolyNimbus.class, Forest.class, LeylineOfTheVoid.class})
 class GlyphOfReincarnationTest extends BaseCardTest {
 
     @Test
@@ -172,6 +173,89 @@ class GlyphOfReincarnationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .contains(matchingPermanent(player1, attacker.getCard()));
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(attacker.getCard());
+    }
+
+    @Test
+    @DisplayName("Does nothing when the targeted Wall did not block any creatures")
+    void doesNothingWhenWallDidNotBlock() {
+        Permanent wall = addCreatureReady(player2, new WallOfWood());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Card graveyardCreature = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player2, List.of(new GlyphOfReincarnation()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player2, 0, wall.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardCreature);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Does not return a creature when the blocked creature is exiled instead of dying")
+    void doesNotReturnCreatureForReplacedDeath() {
+        Permanent wall = addCreatureReady(player2, new WallOfWood());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Card graveyardCreature = new LlanowarElves();
+        graveyardCreature.setOwnerId(player1.getId());
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.addToBattlefield(player2, new LeylineOfTheVoid());
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new GlyphOfReincarnation()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player2, 0, wall.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.findExiledCard(attacker.getCard().getId())).isNotNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardCreature);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Waits for every creature choice before putting any selected creature onto the battlefield")
+    void returnsChosenCreaturesTogether() {
+        Permanent wall = addCreatureReady(player2, new WallOfGlare());
+        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+        firstAttacker.setAttacking(true);
+        secondAttacker.setAttacking(true);
+        Card firstReturn = new LlanowarElves();
+        Card secondReturn = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(firstReturn, secondReturn));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new GlyphOfReincarnation()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player2, 0, wall.getId());
+
+        PendingInteraction.GraveyardChoice firstChoice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(firstChoice).isNotNull();
+        assertThat(firstChoice.cardPool()).contains(firstAttacker.getCard(), secondAttacker.getCard());
+        harness.handleGraveyardCardChosen(player2, firstChoice.cardPool().indexOf(firstReturn));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        PendingInteraction.GraveyardChoice secondChoice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(secondChoice).isNotNull();
+        assertThat(secondChoice.cardPool()).contains(secondReturn).doesNotContain(firstReturn);
+        harness.handleGraveyardCardChosen(player2, secondChoice.cardPool().indexOf(secondReturn));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .containsExactlyInAnyOrder(matchingPermanent(player1, firstReturn),
+                        matchingPermanent(player1, secondReturn));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
     }
 
     private Permanent matchingPermanent(Player player, Card card) {

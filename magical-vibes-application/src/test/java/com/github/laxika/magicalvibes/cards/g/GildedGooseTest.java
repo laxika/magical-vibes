@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(GildedGoose.class)
 class GildedGooseTest extends BaseCardTest {
@@ -36,8 +37,7 @@ class GildedGooseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(countPermanents(player1, "Food")).isEqualTo(2);
     }
@@ -62,8 +62,7 @@ class GildedGooseTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 1, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
         assertThat(countPermanents(player1, "Food")).isZero();
@@ -73,7 +72,99 @@ class GildedGooseTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GildedGoose()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+    }
+
+    @Test
+    void summoningSicknessPreventsBothTapAbilities() {
+        castGoose();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(countPermanents(player1, "Food")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Gilded Goose").isTapped()).isFalse();
+    }
+
+    @Test
+    void foodCreationRequiresGreenMana() {
+        castGoose();
+        findPermanent(player1, "Gilded Goose").setSummoningSick(false);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(countPermanents(player1, "Food")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Gilded Goose").isTapped()).isFalse();
+    }
+
+    @Test
+    void manaAbilityCannotBeActivatedWithoutFood() {
+        Permanent goose = addCreatureReady(player1, new GildedGoose());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(goose.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    void manaAbilityResolvesImmediatelyAndDoesNotGainLife() {
+        castGoose();
+        Permanent goose = findPermanent(player1, "Gilded Goose");
+        goose.setSummoningSick(false);
+        findPermanent(player1, "Food").setTapped(true);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(goose.isTapped()).isTrue();
+        assertThat(countPermanents(player1, "Food")).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void creatingFoodTapsGooseAndUsesTheStack() {
+        castGoose();
+        Permanent goose = findPermanent(player1, "Gilded Goose");
+        goose.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(goose.isTapped()).isTrue();
+        assertThat(countPermanents(player1, "Food")).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Food")).isEqualTo(2);
+    }
+
+    @Test
+    void foodLifeAbilityRequiresTwoManaAndSacrificesAsACost() {
+        castGoose();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Food")).isEqualTo(1);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(countPermanents(player1, "Food")).isZero();
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertLife(player1, 23);
     }
 }

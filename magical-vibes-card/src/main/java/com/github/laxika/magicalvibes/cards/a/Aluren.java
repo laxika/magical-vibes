@@ -31,6 +31,6 @@ public class Aluren extends Card {
 
         addEffect(EffectSlot.STATIC, new AlternativeCostForSpellsEffect(
                 "{0}", smallCreatureSpell, null, false, false, true));
-        addEffect(EffectSlot.STATIC, new GrantFlashToCardTypeEffect(smallCreatureSpell, true));
+        addEffect(EffectSlot.STATIC, new GrantFlashToCardTypeEffect(smallCreatureSpell, true, true));
     }
 }

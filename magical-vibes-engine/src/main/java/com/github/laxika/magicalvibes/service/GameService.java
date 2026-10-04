@@ -1969,16 +1969,23 @@ public class GameService {
     public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
                                        List<UUID> counterCostPermanentIds,
                                        List<UUID> additionalCostSacrificePermanentIds) {
+        playCardFromLibraryTop(gameData, player, xValue, targetId, counterCostPermanentIds,
+                additionalCostSacrificePermanentIds, false);
+    }
+
+    public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
+                                       List<UUID> counterCostPermanentIds,
+                                       List<UUID> additionalCostSacrificePermanentIds, boolean castFaceDown) {
         Player actionPlayer = player;
         if (runAsActionIfNeeded(gameData,
                 () -> playCardFromLibraryTop(gameData, actionPlayer, xValue, targetId,
-                        counterCostPermanentIds, additionalCostSacrificePermanentIds))) return;
+                        counterCostPermanentIds, additionalCostSacrificePermanentIds, castFaceDown))) return;
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             spellCastingService.playCardFromLibraryTop(gameData, player, xValue, targetId,
                     counterCostPermanentIds != null ? counterCostPermanentIds : List.of(),
-                    additionalCostSacrificePermanentIds != null ? additionalCostSacrificePermanentIds : List.of());
+                    additionalCostSacrificePermanentIds != null ? additionalCostSacrificePermanentIds : List.of(), castFaceDown);
         }
     }
 

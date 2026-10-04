@@ -125,6 +125,66 @@ class GlissaSunseekerTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an artifact");
     }
 
+    @Test
+    @DisplayName("Can gain the matching mana by activating a mana ability in response")
+    void gainsMatchingManaInResponse() {
+        addCreatureReady(player1, new GlissaSunseeker());
+        addCreatureReady(player1, new IronMyr());
+        Permanent target = addArtifact(player2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Iron Myr");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Does not destroy an artifact when unspent mana exceeds its mana value")
+    void doesNothingWithExcessMana() {
+        addCreatureReady(player1, new GlissaSunseeker());
+        Permanent target = addArtifact(player2);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Iron Myr");
+    }
+
+    @Test
+    @DisplayName("Can destroy an artifact controlled by the ability controller")
+    void destroysOwnArtifact() {
+        addCreatureReady(player1, new GlissaSunseeker());
+        Permanent target = addArtifact(player1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Iron Myr");
+    }
+
+    @Test
+    @DisplayName("A targeted artifact can regenerate from Glissa's destruction")
+    void targetCanRegenerate() {
+        addCreatureReady(player1, new GlissaSunseeker());
+        Permanent target = addArtifact(player2);
+        harness.addToBattlefield(player2, new WeldingJar());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Welding Jar");
+        harness.assertOnBattlefield(player2, "Iron Myr");
+        assertThat(target.isTapped()).isTrue();
+    }
+
     private Permanent addArtifact(Player player) {
         return harness.addToBattlefieldAndReturn(player, new IronMyr());
     }
