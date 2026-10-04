@@ -21,18 +21,11 @@ class HaliyaGuidedByLightTest extends BaseCardTest {
     @DisplayName("Gains life when Haliya and another creature enter under its controller's control")
     void gainsLifeForSelfAndAllyCreatureEntries() {
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new HaliyaGuidedByLight()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HaliyaGuidedByLight(), "{2}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -43,16 +36,11 @@ class HaliyaGuidedByLightTest extends BaseCardTest {
     @DisplayName("Gains life when a noncreature artifact enters under its controller's control")
     void gainsLifeForNoncreatureArtifactEntry() {
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new HaliyaGuidedByLight()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HaliyaGuidedByLight(), "{2}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new LotusPetal()));
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new LotusPetal(), "{0}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -63,16 +51,11 @@ class HaliyaGuidedByLightTest extends BaseCardTest {
     @DisplayName("An artifact creature entering triggers Haliya only once")
     void artifactCreatureTriggersOnlyOnce() {
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new HaliyaGuidedByLight()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HaliyaGuidedByLight(), "{2}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new Memnite()));
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new Memnite(), "{0}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -87,7 +70,7 @@ class HaliyaGuidedByLightTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         gd.lifeGainedThisTurn.put(player1.getId(), 3);
 
-        advanceToEndStep(player1);
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Grizzly Bears");
@@ -101,7 +84,7 @@ class HaliyaGuidedByLightTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         gd.lifeGainedThisTurn.put(player1.getId(), 2);
 
-        advanceToEndStep(player1);
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotInHand(player1, "Grizzly Bears");
@@ -119,17 +102,95 @@ class HaliyaGuidedByLightTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Haliya, Guided by Light");
         harness.passBothPriorities();
 
-        org.assertj.core.api.Assertions.assertThat(gd.findExiledCard(haliya.getId())).isNotNull();
+        assertThat(gd.findExiledCard(haliya.getId())).isNotNull();
     }
 
-    private void advanceToEndStep(com.github.laxika.magicalvibes.model.Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+    @Test
+    @DisplayName("Life gained in response to the end-step trigger counts toward drawing")
+    void drawsAfterReachingThresholdDuringEndStep() {
+        harness.addToBattlefield(player1, new HaliyaGuidedByLight());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new HaliyaGuidedByLight()));
+        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2);
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
         harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Haliya, Guided by Light");
+    }
+
+    @Test
+    @DisplayName("Opponent creature and artifact entries do not gain life")
+    void ignoresOpponentEntries() {
+        harness.addToBattlefield(player1, new HaliyaGuidedByLight());
+        harness.setLife(player1, 20);
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player2, new LotusPetal());
+        harness.enterBattlefieldAndReturn(player2, new Memnite());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Gaining three life does not draw during the opponent's end step")
+    void doesNotDrawDuringOpponentEndStep() {
+        harness.addToBattlefield(player1, new HaliyaGuidedByLight());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new HaliyaGuidedByLight()));
+        harness.forceActivePlayer(player2);
+        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3);
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Haliya, Guided by Light");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Life loss does not subtract from the amount of life gained this turn")
+    void drawsAfterGainingAndLosingThreeLife() {
+        harness.addToBattlefield(player1, new HaliyaGuidedByLight());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new HaliyaGuidedByLight()));
+        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 3);
+        harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 3, "life loss");
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Haliya, Guided by Light");
+    }
+
+    @Test
+    @DisplayName("Warp permits a normal cast from exile on a later turn without another exile")
+    void castsWarpedCardOnLaterTurn() {
+        HaliyaGuidedByLight haliya = new HaliyaGuidedByLight();
+        harness.setHand(player1, List.of(haliya));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        assertThat(gd.findExiledCard(haliya.getId())).isNotNull();
+
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromExile(player1, haliya.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Haliya, Guided by Light");
+        assertThat(gd.findExiledCard(haliya.getId())).isNull();
     }
 }
