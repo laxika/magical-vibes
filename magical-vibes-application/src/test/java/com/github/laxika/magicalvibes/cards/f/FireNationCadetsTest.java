@@ -62,4 +62,78 @@ class FireNationCadetsTest extends BaseCardTest {
     private Permanent addReadyCadets() {
         return addCreatureReady(player1, new FireNationCadets());
     }
+
+    @Test
+    void firebendingStillResolvesAfterLastLessonLeavesGraveyard() {
+        harness.setGraveyard(player1, List.of(new AirbendingLesson()));
+        addReadyCadets();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        assertThat(gd.stack).hasSize(1);
+        harness.setGraveyard(player1, List.of());
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    void opponentsLessonDoesNotGrantFirebending() {
+        harness.setGraveyard(player2, List.of(new AirbendingLesson()));
+        addReadyCadets();
+
+        declareAttackers(List.of(0));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void nonLessonInGraveyardDoesNotGrantFirebending() {
+        harness.setGraveyard(player1, List.of(new FireNationCadets()));
+        addReadyCadets();
+
+        declareAttackers(List.of(0));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void lessonEnteringGraveyardAfterAttackDoesNotTriggerFirebending() {
+        addReadyCadets();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+        harness.setGraveyard(player1, List.of(new AirbendingLesson()));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void firebendingManaExpiresAfterCombat() {
+        harness.setGraveyard(player1, List.of(new AirbendingLesson()));
+        addReadyCadets();
+
+        declareAttackers(List.of(0));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void firebendingManaCanPayForPumpWhileAttacking() {
+        harness.setGraveyard(player1, List.of(new AirbendingLesson()));
+        Permanent cadets = addReadyCadets();
+
+        declareAttackers(List.of(0));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gqs.getEffectivePower(gd, cadets)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, cadets)).isEqualTo(2);
+    }
 }
