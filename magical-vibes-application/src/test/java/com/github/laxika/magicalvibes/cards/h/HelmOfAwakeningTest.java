@@ -109,11 +109,52 @@ class HelmOfAwakeningTest extends BaseCardTest {
     @DisplayName("A zero-mana spell remains castable")
     void zeroManaSpellRemainsCastable() {
         harness.addToBattlefield(player1, new HelmOfAwakening());
-        harness.setHand(player1, List.of(new PhyrexianWalker()));
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PhyrexianWalker(), "");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Artifact spells also cost one less")
+    void artifactSpellsCostOneLess() {
+        harness.addToBattlefield(player1, new HelmOfAwakening());
+
+        harness.castFromHand(player1, new HelmOfAwakening(), "{1}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Helm does not reduce its own cost before entering the battlefield")
+    void doesNotReduceItsOwnCost() {
+        assertThatThrownBy(() -> harness.castFromHand(player1, new HelmOfAwakening(), "{1}"))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Excess generic reduction does not consume or reduce colored mana")
+    void excessReductionLeavesColoredRequirement() {
+        harness.addToBattlefield(player1, new HelmOfAwakening());
+        harness.addToBattlefield(player2, new HelmOfAwakening());
+
+        harness.castFromHand(player1, new FallenAskari(), "{B}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A Helm on the stack does not reduce subsequent instant spells")
+    void helmOnStackDoesNotReduceSpells() {
+        harness.castFromHand(player1, new HelmOfAwakening(), "{2}");
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new Impulse(), "{U}"))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).hasSize(1);
     }
 }
