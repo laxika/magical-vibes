@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(IcatianTown.class)
+@CardUsed({IcatianTown.class})
 class IcatianTownTest extends BaseCardTest {
 
     private void prepareMain(Player active) {
@@ -74,5 +74,36 @@ class IcatianTownTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Icatian Town");
+    }
+
+    @Test
+    @DisplayName("Icatian Town creates no tokens until it resolves")
+    void createsTokensOnlyOnResolution() {
+        prepareMain(player1);
+        harness.castFromHand(player1, new IcatianTown(), "{5}{W}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(citizenTokens()).isEmpty();
+        assertThat(findPermanents(player2, "Citizen")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(citizenTokens()).hasSize(4).allSatisfy(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(token.isTapped()).isFalse();
+            assertThat(token.isSummoningSick()).isTrue();
+        });
+    }
+
+    @Test
+    @DisplayName("Player two receives the Citizens when they cast Icatian Town")
+    void playerTwoCreatesTheirOwnTokens() {
+        prepareMain(player2);
+        harness.castFromHand(player2, new IcatianTown(), "{5}{W}");
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Citizen")).hasSize(4);
+        assertThat(citizenTokens()).isEmpty();
+        harness.assertInGraveyard(player2, "Icatian Town");
     }
 }
