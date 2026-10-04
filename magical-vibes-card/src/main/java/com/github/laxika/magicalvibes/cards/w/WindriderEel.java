@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "78")
+@CardRegistration(set = "E01", collectorNumber = "30")
 public class WindriderEel extends Card {
 
     public WindriderEel() {

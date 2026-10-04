@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.n.NyxbornCourser;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,18 +13,18 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GrimPhysician.class, GrizzlyBears.class})
+@CardUsed({GrimPhysician.class, NyxbornCourser.class})
 class GrimPhysicianTest extends BaseCardTest {
 
     @Test
     @DisplayName("When Grim Physician dies, it targets an opponent's creature")
     void deathTriggerTargetsOpponentsCreature() {
         harness.addToBattlefield(player1, new GrimPhysician());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new NyxbornCourser());
+        UUID targetId = harness.getPermanentId(player2, "Nyxborn Courser");
         setupCombatWherePhysicianDies();
 
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -32,10 +33,7 @@ class GrimPhysicianTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
 
-        Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
-                .filter(permanent -> permanent.getId().equals(targetId))
-                .findFirst()
-                .orElseThrow();
+        Permanent target = findPermanent(player2, "Nyxborn Courser");
         assertThat(target.getPowerModifier()).isEqualTo(-1);
         assertThat(target.getToughnessModifier()).isEqualTo(-1);
     }
@@ -44,15 +42,68 @@ class GrimPhysicianTest extends BaseCardTest {
     @DisplayName("When Grim Physician dies, its trigger cannot target a creature you control")
     void deathTriggerCannotTargetOwnCreature() {
         harness.addToBattlefield(player1, new GrimPhysician());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID ownCreatureId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.addToBattlefield(player1, new NyxbornCourser());
+        UUID ownCreatureId = harness.getPermanentId(player1, "Nyxborn Courser");
         setupCombatWherePhysicianDies();
 
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .doesNotContain(ownCreatureId);
+    }
+
+    @Test
+    @DisplayName("The death trigger's reduction wears off at end of turn")
+    void reductionWearsOffAtEndOfTurn() {
+        harness.addToBattlefield(player1, new GrimPhysician());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new NyxbornCourser());
+        setupCombatWherePhysicianDies();
+        resolveCombat();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The death trigger puts a creature with zero toughness into the graveyard")
+    void reductionKillsOneToughnessCreature() {
+        harness.addToBattlefield(player1, new GrimPhysician());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrimPhysician());
+        setupCombatWherePhysicianDies();
+        resolveCombat();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grim Physician");
+        harness.assertInGraveyard(player2, "Grim Physician");
+    }
+
+    @Test
+    @DisplayName("The death trigger has no legal target when only your creatures remain")
+    void noOpponentCreatureMeansNoTarget() {
+        Permanent physician = harness.addToBattlefieldAndReturn(player1, new GrimPhysician());
+        harness.addToBattlefield(player1, new NyxbornCourser());
+        physician.setMarkedDamage(1);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grim Physician");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        Permanent ownCreature = findPermanent(player1, "Nyxborn Courser");
+        assertThat(ownCreature.getPowerModifier()).isZero();
+        assertThat(ownCreature.getToughnessModifier()).isZero();
     }
 
     private void setupCombatWherePhysicianDies() {
@@ -60,17 +111,8 @@ class GrimPhysicianTest extends BaseCardTest {
         physician.setSummoningSick(false);
         physician.setAttacking(true);
 
-        GrizzlyBears blockerCard = new GrizzlyBears();
-        blockerCard.setPower(3);
-        blockerCard.setToughness(3);
-        Permanent blocker = new Permanent(blockerCard);
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new NyxbornCourser());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
     }
 }

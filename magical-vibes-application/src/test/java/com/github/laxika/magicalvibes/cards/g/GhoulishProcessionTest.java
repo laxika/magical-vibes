@@ -5,15 +5,13 @@ import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -23,6 +21,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GhoulishProcession.class, GrizzlyBears.class, Shock.class, WrathOfGod.class})
 class GhoulishProcessionTest extends BaseCardTest {
 
     private void advanceTurn() {
@@ -32,7 +31,46 @@ class GhoulishProcessionTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Death trigger")
+    @CardUsed({GhoulishProcession.class, GrizzlyBears.class, Shock.class, WrathOfGod.class})
     class DeathTriggerTests {
+
+        @Test
+        void opponentCreatureDeathCreatesZombieForProcessionController() {
+            harness.addToBattlefield(player1, new GhoulishProcession());
+            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            harness.castInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
+            harness.assertNotOnBattlefield(player2, "Zombie");
+        }
+
+        @Test
+        void eachProcessionTriggersIndependentlyWhileEarlierTriggersArePending() {
+            harness.addToBattlefield(player1, new GhoulishProcession());
+            harness.addToBattlefield(player1, new GhoulishProcession());
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.addToBattlefield(player1, new GrizzlyBears());
+            harness.forceActivePlayer(player2);
+            harness.setHand(player2, List.of(new Shock(), new Shock()));
+            harness.addMana(player2, ManaColor.RED, 2);
+
+            harness.castInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+            harness.passBothPriorities();
+            assertThat(gd.stack).hasSize(2);
+
+            harness.castInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+            harness.passBothPriorities();
+            assertThat(gd.stack).hasSize(2);
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(countPermanents(player1, "Zombie")).isEqualTo(2);
+        }
 
         @Test
         @DisplayName("Creates a decayed Zombie when a nontoken creature dies")
@@ -57,10 +95,6 @@ class GhoulishProcessionTest extends BaseCardTest {
             assertThat(zombie.getCard().getColor()).isEqualTo(CardColor.BLACK);
             assertThat(zombie.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
             assertThat(zombie.getCard().getKeywords()).contains(Keyword.DECAYED);
-            assertThat(zombie.getCard().getEffects(EffectSlot.STATIC))
-                    .anyMatch(CantBlockEffect.class::isInstance);
-            assertThat(zombie.getCard().getEffects(EffectSlot.ON_ATTACK))
-                    .anyMatch(SacrificeAtEndOfCombatEffect.class::isInstance);
             assertThat(bls.canBlock(gd, zombie)).isFalse();
         }
 
@@ -75,7 +109,7 @@ class GhoulishProcessionTest extends BaseCardTest {
             harness.addMana(player2, ManaColor.WHITE, 4);
             harness.forceActivePlayer(player2);
 
-            harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
+            harness.castSorcery(player2, 0);
             harness.passBothPriorities(); // Resolve Wrath
 
             GameData gd = harness.getGameData();
@@ -97,20 +131,14 @@ class GhoulishProcessionTest extends BaseCardTest {
             harness.setHand(player2, List.of(new Shock(), new Shock()));
             harness.addMana(player2, ManaColor.RED, 2);
 
-            UUID firstBearId = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .map(Permanent::getId)
-                    .findFirst().orElseThrow();
+            UUID firstBearId = harness.getPermanentId(player1, "Grizzly Bears");
             harness.castInstant(player2, 0, firstBearId);
             harness.passBothPriorities(); // Resolve Shock
             harness.passBothPriorities(); // Resolve Procession trigger
 
             assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
 
-            UUID secondBearId = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
-                    .map(Permanent::getId)
-                    .findFirst().orElseThrow();
+            UUID secondBearId = harness.getPermanentId(player1, "Grizzly Bears");
             harness.castInstant(player2, 0, secondBearId);
             harness.passBothPriorities(); // Resolve Shock
 
@@ -172,6 +200,7 @@ class GhoulishProcessionTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Decayed Zombie combat")
+    @CardUsed({GhoulishProcession.class, GrizzlyBears.class, Shock.class})
     class DecayedCombatTests {
 
         @Test
@@ -192,13 +221,8 @@ class GhoulishProcessionTest extends BaseCardTest {
             zombie.setSummoningSick(false);
 
             harness.setLife(player2, 20);
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-            harness.clearPriorityPassed();
-            harness.beginAttackerDeclarationInput();
-
             int zombieIndex = gd.playerBattlefields.get(player1.getId()).indexOf(zombie);
-            gs.declareAttackers(gd, player1, List.of(zombieIndex));
+            declareAttackers(player1, List.of(zombieIndex));
             harness.passBothPriorities();
 
             harness.assertNotOnBattlefield(player1, "Zombie");

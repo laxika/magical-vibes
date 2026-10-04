@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianArchivist;
 import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GlisteningDeluge.class, GrizzlyBears.class, YouthfulKnight.class, HillGiant.class, Forest.class})
+@CardUsed({GlisteningDeluge.class, GrizzlyBears.class, YouthfulKnight.class, HillGiant.class,
+        Forest.class, GhaltaAndMavren.class, PhyrexianArchivist.class})
 class GlisteningDelugeTest extends BaseCardTest {
 
     @Test
@@ -46,12 +47,53 @@ class GlisteningDelugeTest extends BaseCardTest {
         assertThat(red.getEffectivePower()).isEqualTo(2);
         assertThat(red.getEffectiveToughness()).isEqualTo(2);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(red.getEffectivePower()).isEqualTo(3);
         assertThat(red.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A green and white creature gets the additional reduction only once")
+    void greenAndWhiteCreatureGetsAdditionalReductionOnce() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GhaltaAndMavren());
+
+        castDeluge();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(creature.getEffectivePower()).isEqualTo(9);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(9);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(creature.getEffectivePower()).isEqualTo(12);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(12);
+    }
+
+    @Test
+    @DisplayName("Colorless artifact creatures get only -1/-1")
+    void colorlessArtifactCreatureGetsOnlyBaseReduction() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new PhyrexianArchivist());
+
+        castDeluge();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(creature.getEffectivePower()).isEqualTo(3);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution are unaffected")
+    void creaturesEnteringAfterResolutionAreUnaffected() {
+        castDeluge();
+
+        Permanent multicolor = harness.addToBattlefieldAndReturn(player2, new GhaltaAndMavren());
+        Permanent colorless = harness.addToBattlefieldAndReturn(player1, new PhyrexianArchivist());
+
+        assertThat(multicolor.getEffectivePower()).isEqualTo(12);
+        assertThat(multicolor.getEffectiveToughness()).isEqualTo(12);
+        assertThat(colorless.getEffectivePower()).isEqualTo(4);
+        assertThat(colorless.getEffectiveToughness()).isEqualTo(5);
     }
 
     private void castDeluge() {

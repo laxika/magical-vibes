@@ -25,6 +25,7 @@ import java.util.List;
 @CardRegistration(set = "AFC", collectorNumber = "219")
 @CardRegistration(set = "FIC", collectorNumber = "366")
 @CardRegistration(set = "SCD", collectorNumber = "282")
+@CardRegistration(set = "E01", collectorNumber = "91")
 public class TalismanOfIndulgence extends Card {
 
     public TalismanOfIndulgence() {

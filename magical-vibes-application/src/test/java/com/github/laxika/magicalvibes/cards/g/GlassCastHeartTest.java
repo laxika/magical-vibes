@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.v.VisceraSeer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -16,8 +17,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GlassCastHeart.class)
+@CardUsed({GlassCastHeart.class, VisceraSeer.class})
 class GlassCastHeartTest extends BaseCardTest {
 
     @Test
@@ -30,6 +32,75 @@ class GlassCastHeartTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Blood")).hasSize(1);
+    }
+
+    @Test
+    void multipleAttackingVampiresCreateOnlyOneBloodToken() {
+        addHeart();
+        addVampire(player1);
+        addVampire(player1);
+
+        declareAttackers(player1, List.of(1, 2));
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Blood")).hasSize(1);
+    }
+
+    @Test
+    void opponentsAttackingVampireDoesNotCreateBlood() {
+        addHeart();
+        addVampire(player2);
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Blood")).isEmpty();
+    }
+
+    @Test
+    void attackTriggerResolvesAfterVampireLeavesBattlefield() {
+        addHeart();
+        addVampire(player1);
+        declareAttackers(player1, List.of(1));
+        gd.playerBattlefields.get(player1.getId()).remove(1);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Blood")).hasSize(1);
+    }
+
+    @Test
+    void cannotActivateDrainWithOnlyTwelveBloodTokens() {
+        Permanent heart = addHeart();
+        for (int i = 0; i < 12; i++) {
+            addBloodToken(player1);
+        }
+        addBloodToken(player2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(heart);
+        assertThat(heart.isTapped()).isFalse();
+        assertThat(findPermanents(player1, "Blood")).hasSize(12);
+    }
+
+    @Test
+    void vampireCreationPaysLifeAndTapsBeforeResolution() {
+        Permanent heart = addHeart();
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(heart.isTapped()).isTrue();
+        assertThat(findPermanents(player1, "Vampire")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Vampire")).hasSize(1);
     }
 
     @Test
@@ -81,16 +152,8 @@ class GlassCastHeartTest extends BaseCardTest {
     }
 
     private void addVampire(Player player) {
-        Card vampire = new Card();
-        vampire.setName("Test Vampire");
-        vampire.setType(CardType.CREATURE);
-        vampire.setColor(CardColor.BLACK);
-        vampire.setSubtypes(List.of(CardSubtype.VAMPIRE));
-        vampire.setPower(2);
-        vampire.setToughness(2);
-        Permanent permanent = new Permanent(vampire);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new VisceraSeer());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
     }
 
     private void addBloodToken(Player player) {
@@ -99,6 +162,6 @@ class GlassCastHeartTest extends BaseCardTest {
         blood.setType(CardType.ARTIFACT);
         blood.setSubtypes(List.of(CardSubtype.BLOOD));
         blood.setToken(true);
-        gd.playerBattlefields.get(player.getId()).add(new Permanent(blood));
+        harness.addToBattlefield(player, blood);
     }
 }

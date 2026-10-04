@@ -1,17 +1,19 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.d.DregscapeZombie;
+import com.github.laxika.magicalvibes.cards.o.ObeliskOfEsper;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GlazeFiend.class, DregscapeZombie.class, ObeliskOfEsper.class})
 class GlazeFiendTest extends BaseCardTest {
 
     @Test
@@ -19,11 +21,7 @@ class GlazeFiendTest extends BaseCardTest {
     void allyArtifactEnterBoosts() {
         Permanent fiend = harness.addToBattlefieldAndReturn(player1, new GlazeFiend());
 
-        harness.setHand(player1, List.of(new GlazeFiend()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GlazeFiend(), "{1}{B}");
         harness.passBothPriorities(); // resolve spell, artifact enters, trigger onto stack
         harness.passBothPriorities(); // resolve trigger
 
@@ -36,11 +34,7 @@ class GlazeFiendTest extends BaseCardTest {
     void boostWearsOffAtCleanup() {
         Permanent fiend = harness.addToBattlefieldAndReturn(player1, new GlazeFiend());
 
-        harness.setHand(player1, List.of(new GlazeFiend()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GlazeFiend(), "{1}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(fiend.getPowerModifier()).isEqualTo(2);
@@ -61,15 +55,56 @@ class GlazeFiendTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player2, List.of(new GlazeFiend()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GlazeFiend(), "{1}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(fiend.getPowerModifier()).isEqualTo(0);
         assertThat(fiend.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Glaze Fiend does not trigger for its own entry")
+    void ownEntryDoesNotTrigger() {
+        harness.castFromHand(player1, new GlazeFiend(), "{1}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        Permanent fiend = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(fiend.getPowerModifier()).isZero();
+        assertThat(fiend.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A nonartifact creature entering does not trigger Glaze Fiend")
+    void nonartifactEntryDoesNotTrigger() {
+        Permanent fiend = harness.addToBattlefieldAndReturn(player1, new GlazeFiend());
+        harness.castFromHand(player1, new DregscapeZombie(), "{1}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(fiend.getPowerModifier()).isZero();
+        assertThat(fiend.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Noncreature artifacts trigger Glaze Fiend and multiple boosts accumulate")
+    void noncreatureArtifactBoostsAccumulate() {
+        Permanent fiend = harness.addToBattlefieldAndReturn(player1, new GlazeFiend());
+
+        harness.castFromHand(player1, new ObeliskOfEsper(), "{3}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(fiend.getPowerModifier()).isZero();
+        assertThat(fiend.getToughnessModifier()).isZero();
+        harness.passBothPriorities();
+        assertThat(fiend.getPowerModifier()).isEqualTo(2);
+        assertThat(fiend.getToughnessModifier()).isEqualTo(2);
+
+        harness.castFromHand(player1, new ObeliskOfEsper(), "{3}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(fiend.getPowerModifier()).isEqualTo(4);
+        assertThat(fiend.getToughnessModifier()).isEqualTo(4);
     }
 }

@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 
 @CardRegistration(set = "SUM", collectorNumber = "286")
+@CardRegistration(set = "LEB", collectorNumber = "282")
 @CardRegistration(set = "3ED", collectorNumber = "286")
 @CardRegistration(set = "VMA", collectorNumber = "313")
 @CardRegistration(set = "ME3", collectorNumber = "210")
 @CardRegistration(set = "ME4", collectorNumber = "251")
 @CardRegistration(set = "2ED", collectorNumber = "282")
+@CardRegistration(set = "LEA", collectorNumber = "281")
 public class Scrubland extends Card {
 
     public Scrubland() {

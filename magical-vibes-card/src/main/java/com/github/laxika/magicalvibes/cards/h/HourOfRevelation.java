@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "HOU", collectorNumber = "15")
 @CardRegistration(set = "AKR", collectorNumber = "23")
+@CardRegistration(set = "ZNC", collectorNumber = "17")
 public class HourOfRevelation extends Card {
 
     public HourOfRevelation() {

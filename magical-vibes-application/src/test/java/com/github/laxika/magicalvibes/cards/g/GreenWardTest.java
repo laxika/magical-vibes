@@ -74,6 +74,38 @@ class GreenWardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Another instance of protection from green removes a green Green Ward")
+    void otherProtectionInstanceRemovesGreenWard() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent greenWard = harness.addToBattlefieldAndReturn(player1, new GreenWard());
+        greenWard.setAttachedTo(bears.getId());
+        Permanent whiteWard = harness.addToBattlefieldAndReturn(player1, new GreenWard());
+        whiteWard.setAttachedTo(bears.getId());
+
+        harness.setHand(player1, List.of(new Lifelace()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, greenWard.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(greenWard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(greenWard.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(whiteWard, bears);
+        assertThat(whiteWard.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.hasProtectionFrom(gd, bears, CardColor.GREEN)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Protection applies only to the enchanted creature")
+    void doesNotProtectOtherCreatures() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new GreenWard());
+        aura.setAttachedTo(enchanted.getId());
+
+        assertThat(gqs.hasProtectionFrom(gd, enchanted, CardColor.GREEN)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, other, CardColor.GREEN)).isFalse();
+    }
+
+    @Test
     @DisplayName("Enchanted creature cannot be targeted by a green spell")
     void cannotBeTargetedByGreenSpell() {
         addCreatureReady(player2, new GrizzlyBears());

@@ -46,6 +46,7 @@ class ArachnusSpinnerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Search your graveyard");
 
         assertWebAttachedTo(bearsId);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -62,6 +63,7 @@ class ArachnusSpinnerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, bearsId);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Search your library");
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
@@ -86,6 +88,7 @@ class ArachnusSpinnerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bearsId);
         harness.handlePermanentChosen(player1, giantSpider.getId());
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Search your graveyard");
 
         assertWebAttachedTo(bearsId);
         assertThat(giantSpider.isTapped()).isTrue();
@@ -136,6 +139,7 @@ class ArachnusSpinnerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, hostId);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Search your graveyard");
 
         assertWebAttachedTo(hostId);
         assertThat(spinner.isTapped()).isTrue();
@@ -153,6 +157,7 @@ class ArachnusSpinnerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, hostId);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Search your graveyard");
 
         assertWebAttachedTo(hostId);
         assertThat(spider.isTapped()).isTrue();
@@ -168,6 +173,7 @@ class ArachnusSpinnerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, hostId);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Search your graveyard and library");
 
         assertThat(spinner.isTapped()).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -186,6 +192,7 @@ class ArachnusSpinnerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, hostId);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Search your graveyard and library");
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(web);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -207,6 +214,33 @@ class ArachnusSpinnerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardWeb);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard() instanceof ArachnusWeb);
+        harness.handleListChoice(player1, "Search your library");
+        harness.handleCardChosen(player1, 0);
+        assertWebAttachedTo(hostId);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardWeb);
+    }
+
+    @Test
+    @DisplayName("Searching both zones allows choosing the graveyard Web while leaving the library Web")
+    void bothZonesOfferGraveyardAndLibraryMatches() {
+        addSpinner();
+        UUID hostId = addOpposingBears();
+        ArachnusWeb graveyardWeb = new ArachnusWeb();
+        ArachnusWeb libraryWeb = new ArachnusWeb();
+        harness.setGraveyard(player1, List.of(graveyardWeb));
+        harness.setLibrary(player1, List.of(libraryWeb));
+
+        harness.activateAbility(player1, 0, null, hostId);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Search your graveyard and library");
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactlyInAnyOrder(graveyardWeb, libraryWeb);
+        harness.handleCardChosen(player1, search.params().cards().indexOf(graveyardWeb));
+        assertWebAttachedTo(hostId);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryWeb);
     }
 
     @Test
@@ -220,6 +254,7 @@ class ArachnusSpinnerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, hostId);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Search your library");
         harness.handleCardChosen(player1, -1);
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(web);
@@ -253,6 +288,7 @@ class ArachnusSpinnerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, hostId);
         gd.playerBattlefields.get(player1.getId()).remove(spinner);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Search your graveyard");
 
         assertWebAttachedTo(hostId);
     }

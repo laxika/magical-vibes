@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "181")
 @CardRegistration(set = "DDR", collectorNumber = "16")
+@CardRegistration(set = "E01", collectorNumber = "69")
 public class OranRiefHydra extends Card {
 
     public OranRiefHydra() {

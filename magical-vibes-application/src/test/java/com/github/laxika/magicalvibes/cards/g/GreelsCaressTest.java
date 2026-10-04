@@ -83,4 +83,44 @@ class GreelsCaressTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Multiple copies stack without reducing toughness or destroying the creature")
+    void multipleCopiesStack() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new RidgelineRager());
+
+        harness.setHand(player1, List.of(new GreelsCaress(), new GreelsCaress()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.forceActivePlayer(player1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Ridgeline Rager");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() instanceof GreelsCaress)
+                .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Flash allows the Aura to resolve during an opponent's combat")
+    void resolvesDuringOpponentsCombat() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RidgelineRager());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new GreelsCaress()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.passPriority(player2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Greel's Caress");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
 }

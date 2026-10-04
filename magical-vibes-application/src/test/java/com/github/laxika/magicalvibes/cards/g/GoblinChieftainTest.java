@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GoblinChieftain.class, GoblinEliteInfantry.class, GrizzlyBears.class, GoblinPiker.class})
 class GoblinChieftainTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -49,10 +51,8 @@ class GoblinChieftainTest extends BaseCardTest {
     @Test
     @DisplayName("Other own Goblin creatures get +1/+1 and haste")
     void buffsOtherOwnGoblins() {
-        harness.addToBattlefield(player1, new GoblinEliteInfantry());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinEliteInfantry());
         harness.addToBattlefield(player1, new GoblinChieftain());
-
-        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
@@ -62,9 +62,7 @@ class GoblinChieftainTest extends BaseCardTest {
     @Test
     @DisplayName("Goblin Chieftain does not buff itself with the static effect")
     void doesNotBuffItself() {
-        harness.addToBattlefield(player1, new GoblinChieftain());
-
-        Permanent chieftain = findPermanent(player1, "Goblin Chieftain");
+        Permanent chieftain = harness.addToBattlefieldAndReturn(player1, new GoblinChieftain());
 
         assertThat(gqs.getEffectivePower(gd, chieftain)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, chieftain)).isEqualTo(2);
@@ -74,10 +72,8 @@ class GoblinChieftainTest extends BaseCardTest {
     @Test
     @DisplayName("Does not buff non-Goblin creatures")
     void doesNotBuffNonGoblins() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GoblinChieftain());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -88,9 +84,7 @@ class GoblinChieftainTest extends BaseCardTest {
     @DisplayName("Does not buff opponent's Goblin creatures")
     void doesNotBuffOpponentGoblins() {
         harness.addToBattlefield(player1, new GoblinChieftain());
-        harness.addToBattlefield(player2, new GoblinEliteInfantry());
-
-        Permanent opponentGoblin = findPermanent(player2, "Goblin Elite Infantry");
+        Permanent opponentGoblin = harness.addToBattlefieldAndReturn(player2, new GoblinEliteInfantry());
 
         assertThat(gqs.getEffectivePower(gd, opponentGoblin)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentGoblin)).isEqualTo(2);
@@ -119,9 +113,7 @@ class GoblinChieftainTest extends BaseCardTest {
     void twoChieftainsStackBonuses() {
         harness.addToBattlefield(player1, new GoblinChieftain());
         harness.addToBattlefield(player1, new GoblinChieftain());
-        harness.addToBattlefield(player1, new GoblinEliteInfantry());
-
-        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinEliteInfantry());
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(4);
@@ -133,9 +125,7 @@ class GoblinChieftainTest extends BaseCardTest {
     @DisplayName("Bonus is removed when Goblin Chieftain leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
         harness.addToBattlefield(player1, new GoblinChieftain());
-        harness.addToBattlefield(player1, new GoblinEliteInfantry());
-
-        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinEliteInfantry());
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isTrue();
@@ -151,11 +141,9 @@ class GoblinChieftainTest extends BaseCardTest {
     @Test
     @DisplayName("Bonus applies when Goblin Chieftain resolves onto battlefield")
     void bonusAppliesOnResolve() {
-        harness.addToBattlefield(player1, new GoblinEliteInfantry());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinEliteInfantry());
         harness.setHand(player1, List.of(new GoblinChieftain()));
         harness.addMana(player1, ManaColor.RED, 3);
-
-        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
 
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
 
@@ -171,9 +159,7 @@ class GoblinChieftainTest extends BaseCardTest {
     @DisplayName("Static bonus survives end-of-turn modifier reset")
     void staticBonusSurvivesEndOfTurnReset() {
         harness.addToBattlefield(player1, new GoblinChieftain());
-        harness.addToBattlefield(player1, new GoblinEliteInfantry());
-
-        Permanent goblin = findPermanent(player1, "Goblin Elite Infantry");
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinEliteInfantry());
 
         goblin.setPowerModifier(goblin.getPowerModifier() + 5);
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(8); // 2 base + 5 spell + 1 static
@@ -183,5 +169,29 @@ class GoblinChieftainTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3); // 2 base + 1 static
         assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newly resolved Goblin receives the bonus and can attack immediately")
+    void newlyResolvedGoblinCanAttackWhileChieftainRemains() {
+        Permanent chieftain = harness.addToBattlefieldAndReturn(player1, new GoblinChieftain());
+        chieftain.setSummoningSick(true);
+        assertThat(harness.getAttackLegalityService().canAttack(gd, chieftain, player1.getId())).isTrue();
+
+        harness.setHand(player1, List.of(new GoblinPiker()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent goblin = findPermanent(player1, "Goblin Piker");
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(2);
+        assertThat(harness.getAttackLegalityService().canAttack(gd, goblin, player1.getId())).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(chieftain);
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
+        assertThat(harness.getAttackLegalityService().canAttack(gd, goblin, player1.getId())).isFalse();
     }
 }

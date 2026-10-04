@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.e.EvilPresence;
+import com.github.laxika.magicalvibes.cards.d.DroveOfElves;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,9 +25,10 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GlamerSpinners.class, GrizzlyBears.class, HolyStrength.class, Pacifism.class,
+        EvilPresence.class, Island.class})
 class GlamerSpinnersTest extends BaseCardTest {
 
-    // ===== ETB trigger =====
 
     @Test
     @DisplayName("ETB trigger goes on the stack targeting the chosen permanent")
@@ -60,7 +63,6 @@ class GlamerSpinnersTest extends BaseCardTest {
                 .isInstanceOf(PermanentChoiceContext.AttachAllAurasToAnotherPermanent.class);
     }
 
-    // ===== Moving Auras =====
 
     @Test
     @DisplayName("Choosing a recipient moves all Auras onto it")
@@ -93,7 +95,6 @@ class GlamerSpinnersTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(2);
     }
 
-    // ===== Same-controller restriction =====
 
     @Test
     @DisplayName("Only permanents controlled by the target's controller are valid recipients")
@@ -112,7 +113,6 @@ class GlamerSpinnersTest extends BaseCardTest {
                 .doesNotContain(otherController.getId());
     }
 
-    // ===== Nothing to move / no legal recipient =====
 
     @Test
     @DisplayName("A target with no Auras produces no choice and moves nothing")
@@ -140,7 +140,6 @@ class GlamerSpinnersTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("stay attached"));
     }
 
-    // ===== Enchant restriction of the moved Aura is honoured =====
 
     @Test
     @DisplayName("A land Aura can only move to another land the same player controls")
@@ -159,7 +158,66 @@ class GlamerSpinnersTest extends BaseCardTest {
                 .doesNotContain(creature.getId(), enchantedLand.getId());
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Auras move regardless of their controller, without changing that controller")
+    void movesAurasControlledByBothPlayers() {
+        Permanent enchanted = addCreature(player2);
+        Permanent friendlyAura = addAura(player1, new HolyStrength(), enchanted);
+        Permanent opposingAura = addAura(player2, new Pacifism(), enchanted);
+        Permanent recipient = addCreature(player2);
+
+        resolveSpinnersEtb(enchanted.getId());
+        harness.handlePermanentChosen(player1, recipient.getId());
+
+        assertThat(friendlyAura.getAttachedTo()).isEqualTo(recipient.getId());
+        assertThat(opposingAura.getAttachedTo()).isEqualTo(recipient.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(friendlyAura);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingAura);
+    }
+
+    @Test
+    @DisplayName("Glamer Spinners itself can receive Auras from another permanent its controller controls")
+    void spinnersCanReceiveAuras() {
+        Permanent enchanted = addCreature(player1);
+        Permanent aura = addAura(player2, new Pacifism(), enchanted);
+
+        resolveSpinnersEtb(enchanted.getId());
+        Permanent spinners = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof GlamerSpinners)
+                .findFirst().orElseThrow();
+        harness.handlePermanentChosen(player1, spinners.getId());
+
+        assertThat(aura.getAttachedTo()).isEqualTo(spinners.getId());
+    }
+
+    @Test
+    @CardUsed({DroveOfElves.class})
+    @DisplayName("An opponent's hexproof creature can receive Auras because the recipient is not targeted")
+    void hexproofRecipientIsLegal() {
+        Permanent enchanted = addCreature(player2);
+        Permanent aura = addAura(player1, new HolyStrength(), enchanted);
+        Permanent recipient = harness.addToBattlefieldAndReturn(player2, new DroveOfElves());
+
+        resolveSpinnersEtb(enchanted.getId());
+        harness.handlePermanentChosen(player1, recipient.getId());
+
+        assertThat(aura.getAttachedTo()).isEqualTo(recipient.getId());
+    }
+
+    @Test
+    @DisplayName("Auras and recipients are determined when the trigger resolves")
+    void usesBattlefieldAtResolution() {
+        Permanent enchanted = addCreature(player2);
+        castSpinners(enchanted.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = addAura(player2, new HolyStrength(), enchanted);
+        Permanent recipient = addCreature(player2);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, recipient.getId());
+
+        assertThat(aura.getAttachedTo()).isEqualTo(recipient.getId());
+    }
 
     private void castSpinners(UUID targetId) {
         harness.setHand(player1, List.of(new GlamerSpinners()));
@@ -174,22 +232,18 @@ class GlamerSpinnersTest extends BaseCardTest {
     }
 
     private Permanent addCreature(Player player) {
-        Permanent perm = new Permanent(new GrizzlyBears());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addLand(Player player, Card landCard) {
-        Permanent perm = new Permanent(landCard);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, landCard);
     }
 
     private Permanent addAura(Player owner, Card auraCard, Permanent target) {
-        Permanent auraPerm = new Permanent(auraCard);
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(owner, auraCard);
         auraPerm.setAttachedTo(target.getId());
-        gd.playerBattlefields.get(owner.getId()).add(auraPerm);
         return auraPerm;
     }
 }

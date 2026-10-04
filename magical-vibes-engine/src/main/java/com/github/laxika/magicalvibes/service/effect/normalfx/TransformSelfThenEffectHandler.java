@@ -27,6 +27,11 @@ public class TransformSelfThenEffectHandler implements NormalEffectHandlerBean {
         if (self == null || gameQueryService.isTransformPrevented(gameData, self)) {
             return;
         }
+        Permanent snapshot = entry.getSourcePermanentSnapshot();
+        if (snapshot != null && snapshot.getId().equals(self.getId())
+                && snapshot.getTransformationSequence() != self.getTransformationSequence()) {
+            return;
+        }
 
         TransformSelfThenEffect transform = (TransformSelfThenEffect) effect;
         boolean transformed = self.isTransformed()

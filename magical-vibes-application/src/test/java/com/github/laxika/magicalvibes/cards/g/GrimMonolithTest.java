@@ -22,7 +22,7 @@ class GrimMonolithTest extends BaseCardTest {
     void tappingProducesThreeColorlessMana() {
         addReadyMonolith(player1, false);
 
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
@@ -33,7 +33,11 @@ class GrimMonolithTest extends BaseCardTest {
     void doesNotUntapDuringUntapStep() {
         Permanent monolith = addReadyMonolith(player1, true);
 
-        advanceToNextTurn(player2);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.UNTAP);
 
         assertThat(monolith.isTapped()).isTrue();
     }
@@ -56,12 +60,12 @@ class GrimMonolithTest extends BaseCardTest {
     void canBeTappedAgainAfterUntapping() {
         Permanent monolith = addReadyMonolith(player1, false);
 
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(monolith.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
@@ -77,6 +81,52 @@ class GrimMonolithTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("A newly entered Grim Monolith produces mana immediately without using the stack")
+    void newlyEnteredMonolithProducesManaImmediately() {
+        Permanent monolith = harness.addToBattlefieldAndReturn(player1, new GrimMonolith());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(monolith.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The untap ability uses the stack and untaps only its source")
+    void untapAbilityResolvesOnStackAndOnlyUntapsSource() {
+        Permanent monolith = addReadyMonolith(player1, true);
+        Permanent otherMonolith = addReadyMonolith(player1, true);
+        Permanent opponentsMonolith = addReadyMonolith(player2, true);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(monolith.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(monolith.isTapped()).isFalse();
+        assertThat(otherMonolith.isTapped()).isTrue();
+        assertThat(opponentsMonolith.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Grim Monolith cannot produce mana again")
+    void cannotTapTappedMonolithForMana() {
+        addReadyMonolith(player1, true);
+
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
     private Permanent addReadyMonolith(Player player, boolean tapped) {
         Permanent monolith = harness.addToBattlefieldAndReturn(player, new GrimMonolith());
         monolith.setSummoningSick(false);
@@ -86,12 +136,4 @@ class GrimMonolithTest extends BaseCardTest {
         return monolith;
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passUntil(TurnStep.UNTAP);
-    }
 }

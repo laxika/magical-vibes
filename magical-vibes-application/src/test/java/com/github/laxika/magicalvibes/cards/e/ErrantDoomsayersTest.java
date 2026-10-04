@@ -31,7 +31,7 @@ class ErrantDoomsayersTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent doomsayers = addCreatureReady(player1, new ErrantDoomsayers());
-        doomsayers.setTapped(true);
+        doomsayers.tap();
         Permanent target = addCreatureReady(player2, new BenalishCavalry());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -43,7 +43,7 @@ class ErrantDoomsayersTest extends BaseCardTest {
     void canTargetAlreadyTappedCreature() {
         addCreatureReady(player1, new ErrantDoomsayers());
         Permanent target = addCreatureReady(player2, new BenalishCavalry());
-        target.setTapped(true);
+        target.tap();
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();

@@ -73,7 +73,7 @@ class EarthServantTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(4);
 
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
-        mountain.setTapped(true);
+        mountain.tap();
         assertThat(gqs.getEffectiveToughness(gd, servant)).isEqualTo(5);
 
         gd.playerBattlefields.get(player1.getId()).remove(mountain);

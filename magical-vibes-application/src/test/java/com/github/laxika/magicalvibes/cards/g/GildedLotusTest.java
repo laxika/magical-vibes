@@ -71,4 +71,29 @@ class GildedLotusTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
     }
+
+    @Test
+    @DisplayName("After untapping, Gilded Lotus can produce a different color")
+    void canChooseDifferentColorAfterUntapping() {
+        Permanent lotus = harness.addToBattlefieldAndReturn(player1, new GildedLotus());
+        var manaPool = gd.playerManaPools.get(player1.getId());
+        int blueBefore = manaPool.get(ManaColor.BLUE);
+        int redBefore = manaPool.get(ManaColor.RED);
+        int totalBefore = manaPool.getTotalAllMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.BLUE.name());
+        harness.performUntapStep(player1);
+        assertThat(lotus.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
+
+        assertThat(manaPool.get(ManaColor.BLUE)).isEqualTo(blueBefore + 3);
+        assertThat(manaPool.get(ManaColor.RED)).isEqualTo(redBefore + 3);
+        assertThat(manaPool.getTotalAllMana()).isEqualTo(totalBefore + 6);
+        assertThat(lotus.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }

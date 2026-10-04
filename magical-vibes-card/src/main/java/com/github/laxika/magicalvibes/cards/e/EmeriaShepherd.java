@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import java.util.List;
 
 @CardRegistration(set = "BFZ", collectorNumber = "22")
+@CardRegistration(set = "ZNC", collectorNumber = "16")
 public class EmeriaShepherd extends Card {
 
     public EmeriaShepherd() {

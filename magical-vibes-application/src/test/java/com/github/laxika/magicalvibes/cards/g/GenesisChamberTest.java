@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
+import com.github.laxika.magicalvibes.cards.e.EchoingTruth;
 import com.github.laxika.magicalvibes.cards.m.MyrMatrix;
 import com.github.laxika.magicalvibes.cards.m.MyrMoonvessel;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -15,9 +16,12 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static com.github.laxika.magicalvibes.model.ManaColor.COLORLESS;
+import static com.github.laxika.magicalvibes.model.ManaColor.BLUE;
+import static com.github.laxika.magicalvibes.model.ManaColor.RED;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GenesisChamber.class, MyrMoonvessel.class, DarksteelCitadel.class, MyrMatrix.class})
+@CardUsed({GenesisChamber.class, MyrMoonvessel.class, DarksteelCitadel.class, MyrMatrix.class,
+        EchoingTruth.class, GrabTheReins.class})
 class GenesisChamberTest extends BaseCardTest {
 
     @Test
@@ -109,6 +113,61 @@ class GenesisChamberTest extends BaseCardTest {
         chamber.tap();
         harness.passBothPriorities();
 
+        assertThat(myrTokens(player1)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The creature's controller at resolution creates the token")
+    void changedCreatureControllerCreatesToken() {
+        addChamber(player1);
+        harness.setHand(player1, List.of(new MyrMoonvessel()));
+        harness.addMana(player1, COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent creature = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof MyrMoonvessel).findFirst().orElseThrow();
+        harness.setHand(player2, List.of(new GrabTheReins()));
+        harness.addMana(player2, COLORLESS, 3);
+        harness.addMana(player2, RED, 1);
+        harness.castModalInstantWithModes(player2, 0, 1, 2, new int[]{0}, List.of(creature.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        harness.passBothPriorities();
+
+        assertThat(myrTokens(player1)).isEmpty();
+        assertThat(myrTokens(player2)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An untapped Chamber leaving before resolution still allows token creation")
+    void removedUntappedChamberStillCreatesToken() {
+        Permanent chamber = addChamber(player1);
+        harness.setHand(player1, List.of(new MyrMoonvessel(), new EchoingTruth()));
+        harness.addMana(player1, COLORLESS, 2);
+        harness.addMana(player1, BLUE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.castAndResolveInstant(player1, 0, chamber.getId());
+        harness.assertNotOnBattlefield(player1, "Genesis Chamber");
+        harness.passBothPriorities();
+
+        assertThat(myrTokens(player1)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Untapping a Chamber after a creature enters does not create a missed trigger")
+    void untappingAfterEntryDoesNotCreateTrigger() {
+        Permanent chamber = addChamber(player1);
+        chamber.tap();
+        harness.setHand(player1, List.of(new MyrMoonvessel()));
+        harness.addMana(player1, COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        chamber.untap();
+
+        assertThat(gd.stack).isEmpty();
         assertThat(myrTokens(player1)).isEmpty();
     }
 

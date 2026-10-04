@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.p.PlatedSpider;
 import com.github.laxika.magicalvibes.cards.r.RecklessAbandon;
+import com.github.laxika.magicalvibes.cards.s.Stifle;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoblinMarshal.class, PlatedSpider.class, RecklessAbandon.class})
+@CardUsed({GoblinMarshal.class, PlatedSpider.class, RecklessAbandon.class, Stifle.class})
 class GoblinMarshalTest extends BaseCardTest {
 
     @Test
@@ -88,15 +89,53 @@ class GoblinMarshalTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Goblin Marshal");
     }
 
+    @Test
+    @DisplayName("Countering the enters trigger does not prevent echo")
+    void counteringEntersTriggerDoesNotPreventEcho() {
+        harness.setHand(player2, List.of(new Stifle()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castFromHand(player1, new GoblinMarshal(), "{4}{R}{R}");
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, gd.stack.getLast().getCard().getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertGoblinTokens(player1, 0);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Goblin Marshal");
+        assertGoblinTokens(player1, 2);
+    }
+
+    @Test
+    @DisplayName("Sacrificing to echo creates two more Goblins after the death trigger resolves")
+    void echoSacrificeCreatesAdditionalGoblinTokens() {
+        castAndResolveGoblinMarshal();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Goblin Marshal");
+        assertGoblinTokens(player1, 4);
+        assertGoblinTokens(player2, 0);
+    }
+
     private void castAndResolveGoblinMarshal() {
         harness.castFromHand(player1, new GoblinMarshal(), "{4}{R}{R}");
         resolveAllTriggers();
     }
 
     private void assertGoblinTokens(com.github.laxika.magicalvibes.model.Player player, int amount) {
-        List<Permanent> tokens = gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Goblin"))
-                .toList();
+        List<Permanent> tokens = findPermanents(player, "Goblin");
 
         assertThat(tokens).hasSize(amount);
         for (Permanent token : tokens) {

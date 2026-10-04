@@ -55,7 +55,7 @@ class EtherealWhiskergillTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Island still permits attacking")
     void canAttackWhenDefendersIslandIsTapped() {
-        harness.addToBattlefieldAndReturn(player2, new Island()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player2, new Island()).tap();
         addCreatureReady(player1, new EtherealWhiskergill());
 
         declareAttackers(List.of(0));

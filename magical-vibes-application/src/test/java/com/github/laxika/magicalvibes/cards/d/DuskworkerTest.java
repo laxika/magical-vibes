@@ -92,7 +92,7 @@ class DuskworkerTest extends BaseCardTest {
     void repeatedActivationsBoostOnlyTappedSource() {
         Permanent duskworker = addCreatureReady(player1, new Duskworker());
         Permanent other = addCreatureReady(player1, new Duskworker());
-        duskworker.setTapped(true);
+        duskworker.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 
         harness.activateAbility(player1, 0, null, null);

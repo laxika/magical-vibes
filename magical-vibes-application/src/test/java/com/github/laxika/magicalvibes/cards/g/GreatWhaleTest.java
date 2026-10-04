@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -77,11 +76,42 @@ class GreatWhaleTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
     }
 
+    @Test
+    @DisplayName("Great Whale can untap fewer than seven lands while leaving the rest tapped")
+    void canChooseFewerThanSevenLands() {
+        List<Permanent> lands = addTappedLands(player1, 4);
+
+        castGreatWhale();
+        harness.handleMultiplePermanentsChosen(player1, List.of(lands.getFirst().getId()));
+
+        assertThat(lands.getFirst().isTapped()).isFalse();
+        assertThat(lands.subList(1, lands.size())).allMatch(Permanent::isTapped);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Great Whale resolves normally with no lands on the battlefield")
+    void resolvesWithNoLands() {
+        castGreatWhale();
+
+        harness.assertOnBattlefield(player1, "Great Whale");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Great Whale resolves normally when all lands are already untapped")
+    void resolvesWithOnlyUntappedLands() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        castGreatWhale();
+
+        assertThat(land.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Great Whale");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+    }
+
     private void castGreatWhale() {
-        harness.setHand(player1, List.of(new GreatWhale()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GreatWhale(), "{5}{U}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

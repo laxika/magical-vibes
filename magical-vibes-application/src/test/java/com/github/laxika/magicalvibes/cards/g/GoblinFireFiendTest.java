@@ -97,6 +97,65 @@ class GoblinFireFiendTest extends BaseCardTest {
         assertThat(fiend.getPowerModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Goblin Fire Fiend can attack the turn it enters")
+    void hasteAllowsImmediateAttack() {
+        harness.setHand(player1, List.of(new GoblinFireFiend()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent fiend = findPermanent(player1, "Goblin Fire Fiend");
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(fiend.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations accumulate on only their source")
+    void repeatedActivationsBoostOnlyTheirSource() {
+        Permanent fiend = addCreatureReady(player1, new GoblinFireFiend());
+        Permanent other = addCreatureReady(player1, new GoblinFireFiend());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(fiend.getPowerModifier()).isEqualTo(2);
+        assertThat(fiend.getToughnessModifier()).isZero();
+        assertThat(other.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A blocker cannot ignore the Fiend to block an ordinary attacker")
+    void cannotDivertOnlyBlockerToOtherAttacker() {
+        addAttackingFiend();
+        Permanent other = addCreatureReady(player1, new GrayscaledGharial());
+        other.setAttacking(true);
+        addCreatureReady(player2, new GrayscaledGharial());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must be blocked if able");
+    }
+
+    @Test
+    @DisplayName("One available blocker may block either of two Fiends")
+    void oneBlockerMayChooseBetweenTwoFiends() {
+        addAttackingFiend();
+        addAttackingFiend();
+        Permanent blocker = addCreatureReady(player2, new GrayscaledGharial());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private Permanent addAttackingFiend() {
         Permanent fiend = addCreatureReady(player1, new GoblinFireFiend());
         fiend.setAttacking(true);

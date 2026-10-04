@@ -125,7 +125,7 @@ class EllieVengefulHunterTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent ellie = harness.addToBattlefieldAndReturn(player1, new EllieVengefulHunter());
         ellie.setSummoningSick(true);
-        ellie.setTapped(true);
+        ellie.tap();
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

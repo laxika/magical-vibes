@@ -49,7 +49,9 @@ public class AwardManaUntilEndOfCombatEffectHandler implements NormalEffectHandl
 
         int amount = amountEvaluationService.evaluate(gameData, manaEffect.amount(),
                 AmountContext.forStackEntry(entry, source));
-        triggerCollectionService.checkBendingTriggers(gameData, entry.getControllerId(), BendingType.FIREBEND);
+        if (manaEffect.firebending()) {
+            triggerCollectionService.checkBendingTriggers(gameData, entry.getControllerId(), BendingType.FIREBEND);
+        }
         if (amount <= 0) {
             return;
         }

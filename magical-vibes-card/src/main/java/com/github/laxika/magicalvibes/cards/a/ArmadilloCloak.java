@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "DDE", collectorNumber = "58")
 @CardRegistration(set = "EMA", collectorNumber = "195")
 @CardRegistration(set = "VMA", collectorNumber = "242")
+@CardRegistration(set = "ARC", collectorNumber = "78")
 public class ArmadilloCloak extends Card {
 
     public ArmadilloCloak() {

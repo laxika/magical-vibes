@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "244")
 @CardRegistration(set = "KHC", collectorNumber = "109")
+@CardRegistration(set = "ZNC", collectorNumber = "125")
 public class CrypticCaves extends Card {
 
     public CrypticCaves() {

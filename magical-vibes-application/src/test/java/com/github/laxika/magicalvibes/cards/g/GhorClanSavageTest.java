@@ -40,6 +40,39 @@ class GhorClanSavageTest extends BaseCardTest {
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Bloodthirst checks damage on entry, even when none had been dealt as the spell was cast")
+    void bloodthirstChecksDamageAtResolution() {
+        harness.castFromHand(player1, new GhorClanSavage(), "{3}{G}{G}");
+        gd.recordDamageToPlayer(player2.getId(), 1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Ghor-Clan Savage")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bloodthirst adds exactly three counters regardless of the amount of damage")
+    void bloodthirstDoesNotScaleWithDamage() {
+        gd.recordDamageToPlayer(player2.getId(), 4);
+        gd.recordDamageToPlayer(player2.getId(), 2);
+        castSavage();
+
+        assertThat(findPermanent(player1, "Ghor-Clan Savage")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An opponent's reduced life total alone does not enable bloodthirst")
+    void lowerLifeTotalDoesNotEnableBloodthirst() {
+        harness.setLife(player2, 17);
+        castSavage();
+
+        assertThat(findPermanent(player1, "Ghor-Clan Savage")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private void castSavage() {
         harness.castFromHand(player1, new GhorClanSavage(), "{3}{G}{G}");
         resolveAllTriggers();

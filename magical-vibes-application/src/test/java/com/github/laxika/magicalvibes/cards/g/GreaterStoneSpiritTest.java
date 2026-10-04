@@ -129,4 +129,67 @@ class GreaterStoneSpiritTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+    @Test
+    @DisplayName("Can target itself while summoning sick and repeatedly activate the granted ability")
+    void canTargetItselfAndRepeatedlyPump() {
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new GreaterStoneSpirit());
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.activateAbility(player1, 0, 0, null, spirit.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(6);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(4);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves and its grant persists after the source leaves")
+    void abilityWorksAfterSourceLeaves() {
+        Permanent spirit = addCreatureReady(player1, new GreaterStoneSpirit());
+        Permanent berserker = addCreatureReady(player1, new VulshokBerserker());
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, 0, null, berserker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(spirit);
+        gd.playerGraveyards.get(player1.getId()).add(spirit.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, berserker)).isEqualTo(4);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, berserker)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Multiple activations targeting the same creature stack their toughness boosts")
+    void toughnessBoostsStack() {
+        addCreatureReady(player1, new GreaterStoneSpirit());
+        Permanent berserker = addCreatureReady(player1, new VulshokBerserker());
+        harness.addMana(player1, ManaColor.RED, 7);
+
+        harness.activateAbility(player1, 0, 0, null, berserker.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, berserker.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, berserker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, berserker)).isEqualTo(6);
+    }
 }

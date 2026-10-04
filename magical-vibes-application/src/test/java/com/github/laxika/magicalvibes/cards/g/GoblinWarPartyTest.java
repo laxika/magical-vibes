@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MotherBear;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinWarParty.class, GrizzlyBears.class})
+@CardUsed({GoblinWarParty.class, MotherBear.class})
 class GoblinWarPartyTest extends BaseCardTest {
 
     @Test
@@ -34,8 +34,8 @@ class GoblinWarPartyTest extends BaseCardTest {
     @Test
     @DisplayName("Boost mode gives your creatures +1/+1 and haste until end of turn")
     void boostsOwnCreaturesAndGrantsHaste() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new MotherBear());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new MotherBear());
 
         cast(new int[]{1}, false);
 
@@ -50,7 +50,7 @@ class GoblinWarPartyTest extends BaseCardTest {
     @Test
     @DisplayName("Entwine resolves both modes and pays {2}{R}")
     void entwinesBothModes() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new MotherBear());
 
         cast(new int[]{0, 1}, true);
 
@@ -76,7 +76,7 @@ class GoblinWarPartyTest extends BaseCardTest {
     @Test
     @DisplayName("The boost mode wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new MotherBear());
 
         cast(new int[]{1}, false);
         harness.forceStep(TurnStep.END_STEP);
@@ -86,6 +86,37 @@ class GoblinWarPartyTest extends BaseCardTest {
         assertThat(ownCreature.getEffectivePower()).isEqualTo(2);
         assertThat(ownCreature.getEffectiveToughness()).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Entwine creates tokens before boosting them, regardless of selection order")
+    void entwineBoostsItsNewTokensInPrintedOrder() {
+        cast(new int[]{1, 0}, true);
+
+        List<Permanent> tokens = findPermanents(player1, "Goblin");
+        assertThat(tokens).hasSize(3);
+        assertThat(tokens).allSatisfy(token -> {
+            assertThat(token.getEffectivePower()).isEqualTo(2);
+            assertThat(token.getEffectiveToughness()).isEqualTo(2);
+            assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        });
+        assertThat(findPermanents(player2, "Goblin")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the boost resolves do not receive it")
+    void laterCreaturesDoNotReceiveBoostOrHaste() {
+        cast(new int[]{1}, false);
+        assertThat(findPermanents(player1, "Goblin")).isEmpty();
+        cast(new int[]{0}, false);
+
+        List<Permanent> tokens = findPermanents(player1, "Goblin");
+        assertThat(tokens).hasSize(3);
+        assertThat(tokens).allSatisfy(token -> {
+            assertThat(token.getEffectivePower()).isEqualTo(1);
+            assertThat(token.getEffectiveToughness()).isEqualTo(1);
+            assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
+        });
     }
 
     private void cast(int[] modes, boolean entwined) {

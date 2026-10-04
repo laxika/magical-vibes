@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "15")
+@CardRegistration(set = "E01", collectorNumber = "13")
 public class GraspOfTheHieromancer extends Card {
 
     public GraspOfTheHieromancer() {

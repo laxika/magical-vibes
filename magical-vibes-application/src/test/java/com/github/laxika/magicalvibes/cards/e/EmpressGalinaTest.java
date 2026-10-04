@@ -83,7 +83,7 @@ class EmpressGalinaTest extends BaseCardTest {
     void canTargetOwnTappedLegendaryPermanent() {
         Permanent empress = addEmpressGalina();
         Permanent target = addCreatureReady(player1, new CaptainSisay());
-        target.setTapped(true);
+        target.tap();
 
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.activateAbility(player1, battlefieldIndex(player1, empress), null, target.getId());
@@ -136,7 +136,7 @@ class EmpressGalinaTest extends BaseCardTest {
     void controlDoesNotGrantUntapOrHasteAndSurvivesSourceUntapping() {
         Permanent empress = addEmpressGalina();
         Permanent target = addCreatureReady(player2, new CaptainSisay());
-        target.setTapped(true);
+        target.tap();
 
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.activateAbility(player1, battlefieldIndex(player1, empress), null, target.getId());

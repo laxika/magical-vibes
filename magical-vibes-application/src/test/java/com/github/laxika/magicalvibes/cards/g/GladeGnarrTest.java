@@ -63,9 +63,7 @@ class GladeGnarrTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gnarr.getPowerModifier()).isEqualTo(2);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.UPKEEP);
 
         assertThat(gnarr.getPowerModifier()).isZero();
         assertThat(gnarr.getToughnessModifier()).isZero();
@@ -73,6 +71,58 @@ class GladeGnarrTest extends BaseCardTest {
 
     private Permanent addGnarr() {
         return harness.addToBattlefieldAndReturn(player1, new GladeGnarr());
+    }
+
+    @Test
+    @DisplayName("Casting a blue spell queues the boost before the spell resolves")
+    void boostResolvesBeforeBlueSpell() {
+        Permanent gnarr = addGnarr();
+
+        castBlueSpell(player1);
+
+        assertThat(gnarr.getPowerModifier()).isZero();
+        assertThat(gnarr.getToughnessModifier()).isZero();
+        harness.assertNotOnBattlefield(player1, "Gaea's Skyfolk");
+
+        harness.passBothPriorities();
+
+        assertThat(gnarr.getPowerModifier()).isEqualTo(2);
+        assertThat(gnarr.getToughnessModifier()).isEqualTo(2);
+        harness.assertNotOnBattlefield(player1, "Gaea's Skyfolk");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Gaea's Skyfolk");
+        assertThat(gnarr.getPowerModifier()).isEqualTo(2);
+        assertThat(gnarr.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A blue creature entering without being cast does not trigger the boost")
+    void enteringBlueCreatureDoesNotTrigger() {
+        Permanent gnarr = addGnarr();
+
+        harness.addToBattlefield(player2, new GaeasSkyfolk());
+        harness.passBothPriorities();
+
+        assertThat(gnarr.getPowerModifier()).isZero();
+        assertThat(gnarr.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Glade Gnarr boosts itself regardless of which player controls it")
+    void bothPlayersGnarrsTriggerIndependently() {
+        Permanent first = addGnarr();
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GladeGnarr());
+
+        castBlueSpell(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getPowerModifier()).isEqualTo(2);
+        assertThat(first.getToughnessModifier()).isEqualTo(2);
+        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(second.getToughnessModifier()).isEqualTo(2);
     }
 
     private void castBlueSpell(Player caster) {

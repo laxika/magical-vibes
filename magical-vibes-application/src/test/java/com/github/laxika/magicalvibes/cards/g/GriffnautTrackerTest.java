@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -72,11 +71,117 @@ class GriffnautTrackerTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(chosen);
     }
 
+    @Test
+    @DisplayName("Allows choosing zero cards even when graveyards contain cards")
+    void canChooseZeroCards() {
+        Card untouched = new GriffnautTracker();
+        harness.setGraveyard(player2, List.of(untouched));
+
+        castGriffnautTracker();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(untouched);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Griffnaut Tracker");
+    }
+
+    @Test
+    @DisplayName("Resolves without a target choice when both graveyards are empty")
+    void resolvesWithEmptyGraveyards() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        castGriffnautTracker();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Griffnaut Tracker");
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than two cards")
+    void rejectsThreeTargets() {
+        Card first = new GriffnautTracker();
+        Card second = new GriffnautTracker();
+        Card third = new GriffnautTracker();
+        harness.setGraveyard(player2, List.of(first, second, third));
+
+        castGriffnautTracker();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(third);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactlyInAnyOrder(first, second);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same graveyard card twice")
+    void rejectsDuplicateTargets() {
+        Card first = new GriffnautTracker();
+        Card second = new GriffnautTracker();
+        harness.setGraveyard(player2, List.of(first, second));
+
+        castGriffnautTracker();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), first.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(second);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(first);
+    }
+
+    @Test
+    @DisplayName("Exiles the remaining legal target when one target leaves the graveyard")
+    void resolvesWithOneRemainingTarget() {
+        Card departed = new GriffnautTracker();
+        Card remaining = new GriffnautTracker();
+        harness.setGraveyard(player2, List.of(departed, remaining));
+
+        castGriffnautTracker();
+        harness.handleMultipleCardsChosen(player1, List.of(departed.getId(), remaining.getId()));
+        harness.setGraveyard(player2, List.of(remaining));
+        harness.setHand(player2, List.of(departed));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(remaining);
+        harness.assertInHand(player2, "Griffnaut Tracker");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not exile departed targets or choose replacements when all targets leave")
+    void doesNotRetargetWhenAllTargetsLeave() {
+        Card departed = new GriffnautTracker();
+        Card untouched = new GriffnautTracker();
+        harness.setGraveyard(player2, List.of(departed, untouched));
+
+        castGriffnautTracker();
+        harness.handleMultipleCardsChosen(player1, List.of(departed.getId()));
+        harness.setGraveyard(player2, List.of(untouched));
+        harness.setHand(player2, List.of(departed));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(untouched);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertInHand(player2, "Griffnaut Tracker");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castGriffnautTracker() {
-        harness.setHand(player1, List.of(new GriffnautTracker()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GriffnautTracker(), "{3}{W}");
         harness.passBothPriorities();
     }
 }

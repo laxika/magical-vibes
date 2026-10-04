@@ -70,7 +70,7 @@ class FirehoofCavalryTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new FirehoofCavalry());
         cavalry.setSummoningSick(true);
-        cavalry.setTapped(true);
+        cavalry.tap();
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.addMana(player1, ManaColor.RED, 1);
 

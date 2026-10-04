@@ -27,6 +27,7 @@ import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "42")
 @CardRegistration(set = "NCC", collectorNumber = "209")
+@CardRegistration(set = "ZNC", collectorNumber = "19")
 public class PlanarOutburst extends Card {
 
     @Override

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.f.FuneralCharm;
 import com.github.laxika.magicalvibes.cards.w.Warthog;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoblinSwineRider.class, Warthog.class})
+@CardUsed({GoblinSwineRider.class, Warthog.class, FuneralCharm.class})
 class GoblinSwineRiderTest extends BaseCardTest {
 
     @Test
@@ -46,12 +48,12 @@ class GoblinSwineRiderTest extends BaseCardTest {
     @Test
     @DisplayName("Becoming blocked kills 1- and 2-toughness attackers and blockers including itself")
     void becomingBlockedKillsFragileCombatCreatures() {
-        Permanent swine = addAttackingSwine(player1);
+        addAttackingSwine(player1);
 
         Permanent otherAttacker = addCreatureReady(player1, new Warthog());
         otherAttacker.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new Warthog());
+        addCreatureReady(player2, new Warthog());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -109,7 +111,7 @@ class GoblinSwineRiderTest extends BaseCardTest {
     void becomingBlockedPushesTrigger() {
         Permanent swine = addAttackingSwine(player1);
 
-        Permanent blocker = addCreatureReady(player2, new Warthog());
+        addCreatureReady(player2, new Warthog());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -117,6 +119,33 @@ class GoblinSwineRiderTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(swine.getId());
+    }
+
+    @Test
+    @DisplayName("The blocked trigger still damages combat creatures after its source dies")
+    void triggerResolvesAfterSourceDies() {
+        Permanent swine = addAttackingSwine(player1);
+        Permanent otherAttacker = addCreatureReady(player1, new Warthog());
+        otherAttacker.setAttacking(true);
+        addCreatureReady(player2, new Warthog());
+        Permanent idle = addCreatureReady(player2, new Warthog());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.setHand(player1, List.of(new FuneralCharm()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castInstant(player1, 0, 1, swine.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Goblin Swine-Rider");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Warthog");
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(idle);
+        assertThat(idle.getMarkedDamage()).isZero();
     }
 
     private Permanent addAttackingSwine(Player player) {

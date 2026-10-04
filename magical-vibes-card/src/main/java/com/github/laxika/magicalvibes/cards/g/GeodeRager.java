@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "SCD", collectorNumber = "144")
+@CardRegistration(set = "ZNC", collectorNumber = "6")
 public class GeodeRager extends Card {
 
     public GeodeRager() {

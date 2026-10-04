@@ -91,8 +91,9 @@ class AstelliReclaimerTest extends BaseCardTest {
     void copiedSpellCannotTargetCardsUsingManaSpentOnTheOriginal() {
         Card artifact = new AllFatesScroll();
         AstelliReclaimer reclaimer = new AstelliReclaimer();
+        Card doubleMajor = new DoubleMajor();
         harness.setGraveyard(player1, List.of(artifact));
-        harness.setHand(player1, List.of(reclaimer, new DoubleMajor()));
+        harness.setHand(player1, List.of(reclaimer, doubleMajor));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -104,7 +105,7 @@ class AstelliReclaimerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact, doubleMajor);
         harness.assertNotOnBattlefield(player1, "All-Fates Scroll");
 
         harness.passBothPriorities();

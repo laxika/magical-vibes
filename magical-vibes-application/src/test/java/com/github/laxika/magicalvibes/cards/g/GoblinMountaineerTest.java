@@ -38,6 +38,24 @@ class GoblinMountaineerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Goblin Mountaineer cannot be blocked even when the defending Mountain is tapped")
+    void cannotBeBlockedWhenDefendingMountainIsTapped() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        mountain.setTapped(true);
+        Permanent blocker = addCreatureReady(player2, new HillGiant());
+        Permanent attacker = addCreatureReady(player1, new GoblinMountaineer());
+
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
     @DisplayName("Goblin Mountaineer can be blocked when defending player does not control a Mountain")
     void canBeBlockedWhenDefenderDoesNotControlMountain() {
         Permanent blockerPerm = addCreatureReady(player2, new HillGiant());

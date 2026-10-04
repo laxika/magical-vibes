@@ -125,7 +125,7 @@ class ElvishClancallerTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new ElvishClancaller());
         source.setSummoningSick(false);
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.GREEN, 6);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

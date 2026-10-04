@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GoldmireBridge.class, StoneRain.class})
 class GoldmireBridgeTest extends BaseCardTest {
@@ -28,9 +29,18 @@ class GoldmireBridgeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Enters tapped when put onto the battlefield without being played")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent bridge = harness.enterBattlefieldAndReturn(player1, new GoldmireBridge());
+
+        assertThat(bridge.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Mana ability adds white or black mana")
     void manaAbilityAddsWhiteOrBlackMana() {
-        Permanent bridge = addReadyBridge();
+        Permanent bridge = harness.addToBattlefieldAndReturn(player1, new GoldmireBridge());
+        bridge.setSummoningSick(false);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, ManaColor.WHITE.name());
@@ -59,10 +69,38 @@ class GoldmireBridgeTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Goldmire Bridge");
     }
 
-    private Permanent addReadyBridge() {
-        Permanent bridge = new Permanent(new GoldmireBridge());
-        bridge.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bridge);
-        return bridge;
+    @Test
+    @DisplayName("Cannot activate the mana ability while tapped after entering")
+    void cannotActivateWhileTapped() {
+        harness.setHand(player1, List.of(new GoldmireBridge()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("A newly controlled noncreature land produces mana immediately when untapped")
+    void newlyControlledLandProducesManaWithoutUsingStack() {
+        harness.setHand(player1, List.of(new GoldmireBridge()));
+        harness.playLand(player1, 0);
+        Permanent bridge = findPermanent(player1, "Goldmire Bridge");
+        bridge.untap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.BLACK.name());
+
+        assertThat(bridge.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 }

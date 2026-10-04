@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLand
 @CardRegistration(set = "TLE", collectorNumber = "45")
 @CardRegistration(set = "BLC", collectorNumber = "122")
 @CardRegistration(set = "C16", collectorNumber = "163")
+@CardRegistration(set = "ZNC", collectorNumber = "80")
 public class RitesOfFlourishing extends Card {
 
     public RitesOfFlourishing() {

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GontisMachinations.class, Shock.class})
 class GontisMachinationsTest extends BaseCardTest {
 
     private void advanceTurn() {
@@ -31,14 +33,12 @@ class GontisMachinationsTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock(), new Shock()));
         harness.addMana(player2, ManaColor.RED, 2);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
     }
@@ -53,8 +53,7 @@ class GontisMachinationsTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Shock(), new Shock()));
         harness.addMana(player2, ManaColor.RED, 2);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
 
         advanceTurn();
@@ -62,8 +61,7 @@ class GontisMachinationsTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
@@ -100,5 +98,92 @@ class GontisMachinationsTest extends BaseCardTest {
                 .hasMessageContaining("two energy counters");
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(machinations);
+    }
+
+    @Test
+    @DisplayName("Does not trigger if its controller already lost life before it entered")
+    void doesNotTriggerAfterEarlierLifeLossBeforeEntry() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.addToBattlefield(player1, new GontisMachinations());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        assertThat(gd.playerEnergyCounters.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("A later copy cannot trigger on a subsequent life loss in the same turn")
+    void laterCopyDoesNotTriggerOnSecondLifeLoss() {
+        harness.addToBattlefield(player1, new GontisMachinations());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new GontisMachinations());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each copy present for the first life loss gives one energy")
+    void bothCopiesTriggerOnFirstLifeLoss() {
+        harness.addToBattlefield(player1, new GontisMachinations());
+        harness.addToBattlefield(player1, new GontisMachinations());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Non-damage life loss triggers and activation costs are paid before resolution")
+    void triggersOnNonDamageLifeLossAndPaysCostsImmediately() {
+        harness.addToBattlefield(player1, new GontisMachinations());
+        harness.addToBattlefield(player2, new GontisMachinations());
+        gd.playerEnergyCounters.put(player2.getId(), 2);
+        harness.forceActivePlayer(player2);
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(gd.playerEnergyCounters.get(player2.getId())).isZero();
+        harness.assertNotOnBattlefield(player2, "Gonti's Machinations");
+        harness.assertInGraveyard(player2, "Gonti's Machinations");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 23);
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Opponent life loss does not award energy")
+    void doesNotTriggerForOpponentLifeLoss() {
+        harness.addToBattlefield(player1, new GontisMachinations());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerEnergyCounters.getOrDefault(player1.getId(), 0)).isZero();
     }
 }

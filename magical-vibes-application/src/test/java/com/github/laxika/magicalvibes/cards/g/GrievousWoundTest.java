@@ -59,8 +59,7 @@ class GrievousWoundTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(9);
@@ -76,10 +75,7 @@ class GrievousWoundTest extends BaseCardTest {
         firstAttacker.setAttacking(true);
         secondAttacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
 
@@ -88,10 +84,96 @@ class GrievousWoundTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(8);
     }
 
+    @Test
+    @DisplayName("Half of an odd life total is rounded up after damage")
+    void oddLifeTotalRoundsLifeLossUp() {
+        placeGrievousWound(player1, player2);
+        harness.setLife(player2, 11);
+
+        castShock(player2);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(9);
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Damage to the other player does not trigger Grievous Wound")
+    void damageToOtherPlayerDoesNotTrigger() {
+        placeGrievousWound(player1, player2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castShock(player1);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Wound uses the life total when its trigger resolves")
+    void multipleWoundsUseCurrentLifeTotal() {
+        placeGrievousWound(player1, player2);
+        placeGrievousWound(player1, player2);
+        harness.setLife(player2, 20);
+
+        castShock(player2);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(9);
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A trigger still resolves after its Aura leaves the battlefield")
+    void triggerSurvivesAuraLeavingBattlefield() {
+        Permanent aura = placeGrievousWound(player1, player2);
+        harness.setLife(player2, 20);
+
+        castShock(player2);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(9);
+        castAngelOfMercy(player2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
+    }
+
+    @Test
+    @DisplayName("The Aura can enchant its controller and triggers for their damage")
+    void canEnchantController() {
+        harness.setHand(player1, List.of(new GrievousWound()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.setLife(player1, 20);
+
+        castShock(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(9);
+        castAngelOfMercy(player1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(9);
+    }
+
+    private void castShock(Player target) {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+    }
+
     private Permanent placeGrievousWound(Player controller, Player enchantedPlayer) {
-        Permanent aura = new Permanent(new GrievousWound());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new GrievousWound());
         aura.setAttachedTo(enchantedPlayer.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;
     }
 
@@ -99,9 +181,7 @@ class GrievousWoundTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player, List.of(new AngelOfMercy()));
-        harness.addMana(player, ManaColor.WHITE, 5);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new AngelOfMercy(), "{4}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }

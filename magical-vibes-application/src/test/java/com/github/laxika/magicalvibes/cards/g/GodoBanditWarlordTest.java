@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.k.KamiOfAncientLaw;
 import com.github.laxika.magicalvibes.cards.k.KondasHatamoto;
 import com.github.laxika.magicalvibes.cards.k.KusariGama;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GodoBanditWarlord.class, KusariGama.class, KamiOfAncientLaw.class, KondasHatamoto.class})
+@CardUsed({GodoBanditWarlord.class, KusariGama.class, KamiOfAncientLaw.class, KondasHatamoto.class, Humility.class})
 class GodoBanditWarlordTest extends BaseCardTest {
 
     @Test
@@ -35,7 +35,7 @@ class GodoBanditWarlordTest extends BaseCardTest {
         assertThat(offered).hasSize(1); // only the Equipment, not the creature or land
         assertThat(offered.getFirst().getName()).isEqualTo("Kusari-Gama");
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Kusari-Gama");
     }
@@ -114,11 +114,57 @@ class GodoBanditWarlordTest extends BaseCardTest {
         declareAttackers(player1, List.of(0), 1);
         harness.passBothPriorities();
 
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(player1, List.of(0));
 
         assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Godo, Bandit Warlord"));
         assertThat(gd.additionalCombatPhasesOnly).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Godo does not untap opposing Samurai")
+    void attackDoesNotUntapOpposingSamurai() {
+        addCreatureReady(player1, new GodoBanditWarlord());
+        Permanent opposingSamurai = addCreatureReady(player2, new KondasHatamoto());
+        opposingSamurai.tap();
+
+        declareAttackers(player1, List.of(0), 1);
+        harness.passBothPriorities();
+
+        assertThat(opposingSamurai.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An Equipment search may fail to find even with Equipment in the library")
+    void searchMayFailToFindExistingEquipment() {
+        castGodo();
+        harness.setLibrary(player1, List.of(new KusariGama(), new KamiOfAncientLaw()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        harness.assertNotOnBattlefield(player1, "Kusari-Gama");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Regaining abilities after an earlier attack does not make a later attack the first")
+    void secondAttackDoesNotTriggerAfterHumilityLeaves() {
+        Permanent godo = addCreatureReady(player1, new GodoBanditWarlord());
+        addCreatureReady(player2, new KamiOfAncientLaw());
+        Permanent humility = harness.addToBattlefieldAndReturn(player2, new Humility());
+
+        declareAttackers(player1, List.of(0), 1);
+        assertThat(gd.stack).isEmpty();
+
+        gd.playerBattlefields.get(player2.getId()).remove(humility);
+        godo.untap();
+        declareAttackers(player1, List.of(0), 2);
+
+        assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Godo, Bandit Warlord"));
+        assertThat(gd.additionalCombatPhasesOnly).isZero();
     }
 
     private void castGodo() {

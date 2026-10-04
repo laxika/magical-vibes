@@ -113,7 +113,7 @@ class FesteringThicketTest extends BaseCardTest {
     @DisplayName("A tapped thicket cannot activate its mana ability")
     void tappedLandCannotProduceMana() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new FesteringThicket());
-        land.setTapped(true);
+        land.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

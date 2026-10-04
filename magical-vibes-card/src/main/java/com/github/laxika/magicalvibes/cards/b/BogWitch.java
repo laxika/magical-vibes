@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "118")
+@CardRegistration(set = "ARC", collectorNumber = "11")
 public class BogWitch extends Card {
 
     public BogWitch() {

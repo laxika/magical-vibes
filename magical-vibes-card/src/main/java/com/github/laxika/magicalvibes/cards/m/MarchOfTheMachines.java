@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "91")
 @CardRegistration(set = "MRD", collectorNumber = "42")
+@CardRegistration(set = "ARC", collectorNumber = "6")
 public class MarchOfTheMachines extends Card {
 
     public MarchOfTheMachines() {

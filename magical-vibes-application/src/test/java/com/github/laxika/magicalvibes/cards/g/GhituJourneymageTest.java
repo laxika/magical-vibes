@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.s.ShivanFire;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,14 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GhituJourneymage.class, GhituLavarunner.class, ShivanFire.class})
 class GhituJourneymageTest extends BaseCardTest {
-
-    // ===== ETB with another Wizard =====
 
     @Test
     @DisplayName("ETB triggers when you control another Wizard")
     void etbTriggersWithAnotherWizard() {
-        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new GhituLavarunner());
         castGhituJourneymage();
         harness.passBothPriorities(); // resolve creature spell
 
@@ -33,7 +33,7 @@ class GhituJourneymageTest extends BaseCardTest {
     @Test
     @DisplayName("ETB deals 2 damage to each opponent when another Wizard is controlled")
     void etbDealsDamageWithAnotherWizard() {
-        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new GhituLavarunner());
         castGhituJourneymage();
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
@@ -48,7 +48,7 @@ class GhituJourneymageTest extends BaseCardTest {
         harness.setLife(player1, 10);
         harness.setLife(player2, 15);
 
-        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new GhituLavarunner());
         castGhituJourneymage();
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
@@ -56,8 +56,6 @@ class GhituJourneymageTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
     }
-
-    // ===== ETB without another Wizard =====
 
     @Test
     @DisplayName("ETB does NOT trigger without another Wizard (only self)")
@@ -79,7 +77,7 @@ class GhituJourneymageTest extends BaseCardTest {
     @Test
     @DisplayName("ETB does NOT trigger when opponent controls a Wizard but you don't")
     void etbDoesNotTriggerWithOpponentWizard() {
-        harness.addToBattlefield(player2, new FugitiveWizard());
+        harness.addToBattlefield(player2, new GhituLavarunner());
         castGhituJourneymage();
         harness.passBothPriorities(); // resolve creature spell
 
@@ -91,18 +89,16 @@ class GhituJourneymageTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
-    // ===== Condition lost before resolution =====
-
     @Test
     @DisplayName("ETB does nothing if the other Wizard is removed before resolution")
     void etbFizzlesWhenAnotherWizardRemoved() {
-        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new GhituLavarunner());
         castGhituJourneymage();
         harness.passBothPriorities(); // resolve creature spell — ETB trigger on stack
 
         // Remove the other Wizard before ETB resolves
         gd.playerBattlefields.get(player1.getId()).removeIf(
-                p -> p.getCard().getName().equals("Fugitive Wizard"));
+                p -> p.getCard().getName().equals("Ghitu Lavarunner"));
 
         harness.passBothPriorities(); // resolve ETB trigger — condition no longer met
 
@@ -112,8 +108,6 @@ class GhituJourneymageTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("controls another matching permanent ability does nothing"));
     }
-
-    // ===== Creature enters battlefield regardless =====
 
     @Test
     @DisplayName("Creature enters battlefield even without another Wizard")
@@ -127,7 +121,7 @@ class GhituJourneymageTest extends BaseCardTest {
     @Test
     @DisplayName("Stack is empty after full resolution with another Wizard")
     void stackEmptyAfterResolution() {
-        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new GhituLavarunner());
         castGhituJourneymage();
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
@@ -135,13 +129,11 @@ class GhituJourneymageTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Multiple Wizards =====
-
     @Test
     @DisplayName("ETB triggers with two other Wizards — still deals only 2 damage")
     void etbTriggersWithMultipleWizards() {
-        harness.addToBattlefield(player1, new FugitiveWizard());
-        harness.addToBattlefield(player1, new FugitiveWizard());
+        harness.addToBattlefield(player1, new GhituLavarunner());
+        harness.addToBattlefield(player1, new GhituLavarunner());
         castGhituJourneymage();
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
@@ -149,11 +141,47 @@ class GhituJourneymageTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    // ===== Helpers =====
-
     private void castGhituJourneymage() {
-        harness.setHand(player1, List.of(new GhituJourneymage()));
-        harness.addMana(player1, ManaColor.RED, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GhituJourneymage(), "{2}{R}");
+    }
+
+    @Test
+    @DisplayName("The ability still deals damage after Journeymage dies")
+    void abilityResolvesAfterSourceDies() {
+        harness.addToBattlefield(player1, new GhituLavarunner());
+        castGhituJourneymage();
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new ShivanFire()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Ghitu Journeymage"));
+        harness.assertInGraveyard(player1, "Ghitu Journeymage");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A different Wizard can satisfy the condition at resolution")
+    void differentWizardSatisfiesConditionAtResolution() {
+        harness.addToBattlefield(player1, new GhituLavarunner());
+        castGhituJourneymage();
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new ShivanFire()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Ghitu Lavarunner"));
+        harness.assertInGraveyard(player1, "Ghitu Lavarunner");
+        harness.addToBattlefield(player1, new GhituLavarunner());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
     }
 }

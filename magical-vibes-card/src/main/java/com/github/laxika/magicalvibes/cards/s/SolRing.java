@@ -11,7 +11,9 @@ import java.util.List;
 @CardRegistration(set = "SUM", collectorNumber = "274")
 @CardRegistration(set = "KHC", collectorNumber = "104")
 @CardRegistration(set = "MKC", collectorNumber = "237")
+@CardRegistration(set = "LEA", collectorNumber = "269")
 @CardRegistration(set = "2ED", collectorNumber = "270")
+@CardRegistration(set = "LEB", collectorNumber = "270")
 @CardRegistration(set = "3ED", collectorNumber = "274")
 @CardRegistration(set = "V10", collectorNumber = "12")
 @CardRegistration(set = "VMA", collectorNumber = "283")
@@ -103,6 +105,9 @@ import java.util.List;
 @CardRegistration(set = "DRC", collectorNumber = "57")
 @CardRegistration(set = "SCD", collectorNumber = "276")
 @CardRegistration(set = "CM2", collectorNumber = "217")
+@CardRegistration(set = "ZNC", collectorNumber = "120")
+@CardRegistration(set = "CC1", collectorNumber = "7")
+@CardRegistration(set = "CC2", collectorNumber = "7")
 public class SolRing extends Card {
 
     public SolRing() {

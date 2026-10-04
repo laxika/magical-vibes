@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "HOC", collectorNumber = "198")
 @CardRegistration(set = "BLC", collectorNumber = "198")
 @CardRegistration(set = "CM2", collectorNumber = "109")
+@CardRegistration(set = "E01", collectorNumber = "53")
 public class InfernoTitan extends Card {
 
     public InfernoTitan() {

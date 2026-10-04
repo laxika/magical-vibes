@@ -99,4 +99,59 @@ class GlidingLicidTest extends BaseCardTest {
     private Permanent addReadyLicid(Player player) {
         return addCreatureReady(player, new GlidingLicid());
     }
+
+    @Test
+    @DisplayName("Ending the effect requires blue mana and leaves the Aura attached if unpaid")
+    void cannotEndEffectWithoutBlueMana() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addCreatureReady(player1, new YouthfulKnight());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(licid.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gqs.isCreature(gd, licid)).isFalse();
+        assertThat(gqs.hasKeyword(gd, host, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ending the effect restores the ability without untapping the Licid")
+    void restoredAbilityCanAttachToAnotherCreatureAfterUntapping() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent firstHost = addCreatureReady(player1, new YouthfulKnight());
+        Permanent secondHost = addCreatureReady(player2, new YouthfulKnight());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, firstHost.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(licid.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, secondHost.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, null, secondHost.getId());
+        harness.passBothPriorities();
+
+        assertThat(licid.getAttachedTo()).isEqualTo(secondHost.getId());
+        assertThat(gqs.hasKeyword(gd, firstHost, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, secondHost, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Targeting itself leaves an illegal Aura that goes to the graveyard")
+    void targetingItselfPutsLicidInGraveyard() {
+        Permanent licid = addReadyLicid(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, licid.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Gliding Licid");
+        harness.assertInGraveyard(player1, "Gliding Licid");
+    }
 }

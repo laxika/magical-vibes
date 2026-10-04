@@ -29,8 +29,7 @@ class GlyphOfLifeTest extends BaseCardTest {
 
         castGlyph(wall);
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         resolveAllTriggers();
@@ -86,8 +85,7 @@ class GlyphOfLifeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         resolveAllTriggers();
@@ -104,6 +102,81 @@ class GlyphOfLifeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Every damage event triggers, including lethal damage to the Wall")
+    void gainsLifeForRepeatedAndLethalDamage() {
+        Permanent wall = addCreatureReady(player2, new WallOfWood());
+        Permanent blocker = addCreatureReady(player2, new GiantSpider());
+        addCreatureReady(player1, new ShivanHellkite());
+        castGlyph(wall);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker), 0)));
+
+        for (int i = 1; i <= 3; i++) {
+            harness.addMana(player1, ManaColor.RED, 2);
+            harness.activateAbility(player1, 0, null, wall.getId());
+            harness.passBothPriorities();
+            resolveAllTriggers();
+
+            assertThat(gd.getLife(player1.getId())).isEqualTo(20 + i);
+        }
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(wall);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(wall.getCard());
+    }
+
+    @Test
+    @DisplayName("Multiple Glyphs on a Wall each grant life to their spell controller")
+    void multipleGlyphsTriggerIndependentlyOnOwnWall() {
+        Permanent wall = addCreatureReady(player1, new WallOfWood());
+        addCreatureReady(player2, new GrizzlyBears());
+        castGlyph(wall);
+        castGlyph(wall);
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(24);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Damage from a nonattacking creature does not trigger life gain")
+    void ignoresDamageFromNonattackingCreature() {
+        Permanent wall = addCreatureReady(player2, new WallOfWood());
+        addCreatureReady(player1, new ShivanHellkite());
+        castGlyph(wall);
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, null, wall.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(wall.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Damage to another Wall does not trigger life gain")
+    void ignoresDamageToUnwatchedWall() {
+        Permanent watchedWall = addCreatureReady(player2, new WallOfWood());
+        Permanent otherWall = addCreatureReady(player2, new WallOfWood());
+        addCreatureReady(player1, new GrizzlyBears());
+        castGlyph(watchedWall);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(otherWall.getMarkedDamage()).isEqualTo(2);
+        assertThat(watchedWall.getMarkedDamage()).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
 
     private void castGlyph(Permanent wall) {

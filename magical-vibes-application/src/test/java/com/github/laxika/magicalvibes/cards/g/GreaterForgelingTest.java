@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GreaterForgeling.class)
+@CardUsed({GreaterForgeling.class})
 class GreaterForgelingTest extends BaseCardTest {
 
     @Test
@@ -85,6 +85,53 @@ class GreaterForgelingTest extends BaseCardTest {
 
         assertThat(forgeling.getPowerModifier()).isZero();
         assertThat(forgeling.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A second activation puts it into the graveyard for nonpositive toughness")
+    void secondActivationKillsForgeling() {
+        addCreatureReady(player1, new GreaterForgeling());
+        addActivationMana();
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Greater Forgeling");
+        harness.assertNotInGraveyard(player1, "Greater Forgeling");
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Greater Forgeling");
+        harness.assertInGraveyard(player1, "Greater Forgeling");
+    }
+
+    @Test
+    @DisplayName("Summoning sickness does not prevent its activation")
+    void activationWorksWhileSummoningSick() {
+        Permanent forgeling = harness.addToBattlefieldAndReturn(player1, new GreaterForgeling());
+        forgeling.setSummoningSick(true);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(forgeling.getPowerModifier()).isZero();
+        assertThat(forgeling.getToughnessModifier()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(forgeling.getPowerModifier()).isEqualTo(3);
+        assertThat(forgeling.getToughnessModifier()).isEqualTo(-3);
+        harness.assertOnBattlefield(player1, "Greater Forgeling");
+    }
+
+    @Test
+    @DisplayName("Two colorless mana cannot pay the red component of the activation cost")
+    void activationRequiresRedMana() {
+        addCreatureReady(player1, new GreaterForgeling());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
     }
 
     private void addActivationMana() {

@@ -707,18 +707,20 @@ public class MayCopyHandlerService {
             return;
         }
 
-        // Find source permanent by card identity
-        Permanent sourcePermanent = null;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent p : bf) {
-                if (p.getCard() == sourceCard) {
-                    sourcePermanent = p;
-                    break;
+        Permanent sourcePermanent = ability.sourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
+        if (ability.sourcePermanentId() == null) {
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> bf = gameData.playerBattlefields.get(pid);
+                if (bf == null) continue;
+                for (Permanent p : bf) {
+                    if (p.getCard() == sourceCard) {
+                        sourcePermanent = p;
+                        break;
+                    }
                 }
+                if (sourcePermanent != null) break;
             }
-            if (sourcePermanent != null) break;
         }
 
         if (sourcePermanent == null) {

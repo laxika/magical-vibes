@@ -43,8 +43,7 @@ class GoblinFirebugTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Goblin Firebug");
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Forest"));
+        harness.assertOnBattlefield(player2, "Forest");
     }
 
     @Test
@@ -74,5 +73,51 @@ class GoblinFirebugTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(firstForest);
         harness.assertInGraveyard(player1, "Forest");
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(secondForest);
+    }
+
+    @Test
+    @DisplayName("Exiling Goblin Firebug also causes its controller to sacrifice a land")
+    void sacrificesLandWhenExiled() {
+        Permanent firebug = addCreatureReady(player1, new GoblinFirebug());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, firebug));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Goblin Firebug");
+        harness.assertNotInGraveyard(player1, "Goblin Firebug");
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("The controller before leaving sacrifices a land, even when someone else owns Goblin Firebug")
+    void controllerRatherThanOwnerSacrificesLand() {
+        GoblinFirebug card = new GoblinFirebug();
+        card.setOwnerId(player1.getId());
+        Permanent firebug = addCreatureReady(player2, card);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, firebug));
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Goblin Firebug");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("The trigger sacrifices a land acquired after Goblin Firebug leaves the battlefield")
+    void checksAvailableLandsAtResolution() {
+        Permanent firebug = addCreatureReady(player1, new GoblinFirebug());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, firebug));
+        harness.addToBattlefield(player1, new Forest());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Goblin Firebug");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
     }
 }

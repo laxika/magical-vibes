@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MAT", collectorNumber = "14")
+@CardRegistration(set = "MAT", collectorNumber = "64")
+@CardRegistration(set = "MAT", collectorNumber = "114")
+@CardRegistration(set = "MAT", collectorNumber = "198")
 public class MarkovBaron extends Card {
 
     public MarkovBaron() {

@@ -51,7 +51,7 @@ class FireDrakeTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent drake = harness.addToBattlefieldAndReturn(player1, new FireDrake());
         drake.setSummoningSick(true);
-        drake.setTapped(true);
+        drake.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

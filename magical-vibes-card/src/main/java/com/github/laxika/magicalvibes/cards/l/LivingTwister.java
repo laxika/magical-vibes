@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "203")
+@CardRegistration(set = "ZNC", collectorNumber = "93")
 public class LivingTwister extends Card {
 
     public LivingTwister() {

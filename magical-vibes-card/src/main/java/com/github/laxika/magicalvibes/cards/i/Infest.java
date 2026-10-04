@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 @CardRegistration(set = "ALA", collectorNumber = "80")
 @CardRegistration(set = "ONS", collectorNumber = "157")
 @CardRegistration(set = "C13", collectorNumber = "81")
+@CardRegistration(set = "ARC", collectorNumber = "19")
 public class Infest extends Card {
 
     public Infest() {

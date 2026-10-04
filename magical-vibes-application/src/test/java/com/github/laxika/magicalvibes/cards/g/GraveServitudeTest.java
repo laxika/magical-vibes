@@ -8,10 +8,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CharcoalDiamond.class, DarkRitual.class, FemerefScouts.class, GraveServitude.class})
+@CardUsed({CharcoalDiamond.class, DarkRitual.class, FemerefScouts.class, GraveServitude.class, VernalEquinox.class})
 class GraveServitudeTest extends BaseCardTest {
 
     private Permanent enchant(Permanent host) {
@@ -65,7 +63,7 @@ class GraveServitudeTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, scouts.getId());
         harness.passBothPriorities();
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.passUntil(TurnStep.CLEANUP);
 
         harness.assertOnBattlefield(player1, "Grave Servitude");
     }
@@ -84,7 +82,11 @@ class GraveServitudeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grave Servitude");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.passUntil(TurnStep.CLEANUP);
+
+        harness.assertOnBattlefield(player1, "Grave Servitude");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grave Servitude");
         harness.assertInGraveyard(player1, "Grave Servitude");
@@ -103,14 +105,17 @@ class GraveServitudeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grave Servitude");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.passUntil(TurnStep.CLEANUP);
+
+        harness.assertOnBattlefield(player1, "Grave Servitude");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grave Servitude");
         harness.assertInGraveyard(player1, "Grave Servitude");
     }
 
     @Test
-    @CardUsed(VernalEquinox.class)
     @DisplayName("Cast using another flash permission, it survives cleanup")
     void castUsingAnotherFlashPermissionSurvivesCleanup() {
         Permanent scouts = addCreatureReady(player1, new FemerefScouts());
@@ -125,9 +130,40 @@ class GraveServitudeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grave Servitude");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.passUntil(TurnStep.CLEANUP);
 
         harness.assertOnBattlefield(player1, "Grave Servitude");
+    }
+
+    @Test
+    @DisplayName("Can enchant an opponent's creature during that opponent's main phase")
+    void castDuringOpponentsMainPhaseUsesCleanupTrigger() {
+        Permanent scouts = addCreatureReady(player2, new FemerefScouts());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new GraveServitude()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0, scouts.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, scouts)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, scouts)).isEqualTo(3);
+        assertThat(gqs.hasColor(gd, scouts, CardColor.BLACK)).isTrue();
+        assertThat(gqs.hasColor(gd, scouts, CardColor.WHITE)).isFalse();
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        harness.assertOnBattlefield(player1, "Grave Servitude");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grave Servitude");
+        harness.assertOnBattlefield(player2, "Femeref Scouts");
+        assertThat(gqs.getEffectivePower(gd, scouts)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, scouts)).isEqualTo(4);
+        assertThat(gqs.hasColor(gd, scouts, CardColor.BLACK)).isFalse();
+        assertThat(gqs.hasColor(gd, scouts, CardColor.WHITE)).isTrue();
     }
 
     @Test

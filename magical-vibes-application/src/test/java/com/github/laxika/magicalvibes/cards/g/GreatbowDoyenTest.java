@@ -5,19 +5,22 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KeenEyedArchers;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SkyhunterSkirmisher;
+import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GreatbowDoyen.class, KeenEyedArchers.class, GrizzlyBears.class, SerraAngel.class,
-        FemerefArchers.class, SkyhunterSkirmisher.class})
+        FemerefArchers.class, SkyhunterSkirmisher.class, Terror.class})
 class GreatbowDoyenTest extends BaseCardTest {
 
     // ===== Static: other Archer creatures you control get +1/+1 =====
@@ -65,10 +68,7 @@ class GreatbowDoyenTest extends BaseCardTest {
 
         blockAttacker(player2, new GrizzlyBears(), 0); // Grizzly Bears blocks Doyen (attacker index 0)
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // combat damage — Doyen deals 2 to the blocker
+        resolveCombat();
 
         harness.passBothPriorities(); // resolve reflection trigger
 
@@ -88,10 +88,7 @@ class GreatbowDoyenTest extends BaseCardTest {
         // reflection still fires when the source Archer dies in combat.
         blockAttacker(player2, new SerraAngel(), 1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // combat damage — boosted 3/3 Archer deals 3 to the blocker
+        resolveCombat();
 
         harness.passBothPriorities(); // resolve reflection trigger
 
@@ -109,10 +106,7 @@ class GreatbowDoyenTest extends BaseCardTest {
 
         blockAttacker(player2, new GrizzlyBears(), 1); // block the Grizzly Bears (attacker index 1)
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // combat damage — no player damage, no reflection
+        resolveCombat();
 
         // Grizzly Bears is not an Archer, so player2 takes no reflected damage.
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -125,10 +119,8 @@ class GreatbowDoyenTest extends BaseCardTest {
         addCreatureReady(player1, new FemerefArchers());
         harness.setLife(player2, 20);
 
-        Permanent flyer = new Permanent(new SkyhunterSkirmisher());
-        flyer.setSummoningSick(false);
+        Permanent flyer = addCreatureReady(player2, new SkyhunterSkirmisher());
         flyer.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(flyer);
 
         // Femeref Archers (an Archer): {T}: deals 4 damage to the attacking flyer.
         harness.activateAbility(player1, 1, null, flyer.getId());
@@ -141,12 +133,101 @@ class GreatbowDoyenTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(flyer.getId()));
     }
 
+    @Test
+    @DisplayName("Another Archer's damage still triggers when Doyen dies in the same damage step")
+    void reflectsOtherArcherDamageWhenDoyenDiesSimultaneously() {
+        Permanent doyen = addCreatureReady(player1, new GreatbowDoyen());
+        Permanent archer = addCreatureReady(player1, new FemerefArchers());
+        doyen.setAttacking(true);
+        archer.setAttacking(true);
+        blockAttacker(player2, new SerraAngel(), 0);
+        blockAttacker(player2, new SerraAngel(), 1);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Greatbow Doyen");
+        harness.assertInGraveyard(player1, "Femeref Archers");
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("An Archer's activated damage still triggers Doyen after the Archer leaves the battlefield")
+    void reflectsNoncombatDamageFromArcherThatDiedInResponse() {
+        addCreatureReady(player1, new GreatbowDoyen());
+        Permanent archer = addCreatureReady(player1, new FemerefArchers());
+        Permanent flyer = addCreatureReady(player2, new SkyhunterSkirmisher());
+        flyer.setAttacking(true);
+        harness.setLife(player2, 20);
+        harness.activateAbility(player1, 1, null, flyer.getId());
+
+        harness.setHand(player2, List.of(new Terror()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castInstant(player2, 0, archer.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Femeref Archers");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Skyhunter Skirmisher");
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Multiple Doyens boost each other and each reflect an Archer's damage")
+    void multipleDoyensBoostAndTriggerIndependently() {
+        Permanent first = addCreatureReady(player1, new GreatbowDoyen());
+        Permanent second = addCreatureReady(player1, new GreatbowDoyen());
+        Permanent archer = addCreatureReady(player1, new FemerefArchers());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(5);
+        archer.setAttacking(true);
+        blockAttacker(player2, new SerraAngel(), 2);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 12);
+    }
+
+    @Test
+    @DisplayName("Damage to a player does not trigger additional damage")
+    void unblockedArcherDoesNotReflectPlayerDamage() {
+        Permanent doyen = addCreatureReady(player1, new GreatbowDoyen());
+        doyen.setAttacking(true);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("An opponent's Archer dealing damage does not trigger Doyen")
+    void opponentArcherDoesNotReflectDamage() {
+        addCreatureReady(player1, new GreatbowDoyen());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setAttacking(true);
+        blockAttacker(player2, new FemerefArchers(), 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
     /** Adds {@code blockerCard} to {@code blocker}'s battlefield blocking the attacker at {@code attackerIndex}. */
     private void blockAttacker(Player blocker, Card blockerCard, int attackerIndex) {
-        Permanent perm = new Permanent(blockerCard);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(blocker, blockerCard);
         perm.setBlocking(true);
         perm.addBlockingTarget(attackerIndex);
-        gd.playerBattlefields.get(blocker.getId()).add(perm);
     }
 }

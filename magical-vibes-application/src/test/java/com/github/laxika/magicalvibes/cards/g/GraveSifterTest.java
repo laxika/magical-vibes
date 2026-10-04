@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.cards.c.CribSwap;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.cards.g.GoblinSledder;
+import com.github.laxika.magicalvibes.cards.t.TormodTheDesecrator;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GraveSifter.class, ElvishWarrior.class, GoblinSledder.class, AvianChangeling.class, CribSwap.class})
+@CardUsed({GraveSifter.class, ElvishWarrior.class, GoblinSledder.class, AvianChangeling.class, CribSwap.class,
+        TormodTheDesecrator.class})
 class GraveSifterTest extends BaseCardTest {
 
     @Test
@@ -71,6 +73,59 @@ class GraveSifterTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(Card::getName)
                 .containsExactly("Goblin Sledder", "Avian Changeling");
+    }
+
+    @Test
+    void returnsAllMatchingCardsIncludingChangelingAndKindred() {
+        harness.setGraveyard(player1, List.of(new ElvishWarrior(), new AvianChangeling(), new CribSwap(),
+                new GoblinSledder()));
+        harness.setGraveyard(player2, List.of());
+        cast();
+
+        harness.handleListChoice(player1, "ELF");
+        harness.handleListChoice(player2, "GIANT");
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Elvish Warrior", "Avian Changeling", "Crib Swap");
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Goblin Sledder");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void emptyGraveyardsStillAllowTypeChoicesAndFinishResolving() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        cast();
+
+        harness.handleListChoice(player1, "ELF");
+        harness.handleListChoice(player2, "GOBLIN");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Grave Sifter");
+    }
+
+    @Test
+    void returningMultipleCardsTriggersTormodOnlyOnce() {
+        harness.addToBattlefield(player1, new TormodTheDesecrator());
+        harness.setGraveyard(player1, List.of(new ElvishWarrior(), new ElvishWarrior()));
+        harness.setGraveyard(player2, List.of());
+        cast();
+
+        harness.handleListChoice(player1, "ELF");
+        harness.handleListChoice(player2, "GOBLIN");
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void cast() {

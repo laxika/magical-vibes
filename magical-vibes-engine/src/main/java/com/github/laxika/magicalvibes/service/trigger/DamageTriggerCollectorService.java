@@ -2317,7 +2317,7 @@ public class DamageTriggerCollectorService {
                     sourceCard, sd.sourceControllerId(), new ArrayList<>(List.of(effect)),
                     !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT),
                     targetFilterForTriggeredEffect(sourceCard, effect), sd.totalDamage(),
-                    sd.sourcePermanentId()));
+                    sd.sourcePermanentId(), hasOptionalTarget(sourceCard, effect)));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} ON_SELF_DEALS_COMBAT_DAMAGE trigger awaits target",
                     match.gameData().id, sourceCard.getName());
@@ -2515,7 +2515,8 @@ public class DamageTriggerCollectorService {
                     damagedCreature.getCard(), controllerId, new ArrayList<>(List.of(effect)),
                     !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT),
                     targetFilterForTriggeredEffect(damagedCreature.getCard(), effect),
-                    dc.damageDealt(), damagedCreature.getId()));
+                    dc.damageDealt(), damagedCreature.getId(),
+                    hasOptionalTarget(damagedCreature.getCard(), effect)));
             gameLogService.append(gameData, GameLog.abilityTriggers(damagedCreature.getCard()));
             log.info("Game {} - {} ON_DEALT_DAMAGE targeted trigger fires",
                     gameData.id, damagedCreature.getCard().getName());
@@ -2541,6 +2542,12 @@ public class DamageTriggerCollectorService {
             return damageEffect.triggeredTargetFilter();
         }
         return card.getTargetFilter();
+    }
+
+    private boolean hasOptionalTarget(Card card, CardEffect effect) {
+        int targetIndex = card.getEffectTargetIndex(effect);
+        return targetIndex >= 0 && targetIndex < card.getSpellTargets().size()
+                && card.getSpellTargets().get(targetIndex).getMinTargets() == 0;
     }
 
     /**

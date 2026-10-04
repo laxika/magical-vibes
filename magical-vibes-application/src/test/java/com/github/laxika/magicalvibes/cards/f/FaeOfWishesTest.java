@@ -143,7 +143,7 @@ class FaeOfWishesTest extends BaseCardTest {
         fae.setOwnerId(player2.getId());
         Permanent permanent = harness.addToBattlefieldAndReturn(player1, fae);
         gd.stolenCreatures.put(permanent.getId(), player2.getId());
-        permanent.setTapped(true);
+        permanent.tap();
         permanent.setSummoningSick(true);
         Card first = new Island();
         Card second = new Mountain();

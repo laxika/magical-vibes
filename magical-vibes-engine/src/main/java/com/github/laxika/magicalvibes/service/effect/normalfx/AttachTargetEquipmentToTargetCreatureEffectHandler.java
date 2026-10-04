@@ -67,6 +67,9 @@ public class AttachTargetEquipmentToTargetCreatureEffectHandler implements Norma
         }
 
         UUID oldAttachedTo = equipment.getAttachedTo();
+        if (creature.getId().equals(oldAttachedTo)) {
+            return;
+        }
 
         equipSupport.expireAttachedCopyEffects(gameData, equipment);
         equipment.setAttachedTo(creature.getId());

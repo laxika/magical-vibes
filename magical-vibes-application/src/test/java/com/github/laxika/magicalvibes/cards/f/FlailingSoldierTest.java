@@ -134,7 +134,7 @@ class FlailingSoldierTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FlailingSoldier());
         Permanent soldier = findPermanent(player1, "Flailing Soldier");
         soldier.setSummoningSick(true);
-        soldier.setTapped(true);
+        soldier.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, null);

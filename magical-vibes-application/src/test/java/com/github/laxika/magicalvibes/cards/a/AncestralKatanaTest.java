@@ -159,7 +159,8 @@ class AncestralKatanaTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(2));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, false));
 
         assertThat(katana.getAttachedTo()).isEqualTo(original.getId());
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);

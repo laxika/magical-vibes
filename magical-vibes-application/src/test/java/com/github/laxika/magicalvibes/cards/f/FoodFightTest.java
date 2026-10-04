@@ -121,7 +121,7 @@ class FoodFightTest extends BaseCardTest {
     void tappedArtifactCanActivateAndTargetItsController() {
         addFoodFight(player1);
         Permanent artifact = addArtifact(player1);
-        artifact.setTapped(true);
+        artifact.tap();
         harness.setLife(player1, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

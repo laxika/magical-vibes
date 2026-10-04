@@ -20,8 +20,10 @@ import java.util.List;
 @CardRegistration(set = "4ED", collectorNumber = "247")
 @CardRegistration(set = "3ED", collectorNumber = "198")
 @CardRegistration(set = "2ED", collectorNumber = "197")
+@CardRegistration(set = "LEA", collectorNumber = "196")
 @CardRegistration(set = "SUM", collectorNumber = "198")
 @CardRegistration(set = "TSB", collectorNumber = "78")
+@CardRegistration(set = "LEB", collectorNumber = "197")
 public class GaeasLiege extends Card {
 
     public GaeasLiege() {

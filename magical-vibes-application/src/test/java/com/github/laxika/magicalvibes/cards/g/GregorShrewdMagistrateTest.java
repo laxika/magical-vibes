@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.a.AnthemOfChampions;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -18,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GregorShrewdMagistrate.class, AnthemOfChampions.class, Forest.class, HillGiant.class, Memnite.class, GrizzlyBears.class})
+@CardUsed({GregorShrewdMagistrate.class, Forest.class, SwordsToPlowshares.class})
 class GregorShrewdMagistrateTest extends BaseCardTest {
 
     @Test
@@ -53,18 +51,67 @@ class GregorShrewdMagistrateTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does not trigger when combat damage is prevented by a blocker")
+    @DisplayName("Does not trigger when legally blocked by a creature with equal power")
     void doesNotTriggerWhenBlocked() {
         addAttackingGregor();
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
-        blocker.setBlocking(true);
-        blocker.addBlockingTarget(0);
+        addCreatureReady(player2, new GregorShrewdMagistrate());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new Forest()));
 
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombatAndTrigger();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void cannotBeBlockedByGreaterPower() {
+        addAttackingGregor();
+        Permanent blocker = addCreatureReady(player2, new GregorShrewdMagistrate());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("skulk");
+    }
+
+    @Test
+    void canBeBlockedByLowerPower() {
+        Permanent gregor = addAttackingGregor();
+        gregor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        addCreatureReady(player2, new GregorShrewdMagistrate());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombatAndTrigger();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void usesLastKnownPowerAfterLeavingBattlefield() {
+        Permanent gregor = addAttackingGregor();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new SwordsToPlowshares()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        gregor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castInstant(player2, 0, gregor.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Gregor, Shrewd Magistrate");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
@@ -76,6 +123,6 @@ class GregorShrewdMagistrateTest extends BaseCardTest {
 
     private void resolveCombatAndTrigger() {
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

@@ -85,6 +85,7 @@ class AvenSurveyorTest extends BaseCardTest {
     @Test
     void canBounceItselfWhenEnteringWithoutBeingCast() {
         Permanent surveyor = harness.enterBattlefieldAndReturn(player1, new AvenSurveyor());
+        gs.passPriority(gd, player1);
         harness.handleListChoice(player1, "Return target creature to its owner's hand");
         harness.handlePermanentChosen(player1, surveyor.getId());
         harness.passBothPriorities();
@@ -96,6 +97,7 @@ class AvenSurveyorTest extends BaseCardTest {
     @Test
     void counterModeCanBeChosenWhenEnteringWithoutBeingCast() {
         Permanent surveyor = harness.enterBattlefieldAndReturn(player1, new AvenSurveyor());
+        gs.passPriority(gd, player1);
         harness.handleListChoice(player1, "Put a +1/+1 counter on this creature");
         harness.passBothPriorities();
 

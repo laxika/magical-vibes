@@ -934,6 +934,7 @@ public class DamageSupport {
         if (!gameQueryService.shouldControllerSpellHaveLifelink(gameData, entry)) return;
         UUID controllerId = entry.getSourcePermanentId() == null ? null
                 : gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId());
+        if (controllerId == null) controllerId = entry.getDamageSourceControllerId();
         lifeSupport.applyGainLife(gameData, controllerId != null ? controllerId : entry.getControllerId(), effectiveDamage,
                 "lifelink", entry.getEffectiveDamageSourceCard(), entry.getEntryType());
     }
@@ -1363,7 +1364,7 @@ public class DamageSupport {
         }
         for (Permanent p : permanents) {
             if (!filter.test(p)) continue;
-            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, p, entry.getCard(), entry.getControllerId())) continue;
+            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromDamageSource(gameData, p, entry.getEffectiveDamageSourceCard(), entry.getControllerId())) continue;
             int damageDealt = dealCreatureDamage(gameData, entry, p, damage.applyAsInt(p));
             if (exileInsteadOfDie && damageDealt > 0 && gameQueryService.isCreature(gameData, p)) {
                 p.setExileInsteadOfDieThisTurn(true);

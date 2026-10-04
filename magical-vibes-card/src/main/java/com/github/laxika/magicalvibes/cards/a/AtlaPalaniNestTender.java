@@ -11,9 +11,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealUntilCreatureToBattlefieldRestToLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 import java.util.Set;
@@ -34,8 +33,11 @@ public class AtlaPalaniNestTender extends Card {
                 "{2}, {T}: Create a 0/1 green Egg creature token with defender."
         ));
 
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
-                new CardSubtypePredicate(CardSubtype.EGG),
-                new RevealUntilCreatureToBattlefieldRestToLibraryEffect()));
+        var eggDeath = new TriggeringPermanentConditionalEffect(
+                new PermanentHasSubtypePredicate(CardSubtype.EGG),
+                new RevealUntilCardPredicateRestOnBottomRandomEffect(
+                        new CardTypePredicate(CardType.CREATURE), LibrarySearchDestination.BATTLEFIELD));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, eggDeath);
+        addEffect(EffectSlot.ON_DEATH, eggDeath);
     }
 }

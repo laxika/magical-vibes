@@ -153,7 +153,7 @@ class FlowstoneSculptureTest extends BaseCardTest {
     void doesNotRequireTapOrHaste() {
         Permanent sculpture = harness.addToBattlefieldAndReturn(player1, new FlowstoneSculpture());
         sculpture.setSummoningSick(true);
-        sculpture.setTapped(true);
+        sculpture.tap();
 
         activate();
         harness.handleListChoice(player1, COUNTER_MODE);

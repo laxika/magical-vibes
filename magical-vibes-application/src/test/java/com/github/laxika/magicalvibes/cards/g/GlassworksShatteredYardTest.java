@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.cards.o.OverlordOfTheBoilerbilges;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,12 +14,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GlassworksShatteredYard.class)
+@CardUsed({GlassworksShatteredYard.class, OverlordOfTheBoilerbilges.class})
 class GlassworksShatteredYardTest extends BaseCardTest {
 
     @Test
     void glassworksDealsFourDamageToATargetCreatureAnOpponentControls() {
-        Permanent target = addCreatureReady(player2, creature("Target creature", 5, 5));
+        Permanent target = addCreatureReady(player2, new OverlordOfTheBoilerbilges());
 
         castRoom(0);
         harness.handlePermanentChosen(player1, target.getId());
@@ -32,8 +30,8 @@ class GlassworksShatteredYardTest extends BaseCardTest {
 
     @Test
     void glassworksCannotTargetACreatureItsControllerControls() {
-        Permanent ownCreature = addCreatureReady(player1, creature("Own creature", 5, 5));
-        addCreatureReady(player2, creature("Opponent creature", 5, 5));
+        Permanent ownCreature = addCreatureReady(player1, new OverlordOfTheBoilerbilges());
+        addCreatureReady(player2, new OverlordOfTheBoilerbilges());
 
         castRoom(0);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownCreature.getId()))
@@ -68,17 +66,89 @@ class GlassworksShatteredYardTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 
-    private Card creature(String name, int power, int toughness) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setColor(CardColor.RED);
-        card.setManaCost("{1}{R}");
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
+    @Test
+    void lockedShatteredYardDoesNotDealDamageAtYourEndStep() {
+        Permanent target = addCreatureReady(player2, new OverlordOfTheBoilerbilges());
+        castRoom(0);
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+        int opponentLife = gd.getLife(player2.getId());
+
+        forceEndStep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife);
+    }
+
+    @Test
+    void castingShatteredYardDoesNotTriggerLockedGlassworks() {
+        Permanent target = addCreatureReady(player2, new OverlordOfTheBoilerbilges());
+
+        castRoom(1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void unlockingGlassworksAfterCastingShatteredYardDealsFourDamage() {
+        Permanent target = addCreatureReady(player2, new OverlordOfTheBoilerbilges());
+        castRoom(1);
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.unlockRoomDoor(player1, 0, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    void unlockingShatteredYardEnablesEndStepDamageWithoutRetriggeringGlassworks() {
+        Permanent target = addCreatureReady(player2, new OverlordOfTheBoilerbilges());
+        castRoom(0);
+        harness.handlePermanentChosen(player1, target.getId());
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.RED, 5);
+        int opponentLife = gd.getLife(player2.getId());
+
+        harness.unlockRoomDoor(player1, 0, 1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        forceEndStep(player1);
+        resolveAllTriggers();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife - 1);
+    }
+
+    @Test
+    void shatteredYardDoesNotTriggerAtAnOpponentsEndStep() {
+        castRoom(1);
+        int controllerLife = gd.getLife(player1.getId());
+        int opponentLife = gd.getLife(player2.getId());
+
+        forceEndStep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLife);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLife);
+    }
+
+    @Test
+    void glassworksDoesNotDamageATargetThatMovesUnderItsControllersControl() {
+        Permanent target = addCreatureReady(player2, new OverlordOfTheBoilerbilges());
+        castRoom(0);
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isZero();
     }
 }

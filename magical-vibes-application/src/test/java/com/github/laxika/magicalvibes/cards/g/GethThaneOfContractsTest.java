@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GethThaneOfContracts.class, GrizzlyBears.class, LightningBolt.class, Humble.class})
 class GethThaneOfContractsTest extends BaseCardTest {
 
     @Test
@@ -65,8 +67,7 @@ class GethThaneOfContractsTest extends BaseCardTest {
         Permanent reanimated = findPermanent(player1, "Grizzly Bears");
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, reanimated.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, reanimated.getId());
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
@@ -85,6 +86,55 @@ class GethThaneOfContractsTest extends BaseCardTest {
         assertThatThrownBy(() -> activateGeth(geth, instant))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature card");
+    }
+
+    @Test
+    @DisplayName("Losing all abilities removes the granted exile replacement")
+    void abilityLossAllowsReanimatedCreatureToDieNormally() {
+        Permanent geth = addReadyGeth();
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        addGethMana();
+        activateGeth(geth, creature);
+
+        Permanent reanimated = findPermanent(player1, "Grizzly Bears");
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, reanimated.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(creature.getId()));
+    }
+
+    @Test
+    @DisplayName("Cannot activate outside a main phase")
+    void cannotActivateDuringCombat() {
+        Permanent geth = addReadyGeth();
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        addGethMana();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> activateGeth(geth, creature))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(geth.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot return a creature from an opponent's graveyard")
+    void cannotTargetOpponentsGraveyard() {
+        Permanent geth = addReadyGeth();
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        addGethMana();
+
+        assertThatThrownBy(() -> activateGeth(geth, creature))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     private Permanent addReadyGeth() {

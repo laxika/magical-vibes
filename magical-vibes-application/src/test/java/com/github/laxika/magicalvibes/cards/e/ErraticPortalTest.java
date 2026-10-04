@@ -130,7 +130,7 @@ class ErraticPortalTest extends BaseCardTest {
     @Test
     void cannotActivateTappedPortal() {
         addPortal();
-        findPermanent(player1, "Erratic Portal").setTapped(true);
+        findPermanent(player1, "Erratic Portal").tap();
         Permanent target = addCreatureReady(player2, new CrashingBoars());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

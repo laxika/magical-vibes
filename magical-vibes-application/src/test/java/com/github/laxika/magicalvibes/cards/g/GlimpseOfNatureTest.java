@@ -86,11 +86,9 @@ class GlimpseOfNatureTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GlimpseOfNature(), new GlimpseOfNature()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.clearPriorityPassed();
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.setHand(player1, List.of(new LanternKami()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -99,5 +97,81 @@ class GlimpseOfNatureTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The draw resolves before the creature spell")
+    void drawsBeforeCreatureResolves() {
+        harness.setLibrary(player1, List.of(new LavaSpike()));
+        harness.castFromHand(player1, new GlimpseOfNature(), "{G}");
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new LanternKami(), "{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Multiple Glimpses draw through independently resolving triggers")
+    void multipleGlimpsesResolveSeparately() {
+        harness.setLibrary(player1, List.of(new LavaSpike(), new LavaSpike()));
+        harness.castFromHand(player1, new GlimpseOfNature(), "{G}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new GlimpseOfNature(), "{G}");
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new LanternKami(), "{W}");
+        assertThat(gd.stack).hasSize(3);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature spell does not trigger Glimpse")
+    void opponentCreatureDoesNotDraw() {
+        harness.setLibrary(player1, List.of(new LavaSpike()));
+        harness.setLibrary(player2, List.of(new LavaSpike()));
+        harness.castFromHand(player1, new GlimpseOfNature(), "{G}");
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, new LanternKami(), "{W}");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The delayed draw ability retains Glimpse as its source")
+    void drawTriggerHasGlimpseAsSource() {
+        GlimpseOfNature glimpse = new GlimpseOfNature();
+        harness.setLibrary(player1, List.of(new LavaSpike()));
+        harness.castFromHand(player1, glimpse, "{G}");
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new LanternKami(), "{W}");
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getCard().getId()).isEqualTo(glimpse.getId());
     }
 }

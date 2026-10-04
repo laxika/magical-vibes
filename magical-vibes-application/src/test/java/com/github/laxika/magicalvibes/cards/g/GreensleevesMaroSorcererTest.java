@@ -62,10 +62,7 @@ class GreensleevesMaroSorcererTest extends BaseCardTest {
         harness.playLand(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken())
-                .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.BADGER))
-                .count()).isZero();
+        assertThat(countPermanents(player1, "Badger")).isZero();
     }
 
     @Test
@@ -98,6 +95,66 @@ class GreensleevesMaroSorcererTest extends BaseCardTest {
                 player2, indexOf(player2, chandra), 1, 2, greensleeves.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Each land entering without being played creates its own Badger")
+    void multipleLandEntriesCreateSeparateBadgers() {
+        Permanent greensleeves = addCreatureReady(player1, new GreensleevesMaroSorcerer());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Badger")).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, greensleeves)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, greensleeves)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("With no lands Greensleeves dies as a zero-toughness creature")
+    void noLandsCausesDeath() {
+        addCreatureReady(player1, new GreensleevesMaroSorcerer());
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Greensleeves, Maro-Sorcerer");
+        harness.assertInGraveyard(player1, "Greensleeves, Maro-Sorcerer");
+    }
+
+    @Test
+    @DisplayName("The land-count ability works in hand and graveyard")
+    void landCountWorksOutsideBattlefield() {
+        GreensleevesMaroSorcerer inHand = new GreensleevesMaroSorcerer();
+        GreensleevesMaroSorcerer inGraveyard = new GreensleevesMaroSorcerer();
+        harness.setHand(player1, List.of(inHand));
+        harness.setGraveyard(player1, List.of(inGraveyard));
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        assertThat(gqs.getEffectiveCardPower(gd, inHand)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, inHand)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardPower(gd, inGraveyard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, inGraveyard)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Protection prevents untargeted damage from Chandra's ultimate")
+    void protectionPreventsPlaneswalkerDamage() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent greensleeves = addCreatureReady(player1, new GreensleevesMaroSorcerer());
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 8);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, indexOf(player2, chandra), 2, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(greensleeves);
+        assertThat(greensleeves.getMarkedDamage()).isZero();
     }
 
     private int indexOf(Player player, Permanent permanent) {

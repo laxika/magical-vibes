@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GideonsPhalanx.class, DoomBlade.class, LavaAxe.class, Shock.class, GrizzlyBears.class})
 class GideonsPhalanxTest extends BaseCardTest {
 
     @Test
@@ -52,10 +54,10 @@ class GideonsPhalanxTest extends BaseCardTest {
         cast(player1);
 
         doomBlade(player2, knightsOf(player1).getFirst().getId());
-        doomBlade(player2, permanentOf(player1, "Grizzly Bears").getId());
+        doomBlade(player2, harness.getPermanentId(player1, "Grizzly Bears"));
 
         assertThat(knightsOf(player1)).hasSize(4);
-        assertThat(countOf(player1, "Grizzly Bears")).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -93,24 +95,110 @@ class GideonsPhalanxTest extends BaseCardTest {
 
         cast(player1);
 
-        doomBlade(player1, permanentOf(player2, "Grizzly Bears").getId());
+        doomBlade(player1, harness.getPermanentId(player2, "Grizzly Bears"));
 
-        assertThat(countOf(player2, "Grizzly Bears")).isZero();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Two instants suffice for spell mastery")
+    void twoInstantsEnableSpellMastery() {
+        harness.setGraveyard(player1, List.of(new Shock(), new Shock()));
+
+        cast(player1);
+        doomBlade(player2, knightsOf(player1).getFirst().getId());
+
+        assertThat(knightsOf(player1)).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Two sorceries suffice for spell mastery")
+    void twoSorceriesEnableSpellMastery() {
+        harness.setGraveyard(player1, List.of(new LavaAxe(), new LavaAxe()));
+
+        cast(player1);
+        doomBlade(player2, knightsOf(player1).getFirst().getId());
+
+        assertThat(knightsOf(player1)).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Creature cards in the graveyard do not contribute to spell mastery")
+    void creatureCardsDoNotEnableSpellMastery() {
+        harness.setGraveyard(player1, List.of(new Shock(), new GrizzlyBears(), new GrizzlyBears()));
+
+        cast(player1);
+        doomBlade(player2, knightsOf(player1).getFirst().getId());
+
+        assertThat(knightsOf(player1)).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Opponent graveyards do not contribute to spell mastery")
+    void opponentGraveyardDoesNotEnableSpellMastery() {
+        harness.setGraveyard(player1, List.of(new Shock()));
+        harness.setGraveyard(player2, List.of(new Shock(), new LavaAxe()));
+
+        cast(player1);
+        doomBlade(player2, knightsOf(player1).getFirst().getId());
+
+        assertThat(knightsOf(player1)).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("A spell resolving in response can enable spell mastery")
+    void spellMasteryIsCheckedAtResolution() {
+        harness.setGraveyard(player1, List.of(new LavaAxe()));
+        harness.setHand(player1, List.of(new GideonsPhalanx(), new Shock()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, (UUID) null);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        doomBlade(player2, knightsOf(player1).getFirst().getId());
+
+        assertThat(knightsOf(player1)).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not gain indestructible")
+    void laterCreaturesAreNotProtected() {
+        harness.setGraveyard(player1, List.of(new Shock(), new LavaAxe()));
+        cast(player1);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        doomBlade(player2, harness.getPermanentId(player1, "Grizzly Bears"));
+        doomBlade(player2, knightsOf(player1).getFirst().getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(knightsOf(player1)).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Removing graveyard cards after resolution does not end the protection")
+    void protectionPersistsWithoutSpellMastery() {
+        harness.setGraveyard(player1, List.of(new Shock(), new LavaAxe()));
+        cast(player1);
+        harness.setGraveyard(player1, List.of());
+
+        doomBlade(player2, knightsOf(player1).getFirst().getId());
+
+        assertThat(knightsOf(player1)).hasSize(4);
     }
 
     private void cast(Player player) {
         harness.setHand(player, List.of(new GideonsPhalanx()));
         harness.addMana(player, ManaColor.WHITE, 2);
         harness.addMana(player, ManaColor.COLORLESS, 5);
-        harness.castInstant(player, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player, 0);
     }
 
     private void doomBlade(Player player, UUID targetId) {
         harness.setHand(player, List.of(new DoomBlade()));
         harness.addMana(player, ManaColor.BLACK, 2);
-        harness.castInstant(player, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player, 0, targetId);
     }
 
     private List<Permanent> knightsOf(Player player) {
@@ -119,16 +207,4 @@ class GideonsPhalanxTest extends BaseCardTest {
                 .toList();
     }
 
-    private Permanent permanentOf(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> name.equals(p.getCard().getName()))
-                .findFirst()
-                .orElseThrow();
-    }
-
-    private long countOf(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> name.equals(p.getCard().getName()))
-                .count();
-    }
 }

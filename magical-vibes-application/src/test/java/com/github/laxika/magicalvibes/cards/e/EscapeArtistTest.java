@@ -120,7 +120,7 @@ class EscapeArtistTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Escape Artist can activate its return ability")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent artist = harness.addToBattlefieldAndReturn(player1, new EscapeArtist());
-        artist.setTapped(true);
+        artist.tap();
         artist.setSummoningSick(true);
         harness.setHand(player1, List.of(new AngelicWall()));
         harness.addMana(player1, ManaColor.BLUE, 1);

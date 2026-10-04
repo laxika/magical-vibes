@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.s.StratusDancer;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,8 +14,41 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GiftOfDoom.class, GrizzlyBears.class})
+@CardUsed({GiftOfDoom.class, GrizzlyBears.class, StratusDancer.class})
 class GiftOfDoomTest extends BaseCardTest {
+
+    @Test
+    @CardUsed({GiftOfDoom.class, StratusDancer.class})
+    void castingFaceUpAttachesAndGrantsBothKeywords() {
+        Permanent target = addCreatureReady(player2, new StratusDancer());
+        harness.setHand(player1, List.of(new GiftOfDoom()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        Permanent gift = findPermanent(player1, "Gift of Doom");
+        assertThat(gift.getAttachedTo()).isEqualTo(target.getId());
+        assertThat(gqs.hasKeyword(gd, target, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @CardUsed({GiftOfDoom.class, StratusDancer.class})
+    void sacrificingTheOnlyOtherCreatureLeavesNoLegalHost() {
+        Permanent sacrifice = addCreatureReady(player1, new StratusDancer());
+        Permanent gift = castFaceDown();
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(gift),
+                List.of(sacrifice.getId()));
+
+        harness.assertInGraveyard(player1, "Stratus Dancer");
+        harness.assertInGraveyard(player1, "Gift of Doom");
+        harness.assertNotOnBattlefield(player1, "Gift of Doom");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     void turningFaceUpSacrificesAnotherCreatureAndMayAttachAura() {

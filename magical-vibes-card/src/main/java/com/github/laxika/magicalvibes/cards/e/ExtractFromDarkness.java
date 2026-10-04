@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "EMA", collectorNumber = "200")
 @CardRegistration(set = "2X2", collectorNumber = "210")
 @CardRegistration(set = "LTC", collectorNumber = "266")
+@CardRegistration(set = "ZNC", collectorNumber = "90")
+@CardRegistration(set = "E01", collectorNumber = "84")
 public class ExtractFromDarkness extends Card {
 
     public ExtractFromDarkness() {

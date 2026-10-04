@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "140")
+@CardRegistration(set = "E01", collectorNumber = "55")
 public class ObsidianFireheart extends Card {
 
     public ObsidianFireheart() {

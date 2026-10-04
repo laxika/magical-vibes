@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 @CardRegistration(set = "CMD", collectorNumber = "112")
 @CardRegistration(set = "C15", collectorNumber = "143")
 @CardRegistration(set = "CM2", collectorNumber = "88")
+@CardRegistration(set = "ARC", collectorNumber = "31")
 public class BreathOfDarigaaz extends Card {
 
     public BreathOfDarigaaz() {

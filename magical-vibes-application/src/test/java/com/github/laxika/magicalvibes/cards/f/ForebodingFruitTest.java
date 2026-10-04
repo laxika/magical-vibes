@@ -115,7 +115,7 @@ class ForebodingFruitTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int foodIndex = gd.playerBattlefields.get(player1.getId())
                 .indexOf(findPermanent(player1, "Food"));
-        findPermanent(player1, "Food").setTapped(true);
+        findPermanent(player1, "Food").tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, foodIndex, null, null))
                 .isInstanceOf(IllegalStateException.class);

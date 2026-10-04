@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.d.DryadSophisticate;
 import com.github.laxika.magicalvibes.cards.m.Mortify;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -120,6 +121,33 @@ class GravenDominatorTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, survivingCreature)).isEqualTo(1);
     }
 
+    @Test
+    void creaturesEnteringAfterResolutionKeepTheirBaseStats() {
+        castGravenDominator();
+
+        Permanent lateCreature = harness.enterBattlefieldAndReturn(player2, new DryadSophisticate());
+
+        assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lateCreature)).isEqualTo(1);
+    }
+
+    @Test
+    void countersApplyOnTopOfTheOneOneBaseStats() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new DryadSophisticate());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        castGravenDominator();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
     private void castGravenDominator() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -137,7 +165,6 @@ class GravenDominatorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
     }
 }

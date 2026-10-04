@@ -64,7 +64,7 @@ class EbonyTreefolkTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Ebony Treefolk can activate its ability")
     void activatesWhileTappedAndSummoningSick() {
         Permanent treefolk = addReadyTreefolk(player1);
-        treefolk.setTapped(true);
+        treefolk.tap();
         treefolk.setSummoningSick(true);
         addBlackGreenMana(player1);
 

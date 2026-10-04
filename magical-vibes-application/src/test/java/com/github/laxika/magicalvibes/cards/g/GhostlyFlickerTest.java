@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
+import com.github.laxika.magicalvibes.cards.a.AngelicArmaments;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.IslandSanctuary;
+import com.github.laxika.magicalvibes.cards.z.ZealousConscripts;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GhostlyFlicker.class, GrizzlyBears.class, Island.class, AngelOfMercy.class,
-        GoldnightRedeemer.class, IslandSanctuary.class})
+        GoldnightRedeemer.class, IslandSanctuary.class, AngelicArmaments.class, ZealousConscripts.class})
 class GhostlyFlickerTest extends BaseCardTest {
 
     @Test
@@ -30,8 +32,7 @@ class GhostlyFlickerTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID islandId = harness.getPermanentId(player1, "Island");
 
-        harness.castInstant(player1, 0, List.of(bearsId, islandId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(bearsId, islandId));
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Island");
@@ -56,8 +57,7 @@ class GhostlyFlickerTest extends BaseCardTest {
         UUID angelId = harness.getPermanentId(player1, "Angel of Mercy");
         UUID redeemerId = harness.getPermanentId(player1, "Goldnight Redeemer");
 
-        harness.castInstant(player1, 0, List.of(angelId, redeemerId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(angelId, redeemerId));
         // Resolve both enter-the-battlefield triggers put on the stack by the returns.
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -159,11 +159,53 @@ class GhostlyFlickerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GhostlyFlicker()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, List.of(
+        harness.castAndResolveInstant(player1, 0, List.of(
                 harness.getPermanentId(player1, "Grizzly Bears"),
                 harness.getPermanentId(player1, "Island")));
-        harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Ghostly Flicker");
+    }
+
+    @Test
+    @DisplayName("Returns a stolen land under the spell controller's control")
+    void retainsControlOfStolenLand() {
+        Permanent stolenLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new ZealousConscripts()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castCreature(player1, 0, stolenLand.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(stolenLand);
+
+        harness.setHand(player1, List.of(new GhostlyFlicker()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castAndResolveInstant(player1, 0, List.of(stolenLand.getId(), ownLand.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Island")).hasSize(2);
+        harness.assertNotOnBattlefield(player2, "Island");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getId().equals(stolenLand.getId()) || p.getId().equals(ownLand.getId()));
+    }
+
+    @Test
+    @DisplayName("Can flicker an artifact and a land and returns them untapped")
+    void flickersArtifactAndLandUntapped() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AngelicArmaments());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Island());
+        artifact.tap();
+        land.tap();
+        harness.setHand(player1, List.of(new GhostlyFlicker()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, List.of(artifact.getId(), land.getId()));
+
+        Permanent returnedArtifact = findPermanent(player1, "Angelic Armaments");
+        Permanent returnedLand = findPermanent(player1, "Island");
+        assertThat(returnedArtifact.getId()).isNotEqualTo(artifact.getId());
+        assertThat(returnedLand.getId()).isNotEqualTo(land.getId());
+        assertThat(returnedArtifact.isTapped()).isFalse();
+        assertThat(returnedLand.isTapped()).isFalse();
     }
 }

@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "18")
 @CardRegistration(set = "MM3", collectorNumber = "7")
+@CardRegistration(set = "E01", collectorNumber = "11")
 public class GideonsLawkeeper extends Card {
 
     public GideonsLawkeeper() {

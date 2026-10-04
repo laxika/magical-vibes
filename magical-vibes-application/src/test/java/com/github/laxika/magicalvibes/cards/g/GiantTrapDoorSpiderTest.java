@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.a.Aurochs;
 import com.github.laxika.magicalvibes.cards.w.WindSpirit;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -95,16 +96,65 @@ class GiantTrapDoorSpiderTest extends BaseCardTest {
         assertThat(gd.exiledCards).isEmpty();
     }
 
+    @Test
+    @DisplayName("The attacker is still exiled if the Spider leaves before resolution")
+    void exilesAttackerWithoutSource() {
+        Permanent spider = addReadySpider(player1);
+        Permanent attacker = addAttacker(player2, player1, new Aurochs());
+        payMana(player1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(spider);
+        gd.playerGraveyards.get(player1.getId()).add(spider.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
+        assertThat(gd.exiledCards).extracting(e -> e.card().getId())
+                .contains(attacker.getCard().getId()).doesNotContain(spider.getCard().getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spider.getCard());
+    }
+
+    @Test
+    @DisplayName("Neither creature is exiled if the attacker gains flying before resolution")
+    void gainingFlyingMakesTargetIllegal() {
+        Permanent spider = addReadySpider(player1);
+        Permanent attacker = addAttacker(player2, player1, new Aurochs());
+        payMana(player1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.getGrantedKeywords().add(Keyword.FLYING);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(spider);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Neither creature is exiled if the target stops attacking before resolution")
+    void stoppingAttackMakesTargetIllegal() {
+        Permanent spider = addReadySpider(player1);
+        Permanent attacker = addAttacker(player2, player1, new Aurochs());
+        payMana(player1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(spider);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
     private Permanent addReadySpider(Player player) {
         return addCreatureReady(player, new GiantTrapDoorSpider());
     }
 
     private Permanent addAttacker(Player controller, Player defender, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(controller, card);
         perm.setAttacking(true);
         perm.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(controller.getId()).add(perm);
         return perm;
     }
 

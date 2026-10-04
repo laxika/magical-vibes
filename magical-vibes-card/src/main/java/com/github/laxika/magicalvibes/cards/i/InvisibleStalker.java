@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 
 @CardRegistration(set = "ISD", collectorNumber = "60")
 @CardRegistration(set = "SIS", collectorNumber = "17")
+@CardRegistration(set = "ZNC", collectorNumber = "27")
 public class InvisibleStalker extends Card {
 
     public InvisibleStalker() {

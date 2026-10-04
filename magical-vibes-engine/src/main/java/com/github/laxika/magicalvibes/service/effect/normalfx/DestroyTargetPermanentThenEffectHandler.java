@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -134,6 +138,27 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
                 return;
             }
             thenEffect = conditional.wrapped();
+        }
+
+        if (thenEffect instanceof MayEffect may && may.elseEffect() == null
+                && may.choicePlayer() == MayChoicePlayer.CONTROLLER
+                && may.wrapped() instanceof SearchLibraryEffect search
+                && search.searchPlayer() == LibrarySearchPlayer.CONTROLLER) {
+            var boundSearch = new SearchLibraryEffect(search.count(), search.filter(), search.destination(),
+                    search.manaValueBound(), search.castFromGraveyardCount(), search.requireDifferentNames(),
+                    search.grantHaste(), search.exileAtEndStep(), search.returnToHandAtEndStep(),
+                    search.animateFound(), LibrarySearchPlayer.TRIGGERING_PERMANENT_CONTROLLER,
+                    search.onlyIfSacrificed(), search.battlefieldIfChosenBeholdType(), search.shuffleAfterSelection(),
+                    search.battlefieldCounter(), search.enterWithCounters(), search.topLibraryPosition(),
+                    search.battlefieldIfOpponentControlsMoreLands(), search.topLibraryFractionDenominator());
+            var boundMay = new MayEffect(boundSearch, may.prompt(), null,
+                    MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER);
+            entry.setTriggeringPermanentControllerId(thenControllerId);
+            entry.setEventValue(statValue);
+            entry.replaceEffectToResolve(entry.getResolvingEffectIndex(), boundMay);
+            effectHandlerRegistry.getHandler(boundMay).resolve(gameData, entry, boundMay);
+            gameOutcomeService.checkWinCondition(gameData);
+            return;
         }
 
         if (thenEffect instanceof SequenceEffect) {

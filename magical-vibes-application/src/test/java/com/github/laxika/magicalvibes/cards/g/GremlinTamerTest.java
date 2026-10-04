@@ -12,16 +12,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GremlinTamer.class, DazzlingTheaterPropRoom.class, GloriousAnthem.class})
+@CardUsed({GremlinTamer.class, DazzlingTheaterPropRoom.class})
 class GremlinTamerTest extends BaseCardTest {
 
     @Test
     void enchantmentYouControlEnteringCreatesAGremlin() {
         addTamer();
-        harness.setHand(player1, List.of(new GloriousAnthem()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.setHand(player1, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castEnchantment(player1, 0);
+        harness.castModalSorcery(player1, 0, 0, List.of());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -47,18 +47,70 @@ class GremlinTamerTest extends BaseCardTest {
     void opponentEnchantmentsDoNotCreateAGremlin() {
         addTamer();
         int tokenCountBefore = findGremlinTokens(player1).size();
-        harness.setHand(player2, List.of(new GloriousAnthem()));
-        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.setHand(player2, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
 
-        harness.castEnchantment(player2, 0);
+        harness.castModalSorcery(player2, 0, 0, List.of());
         harness.passBothPriorities();
 
         assertThat(findGremlinTokens(player1)).hasSize(tokenCountBefore);
     }
 
-    private Permanent addTamer() {
-        return harness.addToBattlefieldAndReturn(player1, new GremlinTamer());
+    @Test
+    void roomEntryAndLaterFullUnlockEachCreateAGremlin() {
+        addTamer();
+        harness.setHand(player1, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player1, ManaColor.WHITE, 7);
+
+        harness.castModalSorcery(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findGremlinTokens(player1)).hasSize(1);
+        Permanent room = findPermanent(player1, "Dazzling Theater // Prop Room");
+        assertThat(room.isRoomFullyUnlocked()).isFalse();
+
+        harness.unlockRoomDoor(player1, gd.playerBattlefields.get(player1.getId()).indexOf(room), 1);
+        harness.passBothPriorities();
+
+        assertThat(room.isRoomFullyUnlocked()).isTrue();
+        assertThat(findGremlinTokens(player1)).hasSize(2);
+    }
+
+    @Test
+    void opponentFullyUnlockingARoomDoesNotCreateAGremlin() {
+        addTamer();
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player2, ManaColor.WHITE, 7);
+
+        harness.castModalSorcery(player2, 0, 0, List.of());
+        harness.passBothPriorities();
+        Permanent room = findPermanent(player2, "Dazzling Theater // Prop Room");
+        harness.unlockRoomDoor(player2, 0, 1);
+        harness.passBothPriorities();
+
+        assertThat(room.isRoomFullyUnlocked()).isTrue();
+        assertThat(findGremlinTokens(player1)).isEmpty();
+        assertThat(findGremlinTokens(player2)).isEmpty();
+    }
+
+    @Test
+    void eachTamerCreatesItsOwnTokenForAnEnchantmentEntering() {
+        addTamer();
+        addTamer();
+
+        harness.enterBattlefieldAndReturn(player1, new DazzlingTheaterPropRoom());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findGremlinTokens(player1)).hasSize(2);
+        assertThat(findGremlinTokens(player2)).isEmpty();
+    }
+
+    private void addTamer() {
+        harness.addToBattlefield(player1, new GremlinTamer());
     }
 
     private Permanent castRoom() {
@@ -66,7 +118,7 @@ class GremlinTamerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
         harness.castModalSorcery(player1, 0, 0, List.of());
         harness.passBothPriorities();
-        return gd.playerBattlefields.get(player1.getId()).getFirst();
+        return findPermanent(player1, "Dazzling Theater // Prop Room");
     }
 
     private List<Permanent> findGremlinTokens(com.github.laxika.magicalvibes.model.Player player) {

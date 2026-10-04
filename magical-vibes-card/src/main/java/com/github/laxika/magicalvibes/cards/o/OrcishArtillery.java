@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "6ED", collectorNumber = "196")
 @CardRegistration(set = "ITP", collectorNumber = "36")
 @CardRegistration(set = "RQS", collectorNumber = "35")
+@CardRegistration(set = "LEA", collectorNumber = "165")
+@CardRegistration(set = "LEB", collectorNumber = "166")
 public class OrcishArtillery extends Card {
 
     public OrcishArtillery() {

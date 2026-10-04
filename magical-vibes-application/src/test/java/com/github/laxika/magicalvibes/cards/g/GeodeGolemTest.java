@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HaakonStromgaldScourge;
+import com.github.laxika.magicalvibes.cards.y.YargleGluttonOfUrborg;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GeodeGolem.class, GrizzlyBears.class})
+@CardUsed({GeodeGolem.class, YargleGluttonOfUrborg.class, HaakonStromgaldScourge.class})
 class GeodeGolemTest extends BaseCardTest {
 
     @Test
@@ -35,7 +37,7 @@ class GeodeGolemTest extends BaseCardTest {
         assertThat(gd.commanderTaxByCardId).containsEntry(commander.getId(), 2);
 
         harness.passBothPriorities();
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Yargle, Glutton of Urborg");
     }
 
     @Test
@@ -63,6 +65,77 @@ class GeodeGolemTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Commander tax must be paid even when the mana cost is waived")
+    void paysCommanderTax() {
+        addAttackingGeodeGolem();
+        Card commander = putCommanderInCommandZone();
+        gd.commanderTaxByCardId.put(commander.getId(), 2);
+
+        resolveCombatAndTrigger();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(commander.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.commanderTaxByCardId).containsEntry(commander.getId(), 4);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Yargle, Glutton of Urborg");
+    }
+
+    @Test
+    @DisplayName("An unpaid commander tax prevents casting")
+    void cannotCastWithoutCommanderTaxMana() {
+        addAttackingGeodeGolem();
+        Card commander = putCommanderInCommandZone();
+        gd.commanderTaxByCardId.put(commander.getId(), 2);
+
+        resolveCombatAndTrigger();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(commander.getId()));
+        assertThat(gd.playerCommandZones.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(commander.getId());
+        assertThat(gd.commanderTaxByCardId).containsEntry(commander.getId(), 2);
+    }
+
+    @Test
+    @CardUsed({GeodeGolem.class, YargleGluttonOfUrborg.class, HaakonStromgaldScourge.class})
+    @DisplayName("Casting restrictions still apply to the commander")
+    void cannotCastHaakonFromCommandZone() {
+        addAttackingGeodeGolem();
+        Card commander = new HaakonStromgaldScourge();
+        gd.makeCommander(player1.getId(), commander);
+        gd.playerCommandZones.put(player1.getId(), new ArrayList<>(List.of(commander)));
+
+        resolveCombatAndTrigger();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(commander.getId()));
+        assertThat(gd.playerCommandZones.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(commander.getId());
+    }
+
+    @Test
+    @DisplayName("A commander arriving before trigger resolution can be cast")
+    void commanderMayEnterCommandZoneAfterCombatDamage() {
+        addAttackingGeodeGolem();
+        resolveCombat();
+        assertThat(gd.stack).isNotEmpty();
+        Card commander = putCommanderInCommandZone();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(commander.getId()));
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Yargle, Glutton of Urborg");
+    }
+
     private Permanent addAttackingGeodeGolem() {
         Permanent geode = addCreatureReady(player1, new GeodeGolem());
         geode.setAttacking(true);
@@ -70,7 +143,7 @@ class GeodeGolemTest extends BaseCardTest {
     }
 
     private Card putCommanderInCommandZone() {
-        Card commander = new GrizzlyBears();
+        Card commander = new YargleGluttonOfUrborg();
         gd.makeCommander(player1.getId(), commander);
         gd.playerCommandZones.put(player1.getId(), new ArrayList<>(List.of(commander)));
         return commander;

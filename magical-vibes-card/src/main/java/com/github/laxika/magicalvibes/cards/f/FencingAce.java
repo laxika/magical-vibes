@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "2XM", collectorNumber = "15")
 @CardRegistration(set = "ANB", collectorNumber = "7")
 @CardRegistration(set = "CMM", collectorNumber = "23")
+@CardRegistration(set = "E01", collectorNumber = "7")
 public class FencingAce extends Card {
 
     public FencingAce() {

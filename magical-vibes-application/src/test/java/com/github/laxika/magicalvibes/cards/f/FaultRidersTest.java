@@ -151,8 +151,8 @@ class FaultRidersTest extends BaseCardTest {
     void tappedPermanentsDoNotPreventActivation() {
         Permanent riders = harness.addToBattlefieldAndReturn(player1, new FaultRiders());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
-        riders.setTapped(true);
-        land.setTapped(true);
+        riders.tap();
+        land.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

@@ -147,7 +147,7 @@ class EtchedMonstrosityTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickWithExtraCounters() {
         Permanent monstrosity = harness.addToBattlefieldAndReturn(player1, new EtchedMonstrosity());
         monstrosity.setSummoningSick(true);
-        monstrosity.setTapped(true);
+        monstrosity.tap();
         monstrosity.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 6);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

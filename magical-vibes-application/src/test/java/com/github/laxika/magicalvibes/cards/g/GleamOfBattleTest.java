@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.b.BorosMastiff;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GleamOfBattle.class, BorosMastiff.class})
 class GleamOfBattleTest extends BaseCardTest {
 
     @Test
@@ -25,7 +25,7 @@ class GleamOfBattleTest extends BaseCardTest {
         Permanent idle = addCreature(player1);
 
         declareAttackers(List.of(1, 2));
-        resolveQueuedTriggers();
+        resolveAllTriggers();
 
         assertThat(attacker1.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(attacker2.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -41,34 +41,61 @@ class GleamOfBattleTest extends BaseCardTest {
         Permanent opponentAttacker = addCreature(player2);
 
         declareAttackers(player2, List.of(0));
-        resolveQueuedTriggers();
+        resolveAllTriggers();
 
         assertThat(opponentAttacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    /** Resolve every triggered ability currently on the stack (one Gleam of Battle trigger per attacker). */
-    private void resolveQueuedTriggers() {
-        int triggers = gd.stack.size();
-        for (int i = 0; i < triggers; i++) {
-            harness.passBothPriorities();
-        }
+    @Test
+    @DisplayName("Two Gleams each put a counter on the attacking creature")
+    void multipleGleamsEachTrigger() {
+        addGleamOfBattle(player1);
+        addGleamOfBattle(player1);
+        Permanent attacker = addCreature(player1);
+
+        declareAttackers(List.of(2));
+        resolveAllTriggers();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Removing Gleam after it triggers does not stop the counter")
+    void triggerResolvesAfterEnchantmentLeaves() {
+        Permanent gleam = harness.addToBattlefieldAndReturn(player1, new GleamOfBattle());
+        Permanent attacker = addCreature(player1);
+
+        declareAttackers(List.of(1));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(gleam);
+        gd.playerGraveyards.get(player1.getId()).add(gleam.getCard());
+        resolveAllTriggers();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A creature returning to the battlefield is not the original attacker")
+    void returnedCreatureDoesNotReceiveOldTriggerCounter() {
+        addGleamOfBattle(player1);
+        Permanent attacker = addCreature(player1);
+
+        declareAttackers(List.of(1));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, attacker.getCard());
+        resolveAllTriggers();
+
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private void addGleamOfBattle(Player player) {
-        gd.playerBattlefields.get(player.getId()).add(new Permanent(new GleamOfBattle()));
+        harness.addToBattlefield(player, new GleamOfBattle());
     }
 
     private Permanent addCreature(Player player) {
-        Card creature = new Card();
-        creature.setName("Test Creature");
-        creature.setType(CardType.CREATURE);
-        creature.setManaCost("{R}");
-        creature.setColor(CardColor.RED);
-        creature.setPower(2);
-        creature.setToughness(2);
-        Permanent perm = new Permanent(creature);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        Permanent creature = harness.addToBattlefieldAndReturn(player, new BorosMastiff());
+        creature.setSummoningSick(false);
+        return creature;
     }
 }

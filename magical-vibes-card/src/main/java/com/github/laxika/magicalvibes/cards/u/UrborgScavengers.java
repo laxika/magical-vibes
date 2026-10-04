@@ -7,6 +7,10 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardP
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCardsExiledWithSourceEffect;
 
 @CardRegistration(set = "MAT", collectorNumber = "15")
+@CardRegistration(set = "MAT", collectorNumber = "65")
+@CardRegistration(set = "MAT", collectorNumber = "115")
+@CardRegistration(set = "MAT", collectorNumber = "158")
+@CardRegistration(set = "MAT", collectorNumber = "199")
 public class UrborgScavengers extends Card {
 
     public UrborgScavengers() {

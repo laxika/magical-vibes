@@ -103,7 +103,7 @@ class DrowsingTyrannodonTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(support);
 
         assertThat(tyrannodon.isAttacking()).isTrue();
-        gs.declareBlockers(gd, player2, java.util.Map.of());
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }

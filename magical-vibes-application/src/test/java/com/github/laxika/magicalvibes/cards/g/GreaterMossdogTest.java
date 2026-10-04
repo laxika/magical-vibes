@@ -65,6 +65,64 @@ class GreaterMossdogTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(mossdog);
     }
 
+    @Test
+    @DisplayName("Dredge mills exactly three cards and leaves the rest of the library")
+    void millsExactlyThreeCards() {
+        harness.setHand(player1, List.of());
+        GreaterMossdog mossdog = new GreaterMossdog();
+        List<Card> milled = List.of(new Forest(), new Forest(), new Forest());
+        Card remaining = new Forest();
+        harness.setGraveyard(player1, List.of(mossdog));
+        harness.setLibrary(player1, List.of(milled.get(0), milled.get(1), milled.get(2), remaining));
+
+        resolveDraw();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(mossdog);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(milled);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Choosing one copy dredges only that copy")
+    void returnsOnlyChosenCopy() {
+        harness.setHand(player1, List.of());
+        GreaterMossdog first = new GreaterMossdog();
+        GreaterMossdog second = new GreaterMossdog();
+        List<Card> milled = List.of(new Forest(), new Forest(), new Forest());
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setLibrary(player1, milled);
+
+        resolveDraw();
+        harness.handleGraveyardCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactly(first, milled.get(0), milled.get(1), milled.get(2));
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's draw cannot dredge a card from your graveyard")
+    void opponentDrawDoesNotDredge() {
+        harness.setHand(player2, List.of());
+        GreaterMossdog mossdog = new GreaterMossdog();
+        Card topCard = new Forest();
+        harness.setGraveyard(player1, List.of(mossdog));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(topCard, new Forest(), new Forest()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(mossdog);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.cardsDrawnThisTurn.get(player2.getId())).isEqualTo(1);
+    }
+
     private void resolveDraw() {
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
     }

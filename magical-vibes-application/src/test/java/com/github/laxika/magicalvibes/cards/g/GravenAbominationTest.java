@@ -1,25 +1,27 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FrilledSandwalla;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GravenAbomination.class, FrilledSandwalla.class, Forest.class})
 class GravenAbominationTest extends BaseCardTest {
 
     private Permanent addReadyAttacker() {
-        Permanent abomination = new Permanent(new GravenAbomination());
+        Permanent abomination = harness.addToBattlefieldAndReturn(player1, new GravenAbomination());
         abomination.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(abomination);
         return abomination;
     }
 
@@ -35,8 +37,8 @@ class GravenAbominationTest extends BaseCardTest {
     @DisplayName("Attacking exiles a targeted card from the defending player's graveyard")
     void attackExilesDefendingPlayerGraveyardCard() {
         addReadyAttacker();
-        Card bears = new GrizzlyBears();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(bears)));
+        Card bears = new FrilledSandwalla();
+        harness.setGraveyard(player2, List.of(bears));
 
         declareAttack();
 
@@ -55,10 +57,10 @@ class GravenAbominationTest extends BaseCardTest {
     @DisplayName("A card in the attacker's own graveyard is not a legal target")
     void ownGraveyardCardNotTargetable() {
         addReadyAttacker();
-        Card ownCard = new GrizzlyBears();
-        Card opponentCard = new GrizzlyBears();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(ownCard)));
-        harness.setGraveyard(player2, new ArrayList<>(List.of(opponentCard)));
+        Card ownCard = new FrilledSandwalla();
+        Card opponentCard = new FrilledSandwalla();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
 
         declareAttack();
 
@@ -80,11 +82,85 @@ class GravenAbominationTest extends BaseCardTest {
     @DisplayName("Empty defending graveyard produces no target choice")
     void emptyDefendingGraveyardNoChoice() {
         addReadyAttacker();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setGraveyard(player1, List.of(new FrilledSandwalla()));
 
         declareAttack();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A legal graveyard target must be chosen; the exile is not optional")
+    void cannotDeclineTargetSelection() {
+        addReadyAttacker();
+        Card target = new FrilledSandwalla();
+        harness.setGraveyard(player2, List.of(target));
+        declareAttack();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target);
+    }
+
+    @Test
+    @DisplayName("Only the chosen card is exiled, and noncreature cards are legal targets")
+    void onlyChosenNoncreatureCardIsExiled() {
+        addReadyAttacker();
+        Card forest = new Forest();
+        Card creature = new FrilledSandwalla();
+        harness.setGraveyard(player2, List.of(forest, creature));
+
+        declareAttack();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(forest.getId(), creature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("The attack trigger resolves even if its source leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent abomination = addReadyAttacker();
+        Card target = new FrilledSandwalla();
+        harness.setGraveyard(player2, List.of(target));
+        declareAttack();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(abomination);
+        harness.setGraveyard(player1, List.of(abomination.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target);
+    }
+
+    @Test
+    @DisplayName("A target that leaves the graveyard is not exiled and no new target is chosen")
+    void targetLeavingGraveyardMakesTriggerIneffective() {
+        addReadyAttacker();
+        Card target = new FrilledSandwalla();
+        Card remaining = new Forest();
+        harness.setGraveyard(player2, List.of(target, remaining));
+        declareAttack();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+
+        harness.setGraveyard(player2, List.of(remaining));
+        harness.setHand(player2, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.playerHands.get(player2.getId())).contains(target);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }

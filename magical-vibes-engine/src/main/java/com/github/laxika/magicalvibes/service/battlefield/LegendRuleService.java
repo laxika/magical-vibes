@@ -54,7 +54,7 @@ public class LegendRuleService {
         Map<String, List<UUID>> legendaryByName = new HashMap<>();
         for (Permanent perm : battlefield) {
             if (isLegendary(gameData, perm)) {
-                legendaryByName.computeIfAbsent(perm.getCard().getName(), k -> new ArrayList<>()).add(perm.getId());
+                legendaryByName.computeIfAbsent(gameQueryService.getEffectiveName(gameData, perm), k -> new ArrayList<>()).add(perm.getId());
             }
         }
 
@@ -105,7 +105,7 @@ public class LegendRuleService {
                               UUID controllerId) {
         int totalWithName = countOnBattlefield(gameData, name);
         return battlefield.stream()
-                .filter(perm -> name.equals(perm.getCard().getName()))
+                .filter(perm -> name.equals(gameQueryService.getEffectiveName(gameData, perm)))
                 .allMatch(perm -> hasLegendRuleExemption(gameData, perm, name, totalWithName,
                         controllerId));
     }
@@ -125,7 +125,7 @@ public class LegendRuleService {
         int count = 0;
         for (List<Permanent> permanents : gameData.playerBattlefields.values()) {
             for (Permanent perm : permanents) {
-                if (name.equals(perm.getCard().getName())) {
+                if (name.equals(gameQueryService.getEffectiveName(gameData, perm))) {
                     count++;
                 }
             }
@@ -135,7 +135,7 @@ public class LegendRuleService {
 
     private int countControlledOnBattlefield(GameData gameData, UUID controllerId, String name) {
         return (int) gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
-                .filter(perm -> name.equals(perm.getCard().getName()))
+                .filter(perm -> name.equals(gameQueryService.getEffectiveName(gameData, perm)))
                 .count();
     }
 

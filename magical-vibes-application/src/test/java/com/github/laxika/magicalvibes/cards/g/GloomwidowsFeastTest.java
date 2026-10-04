@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.FaerieMacabre;
 import com.github.laxika.magicalvibes.cards.r.RuneCervinRider;
 import com.github.laxika.magicalvibes.cards.s.SafeholdElite;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -78,6 +79,49 @@ class GloomwidowsFeastTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, nonFlyer))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The flying creature is destroyed before the Spider enters")
+    void destroysCreatureBeforeCreatingSpider() {
+        UUID target = addCreature(player2, new FaerieMacabre());
+        castFeast(target);
+
+        List<String> events = gd.gameLog.stream().map(GameLogEntry::plainText).toList();
+        int destruction = java.util.stream.IntStream.range(0, events.size())
+                .filter(i -> events.get(i).contains("Faerie Macabre")
+                        && events.get(i).contains("is destroyed"))
+                .findFirst().orElseThrow();
+        int creation = java.util.stream.IntStream.range(0, events.size())
+                .filter(i -> events.get(i).contains("Spider")
+                        && events.get(i).contains("enters the battlefield"))
+                .findFirst().orElseThrow();
+        assertThat(destruction).isLessThan(creation);
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents both destruction and token creation")
+    void removedTargetDoesNotCreateSpider() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FaerieMacabre());
+        harness.setHand(player1, List.of(new GloomwidowsFeast()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spider")).isEmpty();
+        harness.assertInGraveyard(player1, "Gloomwidow's Feast");
+    }
+
+    @Test
+    @DisplayName("The caster can destroy their own blue flyer and receives the Spider")
+    void canTargetOwnBlueFlyer() {
+        UUID target = addCreature(player1, new BriarberryCohort());
+        castFeast(target);
+
+        harness.assertInGraveyard(player1, "Briarberry Cohort");
+        assertThat(findPermanents(player1, "Spider")).hasSize(1);
+        assertThat(findPermanents(player2, "Spider")).isEmpty();
     }
 
     // ===== Helpers =====

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeForColorlessManaUntilEndOfTurnEffect;
 
 @CardRegistration(set = "4ED", collectorNumber = "236")
+@CardRegistration(set = "LEA", collectorNumber = "188")
 @CardRegistration(set = "2ED", collectorNumber = "189")
 @CardRegistration(set = "SUM", collectorNumber = "188")
 @CardRegistration(set = "3ED", collectorNumber = "188")
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeForColorlessManaUnt
 @CardRegistration(set = "VMA", collectorNumber = "200")
 @CardRegistration(set = "STA", collectorNumber = "50")
 @CardRegistration(set = "ME4", collectorNumber = "145")
+@CardRegistration(set = "LEB", collectorNumber = "189")
 public class Channel extends Card {
 
     public Channel() {

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "5ED", collectorNumber = "324")
+@CardRegistration(set = "LEA", collectorNumber = "215")
 @CardRegistration(set = "4ED", collectorNumber = "270")
 @CardRegistration(set = "3ED", collectorNumber = "215")
 @CardRegistration(set = "2ED", collectorNumber = "216")
@@ -13,5 +14,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "SUM", collectorNumber = "215")
 @CardRegistration(set = "ME1", collectorNumber = "128")
 @CardRegistration(set = "ME3", collectorNumber = "132")
+@CardRegistration(set = "LEB", collectorNumber = "216")
 public class ScrybSprites extends Card {
 }

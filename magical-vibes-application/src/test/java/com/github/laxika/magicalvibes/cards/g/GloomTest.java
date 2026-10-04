@@ -22,6 +22,7 @@ class GloomTest extends BaseCardTest {
 
     @Nested
     @DisplayName("White spells cost {3} more to cast")
+    @CardUsed({Gloom.class, SavannahLions.class, GrizzlyBears.class})
     class WhiteSpellTax {
 
         @Test
@@ -40,11 +41,7 @@ class GloomTest extends BaseCardTest {
         @DisplayName("A {W} white creature casts with {3} extra generic mana")
         void whiteSpellCastableWithTax() {
             harness.addToBattlefield(player1, new Gloom());
-            harness.setHand(player1, List.of(new SavannahLions()));
-            harness.addMana(player1, ManaColor.WHITE, 1);
-            harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-            harness.castCreature(player1, 0);
+            harness.castFromHand(player1, new SavannahLions(), "{3}{W}");
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
@@ -54,10 +51,7 @@ class GloomTest extends BaseCardTest {
         @DisplayName("Non-white spells are not taxed")
         void nonWhiteSpellNotAffected() {
             harness.addToBattlefield(player1, new Gloom());
-            harness.setHand(player1, List.of(new GrizzlyBears()));
-            harness.addMana(player1, ManaColor.GREEN, 2);
-
-            harness.castCreature(player1, 0);
+            harness.castFromHand(player1, new GrizzlyBears(), "{G}{G}");
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
@@ -68,11 +62,7 @@ class GloomTest extends BaseCardTest {
         void opponentWhiteSpellAlsoCostsThreeMore() {
             harness.addToBattlefield(player1, new Gloom());
             harness.forceActivePlayer(player2);
-            harness.setHand(player2, List.of(new SavannahLions()));
-            harness.addMana(player2, ManaColor.WHITE, 1);
-            harness.addMana(player2, ManaColor.COLORLESS, 3);
-
-            harness.castCreature(player2, 0);
+            harness.castFromHand(player2, new SavannahLions(), "{3}{W}");
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(0);
@@ -81,6 +71,8 @@ class GloomTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Activated abilities of white enchantments cost {3} more")
+    @CardUsed({Gloom.class, CircleOfProtectionRed.class, Deathgrip.class,
+            NorthernPaladin.class, GrizzlyBears.class})
     class WhiteEnchantmentAbilityTax {
 
         @Test
@@ -140,10 +132,7 @@ class GloomTest extends BaseCardTest {
             harness.addToBattlefield(player1, new Deathgrip());
             harness.addToBattlefield(player2, new Gloom());
             harness.forceActivePlayer(player2);
-            harness.setHand(player2, List.of(new GrizzlyBears()));
-            harness.addMana(player2, ManaColor.GREEN, 1);
-            harness.addMana(player2, ManaColor.COLORLESS, 1);
-            harness.castCreature(player2, 0);
+            harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
             var greenSpellId = gd.stack.getFirst().getCard().getId();
             harness.passPriority(player2);
             harness.addMana(player1, ManaColor.BLACK, 2);
@@ -153,5 +142,76 @@ class GloomTest extends BaseCardTest {
             assertThat(gd.stack).hasSize(2);
             assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
         }
+    }
+
+    @Test
+    void multipleGloomsStackTheirSpellTaxes() {
+        harness.addToBattlefield(player1, new Gloom());
+        harness.addToBattlefield(player2, new Gloom());
+        harness.setHand(player1, List.of(new SavannahLions()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void multipleGloomsStackTheirAbilityTaxes() {
+        harness.addToBattlefield(player1, new CircleOfProtectionRed());
+        harness.addToBattlefield(player1, new Gloom());
+        harness.addToBattlefield(player2, new Gloom());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, (Integer) null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, (Integer) null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void gloomTaxesItsControllersWhiteEnchantmentSpell() {
+        harness.addToBattlefield(player1, new Gloom());
+
+        harness.castFromHand(player1, new CircleOfProtectionRed(), "{4}{W}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Circle of Protection: Red");
+    }
+
+    @Test
+    void destroyingGloomEndsBothTaxes() {
+        addCreatureReady(player1, new NorthernPaladin());
+        harness.addToBattlefield(player1, new CircleOfProtectionRed());
+        var gloom = harness.addToBattlefieldAndReturn(player2, new Gloom());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, (Integer) null, gloom.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Gloom");
+
+        harness.castFromHand(player1, new SavannahLions(), "{W}");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Savannah Lions");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, (Integer) null, null);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

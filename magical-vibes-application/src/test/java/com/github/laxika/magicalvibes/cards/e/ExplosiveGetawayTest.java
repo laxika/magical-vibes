@@ -66,7 +66,7 @@ class ExplosiveGetawayTest extends BaseCardTest {
     @Test
     void exilesNoncreatureArtifactAndReturnsItUntapped() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Spellbook());
-        target.setTapped(true);
+        target.tap();
         harness.addToBattlefield(player1, new HillGiant());
         castGetaway(target.getId());
         harness.passBothPriorities();

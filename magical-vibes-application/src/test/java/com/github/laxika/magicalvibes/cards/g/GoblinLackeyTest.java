@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -83,13 +84,65 @@ class GoblinLackeyTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Coral Merfolk");
     }
 
+    @Test
+    @DisplayName("Damage to its controller also permits putting a Goblin onto the battlefield")
+    void damageToControllerTriggersAbility() {
+        harness.setHand(player1, List.of(new GoblinRaider()));
+        dealNoncombatDamage(player1.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Goblin Raider");
+        harness.assertNotOnBattlefield(player2, "Goblin Raider");
+    }
+
+    @Test
+    @DisplayName("Damage to a creature does not trigger the ability")
+    void damageToCreatureDoesNotTriggerAbility() {
+        harness.setHand(player1, List.of(new GoblinRaider()));
+        Permanent target = addCreatureReady(player2, new GoblinRaider());
+        dealNoncombatDamage(target.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Goblin Raider");
+        harness.assertNotOnBattlefield(player1, "Goblin Raider");
+    }
+
+    @Test
+    @DisplayName("One damage event permits exactly one Goblin, which enters untapped and not attacking")
+    void putsOnlyOneGoblinOntoBattlefield() {
+        harness.setHand(player1, List.of(new GoblinRaider(), new GoblinLackey()));
+        dealNoncombatDamage();
+
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        PendingInteraction.HandChoice choice = (PendingInteraction.HandChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validIndices()).containsExactly(0, 1);
+        harness.handleCardChosen(player1, 0);
+
+        Permanent raider = findPermanent(player1, "Goblin Raider");
+        assertThat(raider.isTapped()).isFalse();
+        assertThat(raider.isAttacking()).isFalse();
+        assertThat(raider.isSummoningSick()).isTrue();
+        harness.assertInHand(player1, "Goblin Lackey");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void dealNoncombatDamage() {
+        dealNoncombatDamage(player2.getId());
+    }
+
+    private void dealNoncombatDamage(UUID targetId) {
         Permanent lackey = addCreatureReady(player1, new GoblinLackey());
         Permanent study = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
         study.setAttachedTo(lackey.getId());
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(lackey), null,
-                player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+                targetId);
+        resolveAllTriggers();
     }
 }

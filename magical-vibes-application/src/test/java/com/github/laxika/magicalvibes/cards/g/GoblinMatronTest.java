@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -112,11 +111,42 @@ class GoblinMatronTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("An accepted search may fail to find even when Goblins are available")
+    void acceptedSearchMayFailToFind() {
+        setupAndCast();
+        GoblinRaider raider = new GoblinRaider();
+        Island island = new Island();
+        harness.setLibrary(player1, List.of(raider, island));
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(raider, island);
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+        assertThat(gameLogContains("reveals")).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Accepting a search of an empty library completes and shuffles")
+    void acceptedSearchOfEmptyLibraryCompletes() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("Library is shuffled")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new GoblinMatron()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GoblinMatron(), "{2}{R}");
     }
 
     private void setupLibrary() {

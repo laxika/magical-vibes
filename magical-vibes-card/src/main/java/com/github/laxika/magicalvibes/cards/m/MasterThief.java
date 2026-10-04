@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M12", collectorNumber = "64")
+@CardRegistration(set = "ZNC", collectorNumber = "30")
 public class MasterThief extends Card {
 
     public MasterThief() {

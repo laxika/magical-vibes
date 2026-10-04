@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "MIC", collectorNumber = "77")
 @CardRegistration(set = "C16", collectorNumber = "57")
 @CardRegistration(set = "CM2", collectorNumber = "15")
+@CardRegistration(set = "ZNC", collectorNumber = "9")
 public class AbzanFalconer extends Card {
 
     public AbzanFalconer() {

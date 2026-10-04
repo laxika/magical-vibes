@@ -94,7 +94,7 @@ class DuskUrchinsTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Dusk Urchins");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     @Test

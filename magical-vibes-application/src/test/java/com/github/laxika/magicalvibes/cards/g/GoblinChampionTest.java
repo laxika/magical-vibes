@@ -49,9 +49,7 @@ class GoblinChampionTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -68,5 +66,61 @@ class GoblinChampionTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Goblin Champion"));
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Champions each boost the creature attacking alone")
+    void multipleExaltedAbilitiesStack() {
+        Permanent attacker = addCreatureReady(player1, new GoblinChampion());
+        addCreatureReady(player1, new GoblinChampion());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An opposing Champion does not boost a creature you control")
+    void opposingExaltedDoesNotApply() {
+        Permanent attacker = addCreatureReady(player1, new GoblinChampion());
+        addCreatureReady(player2, new GoblinChampion());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Exalted resolves after its source leaves the battlefield")
+    void exaltedResolvesWithoutSource() {
+        Permanent source = addCreatureReady(player1, new GoblinChampion());
+        Permanent attacker = addCreatureReady(player1, new GoblinChampion());
+
+        declareAttackers(player1, List.of(1));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Haste allows a newly entered Champion to attack and receive exalted")
+    void newlyEnteredChampionCanAttack() {
+        Permanent champion = harness.addToBattlefieldAndReturn(player1, new GoblinChampion());
+        champion.setSummoningSick(true);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(2);
     }
 }

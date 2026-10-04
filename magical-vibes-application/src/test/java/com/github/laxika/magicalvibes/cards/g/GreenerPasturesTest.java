@@ -68,4 +68,52 @@ class GreenerPasturesTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
     }
+
+    @Test
+    @DisplayName("Gaining the land lead after upkeep begins does not create a trigger")
+    void gainingLandLeadAfterUpkeepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new GreenerPastures());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.addToBattlefield(player1, new Forest());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(findPermanents(player2, "Saproling")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land-count tie before resolution prevents token creation")
+    void becomingTiedBeforeResolutionPreventsToken() {
+        harness.addToBattlefield(player1, new GreenerPastures());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        harness.addToBattlefield(player1, new Forest());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(findPermanents(player2, "Saproling")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each copy creates a token for the active player regardless of its controller")
+    void multipleCopiesCreateTokensForActivePlayer() {
+        harness.addToBattlefield(player1, new GreenerPastures());
+        harness.addToBattlefield(player2, new GreenerPastures());
+        harness.addToBattlefield(player1, new Forest());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(2);
+        assertThat(findPermanents(player2, "Saproling")).isEmpty();
+    }
 }
