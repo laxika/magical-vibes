@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LavaAxe;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TrueBeliever;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HidetsuguAndKairi.class, GrizzlyBears.class, Shock.class})
+@CardUsed({HidetsuguAndKairi.class, GrizzlyBears.class, Shock.class, LavaAxe.class, TrueBeliever.class})
 class HidetsuguAndKairiTest extends BaseCardTest {
 
     @Test
@@ -26,12 +27,7 @@ class HidetsuguAndKairiTest extends BaseCardTest {
         Card third = new GrizzlyBears();
         Card fourth = new Shock();
         harness.setLibrary(player1, List.of(first, second, third, fourth));
-        harness.setHand(player1, List.of(new HidetsuguAndKairi()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HidetsuguAndKairi(), "{2}{U}{U}{B}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -97,6 +93,104 @@ class HidetsuguAndKairiTest extends BaseCardTest {
 
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
+    }
+
+    @Test
+    @DisplayName("Death trigger may be declined while the opponent still loses life")
+    void decliningCastLeavesInstantExiled() {
+        Permanent source = addHidetsuguAndKairiWithResolvedEtb();
+        Card topCard = new Shock();
+        harness.setLibrary(player1, List.of(topCard));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        kill(source);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Death trigger does nothing with an empty library")
+    void emptyLibraryDoesNotLoseLifeOrOfferCast() {
+        Permanent source = addHidetsuguAndKairiWithResolvedEtb();
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        kill(source);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Death trigger casts a sorcery without mana and uses its full mana value")
+    void deathTriggerCastsSorceryWithoutMana() {
+        Permanent source = addHidetsuguAndKairiWithResolvedEtb();
+        Card topCard = new LavaAxe();
+        harness.setLibrary(player1, List.of(topCard));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        kill(source);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 5);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 10);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
+    }
+
+    @Test
+    @DisplayName("Enter trigger can put preexisting hand cards on top in the chosen order")
+    void enterTriggerCanReturnPreexistingHandCardsInReverseOrder() {
+        Card first = new GrizzlyBears();
+        Card second = new Shock();
+        Card drawnFirst = new GrizzlyBears();
+        Card drawnSecond = new Shock();
+        Card drawnThird = new GrizzlyBears();
+        Card remaining = new Shock();
+        harness.setHand(player1, List.of(first, second));
+        harness.setLibrary(player1, List.of(drawnFirst, drawnSecond, drawnThird, remaining));
+
+        harness.enterBattlefieldAndReturn(player1, new HidetsuguAndKairi());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId(), first.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnFirst, drawnSecond, drawnThird);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first, remaining);
+    }
+
+    @Test
+    @DisplayName("An opponent gaining shroud prevents the entire death trigger from resolving")
+    void illegalOpponentTargetPreventsExileAndLifeLoss() {
+        Permanent source = addHidetsuguAndKairiWithResolvedEtb();
+        Card topCard = new Shock();
+        harness.setLibrary(player1, List.of(topCard));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        kill(source);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.addToBattlefield(player2, new TrueBeliever());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addHidetsuguAndKairiWithResolvedEtb() {
