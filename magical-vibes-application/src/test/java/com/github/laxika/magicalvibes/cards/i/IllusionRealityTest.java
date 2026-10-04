@@ -112,4 +112,65 @@ class IllusionRealityTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, artifactSpellId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void illusionChangesArtifactSpellAndColorExpiresAfterResolution() {
+        harness.setHand(player1, List.of(new IllusionReality(), new MaskOfIntolerance()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 1);
+        UUID artifactSpellId = gd.stack.getFirst().getCard().getId();
+        harness.castInstant(player1, 0, 0, artifactSpellId);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+        harness.passBothPriorities();
+
+        Permanent mask = findPermanent(player1, "Mask of Intolerance");
+        assertThat(gqs.getEffectiveColors(gd, mask)).containsExactly(CardColor.RED);
+
+        gd.expireEndOfTurnFloatingEffects();
+        mask.resetModifiers();
+        assertThat(gqs.getEffectiveColors(gd, mask)).isEmpty();
+    }
+
+    @Test
+    void illusionCannotTargetPlayer() {
+        harness.setHand(player1, List.of(new IllusionReality()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void realityCannotBeCastWithOnlyIllusionsManaCost() {
+        Permanent mask = harness.addToBattlefieldAndReturn(player2, new MaskOfIntolerance());
+        harness.setHand(player1, List.of(new IllusionReality()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, mask.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Mask of Intolerance");
+    }
+
+    @Test
+    void illusionDoesNotAskForColorWhenTargetIsDestroyedInResponse() {
+        Permanent mask = harness.addToBattlefieldAndReturn(player2, new MaskOfIntolerance());
+        harness.setHand(player1, List.of(new IllusionReality()));
+        harness.setHand(player2, List.of(new IllusionReality()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, 0, mask.getId());
+        harness.castInstant(player2, 0, 1, mask.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Mask of Intolerance");
+        harness.assertInGraveyard(player1, "Illusion // Reality");
+    }
 }
