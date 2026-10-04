@@ -75,14 +75,13 @@ class GhostLitDrifterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.getGameService().activateHandAbility(
                 gd, player1, 0, 0, null, 2, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.getGameService().activateHandAbility(
-                gd, player1, 0, 0, null, 1, List.of(forest.getId())))
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, forest.getId(), 1))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertInHand(player1, "Ghost-Lit Drifter");
     }
 
     @Test
-    @DisplayName("Both flying abilities wear off at end of turn")
+    @DisplayName("Battlefield flying wears off at end of turn")
     void flyingWearsOffAtEndOfTurn() {
         addCreatureReady(player1, new GhostLitDrifter());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
@@ -90,6 +89,84 @@ class GhostLitDrifterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Channel can be activated with X zero and no targets")
+    void channelWithZeroTargets() {
+        harness.setHand(player1, List.of(new GhostLitDrifter()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbilityWithMultiTargets(player1, 0, List.of());
+
+        harness.assertNotInHand(player1, "Ghost-Lit Drifter");
+        harness.assertInGraveyard(player1, "Ghost-Lit Drifter");
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Channel cannot select the same creature twice")
+    void channelRejectsDuplicateTargets() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GhostLitDrifter()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.ensurePriority(player1);
+        assertThatThrownBy(() -> gs.activateHandAbility(
+                gd, player1, 0, 0, null, 2, List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Ghost-Lit Drifter");
+        harness.assertNotInGraveyard(player1, "Ghost-Lit Drifter");
+    }
+
+    @Test
+    @DisplayName("Channel with X zero cannot select one target through single-target activation")
+    void channelRejectsSingleTargetWithZeroX() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GhostLitDrifter()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, target.getId(), 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Ghost-Lit Drifter");
+    }
+
+    @Test
+    @DisplayName("Channel with X two cannot select only one target through single-target activation")
+    void channelRejectsSingleTargetWithTwoX() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GhostLitDrifter()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, target.getId(), 2))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Ghost-Lit Drifter");
+    }
+
+    @Test
+    @DisplayName("Channel discards as a cost and its flying wears off at end of turn")
+    void channelFlyingWearsOffAtEndOfTurn() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GhostLitDrifter()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, target.getId(), 1);
+
+        harness.assertNotInHand(player1, "Ghost-Lit Drifter");
+        harness.assertInGraveyard(player1, "Ghost-Lit Drifter");
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
 

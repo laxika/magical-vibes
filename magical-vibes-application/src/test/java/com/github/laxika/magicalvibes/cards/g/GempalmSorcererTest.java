@@ -51,9 +51,7 @@ class GempalmSorcererTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, wizard, Keyword.FLYING)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, wizard, Keyword.FLYING)).isFalse();
     }
@@ -72,6 +70,45 @@ class GempalmSorcererTest extends BaseCardTest {
         Permanent laterWizard = harness.enterBattlefieldAndReturn(player1, new FugitiveWizard());
 
         assertThat(gqs.hasKeyword(gd, laterWizard, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Wizards entering before the cycling trigger resolves gain flying")
+    void wizardsEnteringBeforeResolutionGainFlying() {
+        harness.setHand(player1, List.of(new GempalmSorcerer()));
+        harness.setLibrary(player1, List.of(new MacetailHystrodon()));
+        addCyclingMana();
+
+        harness.activateHandAbility(player1, 0, null);
+        Permanent wizard = harness.enterBattlefieldAndReturn(player2, new FugitiveWizard());
+        assertThat(gqs.hasKeyword(gd, wizard, Keyword.FLYING)).isFalse();
+        harness.assertInGraveyard(player1, "Gempalm Sorcerer");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, wizard, Keyword.FLYING)).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Macetail Hystrodon");
+    }
+
+    @Test
+    @DisplayName("Discarding Gempalm Sorcerer during cleanup does not grant flying")
+    void ordinaryDiscardDoesNotGrantFlying() {
+        Permanent wizard = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
+        harness.setHand(player1, List.of(new GempalmSorcerer(),
+                new FugitiveWizard(), new FugitiveWizard(), new FugitiveWizard(),
+                new FugitiveWizard(), new FugitiveWizard(), new FugitiveWizard(), new FugitiveWizard()));
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        harness.assertInGraveyard(player1, "Gempalm Sorcerer");
+        assertThat(gqs.hasKeyword(gd, wizard, Keyword.FLYING)).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
     }
 
     private void addCyclingMana() {

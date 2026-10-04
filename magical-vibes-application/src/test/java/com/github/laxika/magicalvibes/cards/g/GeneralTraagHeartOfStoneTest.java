@@ -19,10 +19,8 @@ class GeneralTraagHeartOfStoneTest extends BaseCardTest {
     void sacrificeAnotherArtifactDealsFourDamageToTargetCreature() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player1, new Ornithopter());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID artifactId = harness.getPermanentId(player1, "Ornithopter");
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID artifactId = harness.addToBattlefieldAndReturn(player1, new Ornithopter()).getId();
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
 
         harness.setHand(player1, List.of(new GeneralTraagHeartOfStone()));
         harness.addMana(player1, ManaColor.RED, 5);
@@ -74,5 +72,50 @@ class GeneralTraagHeartOfStoneTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "General Traag, Heart of Stone");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void reflexiveDamageCanTargetGeneralTraagAndWaitsForResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        UUID artifactId = harness.addToBattlefieldAndReturn(player1, new Ornithopter()).getId();
+
+        harness.setHand(player1, List.of(new GeneralTraagHeartOfStone()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, artifactId);
+        UUID sourceId = harness.getPermanentId(player1, "General Traag, Heart of Stone");
+        harness.handlePermanentChosen(player1, sourceId);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.assertOnBattlefield(player1, "General Traag, Heart of Stone");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "General Traag, Heart of Stone");
+    }
+
+    @Test
+    void opponentsArtifactIsNotEligibleForSacrifice() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player2, new Ornithopter());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new GeneralTraagHeartOfStone()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "General Traag, Heart of Stone");
+        harness.assertOnBattlefield(player2, "Ornithopter");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

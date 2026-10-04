@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.AuraGraft;
 import com.github.laxika.magicalvibes.cards.t.TaintedField;
 import com.github.laxika.magicalvibes.cards.t.TerohsFaithful;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -9,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -161,5 +164,79 @@ class GhostlyWingsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    @CardUsed({GhostlyWings.class, TerohsFaithful.class, TaintedField.class, AuraGraft.class})
+    @DisplayName("After Aura Graft moves Ghostly Wings, bounce uses its current or last enchanted creature")
+    void returnsNewlyEnchantedCreature(boolean auraLeavesBeforeResolution) {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new TerohsFaithful());
+        Permanent destination = harness.addToBattlefieldAndReturn(player1, new TerohsFaithful());
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new GhostlyWings());
+        wings.setAttachedTo(original.getId());
+        TaintedField discarded = new TaintedField();
+        harness.setHand(player1, List.of(discarded, new AuraGraft()));
+
+        harness.activateAbility(player1, 2, null, null);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(original);
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, wings.getId());
+        harness.handlePermanentChosen(player1, destination.getId());
+        assertThat(wings.getAttachedTo()).isEqualTo(destination.getId());
+
+        if (auraLeavesBeforeResolution) {
+            harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, wings));
+        }
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(destination.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(original).doesNotContain(destination);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(wings.getCard(), discarded);
+    }
+
+    @Test
+    @DisplayName("Multiple activations discard multiple cards but return the creature only once")
+    void multipleActivationsPayEachDiscardCost() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new TerohsFaithful());
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new GhostlyWings());
+        wings.setAttachedTo(creature.getId());
+        TaintedField first = new TaintedField();
+        TaintedField second = new TaintedField();
+        harness.setHand(player1, List.of(first, second));
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 1, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second, wings.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature, wings);
+    }
+
+    @Test
+    @DisplayName("The enchanted creature's controller cannot activate an opponent's Ghostly Wings")
+    void creatureControllerCannotActivateOpponentsAura() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new TerohsFaithful());
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new GhostlyWings());
+        wings.setAttachedTo(creature.getId());
+        TaintedField card = new TaintedField();
+        harness.setHand(player2, List.of(card));
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(card);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.stack).isEmpty();
     }
 }

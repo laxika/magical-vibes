@@ -1,10 +1,15 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.Archangel;
 import com.github.laxika.magicalvibes.cards.b.Blaze;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.t.TamiyoTheMoonSage;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GiselaBladeOfGoldnight.class, Blaze.class, SerraAngel.class, GrizzlyBears.class, Archangel.class})
 class GiselaBladeOfGoldnightTest extends BaseCardTest {
 
     @Test
@@ -114,15 +120,9 @@ class GiselaBladeOfGoldnightTest extends BaseCardTest {
     void preventsHalfCombatDamageToController() {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new GiselaBladeOfGoldnight());
-        GrizzlyBears bigBears = new GrizzlyBears();
-        bigBears.setPower(5);
-        bigBears.setToughness(5);
-        addCreatureReady(player2, bigBears);
+        addCreatureReady(player2, new Archangel());
 
-        declareAttackers(player2, List.of(0));
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of());
         harness.passBothPriorities();
 
@@ -144,5 +144,123 @@ class GiselaBladeOfGoldnightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    void preventsOneDamageToGiselaHerself() {
+        harness.addToBattlefield(player1, new GiselaBladeOfGoldnight());
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0, 1,
+                harness.getPermanentId(player1, "Gisela, Blade of Goldnight"));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void doublesDamageFromOpponentsOwnSource() {
+        harness.addToBattlefield(player1, new GiselaBladeOfGoldnight());
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new Blaze()));
+        harness.addMana(player2, ManaColor.RED, 4);
+        harness.forceActivePlayer(player2);
+
+        harness.castSorcery(player2, 0, 3, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @CardUsed({TurnToFrog.class})
+    void abilityRemovalStopsDamageDoubling() {
+        harness.addToBattlefield(player1, new GiselaBladeOfGoldnight());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new TurnToFrog(), new Blaze()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0,
+                harness.getPermanentId(player1, "Gisela, Blade of Goldnight"));
+        harness.passBothPriorities();
+        harness.castSorcery(player1, 0, 3, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @CardUsed({TurnToFrog.class})
+    void abilityRemovalStopsDamagePrevention() {
+        harness.addToBattlefield(player1, new GiselaBladeOfGoldnight());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new TurnToFrog(), new Blaze()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0,
+                harness.getPermanentId(player1, "Gisela, Blade of Goldnight"));
+        harness.passBothPriorities();
+        harness.castSorcery(player1, 0, 3, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    void opposingGiselasAllowRecipientToChooseDamageEffectOrder() {
+        harness.addToBattlefield(player1, new GiselaBladeOfGoldnight());
+        harness.addToBattlefield(player2, new GiselaBladeOfGoldnight());
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, 3, player2.getId());
+        harness.passBothPriorities();
+
+        // Prevention first leaves 1 damage to double; doubling first leaves 3 damage.
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    @CardUsed({TamiyoTheMoonSage.class})
+    void preventsHalfDamageToControlledPlaneswalker() {
+        harness.addToBattlefield(player1, new GiselaBladeOfGoldnight());
+        var tamiyo = harness.addToBattlefieldAndReturn(player1, new TamiyoTheMoonSage());
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castSorcery(player1, 0, 3, tamiyo.getId());
+        harness.passBothPriorities();
+
+        assertThat(tamiyo.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @Test
+    void doublesCombatDamageToOpponentsCreature() {
+        harness.addToBattlefield(player1, new GiselaBladeOfGoldnight());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new SerraAngel());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Serra Angel");
+    }
+
+    @Test
+    void preventsHalfCombatDamageToControlledCreature() {
+        harness.addToBattlefield(player1, new GiselaBladeOfGoldnight());
+        var angel = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Serra Angel");
+        assertThat(angel.getMarkedDamage()).isEqualTo(1);
     }
 }

@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
+import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
+import com.github.laxika.magicalvibes.cards.d.DarksteelColossus;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.m.MoriokReaver;
+import com.github.laxika.magicalvibes.cards.s.SylvokLifestaff;
+import com.github.laxika.magicalvibes.cards.u.UndeadAlchemist;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,32 +17,24 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GethLordOfTheVault.class, MoriokReaver.class, CarapaceForger.class,
+        Memnite.class, SylvokLifestaff.class, GraspOfDarkness.class})
 class GethLordOfTheVaultTest extends BaseCardTest {
-
-    // ===== Intimidate blocking =====
 
     @Test
     @DisplayName("Intimidate — same color creature can block")
     void sameColorCanBlock() {
-        Permanent gethPerm = new Permanent(new GethLordOfTheVault());
-        gethPerm.setSummoningSick(false);
+        Permanent gethPerm = addCreatureReady(player1, new GethLordOfTheVault());
         gethPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(gethPerm);
 
-        // DrossCrocodile is black — same color as Geth
-        Permanent blockerPerm = new Permanent(new DrossCrocodile());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        // MoriokReaver is black — same color as Geth
+        addCreatureReady(player2, new MoriokReaver());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
     }
@@ -47,28 +42,12 @@ class GethLordOfTheVaultTest extends BaseCardTest {
     @Test
     @DisplayName("Intimidate — artifact creature can block")
     void artifactCreatureCanBlock() {
-        Permanent gethPerm = new Permanent(new GethLordOfTheVault());
-        gethPerm.setSummoningSick(false);
+        Permanent gethPerm = addCreatureReady(player1, new GethLordOfTheVault());
         gethPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(gethPerm);
 
-        // Create an artifact creature blocker
-        Card artifactCreature = new Card();
-        artifactCreature.setName("Test Artifact Creature");
-        artifactCreature.setType(CardType.ARTIFACT);
-        artifactCreature.setAdditionalTypes(java.util.Set.of(CardType.CREATURE));
-        artifactCreature.setColor(CardColor.WHITE);
-        artifactCreature.setPower(2);
-        artifactCreature.setToughness(2);
-        artifactCreature.setManaCost("{2}");
-        Permanent blockerPerm = new Permanent(artifactCreature);
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        addCreatureReady(player2, new Memnite());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
     }
@@ -76,20 +55,13 @@ class GethLordOfTheVaultTest extends BaseCardTest {
     @Test
     @DisplayName("Intimidate — different color non-artifact creature cannot block")
     void differentColorCannotBlock() {
-        Permanent gethPerm = new Permanent(new GethLordOfTheVault());
-        gethPerm.setSummoningSick(false);
+        Permanent gethPerm = addCreatureReady(player1, new GethLordOfTheVault());
         gethPerm.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(gethPerm);
 
-        // GrizzlyBears is green — different color from Geth (black)
-        Permanent blockerPerm = new Permanent(new GrizzlyBears());
-        blockerPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerPerm);
+        // CarapaceForger is green — different color from Geth (black)
+        addCreatureReady(player2, new CarapaceForger());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -97,26 +69,21 @@ class GethLordOfTheVaultTest extends BaseCardTest {
                 .hasMessageContaining("(intimidate)");
     }
 
-    // ===== Activated ability =====
-
     @Test
     @DisplayName("Activated ability — takes creature from opponent's graveyard onto battlefield tapped")
     void takesCreatureFromOpponentGraveyard() {
-        Permanent gethPerm = new Permanent(new GethLordOfTheVault());
-        gethPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(gethPerm);
+        harness.addToBattlefield(player1, new GethLordOfTheVault());
 
-        // GrizzlyBears has mana value 2 — put in opponent's graveyard
-        Card bears = new GrizzlyBears();
+        // CarapaceForger has mana value 2 — put in opponent's graveyard
+        Card bears = new CarapaceForger();
         harness.setGraveyard(player2, List.of(bears));
 
         // Add some cards to opponent's deck for milling
-        Card deckCard1 = new DrossCrocodile();
-        Card deckCard2 = new DrossCrocodile();
-        gd.playerDecks.get(player2.getId()).add(0, deckCard1);
-        gd.playerDecks.get(player2.getId()).add(1, deckCard2);
+        Card deckCard1 = new MoriokReaver();
+        Card deckCard2 = new MoriokReaver();
+        harness.setLibrary(player2, List.of(deckCard1, deckCard2));
 
-        // X=2 (mana value of GrizzlyBears), plus {B}
+        // X=2 (mana value of CarapaceForger), plus {B}
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -131,53 +98,38 @@ class GethLordOfTheVaultTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .noneMatch(c -> c.getId().equals(bears.getId()));
 
-        // Opponent should have been milled 2 cards (Dross Crocodiles)
-        harness.assertInGraveyard(player2, "Dross Crocodile");
+        // Opponent should have been milled 2 cards (Moriok Reavers)
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(deckCard1, deckCard2);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
     @Test
     @DisplayName("Activated ability — takes artifact from opponent's graveyard")
     void takesArtifactFromOpponentGraveyard() {
-        Permanent gethPerm = new Permanent(new GethLordOfTheVault());
-        gethPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(gethPerm);
+        harness.addToBattlefield(player1, new GethLordOfTheVault());
 
-        // Create an artifact with mana value 3
-        Card artifact = new Card();
-        artifact.setName("Test Artifact");
-        artifact.setType(CardType.ARTIFACT);
-        artifact.setManaCost("{3}");
-        artifact.setColor(CardColor.WHITE);
-        artifact.setPower(null);
-        artifact.setToughness(null);
+        Card artifact = new SylvokLifestaff();
         harness.setGraveyard(player2, List.of(artifact));
-
-        // Add some deck cards for milling
-        for (int i = 0; i < 3; i++) {
-            gd.playerDecks.get(player2.getId()).add(0, new GrizzlyBears());
-        }
-
-        // X=3, plus {B}
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        Card milled = new MoriokReaver();
+        harness.setLibrary(player2, List.of(milled));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.activateAbility(player1, 0, 3, artifact.getId(), Zone.GRAVEYARD);
+        harness.activateAbility(player1, 0, 1, artifact.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
         // Artifact should be on player1's battlefield, tapped
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Test Artifact") && p.isTapped());
+                .anyMatch(p -> p.getCard().getId().equals(artifact.getId()) && p.isTapped());
     }
 
     @Test
     @DisplayName("Activated ability — rejects target with wrong mana value")
     void rejectsWrongManaValue() {
-        Permanent gethPerm = new Permanent(new GethLordOfTheVault());
-        gethPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(gethPerm);
+        harness.addToBattlefield(player1, new GethLordOfTheVault());
 
-        // GrizzlyBears has mana value 2, but we'll use X=3
-        Card bears = new GrizzlyBears();
+        // CarapaceForger has mana value 2, but we'll use X=3
+        Card bears = new CarapaceForger();
         harness.setGraveyard(player2, List.of(bears));
 
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -191,12 +143,10 @@ class GethLordOfTheVaultTest extends BaseCardTest {
     @Test
     @DisplayName("Activated ability — rejects targeting own graveyard")
     void rejectsOwnGraveyard() {
-        Permanent gethPerm = new Permanent(new GethLordOfTheVault());
-        gethPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(gethPerm);
+        harness.addToBattlefield(player1, new GethLordOfTheVault());
 
         // Put creature in player1's own graveyard
-        Card bears = new GrizzlyBears();
+        Card bears = new CarapaceForger();
         harness.setGraveyard(player1, List.of(bears));
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -210,16 +160,13 @@ class GethLordOfTheVaultTest extends BaseCardTest {
     @Test
     @DisplayName("Stolen creature goes to original owner's graveyard on death")
     void stolenCreatureGoesToOriginalOwnerGraveyard() {
-        Permanent gethPerm = new Permanent(new GethLordOfTheVault());
-        gethPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(gethPerm);
+        harness.addToBattlefield(player1, new GethLordOfTheVault());
 
-        Card bears = new GrizzlyBears();
+        Card bears = new CarapaceForger();
         harness.setGraveyard(player2, List.of(bears));
 
         // Add some deck cards for milling
-        gd.playerDecks.get(player2.getId()).add(0, new GrizzlyBears());
-        gd.playerDecks.get(player2.getId()).add(1, new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new CarapaceForger(), new CarapaceForger()));
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -227,22 +174,121 @@ class GethLordOfTheVaultTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, bears.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        // Find the stolen creature on player1's battlefield
-        Permanent stolenBears = findPermanent(player1, "Grizzly Bears");
+        Permanent stolenBears = findPermanent(player1, "Carapace Forger");
+        stolenBears.setDamage(2);
+        harness.runStateBasedActions();
 
-        // Verify it's tracked as stolen
-        assertThat(gd.stolenCreatures).containsKey(stolenBears.getId());
-        assertThat(gd.stolenCreatures.get(stolenBears.getId())).isEqualTo(player2.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(bears);
+        harness.assertNotOnBattlefield(player1, "Carapace Forger");
+    }
 
-        // Kill it — use Lightning Bolt pattern: deal lethal damage by setting damage
-        // Simply remove from battlefield and send to graveyard using the helper
-        gd.playerBattlefields.get(player1.getId()).remove(stolenBears);
-        UUID graveyardOwnerId = gd.stolenCreatures.getOrDefault(stolenBears.getId(), player1.getId());
-        gd.playerGraveyards.get(graveyardOwnerId).add(stolenBears.getCard());
-        gd.stolenCreatures.remove(stolenBears.getId());
+    @Test
+    void zeroXReturnsArtifactCreatureWithoutMilling() {
+        harness.addToBattlefield(player1, new GethLordOfTheVault());
+        Card target = new Memnite();
+        Card libraryCard = new MoriokReaver();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setLibrary(player2, List.of(libraryCard));
+        harness.addMana(player1, ManaColor.BLACK, 1);
 
-        // Bears should go to player2's graveyard (original owner), not player1's
-        harness.assertInGraveyard(player2, "Grizzly Bears");
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.activateAbility(player1, 0, 0, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Memnite").isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    void rejectsInstantEvenWhenManaValueMatchesX() {
+        harness.addToBattlefield(player1, new GethLordOfTheVault());
+        Card target = new GraspOfDarkness();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void missingTargetPreventsReanimationAndMilling() {
+        harness.addToBattlefield(player1, new GethLordOfTheVault());
+        Card target = new CarapaceForger();
+        Card libraryCard = new MoriokReaver();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setLibrary(player2, List.of(libraryCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, 2, target.getId(), Zone.GRAVEYARD);
+
+        harness.setGraveyard(player2, List.of());
+        harness.setExile(player2, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Carapace Forger");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void reanimatesWithEmptyOpponentLibraryWithoutCausingLoss() {
+        harness.addToBattlefield(player1, new GethLordOfTheVault());
+        Card target = new CarapaceForger();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 2, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Carapace Forger").isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
+    }
+
+    @Test
+    @CardUsed({DarksteelColossus.class})
+    void millingAppliesShuffleIntoLibraryReplacement() {
+        harness.addToBattlefield(player1, new GethLordOfTheVault());
+        Card target = new SylvokLifestaff();
+        Card colossus = new DarksteelColossus();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setLibrary(player2, List.of(colossus));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 1, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Sylvok Lifestaff").isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(colossus);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(colossus);
+    }
+
+    @Test
+    @CardUsed({UndeadAlchemist.class})
+    void millingTriggersAbilitiesForCreaturesPutIntoOpponentGraveyard() {
+        harness.addToBattlefield(player1, new GethLordOfTheVault());
+        harness.addToBattlefield(player1, new UndeadAlchemist());
+        Card target = new SylvokLifestaff();
+        Card milled = new MoriokReaver();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setLibrary(player2, List.of(milled));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 1, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(milled);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(milled);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().isToken());
     }
 }

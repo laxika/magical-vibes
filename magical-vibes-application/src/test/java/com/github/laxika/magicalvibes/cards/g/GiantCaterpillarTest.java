@@ -109,6 +109,55 @@ class GiantCaterpillarTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Butterfly");
     }
 
+    @Test
+    @DisplayName("Can sacrifice a tapped creature with summoning sickness")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent caterpillar = harness.addToBattlefieldAndReturn(player1, new GiantCaterpillar());
+        caterpillar.setSummoningSick(true);
+        caterpillar.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Giant Caterpillar");
+        harness.assertNotOnBattlefield(player1, "Butterfly");
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Butterfly")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Activation during the end step waits until the following turn's end step")
+    void activationDuringEndStepWaitsForNextTurnsEndStep() {
+        setupCaterpillar();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        });
+
+        harness.assertInGraveyard(player1, "Giant Caterpillar");
+        harness.assertNotOnBattlefield(player1, "Butterfly");
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.assertNotOnBattlefield(player1, "Butterfly");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Butterfly")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player2, "Butterfly");
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Butterfly")).isEqualTo(1);
+    }
+
     private void setupCaterpillar() {
         addCreatureReady(player1, new GiantCaterpillar());
         harness.addMana(player1, ManaColor.GREEN, 1);

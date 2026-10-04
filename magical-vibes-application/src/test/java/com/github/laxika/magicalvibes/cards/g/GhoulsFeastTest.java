@@ -92,6 +92,46 @@ class GhoulsFeastTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Uses the reduced creature count if cards leave the graveyard before resolution")
+    void countsRemainingCreatureCardsAtResolution() {
+        Permanent target = addCreatureReady(player1, new FreshVolunteers());
+        harness.setGraveyard(player1, List.of(new FreshVolunteers(), new FreshVolunteers()));
+        harness.setHand(player1, List.of(new GhoulsFeast()));
+        addMana();
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Ghoul's Feast");
+    }
+
+    @Test
+    @DisplayName("The resolved boost does not change when the graveyard changes")
+    void resolvedBoostIsFixedUntilEndOfTurn() {
+        Permanent target = addCreatureReady(player1, new FreshVolunteers());
+        harness.setGraveyard(player1, List.of(new FreshVolunteers(), new FreshVolunteers()));
+        harness.setHand(player1, List.of(new GhoulsFeast()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.publishState();
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+
+        harness.setGraveyard(player1, List.of(
+                new FreshVolunteers(), new FreshVolunteers(), new FreshVolunteers()));
+        harness.publishState();
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

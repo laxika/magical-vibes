@@ -59,13 +59,61 @@ class GempalmAvengerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, soldier, Keyword.FIRST_STRIKE)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(0);
         assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, soldier, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The cycling trigger affects Soldiers present at resolution, before the draw")
+    void soldiersAreChosenWhenTriggerResolves() {
+        harness.setHand(player1, List.of(new GempalmAvenger()));
+        harness.setLibrary(player1, List.of(new FugitiveWizard()));
+        addCyclingMana();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.assertInGraveyard(player1, "Gempalm Avenger");
+        harness.assertNotInHand(player1, "Fugitive Wizard");
+        Permanent soldier = harness.addToBattlefieldAndReturn(player2, new AvenEnvoy());
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(0);
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FIRST_STRIKE)).isTrue();
+        harness.assertNotInHand(player1, "Fugitive Wizard");
+
+        Permanent lateSoldier = harness.addToBattlefieldAndReturn(player1, new AvenEnvoy());
+        assertThat(gqs.getEffectivePower(gd, lateSoldier)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, lateSoldier)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, lateSoldier, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Fugitive Wizard");
+    }
+
+    @Test
+    @DisplayName("Cycling still draws a card when there are no Soldiers")
+    void cyclingWithoutSoldiersStillDraws() {
+        Permanent wizard = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard());
+        harness.setHand(player1, List.of(new GempalmAvenger()));
+        harness.setLibrary(player1, List.of(new AvenEnvoy()));
+        addCyclingMana();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Gempalm Avenger");
+        harness.assertInHand(player1, "Aven Envoy");
+        assertThat(gqs.getEffectivePower(gd, wizard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wizard)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, wizard, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     private void addCyclingMana() {

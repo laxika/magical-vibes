@@ -2,6 +2,11 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionRed;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.e.EmrakulTheAeonsTorn;
+import com.github.laxika.magicalvibes.cards.f.FlameSpirit;
+import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
+import com.github.laxika.magicalvibes.cards.w.WellLaidPlans;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -22,7 +27,9 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GhostlyFlame.class, CircleOfProtectionRed.class, Incinerate.class})
+@CardUsed({GhostlyFlame.class, CircleOfProtectionRed.class, Incinerate.class,
+        Disenchant.class, EmrakulTheAeonsTorn.class, FlameSpirit.class,
+        Pyroclasm.class, WellLaidPlans.class})
 class GhostlyFlameTest extends BaseCardTest {
 
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
@@ -192,5 +199,55 @@ class GhostlyFlameTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Red non-targeted spell damage bypasses protection from colored spells")
+    void redMassDamageBypassesProtectionFromColoredSpells() {
+        Permanent emrakul = harness.addToBattlefieldAndReturn(player2, new EmrakulTheAeonsTorn());
+        addGhostlyFlame();
+        harness.setHand(player1, List.of(new Pyroclasm()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(emrakul.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Red creatures deal colorless combat damage through shared-color prevention")
+    void redCombatDamageBypassesSharedColorPrevention() {
+        Permanent attacker = addCreatureReady(player1, new FlameSpirit());
+        Permanent blocker = addCreatureReady(player2, new FlameSpirit());
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        addGhostlyFlame();
+        harness.addToBattlefield(player2, new WellLaidPlans());
+
+        resolveCombat();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Removing Ghostly Flame restores color-based damage prevention")
+    void removingGhostlyFlameRestoresProtection() {
+        Permanent redWard = addCreatureReady(player2,
+                createCreatureWithProtection("Red Ward", 1, 2, CardColor.WHITE, CardColor.RED));
+        Permanent flame = harness.addToBattlefieldAndReturn(player1, new GhostlyFlame());
+        harness.setHand(player1, List.of(new Disenchant(), new Pyroclasm()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, flame.getId());
+        harness.assertInGraveyard(player1, "Ghostly Flame");
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Red Ward");
+        assertThat(redWard.getMarkedDamage()).isZero();
     }
 }

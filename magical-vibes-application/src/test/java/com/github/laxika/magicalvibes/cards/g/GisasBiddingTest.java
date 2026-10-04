@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.r.RavensCrime;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GisasBidding.class, RavensCrime.class})
 class GisasBiddingTest extends BaseCardTest {
 
     /** Force player1 to discard Gisa's Bidding via Raven's Crime from player2. */
@@ -24,8 +29,7 @@ class GisasBiddingTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.handleCardChosen(player1, 0);
         return bidding;
     }
@@ -40,8 +44,7 @@ class GisasBiddingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GisasBidding()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         List<Permanent> zombies = zombiesOnBattlefield();
         assertThat(zombies).hasSize(2);
@@ -94,5 +97,38 @@ class GisasBiddingTest extends BaseCardTest {
         assertThat(zombies).hasSize(2);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.assertInGraveyard(player1, "Gisa's Bidding");
+    }
+
+    @Test
+    @DisplayName("Created tokens are black Zombie creatures under the caster's control")
+    void tokensHaveCorrectCharacteristicsAndController() {
+        harness.setHand(player1, List.of(new GisasBidding()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(zombiesOnBattlefield()).hasSize(2).allSatisfy(zombie -> {
+            assertThat(zombie.getCard().hasType(CardType.CREATURE)).isTrue();
+            assertThat(zombie.getCard().getColor()).isEqualTo(CardColor.BLACK);
+            assertThat(zombie.getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
+        });
+        assertThat(findPermanents(player2, "Zombie")).isEmpty();
+        harness.assertInGraveyard(player1, "Gisa's Bidding");
+    }
+
+    @Test
+    @DisplayName("An unaffordable madness cast moves the card to the graveyard without creating tokens")
+    void unpayableMadnessGoesToGraveyard() {
+        GisasBidding bidding = discardViaRavensCrime();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.findExiledCard(bidding.getId())).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bidding);
+        assertThat(zombiesOnBattlefield()).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
 }
