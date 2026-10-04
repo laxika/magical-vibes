@@ -80,6 +80,47 @@ class HellholeRatsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Targeting its controller with a nonland discard damages only its controller")
+    void nonlandDiscardDamagesController() {
+        harness.setHand(player1, List.of(new HellholeRats(), new AzoriusFirstWing()));
+        addMana(player1);
+
+        harness.castCreature(player1, 0, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Azorius First-Wing");
+        harness.assertNotInHand(player1, "Azorius First-Wing");
+    }
+
+    @Test
+    @DisplayName("An empty hand does not reuse the mana value from an earlier discard")
+    void emptyHandAfterEarlierDiscardDealsNoDamage() {
+        harness.setHand(player1, List.of(new HellholeRats(), new HellholeRats()));
+        harness.setHand(player2, List.of(new AssaultZeppelid()));
+        addMana(player1);
+
+        harness.castCreature(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.assertLife(player2, 16);
+        harness.assertNotInHand(player2, "Assault Zeppelid");
+
+        addMana(player1);
+        harness.castCreature(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void addMana(com.github.laxika.magicalvibes.model.Player player) {
         harness.addMana(player, ManaColor.BLACK, 1);
         harness.addMana(player, ManaColor.RED, 1);
