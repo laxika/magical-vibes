@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
+import com.github.laxika.magicalvibes.cards.k.KnightOfGrace;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({HistoryOfBenalia.class, BalothGorger.class, KnightOfGrace.class})
 class HistoryOfBenaliaTest extends BaseCardTest {
-
-    // ===== ETB: first lore counter and chapter I triggers =====
 
     @Test
     @DisplayName("Casting History of Benalia adds a lore counter and triggers chapter I")
@@ -69,12 +71,14 @@ class HistoryOfBenaliaTest extends BaseCardTest {
         assertThat(knight.getCard().getKeywords()).contains(Keyword.VIGILANCE);
     }
 
-    // ===== Precombat main: chapter II triggers =====
-
     @Test
     @DisplayName("Chapter II creates a second Knight token")
     void chapterIICreatesSecondKnightToken() {
-        harness.addToBattlefield(player1, new HistoryOfBenalia());
+        harness.setHand(player1, List.of(new HistoryOfBenalia()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
         Permanent saga = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("History of Benalia"))
                 .findFirst().orElse(null);
@@ -83,8 +87,7 @@ class HistoryOfBenaliaTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to precombat main → chapter II triggers
+        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
 
         GameData gd = harness.getGameData();
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
@@ -98,10 +101,8 @@ class HistoryOfBenaliaTest extends BaseCardTest {
         long knightCount = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Knight") && p.getCard().isToken())
                 .count();
-        assertThat(knightCount).isEqualTo(1);
+        assertThat(knightCount).isEqualTo(2);
     }
-
-    // ===== Chapter III: Knights you control get +2/+1 =====
 
     @Test
     @DisplayName("Chapter III gives +2/+1 to Knights you control until end of turn")
@@ -125,8 +126,7 @@ class HistoryOfBenaliaTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // precombat main → chapter III triggers
+        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
 
         GameData gd = harness.getGameData();
         assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
@@ -155,31 +155,28 @@ class HistoryOfBenaliaTest extends BaseCardTest {
         saga.setCounterCount(CounterType.LORE, 2);
 
         // Add a non-Knight creature
-        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.g.GrizzlyBears());
+        harness.addToBattlefield(player1, new BalothGorger());
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
+                .filter(p -> p.getCard().getName().equals("Baloth Gorger"))
                 .findFirst().orElse(null);
         assertThat(bears).isNotNull();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // precombat main → chapter III triggers
+        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
         harness.passBothPriorities(); // resolve chapter III
 
         GameData gd = harness.getGameData();
 
-        // Grizzly Bears should remain unboosted
+        // Baloth Gorger should remain unboosted
         bears = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
+                .filter(p -> p.getCard().getName().equals("Baloth Gorger"))
                 .findFirst().orElse(null);
         assertThat(bears).isNotNull();
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();
     }
-
-    // ===== Saga lifecycle =====
 
     @Test
     @DisplayName("Saga is sacrificed after chapter III resolves")
@@ -193,27 +190,18 @@ class HistoryOfBenaliaTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // precombat main → chapter III triggers
+        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
 
         // Chapter III on stack — saga should still be on battlefield
-        boolean sagaOnBf = gd.playerBattlefields.get(player1.getId()).stream()
-                .anyMatch(p -> p.getCard().getName().equals("History of Benalia"));
-        assertThat(sagaOnBf).isTrue();
+        harness.assertOnBattlefield(player1, "History of Benalia");
 
         harness.passBothPriorities(); // resolve chapter III
 
-        GameData gd = harness.getGameData();
-
         // Saga should be sacrificed
-        boolean sagaStillOnBf = gd.playerBattlefields.get(player1.getId()).stream()
-                .anyMatch(p -> p.getCard().getName().equals("History of Benalia"));
-        assertThat(sagaStillOnBf).isFalse();
+        harness.assertNotOnBattlefield(player1, "History of Benalia");
 
         // Saga should be in graveyard
-        boolean sagaInGraveyard = gd.playerGraveyards.get(player1.getId()).stream()
-                .anyMatch(c -> c.getName().equals("History of Benalia"));
-        assertThat(sagaInGraveyard).isTrue();
+        harness.assertInGraveyard(player1, "History of Benalia");
     }
 
     @Test
@@ -228,8 +216,7 @@ class HistoryOfBenaliaTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // precombat main → lore counter 3, chapter III triggers
+        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
 
         GameData gd = harness.getGameData();
 
@@ -239,7 +226,52 @@ class HistoryOfBenaliaTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
     }
 
-    // ===== Helper =====
+    @Test
+    void chapterIIIBoostsOnlyCurrentOwnKnightsAndExpiresAtCleanup() {
+        harness.addToBattlefield(player1, new HistoryOfBenalia());
+        Permanent saga = gd.playerBattlefields.get(player1.getId()).getFirst();
+        saga.setCounterCount(CounterType.LORE, 2);
+        harness.addToBattlefield(player1, new KnightOfGrace());
+        Permanent ownKnight = gd.playerBattlefields.get(player1.getId()).getLast();
+        harness.addToBattlefield(player2, new KnightOfGrace());
+        Permanent opposingKnight = gd.playerBattlefields.get(player2.getId()).getFirst();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
+        harness.passBothPriorities();
+
+        assertThat(ownKnight.getPowerModifier()).isEqualTo(2);
+        assertThat(ownKnight.getToughnessModifier()).isEqualTo(1);
+        assertThat(opposingKnight.getPowerModifier()).isZero();
+        assertThat(opposingKnight.getToughnessModifier()).isZero();
+        harness.assertNotOnBattlefield(player1, "History of Benalia");
+
+        harness.setHand(player1, List.of(new KnightOfGrace()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent laterKnight = gd.playerBattlefields.get(player1.getId()).getLast();
+        assertThat(laterKnight.getPowerModifier()).isZero();
+        assertThat(laterKnight.getToughnessModifier()).isZero();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(ownKnight.getPowerModifier()).isZero();
+        assertThat(ownKnight.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void opponentsMainPhaseDoesNotAdvanceSaga() {
+        harness.addToBattlefield(player1, new HistoryOfBenalia());
+        Permanent saga = gd.playerBattlefields.get(player1.getId()).getFirst();
+        saga.setCounterCount(CounterType.LORE, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DRAW);
+        harness.passUntil(TurnStep.PRECOMBAT_MAIN);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private com.github.laxika.magicalvibes.model.Card createKnightToken() {
         var token = new com.github.laxika.magicalvibes.model.Card();
