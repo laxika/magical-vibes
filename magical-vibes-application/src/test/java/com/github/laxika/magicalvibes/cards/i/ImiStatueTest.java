@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.j.JourneyersKite;
+import com.github.laxika.magicalvibes.cards.s.StaticOrb;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,8 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ImiStatue.class, JourneyersKite.class, Forest.class})
+@CardUsed({ImiStatue.class, JourneyersKite.class, Forest.class, StaticOrb.class})
 class ImiStatueTest extends BaseCardTest {
 
     @Test
@@ -86,6 +88,51 @@ class ImiStatueTest extends BaseCardTest {
         assertThat(kite.isTapped()).isFalse();
         assertThat(otherKite.isTapped()).isTrue();
         assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
+    @CardUsed({ImiStatue.class, StaticOrb.class, JourneyersKite.class, Forest.class})
+    @DisplayName("Static Orb does not permit untapping two artifacts through Imi Statue")
+    void staticOrbDoesNotOverrideArtifactLimit() {
+        addCreatureReady(player1, new StaticOrb());
+        addCreatureReady(player1, new ImiStatue());
+        Permanent firstKite = addCreatureReady(player1, new JourneyersKite());
+        Permanent secondKite = addCreatureReady(player1, new JourneyersKite());
+        Permanent forest = addCreatureReady(player1, new Forest());
+        firstKite.tap();
+        secondKite.tap();
+        forest.tap();
+
+        advanceToNextTurn(player2);
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(firstKite.getId(), secondKite.getId())));
+        assertThat(firstKite.isTapped()).isTrue();
+        assertThat(secondKite.isTapped()).isTrue();
+    }
+
+    @Test
+    @CardUsed({ImiStatue.class, StaticOrb.class, JourneyersKite.class, Forest.class})
+    @DisplayName("Imi Statue does not bypass Static Orb's total permanent limit")
+    void artifactLimitDoesNotOverrideTotalPermanentLimit() {
+        addCreatureReady(player1, new ImiStatue());
+        addCreatureReady(player1, new StaticOrb());
+        Permanent firstKite = addCreatureReady(player1, new JourneyersKite());
+        Permanent secondKite = addCreatureReady(player1, new JourneyersKite());
+        Permanent firstForest = addCreatureReady(player1, new Forest());
+        Permanent secondForest = addCreatureReady(player1, new Forest());
+        firstKite.tap();
+        secondKite.tap();
+        firstForest.tap();
+        secondForest.tap();
+
+        advanceToNextTurn(player2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstKite.getId(), firstForest.getId()));
+
+        assertThat(firstKite.isTapped()).isFalse();
+        assertThat(secondKite.isTapped()).isTrue();
+        assertThat(firstForest.isTapped()).isFalse();
+        assertThat(secondForest.isTapped()).isTrue();
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
