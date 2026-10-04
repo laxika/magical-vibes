@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.cards.s.StealArtifact;
 import com.github.laxika.magicalvibes.cards.w.WordOfSeizing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.service.JacksonConfig;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -52,8 +55,7 @@ class GusthasScepterTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.setHand(player2, new ArrayList<>(List.of(new WordOfSeizing())));
         harness.addMana(player2, ManaColor.RED, 5);
-        harness.castInstant(player2, 0, scepter.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, scepter.getId());
         harness.runStateBasedActions();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -80,8 +82,7 @@ class GusthasScepterTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.setHand(player2, new ArrayList<>(List.of(new Shatter())));
         harness.addMana(player2, ManaColor.RED, 2);
-        harness.castInstant(player2, 0, scepter.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, scepter.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
@@ -104,8 +105,7 @@ class GusthasScepterTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.setHand(player2, new ArrayList<>(List.of(new WordOfSeizing())));
         harness.addMana(player2, ManaColor.RED, 5);
-        harness.castInstant(player2, 0, scepter.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, scepter.getId());
 
         assertThat(gd.exiledCards)
                 .anyMatch(e -> scepter.getId().equals(e.sourcePermanentId())
@@ -174,8 +174,7 @@ class GusthasScepterTest extends BaseCardTest {
 
         harness.setHand(player2, new ArrayList<>(List.of(new Shatter())));
         harness.addMana(player2, ManaColor.RED, 2);
-        harness.castInstant(player2, 0, scepter.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, scepter.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -215,6 +214,135 @@ class GusthasScepterTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.exiledCards).noneMatch(e -> scepter.getId().equals(e.sourcePermanentId()));
+    }
+
+    @Test
+    void returnWithNoLinkedCardsDoesNothing() {
+        Permanent scepter = harness.addToBattlefieldAndReturn(player1, new GusthasScepter());
+        harness.setHand(player1, List.of());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(scepter.isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void eachScepterReturnsOnlyItsOwnLinkedCards() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GusthasScepter());
+        harness.addToBattlefield(player1, new GusthasScepter());
+        GrizzlyBears card = new GrizzlyBears();
+        harness.setHand(player1, List.of(card));
+        exileTopHandCard(first);
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).anyMatch(e -> e.card() == card);
+    }
+
+    @Test
+    void returningFaceDownCardDoesNotRevealItsIdentityToOpponent() {
+        Permanent scepter = harness.addToBattlefieldAndReturn(player1, new GusthasScepter());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        exileTopHandCard(scepter);
+        scepter.untap();
+        harness.clearMessages();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.publishState();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(harness.getConn2().getSentMessages())
+                .noneMatch(message -> message.contains("Grizzly Bears"));
+    }
+
+    @Test
+    void originalExilerRetainsExclusiveLookPermissionAfterControlChanges() {
+        Permanent scepter = harness.addToBattlefieldAndReturn(player1, new GusthasScepter());
+        GrizzlyBears card = new GrizzlyBears();
+        harness.setHand(player1, List.of(card));
+        exileTopHandCard(scepter);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new WordOfSeizing()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player2, 0, scepter.getId());
+        harness.publishState();
+
+        assertThat(visibleFaceDownCards(harness.getConn1())).contains(card.getId());
+        assertThat(visibleFaceDownCards(harness.getConn2())).doesNotContain(card.getId());
+    }
+
+    @Test
+    void exilerCanLookAtCardExiledAfterScepterLeavesBattlefield() {
+        Permanent scepter = harness.addToBattlefieldAndReturn(player1, new GusthasScepter());
+        GrizzlyBears card = new GrizzlyBears();
+        harness.setHand(player1, List.of(card));
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, scepter.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.publishState();
+
+        assertThat(gd.exiledCards).anyMatch(e -> e.card() == card);
+        assertThat(visibleFaceDownCards(harness.getConn1())).contains(card.getId());
+        assertThat(visibleFaceDownCards(harness.getConn2())).doesNotContain(card.getId());
+    }
+
+    @Test
+    void newControllerCannotReturnCardsOwnedByPreviousController() {
+        Permanent scepter = harness.addToBattlefieldAndReturn(player1, new GusthasScepter());
+        GrizzlyBears card = new GrizzlyBears();
+        harness.setHand(player1, List.of(card));
+        exileTopHandCard(scepter);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new WordOfSeizing()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player2, 0, scepter.getId());
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards).anyMatch(e -> e.card() == card);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(card);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void controlLossTriggerMovesAllLinkedCardsToTheirRespectiveOwnersGraveyards() {
+        Permanent scepter = harness.addToBattlefieldAndReturn(player1, new GusthasScepter());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        exileTopHandCard(scepter);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new WordOfSeizing(), new Ornithopter()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player2, 0, scepter.getId());
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Ornithopter");
+        assertThat(gd.exiledCards).noneMatch(e -> scepter.getId().equals(e.sourcePermanentId()));
+    }
+
+    private List<java.util.UUID> visibleFaceDownCards(FakeConnection connection) {
+        GameStateMessage state = new JacksonConfig().objectMapper().readValue(connection
+                .getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        List<java.util.UUID> visible = new ArrayList<>();
+        state.battlefields().stream().flatMap(List::stream)
+                .flatMap(permanent -> permanent.faceDownExiledCards().stream())
+                .forEach(card -> visible.add(card.id()));
+        state.lookedAtExileCards().forEach(card -> visible.add(card.id()));
+        return visible;
     }
 
     private void exileTopHandCard(Permanent scepter) {
