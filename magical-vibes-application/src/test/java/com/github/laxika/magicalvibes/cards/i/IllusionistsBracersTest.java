@@ -2,19 +2,27 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.d.DeathriteShaman;
+import com.github.laxika.magicalvibes.cards.z.ZameckGuildmage;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({IllusionistsBracers.class, LlanowarElves.class, ProdigalPyromancer.class,
+        ZameckGuildmage.class, DeathriteShaman.class})
 class IllusionistsBracersTest extends BaseCardTest {
 
     @Test
@@ -126,15 +134,77 @@ class IllusionistsBracersTest extends BaseCardTest {
         assertThat(bracers.getAttachedTo()).isEqualTo(creature.getId());
     }
 
+    @Test
+    void copiesUntargetedAbilityWithoutPayingItsManaCostAgain() {
+        Permanent guildmage = addReady(player1, new ZameckGuildmage());
+        Permanent bracers = addReady(player1, new IllusionistsBracers());
+        bracers.setAttachedTo(guildmage.getId());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        activate(player1, guildmage, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new LlanowarElves());
+        assertThat(entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void bracersControllerControlsCopyOfOpponentsCreatureAbility() {
+        Permanent guildmage = addReady(player2, new ZameckGuildmage());
+        Permanent bracers = addReady(player1, new IllusionistsBracers());
+        bracers.setAttachedTo(guildmage.getId());
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.ensurePriority(player2);
+
+        activate(player2, guildmage, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent ownCreature = harness.enterBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent opposingCreature = harness.enterBattlefieldAndReturn(player2, new LlanowarElves());
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void copyCanChooseAnotherCreatureCardInGraveyard() {
+        Permanent shaman = addReady(player1, new DeathriteShaman());
+        Permanent bracers = addReady(player1, new IllusionistsBracers());
+        bracers.setAttachedTo(shaman.getId());
+        Card originalTarget = new LlanowarElves();
+        Card newTarget = new LlanowarElves();
+        harness.setGraveyard(player2, List.of(originalTarget, newTarget));
+        harness.setLife(player1, 10);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(shaman),
+                2, null, originalTarget.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, newTarget.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(originalTarget, newTarget);
+        harness.assertLife(player1, 14);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void activate(Player player, Permanent permanent, UUID targetId) {
         int index = harness.getGameData().playerBattlefields.get(player.getId()).indexOf(permanent);
         harness.activateAbility(player, index, null, targetId);
     }
 
     private Permanent addReady(Player player, Card card) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
