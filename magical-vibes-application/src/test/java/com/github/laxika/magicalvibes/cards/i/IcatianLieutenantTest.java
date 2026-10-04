@@ -104,4 +104,41 @@ class IcatianLieutenantTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Lieutenant can target itself while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent lieutenant = harness.addToBattlefieldAndReturn(player1, new IcatianLieutenant());
+        lieutenant.setTapped(true);
+        lieutenant.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, lieutenant.getId());
+        harness.passBothPriorities();
+
+        assertThat(lieutenant.getEffectivePower()).isEqualTo(2);
+        assertThat(lieutenant.getEffectiveToughness()).isEqualTo(2);
+        assertThat(lieutenant.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations stack and each pays the mana cost")
+    void repeatedActivationsStack() {
+        addLieutenant();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addToBattlefield(player1, new IcatianJavelineers());
+        UUID targetId = harness.getPermanentId(player1, "Icatian Javelineers");
+
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+
+        Permanent soldier = findPermanent(player1, "Icatian Javelineers");
+        assertThat(soldier.getEffectivePower()).isEqualTo(3);
+        assertThat(soldier.getEffectiveToughness()).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
