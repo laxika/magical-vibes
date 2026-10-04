@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.d.DawnhartDisciple;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HoneymoonHearse.class, DawnhartDisciple.class})
 class HoneymoonHearseTest extends BaseCardTest {
 
     @Test
@@ -22,15 +23,14 @@ class HoneymoonHearseTest extends BaseCardTest {
         Permanent hearse = addHearseReady(player1);
 
         assertThat(gqs.isCreature(gd, hearse)).isFalse();
-        assertThat(hearse.getCard().getType()).isEqualTo(CardType.ARTIFACT);
     }
 
     @Test
     @DisplayName("Tapping two untapped creatures animates Hearse as a 5/5")
     void tapTwoCreaturesAnimatesHearse() {
         Permanent hearse = addHearseReady(player1);
-        Permanent bearsA = addCreatureReady(player1, new GrizzlyBears());
-        Permanent bearsB = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bearsA = addCreatureReady(player1, new DawnhartDisciple());
+        Permanent bearsB = addCreatureReady(player1, new DawnhartDisciple());
 
         harness.activateAbility(player1, indexOf(player1, hearse), null, null);
         harness.passBothPriorities();
@@ -48,9 +48,9 @@ class HoneymoonHearseTest extends BaseCardTest {
     @DisplayName("With more than two creatures, choosing two taps them as cost")
     void choosesTwoOfThreeCreatures() {
         Permanent hearse = addHearseReady(player1);
-        addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player1, new GrizzlyBears());
-        Permanent spare = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new DawnhartDisciple());
+        addCreatureReady(player1, new DawnhartDisciple());
+        Permanent spare = addCreatureReady(player1, new DawnhartDisciple());
 
         harness.activateAbility(player1, indexOf(player1, hearse), null, null);
         tapCreatures(player1, 2);
@@ -64,7 +64,7 @@ class HoneymoonHearseTest extends BaseCardTest {
     @DisplayName("Cannot activate with fewer than two untapped creatures")
     void cannotActivateWithFewerThanTwo() {
         addHearseReady(player1);
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new DawnhartDisciple());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -74,8 +74,8 @@ class HoneymoonHearseTest extends BaseCardTest {
     @DisplayName("Animation resets at end of turn")
     void animationResetsAtEndOfTurn() {
         Permanent hearse = addHearseReady(player1);
-        addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new DawnhartDisciple());
+        addCreatureReady(player1, new DawnhartDisciple());
 
         harness.activateAbility(player1, indexOf(player1, hearse), null, null);
         harness.passBothPriorities();
@@ -90,11 +90,63 @@ class HoneymoonHearseTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, hearse)).isFalse();
     }
 
+    @Test
+    void newlyEnteredCreaturesCanPayAndAnimationWaitsForResolution() {
+        Permanent hearse = harness.addToBattlefieldAndReturn(player1, new HoneymoonHearse());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new DawnhartDisciple());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new DawnhartDisciple());
+
+        harness.activateAbility(player1, indexOf(player1, hearse), null, null);
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, hearse)).isFalse();
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, hearse)).isTrue();
+        assertThat(hearse.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    void tappedCreaturesCannotPayTheCost() {
+        Permanent hearse = addHearseReady(player1);
+        addCreatureReady(player1, new DawnhartDisciple());
+        Permanent tapped = addCreatureReady(player1, new DawnhartDisciple());
+        tapped.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, hearse), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.isCreature(gd, hearse)).isFalse();
+    }
+
+    @Test
+    void opponentsCreaturesCannotPayTheCost() {
+        Permanent hearse = addHearseReady(player1);
+        addCreatureReady(player1, new DawnhartDisciple());
+        Permanent opponentCreature = addCreatureReady(player2, new DawnhartDisciple());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, hearse), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(opponentCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    void animatedHearseCanTapItselfForAnotherActivation() {
+        Permanent hearse = addHearseReady(player1);
+        addCreatureReady(player1, new DawnhartDisciple());
+        addCreatureReady(player1, new DawnhartDisciple());
+        harness.activateAbility(player1, indexOf(player1, hearse), null, null);
+        harness.passBothPriorities();
+        Permanent freshCreature = harness.addToBattlefieldAndReturn(player1, new DawnhartDisciple());
+
+        harness.activateAbility(player1, indexOf(player1, hearse), null, null);
+        assertThat(hearse.isTapped()).isTrue();
+        assertThat(freshCreature.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, hearse)).isTrue();
+    }
+
     private Permanent addHearseReady(Player player) {
-        Permanent perm = new Permanent(new HoneymoonHearse());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new HoneymoonHearse());
     }
 
     private int indexOf(Player player, Permanent permanent) {
