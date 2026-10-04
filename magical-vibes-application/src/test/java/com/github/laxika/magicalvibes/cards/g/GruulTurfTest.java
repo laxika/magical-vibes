@@ -77,6 +77,27 @@ class GruulTurfTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's land cannot be chosen for the return trigger")
+    void cannotReturnOpponentsLand() {
+        Permanent opponentsLand = harness.addToBattlefieldAndReturn(player2, new GruulTurf());
+        harness.setHand(player1, List.of(new GruulTurf()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent turf = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactly(turf.getId())
+                .doesNotContain(opponentsLand.getId());
+        harness.handlePermanentChosen(player1, turf.getId());
+
+        harness.assertNotOnBattlefield(player1, "Gruul Turf");
+        harness.assertInHand(player1, "Gruul Turf");
+        harness.assertOnBattlefield(player2, "Gruul Turf");
+        harness.assertNotInHand(player2, "Gruul Turf");
+    }
+
+    @Test
     @DisplayName("Tapping adds one red and one green mana")
     void manaAbilityAddsRedAndGreen() {
         Permanent turf = harness.addToBattlefieldAndReturn(player1, new GruulTurf());
