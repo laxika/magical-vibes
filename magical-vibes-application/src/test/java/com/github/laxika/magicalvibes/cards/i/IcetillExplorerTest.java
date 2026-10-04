@@ -63,4 +63,101 @@ class IcetillExplorerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
+
+    @Test
+    void milledLandCanBePlayedAsTheAdditionalLand() {
+        harness.addToBattlefield(player1, new IcetillExplorer());
+        Forest milledLand = new Forest();
+        harness.setLibrary(player1, List.of(milledLand, new IcetillExplorer()));
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setGraveyard(player1, List.of());
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(milledLand);
+
+        harness.playGraveyardLand(player1, milledLand.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Forest")).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Icetill Explorer");
+    }
+
+    @Test
+    void opponentsLandDoesNotTriggerMillOrGainAnAdditionalLandPlay() {
+        harness.addToBattlefield(player1, new IcetillExplorer());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of(new Forest(), new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.playLand(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThatThrownBy(() -> harness.playLand(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void multipleExplorersEachGrantAnAdditionalLandAndTriggerMill() {
+        harness.addToBattlefield(player1, new IcetillExplorer());
+        harness.addToBattlefield(player1, new IcetillExplorer());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        for (int i = 0; i < 3; i++) {
+            harness.playLand(player1, 0);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(6);
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void permissionsEndWhenExplorerLeavesButPendingLandfallStillResolves() {
+        var explorer = harness.addToBattlefieldAndReturn(player1, new IcetillExplorer());
+        harness.setLibrary(player1, List.of(new IcetillExplorer()));
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+
+        harness.playLand(player1, 0);
+        gd.playerBattlefields.get(player1.getId()).remove(explorer);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Forest", "Icetill Explorer");
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThatThrownBy(() -> harness.playGraveyardLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    void losingAllAbilitiesRemovesTheAdditionalLandAllowance() {
+        var explorer = harness.addToBattlefieldAndReturn(player1, new IcetillExplorer());
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        explorer.setLosesAllAbilitiesUntilEndOfTurn(true);
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
 }
