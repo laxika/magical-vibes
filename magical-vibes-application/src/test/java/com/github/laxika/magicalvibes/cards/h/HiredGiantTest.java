@@ -63,16 +63,40 @@ class HiredGiantTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(before);
         assertThat(activeSearch()).isNull();
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
+                .noneMatch(log -> log.contains("Library is shuffled"));
     }
 
     @Test
-    @DisplayName("No land search is offered when an opponent has no land cards")
-    void noLandNoPrompt() {
+    @DisplayName("Opponent may choose whether to search even when their library has no lands")
+    void noLandStillOffersOptionalSearch() {
         harness.setLibrary(player2, List.of(new PortInspector()));
         castHiredGiant();
         resolveEtb();
 
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
+                .noneMatch(log -> log.contains("Library is shuffled"));
+    }
+
+    @Test
+    @DisplayName("Opponent may put a basic land onto the battlefield under their control")
+    void opponentMayPutBasicLandOntoBattlefield() {
+        Forest land = new Forest();
+        harness.setLibrary(player2, List.of(land, new PortInspector()));
+        castHiredGiant();
+        resolveEtb();
+
+        harness.handleCardChosen(player2, indexOf(activeSearch(), Forest.class));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() == land && !permanent.isTapped());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == land);
+        assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(land);
         assertThat(activeSearch()).isNull();
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
+                .anyMatch(log -> log.contains("Library is shuffled"));
     }
 
     private void castHiredGiant() {
