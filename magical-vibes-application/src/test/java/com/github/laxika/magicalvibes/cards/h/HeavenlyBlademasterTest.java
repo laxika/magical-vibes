@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -63,25 +62,77 @@ class HeavenlyBlademasterTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(5);
     }
 
+    @Test
+    void canChooseOnlyUnattachedEquipment() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = addAura(player1, new HolyStrength(), creature);
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
+
+        Permanent blademaster = castBlademaster();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(equipment.getId()));
+
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(equipment.getAttachedTo()).isEqualTo(blademaster.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, blademaster)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, blademaster)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
+    }
+
+    @Test
+    void noAttachmentsNeedsNoChoice() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        castBlademaster();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    void countsOpposingAurasAndUpdatesWhenAttachmentsMove() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blademaster = harness.addToBattlefieldAndReturn(player1, new HeavenlyBlademaster());
+        Permanent aura = addAura(player2, new HolyStrength(), blademaster);
+        Permanent equipment = addEquipment(player1, new LeoninScimitar(), blademaster);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blademaster)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, blademaster)).isEqualTo(9);
+
+        equipment.setAttachedTo(null);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+
+        aura.setAttachedTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, blademaster)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, blademaster)).isEqualTo(6);
+    }
+
     private Permanent castBlademaster() {
-        harness.setHand(player1, List.of(new HeavenlyBlademaster()));
-        harness.addMana(player1, ManaColor.WHITE, 6);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HeavenlyBlademaster(), "{5}{W}");
         harness.passBothPriorities();
         return findPermanent(player1, "Heavenly Blademaster");
     }
 
     private Permanent addAura(Player owner, Card auraCard, Permanent host) {
-        Permanent aura = new Permanent(auraCard);
+        Permanent aura = harness.addToBattlefieldAndReturn(owner, auraCard);
         aura.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(owner.getId()).add(aura);
         return aura;
     }
 
     private Permanent addEquipment(Player owner, Card equipmentCard, Permanent host) {
-        Permanent equipment = new Permanent(equipmentCard);
+        Permanent equipment = harness.addToBattlefieldAndReturn(owner, equipmentCard);
         equipment.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(owner.getId()).add(equipment);
         return equipment;
     }
 }
