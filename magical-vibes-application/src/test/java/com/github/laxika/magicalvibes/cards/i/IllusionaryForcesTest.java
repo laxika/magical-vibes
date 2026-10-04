@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -98,5 +99,52 @@ class IllusionaryForcesTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forces);
         harness.assertInGraveyard(player1, "Illusionary Forces");
+    }
+
+    @Test
+    @DisplayName("Another flying creature can block Illusionary Forces")
+    void canBeBlockedByFlyingCreature() {
+        addCreatureReady(player1, new IllusionaryForces());
+        addCreatureReady(player2, new IllusionaryForces());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Existing age counters increase the entire blue upkeep payment")
+    void paysForExistingAgeCounters() {
+        Permanent forces = harness.addToBattlefieldAndReturn(player1, new IllusionaryForces());
+        forces.setCounterCount(CounterType.AGE, 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(forces.getCounterCount(CounterType.AGE)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(forces);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Insufficient blue mana sacrifices the creature without partial payment")
+    void insufficientManaDoesNotPayPartially() {
+        Permanent forces = harness.addToBattlefieldAndReturn(player1, new IllusionaryForces());
+        forces.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.withAutoStop(TurnStep.UPKEEP,
+                () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forces);
+        harness.assertInGraveyard(player1, "Illusionary Forces");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
 }
