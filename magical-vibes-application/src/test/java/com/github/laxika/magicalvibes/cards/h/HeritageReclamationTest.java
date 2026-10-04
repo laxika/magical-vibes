@@ -26,11 +26,10 @@ class HeritageReclamationTest extends BaseCardTest {
 
     @Test
     void destroysTargetArtifact() {
-        harness.addToBattlefield(player2, new FountainOfYouth());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth()).getId();
         harness.setHand(player1, List.of(new HeritageReclamation()));
         addMana();
 
-        UUID targetId = harness.getPermanentId(player2, "Fountain of Youth");
         harness.castInstant(player1, 0, 0, targetId);
         harness.passBothPriorities();
 
@@ -39,11 +38,10 @@ class HeritageReclamationTest extends BaseCardTest {
 
     @Test
     void destroysTargetEnchantment() {
-        harness.addToBattlefield(player2, new GloriousAnthem());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem()).getId();
         harness.setHand(player1, List.of(new HeritageReclamation()));
         addMana();
 
-        UUID targetId = harness.getPermanentId(player2, "Glorious Anthem");
         harness.castInstant(player1, 0, 1, targetId);
         harness.passBothPriorities();
 
@@ -52,11 +50,10 @@ class HeritageReclamationTest extends BaseCardTest {
 
     @Test
     void rejectsWrongPermanentTypeForSelectedMode() {
-        harness.addToBattlefield(player2, new AirElemental());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new AirElemental()).getId();
         harness.setHand(player1, List.of(new HeritageReclamation()));
         addMana();
 
-        UUID targetId = harness.getPermanentId(player2, "Air Elemental");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -75,7 +72,90 @@ class HeritageReclamationTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Grizzly Bears"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void drawsWithNoTargetWhenGraveyardsAreEmpty() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(new HeritageReclamation()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        addMana();
+
+        harness.castInstant(player1, 0, 2, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Heritage Reclamation");
+    }
+
+    @Test
+    void mayDeclineGraveyardTargetEvenWhenOneIsAvailable() {
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(bears));
+        harness.setHand(player1, List.of(new HeritageReclamation()));
+        harness.setLibrary(player1, List.of(new AirElemental()));
+        addMana();
+
+        harness.castInstant(player1, 0, 2, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertInHand(player1, "Air Elemental");
+    }
+
+    @Test
+    void canExileNoncreatureCardFromOwnGraveyard() {
+        Card artifact = new FountainOfYouth();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.setHand(player1, List.of(new HeritageReclamation()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        addMana();
+
+        harness.castInstant(player1, 0, 2, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Fountain of Youth");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(artifact);
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotDrawWhenChosenGraveyardTargetBecomesIllegal() {
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(bears));
+        harness.setHand(player1, List.of(new HeritageReclamation()));
+        harness.setLibrary(player1, List.of(new AirElemental()));
+        addMana();
+
+        harness.castInstant(player1, 0, 2, bears.getId());
+        harness.setGraveyard(player2, List.of());
+        harness.setExile(player2, List.of(bears));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Air Elemental");
+        harness.assertInGraveyard(player1, "Heritage Reclamation");
+    }
+
+    @Test
+    void enchantmentModeRejectsArtifact() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth()).getId();
+        harness.setHand(player1, List.of(new HeritageReclamation()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, targetId))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void artifactModeRejectsEnchantment() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem()).getId();
+        harness.setHand(player1, List.of(new HeritageReclamation()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, 0, targetId))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
