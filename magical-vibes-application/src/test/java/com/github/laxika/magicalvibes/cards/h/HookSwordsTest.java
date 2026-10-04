@@ -72,17 +72,51 @@ class HookSwordsTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, second, Keyword.FIRST_STRIKE)).isTrue();
     }
 
+    @Test
+    void enteringStillCreatesAnAllyIfEquipmentLeavesBeforeTriggerResolves() {
+        harness.setHand(player1, List.of(new HookSwords()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent swords = findPermanent(player1, "Hook Swords");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, swords));
+        harness.passBothPriorities();
+
+        Permanent ally = findPermanent(player1, "Ally");
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(ally);
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void bonusUsesEquipmentControllersTurnEvenWhenOpponentControlsCreature() {
+        Permanent swords = addSwordsReady(player1);
+        Permanent creature = addCreatureReady(player2);
+        swords.setAttachedTo(creature.getId());
+
+        harness.forceActivePlayer(player1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+
+        harness.forceActivePlayer(player2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
     private Permanent addSwordsReady(Player player) {
-        Permanent permanent = new Permanent(new HookSwords());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new HookSwords());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
     private Permanent addCreatureReady(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
