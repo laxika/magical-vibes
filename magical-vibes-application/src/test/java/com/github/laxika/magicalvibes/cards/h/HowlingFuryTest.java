@@ -25,8 +25,7 @@ class HowlingFuryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HowlingFury()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bear.getId());
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
@@ -39,8 +38,7 @@ class HowlingFuryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HowlingFury()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bear.getId());
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
@@ -65,10 +63,34 @@ class HowlingFuryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HowlingFury()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bear.getId());
 
         harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Howling Fury boosts add together and expire at cleanup")
+    void multipleBoostsAreCumulative() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HowlingFury(), new HowlingFury()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castAndResolveSorcery(player1, 0, bear.getId());
+        harness.castAndResolveSorcery(player1, 0, bear.getId());
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherBear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherBear)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(10);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
