@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.p.Panopticon;
+import com.github.laxika.magicalvibes.cards.h.Humility;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,10 +20,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@CardUsed({IchorElixir.class, Panopticon.class})
+@CardUsed({IchorElixir.class, Panopticon.class, Humility.class, MarchOfTheMachines.class})
 class IchorElixirTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -59,6 +62,19 @@ class IchorElixirTest extends BaseCardTest {
     }
 
     @Test
+    void manaAbilityTapsImmediatelyAndCannotBeActivatedAgain() {
+        var elixir = harness.addToBattlefieldAndReturn(player1, new IchorElixir());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(elixir.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
     void letsItsControllerChooseTheIgnoredPlanarResult() {
         harness.addToBattlefield(player1, new IchorElixir());
         when(die.roll()).thenReturn(PlanarDieResult.BLANK, PlanarDieResult.CHAOS);
@@ -83,5 +99,71 @@ class IchorElixirTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.planechase.lastRoll).isEqualTo(PlanarDieResult.BLANK);
+    }
+
+    @Test
+    void ignoredChaosDoesNotTriggerThePlane() {
+        harness.addToBattlefield(player1, new IchorElixir());
+        when(die.roll()).thenReturn(PlanarDieResult.CHAOS, PlanarDieResult.BLANK);
+
+        harness.inMutationScope(() -> planar.roll(gd, player1.getId()));
+        harness.handleListChoice(player1, "1: CHAOS");
+
+        assertThat(gd.planechase.lastRoll).isEqualTo(PlanarDieResult.BLANK);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void ignoredPlaneswalkerDoesNotPlaneswalk() {
+        harness.addToBattlefield(player1, new IchorElixir());
+        var originalPlane = gd.planechase.faceUp.getFirst();
+        when(die.roll()).thenReturn(PlanarDieResult.PLANESWALKER, PlanarDieResult.BLANK);
+
+        harness.inMutationScope(() -> planar.roll(gd, player1.getId()));
+        harness.handleListChoice(player1, "1: PLANESWALKER");
+
+        assertThat(gd.planechase.lastRoll).isEqualTo(PlanarDieResult.BLANK);
+        assertThat(gd.planechase.faceUp).containsExactly(originalPlane);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void twoElixirsRollThreeDiceAndIgnoreTwo() {
+        harness.addToBattlefield(player1, new IchorElixir());
+        harness.addToBattlefield(player1, new IchorElixir());
+        when(die.roll()).thenReturn(PlanarDieResult.CHAOS, PlanarDieResult.PLANESWALKER,
+                PlanarDieResult.BLANK);
+
+        harness.inMutationScope(() -> planar.roll(gd, player1.getId()));
+
+        var choice = (PendingInteraction.PlanarDieChoice) gd.interaction.activeInteraction();
+        assertThat(choice.rolls()).containsExactly(PlanarDieResult.CHAOS,
+                PlanarDieResult.PLANESWALKER, PlanarDieResult.BLANK);
+        harness.handleListChoice(player1, "1: CHAOS");
+        assertThat(gd.planechase.rollSequence).isZero();
+        harness.handleListChoice(player1, "1: PLANESWALKER");
+
+        assertThat(gd.planechase.lastRoll).isEqualTo(PlanarDieResult.BLANK);
+        assertThat(gd.planechase.rollSequence).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({Humility.class, MarchOfTheMachines.class})
+    void elixirWithNoAbilitiesDoesNotReplacePlanarRolls() {
+        var elixir = harness.addToBattlefieldAndReturn(player1, new IchorElixir());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        harness.addToBattlefield(player1, new Humility());
+        assertThat(gqs.isCreature(gd, elixir)).isTrue();
+        assertThat(gqs.hasLostAllAbilities(gd, elixir)).isTrue();
+        when(die.roll()).thenReturn(PlanarDieResult.BLANK, PlanarDieResult.CHAOS);
+
+        harness.inMutationScope(() -> planar.roll(gd, player1.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.planechase.lastRoll).isEqualTo(PlanarDieResult.BLANK);
+        assertThat(gd.planechase.rollSequence).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }
