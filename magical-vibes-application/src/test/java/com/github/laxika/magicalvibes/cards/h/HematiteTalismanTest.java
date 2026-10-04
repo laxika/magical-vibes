@@ -93,4 +93,66 @@ class HematiteTalismanTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
+
+    @Test
+    @DisplayName("The Talisman can untap itself and payment spends exactly three mana")
+    void canUntapItself() {
+        Permanent talisman = harness.addToBattlefieldAndReturn(player1, new HematiteTalisman());
+        talisman.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castFromHand(player1, new BalduvianBarbarians(), "{1}{R}{R}");
+        harness.handlePermanentChosen(player1, talisman.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(talisman.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The controller can pay to untap an opponent's permanent")
+    void canUntapOpponentsPermanent() {
+        harness.addToBattlefield(player1, new HematiteTalisman());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        bears.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castFromHand(player1, new BalduvianBarbarians(), "{1}{R}{R}");
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(bears.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+        PendingInteraction.MayAbilityChoice payment =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(payment.playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("An ability with a departed target does not offer or charge payment")
+    void departedTargetPreventsPayment() {
+        harness.addToBattlefield(player1, new HematiteTalisman());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        bears.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castFromHand(player1, new BalduvianBarbarians(), "{1}{R}{R}");
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerGraveyards.get(player1.getId()).add(bears.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(bears.isTapped()).isTrue();
+    }
 }
