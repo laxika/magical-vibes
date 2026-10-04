@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -59,6 +60,58 @@ class HarvesterTrollTest extends BaseCardTest {
         Permanent troll = findPermanent(player1, "Harvester Troll");
         assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+    }
+
+    @Test
+    @DisplayName("Counters are placed during the same resolution as the sacrifice")
+    void countersArePlacedWithoutAnotherPriorityRound() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        castHarvesterTroll();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, land.getId());
+
+        Permanent troll = findPermanent(player1, "Harvester Troll");
+        assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Harvester Troll can sacrifice itself without another permanent")
+    void canSacrificeItself() {
+        castHarvesterTroll();
+        Permanent troll = findPermanent(player1, "Harvester Troll");
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, troll.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Harvester Troll");
+        harness.assertInGraveyard(player1, "Harvester Troll");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only creatures and lands controlled by the ability controller can be sacrificed")
+    void excludesOpponentsPermanents() {
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        castHarvesterTroll();
+        Permanent troll = findPermanent(player1, "Harvester Troll");
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactlyInAnyOrder(ownLand.getId(), troll.getId())
+                .doesNotContain(opposingCreature.getId(), opposingLand.getId());
+        harness.handlePermanentChosen(player1, ownLand.getId());
+        harness.passBothPriorities();
+
+        assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Forest");
     }
 
     private void castHarvesterTroll() {
