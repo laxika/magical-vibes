@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.s.SavaenElves;
 import com.github.laxika.magicalvibes.cards.s.Squire;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,8 +18,43 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HiddenPath.class, SavaenElves.class, Squire.class, Forest.class})
+@CardUsed({HiddenPath.class, SavaenElves.class, Squire.class, Forest.class, Opalescence.class})
 class HiddenPathTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Resolving Hidden Path grants forestwalk to creatures already in play")
+    void grantsForestwalkAfterResolving() {
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new SavaenElves());
+        harness.castFromHand(player1, new HiddenPath(), "{2}{G}{G}{G}{G}");
+
+        assertThat(gqs.hasKeyword(gd, elves, Keyword.FORESTWALK)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, elves, Keyword.FORESTWALK)).isTrue();
+    }
+
+    @Test
+    @CardUsed(Opalescence.class)
+    @DisplayName("Hidden Path grants itself forestwalk when it becomes a green creature")
+    void animatedHiddenPathHasForestwalk() {
+        Permanent hiddenPath = harness.addToBattlefieldAndReturn(player1, new HiddenPath());
+        harness.addToBattlefield(player1, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, hiddenPath)).isTrue();
+        assertThat(gqs.hasKeyword(gd, hiddenPath, Keyword.FORESTWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A Forest controlled only by the attacker does not prevent blocking")
+    void attackersForestDoesNotPreventBlocking() {
+        harness.addToBattlefield(player1, new HiddenPath());
+        harness.addToBattlefield(player1, new Forest());
+
+        Permanent blocker = declareCombat();
+        gs.declareBlockers(gd, player2, List.of(blockAssignment(blocker)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 
     @Test
     @DisplayName("Green creatures gain forestwalk on both battlefields")
@@ -90,11 +126,10 @@ class HiddenPathTest extends BaseCardTest {
 
     private Permanent declareCombat() {
         Permanent attacker = addCreatureReady(player1, new SavaenElves());
-        attacker.setAttacking(true);
 
         Permanent blocker = addCreatureReady(player2, new Squire());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
 
         return blocker;
     }
