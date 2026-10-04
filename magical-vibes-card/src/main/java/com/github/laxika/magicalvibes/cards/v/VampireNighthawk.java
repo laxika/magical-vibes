@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DDK", collectorNumber = "12")
 @CardRegistration(set = "DDP", collectorNumber = "58")
 @CardRegistration(set = "E02", collectorNumber = "23")
+@CardRegistration(set = "E01", collectorNumber = "38")
 @CardRegistration(set = "MM3", collectorNumber = "87")
 @CardRegistration(set = "C13", collectorNumber = "97")
 @CardRegistration(set = "CMD", collectorNumber = "106")
 @CardRegistration(set = "C21", collectorNumber = "157")
 @CardRegistration(set = "C20", collectorNumber = "140")
 @CardRegistration(set = "VOC", collectorNumber = "140")
+@CardRegistration(set = "C17", collectorNumber = "129")
 @CardRegistration(set = "SCD", collectorNumber = "115")
 public class VampireNighthawk extends Card {
 }

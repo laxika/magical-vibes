@@ -76,6 +76,7 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
         FilterContext ctx = FilterContext.of(gameData)
                 .withSourceCardId(sourceCardId)
                 .withSourceControllerId(entry.getControllerId())
+                .withTriggeringPermanentId(entry.getTriggeringPermanentId())
                 .withSourcePermanentSnapshot(source);
         int count = 0;
         int totalPlaced = 0;

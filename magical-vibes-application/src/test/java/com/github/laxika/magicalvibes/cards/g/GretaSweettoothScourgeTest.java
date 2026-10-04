@@ -89,14 +89,75 @@ class GretaSweettoothScourgeTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Food")).isOne();
     }
 
-    private Permanent castGreta() {
-        harness.setHand(player1, List.of(new GretaSweettoothScourge()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
+    @Test
+    void foodTokenCanBeSacrificedToGainThreeLife() {
+        castGreta();
+        Permanent food = findPermanent(player1, "Food");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, food), 0, null, null);
+
+        assertThat(countPermanents(player1, "Food")).isZero();
+        harness.assertLife(player1, 20);
+        resolveAllTriggers();
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    void tappedFoodCanPayForCounterOnGreta() {
+        Permanent greta = castGreta();
+        findPermanent(player1, "Food").setTapped(true);
         harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, greta), 0, null, greta.getId());
+
+        assertThat(countPermanents(player1, "Food")).isZero();
+        assertThat(greta.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        resolveAllTriggers();
+        assertThat(greta.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void drawAbilityCanBeActivatedDuringOpponentsUpkeep() {
+        Permanent greta = castGreta();
+        harness.setLibrary(player1, List.of(new GretaSweettoothScourge()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+
+        harness.activateAbility(player1, battlefieldIndex(player1, greta), 1, null, null);
+
+        assertThat(countPermanents(player1, "Food")).isZero();
+        harness.assertLife(player1, 20);
+        resolveAllTriggers();
+        harness.assertInHand(player1, "Greta, Sweettooth Scourge");
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    void cannotActivateEitherAbilityWithoutFood() {
+        Permanent greta = addCreatureReady(player1, new GretaSweettoothScourge());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, greta), 0, null, greta.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sacrifice");
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(player1, greta), 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sacrifice");
+        assertThat(greta.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertLife(player1, 20);
+    }
+    private Permanent castGreta() {
+        harness.castFromHand(player1, new GretaSweettoothScourge(), "{1}{B}{G}");
+        resolveAllTriggers();
         return findPermanent(player1, "Greta, Sweettooth Scourge");
     }
 

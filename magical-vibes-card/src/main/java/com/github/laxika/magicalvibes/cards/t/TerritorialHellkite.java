@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseRandomOpponentMustAttackThisCombatEffect;
 
 @CardRegistration(set = "TDC", collectorNumber = "240")
+@CardRegistration(set = "C17", collectorNumber = "29")
 public class TerritorialHellkite extends Card {
 
     public TerritorialHellkite() {

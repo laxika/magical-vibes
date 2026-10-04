@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "V13", collectorNumber = "16")
 @CardRegistration(set = "C15", collectorNumber = "178")
 @CardRegistration(set = "AFC", collectorNumber = "153")
+@CardRegistration(set = "ARC", collectorNumber = "52")
 public class ChameleonColossus extends Card {
 
     public ChameleonColossus() {

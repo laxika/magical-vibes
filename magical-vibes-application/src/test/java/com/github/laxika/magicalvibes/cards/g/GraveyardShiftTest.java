@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.c.CivilServant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.m.Murder;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Strangle;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,20 +17,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GraveyardShift.class, GrizzlyBears.class, HillGiant.class, Mountain.class, Murder.class, Shock.class})
+@CardUsed({GraveyardShift.class, CivilServant.class, GirderGoons.class, Mountain.class, Murder.class, Strangle.class})
 class GraveyardShiftTest extends BaseCardTest {
 
     @Test
     @DisplayName("Returns a target creature card from your graveyard to the battlefield")
     void returnsTargetCreatureFromGraveyard() {
-        Card creature = new GrizzlyBears();
+        Card creature = new CivilServant();
         harness.setGraveyard(player1, List.of(creature));
         harness.setHand(player1, List.of(new GraveyardShift()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));
@@ -41,9 +40,9 @@ class GraveyardShiftTest extends BaseCardTest {
     @Test
     @DisplayName("Can be cast at instant speed with five distinct mana values in your graveyard")
     void fiveDistinctManaValuesGrantFlashTiming() {
-        Card target = new GrizzlyBears();
+        Card target = new CivilServant();
         harness.setGraveyard(player1, List.of(
-                new Mountain(), new Shock(), target, new Murder(), new HillGiant()));
+                new Mountain(), new Strangle(), target, new Murder(), new GirderGoons()));
         castDuringOpponentsTurn(target);
 
         assertThat(gd.stack).hasSize(1);
@@ -52,8 +51,8 @@ class GraveyardShiftTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be cast at instant speed without five distinct mana values")
     void fewerThanFiveDistinctManaValuesKeepSorceryTiming() {
-        Card target = new GrizzlyBears();
-        harness.setGraveyard(player1, List.of(new Mountain(), new Shock(), target, new Murder()));
+        Card target = new CivilServant();
+        harness.setGraveyard(player1, List.of(new Mountain(), new Strangle(), target, new Murder()));
         prepareToCastDuringOpponentsTurn();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
@@ -61,7 +60,94 @@ class GraveyardShiftTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
-    private void castDuringOpponentsTurn(Card target) {
+    @Test
+    @DisplayName("Five cards with only four distinct mana values do not grant flash")
+    void duplicateManaValuesDoNotGrantFlash() {
+        Card target = new CivilServant();
+        harness.setGraveyard(player1, List.of(
+                new Mountain(), new Strangle(), target, new Murder(), new CivilServant()));
+        prepareToCastDuringOpponentsTurn();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Mana values in the opponent's graveyard do not grant flash")
+    void opponentsGraveyardDoesNotGrantFlash() {
+        Card target = new CivilServant();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setGraveyard(player2, List.of(
+                new Mountain(), new Strangle(), new CivilServant(), new Murder(), new GirderGoons()));
+        prepareToCastDuringOpponentsTurn();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature card in the opponent's graveyard")
+    void rejectsOpponentsCreature() {
+        Card target = new CivilServant();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(new GraveyardShift()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a noncreature card in your graveyard")
+    void rejectsNoncreatureCard() {
+        Card target = new Murder();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new GraveyardShift()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not return a target that leaves the graveyard before resolution")
+    void targetLeavingGraveyardPreventsReturn() {
+        Card target = new CivilServant();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new GraveyardShift()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castSorcery(player1, 0, target.getId());
+
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Civil Servant");
+        harness.assertInHand(player1, "Civil Servant");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Losing the flash condition after casting does not stop resolution")
+    void flashConditionIsNotRequiredAtResolution() {
+        Card target = new CivilServant();
+        harness.setGraveyard(player1, List.of(
+                new Mountain(), new Strangle(), target, new Murder(), new GirderGoons()));
+        castDuringOpponentsTurn(target);
+
+        harness.setGraveyard(player1, List.of(target));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Civil Servant");
+        harness.assertNotInGraveyard(player1, "Civil Servant");
+        assertThat(gd.stack).isEmpty();
+    }
+
+
         prepareToCastDuringOpponentsTurn();
         harness.castSorcery(player1, 0, target.getId());
     }
@@ -73,6 +159,6 @@ class GraveyardShiftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GraveyardShift()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passPriority(player2);
     }
 }

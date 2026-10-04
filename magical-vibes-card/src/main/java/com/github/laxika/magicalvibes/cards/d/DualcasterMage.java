@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "C14", collectorNumber = "34")
 @CardRegistration(set = "C21", collectorNumber = "165")
 @CardRegistration(set = "C20", collectorNumber = "150")
+@CardRegistration(set = "E01", collectorNumber = "46")
 public class DualcasterMage extends Card {
 
     public DualcasterMage() {

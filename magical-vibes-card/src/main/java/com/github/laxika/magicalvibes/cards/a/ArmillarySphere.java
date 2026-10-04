@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "PCA", collectorNumber = "108")
 @CardRegistration(set = "CMD", collectorNumber = "242")
 @CardRegistration(set = "C19", collectorNumber = "209")
+@CardRegistration(set = "C17", collectorNumber = "203")
 public class ArmillarySphere extends Card {
 
     public ArmillarySphere() {

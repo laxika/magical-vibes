@@ -1,19 +1,25 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Slagstorm;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.event.GameEventEnvelope;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Galvanoth.class, GrizzlyBears.class, Pyroclasm.class, Shock.class})
+@CardUsed({Galvanoth.class, GrizzlyBears.class, KuldothaRebirth.class, Pyroclasm.class, Shock.class, Slagstorm.class})
 class GalvanothTest extends BaseCardTest {
 
     // ===== Upkeep trigger — may look prompt =====
@@ -213,7 +219,79 @@ class GalvanothTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Galvanoth());
 
         advanceToUpkeep(player2); // opponent's upkeep
-        // If the trigger fired, there would be a may prompt
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() instanceof Galvanoth);
         assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Looking at a creature on top privately shows its identity to the controller")
+    void lookingAtCreatureShowsItOnlyToController() throws Exception {
+        harness.addToBattlefield(player1, new Galvanoth());
+        Card bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bears));
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        List<GameEventEnvelope> events = new ArrayList<>();
+
+        try (AutoCloseable ignored = harness.subscribeToGameEvents(batch -> events.addAll(batch.events()))) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(events)
+                .filteredOn(event -> event.fact() instanceof GameEventFact.PrivateReveal reveal
+                        && reveal.zone() == GameEventFact.RevealZone.LIBRARY
+                        && reveal.subjectPlayerId().equals(player1.getId()))
+                .isNotEmpty()
+                .allSatisfy(event -> {
+                    GameEventFact.PrivateReveal reveal = (GameEventFact.PrivateReveal) event.fact();
+                    assertThat(reveal.cards()).extracting(GameEventFact.CardSnapshot::cardId)
+                            .containsExactly(bears.getId());
+                    assertThat(event.audience().playerIds()).containsExactly(player1.getId());
+                });
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bears);
+    }
+
+    @Test
+    @DisplayName("A spell with a mandatory artifact sacrifice cannot be cast without an artifact")
+    void cannotCastWithoutMandatorySacrifice() {
+        harness.addToBattlefield(player1, new Galvanoth());
+        Card rebirth = new KuldothaRebirth();
+        harness.setLibrary(player1, List.of(rebirth));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(rebirth);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == rebirth);
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isZero();
+    }
+
+    @Test
+    @DisplayName("A modal sorcery's mode is chosen during casting before opponents can respond")
+    void modalSpellChoosesModeBeforeGoingOnStack() {
+        harness.addToBattlefield(player1, new Galvanoth());
+        Card slagstorm = new Slagstorm();
+        harness.setLibrary(player1, List.of(slagstorm));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player1, "Slagstorm deals 3 damage to each player");
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == slagstorm);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+        harness.assertOnBattlefield(player1, "Galvanoth");
+        harness.assertInGraveyard(player1, "Slagstorm");
     }
 }

@@ -87,4 +87,47 @@ class GoblinDirigibleTest extends BaseCardTest {
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(dirigible.isTapped()).isTrue();
     }
+
+    @Test
+    void genericUpkeepPaymentCanUseColoredMana() {
+        Permanent dirigible = addCreatureReady(player1, new GoblinDirigible());
+        dirigible.tap();
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(dirigible.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void canPayUpkeepCostEvenWhenAlreadyUntapped() {
+        Permanent dirigible = addCreatureReady(player1, new GoblinDirigible());
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(dirigible.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    void decliningUpkeepPaymentDoesNotSpendMana() {
+        Permanent dirigible = addCreatureReady(player1, new GoblinDirigible());
+        dirigible.tap();
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, false));
+
+        assertThat(dirigible.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+    }
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +18,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Gnathosaur.class, Spellbook.class, LeoninScimitar.class})
 class GnathosaurTest extends BaseCardTest {
-
-    // ===== Activation: sacrifice an artifact to gain trample =====
 
     @Test
     @DisplayName("Sacrificing an artifact grants Gnathosaur trample until end of turn")
@@ -139,13 +139,59 @@ class GnathosaurTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Artifact is sacrificed immediately, but only the source gains trample on resolution")
+    void sacrificeIsPaidBeforeTrampleResolves() {
+        Permanent source = addReadyGnathosaur(player1);
+        Permanent other = addReadyGnathosaur(player1);
+        harness.addToBattlefield(player1, new Spellbook());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Spellbook");
+        harness.assertInGraveyard(player1, "Spellbook");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(source.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+
+        harness.passBothPriorities();
+
+        assertThat(source.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+        assertThat(other.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness does not prevent activating the sacrifice ability")
+    void canActivateWhileSummoningSick() {
+        Permanent gnathosaur = harness.addToBattlefieldAndReturn(player1, new Gnathosaur());
+        gnathosaur.setSummoningSick(true);
+        harness.addToBattlefield(player1, new Spellbook());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Spellbook");
+        assertThat(gnathosaur.getGrantedKeywords()).contains(Keyword.TRAMPLE);
+    }
+
+    @Test
+    @DisplayName("An opponent's artifact cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsArtifact() {
+        Permanent gnathosaur = addReadyGnathosaur(player1);
+        harness.addToBattlefield(player2, new Spellbook());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permanent to sacrifice matching: an artifact");
+
+        harness.assertOnBattlefield(player2, "Spellbook");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gnathosaur.getGrantedKeywords()).doesNotContain(Keyword.TRAMPLE);
+    }
 
     private Permanent addReadyGnathosaur(Player player) {
-        Gnathosaur card = new Gnathosaur();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new Gnathosaur());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 

@@ -7,6 +7,10 @@ import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnPermanentsOrP
 import com.github.laxika.magicalvibes.model.effect.HalveCountersPutByOpponentsEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "199")
+@CardRegistration(set = "KHM", collectorNumber = "320")
+@CardRegistration(set = "KHM", collectorNumber = "333")
+@CardRegistration(set = "KHM", collectorNumber = "406")
+@CardRegistration(set = "KHM", collectorNumber = "407")
 public class VorinclexMonstrousRaider extends Card {
 
     public VorinclexMonstrousRaider() {

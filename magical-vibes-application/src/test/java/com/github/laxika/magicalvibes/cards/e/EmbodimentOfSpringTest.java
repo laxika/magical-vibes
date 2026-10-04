@@ -112,7 +112,7 @@ class EmbodimentOfSpringTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Embodiment cannot activate its ability")
     void cannotActivateWhileTapped() {
-        addReadyEmbodiment().setTapped(true);
+        addReadyEmbodiment().tap();
         addMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

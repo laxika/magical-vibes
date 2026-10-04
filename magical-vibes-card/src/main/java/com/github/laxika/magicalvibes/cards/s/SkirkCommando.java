@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "228")
 @CardRegistration(set = "A25", collectorNumber = "150")
+@CardRegistration(set = "ARC", collectorNumber = "47")
 public class SkirkCommando extends Card {
 
     public SkirkCommando() {

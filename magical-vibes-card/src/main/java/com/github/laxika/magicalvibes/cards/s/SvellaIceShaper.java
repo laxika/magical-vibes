@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "230")
+@CardRegistration(set = "KHM", collectorNumber = "331")
 public class SvellaIceShaper extends Card {
 
     public SvellaIceShaper() {

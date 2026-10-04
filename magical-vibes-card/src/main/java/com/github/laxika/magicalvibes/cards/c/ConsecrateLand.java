@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSB", collectorNumber = "4")
 @CardRegistration(set = "2ED", collectorNumber = "15")
+@CardRegistration(set = "LEA", collectorNumber = "14")
+@CardRegistration(set = "LEB", collectorNumber = "15")
 public class ConsecrateLand extends Card {
 
     public ConsecrateLand() {

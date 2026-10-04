@@ -23,8 +23,10 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "C20", collectorNumber = "307")
 @CardRegistration(set = "ONC", collectorNumber = "163")
 @CardRegistration(set = "C18", collectorNumber = "279")
+@CardRegistration(set = "C17", collectorNumber = "278")
 @CardRegistration(set = "EOC", collectorNumber = "177")
 @CardRegistration(set = "FDC", collectorNumber = "312")
+@CardRegistration(set = "ARC", collectorNumber = "133")
 public class SecludedSteppe extends Card {
 
     public SecludedSteppe() {

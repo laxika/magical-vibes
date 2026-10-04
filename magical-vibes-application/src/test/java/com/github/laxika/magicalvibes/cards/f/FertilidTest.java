@@ -128,7 +128,7 @@ class FertilidTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent fertilid = fertilid(player1);
         assertThat(fertilid.isSummoningSick()).isTrue();
-        fertilid.setTapped(true);
+        fertilid.tap();
 
         harness.activateAbility(player1, 0, null, player2.getId());
         assertThat(fertilid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

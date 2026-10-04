@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEachCreatureOfChosenTypeEffect;
 
 @CardRegistration(set = "SPG", collectorNumber = "58")
+@CardRegistration(set = "C17", collectorNumber = "27")
 public class KindredCharge extends Card {
 
     public KindredCharge() {

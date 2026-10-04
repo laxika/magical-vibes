@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "148")
+@CardRegistration(set = "THB", collectorNumber = "319")
 public class PhoenixOfAsh extends Card {
 
     public PhoenixOfAsh() {

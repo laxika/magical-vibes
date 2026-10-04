@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "INV", collectorNumber = "238")
+@CardRegistration(set = "C17", collectorNumber = "166")
 public class CauldronDance extends Card {
 
     public CauldronDance() {

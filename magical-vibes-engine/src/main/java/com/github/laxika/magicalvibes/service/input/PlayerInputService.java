@@ -1030,8 +1030,15 @@ public class PlayerInputService {
     public void beginLibraryCastModeChoice(GameData gameData, UUID controllerId, Card cardToCast,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, StackEntryType spellType,
             List<Integer> modeIndices, Integer discoverValue) {
+        beginLibraryCastModeChoice(gameData, controllerId, cardToCast, effect, spellType, modeIndices,
+                discoverValue, Zone.LIBRARY);
+    }
+
+    public void beginLibraryCastModeChoice(GameData gameData, UUID controllerId, Card cardToCast,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, StackEntryType spellType,
+            List<Integer> modeIndices, Integer discoverValue, Zone sourceZone) {
         ChoiceContext.LibraryCastModeChoice ctx = new ChoiceContext.LibraryCastModeChoice(
-                cardToCast, controllerId, effect, spellType, modeIndices, discoverValue);
+                cardToCast, controllerId, effect, spellType, modeIndices, discoverValue, sourceZone);
         List<String> optionLabels = effect.options().stream()
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
                 .toList();
@@ -1522,8 +1529,13 @@ public class PlayerInputService {
 
     public void beginCardTypeOnEnterChoice(GameData gameData, UUID playerId, Card card,
                                            List<CardType> excludedTypes) {
+        beginCardTypeOnEnterChoice(gameData, playerId, card, excludedTypes, null);
+    }
+
+    public void beginCardTypeOnEnterChoice(GameData gameData, UUID playerId, Card card,
+                                           List<CardType> excludedTypes, Permanent preparedPermanent) {
         ChoiceContext.CardTypeOnEnterChoice choiceContext =
-                new ChoiceContext.CardTypeOnEnterChoice(card, playerId, excludedTypes);
+                new ChoiceContext.CardTypeOnEnterChoice(card, playerId, excludedTypes, preparedPermanent);
         List<String> cardTypes = Arrays.stream(CardType.values())
                 .filter(type -> type != CardType.EMBLEM && !excludedTypes.contains(type))
                 .map(CardType::name)
@@ -1923,11 +1935,19 @@ public class PlayerInputService {
     public void beginRemoveChosenCountersChoice(GameData gameData, UUID playerId, UUID targetId,
                                                  String sourceCardName, int remainingSelections,
                                                  List<CounterType> counterTypes) {
+        beginRemoveChosenCountersChoice(gameData, playerId, targetId, sourceCardName,
+                remainingSelections, counterTypes, false);
+    }
+
+    public void beginRemoveChosenCountersChoice(GameData gameData, UUID playerId, UUID targetId,
+                                                String sourceCardName, int remainingSelections,
+                                                List<CounterType> counterTypes, boolean exactAmount) {
         ChoiceContext.RemoveChosenCountersChoice context = new ChoiceContext.RemoveChosenCountersChoice(
-                targetId, playerId, sourceCardName, remainingSelections, counterTypes);
+                targetId, playerId, sourceCardName, remainingSelections, counterTypes, exactAmount);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, context, context.options(),
-                sourceCardName + " — Choose up to " + remainingSelections + " counters to remove."));
+                sourceCardName + (exactAmount ? " — Choose " : " — Choose up to ")
+                        + remainingSelections + " counters to remove."));
         log.info("Game {} - Awaiting {} to choose a counter to remove from {}", gameData.id, playerId, targetId);
     }
 
@@ -2844,7 +2864,7 @@ public class PlayerInputService {
                                           int maxCount, UUID targetPlayerId, String cardName,
                                           boolean drawForHandExiled) {
         beginMultiZoneExileChoice(gameData, choosingPlayerId, matchingCards, maxCount, targetPlayerId,
-                cardName, drawForHandExiled, null, null);
+                cardName, drawForHandExiled, (CreateTokenEffect) null, null);
     }
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
@@ -2867,6 +2887,18 @@ public class PlayerInputService {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
                 choosingPlayerId, validCardIds, Math.min(maxCount, matchingCards.size()), targetPlayerId,
                 choosingPlayerId, cardName, drawForHandExiled, tokenTemplate, sourceSetCode, sourcePermanentId, null));
+    }
+
+    public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
+                                          int maxCount, UUID targetPlayerId, String cardName,
+                                          boolean drawForHandExiled, UUID sourcePermanentId,
+                                          CardEffect followUpEffect) {
+        List<UUID> validCardIds = matchingCards.stream().map(Card::getId).toList();
+
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
+                choosingPlayerId, validCardIds, Math.min(maxCount, matchingCards.size()), targetPlayerId,
+                choosingPlayerId, cardName, drawForHandExiled, null, null, sourcePermanentId,
+                followUpEffect, false));
     }
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,

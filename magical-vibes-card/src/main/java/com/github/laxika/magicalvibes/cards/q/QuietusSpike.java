@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 @CardRegistration(set = "PC2", collectorNumber = "112")
 @CardRegistration(set = "PCA", collectorNumber = "112")
 @CardRegistration(set = "BRR", collectorNumber = "46")
+@CardRegistration(set = "C17", collectorNumber = "220")
 public class QuietusSpike extends Card {
 
     public QuietusSpike() {

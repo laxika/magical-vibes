@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AladdinsRing;
+import com.github.laxika.magicalvibes.cards.c.Clone;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GatherSpecimens.class, GrizzlyBears.class, AladdinsRing.class, GatherTheTownsfolk.class})
+@CardUsed({GatherSpecimens.class, GrizzlyBears.class, AladdinsRing.class, GatherTheTownsfolk.class, Clone.class})
 class GatherSpecimensTest extends BaseCardTest {
 
     private void castGatherSpecimens() {
@@ -45,14 +47,12 @@ class GatherSpecimensTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The creature enters under the Gather Specimens caster's control.
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .extracting(this::nameOf).contains("Grizzly Bears");
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .extracting(this::nameOf).doesNotContain("Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
-    @DisplayName("Only creatures are redirected — an opponent's noncreature artifact is unaffected")
+    @DisplayName("Only creatures are redirected â€” an opponent's noncreature artifact is unaffected")
     void opponentNoncreatureUnaffected() {
         castGatherSpecimens();
 
@@ -64,10 +64,8 @@ class GatherSpecimensTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The noncreature artifact stays under its caster's control.
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .extracting(this::nameOf).contains("Aladdin's Ring");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .extracting(this::nameOf).doesNotContain("Aladdin's Ring");
+        harness.assertOnBattlefield(player2, "Aladdin's Ring");
+        harness.assertNotOnBattlefield(player1, "Aladdin's Ring");
     }
 
     @Test
@@ -80,10 +78,8 @@ class GatherSpecimensTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .extracting(this::nameOf).contains("Grizzly Bears");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .extracting(this::nameOf).doesNotContain("Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -116,14 +112,12 @@ class GatherSpecimensTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .extracting(this::nameOf).contains("Grizzly Bears");
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .extracting(this::nameOf).doesNotContain("Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
-    @DisplayName("Effect expires at turn cleanup — next-turn opponent creatures stay theirs")
+    @DisplayName("Effect expires at turn cleanup â€” next-turn opponent creatures stay theirs")
     void effectExpiresNextTurn() {
         castGatherSpecimens();
         advanceToNextTurn(player1);
@@ -135,10 +129,8 @@ class GatherSpecimensTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .extracting(this::nameOf).contains("Grizzly Bears");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .extracting(this::nameOf).doesNotContain("Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     @Test
@@ -162,10 +154,8 @@ class GatherSpecimensTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .extracting(this::nameOf).contains("Grizzly Bears");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .extracting(this::nameOf).doesNotContain("Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
@@ -177,5 +167,59 @@ class GatherSpecimensTest extends BaseCardTest {
         harness.passBothPriorities(); // END_STEP -> CLEANUP
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // CLEANUP -> next turn
+    }
+
+    @Test
+    @DisplayName("Separate Gather Specimens casts by the same player each replace creature entry")
+    void multipleCastsRemainSeparateReplacementEffects() {
+        castGatherSpecimens();
+        castGatherSpecimens();
+        harness.castFromHand(player2, new GatherSpecimens(), "{3}{U}{U}{U}");
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Separate Gather Specimens casts also replace creature token entry")
+    void multipleCastsRedirectTokensAfterOpposingReplacement() {
+        castGatherSpecimens();
+        castGatherSpecimens();
+        harness.castFromHand(player2, new GatherSpecimens(), "{3}{U}{U}{U}");
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, new GatherTheTownsfolk(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken() && "Human".equals(nameOf(p)))
+                .count()).isEqualTo(2);
+        harness.assertNotOnBattlefield(player2, "Human");
+    }
+
+    @Test
+    @DisplayName("Gather Specimens controller makes Clone's as-enters copy choice")
+    void enteringControllerChoosesWhetherCloneCopies() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        castGatherSpecimens();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 }

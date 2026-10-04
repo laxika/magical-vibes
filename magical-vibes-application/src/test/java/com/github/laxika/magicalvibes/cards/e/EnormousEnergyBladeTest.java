@@ -104,7 +104,7 @@ class EnormousEnergyBladeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, creature.getId());
         resolveAllTriggers();
         assertThat(creature.isTapped()).isTrue();
-        creature.setTapped(false);
+        creature.untap();
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, creature.getId());

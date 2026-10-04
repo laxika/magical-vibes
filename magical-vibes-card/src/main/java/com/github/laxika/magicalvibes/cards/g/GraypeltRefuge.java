@@ -18,7 +18,9 @@ import java.util.List;
 @CardRegistration(set = "DDP", collectorNumber = "32")
 @CardRegistration(set = "LTC", collectorNumber = "316")
 @CardRegistration(set = "C19", collectorNumber = "249")
+@CardRegistration(set = "C17", collectorNumber = "253")
 @CardRegistration(set = "SCD", collectorNumber = "303")
+@CardRegistration(set = "ARC", collectorNumber = "125")
 public class GraypeltRefuge extends Card {
 
     public GraypeltRefuge() {

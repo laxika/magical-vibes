@@ -23,8 +23,8 @@ class GracebladeArtisanTest extends BaseCardTest {
     @Test
     void getsPlusTwoPlusTwoForEachAttachedAura() {
         Permanent artisan = addArtisan(player1);
-        Permanent aura1 = addPermanent(player1, new Pacifism());
-        Permanent aura2 = addPermanent(player1, new Pacifism());
+        Permanent aura1 = addCreatureReady(player1, new Pacifism());
+        Permanent aura2 = addCreatureReady(player1, new Pacifism());
         aura1.setAttachedTo(artisan.getId());
         aura2.setAttachedTo(artisan.getId());
 
@@ -35,21 +35,62 @@ class GracebladeArtisanTest extends BaseCardTest {
     @Test
     void doesNotCountAttachedEquipment() {
         Permanent artisan = addArtisan(player1);
-        Permanent equipment = addPermanent(player1, new LeoninScimitar());
+        Permanent equipment = addCreatureReady(player1, new LeoninScimitar());
         equipment.setAttachedTo(artisan.getId());
 
         assertThat(gqs.getEffectivePower(gd, artisan)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, artisan)).isEqualTo(4);
     }
 
-    private Permanent addArtisan(com.github.laxika.magicalvibes.model.Player player) {
-        return addPermanent(player, new GracebladeArtisan());
+    @Test
+    void countsAnAuraControlledByOpponent() {
+        Permanent artisan = addArtisan(player1);
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        aura.setAttachedTo(artisan.getId());
+
+        assertThat(gqs.getEffectivePower(gd, artisan)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, artisan)).isEqualTo(5);
     }
 
-    private Permanent addPermanent(com.github.laxika.magicalvibes.model.Player player,
-                                   com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    void bonusFollowsAuraWhenItMovesToAnotherCreature() {
+        Permanent artisan = addArtisan(player1);
+        Permanent otherArtisan = addArtisan(player1);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        aura.setAttachedTo(artisan.getId());
+
+        assertThat(gqs.getEffectivePower(gd, artisan)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, artisan)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, otherArtisan)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherArtisan)).isEqualTo(3);
+
+        aura.setAttachedTo(otherArtisan.getId());
+
+        assertThat(gqs.getEffectivePower(gd, artisan)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, artisan)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, otherArtisan)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, otherArtisan)).isEqualTo(5);
+    }
+
+    @Test
+    void losesOnlyTheBonusFromAnAuraThatLeavesTheBattlefield() {
+        Permanent artisan = addArtisan(player1);
+        Permanent aura1 = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        Permanent aura2 = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        aura1.setAttachedTo(artisan.getId());
+        aura2.setAttachedTo(artisan.getId());
+
+        assertThat(gqs.getEffectivePower(gd, artisan)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, artisan)).isEqualTo(7);
+
+        gd.playerBattlefields.get(player2.getId()).remove(aura2);
+        gd.playerGraveyards.get(player2.getId()).add(aura2.getCard());
+
+        assertThat(gqs.getEffectivePower(gd, artisan)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, artisan)).isEqualTo(5);
+    }
+
+    private Permanent addArtisan(com.github.laxika.magicalvibes.model.Player player) {
+        return addCreatureReady(player, new GracebladeArtisan());
     }
 }

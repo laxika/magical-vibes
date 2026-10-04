@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GauntletsOfChaos.class, AladdinsRing.class, GrizzlyBears.class, LlanowarElves.class,
-        HolyStrength.class, Forest.class, Plains.class, LivingLands.class})
+        HolyStrength.class, Forest.class, Plains.class, LivingLands.class, GuardianBeast.class})
 class GauntletsOfChaosTest extends BaseCardTest {
 
     @Test
@@ -177,5 +177,80 @@ class GauntletsOfChaosTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Forest");
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("No part of the exchange occurs when your artifact cannot change control")
+    void doesNotPartiallyExchangeProtectedOwnArtifact() {
+        harness.addToBattlefield(player1, new GauntletsOfChaos());
+        harness.addToBattlefield(player1, new GuardianBeast());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new AladdinsRing());
+        Permanent opp = harness.addToBattlefieldAndReturn(player2, new AladdinsRing());
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(own.getId(), opp.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(own).doesNotContain(opp);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opp).doesNotContain(own);
+        harness.assertInGraveyard(player1, "Gauntlets of Chaos");
+    }
+
+    @Test
+    @DisplayName("No part of the exchange occurs when the opponent's artifact cannot change control")
+    void doesNotPartiallyExchangeProtectedOpposingArtifact() {
+        harness.addToBattlefield(player1, new GauntletsOfChaos());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new AladdinsRing());
+        Permanent opp = harness.addToBattlefieldAndReturn(player2, new AladdinsRing());
+        harness.addToBattlefield(player2, new GuardianBeast());
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(own.getId(), opp.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(own).doesNotContain(opp);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opp).doesNotContain(own);
+        harness.assertInGraveyard(player1, "Gauntlets of Chaos");
+    }
+
+    @Test
+    @DisplayName("Keeps the surviving target's Aura when the other target leaves")
+    void preservesAuraWhenOwnTargetLeaves() {
+        harness.addToBattlefield(player1, new GauntletsOfChaos());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opp = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
+        aura.setAttachedTo(opp.getId());
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(own.getId(), opp.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(own);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertOnBattlefield(player2, "Holy Strength");
+        harness.assertNotInGraveyard(player2, "Holy Strength");
+        assertThat(aura.getAttachedTo()).isEqualTo(opp.getId());
+    }
+
+    @Test
+    @DisplayName("Leaves Auras on permanents outside the exchange untouched")
+    void preservesUnrelatedAura() {
+        harness.addToBattlefield(player1, new GauntletsOfChaos());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opp = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        Permanent unrelated = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        aura.setAttachedTo(unrelated.getId());
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(own.getId(), opp.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(own);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(opp, unrelated, aura);
+        harness.assertNotInGraveyard(player1, "Holy Strength");
+        assertThat(aura.getAttachedTo()).isEqualTo(unrelated.getId());
     }
 }

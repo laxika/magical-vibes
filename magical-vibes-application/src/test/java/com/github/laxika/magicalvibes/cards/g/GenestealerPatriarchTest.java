@@ -68,13 +68,87 @@ class GenestealerPatriarchTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
     }
 
+    @Test
+    @DisplayName("An infected friendly creature creates one copy regardless of counter count")
+    void infectedFriendlyCreatureCreatesOneCopyWithoutCounters() {
+        addCreatureReady(player1, new GenestealerPatriarch());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.INFECTION, 3);
+
+        killWithShock(creature);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
+        Permanent copy = findPermanent(player1, "Grizzly Bears");
+        assertThat(copy.getCard().isToken()).isTrue();
+        assertThat(copy.getCounterCount(CounterType.INFECTION)).isZero();
+        assertThat(copy.getMarkedDamage()).isZero();
+        assertThat(findPermanents(player2, "Grizzly Bears")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An infected token dying creates another copy")
+    void infectedTokenDyingCreatesCopy() {
+        addCreatureReady(player1, new GenestealerPatriarch());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.setCounterCount(CounterType.INFECTION, 1);
+        killWithShock(creature);
+        resolveAllTriggers();
+        Permanent token = findPermanent(player1, "Grizzly Bears");
+        token.setCounterCount(CounterType.INFECTION, 1);
+
+        killWithShock(token);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
+        Permanent replacement = findPermanent(player1, "Grizzly Bears");
+        assertThat(replacement.getId()).isNotEqualTo(token.getId());
+        assertThat(replacement.getCard().isToken()).isTrue();
+        assertThat(replacement.getCard().getSubtypes()).contains(CardSubtype.BEAR, CardSubtype.TYRANID);
+        assertThat(replacement.getCounterCount(CounterType.INFECTION)).isZero();
+    }
+
+    @Test
+    @DisplayName("An infected Patriarch triggers for its own death")
+    void infectedPatriarchCopiesItselfWhenItDies() {
+        Permanent patriarch = addCreatureReady(player1, new GenestealerPatriarch());
+        patriarch.setCounterCount(CounterType.INFECTION, 1);
+        patriarch.setMarkedDamage(4);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Genestealer Patriarch")).hasSize(1);
+        Permanent copy = findPermanent(player1, "Genestealer Patriarch");
+        assertThat(copy.getCard().isToken()).isTrue();
+        assertThat(copy.getId()).isNotEqualTo(patriarch.getId());
+        assertThat(copy.getCounterCount(CounterType.INFECTION)).isZero();
+    }
+
+    @Test
+    @DisplayName("Patriarch sees infected creatures dying simultaneously with it")
+    void simultaneousDeathStillCreatesCopy() {
+        Permanent patriarch = addCreatureReady(player1, new GenestealerPatriarch());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.setCounterCount(CounterType.INFECTION, 1);
+        patriarch.setMarkedDamage(4);
+        creature.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Genestealer Patriarch")).isEmpty();
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
+        assertThat(findPermanent(player1, "Grizzly Bears").getCard().isToken()).isTrue();
+        assertThat(findPermanents(player2, "Grizzly Bears")).isEmpty();
+    }
+
     private void killWithShock(Permanent target) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
     }
 }

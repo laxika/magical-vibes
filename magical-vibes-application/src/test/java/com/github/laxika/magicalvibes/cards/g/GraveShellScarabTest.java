@@ -71,4 +71,56 @@ class GraveShellScarabTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(scarab);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(milled);
     }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately before the draw ability resolves")
+    void sacrificesAsAnActivationCost() {
+        Forest topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.addToBattlefield(player1, new GraveShellScarab());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Grave-Shell Scarab");
+        harness.assertInGraveyard(player1, "Grave-Shell Scarab");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(topCard);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Dredge can mill the last library card without drawing")
+    void dredgesLastLibraryCard() {
+        GraveShellScarab scarab = new GraveShellScarab();
+        Forest milled = new Forest();
+        harness.setGraveyard(player1, List.of(scarab));
+        harness.setLibrary(player1, List.of(milled));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(scarab);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(milled);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's draw cannot dredge your Grave-Shell Scarab")
+    void doesNotReplaceOpponentsDraw() {
+        GraveShellScarab scarab = new GraveShellScarab();
+        Forest drawn = new Forest();
+        harness.setGraveyard(player1, List.of(scarab));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(drawn));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(scarab);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }

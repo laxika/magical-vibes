@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BurningRuneDemonEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "81")
+@CardRegistration(set = "KHM", collectorNumber = "349")
 public class BurningRuneDemon extends Card {
 
     public BurningRuneDemon() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "147")
+@CardRegistration(set = "C17", collectorNumber = "160")
 public class ZendikarResurgent extends Card {
 
     public ZendikarResurgent() {

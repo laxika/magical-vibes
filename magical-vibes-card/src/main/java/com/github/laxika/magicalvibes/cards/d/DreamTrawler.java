@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "214")
+@CardRegistration(set = "THB", collectorNumber = "336")
 public class DreamTrawler extends Card {
 
     public DreamTrawler() {

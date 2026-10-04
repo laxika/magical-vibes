@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 @CardRegistration(set = "C13", collectorNumber = "208")
 @CardRegistration(set = "CMD", collectorNumber = "222")
 @CardRegistration(set = "C18", collectorNumber = "190")
+@CardRegistration(set = "ARC", collectorNumber = "93")
 public class SavageTwister extends Card {
 
     public SavageTwister() {

@@ -120,4 +120,76 @@ class GoblinShrineTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }
+
+    @Test
+    @DisplayName("Casting Goblin Shrine attaches it to the targeted land and enables its boost")
+    void castingAttachesToLand() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinEliteInfantry());
+        harness.setHand(player1, List.of(new GoblinShrine()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, mountain.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Goblin Shrine").getAttachedTo()).isEqualTo(mountain.getId());
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
+        assertThat(goblin.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple Goblin Shrines stack their boosts and each triggers separately when leaving")
+    void multipleShrinesStackAndTriggerSeparately() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinEliteInfantry());
+        Permanent firstShrine = attachShrine(mountain);
+        Permanent secondShrine = attachShrine(mountain);
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(4);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, firstShrine));
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
+        assertThat(goblin.getMarkedDamage()).isZero();
+        harness.passBothPriorities();
+        assertThat(goblin.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Goblin Elite Infantry");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, secondShrine));
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Goblin Elite Infantry");
+        harness.assertInGraveyard(player1, "Goblin Elite Infantry");
+    }
+
+    @Test
+    @DisplayName("Leaving a non-Mountain still triggers damage, including to Goblins present only at resolution")
+    void damageIsUnconditionalAndChecksCreaturesAtResolution() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent shrine = attachShrine(forest);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, shrine));
+
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinEliteInfantry());
+        assertThat(goblin.getMarkedDamage()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(goblin.getMarkedDamage()).isEqualTo(1);
+        harness.assertInHand(player1, "Goblin Shrine");
+    }
+
+    @Test
+    @DisplayName("Losing the enchanted land removes Goblin Shrine and triggers its damage")
+    void losingEnchantedLandTriggersDamage() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinEliteInfantry());
+        attachShrine(mountain);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, mountain));
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Goblin Shrine");
+        harness.assertInGraveyard(player1, "Goblin Shrine");
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
+        assertThat(goblin.getMarkedDamage()).isEqualTo(1);
+    }
 }

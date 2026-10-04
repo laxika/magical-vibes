@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "EVE", collectorNumber = "14")
+@CardRegistration(set = "C17", collectorNumber = "73")
 public class SpiritOfTheHearth extends Card {
 
     public SpiritOfTheHearth() {

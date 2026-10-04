@@ -26,6 +26,12 @@ public class InteractionState {
     public InteractionState deepCopy() {
         InteractionState copy = new InteractionState();
         copy.activeInteraction = this.activeInteraction;
+        if (activeInteraction instanceof PendingInteraction.ColorChoice choice) {
+            copy.activeInteraction = choice.copyCardTypeOnEnterPermanent();
+        }
+        if (activeInteraction instanceof PendingInteraction.DiscardChoice discard) {
+            copy.activeInteraction = discard.deepCopy();
+        }
         if (activeInteraction instanceof PendingInteraction.RevealAnyNumberOfCardsFromHandChoice reveal
                 && (reveal.amplifyEntry() != null || reveal.duplicateManaValueRevealContext() != null)) {
             copy.activeInteraction = new PendingInteraction.RevealAnyNumberOfCardsFromHandChoice(

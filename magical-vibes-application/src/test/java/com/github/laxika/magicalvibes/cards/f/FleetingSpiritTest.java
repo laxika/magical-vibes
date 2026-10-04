@@ -180,7 +180,7 @@ class FleetingSpiritTest extends BaseCardTest {
     @DisplayName("A spirit controlled by another player returns untapped under its owner's control")
     void stolenSpiritReturnsToOwnerAsANewPermanent() {
         Permanent spirit = addSpirit(player1);
-        spirit.setTapped(true);
+        spirit.tap();
         gd.playerBattlefields.get(player1.getId()).remove(spirit);
         gd.playerBattlefields.get(player2.getId()).add(spirit);
         gd.stolenCreatures.put(spirit.getId(), player1.getId());

@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "GK2", collectorNumber = "59")
 @CardRegistration(set = "RVR", collectorNumber = "129")
 @CardRegistration(set = "FDC", collectorNumber = "185")
+@CardRegistration(set = "C17", collectorNumber = "144")
 public class UtvaraHellkite extends Card {
 
     public UtvaraHellkite() {

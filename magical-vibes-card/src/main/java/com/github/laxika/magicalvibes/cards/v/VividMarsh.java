@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "C13", collectorNumber = "336")
 @CardRegistration(set = "CMD", collectorNumber = "296")
 @CardRegistration(set = "C15", collectorNumber = "319")
+@CardRegistration(set = "C17", collectorNumber = "292")
 public class VividMarsh extends Card {
 
     public VividMarsh() {

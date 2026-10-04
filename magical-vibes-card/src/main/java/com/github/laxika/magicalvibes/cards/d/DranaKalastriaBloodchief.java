@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "107")
 @CardRegistration(set = "C14", collectorNumber = "141")
+@CardRegistration(set = "C17", collectorNumber = "112")
 public class DranaKalastriaBloodchief extends Card {
 
     public DranaKalastriaBloodchief() {

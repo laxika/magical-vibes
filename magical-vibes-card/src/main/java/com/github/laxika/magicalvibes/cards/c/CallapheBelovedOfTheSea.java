@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "45")
+@CardRegistration(set = "THB", collectorNumber = "260")
 public class CallapheBelovedOfTheSea extends Card {
 
     public CallapheBelovedOfTheSea() {

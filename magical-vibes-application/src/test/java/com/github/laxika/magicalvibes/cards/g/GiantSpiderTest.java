@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GiantSpider.class, WindDrake.class, GrizzlyBears.class})
 class GiantSpiderTest extends BaseCardTest {
@@ -34,5 +35,31 @@ class GiantSpiderTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(spider.isBlocking()).isTrue();
+    }
+
+    @Test
+    void reachDoesNotPreventNonFlyingCreatureFromBlockingSpider() {
+        addCreatureReady(player1, new GiantSpider());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(bears.isBlocking()).isTrue();
+    }
+
+    @Test
+    void tappedSpiderCannotBlockFlyingCreature() {
+        addCreatureReady(player1, new WindDrake());
+        Permanent spider = addCreatureReady(player2, new GiantSpider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        spider.setTapped(true);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid blocker index");
+        assertThat(spider.isBlocking()).isFalse();
     }
 }

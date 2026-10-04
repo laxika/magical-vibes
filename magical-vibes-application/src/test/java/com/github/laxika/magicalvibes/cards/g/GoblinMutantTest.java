@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.j.JohtullWurm;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -90,8 +91,7 @@ class GoblinMutantTest extends BaseCardTest {
         Permanent mutant = mutant(player2);
         addCreatureReady(player1, new BalduvianBears()); // 2/2
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(mutant.isBlocking()).isTrue();
@@ -103,8 +103,7 @@ class GoblinMutantTest extends BaseCardTest {
         mutant(player2);
         addCreatureReady(player1, new BalduvianBarbarians()); // 3/2
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -117,8 +116,7 @@ class GoblinMutantTest extends BaseCardTest {
         mutant(player2);
         addCreatureReady(player1, new JohtullWurm()); // 6/6
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -132,8 +130,7 @@ class GoblinMutantTest extends BaseCardTest {
         mutant();
         Permanent blocker = addCreatureReady(player2, new BalduvianBears()); // 2/2
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -143,5 +140,66 @@ class GoblinMutantTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @DisplayName("Own untapped large creatures do not prevent attacking")
+    void ownLargeCreatureDoesNotPreventAttack() {
+        Permanent mutant = mutant();
+        addCreatureReady(player1, new BalduvianBarbarians());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(mutant.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Counters raising a defending creature's power to 3 prevent attacking")
+    void cantAttackIntoCreatureRaisedToThreePower() {
+        Permanent bear = addCreatureReady(player2, new BalduvianBears());
+        bear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        mutant();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Counters lowering a defending creature's power below 3 permit attacking")
+    void canAttackIntoCreatureReducedBelowThreePower() {
+        Permanent barbarian = addCreatureReady(player2, new BalduvianBarbarians());
+        barbarian.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        Permanent mutant = mutant();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(mutant.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Counters raising an attacker's power to 3 prevent blocking")
+    void cantBlockCreatureRaisedToThreePower() {
+        mutant(player2);
+        Permanent bear = addCreatureReady(player1, new BalduvianBears());
+        bear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Counters lowering an attacker's power below 3 permit blocking")
+    void canBlockCreatureReducedBelowThreePower() {
+        Permanent mutant = mutant(player2);
+        Permanent barbarian = addCreatureReady(player1, new BalduvianBarbarians());
+        barbarian.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(mutant.isBlocking()).isTrue();
     }
 }

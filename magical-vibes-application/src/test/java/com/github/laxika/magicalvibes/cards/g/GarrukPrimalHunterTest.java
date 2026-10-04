@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GarrukPrimalHunter.class, Forest.class, RuneclawBear.class, GarruksCompanion.class})
 class GarrukPrimalHunterTest extends BaseCardTest {
 
     @Test
@@ -40,8 +42,8 @@ class GarrukPrimalHunterTest extends BaseCardTest {
     void minusThreeDrawsGreatestPower() {
         Permanent garruk = addReadyGarruk(player1);
         garruk.setCounterCount(CounterType.LOYALTY, 5);
-        // Grizzly Bears is 2/2; Garruk's Companion is 3/2 — greatest power is 3.
-        addCreature(player1, new GrizzlyBears());
+        // Runeclaw Bear is 2/2; Garruk's Companion is 3/2 — greatest power is 3.
+        addCreature(player1, new RuneclawBear());
         addCreature(player1, new GarruksCompanion());
         harness.setLibrary(player1, library(5));
         int handBefore = harness.getGameData().playerHands.get(player1.getId()).size();
@@ -72,7 +74,7 @@ class GarrukPrimalHunterTest extends BaseCardTest {
     void minusThreeIgnoresOpponentCreatures() {
         Permanent garruk = addReadyGarruk(player1);
         garruk.setCounterCount(CounterType.LOYALTY, 5);
-        addCreature(player1, new GrizzlyBears());
+        addCreature(player1, new RuneclawBear());
         addCreature(player2, new GarruksCompanion());
         harness.setLibrary(player1, library(5));
         int handBefore = harness.getGameData().playerHands.get(player1.getId()).size();
@@ -118,27 +120,54 @@ class GarrukPrimalHunterTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Wurm")).isZero();
     }
 
+    @Test
+    @DisplayName("-3 uses the greatest power at resolution even after Garruk dies")
+    void minusThreeChecksPowerAtResolutionAfterGarrukDies() {
+        Permanent garruk = addReadyGarruk(player1);
+        addCreature(player1, new RuneclawBear());
+        harness.setLibrary(player1, library(5));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(garruk);
+        harness.addToBattlefield(player1, new GarruksCompanion());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);
+    }
+
+    @Test
+    @DisplayName("-6 counts lands at resolution even after Garruk dies")
+    void minusSixChecksLandsAtResolutionAfterGarrukDies() {
+        Permanent garruk = addReadyGarruk(player1);
+        garruk.setCounterCount(CounterType.LOYALTY, 6);
+        addLand(player1);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(garruk);
+        harness.addToBattlefield(player1, new Forest());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Wurm")).isEqualTo(2);
+    }
+
     private Permanent addReadyGarruk(Player player) {
-        Permanent perm = new Permanent(new GarrukPrimalHunter());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GarrukPrimalHunter());
         perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
     }
 
     private Permanent addCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addLand(Player player) {
-        Permanent perm = new Permanent(new Forest());
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 
     private List<Card> library(int count) {

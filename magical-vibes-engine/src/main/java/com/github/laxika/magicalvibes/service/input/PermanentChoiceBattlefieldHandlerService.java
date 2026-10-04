@@ -709,7 +709,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         List<Permanent> toRemove = new ArrayList<>();
         for (Permanent perm : battlefield) {
-            if (perm.getCard().getName().equals(legendRule.cardName()) && !perm.getId().equals(permanentId)) {
+            if (legendRule.cardName().equals(gameQueryService.getEffectiveName(gameData, perm)) && !perm.getId().equals(permanentId)) {
                 toRemove.add(perm);
             }
         }
@@ -2399,6 +2399,15 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (permanent != null) {
             return permanent.getCard();
         }
+        Card abilitySource = gameData.stack.stream()
+                .filter(entry -> sourceId.equals(entry.getSourcePermanentId())
+                        || entry.getSourcePermanentSnapshot() != null
+                        && entry.getSourcePermanentSnapshot().getId().equals(sourceId))
+                .map(StackEntry::getCard)
+                .findFirst().orElse(null);
+        if (abilitySource != null) {
+            return abilitySource;
+        }
         return gameData.stack.stream()
                 .filter(entry -> entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
                         && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
@@ -2476,9 +2485,12 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen creature no longer exists");
         }
 
-        // Capture effective power before removing from battlefield (static bonuses still apply;
-        // CR 510.1a clamps negative power to 0).
+        // Capture effective power before removing from battlefield so static bonuses still apply.
         int power = Math.max(0, gameQueryService.getEffectivePower(gameData, toSacrifice));
+        if (ctx.doubleDamageIfGiant()
+                && gameQueryService.hasEffectiveSubtype(gameData, toSacrifice, CardSubtype.GIANT)) {
+            power *= 2;
+        }
 
         UUID sourcePermanentId = gameData.playerBattlefields.get(ctx.controllerId()).stream()
                 .filter(permanent -> permanent.getOriginalCard().getId().equals(ctx.sourceCard().getId()))

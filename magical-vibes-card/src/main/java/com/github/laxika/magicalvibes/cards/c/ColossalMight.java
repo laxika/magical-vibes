@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "ARB", collectorNumber = "51")
 @CardRegistration(set = "CMD", collectorNumber = "190")
+@CardRegistration(set = "ARC", collectorNumber = "83")
 public class ColossalMight extends Card {
 
     public ColossalMight() {

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GrimFlowering.class, GrizzlyBears.class, GiantGrowth.class})
 class GrimFloweringTest extends BaseCardTest {
 
     
@@ -28,8 +30,7 @@ class GrimFloweringTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrimFlowering()));
         harness.addMana(player1, ManaColor.GREEN, 6);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 3);
@@ -48,8 +49,7 @@ class GrimFloweringTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrimFlowering()));
         harness.addMana(player1, ManaColor.GREEN, 6);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 2);
@@ -65,8 +65,7 @@ class GrimFloweringTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrimFlowering()));
         harness.addMana(player1, ManaColor.GREEN, 6);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
@@ -81,8 +80,7 @@ class GrimFloweringTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrimFlowering()));
         harness.addMana(player1, ManaColor.GREEN, 6);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
@@ -96,10 +94,42 @@ class GrimFloweringTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrimFlowering()));
         harness.addMana(player1, ManaColor.GREEN, 6);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Grim Flowering");
+    }
+
+    @Test
+    @DisplayName("Counts creatures added to the graveyard after casting")
+    void countsCreaturesAddedBeforeResolution() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new GrimFlowering()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.castSorcery(player1, 0, 0);
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Draws nothing if all creature cards leave the graveyard before resolution")
+    void countsGraveyardAtResolution() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new GrimFlowering()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
+
+        harness.castSorcery(player1, 0, 0);
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
         harness.assertInGraveyard(player1, "Grim Flowering");
     }
 }

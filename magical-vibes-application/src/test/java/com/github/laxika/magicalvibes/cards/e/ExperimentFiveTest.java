@@ -65,7 +65,7 @@ class ExperimentFiveTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ManaConfluence());
         Permanent experiment = harness.addToBattlefieldAndReturn(player1, new ExperimentFive());
         experiment.setSummoningSick(true);
-        experiment.setTapped(true);
+        experiment.tap();
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, "BLUE");
         harness.addMana(player1, ManaColor.COLORLESS, 1);

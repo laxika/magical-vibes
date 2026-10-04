@@ -99,10 +99,11 @@ class ArchivistOfGondorTest extends BaseCardTest {
         addCreatureReady(player1, commanderCard);
         gd.monarchPlayerId = player1.getId();
 
-        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
-            declareAttackers(List.of(1));
-            resolveCombat();
-        });
+        declareAttackersAndPrepareBlockers(List.of(1));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.COMBAT_DAMAGE);
         assertThat(gd.stack).isEmpty();
@@ -128,10 +129,11 @@ class ArchivistOfGondorTest extends BaseCardTest {
         addCreatureReady(player1, new ArchivistOfGondor());
         addCreatureReady(player1, commanderCard);
 
-        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
-            declareAttackers(List.of(1));
-            resolveCombat();
-        });
+        declareAttackersAndPrepareBlockers(List.of(1));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
         assertThat(gd.stack).hasSize(1);
         gd.monarchPlayerId = player2.getId();
         resolveAllTriggers();

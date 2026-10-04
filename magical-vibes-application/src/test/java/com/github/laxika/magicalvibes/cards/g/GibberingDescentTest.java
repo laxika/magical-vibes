@@ -48,10 +48,9 @@ class GibberingDescentTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
 
-        harness.forceActivePlayer(player1);
+        harness.performUntapStep(player1);
         harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -106,6 +105,42 @@ class GibberingDescentTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(descent.getId()));
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Discarding the controller's last card does not undo an upkeep that already began")
+    void lastCardDiscardDoesNotSkipCurrentUpkeep() {
+        harness.addToBattlefield(player1, new GibberingDescent());
+        harness.setHand(player1, List.of(new BlindPhantasm()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.handleCardChosen(player1, 0);
+        harness.assertInGraveyard(player1, "Blind Phantasm");
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Multiple copies still cause life loss after the active player's hand becomes empty")
+    void multipleCopiesStillLoseLifeWithEmptyHand() {
+        harness.addToBattlefield(player1, new GibberingDescent());
+        harness.addToBattlefield(player2, new GibberingDescent());
+        harness.setHand(player2, List.of(new BlindPhantasm()));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Blind Phantasm");
     }
 
     private GibberingDescent discardViaAugurOfSkulls() {

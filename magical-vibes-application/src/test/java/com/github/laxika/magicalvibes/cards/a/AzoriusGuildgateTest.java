@@ -55,9 +55,9 @@ class AzoriusGuildgateTest extends BaseCardTest {
             harness = new GameTestHarness();
             player1 = harness.getPlayer1();
             harness.skipMulligan();
+            gd = harness.getGameData();
 
             Permanent guildgate = addGuildgateReady(player1);
-            GameData gd = harness.getGameData();
             ManaColor manaColor = ManaColor.valueOf(color);
 
             harness.activateAbility(player1, 0, 0, null, null);

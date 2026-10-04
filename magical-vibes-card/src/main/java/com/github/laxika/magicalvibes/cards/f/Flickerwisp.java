@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "EVE", collectorNumber = "6")
+@CardRegistration(set = "E01", collectorNumber = "9")
 @CardRegistration(set = "MMA", collectorNumber = "16")
 @CardRegistration(set = "MM3", collectorNumber = "6")
 @CardRegistration(set = "2X2", collectorNumber = "11")

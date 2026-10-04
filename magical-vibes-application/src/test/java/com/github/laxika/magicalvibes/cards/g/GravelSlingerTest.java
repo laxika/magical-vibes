@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -90,6 +92,78 @@ class GravelSlingerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(slinger.isFaceDown()).isFalse();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent slinger = addCreatureReady(player1, new GravelSlinger());
+        slinger.setTapped(true);
+        Permanent attacker = addCombatCreature(player2, true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        Permanent slinger = addCreatureReady(player1, new GravelSlinger());
+        slinger.setSummoningSick(true);
+        Permanent attacker = addCombatCreature(player2, true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(slinger.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotDamageTargetThatLeavesCombatBeforeResolution() {
+        Permanent slinger = addCreatureReady(player1, new GravelSlinger());
+        Permanent attacker = addCombatCreature(player2, true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.activateAbility(player1, 0, null, attacker.getId());
+
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(slinger.isTapped()).isTrue();
+    }
+
+    @Test
+    void faceDownSlingerHasNoDamageAbility() {
+        Permanent slinger = addCreatureReady(player1, new GravelSlinger());
+        slinger.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent attacker = addCombatCreature(player2, true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(slinger.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canActivateImmediatelyAfterTurningFaceUpDuringCombat() {
+        Permanent slinger = addCreatureReady(player1, new GravelSlinger());
+        slinger.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent attacker = addCombatCreature(player2, true);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.turnFaceUp(player1, 0);
+        assertThat(slinger.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(slinger.isTapped()).isTrue();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
     }
 
     private Permanent addCombatCreature(Player player, boolean attacking) {

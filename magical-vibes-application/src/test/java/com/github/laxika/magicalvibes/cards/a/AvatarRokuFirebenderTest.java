@@ -56,6 +56,8 @@ class AvatarRokuFirebenderTest extends BaseCardTest {
         assertThat(target.getEffectivePower()).isEqualTo(5);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
 
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(target.getEffectivePower()).isEqualTo(2);

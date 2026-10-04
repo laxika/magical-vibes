@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 @CardRegistration(set = "HA1", collectorNumber = "8")
 @CardRegistration(set = "C15", collectorNumber = "130")
 @CardRegistration(set = "MKC", collectorNumber = "133")
+@CardRegistration(set = "CC2", collectorNumber = "4")
 @CardRegistration(set = "SLD", collectorNumber = "2318")
 @CardRegistration(set = "SLD", collectorNumber = "2333")
 public class PhyrexianArena extends Card {

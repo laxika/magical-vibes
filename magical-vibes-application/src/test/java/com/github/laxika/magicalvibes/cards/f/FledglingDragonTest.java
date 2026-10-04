@@ -167,7 +167,7 @@ class FledglingDragonTest extends BaseCardTest {
     void pumpCanBeActivatedRepeatedlyWhileTappedAndSummoningSick() {
         Permanent dragon = harness.addToBattlefieldAndReturn(player1, new FledglingDragon());
         dragon.setSummoningSick(true);
-        dragon.setTapped(true);
+        dragon.tap();
         harness.setGraveyard(player1, graveyardWithSevenCards());
         harness.addMana(player1, ManaColor.RED, 2);
 

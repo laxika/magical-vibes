@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "160")
+@CardRegistration(set = "KHM", collectorNumber = "298")
 public class BattleMammoth extends Card {
 
     public BattleMammoth() {

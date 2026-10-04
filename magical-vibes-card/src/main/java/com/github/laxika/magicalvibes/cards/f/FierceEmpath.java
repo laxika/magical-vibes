@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "2XM", collectorNumber = "168")
 @CardRegistration(set = "CMD", collectorNumber = "155")
 @CardRegistration(set = "CMM", collectorNumber = "288")
+@CardRegistration(set = "ARC", collectorNumber = "55")
 public class FierceEmpath extends Card {
 
     public FierceEmpath() {

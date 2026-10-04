@@ -3,18 +3,18 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GiltspireAvenger.class, ProdigalSorcerer.class, GrizzlyBears.class})
 class GiltspireAvengerTest extends BaseCardTest {
 
     @Test
@@ -89,15 +89,67 @@ class GiltspireAvengerTest extends BaseCardTest {
         addCreatureReady(player1, new GiltspireAvenger());
         Permanent bears = addCreatureReady(player1, new com.github.laxika.magicalvibes.cards.g.GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(1)); // Grizzly Bears attacks alone
+        declareAttackers(List.of(1)); // Grizzly Bears attacks alone
         harness.passBothPriorities(); // resolve exalted trigger
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Can destroy your own creature that dealt damage to you")
+    void destroysOwnDamageSource() {
+        Permanent giltspire = addCreatureReady(player1, new GiltspireAvenger());
+        Permanent sorcerer = addCreatureReady(player1, new ProdigalSorcerer());
+
+        harness.activateAbility(player1, indexOf(player1, sorcerer), null, player1.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, giltspire), null, sorcerer.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sorcerer);
+        harness.assertInGraveyard(player1, "Prodigal Sorcerer");
+    }
+
+    @Test
+    @DisplayName("Exalted boosts Giltspire Avenger itself when it attacks alone")
+    void exaltedBoostsItself() {
+        Permanent giltspire = addCreatureReady(player1, new GiltspireAvenger());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, giltspire)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giltspire)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Exalted does not boost creatures when two creatures attack")
+    void exaltedDoesNotBoostMultipleAttackers() {
+        Permanent giltspire = addCreatureReady(player1, new GiltspireAvenger());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, giltspire)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, giltspire)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each Avenger contributes its own exalted bonus")
+    void multipleExaltedAbilitiesStack() {
+        addCreatureReady(player1, new GiltspireAvenger());
+        addCreatureReady(player1, new GiltspireAvenger());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(2));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
     }
 
     private int indexOf(Player player, Permanent permanent) {

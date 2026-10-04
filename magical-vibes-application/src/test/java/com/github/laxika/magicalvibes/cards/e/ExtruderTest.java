@@ -127,7 +127,7 @@ class ExtruderTest extends BaseCardTest {
     void tappedSummoningSickExtruderCanActivate() {
         Permanent extruder = harness.addToBattlefieldAndReturn(player1, new Extruder());
         extruder.setSummoningSick(true);
-        extruder.setTapped(true);
+        extruder.tap();
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GoliathBeetle());
 
         harness.activateAbility(player1, 0, 0, null, creature.getId());

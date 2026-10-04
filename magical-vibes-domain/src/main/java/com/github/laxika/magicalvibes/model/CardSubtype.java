@@ -110,6 +110,7 @@ public enum CardSubtype {
     KOBOLD("Kobold"),
     WIZARD("Wizard"),
     SORCERER("Sorcerer"),
+    ELSPETH("Elspeth"),
     MUTANT("Mutant"),
     WEREWOLF("Werewolf"),
     WOLF("Wolf"),
@@ -258,6 +259,7 @@ public enum CardSubtype {
     BLINKMOTH("Blinkmoth"),
     HOMUNCULUS("Homunculus"),
     PRAETOR("Praetor"),
+    ASHIOK("Ashiok"),
     KARN("Karn"),
     GIDEON("Gideon"),
     LILIANA("Liliana"),
@@ -363,8 +365,8 @@ SYNTH("Synth"),
             URZAS, ULAMOGS, MINE, POWER_PLANT, TOWER, SPHERE, OMEN);
 
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
-            AJANI, BASRI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,
-            OKO, SARKHAN, CHANDRA, BOLAS, DOMRI, DOVIN, TEZZERET, VIVIEN, TEFERI, TYVAR, UGIN, SAMUT, ROWAN, YANGGU, YANLING, WRENN);
+            AJANI, BASRI, GARRUK, KOTH, HUATLI, ASHIOK, KARN, GIDEON, LILIANA, JACE, NISSA,
+            OKO, SARKHAN, CHANDRA, BOLAS, DOMRI, DOVIN, TEZZERET, VIVIEN, TEFERI, TYVAR, UGIN, SAMUT, ROWAN, YANGGU, YANLING, WRENN, ELSPETH);
 
     public static List<CardSubtype> basicLandTypes() {
         return BASIC_LAND_TYPES;

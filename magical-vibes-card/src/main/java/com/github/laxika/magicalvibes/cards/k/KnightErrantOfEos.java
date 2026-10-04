@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MOM", collectorNumber = "26")
+@CardRegistration(set = "MOM", collectorNumber = "346")
 public class KnightErrantOfEos extends Card {
 
     public KnightErrantOfEos() {

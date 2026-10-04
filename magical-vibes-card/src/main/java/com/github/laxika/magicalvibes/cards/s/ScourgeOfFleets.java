@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "JOU", collectorNumber = "51")
 @CardRegistration(set = "DDO", collectorNumber = "41")
+@CardRegistration(set = "ZNC", collectorNumber = "35")
 public class ScourgeOfFleets extends Card {
 
     public ScourgeOfFleets() {

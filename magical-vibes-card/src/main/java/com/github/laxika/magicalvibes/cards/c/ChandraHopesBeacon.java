@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "134")
+@CardRegistration(set = "MOM", collectorNumber = "321")
 public class ChandraHopesBeacon extends Card {
 
     public ChandraHopesBeacon() {

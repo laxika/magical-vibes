@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "DDH", collectorNumber = "10")
 @CardRegistration(set = "2X2", collectorNumber = "267")
 @CardRegistration(set = "TSR", collectorNumber = "383")
+@CardRegistration(set = "C17", collectorNumber = "189")
 public class QasaliPridemage extends Card {
 
     public QasaliPridemage() {

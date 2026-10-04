@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
@@ -19,12 +20,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachOneOfEquipmentToSamuraiEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandAndBecomeForetoldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -154,6 +156,9 @@ class LibraryChoiceHandlerServiceTest {
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
+        lenient().when(gameQueryService.cardHasSupertype(any(Card.class), eq(CardSupertype.BASIC),
+                eq(gd), any(UUID.class))).thenAnswer(invocation ->
+                invocation.<Card>getArgument(0).getSupertypes().contains(CardSupertype.BASIC));
     }
 
     @Test
@@ -382,8 +387,8 @@ class LibraryChoiceHandlerServiceTest {
     }
 
     @Test
-    @DisplayName("Scopes a library return-to-hand action to its configured controller")
-    void scopesLibraryReturnToHandActionToConfiguredController() {
+    @DisplayName("Adds a persistent controller end-step return trigger to the found creature")
+    void addsPersistentControllerEndStepReturnTrigger() {
         Card creature = createCard("Creature", CardType.CREATURE);
         gd.playerDecks.get(player1Id).add(creature);
         LibrarySearchParams params = LibrarySearchParams.builder(player1Id, List.of(creature))
@@ -393,16 +398,19 @@ class LibraryChoiceHandlerServiceTest {
                 .shuffleAfterSelection(false)
                 .destination(LibrarySearchDestination.BATTLEFIELD)
                 .returnToHandAtEndStep(true)
-                .returnToHandAtControllerEndStepId(player2Id)
+                .returnToHandAtControllerEndStepId(player1Id)
                 .build();
         gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
                 params, "Choose a creature", true));
 
         service.handleLibraryCardChosen(gd, player1, 0);
 
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(action -> action.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP
-                        && player2Id.equals(action.controllerId()));
+        ArgumentCaptor<Permanent> entered = ArgumentCaptor.forClass(Permanent.class);
+        verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id),
+                entered.capture(), any(Set.class), any(List.class), isNull());
+        assertThat(entered.getValue().getPersistentTriggeredEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED))
+                .singleElement().isInstanceOf(ReturnToHandEffect.class);
+        assertThat(gd.getDelayedActions(DelayedPermanentAction.class)).isEmpty();
     }
 
     @Test
@@ -900,6 +908,32 @@ class LibraryChoiceHandlerServiceTest {
                     any(CardManaValueLessThanXPredicate.class), isNull(), eq(gd), eq(player1Id),
                     isNull(), isNull(), eq(3));
             assertThat(paused.getEffectsToResolve()).containsExactly(followUpEffect);
+        }
+
+        @Test
+        void selectedCardAwareFollowUpReceivesTheChosenCard() {
+            Card found = createCard("Found", CardType.CREATURE);
+            gd.playerDecks.get(player1Id).add(found);
+            gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(
+                    LibrarySearchParams.builder(player1Id, List.of(found))
+                            .canFailToFind(true)
+                            .destination(LibrarySearchDestination.HAND)
+                            .followUp(LibrarySearchFollowUp.forSelectedCard(new CardTypePredicate(CardType.CREATURE),
+                                    new ExileCardFromHandAndBecomeForetoldEffect()))
+                            .build(), "Choose a card", true));
+            StackEntry paused = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Source"),
+                    player1Id, "Source", List.of());
+            gd.pendingEffectResolutionEntry = paused;
+            gd.pendingEffectResolutionIndex = 0;
+            when(predicateEvaluationService.matchesCardPredicate(eq(found),
+                    any(CardTypePredicate.class), isNull(), eq(gd), eq(player1Id),
+                    isNull(), isNull(), eq(0))).thenReturn(true);
+
+            service.handleLibraryCardChosen(gd, player1, 0);
+
+            assertThat(gd.playerHands.get(player1Id)).containsExactly(found);
+            assertThat(paused.getEffectsToResolve())
+                    .containsExactly(new ExileCardFromHandAndBecomeForetoldEffect(found));
         }
     }
 

@@ -117,7 +117,7 @@ class FoulFamiliarTest extends BaseCardTest {
     @DisplayName("A tapped Foul Familiar can activate the turn it enters")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent familiar = harness.addToBattlefieldAndReturn(player1, new FoulFamiliar());
-        familiar.setTapped(true);
+        familiar.tap();
         familiar.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

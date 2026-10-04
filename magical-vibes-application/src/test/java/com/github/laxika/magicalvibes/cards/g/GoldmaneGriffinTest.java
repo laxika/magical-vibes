@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.a.AjaniInspiringLeader;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GoldmaneGriffin.class, AjaniInspiringLeader.class})
 class GoldmaneGriffinTest extends BaseCardTest {
 
     @Test
@@ -28,7 +28,7 @@ class GoldmaneGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the may ability returns Ajani, Inspiring Leader from the graveyard")
     void acceptingMayFindsAjaniInGraveyard() {
-        harness.setGraveyard(player1, List.of(createAjani()));
+        harness.setGraveyard(player1, List.of(new AjaniInspiringLeader()));
         setupAndCast();
 
         resolveMay(true);
@@ -40,9 +40,7 @@ class GoldmaneGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting the may ability searches the library when Ajani is not in the graveyard")
     void acceptingMaySearchesLibrary() {
-        Card ajani = createAjani();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(ajani);
+        harness.setLibrary(player1, List.of(new AjaniInspiringLeader()));
         setupAndCast();
 
         resolveMay(true);
@@ -57,7 +55,7 @@ class GoldmaneGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the may ability leaves Ajani in the graveyard")
     void decliningMayDoesNotSearch() {
-        harness.setGraveyard(player1, List.of(createAjani()));
+        harness.setGraveyard(player1, List.of(new AjaniInspiringLeader()));
         setupAndCast();
 
         resolveMay(false);
@@ -76,11 +74,71 @@ class GoldmaneGriffinTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Goldmane Griffin");
     }
 
+    @Test
+    @DisplayName("Selecting Ajani from the library puts that copy into hand")
+    void selectingLibraryCopyMovesItToHand() {
+        AjaniInspiringLeader ajani = new AjaniInspiringLeader();
+        harness.setLibrary(player1, List.of(new GoldmaneGriffin(), ajani));
+        setupAndCast();
+
+        resolveMay(true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ajani);
+        assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(ajani);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A library search may fail to find Ajani even when present")
+    void librarySearchMayFailToFind() {
+        AjaniInspiringLeader ajani = new AjaniInspiringLeader();
+        harness.setLibrary(player1, List.of(ajani));
+        setupAndCast();
+
+        resolveMay(true);
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotInHand(player1, "Ajani, Inspiring Leader");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ajani);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Accepting with no matching card finishes without taking another card")
+    void noMatchingCardFinishesWithoutTakingCard() {
+        GoldmaneGriffin otherCard = new GoldmaneGriffin();
+        harness.setLibrary(player1, List.of(otherCard));
+        harness.setGraveyard(player1, List.of(new GoldmaneGriffin()));
+        setupAndCast();
+
+        resolveMay(true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(otherCard);
+        harness.assertInGraveyard(player1, "Goldmane Griffin");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Ajani in the graveyard does not force selection before a search-zone choice")
+    void matchingGraveyardCardDoesNotOverrideSearchChoice() {
+        AjaniInspiringLeader graveyardCopy = new AjaniInspiringLeader();
+        AjaniInspiringLeader libraryCopy = new AjaniInspiringLeader();
+        harness.setGraveyard(player1, List.of(graveyardCopy));
+        harness.setLibrary(player1, List.of(libraryCopy));
+        setupAndCast();
+
+        resolveMay(true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardCopy);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCopy);
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+    }
+
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new GoldmaneGriffin()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GoldmaneGriffin(), "{3}{W}{W}");
     }
 
     private void resolveMay(boolean choice) {
@@ -89,11 +147,4 @@ class GoldmaneGriffinTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, choice);
     }
 
-    private Card createAjani() {
-        Card ajani = new Card();
-        ajani.setName("Ajani, Inspiring Leader");
-        ajani.setType(CardType.PLANESWALKER);
-        ajani.setManaCost("{3}{W}{W}");
-        return ajani;
-    }
 }

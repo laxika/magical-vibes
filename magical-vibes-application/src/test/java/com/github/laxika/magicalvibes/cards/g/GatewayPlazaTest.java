@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GatewayPlaza.class})
 class GatewayPlazaTest extends BaseCardTest {
 
     @Test
@@ -66,6 +68,34 @@ class GatewayPlazaTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Colored mana can pay the generic entry cost")
+    void coloredManaPaysEntryCost() {
+        playGatewayPlaza();
+        resolveEnterTrigger();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Gateway Plaza");
+        assertThat(findPlaza(player1).isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        harness.assertNotInGraveyard(player1, "Gateway Plaza");
+    }
+
+    @Test
+    @DisplayName("The controller may decline payment even when mana is available")
+    void canDeclineWithManaAvailable() {
+        playGatewayPlaza();
+        resolveEnterTrigger();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(findPlaza(player1)).isNull();
+        harness.assertInGraveyard(player1, "Gateway Plaza");
+    }
+
     private void playGatewayPlaza() {
         harness.setHand(player1, List.of(new GatewayPlaza()));
         harness.forceActivePlayer(player1);
@@ -74,14 +104,12 @@ class GatewayPlazaTest extends BaseCardTest {
     }
 
     private void resolveEnterTrigger() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private Permanent addPlazaReady(Player player) {
-        Permanent plaza = new Permanent(new GatewayPlaza());
+        Permanent plaza = harness.addToBattlefieldAndReturn(player, new GatewayPlaza());
         plaza.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(plaza);
         return plaza;
     }
 

@@ -23,11 +23,34 @@ class GiantMantisTest extends BaseCardTest {
         addCreatureReady(player1, new BayFalcon());
         Permanent mantis = addCreatureReady(player2, new GiantMantis());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(mantis.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Giant Mantis can also block a creature without flying")
+    void canBlockGroundCreature() {
+        addCreatureReady(player1, new WildElephant());
+        Permanent mantis = addCreatureReady(player2, new GiantMantis());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(mantis.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Reach does not stop a ground creature from blocking Giant Mantis")
+    void reachDoesNotGrantFlyingEvasion() {
+        addCreatureReady(player1, new GiantMantis());
+        Permanent elephant = addCreatureReady(player2, new WildElephant());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(elephant.isBlocking()).isTrue();
     }
 
     @Test

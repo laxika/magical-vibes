@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "244")
+@CardRegistration(set = "MOM", collectorNumber = "311")
 public class KoglaAndYidaro extends Card {
 
     public KoglaAndYidaro() {

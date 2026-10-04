@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EquipAbilitiesCanBeActivatedAtInstantSpeedEffect;
 
 @CardRegistration(set = "DST", collectorNumber = "6")
+@CardRegistration(set = "C17", collectorNumber = "66")
 public class LeoninShikari extends Card {
 
     public LeoninShikari() {

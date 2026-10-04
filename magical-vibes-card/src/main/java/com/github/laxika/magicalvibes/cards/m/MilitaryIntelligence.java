@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "M15", collectorNumber = "69")
+@CardRegistration(set = "ZNC", collectorNumber = "31")
 public class MilitaryIntelligence extends Card {
 
     public MilitaryIntelligence() {

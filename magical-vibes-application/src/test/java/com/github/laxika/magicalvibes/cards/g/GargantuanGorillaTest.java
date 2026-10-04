@@ -129,9 +129,67 @@ class GargantuanGorillaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, gorillaChieftain.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .noneMatch(p -> p.getId().equals(gorillaChieftain.getId()));
+        harness.assertNotOnBattlefield(player2, "Gorilla Chieftain");
         assertThat(gorilla.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The activated ability still damages its target after the Gorilla leaves")
+    void damageAbilityUsesLastKnownPowerAfterSourceLeaves() {
+        Permanent gorilla = readyGorilla(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GorillaChieftain());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, gorilla));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Gargantuan Gorilla");
+        harness.assertNotOnBattlefield(player2, "Gorilla Chieftain");
+        harness.assertInGraveyard(player2, "Gorilla Chieftain");
+    }
+
+    @Test
+    @DisplayName("An absent target prevents the activated ability from resolving")
+    void absentTargetPreventsAllDamage() {
+        Permanent gorilla = readyGorilla(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GorillaChieftain());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Gorilla Chieftain");
+        harness.assertOnBattlefield(player1, "Gargantuan Gorilla");
+        assertThat(gorilla.getMarkedDamage()).isZero();
+        assertThat(gorilla.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The activated ability can target another creature controlled by the same player")
+    void canDamageFriendlyCreature() {
+        Permanent gorilla = readyGorilla(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GorillaChieftain());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Gorilla Chieftain");
+        harness.assertOnBattlefield(player1, "Gargantuan Gorilla");
+        assertThat(gorilla.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The upkeep penalty still deals seven damage after the Gorilla leaves")
+    void upkeepPenaltyStillDealsDamageAfterSourceLeaves() {
+        Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GargantuanGorilla());
+
+        advanceToUpkeep(player1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, gorilla));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Gargantuan Gorilla");
+        harness.assertNotInGraveyard(player1, "Gargantuan Gorilla");
+        harness.assertLife(player1, 13);
     }
 
     @Test

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "C21", collectorNumber = "249")
 @CardRegistration(set = "C16", collectorNumber = "261")
 @CardRegistration(set = "ONC", collectorNumber = "135")
+@CardRegistration(set = "C17", collectorNumber = "216")
 public class LoxodonWarhammer extends Card {
 
     public LoxodonWarhammer() {

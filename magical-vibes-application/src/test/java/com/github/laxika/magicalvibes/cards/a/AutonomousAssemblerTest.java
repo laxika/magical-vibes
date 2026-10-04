@@ -125,7 +125,7 @@ class AutonomousAssemblerTest extends BaseCardTest {
     void vigilanceAllowsAttackingWithoutTapping() {
         Permanent assembler = addCreatureReady(player1, new AutonomousAssembler());
 
-        declareAttackers(player1, List.of(0));
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThat(assembler.isTapped()).isFalse();
         assertThat(assembler.isAttacking()).isTrue();

@@ -1135,9 +1135,13 @@ public class EtbTriggerService {
         // shared SpellGraveyardTargetTrigger flow. Optional effects use an up-to-one selection.
         for (CardEffect effect : graveyardTargetReturnEffects) {
             int minimumGraveyardTargets = minimumGraveyardTargets(card, effect);
+            GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(List.of(effect));
+            int targetXValue = enteringPermanent != null && target != null
+                    && target.maximumManaValue() instanceof com.github.laxika.magicalvibes.model.amount.ManaSpentToCast
+                    ? enteringPermanent.getManaSpentToCast() : xValue;
             for (int t = 0; t < 1 + extraTriggerCopies; t++) {
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        card, controllerId, List.of(effect), null, minimumGraveyardTargets, xValue));
+                        card, controllerId, List.of(effect), null, minimumGraveyardTargets, targetXValue));
             }
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)

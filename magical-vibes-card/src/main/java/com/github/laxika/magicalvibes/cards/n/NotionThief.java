@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentExtraDrawsRedirectedE
 @CardRegistration(set = "SPG", collectorNumber = "36")
 @CardRegistration(set = "LTC", collectorNumber = "270")
 @CardRegistration(set = "SLD", collectorNumber = "2482")
+@CardRegistration(set = "ZNC", collectorNumber = "96")
 public class NotionThief extends Card {
 
     public NotionThief() {

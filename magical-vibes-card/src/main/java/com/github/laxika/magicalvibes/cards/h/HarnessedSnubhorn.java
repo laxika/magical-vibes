@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "3")
+@CardRegistration(set = "MAT", collectorNumber = "53")
+@CardRegistration(set = "MAT", collectorNumber = "103")
+@CardRegistration(set = "MAT", collectorNumber = "188")
 public class HarnessedSnubhorn extends Card {
 
     public HarnessedSnubhorn() {

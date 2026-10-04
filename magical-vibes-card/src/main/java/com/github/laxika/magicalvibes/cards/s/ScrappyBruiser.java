@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandAt
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MOM", collectorNumber = "162")
+@CardRegistration(set = "MOM", collectorNumber = "382")
 public class ScrappyBruiser extends Card {
 
     public ScrappyBruiser() {

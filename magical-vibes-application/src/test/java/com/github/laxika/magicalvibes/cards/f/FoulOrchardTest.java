@@ -78,7 +78,7 @@ class FoulOrchardTest extends BaseCardTest {
     @DisplayName("An untapped Orchard can produce mana immediately and cannot tap twice")
     void canActivateOnEntryTurnButCannotProduceBothColors() {
         var orchard = harness.enterBattlefieldAndReturn(player1, new FoulOrchard());
-        orchard.setTapped(false);
+        orchard.untap();
 
         harness.activateAbility(player1, 0, 0, null, null);
 

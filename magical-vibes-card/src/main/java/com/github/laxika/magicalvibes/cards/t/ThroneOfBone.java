@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "403")
+@CardRegistration(set = "LEA", collectorNumber = "273")
 @CardRegistration(set = "4ED", collectorNumber = "353")
 @CardRegistration(set = "2ED", collectorNumber = "274")
 @CardRegistration(set = "8ED", collectorNumber = "317")
@@ -19,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "7ED", collectorNumber = "322")
 @CardRegistration(set = "SUM", collectorNumber = "279")
 @CardRegistration(set = "3ED", collectorNumber = "279")
+@CardRegistration(set = "LEB", collectorNumber = "274")
 public class ThroneOfBone extends Card {
 
     public ThroneOfBone() {

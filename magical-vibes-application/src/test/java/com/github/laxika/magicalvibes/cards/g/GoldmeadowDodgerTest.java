@@ -56,6 +56,31 @@ class GoldmeadowDodgerTest extends BaseCardTest {
                 .hasMessageContaining("can only be blocked by");
     }
 
+    @Test
+    @DisplayName("Multiple creatures with power 3 may block even when their combined power exceeds 3")
+    void canBeBlockedByMultipleLegalBlockers() {
+        addDodger();
+        addCreatureReady(player2, new CloudcrownOak());
+        addCreatureReady(player2, new CloudcrownOak());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(gameLogContains("declares 2 blockers")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Goldmeadow Dodger may block an attacker with power 4")
+    void restrictionDoesNotApplyWhenDodgerBlocks() {
+        addCreatureReady(player1, new ThundercloudShaman());
+        addCreatureReady(player2, new GoldmeadowDodger());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gameLogContains("declares 1 blocker")).isTrue();
+    }
+
     private void addDodger() {
         addCreatureReady(player1, new GoldmeadowDodger());
     }

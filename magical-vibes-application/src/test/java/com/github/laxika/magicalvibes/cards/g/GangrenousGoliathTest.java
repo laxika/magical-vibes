@@ -95,14 +95,61 @@ class GangrenousGoliathTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(goliath));
         addClerics(player1, 3);
 
-        gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getSubtypes().contains(CardSubtype.CLERIC))
-                .findFirst()
-                .orElseThrow()
-                .tap();
+        findPermanent(player1, "Daru Healer").tap();
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Summoning-sick Clerics can pay its graveyard ability")
+    void summoningSickClericsCanPay() {
+        harness.setGraveyard(player1, List.of(new GangrenousGoliath()));
+        for (int i = 0; i < 3; i++) {
+            Permanent cleric = harness.addToBattlefieldAndReturn(player1, new DaruHealer());
+            cleric.setSummoningSick(true);
+        }
+
+        harness.activateGraveyardAbility(player1, 0);
+        assertThat(findPermanents(player1, "Daru Healer")).allMatch(Permanent::isTapped);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Gangrenous Goliath");
+        harness.assertNotInGraveyard(player1, "Gangrenous Goliath");
+    }
+
+    @Test
+    @DisplayName("Its graveyard ability returns only the activated copy")
+    void returnsOnlyActivatedCopy() {
+        GangrenousGoliath first = new GangrenousGoliath();
+        GangrenousGoliath second = new GangrenousGoliath();
+        harness.setGraveyard(player1, List.of(first, second));
+        addClerics(player1, 3);
+
+        harness.activateGraveyardAbility(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(second).doesNotContain(first);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first);
+    }
+
+    @Test
+    @DisplayName("Removing its source before resolution does not return another copy or refund the cost")
+    void sourceAbsentAtResolution() {
+        GangrenousGoliath source = new GangrenousGoliath();
+        GangrenousGoliath other = new GangrenousGoliath();
+        harness.setGraveyard(player1, List.of(source, other));
+        addClerics(player1, 3);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.setGraveyard(player1, List.of(other));
+        gd.addToExile(player1.getId(), source, null, false);
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Gangrenous Goliath");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        assertThat(gd.findExiledCard(source.getId())).isNotNull();
+        assertThat(findPermanents(player1, "Daru Healer")).allMatch(Permanent::isTapped);
     }
 
     private void addClerics(Player player, int count) {

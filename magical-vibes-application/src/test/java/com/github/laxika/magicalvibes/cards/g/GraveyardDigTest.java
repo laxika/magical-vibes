@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -15,8 +16,48 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GraveyardDig.class, GrizzlyBears.class, ShivanDragon.class, Ornithopter.class, Forest.class})
+@CardUsed({DrudgeSkeletons.class, GraveyardDig.class, GrizzlyBears.class, ShivanDragon.class, Ornithopter.class, Forest.class})
 class GraveyardDigTest extends BaseCardTest {
+
+    @Test
+    void normalCastCanReturnTwoCreaturesUsingGreenMana() {
+        Card first = new GrizzlyBears();
+        Card second = new DrudgeSkeletons();
+        Card opposing = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setGraveyard(player2, List.of(opposing));
+        harness.setHand(player1, List.of(new GraveyardDig()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castSorcery(player1, 0, 0);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void normalCastCanChooseZeroTargets() {
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.setHand(player1, List.of(new GraveyardDig()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Graveyard Dig");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
 
     @Test
     void normalCastOnlyReturnsBlackOrGreenCreatures() {

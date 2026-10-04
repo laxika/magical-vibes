@@ -10,8 +10,10 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class AzoriusPloy extends Card {
 
     public AzoriusPloy() {
+        setAllowSharedTargets(true);
         target(TargetFilters.creature())
-                .addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatToTargetCreatures())
                 .addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatByTargetCreatures());
+        target(TargetFilters.creature())
+                .addEffect(EffectSlot.SPELL, PreventDamageEffect.allCombatToTargetCreatures());
     }
 }

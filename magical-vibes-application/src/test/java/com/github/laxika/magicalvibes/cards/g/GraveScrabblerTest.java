@@ -86,6 +86,68 @@ class GraveScrabblerTest extends BaseCardTest {
     }
 
     private GraveScrabbler castForMadness() {
+        GraveScrabbler scrabbler = discardForMadness();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        return scrabbler;
+    }
+
+    @Test
+    @DisplayName("Madness ETB can return a creature from its controller's graveyard")
+    void madnessEtbReturnsOwnCreature() {
+        Imperiosaur target = new Imperiosaur();
+        harness.setGraveyard(player1, List.of(target));
+
+        castForMadness();
+
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Normal casting does not offer to return an available creature card")
+    void normalCastDoesNotReturnAvailableCreature() {
+        Imperiosaur target = new Imperiosaur();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(new GraveScrabbler()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(target);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining madness puts Grave Scrabbler into its owner's graveyard")
+    void decliningMadnessPutsScrabblerInGraveyard() {
+        GraveScrabbler scrabbler = discardForMadness();
+        assertThat(gd.findExiledCard(scrabbler.getId())).isNotNull();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(scrabbler);
+        assertThat(gd.findExiledCard(scrabbler.getId())).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(scrabbler.getId()));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private GraveScrabbler discardForMadness() {
         GraveScrabbler scrabbler = new GraveScrabbler();
         harness.setHand(player1, List.of(scrabbler));
         harness.setHand(player2, List.of(new Foresee()));
@@ -93,11 +155,6 @@ class GraveScrabblerTest extends BaseCardTest {
         resolveCombat(player2);
         harness.passBothPriorities();
         resolveRatsDiscard();
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
         return scrabbler;
     }
 

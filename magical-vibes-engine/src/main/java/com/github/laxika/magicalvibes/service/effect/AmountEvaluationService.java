@@ -3089,7 +3089,8 @@ public class AmountEvaluationService {
         int count = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(ctx.controllerId())
-                    && gameData.getLife(playerId) <= amount.threshold()) {
+                    && gameData.getLife(playerId) <= (amount.belowHalfStartingLife()
+                    ? (gameData.startingLife() - 1) / 2 : amount.threshold())) {
                 count++;
             }
         }

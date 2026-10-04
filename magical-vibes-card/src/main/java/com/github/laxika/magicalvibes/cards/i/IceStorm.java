@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "ME1", collectorNumber = "122")
 @CardRegistration(set = "SLD", collectorNumber = "1745")
 @CardRegistration(set = "2ED", collectorNumber = "202")
+@CardRegistration(set = "LEA", collectorNumber = "201")
+@CardRegistration(set = "LEB", collectorNumber = "202")
 public class IceStorm extends Card {
 
     public IceStorm() {

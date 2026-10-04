@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrinningTotem;
 import com.github.laxika.magicalvibes.cards.t.TalruumMinotaur;
 import com.github.laxika.magicalvibes.cards.z.ZhalfirinKnight;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -135,7 +135,7 @@ class DwarvenNomadTest extends BaseCardTest {
     @Test
     void tappedNomadCannotActivate() {
         Permanent nomad = addCreatureReady(player1, new DwarvenNomad());
-        nomad.setTapped(true);
+        nomad.tap();
         Permanent target = addCreatureReady(player1, new ZhalfirinKnight());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

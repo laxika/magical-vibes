@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.s.SafeholdElite;
 import com.github.laxika.magicalvibes.cards.s.ShieldOfTheOversoul;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GreaterAuramancy.class, SafeholdElite.class, ShieldOfTheOversoul.class})
+@CardUsed({GreaterAuramancy.class, SafeholdElite.class, ShieldOfTheOversoul.class, Opalescence.class})
 class GreaterAuramancyTest extends BaseCardTest {
 
     private Permanent attachAura(Player controller, Permanent creature) {
@@ -104,5 +105,48 @@ class GreaterAuramancyTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isFalse();
         assertThat(gqs.hasKeyword(gd, aura, Keyword.SHROUD)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two Greater Auramancies grant each other shroud")
+    void twoAuramanciesProtectEachOther() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GreaterAuramancy());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GreaterAuramancy());
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.SHROUD)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.SHROUD)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature loses shroud when its last Aura leaves")
+    void shroudLostWhenLastAuraLeaves() {
+        harness.addToBattlefield(player1, new GreaterAuramancy());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SafeholdElite());
+        Permanent firstAura = attachAura(player1, creature);
+        Permanent secondAura = attachAura(player2, creature);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isTrue();
+        gd.playerBattlefields.get(player1.getId()).remove(firstAura);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isTrue();
+        gd.playerBattlefields.get(player2.getId()).remove(secondAura);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.SHROUD)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Greater Auramancy grants itself shroud when it is an enchanted creature")
+    void enchantedAnimatedAuramancyHasShroud() {
+        Permanent auramancy = harness.addToBattlefieldAndReturn(player1, new GreaterAuramancy());
+        harness.addToBattlefield(player1, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, auramancy)).isTrue();
+        assertThat(gqs.hasKeyword(gd, auramancy, Keyword.SHROUD)).isFalse();
+
+        attachAura(player1, auramancy);
+
+        assertThat(gqs.hasKeyword(gd, auramancy, Keyword.SHROUD)).isTrue();
     }
 }

@@ -177,7 +177,7 @@ class FlayedNimTest extends BaseCardTest {
     void regenerationDoesNotRequireTappingOrHaste() {
         Permanent nim = harness.addToBattlefieldAndReturn(player1, new FlayedNim());
         nim.setSummoningSick(true);
-        nim.setTapped(true);
+        nim.tap();
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbility(player1, 0, null, null);

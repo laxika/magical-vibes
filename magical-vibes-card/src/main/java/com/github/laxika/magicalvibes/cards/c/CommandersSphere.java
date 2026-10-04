@@ -26,6 +26,7 @@ import java.util.List;
 @CardRegistration(set = "C20", collectorNumber = "240")
 @CardRegistration(set = "C19", collectorNumber = "212")
 @CardRegistration(set = "C18", collectorNumber = "200")
+@CardRegistration(set = "C17", collectorNumber = "206")
 @CardRegistration(set = "40K", collectorNumber = "233")
 @CardRegistration(set = "40K", collectorNumber = "234")
 @CardRegistration(set = "40K", collectorNumber = "235")
@@ -41,6 +42,7 @@ import java.util.List;
 @CardRegistration(set = "BRC", collectorNumber = "135")
 @CardRegistration(set = "ONC", collectorNumber = "128")
 @CardRegistration(set = "SCD", collectorNumber = "261")
+@CardRegistration(set = "ZNC", collectorNumber = "109")
 public class CommandersSphere extends Card {
 
     public CommandersSphere() {

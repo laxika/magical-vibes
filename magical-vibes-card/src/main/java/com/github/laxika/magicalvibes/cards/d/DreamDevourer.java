@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantForetellToNonlandCardsInHandEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "90")
+@CardRegistration(set = "KHM", collectorNumber = "352")
 public class DreamDevourer extends Card {
 
     public DreamDevourer() {

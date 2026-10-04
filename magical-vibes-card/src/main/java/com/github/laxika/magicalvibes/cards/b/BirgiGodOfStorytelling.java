@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "123")
+@CardRegistration(set = "KHM", collectorNumber = "311")
 public class BirgiGodOfStorytelling extends Card {
 
     public BirgiGodOfStorytelling() {

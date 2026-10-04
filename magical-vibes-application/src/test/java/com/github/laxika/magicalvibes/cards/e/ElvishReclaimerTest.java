@@ -124,7 +124,7 @@ class ElvishReclaimerTest extends BaseCardTest {
         int baseToughness = gqs.getEffectiveToughness(gd, reclaimer);
         harness.setGraveyard(player1, List.of(new Island(), new Plains()));
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.setLibrary(player1, List.of(new Island()));
 
@@ -210,7 +210,7 @@ class ElvishReclaimerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent reclaimer = addReclaimer(player1);
-        reclaimer.setTapped(true);
+        reclaimer.tap();
         harness.addToBattlefield(player1, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

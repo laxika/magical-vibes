@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 
 
 @CardRegistration(set = "2ED", collectorNumber = "187")
+@CardRegistration(set = "LEA", collectorNumber = "186")
 @CardRegistration(set = "6ED", collectorNumber = "217")
 @CardRegistration(set = "7ED", collectorNumber = "231")
 @CardRegistration(set = "8ED", collectorNumber = "233")
@@ -35,6 +36,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 @CardRegistration(set = "BLC", collectorNumber = "81")
 @CardRegistration(set = "FIC", collectorNumber = "483")
 @CardRegistration(set = "FDC", collectorNumber = "191")
+@CardRegistration(set = "LEB", collectorNumber = "187")
 public class BirdsOfParadise extends Card {
 
     public BirdsOfParadise() {

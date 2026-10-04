@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceToControllerUntilEndOfTurnEffect;
 
 @CardRegistration(set = "FUT", collectorNumber = "31")
+@CardRegistration(set = "C17", collectorNumber = "72")
 public class SehtsTiger extends Card {
 
     public SehtsTiger() {

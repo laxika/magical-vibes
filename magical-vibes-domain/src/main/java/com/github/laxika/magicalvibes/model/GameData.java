@@ -731,6 +731,8 @@ public class GameData {
     public final Set<UUID> exiledCardsWithTakeoverCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have brain counters (Rex, Cyber-Hound). */
     public final Set<UUID> exiledCardsWithBrainCounters = ConcurrentHashMap.newKeySet();
+    /** Tracks exiled card UUIDs that have cage counters (Mairsil, the Pretender). */
+    public final Set<UUID> exiledCardsWithCageCounters = ConcurrentHashMap.newKeySet();
     /** Maps creature cards exiled by Lukka's first ability to the player who may cast them. */
     public final Map<UUID, UUID> lukkaExileCastPermissions = new ConcurrentHashMap<>();
     /** Spells exiled with delay counters and waiting to go back onto the stack (Ertai's Meddling). */
@@ -1899,22 +1901,42 @@ public class GameData {
                                                 boolean exileInsteadOfGraveyard,
                                                 ForageOrPayManaCost additionalCost,
                                                 CounterType enterWithCounter,
-                                                int enterWithCounterCount) {
+                                                int enterWithCounterCount,
+                                                UUID graveyardOwnerId,
+                                                boolean anyManaType) {
         public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter) {
-            this(playerId, filter, false, null, null, false, false, null, null, 0);
+            this(playerId, filter, false, null, null, false, false, null, null, 0, null, false);
         }
 
         public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter,
                                              boolean singleUse, CounterType entryCounterType,
                                              CardSubtype grantedSubtype) {
             this(playerId, filter, singleUse, entryCounterType, grantedSubtype,
-                    false, false, null, null, 0);
+                    false, false, null, null, 0, null, false);
         }
 
         public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter,
                                              boolean anyGraveyard, boolean exileInsteadOfGraveyard) {
             this(playerId, filter, false, null, null, anyGraveyard,
-                    exileInsteadOfGraveyard, null, null, 0);
+                    exileInsteadOfGraveyard, null, null, 0, null, false);
+        }
+
+        public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter,
+                                             boolean singleUse, CounterType entryCounterType,
+                                             CardSubtype grantedSubtype, boolean anyGraveyard,
+                                             boolean exileInsteadOfGraveyard,
+                                             ForageOrPayManaCost additionalCost,
+                                             CounterType enterWithCounter,
+                                             int enterWithCounterCount) {
+            this(playerId, filter, singleUse, entryCounterType, grantedSubtype, anyGraveyard,
+                    exileInsteadOfGraveyard, additionalCost, enterWithCounter,
+                    enterWithCounterCount, null, false);
+        }
+
+        public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter, boolean singleUse,
+                                             UUID graveyardOwnerId, boolean anyManaType) {
+            this(playerId, filter, singleUse, null, null, false, false, null, null, 0,
+                    graveyardOwnerId, anyManaType);
         }
     }
 
@@ -2120,6 +2142,8 @@ public class GameData {
 
     /** Maps exiled card UUID → player UUID who has permission to play it (e.g. Praetor's Grasp). */
     public final Map<UUID, UUID> exilePlayPermissions = new ConcurrentHashMap<>();
+    /** Face-down exiled cards a player may look at for as long as they remain exiled. */
+    public final Map<UUID, UUID> exileLookPermissions = new ConcurrentHashMap<>();
     /** Maps cards granted by one effect to their shared limited exile-play permission group. */
     public final Map<UUID, UUID> exilePlayPermissionGroups = new ConcurrentHashMap<>();
     /** Remaining plays for each shared limited exile-play permission group. */
@@ -2147,6 +2171,8 @@ public class GameData {
     /** Card UUIDs whose exile-play permission expires at end of the turn number stored as the value
      *  (e.g. Archaic's Agony: until end of your next turn). */
     public final Map<UUID, Integer> exilePlayPermissionsExpireAtTurnEnd = new ConcurrentHashMap<>();
+    /** Permissions waiting for the named player's next actual turn before their expiry is fixed. */
+    public final Map<UUID, UUID> exilePlayPermissionsAwaitNextTurnOfPlayer = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> exilePlayPermissionsExpireAtTurnBeginning = new ConcurrentHashMap<>();
     /** Exiled card UUIDs that may be cast spending mana of any type (e.g. Nita, Forum Conciliator's
      *  activated ability). Complements the battlefield-permanent any-mana grant used by Hostage Taker.
@@ -5940,16 +5966,19 @@ public class GameData {
             exiledCardsWithMemoryCounters.remove(cardId);
             exiledCardsWithTakeoverCounters.remove(cardId);
             exiledCardsWithBrainCounters.remove(cardId);
+            exiledCardsWithCageCounters.remove(cardId);
             exiledCardRefineCounters.remove(cardId);
             exilePlayAnyManaTypeWhileExiled.remove(cardId);
             plottedCardIds.remove(cardId);
             exilePlayPermissions.remove(cardId);
+            exileLookPermissions.remove(cardId);
             clearExilePlayPermissionGroup(cardId);
             exilePlayPermissionConditions.remove(cardId);
             exilePlayForLifeEqualToManaValue.remove(cardId);
             exilePlayCostModifiers.remove(cardId);
             exilePlayPermissionsExpireEndOfTurn.remove(cardId);
             exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
+            exilePlayPermissionsAwaitNextTurnOfPlayer.remove(cardId);
             exilePlayPermissionsExpireAtTurnBeginning.remove(cardId);
             exilePlayAnyManaType.remove(cardId);
             exilePlayWithoutPayingManaCost.remove(cardId);
@@ -6146,11 +6175,13 @@ public class GameData {
         removedIds.forEach(exiledCardsWithTakeoverCounters::remove);
         removedIds.forEach(exiledCardsWithFetchCounters::remove);
         removedIds.forEach(exiledCardsWithBrainCounters::remove);
+        removedIds.forEach(exiledCardsWithCageCounters::remove);
         removedIds.forEach(lukkaExileCastPermissions::remove);
         removedIds.forEach(antedCardIds::remove);
         removedIds.forEach(cardId -> {
             exilePlayPermissionSourcePermanents.remove(cardId);
             exilePlayPermissions.remove(cardId);
+            exileLookPermissions.remove(cardId);
         });
     }
 
@@ -7054,6 +7085,7 @@ public class GameData {
         copy.exiledCardsWithMemoryCounters.addAll(this.exiledCardsWithMemoryCounters);
         copy.exiledCardsWithTakeoverCounters.addAll(this.exiledCardsWithTakeoverCounters);
         copy.exiledCardsWithBrainCounters.addAll(this.exiledCardsWithBrainCounters);
+        copy.exiledCardsWithCageCounters.addAll(this.exiledCardsWithCageCounters);
 
         // --- List<UUID> (synchronized) ---
         copy.orderedPlayerIds.addAll(this.orderedPlayerIds);
@@ -7477,6 +7509,7 @@ public class GameData {
         copy.exiledCardsWithMemoryCounters.addAll(this.exiledCardsWithMemoryCounters);
         copy.exiledCardsWithTakeoverCounters.addAll(this.exiledCardsWithTakeoverCounters);
         copy.exiledCardsWithBrainCounters.addAll(this.exiledCardsWithBrainCounters);
+        copy.exiledCardsWithCageCounters.addAll(this.exiledCardsWithCageCounters);
         copy.lukkaExileCastPermissions.putAll(this.lukkaExileCastPermissions);
         copy.delayedSpellExiles.addAll(this.delayedSpellExiles);
         copy.suspendedSpellExiles.addAll(this.suspendedSpellExiles);
@@ -7613,7 +7646,8 @@ public class GameData {
         this.declinedDrawReplacementSources.forEach((playerId, sources) ->
                 copy.declinedDrawReplacementSources.put(playerId, new java.util.HashSet<>(sources)));
         copy.pendingDrawFirstDrawStepFlags.putAll(this.pendingDrawFirstDrawStepFlags);
-        copy.pendingDiscardToLibraryChoice = this.pendingDiscardToLibraryChoice;
+        copy.pendingDiscardToLibraryChoice = this.pendingDiscardToLibraryChoice == null
+                ? null : this.pendingDiscardToLibraryChoice.deepCopy();
         copy.pendingDiscardToLibraryCardIndex = this.pendingDiscardToLibraryCardIndex;
         copy.pendingDiscardToLibraryDecision = this.pendingDiscardToLibraryDecision;
         copy.destroyDamagersUnlessPaysRemaining.addAll(this.destroyDamagersUnlessPaysRemaining);
@@ -7874,7 +7908,9 @@ public class GameData {
 
         // --- Deques ---
         this.pendingInteractions.forEach(pending -> copy.pendingInteractions.add(
-                pending instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
+                pending instanceof PendingInteraction.ColorChoice choice
+                        ? choice.copyCardTypeOnEnterPermanent()
+                        : pending instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
                         ? trigger.copyPlanarSnapshot()
                         : pending instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger trigger
                         ? trigger.copyPlanarSnapshot() : pending));
@@ -8035,6 +8071,7 @@ public class GameData {
         copy.libraryTopCardFreePlayPermissionsUntilEndOfTurn.putAll(this.libraryTopCardFreePlayPermissionsUntilEndOfTurn);
         copy.libraryTopCardPermissionsUntilEndOfTurn.addAll(this.libraryTopCardPermissionsUntilEndOfTurn);
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
+        copy.exileLookPermissions.putAll(this.exileLookPermissions);
         copy.outsideGamePlayPermissions.addAll(this.outsideGamePlayPermissions);
         copy.outsideGameAdditionalModalModePermissions.addAll(this.outsideGameAdditionalModalModePermissions);
         copy.playersAllowedToPlayFromLibraryTopUntilEndOfTurn
@@ -8052,6 +8089,7 @@ public class GameData {
         copy.exilePlayCostModifiers.putAll(this.exilePlayCostModifiers);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
         copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);
+        copy.exilePlayPermissionsAwaitNextTurnOfPlayer.putAll(this.exilePlayPermissionsAwaitNextTurnOfPlayer);
         copy.exilePlayPermissionsExpireAtTurnBeginning.putAll(this.exilePlayPermissionsExpireAtTurnBeginning);
         copy.exilePlayAnyManaType.addAll(this.exilePlayAnyManaType);
         copy.exilePlayAnyManaTypeWhileExiled.addAll(this.exilePlayAnyManaTypeWhileExiled);

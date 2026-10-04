@@ -89,6 +89,69 @@ class GlenElendraTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
     }
 
+    @Test
+    void decliningExchangeLeavesBothControllersUnchanged() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player2, new GrizzlyBears());
+        gd.combatDamageToPlayersThisCombat
+                .computeIfAbsent(first.getId(), ignored -> new java.util.HashSet<>())
+                .add(player2.getId());
+
+        triggerEndOfCombat();
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first).doesNotContain(second);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(second).doesNotContain(first);
+    }
+
+    @Test
+    void exchangeDoesNothingWhenSecondTargetLeavesBeforeResolution() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player2, new GrizzlyBears());
+        gd.combatDamageToPlayersThisCombat
+                .computeIfAbsent(first.getId(), ignored -> new java.util.HashSet<>())
+                .add(player2.getId());
+
+        triggerEndOfCombat();
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(second);
+        gd.playerGraveyards.get(player2.getId()).add(second.getCard());
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first);
+    }
+
+    @Test
+    void chaosOnlyOffersCreaturesOwnedByThePlanarController() {
+        Permanent stolenOwnCreature = addCreatureReady(player2, new GrizzlyBears());
+        gd.stolenCreatures.put(stolenOwnCreature.getId(), player1.getId());
+        Permanent opponentsCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent stolenOpponentsCreature = addCreatureReady(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(stolenOpponentsCreature.getId(), player2.getId());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds())
+                .containsExactlyInAnyOrder(stolenOwnCreature.getId(), ownCreature.getId())
+                .doesNotContain(opponentsCreature.getId(), stolenOpponentsCreature.getId());
+        harness.handlePermanentChosen(player1, stolenOwnCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(stolenOwnCreature);
+    }
+
     private void triggerEndOfCombat() {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
                 .handleEndOfCombatTriggers(gd));

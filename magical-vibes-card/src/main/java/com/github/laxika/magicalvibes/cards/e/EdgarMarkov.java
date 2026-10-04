@@ -29,6 +29,7 @@ import java.util.Set;
 @CardRegistration(set = "INR", collectorNumber = "234")
 @CardRegistration(set = "INR", collectorNumber = "328")
 @CardRegistration(set = "INR", collectorNumber = "428")
+@CardRegistration(set = "C17", collectorNumber = "36")
 public class EdgarMarkov extends Card {
 
     public EdgarMarkov() {

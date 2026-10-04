@@ -31,6 +31,22 @@ class GnatAlleyCreeperTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Flying blockers can block other attackers alongside Gnat Alley Creeper")
+    void restrictionOnlyAppliesToCreeper() {
+        addCreatureReady(player1, new GnatAlleyCreeper());
+        addCreatureReady(player1, new Drekavac());
+        Permanent flyingBlocker = addCreatureReady(player2, new MistralCharger());
+        Permanent groundBlocker = addCreatureReady(player2, new Drekavac());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 1), new BlockerAssignment(1, 0)));
+
+        assertThat(flyingBlocker.isBlocking()).isTrue();
+        assertThat(groundBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Gnat Alley Creeper can be blocked by a creature without flying")
     void canBeBlockedByNonFlyingCreature() {
         addCreatureReady(player1, new GnatAlleyCreeper());

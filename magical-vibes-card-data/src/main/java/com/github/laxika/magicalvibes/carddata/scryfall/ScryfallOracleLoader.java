@@ -278,7 +278,9 @@ public class ScryfallOracleLoader implements OracleLoader {
                 CardDataSupport.text(prefer(face, card, "loyalty"), "loyalty"),
                 CardDataSupport.text(prefer(face, card, "defense"), "defense"),
                 CardDataSupport.strings(card, "keywords"),
-                CardDataSupport.text(card, "watermark"));
+                CardDataSupport.text(card, "watermark"),
+                CardDataSupport.text(card, "layout"),
+                CardDataSupport.text(card, "cmc"));
     }
 
     private static JsonNode prefer(JsonNode face, JsonNode card, String field) {
@@ -321,7 +323,9 @@ public class ScryfallOracleLoader implements OracleLoader {
                 CardDataSupport.text(face, "loyalty"),
                 CardDataSupport.text(face, "defense"),
                 CardDataSupport.strings(card, "keywords"),
-                CardDataSupport.text(card, "watermark"));
+                CardDataSupport.text(card, "watermark"),
+                CardDataSupport.text(card, "layout"),
+                CardDataSupport.text(card, "cmc"));
     }
 
     /**

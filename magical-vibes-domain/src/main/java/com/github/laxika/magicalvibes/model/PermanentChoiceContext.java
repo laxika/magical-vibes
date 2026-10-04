@@ -29,6 +29,9 @@ import java.util.UUID;
 
 public sealed interface PermanentChoiceContext extends PendingInteraction {
 
+    /** Chooses the recipient of damage redirected from the controller's creatures. */
+    record RedirectCreatureDamage(UUID controllerId) implements PermanentChoiceContext {}
+
     /** Celestial Judgment: the controller chooses one creature for each distinct battlefield power. */
     record CelestialJudgmentChoice(List<Integer> powers, int powerIndex, List<UUID> chosenIds,
                                    String sourceName) implements PermanentChoiceContext {
@@ -1850,7 +1853,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                   StackEntryType spellType, List<Card> cardsToBottom,
-                                  Integer discoverValue, UUID ownerIdOverride) implements PermanentChoiceContext {
+                                  Integer discoverValue, UUID ownerIdOverride, Zone sourceZone) implements PermanentChoiceContext {
+        public LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                      StackEntryType spellType, List<Card> cardsToBottom,
+                                      Integer discoverValue, UUID ownerIdOverride) {
+            this(cardToCast, controllerId, spellEffects, spellType, cardsToBottom,
+                    discoverValue, ownerIdOverride, Zone.LIBRARY);
+        }
         public LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                       StackEntryType spellType) {
             this(cardToCast, controllerId, spellEffects, spellType, null, null, null);
@@ -1878,19 +1887,26 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Choose the creature whose sacrifice creates the reflexive trigger. */
     record SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard,
-                                                   List<CardEffect> reflexiveFollowUps, PermanentPredicate targetPredicate)
+                                                   List<CardEffect> reflexiveFollowUps, PermanentPredicate targetPredicate,
+                                                   boolean doubleDamageIfGiant)
             implements PermanentChoiceContext {
         public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard,
                                                    List<CardEffect> reflexiveFollowUps) {
-            this(controllerId, sourceCard, reflexiveFollowUps, null);
+            this(controllerId, sourceCard, reflexiveFollowUps, null, false);
+        }
+
+        public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard,
+                                                   List<CardEffect> reflexiveFollowUps,
+                                                   boolean doubleDamageIfGiant) {
+            this(controllerId, sourceCard, reflexiveFollowUps, null, doubleDamageIfGiant);
         }
 
         public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard, PermanentPredicate targetPredicate) {
-            this(controllerId, sourceCard, List.of(), targetPredicate);
+            this(controllerId, sourceCard, List.of(), targetPredicate, false);
         }
 
         public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard) {
-            this(controllerId, sourceCard, List.of(), null);
+            this(controllerId, sourceCard, List.of(), null, false);
         }
 
         public SacrificeAnotherCreatureDealPowerDamage {

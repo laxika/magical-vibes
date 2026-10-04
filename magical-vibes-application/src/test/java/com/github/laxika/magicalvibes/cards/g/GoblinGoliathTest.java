@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -39,13 +40,12 @@ class GoblinGoliathTest extends BaseCardTest {
     @Test
     @DisplayName("Doubles damage from your sources to an opponent")
     void doublesDamageToOpponent() {
-        harness.addToBattlefield(player1, new GoblinGoliath());
+        activateDamageDoubling();
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.setLife(player2, 20);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
     }
@@ -58,8 +58,7 @@ class GoblinGoliathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, angel.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, angel.getId());
 
         assertThat(angel.getMarkedDamage()).isEqualTo(2);
         harness.assertOnBattlefield(player2, "Serra Angel");
@@ -74,8 +73,7 @@ class GoblinGoliathTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }
@@ -84,11 +82,116 @@ class GoblinGoliathTest extends BaseCardTest {
     @DisplayName("Doubles combat damage to an opponent")
     void doublesCombatDamageToOpponent() {
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player1, new GoblinGoliath());
+        activateDamageDoubling();
         addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(1));
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Damage is not doubled before activating the ability")
+    void doesNotDoubleDamageWithoutActivation() {
+        harness.addToBattlefield(player1, new GoblinGoliath());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Resolving the activated ability pays mana and taps Goblin Goliath")
+    void activationPaysManaAndTaps() {
+        Permanent goliath = addCreatureReady(player1, new GoblinGoliath());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(goliath.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        resolveAllTriggers();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Activated damage doubling persists after Goblin Goliath leaves")
+    void doublingPersistsAfterSourceLeaves() {
+        activateDamageDoubling();
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Activated damage doubling ends with the turn")
+    void doublingExpiresAtEndOfTurn() {
+        activateDamageDoubling();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Activated doubling does not affect damage to opponent creatures")
+    void activatedDoublingDoesNotAffectCreatureDamage() {
+        activateDamageDoubling();
+        Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, angel.getId());
+
+        assertThat(angel.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("Activated doubling does not affect damage to its controller")
+    void activatedDoublingDoesNotAffectSelfDamage() {
+        activateDamageDoubling();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Activated doubling does not affect damage from opponent sources")
+    void activatedDoublingDoesNotAffectOpponentSources() {
+        activateDamageDoubling();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+    }
+
+    private void activateDamageDoubling() {
+        addCreatureReady(player1, new GoblinGoliath());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
     }
 }

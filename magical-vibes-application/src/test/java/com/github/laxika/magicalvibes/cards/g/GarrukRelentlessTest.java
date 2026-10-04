@@ -1,35 +1,37 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.d.DarkthicketWolf;
+import com.github.laxika.magicalvibes.cards.k.KessigCagebreakers;
+import com.github.laxika.magicalvibes.cards.m.MarkovPatrician;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.cards.u.UnburialRites;
+import com.github.laxika.magicalvibes.cards.s.SarkhanTheMasterless;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({GarrukRelentless.class, DarkthicketWolf.class, KessigCagebreakers.class, MarkovPatrician.class, WalkingCorpse.class, UnburialRites.class})
 class GarrukRelentlessTest extends BaseCardTest {
 
-    // ==========================================================================
-    // Card structure
-    // ==========================================================================
     // Front face — 0: Deal 3 damage to target creature; it deals power back
-    // ==========================================================================
 
+    @CardUsed({GarrukRelentless.class, DarkthicketWolf.class, KessigCagebreakers.class, MarkovPatrician.class, WalkingCorpse.class, UnburialRites.class})
     @Nested
     @DisplayName("Front face 0: fight ability")
     class FightAbility {
@@ -38,15 +40,15 @@ class GarrukRelentlessTest extends BaseCardTest {
         @DisplayName("Deals 3 damage to target creature and receives power damage back")
         void dealsDamageAndReceivesPowerBack() {
             Permanent garruk = addFrontFace(player1, 3);
-            // Add a 2/4 creature
-            Permanent target = addCreature(player2, "GrizzlyBears", 2, 2);
+            // Add a 2/2 creature
+            Permanent target = addCreature(player2, new DarkthicketWolf());
 
             int garrukIdx = gd.playerBattlefields.get(player1.getId()).indexOf(garruk);
             harness.activateAbility(player1, garrukIdx, 0, target.getId(), null);
             harness.passBothPriorities();
 
             // Garruk dealt 3 damage to 2/2 creature — creature should die
-            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            harness.assertNotOnBattlefield(player2, "Darkthicket Wolf");
             // Creature had 2 power, so Garruk loses 2 loyalty: 3 - 2 = 1
             assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         }
@@ -56,7 +58,7 @@ class GarrukRelentlessTest extends BaseCardTest {
         void transformsAfterFightDroppingLoyaltyToTwo() {
             Permanent garruk = addFrontFace(player1, 3);
             // A creature with 2 power — Garruk goes to 3-2=1 loyalty, triggering transform
-            Permanent target = addCreature(player2, "EliteVanguard", 2, 1);
+            Permanent target = addCreature(player2, new WalkingCorpse());
 
             int garrukIdx = gd.playerBattlefields.get(player1.getId()).indexOf(garruk);
             harness.activateAbility(player1, garrukIdx, 0, target.getId(), null);
@@ -75,7 +77,7 @@ class GarrukRelentlessTest extends BaseCardTest {
         void garrukDiesIfFightBringsLoyaltyToZero() {
             Permanent garruk = addFrontFace(player1, 3);
             // A creature with 3 power — Garruk goes to 3-3=0
-            Permanent target = addCreature(player2, "BigCreature", 3, 4);
+            Permanent target = addCreature(player2, new KessigCagebreakers());
 
             int garrukIdx = gd.playerBattlefields.get(player1.getId()).indexOf(garruk);
             harness.activateAbility(player1, garrukIdx, 0, target.getId(), null);
@@ -88,10 +90,9 @@ class GarrukRelentlessTest extends BaseCardTest {
         }
     }
 
-    // ==========================================================================
     // Front face — 0: Create a 2/2 green Wolf token
-    // ==========================================================================
 
+    @CardUsed({GarrukRelentless.class, DarkthicketWolf.class, KessigCagebreakers.class, MarkovPatrician.class, WalkingCorpse.class, UnburialRites.class})
     @Nested
     @DisplayName("Front face 0: create Wolf token")
     class CreateWolfToken {
@@ -118,10 +119,9 @@ class GarrukRelentlessTest extends BaseCardTest {
         }
     }
 
-    // ==========================================================================
     // State trigger — transform when loyalty <= 2
-    // ==========================================================================
 
+    @CardUsed({GarrukRelentless.class, DarkthicketWolf.class, KessigCagebreakers.class, MarkovPatrician.class, WalkingCorpse.class, UnburialRites.class})
     @Nested
     @DisplayName("State trigger: transform at <= 2 loyalty")
     class StateTrigger {
@@ -141,10 +141,8 @@ class GarrukRelentlessTest extends BaseCardTest {
         }
     }
 
-    // ==========================================================================
-    // Back face +1: Create a 1/1 black Wolf token with deathtouch
-    // ==========================================================================
 
+    @CardUsed({GarrukRelentless.class, DarkthicketWolf.class, KessigCagebreakers.class, MarkovPatrician.class, WalkingCorpse.class, UnburialRites.class})
     @Nested
     @DisplayName("Back face +1: deathtouch Wolf token")
     class BackFacePlusOne {
@@ -171,10 +169,8 @@ class GarrukRelentlessTest extends BaseCardTest {
         }
     }
 
-    // ==========================================================================
-    // Back face -1: Sacrifice a creature, then search library for creature to hand
-    // ==========================================================================
 
+    @CardUsed({GarrukRelentless.class, DarkthicketWolf.class, KessigCagebreakers.class, MarkovPatrician.class, WalkingCorpse.class, UnburialRites.class})
     @Nested
     @DisplayName("Back face -1: sacrifice then search")
     class BackFaceMinusOne {
@@ -183,11 +179,11 @@ class GarrukRelentlessTest extends BaseCardTest {
         @DisplayName("With one creature, auto-sacrifices and searches library")
         void autoSacrificesOnlyCreatureAndSearches() {
             Permanent garruk = addTransformedBackFace(player1, 3);
-            Permanent creature = addCreature(player1, "GrizzlyBears", 2, 2);
+            addCreature(player1, new DarkthicketWolf());
 
             // Put a creature card in the library for the search
-            Card libraryCreature = createCreatureCard("Runeclaw Bear", 2, 2);
-            gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(libraryCreature)));
+            Card libraryCreature = new WalkingCorpse();
+            harness.setLibrary(player1, List.of(libraryCreature));
 
             int garrukIdx = gd.playerBattlefields.get(player1.getId()).indexOf(garruk);
             harness.activateAbility(player1, garrukIdx, 1, null, null);
@@ -196,27 +192,27 @@ class GarrukRelentlessTest extends BaseCardTest {
             assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
 
             // Creature was sacrificed
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+            harness.assertNotOnBattlefield(player1, "Darkthicket Wolf");
 
             // Library search should be awaiting input
             assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class) != null).isTrue();
 
             // Choose the creature from library
-            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+            harness.handleCardChosen(player1, 0);
 
             // The creature card should now be in hand
-            harness.assertInHand(player1, "Runeclaw Bear");
+            harness.assertInHand(player1, "Walking Corpse");
         }
 
         @Test
         @DisplayName("With multiple creatures, prompts player to choose sacrifice target")
         void promptsForSacrificeWithMultipleCreatures() {
             Permanent garruk = addTransformedBackFace(player1, 3);
-            Permanent creature1 = addCreature(player1, "GrizzlyBears", 2, 2);
-            Permanent creature2 = addCreature(player1, "EliteVanguard", 2, 1);
+            Permanent creature1 = addCreature(player1, new DarkthicketWolf());
+            addCreature(player1, new WalkingCorpse());
 
-            Card libraryCreature = createCreatureCard("Runeclaw Bear", 2, 2);
-            gd.playerDecks.put(player1.getId(), new ArrayList<>(List.of(libraryCreature)));
+            Card libraryCreature = new WalkingCorpse();
+            harness.setLibrary(player1, List.of(libraryCreature));
 
             int garrukIdx = gd.playerBattlefields.get(player1.getId()).indexOf(garruk);
             harness.activateAbility(player1, garrukIdx, 1, null, null);
@@ -231,15 +227,15 @@ class GarrukRelentlessTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, creature1.getId());
 
             // creature1 was sacrificed
-            harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+            harness.assertNotOnBattlefield(player1, "Darkthicket Wolf");
 
             // Library search should be awaiting input
             assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class) != null).isTrue();
 
             // Choose the creature from library
-            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+            harness.handleCardChosen(player1, 0);
 
-            harness.assertInHand(player1, "Runeclaw Bear");
+            harness.assertInHand(player1, "Walking Corpse");
         }
 
         @Test
@@ -257,10 +253,8 @@ class GarrukRelentlessTest extends BaseCardTest {
         }
     }
 
-    // ==========================================================================
-    // Back face -3: Creatures get trample and +X/+X (X = creature cards in GY)
-    // ==========================================================================
 
+    @CardUsed({GarrukRelentless.class, DarkthicketWolf.class, KessigCagebreakers.class, MarkovPatrician.class, WalkingCorpse.class, UnburialRites.class})
     @Nested
     @DisplayName("Back face -3: trample and graveyard-based boost")
     class BackFaceMinusThree {
@@ -269,13 +263,13 @@ class GarrukRelentlessTest extends BaseCardTest {
         @DisplayName("Grants trample and +X/+X where X = creature cards in graveyard")
         void grantsBoostBasedOnGraveyardCreatures() {
             Permanent garruk = addTransformedBackFace(player1, 5);
-            Permanent creature = addCreature(player1, "GrizzlyBears", 2, 2);
+            Permanent creature = addCreature(player1, new DarkthicketWolf());
 
             // Put 3 creature cards in graveyard
             harness.setGraveyard(player1, List.of(
-                    createCreatureCard("Dead1", 1, 1),
-                    createCreatureCard("Dead2", 1, 1),
-                    createCreatureCard("Dead3", 1, 1)
+                    new WalkingCorpse(),
+                    new WalkingCorpse(),
+                    new WalkingCorpse()
             ));
 
             int garrukIdx = gd.playerBattlefields.get(player1.getId()).indexOf(garruk);
@@ -294,7 +288,7 @@ class GarrukRelentlessTest extends BaseCardTest {
         @DisplayName("With no creature cards in graveyard, only grants trample (X=0)")
         void zeroCreaturesInGraveyardOnlyGrantsTrample() {
             Permanent garruk = addTransformedBackFace(player1, 5);
-            Permanent creature = addCreature(player1, "GrizzlyBears", 2, 2);
+            Permanent creature = addCreature(player1, new DarkthicketWolf());
 
             int garrukIdx = gd.playerBattlefields.get(player1.getId()).indexOf(garruk);
             harness.activateAbility(player1, garrukIdx, 2, null, null);
@@ -310,10 +304,10 @@ class GarrukRelentlessTest extends BaseCardTest {
         @DisplayName("Does not boost opponent's creatures")
         void doesNotBoostOpponentCreatures() {
             Permanent garruk = addTransformedBackFace(player1, 5);
-            Permanent oppCreature = addCreature(player2, "GrizzlyBears", 2, 2);
+            Permanent oppCreature = addCreature(player2, new DarkthicketWolf());
 
             harness.setGraveyard(player1, List.of(
-                    createCreatureCard("Dead1", 1, 1)
+                    new WalkingCorpse()
             ));
 
             int garrukIdx = gd.playerBattlefields.get(player1.getId()).indexOf(garruk);
@@ -336,16 +330,12 @@ class GarrukRelentlessTest extends BaseCardTest {
         }
     }
 
-    // ==========================================================================
-    // Helpers
-    // ==========================================================================
 
     private Permanent addFrontFace(Player player, int loyalty) {
         GarrukRelentless card = new GarrukRelentless();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
@@ -353,32 +343,93 @@ class GarrukRelentlessTest extends BaseCardTest {
 
     private Permanent addTransformedBackFace(Player player, int loyalty) {
         GarrukRelentless card = new GarrukRelentless();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
         // Simulate already transformed
         perm.setTransformed(true);
         perm.setCard(card.getBackFaceCard());
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
     }
 
-    private Permanent addCreature(Player player, String name, int power, int toughness) {
-        Card card = createCreatureCard(name, power, toughness);
-        Permanent perm = new Permanent(card);
+    private Permanent addCreature(Player player, Card card) {
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
-    private Card createCreatureCard(String name, int power, int toughness) {
-        Card card = new Card() {};
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setPower(power);
-        card.setToughness(toughness);
-        return card;
+    @Test
+    void returnDamageFromLifelinkCreatureGainsLife() {
+        Permanent garruk = addFrontFace(player1, 5);
+        Permanent target = addCreature(player2, new MarkovPatrician());
+        harness.setLife(player2, 20);
+        harness.activateAbility(player1, 0, 0, target.getId(), null);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 23);
+        assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Markov Patrician");
+    }
+
+    @Test
+    void transformationDoesNotAllowAnotherLoyaltyAbilityThisTurn() {
+        Permanent garruk = addFrontFace(player1, 3);
+        Permanent target = addCreature(player2, new WalkingCorpse());
+        harness.activateAbility(player1, 0, 0, target.getId(), null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(garruk.isTransformed()).isTrue();
+        assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void transformTriggerStillResolvesIfLoyaltyIncreasesAboveTwo() {
+        Permanent garruk = addFrontFace(player1, 2);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+        garruk.setCounterCount(CounterType.LOYALTY, 4);
+        harness.passBothPriorities();
+        assertThat(garruk.isTransformed()).isTrue();
+        assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    @CardUsed({SarkhanTheMasterless.class})
+    void ultimateGrantsTrampleToGarrukWhenHeIsACreature() {
+        Permanent garruk = addTransformedBackFace(player1, 5);
+        Permanent sarkhan = harness.addToBattlefieldAndReturn(player1, new SarkhanTheMasterless());
+        sarkhan.setCounterCount(CounterType.LOYALTY, 5);
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, garruk)).isTrue();
+        harness.setGraveyard(player1, List.of(new WalkingCorpse()));
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, garruk)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, garruk)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, garruk, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void ultimateLocksAmountAndAffectedCreaturesAtResolution() {
+        addTransformedBackFace(player1, 5);
+        Permanent creature = addCreature(player1, new DarkthicketWolf());
+        harness.setGraveyard(player1, List.of(new WalkingCorpse(), new UnburialRites()));
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+        harness.setGraveyard(player1, List.of());
+        Permanent lateCreature = addCreature(player1, new WalkingCorpse());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.TRAMPLE)).isFalse();
+        harness.passUntil(TurnStep.CLEANUP);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 }

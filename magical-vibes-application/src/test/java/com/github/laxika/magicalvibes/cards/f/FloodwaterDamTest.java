@@ -114,7 +114,7 @@ class FloodwaterDamTest extends BaseCardTest {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new FloodwaterDam());
         Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new SchoolOfTheUnseen());
         Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new SchoolOfTheUnseen());
-        opposingLand.setTapped(true);
+        opposingLand.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0, 2, List.of(ownLand.getId(), opposingLand.getId()));
@@ -132,7 +132,7 @@ class FloodwaterDamTest extends BaseCardTest {
     void rejectsActivationWhenSourceIsTapped() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new FloodwaterDam());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new SchoolOfTheUnseen());
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(

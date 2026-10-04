@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "GPT", collectorNumber = "119")
 @CardRegistration(set = "DDJ", collectorNumber = "11")
 @CardRegistration(set = "CMD", collectorNumber = "205")
+@CardRegistration(set = "C17", collectorNumber = "175")
 public class IzzetChronarch extends Card {
 
     public IzzetChronarch() {

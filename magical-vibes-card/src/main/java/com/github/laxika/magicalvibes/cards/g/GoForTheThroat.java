@@ -25,6 +25,7 @@ import java.util.List;
 @CardRegistration(set = "LTC", collectorNumber = "201")
 @CardRegistration(set = "MIC", collectorNumber = "119")
 @CardRegistration(set = "FDC", collectorNumber = "100")
+@CardRegistration(set = "C17", collectorNumber = "114")
 public class GoForTheThroat extends Card {
 
     public GoForTheThroat() {

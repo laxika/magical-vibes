@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrP
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 @CardRegistration(set = "KHM", collectorNumber = "138")
+@CardRegistration(set = "KHM", collectorNumber = "404")
 public class FrostBite extends Card {
 
     public FrostBite() {

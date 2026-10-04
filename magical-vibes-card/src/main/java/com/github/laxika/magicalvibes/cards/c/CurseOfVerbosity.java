@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPlayerEf
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "AFC", collectorNumber = "82")
+@CardRegistration(set = "C17", collectorNumber = "9")
 public class CurseOfVerbosity extends Card {
 
     public CurseOfVerbosity() {

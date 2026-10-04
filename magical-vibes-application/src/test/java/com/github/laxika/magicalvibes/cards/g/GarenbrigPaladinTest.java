@@ -49,12 +49,9 @@ class GarenbrigPaladinTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot be blocked by a creature with power 2 or less")
     void cannotBeBlockedByPower2OrLess() {
-        Permanent paladin = attackingPaladin();
-        gd.playerBattlefields.get(player1.getId()).add(paladin);
+        attackingPaladin();
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
 
@@ -66,12 +63,9 @@ class GarenbrigPaladinTest extends BaseCardTest {
     @Test
     @DisplayName("Can be blocked by a creature with power 3 or greater")
     void canBeBlockedByPower3OrGreater() {
-        Permanent paladin = attackingPaladin();
-        gd.playerBattlefields.get(player1.getId()).add(paladin);
+        attackingPaladin();
 
-        Permanent giant = new Permanent(new HillGiant());
-        giant.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(giant);
+        Permanent giant = addCreatureReady(player2, new HillGiant());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -79,10 +73,60 @@ class GarenbrigPaladinTest extends BaseCardTest {
         assertThat(giant.isBlocking()).isTrue();
     }
 
-    private Permanent attackingPaladin() {
-        Permanent paladin = new Permanent(new GarenbrigPaladin());
-        paladin.setSummoningSick(false);
+    @Test
+    @DisplayName("Spending five green mana still gives exactly one counter")
+    void entersWithOneCounterWhenFiveGreenManaIsSpent() {
+        harness.setHand(player1, List.of(new GarenbrigPaladin()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Garenbrig Paladin")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast does not satisfy adamant")
+    void enteringWithoutCastingDoesNotGiveCounter() {
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        Permanent paladin = harness.enterBattlefieldAndReturn(player1, new GarenbrigPaladin());
+
+        assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A base-power-two blocker with a +1/+1 counter can block")
+    void blockerWithIncreasedPowerCanBlock() {
+        attackingPaladin();
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(bears.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A base-power-three blocker with a -1/-1 counter cannot block")
+    void blockerWithReducedPowerCannotBlock() {
+        attackingPaladin();
+        Permanent giant = addCreatureReady(player2, new HillGiant());
+        giant.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only be blocked by");
+    }
+
+    private void attackingPaladin() {
+        Permanent paladin = addCreatureReady(player1, new GarenbrigPaladin());
         paladin.setAttacking(true);
-        return paladin;
     }
 }

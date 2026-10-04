@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "SCG", collectorNumber = "86")
+@CardRegistration(set = "ARC", collectorNumber = "33")
 public class DragonBreath extends Card {
 
     public DragonBreath() {

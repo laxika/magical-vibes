@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "BRR", collectorNumber = "47")
+@CardRegistration(set = "C17", collectorNumber = "55")
 public class RamosDragonEngine extends Card {
 
     public RamosDragonEngine() {

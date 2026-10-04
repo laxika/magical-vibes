@@ -95,7 +95,7 @@ class FlameChainMaulerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent mauler = harness.addToBattlefieldAndReturn(player1, new FlameChainMauler());
         mauler.setSummoningSick(true);
-        mauler.setTapped(true);
+        mauler.tap();
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);

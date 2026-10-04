@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 @CardRegistration(set = "MAT", collectorNumber = "28")
+@CardRegistration(set = "MAT", collectorNumber = "78")
+@CardRegistration(set = "MAT", collectorNumber = "128")
+@CardRegistration(set = "MAT", collectorNumber = "208")
 public class CosmicRebirth extends Card {
 
     public CosmicRebirth() {

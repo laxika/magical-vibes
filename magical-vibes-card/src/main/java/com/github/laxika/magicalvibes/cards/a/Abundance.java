@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffec
 @CardRegistration(set = "USG", collectorNumber = "229")
 @CardRegistration(set = "DDR", collectorNumber = "2")
 @CardRegistration(set = "40K", collectorNumber = "210")
+@CardRegistration(set = "C17", collectorNumber = "145")
+@CardRegistration(set = "ZNC", collectorNumber = "58")
 public class Abundance extends Card {
 
     public Abundance() {

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -37,7 +36,7 @@ public class AyliEternalPilgrim extends Card {
                 "{1}{W}{B}, Sacrifice another creature: Exile target nonland permanent. Activate only if you have at least 10 life more than your starting life total.",
                 TargetFilters.nonlandPermanent()
         ).withActivationCondition(
-                new ControllerLifeAtLeast(GameData.STARTING_LIFE_TOTAL + 10),
+                new ControllerLifeAtLeast(10, true),
                 "Activate only if you have at least 10 life more than your starting life total."
         ));
     }

@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.c.CandlesOfLeng;
+import com.github.laxika.magicalvibes.cards.h.Hushbringer;
 import com.github.laxika.magicalvibes.cards.s.SuddenDeath;
+import com.github.laxika.magicalvibes.cards.w.WipeAway;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -19,7 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GriffinGuide.class, SuddenDeath.class, AshcoatBear.class, CandlesOfLeng.class})
+@CardUsed({GriffinGuide.class, SuddenDeath.class, AshcoatBear.class, CandlesOfLeng.class,
+        WipeAway.class, Hushbringer.class})
 class GriffinGuideTest extends BaseCardTest {
 
     @Test
@@ -93,6 +96,76 @@ class GriffinGuideTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Resolves attached to an opponent's creature and grants its bonuses")
+    void resolvesOnOpponentCreature() {
+        Permanent creature = addCreatureReady(player2, new AshcoatBear());
+        harness.setHand(player1, List.of(new GriffinGuide()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Griffin Guide").getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Returning the enchanted creature to hand does not create a Griffin")
+    void bouncingCreatureDoesNotTrigger() {
+        Permanent creature = addCreatureReady(player1, new AshcoatBear());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new GriffinGuide());
+        aura.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new WipeAway()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Ashcoat Bear");
+        harness.assertInGraveyard(player1, "Griffin Guide");
+        assertThat(findPermanents(player1, "Griffin")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returning the Aura to hand removes its bonuses and prevents later death triggers")
+    void bouncingAuraRemovesBonusesAndTrigger() {
+        Permanent creature = addCreatureReady(player1, new AshcoatBear());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new GriffinGuide());
+        aura.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new WipeAway()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+
+        harness.assertInHand(player1, "Griffin Guide");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+        destroyCreature(creature);
+        harness.assertInGraveyard(player1, "Ashcoat Bear");
+        assertThat(findPermanents(player1, "Griffin")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hushbringer prevents the enchanted creature's death from creating a Griffin")
+    void deathTriggerIsSuppressedByHushbringer() {
+        harness.addToBattlefield(player2, new Hushbringer());
+        Permanent creature = addCreatureReady(player1, new AshcoatBear());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new GriffinGuide());
+        aura.setAttachedTo(creature.getId());
+
+        destroyCreature(creature);
+
+        harness.assertInGraveyard(player1, "Ashcoat Bear");
+        harness.assertInGraveyard(player1, "Griffin Guide");
+        harness.assertOnBattlefield(player2, "Hushbringer");
+        assertThat(findPermanents(player1, "Griffin")).isEmpty();
     }
 
     private void destroyCreature(Permanent creature) {

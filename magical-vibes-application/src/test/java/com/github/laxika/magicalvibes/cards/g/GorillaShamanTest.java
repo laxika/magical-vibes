@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AesthirGlider;
-import com.github.laxika.magicalvibes.cards.g.GusthasScepter;
 import com.github.laxika.magicalvibes.cards.h.HelmOfObedience;
 import com.github.laxika.magicalvibes.cards.x.XenicPoltergeist;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GorillaShaman.class, HelmOfObedience.class, AesthirGlider.class,
-        GusthasScepter.class})
+        GusthasScepter.class, XenicPoltergeist.class})
 class GorillaShamanTest extends BaseCardTest {
 
     @Test
@@ -96,7 +95,6 @@ class GorillaShamanTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(XenicPoltergeist.class)
     @DisplayName("Does not destroy an artifact that becomes a creature before resolution")
     void doesNotDestroyArtifactThatBecomesCreatureBeforeResolution() {
         harness.addToBattlefield(player1, new GorillaShaman());
@@ -111,5 +109,37 @@ class GorillaShamanTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Helm of Obedience");
         harness.assertNotInGraveyard(player2, "Helm of Obedience");
+    }
+
+    @Test
+    @DisplayName("Cannot target a nonartifact permanent with the matching mana value")
+    void cannotTargetNonartifactPermanent() {
+        harness.addToBattlefield(player1, new GorillaShaman());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GorillaShaman());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can activate repeatedly while tapped and summoning sick with distinct X values")
+    void canActivateRepeatedlyWhileTappedAndSummoningSick() {
+        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new GorillaShaman());
+        shaman.setTapped(true);
+        shaman.setSummoningSick(true);
+        Permanent helm = harness.addToBattlefieldAndReturn(player2, new HelmOfObedience());
+        Permanent scepter = harness.addToBattlefieldAndReturn(player2, new GusthasScepter());
+        harness.addMana(player1, ManaColor.RED, 10);
+
+        harness.activateAbility(player1, 0, 4, helm.getId());
+        harness.activateAbility(player1, 0, 0, scepter.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Helm of Obedience");
+        harness.assertInGraveyard(player2, "Helm of Obedience");
+        harness.assertNotOnBattlefield(player2, "Gustha's Scepter");
+        harness.assertInGraveyard(player2, "Gustha's Scepter");
     }
 }

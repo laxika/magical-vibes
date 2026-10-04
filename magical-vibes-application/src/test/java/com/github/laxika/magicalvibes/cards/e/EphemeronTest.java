@@ -80,7 +80,7 @@ class EphemeronTest extends BaseCardTest {
     @DisplayName("A tapped Ephemeron can activate without paying mana or tapping")
     void canActivateWhileTapped() {
         var ephemeron = harness.addToBattlefieldAndReturn(player1, new Ephemeron());
-        ephemeron.setTapped(true);
+        ephemeron.tap();
         harness.setHand(player1, List.of(new Spellbook()));
 
         harness.activateAbility(player1, 0, null, null);

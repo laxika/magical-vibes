@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,14 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Ghoulflesh.class, GrizzlyBears.class, FountainOfYouth.class})
 class GhoulfleshTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Ghoulflesh attaches it to the target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new Ghoulflesh()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -40,12 +41,10 @@ class GhoulfleshTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature gets -1/-1")
     void shrinksEnchantedCreature() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new Ghoulflesh());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Ghoulflesh());
         aura.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(1);
@@ -54,12 +53,10 @@ class GhoulfleshTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature is black in addition to its other colors")
     void grantsBlackColor() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new Ghoulflesh());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Ghoulflesh());
         aura.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, bearsPerm);
         assertThat(bonus.grantedColors()).contains(CardColor.BLACK);
@@ -68,12 +65,10 @@ class GhoulfleshTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature is a Zombie in addition to its other types")
     void grantsZombieSubtype() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new Ghoulflesh());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Ghoulflesh());
         aura.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, bearsPerm);
         assertThat(bonus.grantedSubtypes()).contains(CardSubtype.ZOMBIE);
@@ -82,12 +77,10 @@ class GhoulfleshTest extends BaseCardTest {
     @Test
     @DisplayName("Removing Ghoulflesh restores the creature's original P/T")
     void removalRestoresOriginalState() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        Permanent aura = new Permanent(new Ghoulflesh());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Ghoulflesh());
         aura.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(1);
 
@@ -112,5 +105,45 @@ class GhoulfleshTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifactPerm.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+    @Test
+    @DisplayName("Resolved Ghoulflesh preserves original colors and creature types and affects only its target")
+    void preservesOriginalCharacteristicsAndOnlyAffectsTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Ghoulflesh()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.BLACK);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactlyInAnyOrder(CardSubtype.BEAR, CardSubtype.ZOMBIE);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveColors(gd, other)).containsExactly(CardColor.GREEN);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, other)).containsExactly(CardSubtype.BEAR);
+    }
+
+    @Test
+    @DisplayName("Two Ghoulflesh auras stack and send a zero-toughness creature and both auras to their owners' graveyards")
+    void multipleAurasStackAndKillCreatureAtZeroToughness() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Ghoulflesh(), new Ghoulflesh()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Ghoulflesh");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof Ghoulflesh)
+                .hasSize(2);
     }
 }

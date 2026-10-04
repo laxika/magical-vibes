@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "FDC", collectorNumber = "51")
+@CardRegistration(set = "KHM", collectorNumber = "380")
 public class StarnheimAspirant extends Card {
 
     public StarnheimAspirant() {

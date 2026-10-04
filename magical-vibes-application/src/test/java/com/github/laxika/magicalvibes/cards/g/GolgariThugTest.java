@@ -136,6 +136,84 @@ class GolgariThugTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(thug);
     }
 
+    @Test
+    @DisplayName("The death trigger does not move a target that has left the graveyard")
+    void deathTriggerDoesNotMoveMissingTarget() {
+        GolgariThug thug = new GolgariThug();
+        Card creature = new GolgariBrownscale();
+        Card libraryCard = new Forest();
+        harness.addToBattlefield(player1, thug);
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        destroyThug();
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.setGraveyard(player1, gd.playerGraveyards.get(player1.getId()).stream()
+                .filter(card -> !card.getId().equals(creature.getId())).toList());
+        harness.setExile(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.findExiledCard(creature.getId())).isNotNull();
+        harness.assertInGraveyard(player1, "Golgari Thug");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dredge mills only four cards and leaves the remaining library in order")
+    void dredgeLeavesRemainingLibraryInOrder() {
+        GolgariThug thug = new GolgariThug();
+        Card firstRemaining = new GolgariBrownscale();
+        Card lastRemaining = new Forest();
+        List<Card> milled = List.of(new Forest(), new Forest(), new Forest(), new Forest());
+        harness.setGraveyard(player1, List.of(thug));
+        harness.setLibrary(player1, List.of(milled.get(0), milled.get(1), milled.get(2), milled.get(3),
+                firstRemaining, lastRemaining));
+
+        resolveDraw();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(thug).doesNotContain(firstRemaining);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstRemaining, lastRemaining);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(milled);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Golgari Thug on the battlefield cannot replace a draw with dredge")
+    void cannotDredgeFromBattlefield() {
+        Card topCard = new Forest();
+        harness.addToBattlefield(player1, new GolgariThug());
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(topCard, new Forest(), new Forest(), new Forest()));
+
+        resolveDraw();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        harness.assertOnBattlefield(player1, "Golgari Thug");
+        assertThat(gd.cardsDrawnThisTurn.get(player1.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A player cannot dredge Golgari Thug from the opponent's graveyard")
+    void cannotDredgeFromOpponentGraveyard() {
+        GolgariThug thug = new GolgariThug();
+        Card topCard = new Forest();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(thug));
+        harness.setLibrary(player1, List.of(topCard, new Forest(), new Forest(), new Forest()));
+
+        resolveDraw();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).contains(topCard).doesNotContain(thug);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(thug);
+        assertThat(gd.cardsDrawnThisTurn.get(player1.getId())).isEqualTo(1);
+    }
+
     private void destroyThug() {
         harness.setHand(player1, List.of(new Putrefy()));
         harness.addMana(player1, ManaColor.BLACK, 1);

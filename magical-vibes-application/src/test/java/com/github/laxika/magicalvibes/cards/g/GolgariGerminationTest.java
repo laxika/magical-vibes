@@ -75,6 +75,33 @@ class GolgariGerminationTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard().isToken());
     }
 
+    @Test
+    @DisplayName("Each Golgari Germination creates a token for the same creature death")
+    void multipleGerminationsEachCreateAToken() {
+        harness.addToBattlefield(player1, new GolgariGermination());
+        harness.addToBattlefield(player1, new GolgariGermination());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ElvesOfDeepShadow());
+
+        destroyCreature(creature.getId());
+
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Saproling")).isZero();
+    }
+
+    @Test
+    @DisplayName("A Saproling created by Germination does not replace itself when it dies")
+    void createdSaprolingDeathDoesNotCreateAnotherToken() {
+        harness.addToBattlefield(player1, new GolgariGermination());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ElvesOfDeepShadow());
+        destroyCreature(creature.getId());
+        Permanent saproling = findPermanent(player1, "Saproling");
+
+        destroyCreature(saproling.getId());
+
+        assertThat(countPermanents(player1, "Saproling")).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void destroyCreature(UUID creatureId) {
         harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new Darkblast()));

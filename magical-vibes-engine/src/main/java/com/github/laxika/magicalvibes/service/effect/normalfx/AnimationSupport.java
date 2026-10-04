@@ -75,6 +75,16 @@ public class AnimationSupport {
     private final UnattachTriggerSupport unattachTriggerSupport;
     private final LudevicCopySupport ludevicCopySupport;
 
+    private AmountContext animationAmountContext(GameData gameData, StackEntry entry) {
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        return AmountContext.forStackEntry(entry, source);
+    }
+
     /**
      * CR 613.4: an animate-and-set-P/T effect's base P/T is a layer-7b entry with the
      * animation's timestamp — a later-timestamp base-P/T setter (Diminish, Lignify) overrides
@@ -185,7 +195,7 @@ public class AnimationSupport {
             return;
         }
 
-        AmountContext ctx = AmountContext.forStackEntry(entry, target);
+        AmountContext ctx = animationAmountContext(gameData, entry);
         int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
         int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
@@ -216,7 +226,7 @@ public class AnimationSupport {
             return;
         }
 
-        AmountContext ctx = AmountContext.forStackEntry(entry, self);
+        AmountContext ctx = animationAmountContext(gameData, entry);
         int power = effect.power() == null
                 ? (self.getCard().getPower() != null ? self.getCard().getPower() : 0)
                 : amountEvaluationService.evaluate(gameData, effect.power(), ctx);
@@ -275,7 +285,7 @@ public class AnimationSupport {
             return;
         }
 
-        AmountContext ctx = AmountContext.forStackEntry(entry, target);
+        AmountContext ctx = animationAmountContext(gameData, entry);
         int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
         int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
         EffectDuration duration = effect.duration();
@@ -552,7 +562,7 @@ public class AnimationSupport {
                 continue;
             }
 
-            AmountContext ctx = AmountContext.forStackEntry(entry, target);
+            AmountContext ctx = animationAmountContext(gameData, entry);
             int power = effect.power() == null ? printedPower(target) :
                     amountEvaluationService.evaluate(gameData, effect.power(), ctx);
             int toughness = effect.toughness() == null ? printedToughness(target) :
@@ -571,7 +581,7 @@ public class AnimationSupport {
         if (chosen == null) {
             return;
         }
-        AmountContext ctx = AmountContext.forStackEntry(entry, chosen);
+        AmountContext ctx = animationAmountContext(gameData, entry);
         int power = effect.power() == null ? printedPower(chosen)
                 : amountEvaluationService.evaluate(gameData, effect.power(), ctx);
         int toughness = effect.toughness() == null ? printedToughness(chosen)
@@ -675,7 +685,7 @@ public class AnimationSupport {
             return;
         }
 
-        AmountContext ctx = AmountContext.forStackEntry(entry, target);
+        AmountContext ctx = animationAmountContext(gameData, entry);
         int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
         int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 

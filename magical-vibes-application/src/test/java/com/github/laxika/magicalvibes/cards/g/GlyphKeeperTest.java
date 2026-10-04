@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.t.Twiddle;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,17 +17,16 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GlyphKeeper.class, IcyManipulator.class, LightningBolt.class, Twiddle.class})
 class GlyphKeeperTest extends BaseCardTest {
 
     private UUID addGlyphKeeper() {
-        harness.addToBattlefield(player1, new GlyphKeeper());
-        Permanent gk = findPermanent(player1, "Glyph Keeper");
+        Permanent gk = harness.addToBattlefieldAndReturn(player1, new GlyphKeeper());
         gk.setSummoningSick(false);
         return gk.getId();
     }
-
-    // ===== Counter trigger =====
 
     @Test
     @DisplayName("Counters the first spell that targets it each turn")
@@ -51,8 +52,7 @@ class GlyphKeeperTest extends BaseCardTest {
     void countersTargetingAbility() {
         UUID gkId = addGlyphKeeper();
 
-        harness.addToBattlefield(player2, new IcyManipulator());
-        Permanent icy = findPermanent(player2, "Icy Manipulator");
+        Permanent icy = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
         icy.setSummoningSick(false);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
@@ -65,8 +65,7 @@ class GlyphKeeperTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the counter trigger
 
         // The ability was countered — Glyph Keeper is not tapped.
-        Permanent gk = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getId().equals(gkId)).findFirst().orElseThrow();
+        Permanent gk = findPermanent(player1, "Glyph Keeper");
         assertThat(gk.isTapped()).isFalse();
     }
 
@@ -111,8 +110,6 @@ class GlyphKeeperTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Glyph Keeper");
     }
 
-    // ===== Embalm =====
-
     @Test
     @DisplayName("Embalm creates a white Zombie token copy with no mana cost")
     void embalmCreatesWhiteZombieTokenCopy() {
@@ -132,5 +129,65 @@ class GlyphKeeperTest extends BaseCardTest {
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(token.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
         assertThat(token.getCard().getManaCost()).isEmpty();
+    }
+
+    @Test
+    void countersTheTriggeringAbilityWhenAnotherAbilityFromSameSourceIsOnStack() {
+        UUID gkId = addGlyphKeeper();
+        Permanent icy = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        int icyIndex = gd.playerBattlefields.get(player2.getId()).indexOf(icy);
+
+        harness.activateAbility(player2, icyIndex, null, icy.getId());
+        harness.setHand(player2, List.of(new Twiddle()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, icy.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(icy.isTapped()).isFalse();
+
+        harness.activateAbility(player2, icyIndex, null, gkId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Glyph Keeper").isTapped()).isFalse();
+        assertThat(icy.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void embalmExilesTheCardAsAnActivationCostAndTokenRetainsCounterAbility() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(new GlyphKeeper()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.assertNotInGraveyard(player1, "Glyph Keeper");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(card -> card.getName()).contains("Glyph Keeper");
+        harness.assertNotOnBattlefield(player1, "Glyph Keeper");
+        harness.passBothPriorities();
+
+        UUID tokenId = harness.getPermanentId(player1, "Glyph Keeper");
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, tokenId);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Glyph Keeper");
+        harness.assertInGraveyard(player2, "Lightning Bolt");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotEmbalmDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(new GlyphKeeper()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Glyph Keeper");
+        assertThat(gd.stack).isEmpty();
     }
 }

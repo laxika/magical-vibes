@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardPersistentManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "156")
+@CardRegistration(set = "KHM", collectorNumber = "361")
 public class TundraFumarole extends Card {
 
     public TundraFumarole() {

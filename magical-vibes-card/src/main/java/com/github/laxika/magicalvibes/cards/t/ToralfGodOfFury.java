@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "154")
+@CardRegistration(set = "KHM", collectorNumber = "313")
 public class ToralfGodOfFury extends Card {
 
     public ToralfGodOfFury() {

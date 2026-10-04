@@ -199,7 +199,7 @@ class FeralDeceiverTest extends BaseCardTest {
     void abilitiesDoNotRequireTappingOrHaste() {
         Permanent deceiver = addReadyDeceiver(player1);
         deceiver.setSummoningSick(true);
-        deceiver.setTapped(true);
+        deceiver.tap();
         Card land = new Forest();
         harness.setLibrary(player1, List.of(land));
         harness.addMana(player1, ManaColor.GREEN, 3);

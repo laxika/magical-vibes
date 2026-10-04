@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "109")
+@CardRegistration(set = "C17", collectorNumber = "200")
 public class TitheDrinker extends Card {
 
     public TitheDrinker() {

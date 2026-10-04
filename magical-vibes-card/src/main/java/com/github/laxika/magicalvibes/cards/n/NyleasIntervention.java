@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "188")
+@CardRegistration(set = "THB", collectorNumber = "329")
 public class NyleasIntervention extends Card {
 
     public NyleasIntervention() {

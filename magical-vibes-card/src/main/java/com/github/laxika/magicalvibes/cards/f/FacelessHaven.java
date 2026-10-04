@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "255")
+@CardRegistration(set = "KHM", collectorNumber = "371")
 public class FacelessHaven extends Card {
 
     public FacelessHaven() {

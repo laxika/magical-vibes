@@ -1311,11 +1311,12 @@ public class CombatDamageService {
         List<Permanent> defendingBattlefield = gameData.playerBattlefields.get(defenderId);
         if (defendingBattlefield == null) return null;
         for (Permanent permanent : defendingBattlefield) {
-            if (permanent.isTapped() || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-            boolean redirectsUnblockedCombatDamage = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
+            boolean redirectsUnblockedCombatDamage = gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
                     .anyMatch(effect -> effect instanceof RedirectUnblockedCombatDamageToSelfEffect
+                            && !permanent.isTapped()
                             || effect instanceof RedirectPlayerDamageToSelfEffect redirect
-                            && redirect.onlyFromUnblockedCreatures());
+                            && (!redirect.onlyFromUnblockedCreatures() || !permanent.isTapped()));
             if (redirectsUnblockedCombatDamage) return permanent;
         }
         return null;
@@ -3673,6 +3674,8 @@ public class CombatDamageService {
                         shufflePermanent |= gameQueryService
                                 .shufflesTargetIntoOwnersLibraryAfterCombatDamagePrevention(
                                         gameData, damageSource, perm);
+                    }
+                    if (damageSource != null) {
                         sourceDamage = damagePreventionService.applyPerSourceCreatureDamagePreventionShield(
                                 gameData, perm, damageSource, sourceDamage, true);
                     }
@@ -4731,6 +4734,8 @@ public class CombatDamageService {
                 queueDralnuReplacement(state, target, damage);
                 return;
             }
+            damagePreventionService.applyCombatDamageToSelfAndAddPlusOneCounter(
+                    gameData, target, source, damage);
             damageTakenMap.merge(targetIdx, damage, Integer::sum);
             unpreventableDamageTakenMap.merge(targetIdx, damage, Integer::sum);
             damageTakenBySourceMap

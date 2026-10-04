@@ -13,6 +13,10 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +30,8 @@ public class AnjeMaidOfDishonor extends Card {
     public AnjeMaidOfDishonor() {
         addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
-                        new CardSubtypePredicate(CardSubtype.VAMPIRE),
+                        new CardAnyOfPredicate(List.of(new CardIsSelfPredicate(),
+                                new CardSubtypePredicate(CardSubtype.VAMPIRE))),
                         new OncePerTurnTriggerEffect(CreateTokenEffect.ofBloodToken(1))));
 
         addActivatedAbility(new ActivatedAbility(
@@ -36,7 +41,9 @@ public class AnjeMaidOfDishonor extends Card {
                         new SacrificePermanentCost(
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
-                                        new PermanentHasSubtypePredicate(CardSubtype.BLOOD)
+                                        new PermanentAllOfPredicate(List.of(
+                                                new PermanentHasSubtypePredicate(CardSubtype.BLOOD),
+                                                new PermanentIsTokenPredicate()))
                                 )),
                                 "another creature or a Blood token"
                         ),

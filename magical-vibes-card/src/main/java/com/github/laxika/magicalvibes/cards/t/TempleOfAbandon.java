@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 
 @CardRegistration(set = "THS", collectorNumber = "224")
 @CardRegistration(set = "THB", collectorNumber = "244")
+@CardRegistration(set = "THB", collectorNumber = "347")
 @CardRegistration(set = "WHO", collectorNumber = "313")
 @CardRegistration(set = "WHO", collectorNumber = "523")
 @CardRegistration(set = "WHO", collectorNumber = "904")

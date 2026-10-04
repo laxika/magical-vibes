@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "187")
+@CardRegistration(set = "MOM", collectorNumber = "371")
 public class GlisteningDawn extends Card {
 
     public GlisteningDawn() {

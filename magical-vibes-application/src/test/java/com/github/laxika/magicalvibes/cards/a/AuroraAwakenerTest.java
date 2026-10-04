@@ -192,6 +192,7 @@ class AuroraAwakenerTest extends BaseCardTest {
     @DisplayName("An Aura put onto the battlefield can attach to an existing creature")
     void choosesAuraAttachment() {
         Card aura = new Pacifism();
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setLibrary(player1, List.of(aura));
 
         castAuroraAwakener();

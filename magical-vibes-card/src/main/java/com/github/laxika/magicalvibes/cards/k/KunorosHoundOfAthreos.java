@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "222")
+@CardRegistration(set = "THB", collectorNumber = "341")
 public class KunorosHoundOfAthreos extends Card {
 
     public KunorosHoundOfAthreos() {

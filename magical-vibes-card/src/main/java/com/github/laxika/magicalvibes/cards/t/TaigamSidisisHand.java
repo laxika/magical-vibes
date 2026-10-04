@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "357")
+@CardRegistration(set = "C17", collectorNumber = "47")
 public class TaigamSidisisHand extends Card {
 
     public TaigamSidisisHand() {

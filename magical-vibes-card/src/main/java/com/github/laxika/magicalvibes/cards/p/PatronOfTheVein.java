@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "LCC", collectorNumber = "207")
 @CardRegistration(set = "VOC", collectorNumber = "135")
+@CardRegistration(set = "C17", collectorNumber = "20")
 public class PatronOfTheVein extends Card {
 
     public PatronOfTheVein() {

@@ -113,7 +113,7 @@ class EpharasRadianceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 13);
-        creature.setTapped(false);
+        creature.untap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -146,7 +146,7 @@ class EpharasRadianceTest extends BaseCardTest {
     void tappedCreatureCannotActivate() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         creature.setSummoningSick(false);
-        creature.setTapped(true);
+        creature.tap();
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new EpharasRadiance());
         aura.setAttachedTo(creature.getId());
         harness.setLife(player1, 10);

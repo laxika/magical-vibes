@@ -710,6 +710,21 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** Each player chooses a different qualifying permanent controlled by an opponent to keep. */
+    record EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest(
+            List<UUID> remainingPlayerIds,
+            List<UUID> chosenIds,
+            PermanentPredicate filter,
+            UUID sourceCardId,
+            UUID sourceControllerId,
+            String sourceName) implements MultiPermanentChoiceContext {
+
+        public EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest {
+            remainingPlayerIds = List.copyOf(remainingPlayerIds);
+            chosenIds = List.copyOf(chosenIds);
+        }
+    }
+
     /** Return the chosen permanents {@code targetPlayerId} controls to their owner's hand. */
     record CombatDamageBounce(UUID targetPlayerId) implements MultiPermanentChoiceContext {
     }
@@ -719,8 +734,11 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /** Put {@code count} counters of {@code counterType} on the single chosen own permanent. */
-    record OwnPermanentCounterPlacement(CounterType counterType, int count)
+    record OwnPermanentCounterPlacement(CounterType counterType, int count, boolean mandatory)
             implements MultiPermanentChoiceContext {
+        public OwnPermanentCounterPlacement(CounterType counterType, int count) {
+            this(counterType, count, false);
+        }
     }
 
     /** Put one or more counters on each chosen matching permanent the controller controls. */
@@ -751,11 +769,16 @@ public sealed interface MultiPermanentChoiceContext {
 
     /** Put counters on the chosen permanent and remember it for a following effect. */
     record OwnPermanentCounterPlacementWithChosenReference(CounterType counterType, int count,
-                                                            boolean recordPlacement)
+                                                            boolean recordPlacement, boolean mandatory)
             implements MultiPermanentChoiceContext {
 
         public OwnPermanentCounterPlacementWithChosenReference(CounterType counterType, int count) {
-            this(counterType, count, false);
+            this(counterType, count, false, false);
+        }
+
+        public OwnPermanentCounterPlacementWithChosenReference(CounterType counterType, int count,
+                                                               boolean recordPlacement) {
+            this(counterType, count, recordPlacement, false);
         }
     }
 

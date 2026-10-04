@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianRevoker;
+import com.github.laxika.magicalvibes.cards.t.TormodsCrypt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GrimReapersScythe.class, GrizzlyBears.class, HolyDay.class})
+@CardUsed({GrimReapersScythe.class, GrizzlyBears.class, HolyDay.class,
+        PhyrexianRevoker.class, TormodsCrypt.class})
 class GrimReapersScytheTest extends BaseCardTest {
 
     @Test
@@ -32,8 +35,7 @@ class GrimReapersScytheTest extends BaseCardTest {
 
         harness.activateAbilityWithGraveyardTargets(
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(scythe), 0, List.of(target.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent returned = findPermanentByCardId(target);
         assertThat(returned.getCounterCount(CounterType.FINALITY)).isEqualTo(1);
@@ -56,8 +58,7 @@ class GrimReapersScytheTest extends BaseCardTest {
 
         harness.activateAbilityWithGraveyardTargets(
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(scythe), 0, List.of(target.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         Permanent returned = findPermanentByCardId(target);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
@@ -104,6 +105,117 @@ class GrimReapersScytheTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
                 player1, gd.playerBattlefields.get(player1.getId()).indexOf(scythe), 0, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target);
+    }
+
+    @Test
+    void createsOnlyOneZombieWhenMultipleCreatureCardsLeaveTogether() {
+        harness.addToBattlefield(player1, new GrimReapersScythe());
+        Permanent crypt = harness.addToBattlefieldAndReturn(player2, new TormodsCrypt());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new HolyDay()));
+        prepareMainPhase();
+
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(crypt),
+                null, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
+    }
+
+    @Test
+    void doesNotTriggerForNoncreatureCardsLeavingGraveyard() {
+        harness.addToBattlefield(player1, new GrimReapersScythe());
+        Permanent crypt = harness.addToBattlefieldAndReturn(player2, new TormodsCrypt());
+        harness.setGraveyard(player1, List.of(new HolyDay()));
+        prepareMainPhase();
+
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(crypt),
+                null, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerForOpponentsCreatureCardsLeavingGraveyard() {
+        harness.addToBattlefield(player1, new GrimReapersScythe());
+        Permanent crypt = harness.addToBattlefieldAndReturn(player2, new TormodsCrypt());
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        prepareMainPhase();
+
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(crypt),
+                null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+    }
+
+    @Test
+    void reanimatedCreatureRetainsFinalityAfterAsEntersChoice() {
+        Permanent scythe = harness.addToBattlefieldAndReturn(player1, new GrimReapersScythe());
+        addCreatureReady(new GrizzlyBears());
+        addCreatureReady(new GrizzlyBears());
+        Card target = new PhyrexianRevoker();
+        harness.setGraveyard(player1, List.of(target));
+        prepareMainPhase();
+        addActivationMana();
+
+        harness.activateAbilityWithGraveyardTargets(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(scythe), 0, List.of(target.getId()));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Grim Reaper's Scythe");
+        resolveAllTriggers();
+
+        assertThat(findPermanentByCardId(target).getCounterCount(CounterType.FINALITY)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
+    }
+
+    @Test
+    void sacrificesRemainPaidWhenTargetLeavesBeforeResolution() {
+        Permanent scythe = harness.addToBattlefieldAndReturn(player1, new GrimReapersScythe());
+        Permanent firstCost = addCreatureReady(new GrizzlyBears());
+        Permanent secondCost = addCreatureReady(new GrizzlyBears());
+        Permanent crypt = harness.addToBattlefieldAndReturn(player2, new TormodsCrypt());
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        prepareMainPhase();
+        addActivationMana();
+
+        harness.activateAbilityWithGraveyardTargets(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(scythe), 0, List.of(target.getId()));
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(firstCost, secondCost);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(firstCost.getCard(), secondCost.getCard());
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(crypt),
+                null, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
+        assertThat(scythe.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotActivateWithOnlyOneCreatureToSacrifice() {
+        Permanent scythe = harness.addToBattlefieldAndReturn(player1, new GrimReapersScythe());
+        Permanent creature = addCreatureReady(new GrizzlyBears());
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        prepareMainPhase();
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(scythe), 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(scythe.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target);
     }
 

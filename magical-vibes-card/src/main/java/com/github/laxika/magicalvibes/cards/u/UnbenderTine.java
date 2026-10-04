@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "15")
+@CardRegistration(set = "ARC", collectorNumber = "97")
 public class UnbenderTine extends Card {
 
     public UnbenderTine() {

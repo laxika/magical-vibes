@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,14 +16,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GravelgillDuo.class, FugitiveWizard.class, ScatheZombies.class, GrizzlyBears.class})
 class GravelgillDuoTest extends BaseCardTest {
 
     private Permanent addDuo() {
-        harness.addToBattlefield(player1, new GravelgillDuo());
+        Permanent duo = harness.addToBattlefieldAndReturn(player1, new GravelgillDuo());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        return gd.playerBattlefields.get(player1.getId()).getFirst();
+        return duo;
     }
 
     @Test
@@ -109,6 +111,87 @@ class GravelgillDuoTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        assertThat(gqs.hasKeyword(gd, duo, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A blue-black hybrid spell triggers both abilities even when paid with black mana")
+    void hybridSpellTriggersBothAbilities() {
+        Permanent duo = addDuo();
+        harness.setHand(player1, List.of(new GravelgillDuo()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, duo)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, duo)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, duo, Keyword.FEAR)).isTrue();
+
+        harness.passBothPriorities();
+
+        Permanent newDuo = gd.playerBattlefields.get(player1.getId()).getLast();
+        assertThat(newDuo).isNotSameAs(duo);
+        assertThat(gqs.getEffectivePower(gd, newDuo)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newDuo)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, newDuo, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each blue spell adds another boost until end of turn")
+    void blueSpellBoostsAccumulate() {
+        Permanent duo = addDuo();
+        harness.setHand(player1, List.of(new FugitiveWizard(), new FugitiveWizard()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, duo)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, duo)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, duo, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's blue-black spell does not trigger either ability")
+    void opponentSpellDoesNotTrigger() {
+        Permanent duo = addDuo();
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new GravelgillDuo()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, duo)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, duo)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, duo, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Gravelgill Duo does not trigger its own abilities when cast")
+    void doesNotTriggerOnItsOwnCast() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new GravelgillDuo()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        Permanent duo = findPermanent(player1, "Gravelgill Duo");
+        assertThat(gqs.getEffectivePower(gd, duo)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, duo)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, duo, Keyword.FEAR)).isFalse();
     }
 }

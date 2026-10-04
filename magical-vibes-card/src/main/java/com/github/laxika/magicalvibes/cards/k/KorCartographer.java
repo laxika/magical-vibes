@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 @CardRegistration(set = "ZEN", collectorNumber = "18")
 @CardRegistration(set = "DDI", collectorNumber = "13")
 @CardRegistration(set = "KHC", collectorNumber = "28")
+@CardRegistration(set = "ZNC", collectorNumber = "18")
 public class KorCartographer extends Card {
 
     public KorCartographer() {

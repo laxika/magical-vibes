@@ -20,6 +20,8 @@ import java.util.Set;
 @CardRegistration(set = "GVL", collectorNumber = "48")
 @CardRegistration(set = "C14", collectorNumber = "135")
 @CardRegistration(set = "FDC", collectorNumber = "87")
+@CardRegistration(set = "LEA", collectorNumber = "93")
+@CardRegistration(set = "LEB", collectorNumber = "94")
 public class BadMoon extends Card {
 
     public BadMoon() {

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.w.WallOfBone;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -15,7 +16,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GreaterWerewolf.class, WallOfBone.class, GiantSpider.class})
+@CardUsed({GreaterWerewolf.class, WallOfBone.class, GiantSpider.class, GiantGrowth.class})
 class GreaterWerewolfTest extends BaseCardTest {
 
     @Test
@@ -25,8 +26,7 @@ class GreaterWerewolfTest extends BaseCardTest {
         Permanent firstBlocker = addCreatureReady(player2, new WallOfBone());
         Permanent secondBlocker = addCreatureReady(player2, new WallOfBone());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -44,8 +44,7 @@ class GreaterWerewolfTest extends BaseCardTest {
         addCreatureReady(player1, new GreaterWerewolf());
         Permanent wall = addCreatureReady(player2, new WallOfBone());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passUntil(TurnStep.END_OF_COMBAT);
 
@@ -64,8 +63,7 @@ class GreaterWerewolfTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GiantSpider());
         addCreatureReady(player2, new GreaterWerewolf());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passUntil(TurnStep.END_OF_COMBAT);
         leaveEndOfCombat();
@@ -93,8 +91,7 @@ class GreaterWerewolfTest extends BaseCardTest {
         Permanent werewolf = addCreatureReady(player1, new GreaterWerewolf());
         Permanent blocker = addCreatureReady(player2, new WallOfBone());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.inMutationScope(() ->
@@ -110,8 +107,7 @@ class GreaterWerewolfTest extends BaseCardTest {
         Permanent werewolf = addCreatureReady(player1, new GreaterWerewolf());
         Permanent blocker = addCreatureReady(player2, new WallOfBone());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passUntil(TurnStep.END_OF_COMBAT);
 
@@ -120,6 +116,44 @@ class GreaterWerewolfTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(blocker.getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The end-of-combat ability triggers even when Greater Werewolf did not attack or block")
+    void triggersWithoutParticipatingInCombat() {
+        Permanent werewolf = addCreatureReady(player1, new GreaterWerewolf());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(werewolf.getId());
+    }
+
+    @Test
+    @DisplayName("A blocker that regenerates out of combat does not receive a counter")
+    void regeneratedBlockerDoesNotReceiveCounter() {
+        Permanent werewolf = addCreatureReady(player1, new GreaterWerewolf());
+        Permanent wall = addCreatureReady(player2, new WallOfBone());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            harness.castAndResolveInstant(player1, 0, werewolf.getId());
+            harness.activateAbility(player2, 0, null, null);
+            harness.passBothPriorities();
+        });
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player2, "Wall of Bone");
+        assertThat(wall.isBlocking()).isFalse();
+        resolveAllTriggers();
+
+        assertThat(wall.getCounterCount(CounterType.MINUS_ZERO_MINUS_TWO)).isZero();
     }
 
     private void leaveEndOfCombat() {

@@ -13,13 +13,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GreenbeltRadical.class, GrizzlyBears.class})
+@CardUsed({GreenbeltRadical.class})
 class GreenbeltRadicalTest extends BaseCardTest {
 
     @Test
     void turningFaceUpPutsCountersOnOwnCreaturesAndGrantsTrampleUntilEndOfTurn() {
-        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent opposingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GreenbeltRadical());
+        Permanent opposingBears = harness.addToBattlefieldAndReturn(player2, new GreenbeltRadical());
         GreenbeltRadical card = new GreenbeltRadical();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -48,6 +48,54 @@ class GreenbeltRadicalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, ownBears, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, radical, Keyword.TRAMPLE)).isFalse();
+        assertThat(ownBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(radical.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void triggerAffectsCreaturesPresentAtResolutionButNotCreaturesEnteringLater() {
+        GreenbeltRadical card = new GreenbeltRadical();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+
+        Permanent radical = findPermanentForCard(card);
+        assertThat(radical.isFaceDown()).isTrue();
+        assertThat(radical.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, radical, Keyword.TRAMPLE)).isFalse();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(radical));
+
+        assertThat(radical.isFaceDown()).isFalse();
+        assertThat(radical.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, radical, Keyword.TRAMPLE)).isFalse();
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new GreenbeltRadical());
+        resolveAllTriggers();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new GreenbeltRadical());
+
+        assertThat(radical.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(beforeResolution.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.TRAMPLE)).isTrue();
+        assertThat(afterResolution.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void castingFaceUpDoesNotTriggerCountersOrTrample() {
+        GreenbeltRadical card = new GreenbeltRadical();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent radical = findPermanentForCard(card);
+        assertThat(radical.isFaceDown()).isFalse();
+        assertThat(radical.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gqs.hasKeyword(gd, radical, Keyword.TRAMPLE)).isFalse();
     }
 

@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "DSC", collectorNumber = "156")
 @CardRegistration(set = "SCD", collectorNumber = "107")
 @CardRegistration(set = "FDC", collectorNumber = "125")
+@CardRegistration(set = "ARC", collectorNumber = "25")
 public class SignInBlood extends Card {
 
     public SignInBlood() {

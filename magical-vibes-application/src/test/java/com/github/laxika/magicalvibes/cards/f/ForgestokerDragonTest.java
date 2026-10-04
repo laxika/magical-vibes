@@ -79,7 +79,7 @@ class ForgestokerDragonTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
         Permanent target = findPermanent(player2, "Grizzly Bears");
         setUpAttacking(dragon);
-        dragon.setTapped(true);
+        dragon.tap();
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

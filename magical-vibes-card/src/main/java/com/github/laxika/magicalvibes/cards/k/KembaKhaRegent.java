@@ -16,6 +16,7 @@ import java.util.Set;
 @CardRegistration(set = "C14", collectorNumber = "75")
 @CardRegistration(set = "CMM", collectorNumber = "34")
 @CardRegistration(set = "CMM", collectorNumber = "671")
+@CardRegistration(set = "C17", collectorNumber = "63")
 public class KembaKhaRegent extends Card {
 
     public KembaKhaRegent() {

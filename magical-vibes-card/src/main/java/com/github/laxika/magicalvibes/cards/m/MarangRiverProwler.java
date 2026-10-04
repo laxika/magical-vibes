@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "FRF", collectorNumber = "40")
 @CardRegistration(set = "UMA", collectorNumber = "65")
+@CardRegistration(set = "ZNC", collectorNumber = "29")
 public class MarangRiverProwler extends Card {
 
     public MarangRiverProwler() {

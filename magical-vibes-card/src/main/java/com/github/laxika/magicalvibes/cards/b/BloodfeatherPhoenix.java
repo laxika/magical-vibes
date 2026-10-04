@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 
 @CardRegistration(set = "MOM", collectorNumber = "132")
+@CardRegistration(set = "MOM", collectorNumber = "362")
 public class BloodfeatherPhoenix extends Card {
 
     public BloodfeatherPhoenix() {

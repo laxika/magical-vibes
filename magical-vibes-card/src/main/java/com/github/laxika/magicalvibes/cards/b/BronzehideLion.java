@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "210")
+@CardRegistration(set = "THB", collectorNumber = "334")
 public class BronzehideLion extends Card {
 
     public BronzehideLion() {

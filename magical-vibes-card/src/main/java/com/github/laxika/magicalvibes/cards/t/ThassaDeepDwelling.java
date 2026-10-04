@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "71")
+@CardRegistration(set = "THB", collectorNumber = "261")
 @CardRegistration(set = "SLD", collectorNumber = "1279")
 public class ThassaDeepDwelling extends Card {
 

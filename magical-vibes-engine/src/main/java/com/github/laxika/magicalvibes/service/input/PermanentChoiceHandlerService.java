@@ -124,6 +124,8 @@ public class PermanentChoiceHandlerService {
     private final EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamageEffectHandler
             olorinSearingLightEffectHandler;
     private final EachOpponentChoosesCreatureToTapAndGoadEffectHandler fellBeastsShriekEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.RedirectAllDamageToChosenCreatureUntilNextTurnEffectHandler
+            redirectCreatureDamageHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         PendingInteraction.PermanentChoice permanentChoice =
@@ -148,7 +150,10 @@ public class PermanentChoiceHandlerService {
 
         PermanentChoiceContext context = permanentChoice.context();
 
-        if (context instanceof PermanentChoiceContext.CelestialJudgmentChoice celestialJudgmentChoice) {
+        if (context instanceof PermanentChoiceContext.RedirectCreatureDamage redirect) {
+            redirectCreatureDamageHandler.completeChoice(gameData, redirect.controllerId(), permanentId);
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        } else if (context instanceof PermanentChoiceContext.CelestialJudgmentChoice celestialJudgmentChoice) {
             celestialJudgmentEffectHandler.completeChoice(gameData, permanentId, celestialJudgmentChoice);
             if (!gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);

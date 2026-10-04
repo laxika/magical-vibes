@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GreatForestDruid.class})
 class GreatForestDruidTest extends BaseCardTest {
 
     @Test
@@ -34,9 +36,8 @@ class GreatForestDruidTest extends BaseCardTest {
             player1 = harness.getPlayer1();
             harness.skipMulligan();
 
-            harness.addToBattlefield(player1, new GreatForestDruid());
+            Permanent druid = harness.addToBattlefieldAndReturn(player1, new GreatForestDruid());
             GameData gameData = harness.getGameData();
-            Permanent druid = gameData.playerBattlefields.get(player1.getId()).getFirst();
             druid.setSummoningSick(false);
 
             harness.activateAbility(player1, 0, null, null);
@@ -54,15 +55,39 @@ class GreatForestDruidTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate Great Forest Druid while it is already tapped")
     void cannotActivateWhileTapped() {
-        harness.addToBattlefield(player1, new GreatForestDruid());
-        GameData gameData = harness.getGameData();
-        Permanent druid = gameData.playerBattlefields.get(player1.getId()).getFirst();
-        druid.setSummoningSick(false);
+        addCreatureReady(player1, new GreatForestDruid());
 
         harness.activateAbility(player1, 0, null, null);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("Mana resolves without the stack and the druid can produce mana again after untapping")
+    void producesManaAgainAfterUntapping() {
+        Permanent druid = addCreatureReady(player1, new GreatForestDruid());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(druid.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, "GREEN");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).isEmpty();
+
+        druid.untap();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(druid.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

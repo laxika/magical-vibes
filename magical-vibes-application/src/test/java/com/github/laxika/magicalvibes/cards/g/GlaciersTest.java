@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -55,9 +56,7 @@ class GlaciersTest extends BaseCardTest {
     void redResumesWhenGlaciersLeaves() {
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Glaciers());
-        Permanent glaciers = gd.playerBattlefields.get(player1.getId()).get(1);
-
-        gd.playerBattlefields.get(player1.getId()).remove(glaciers);
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Glaciers"));
         gs.tapPermanent(gd, player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
@@ -93,5 +92,65 @@ class GlaciersTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Glaciers");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Mountains entering after Glaciers are Plains immediately")
+    void convertsNewMountainAndReplacesItsLandType() {
+        harness.addToBattlefield(player1, new Glaciers());
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent mountain = findPermanent(player1, "Mountain");
+
+        assertThat(gqs.hasEffectiveSubtype(gd, mountain, CardSubtype.PLAINS)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, mountain, CardSubtype.MOUNTAIN)).isFalse();
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Glaciers does not demand payment on an opponent's upkeep")
+    void opponentUpkeepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Glaciers());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Glaciers");
+        harness.assertNotInGraveyard(player1, "Glaciers");
+    }
+
+    @Test
+    @DisplayName("Two white mana cannot pay the white and blue upkeep cost")
+    void missingBlueManaSacrificesWithoutPartialPayment() {
+        harness.addToBattlefield(player1, new Glaciers());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Glaciers");
+        harness.assertInGraveyard(player1, "Glaciers");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Sacrificing Glaciers for unpaid upkeep restores Mountain mana")
+    void unpaidUpkeepRestoresMountainMana() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Glaciers());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.tapPermanent(player1, 0);
+
+        harness.assertInGraveyard(player1, "Glaciers");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
     }
 }

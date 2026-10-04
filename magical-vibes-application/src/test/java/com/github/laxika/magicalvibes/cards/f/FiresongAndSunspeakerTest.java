@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.f;
+package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;

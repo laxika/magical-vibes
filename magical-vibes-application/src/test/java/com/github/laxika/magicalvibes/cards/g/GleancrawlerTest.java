@@ -118,11 +118,69 @@ class GleancrawlerTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(opponentCreature.getId()));
     }
 
+    @Test
+    @DisplayName("Returns creatures that died before Gleancrawler entered the battlefield")
+    void returnsCreaturesThatDiedBeforeEntering() {
+        Card creature = new ElvesOfDeepShadow();
+        harness.addToBattlefield(player1, creature);
+        harness.setHand(player1, List.of(new LastGasp()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Elves of Deep Shadow"));
+        harness.addToBattlefield(player1, new Gleancrawler());
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("Returns a creature that dies in response even when the graveyard was initially empty")
+    void returnsCreatureThatDiesInResponse() {
+        Card creature = new ElvesOfDeepShadow();
+        harness.addToBattlefield(player1, new Gleancrawler());
+        harness.addToBattlefield(player1, creature);
+        harness.setHand(player1, List.of(new LastGasp()));
+        beginEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Elves of Deep Shadow"));
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(creature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("Returns Gleancrawler itself when it dies in response to its trigger")
+    void returnsItselfWhenDestroyedInResponse() {
+        Card gleancrawler = new Gleancrawler();
+        harness.addToBattlefield(player1, gleancrawler);
+        harness.setHand(player1, List.of(new Putrefy()));
+        beginEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Gleancrawler"));
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(gleancrawler);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(gleancrawler);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(gleancrawler);
+    }
+
     private void advanceToEndStep(Player activePlayer) {
+        beginEndStep(activePlayer);
+        harness.passBothPriorities();
+    }
+
+    private void beginEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(activePlayer, TurnStep.END_STEP);
-        harness.passBothPriorities();
     }
 }

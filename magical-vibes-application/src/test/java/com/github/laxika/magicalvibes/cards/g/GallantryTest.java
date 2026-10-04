@@ -124,6 +124,26 @@ class GallantryTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Does not draw if the blocking creature dies before resolution")
+    void doesNotDrawIfTargetDies() {
+        Permanent blocker = addBlockingCreature(player2);
+        setupGallantry();
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.castInstant(player1, 0, blocker.getId());
+        blocker.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player2, "Aven Flock");
+        harness.assertInGraveyard(player2, "Aven Flock");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Gallantry");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void setupGallantry() {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.forceActivePlayer(player1);

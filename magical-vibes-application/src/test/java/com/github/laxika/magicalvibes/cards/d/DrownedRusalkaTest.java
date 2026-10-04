@@ -108,7 +108,7 @@ class DrownedRusalkaTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent rusalka = harness.addToBattlefieldAndReturn(player1, new DrownedRusalka());
         rusalka.setSummoningSick(true);
-        rusalka.setTapped(true);
+        rusalka.tap();
         DrownedRusalka drawn = new DrownedRusalka();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawn));

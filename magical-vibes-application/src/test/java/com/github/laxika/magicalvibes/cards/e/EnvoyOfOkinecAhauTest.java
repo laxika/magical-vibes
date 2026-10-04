@@ -37,7 +37,7 @@ class EnvoyOfOkinecAhauTest extends BaseCardTest {
     @Test
     void canActivateRepeatedlyWhileTapped() {
         Permanent envoy = harness.addToBattlefieldAndReturn(player1, new EnvoyOfOkinecAhau());
-        envoy.setTapped(true);
+        envoy.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 8);
         harness.addMana(player1, ManaColor.WHITE, 2);
 

@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "C21", collectorNumber = "105")
 @CardRegistration(set = "MKC", collectorNumber = "86")
+@CardRegistration(set = "C17", collectorNumber = "7")
 public class StalkingLeonin extends Card {
 
     public StalkingLeonin() {

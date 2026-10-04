@@ -21,6 +21,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MAT", collectorNumber = "33")
+@CardRegistration(set = "MAT", collectorNumber = "83")
+@CardRegistration(set = "MAT", collectorNumber = "133")
+@CardRegistration(set = "MAT", collectorNumber = "168")
+@CardRegistration(set = "MAT", collectorNumber = "230")
 public class JolraelVoiceOfZhalfir extends Card {
 
     public JolraelVoiceOfZhalfir() {

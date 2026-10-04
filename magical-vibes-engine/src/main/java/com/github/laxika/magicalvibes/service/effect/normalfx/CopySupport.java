@@ -135,6 +135,8 @@ public class CopySupport {
                 source.getTargetIds() != null ? new ArrayList<>(source.getTargetIds()) : null
         );
         copy.setCopy(true);
+        copy.setSourcePermanentSnapshot(source.getSourcePermanentSnapshot() == null
+                ? null : new com.github.laxika.magicalvibes.model.Permanent(source.getSourcePermanentSnapshot()));
         copy.setSourcePlanarObject(source.getSourcePlanarObject() == null ? null : source.getSourcePlanarObject().copy());
         copy.setKicked(source.isKicked());
         copy.setTargetFilters(source.getTargetFilters());

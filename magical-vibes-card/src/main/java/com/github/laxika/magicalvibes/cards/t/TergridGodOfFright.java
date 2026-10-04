@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "112")
+@CardRegistration(set = "KHM", collectorNumber = "307")
 public class TergridGodOfFright extends Card {
 
     public TergridGodOfFright() {

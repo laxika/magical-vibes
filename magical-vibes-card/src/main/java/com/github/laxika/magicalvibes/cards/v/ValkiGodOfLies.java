@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentRevealsHandAndExi
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "114")
+@CardRegistration(set = "KHM", collectorNumber = "286")
+@CardRegistration(set = "KHM", collectorNumber = "308")
 public class ValkiGodOfLies extends Card {
 
     public ValkiGodOfLies() {

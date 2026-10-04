@@ -26,8 +26,7 @@ class GreenDragonTest extends BaseCardTest {
         castGreenDragonWithShock();
 
         UUID hillGiantId = harness.getPermanentId(player2, "Hill Giant");
-        harness.castInstant(player1, 0, hillGiantId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, hillGiantId);
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -42,8 +41,7 @@ class GreenDragonTest extends BaseCardTest {
         castGreenDragonWithShock();
 
         UUID hillGiantId = harness.getPermanentId(player1, "Hill Giant");
-        harness.castInstant(player1, 0, hillGiantId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, hillGiantId);
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Hill Giant");
@@ -58,13 +56,11 @@ class GreenDragonTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, dragon.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, dragon.getId());
         harness.assertInGraveyard(player1, "Green Dragon");
 
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
@@ -85,8 +81,7 @@ class GreenDragonTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player2, "Hill Giant");
@@ -110,20 +105,90 @@ class GreenDragonTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Poison Breath does not watch damage before the entry ability resolves")
+    void doesNotTriggerBeforeEntryAbilityResolves() {
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.castFromHand(player1, new GreenDragon(), "{4}{G}{G}");
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player2, "Hill Giant");
         harness.passBothPriorities();
 
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Poison Breath does not retroactively destroy a creature damaged earlier")
+    void doesNotDestroyPreviouslyDamagedCreature() {
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
+
+        castGreenDragon();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Poison Breath watches creatures that enter after the entry ability resolves")
+    void destroysCreatureEnteringLater() {
+        castGreenDragonWithShock();
+        harness.addToBattlefield(player2, new HillGiant());
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Poison Breath triggers even when the opponent deals damage to their own creature")
+    void triggersForOpponentDamageSource() {
+        harness.addToBattlefield(player2, new HillGiant());
+        castGreenDragon();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player2, "Hill Giant"));
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Poison Breath remains active during the end step before cleanup")
+    void remainsActiveDuringEndStep() {
+        harness.addToBattlefield(player2, new HillGiant());
+        castGreenDragonWithShock();
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Hill Giant");
     }
 
     private Permanent castGreenDragon() {
-        harness.setHand(player1, List.of(new GreenDragon(), new Shock()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GreenDragon(), "{4}{G}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Shock()));
         return findPermanent(player1, "Green Dragon");
     }
 

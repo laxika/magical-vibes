@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "OGW", collectorNumber = "144")
 @CardRegistration(set = "DDU", collectorNumber = "23")
+@CardRegistration(set = "ZNC", collectorNumber = "84")
 public class SylvanAdvocate extends Card {
 
     public SylvanAdvocate() {

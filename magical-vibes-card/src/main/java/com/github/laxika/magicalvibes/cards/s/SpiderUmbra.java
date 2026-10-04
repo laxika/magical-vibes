@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "208")
 @CardRegistration(set = "UMA", collectorNumber = "184")
+@CardRegistration(set = "ARC", collectorNumber = "70")
 public class SpiderUmbra extends Card {
 
     public SpiderUmbra() {

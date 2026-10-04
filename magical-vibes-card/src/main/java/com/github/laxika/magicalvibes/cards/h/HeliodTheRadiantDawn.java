@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "17")
+@CardRegistration(set = "MOM", collectorNumber = "293")
 public class HeliodTheRadiantDawn extends Card {
 
     public HeliodTheRadiantDawn() {

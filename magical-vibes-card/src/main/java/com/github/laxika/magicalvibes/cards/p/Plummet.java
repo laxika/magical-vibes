@@ -29,6 +29,7 @@ import java.util.List;
 @CardRegistration(set = "A25", collectorNumber = "183")
 @CardRegistration(set = "DBL", collectorNumber = "193")
 @CardRegistration(set = "HBG", collectorNumber = "928")
+@CardRegistration(set = "ARC", collectorNumber = "65")
 public class Plummet extends Card {
 
     public Plummet() {

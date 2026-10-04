@@ -226,7 +226,7 @@ class EyeForAnEyeTest extends BaseCardTest {
         int index = gd.playerBattlefields.get(player2.getId()).indexOf(source);
         harness.activateAbility(player2, index, null, player1.getId());
         harness.passBothPriorities();
-        source.setTapped(false);
+        source.untap();
         harness.activateAbility(player2, index, null, player1.getId());
         harness.passBothPriorities();
 

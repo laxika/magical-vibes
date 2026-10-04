@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "19")
+@CardRegistration(set = "ARC", collectorNumber = "2")
 public class Metallurgeon extends Card {
 
     public Metallurgeon() {

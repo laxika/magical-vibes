@@ -298,7 +298,9 @@ public class MtgjsonOracleLoader implements OracleLoader {
                 CardDataSupport.text(face, "loyalty"),
                 CardDataSupport.text(face, "defense"),
                 CardDataSupport.strings(face, "keywords"),
-                watermark);
+                watermark,
+                CardDataSupport.text(face, "layout"),
+                CardDataSupport.text(face, "manaValue"));
     }
 
     /**

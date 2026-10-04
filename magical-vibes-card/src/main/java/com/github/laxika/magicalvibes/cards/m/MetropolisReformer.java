@@ -10,6 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 
 @CardRegistration(set = "MAT", collectorNumber = "4")
 @CardRegistration(set = "FDC", collectorNumber = "40")
+@CardRegistration(set = "MAT", collectorNumber = "54")
+@CardRegistration(set = "MAT", collectorNumber = "104")
+@CardRegistration(set = "MAT", collectorNumber = "152")
+@CardRegistration(set = "MAT", collectorNumber = "189")
 public class MetropolisReformer extends Card {
 
     public MetropolisReformer() {

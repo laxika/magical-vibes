@@ -17,6 +17,10 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "6")
+@CardRegistration(set = "MAT", collectorNumber = "56")
+@CardRegistration(set = "MAT", collectorNumber = "106")
+@CardRegistration(set = "MAT", collectorNumber = "154")
+@CardRegistration(set = "MAT", collectorNumber = "190")
 public class TazriStalwartSurvivor extends Card {
 
     public TazriStalwartSurvivor() {

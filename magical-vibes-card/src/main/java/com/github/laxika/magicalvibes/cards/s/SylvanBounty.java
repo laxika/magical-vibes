@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "DDH", collectorNumber = "30")
 @CardRegistration(set = "MM2", collectorNumber = "164")
 @CardRegistration(set = "MMA", collectorNumber = "165")
+@CardRegistration(set = "E01", collectorNumber = "74")
 public class SylvanBounty extends Card {
 
     public SylvanBounty() {

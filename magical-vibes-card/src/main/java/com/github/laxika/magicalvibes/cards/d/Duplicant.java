@@ -32,6 +32,7 @@ import java.util.List;
 @CardRegistration(set = "C18", collectorNumber = "205")
 @CardRegistration(set = "DRC", collectorNumber = "54")
 @CardRegistration(set = "FDC", collectorNumber = "255")
+@CardRegistration(set = "ARC", collectorNumber = "106")
 public class Duplicant extends Card {
 
     public Duplicant() {

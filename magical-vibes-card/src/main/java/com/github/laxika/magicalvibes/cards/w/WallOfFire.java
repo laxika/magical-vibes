@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "230")
+@CardRegistration(set = "LEA", collectorNumber = "181")
 @CardRegistration(set = "6ED", collectorNumber = "216")
 @CardRegistration(set = "7ED", collectorNumber = "227")
 @CardRegistration(set = "10E", collectorNumber = "247")
@@ -18,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "SUM", collectorNumber = "183")
 @CardRegistration(set = "3ED", collectorNumber = "183")
 @CardRegistration(set = "2ED", collectorNumber = "182")
+@CardRegistration(set = "LEB", collectorNumber = "182")
 public class WallOfFire extends Card {
 
     public WallOfFire() {

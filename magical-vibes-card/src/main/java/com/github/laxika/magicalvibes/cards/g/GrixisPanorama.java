@@ -22,6 +22,8 @@ import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "224")
 @CardRegistration(set = "C13", collectorNumber = "293")
+@CardRegistration(set = "C17", collectorNumber = "254")
+@CardRegistration(set = "E01", collectorNumber = "95")
 public class GrixisPanorama extends Card {
 
     public GrixisPanorama() {

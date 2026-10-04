@@ -81,7 +81,7 @@ class FetidImpTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent imp = harness.addToBattlefieldAndReturn(player1, new FetidImp());
         imp.setSummoningSick(true);
-        imp.setTapped(true);
+        imp.tap();
         Permanent otherImp = harness.addToBattlefieldAndReturn(player1, new FetidImp());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

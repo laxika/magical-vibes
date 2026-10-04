@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "LGN", collectorNumber = "113")
+@CardRegistration(set = "ARC", collectorNumber = "48")
 public class SkirkMarauder extends Card {
 
     public SkirkMarauder() {

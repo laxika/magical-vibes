@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "ELD", collectorNumber = "163")
+@CardRegistration(set = "ZNC", collectorNumber = "71")
 public class KeeperOfFables extends Card {
 
     public KeeperOfFables() {

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "45")
 @CardRegistration(set = "SNC", collectorNumber = "44")
+@CardRegistration(set = "ZNC", collectorNumber = "26")
 public class FaerieVandal extends Card {
 
     public FaerieVandal() {

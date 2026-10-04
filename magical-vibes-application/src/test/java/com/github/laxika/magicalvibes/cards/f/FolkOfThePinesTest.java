@@ -92,7 +92,7 @@ class FolkOfThePinesTest extends BaseCardTest {
     @DisplayName("Can activate while tapped without untapping")
     void canActivateWhileTapped() {
         Permanent folk = addCreatureReady(player1, new FolkOfThePines());
-        folk.setTapped(true);
+        folk.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, null);

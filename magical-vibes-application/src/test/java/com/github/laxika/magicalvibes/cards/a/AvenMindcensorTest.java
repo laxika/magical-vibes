@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -104,7 +105,8 @@ class AvenMindcensorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Ovinize()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castAndResolveInstant(player1, 0, mindcensor.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.castAndResolveInstant(player1, 0, mindcensor.getId()));
 
         setupTutor(player1);
         setSixCardLibrary(player1);

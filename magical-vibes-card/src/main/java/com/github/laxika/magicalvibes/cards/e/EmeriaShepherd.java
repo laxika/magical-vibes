@@ -23,6 +23,7 @@ import java.util.List;
 
 @CardRegistration(set = "BFZ", collectorNumber = "22")
 @CardRegistration(set = "FDC", collectorNumber = "27")
+@CardRegistration(set = "ZNC", collectorNumber = "16")
 public class EmeriaShepherd extends Card {
 
     public EmeriaShepherd() {

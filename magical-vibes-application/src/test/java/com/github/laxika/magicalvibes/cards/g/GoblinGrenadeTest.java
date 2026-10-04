@@ -21,6 +21,58 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class GoblinGrenadeTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Cannot cast without sacrificing a Goblin")
+    void cannotCastWithoutSacrifice() {
+        harness.setHand(player1, List.of(new GoblinGrenade()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Goblin Grenade");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid during casting before damage resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent goblin = addCreatureReady(player1, new GoblinPiker());
+        harness.setHand(player1, List.of(new GoblinGrenade()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), goblin.getId());
+
+        harness.assertNotOnBattlefield(player1, "Goblin Piker");
+        harness.assertInGraveyard(player1, "Goblin Piker");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        harness.assertInGraveyard(player1, "Goblin Grenade");
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Goblin can be sacrificed")
+    void canSacrificeTappedSummoningSickGoblin() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinPiker());
+        goblin.setSummoningSick(true);
+        goblin.setTapped(true);
+        harness.setHand(player1, List.of(new GoblinGrenade()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorceryWithSacrifice(player1, 0, player1.getId(), goblin.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Goblin Piker");
+        harness.assertInGraveyard(player1, "Goblin Grenade");
+    }
+
+    @Test
     @DisplayName("Sacrificing a Goblin deals 5 damage to target player")
     void dealsFiveDamageToPlayer() {
         Permanent goblin = addCreatureReady(player1, new GoblinPiker());

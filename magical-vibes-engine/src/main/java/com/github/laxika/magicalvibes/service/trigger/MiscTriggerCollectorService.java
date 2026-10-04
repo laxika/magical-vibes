@@ -3973,6 +3973,8 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId()
         );
         entry.setTriggeringCardId(exiled.exiledPermanent().getCard().getId());
+        entry.setTriggeringCardExileEntryVersion(match.gameData().exileEntryVersions
+                .getOrDefault(exiled.exiledPermanent().getCard().getId(), 0L));
         entry.setTriggeringPermanentId(exiled.exiledPermanent().getId());
         entry.setTriggeringPermanentControllerId(exiled.exiledControllerId());
         match.gameData().enqueueTrigger(entry);

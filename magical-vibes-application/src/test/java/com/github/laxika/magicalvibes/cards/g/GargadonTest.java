@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,8 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Gargadon.class})
+@CardUsed({Gargadon.class, PithingNeedle.class})
 class GargadonTest extends BaseCardTest {
 
     @Test
@@ -65,6 +69,67 @@ class GargadonTest extends BaseCardTest {
                 .doesNotContain(card);
     }
 
+    @Test
+    @DisplayName("Only the owner's upkeep removes a suspend counter, after its trigger resolves")
+    void upkeepCounterRemovalUsesStackAndOwnersTurn() {
+        Gargadon card = suspendCard();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+    }
+
+    @Test
+    @DisplayName("Without flash, Gargadon cannot be suspended during upkeep")
+    void cannotSuspendDuringUpkeep() {
+        Gargadon card = new Gargadon();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(card);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
+    }
+
+    @Test
+    @DisplayName("Casting Gargadon normally does not grant suspend haste")
+    void normalCastDoesNotGrantHaste() {
+        harness.setHand(player1, List.of(new Gargadon()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Gargadon"), Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Pithing Needle cannot prevent the special action of suspending Gargadon")
+    void pithingNeedleDoesNotPreventSuspend() {
+        harness.setHand(player1, List.of(new PithingNeedle()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Gargadon");
+
+        Gargadon card = suspendCard();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.stack).isEmpty();
+    }
     private Gargadon suspendCard() {
         Gargadon card = new Gargadon();
         harness.setHand(player1, List.of(card));

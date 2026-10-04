@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HonorGuard;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
+import com.github.laxika.magicalvibes.cards.w.WoodlurkerMimic;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,10 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GiftOfTheDeity.class, WalkingCorpse.class, GrizzlyBears.class,
-        HonorGuard.class, FountainOfYouth.class})
+        HonorGuard.class, FountainOfYouth.class, WoodlurkerMimic.class})
 class GiftOfTheDeityTest extends BaseCardTest {
-
-    // ===== Black enchanted creature: +1/+1 and deathtouch =====
 
     @Test
     @DisplayName("Black creature gets +1/+1 and deathtouch")
@@ -35,8 +34,6 @@ class GiftOfTheDeityTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, black)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, black, Keyword.DEATHTOUCH)).isTrue();
     }
-
-    // ===== Green enchanted creature: +1/+1 and lure =====
 
     @Test
     @DisplayName("Green creature gets +1/+1 but not deathtouch")
@@ -52,18 +49,11 @@ class GiftOfTheDeityTest extends BaseCardTest {
     @Test
     @DisplayName("All able creatures must block a green enchanted attacker")
     void greenCreatureMustBeBlockedByAll() {
-        Permanent green = new Permanent(new GrizzlyBears());
-        green.setSummoningSick(false);
+        Permanent green = attach(new GrizzlyBears());
         green.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(green);
-        Permanent gift = new Permanent(new GiftOfTheDeity());
-        gift.setAttachedTo(green.getId());
-        gd.playerBattlefields.get(player1.getId()).add(gift);
 
-        Permanent blocker1 = readyCreature(new GrizzlyBears());
-        Permanent blocker2 = readyCreature(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(blocker1);
-        gd.playerBattlefields.get(player2.getId()).add(blocker2);
+        Permanent blocker1 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent blocker2 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -82,18 +72,11 @@ class GiftOfTheDeityTest extends BaseCardTest {
         assertThat(blocker2.isBlocking()).isTrue();
     }
 
-    // ===== Creature that is neither black nor green: nothing applies =====
-
     @Test
     @DisplayName("White creature gets no boost, no deathtouch, and is not a lure")
     void whiteCreatureGetsNothing() {
-        Permanent white = new Permanent(new HonorGuard());
-        white.setSummoningSick(false);
+        Permanent white = attach(new HonorGuard());
         white.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(white);
-        Permanent gift = new Permanent(new GiftOfTheDeity());
-        gift.setAttachedTo(white.getId());
-        gd.playerBattlefields.get(player1.getId()).add(gift);
 
         // Honor Guard is 1/1 and stays 1/1
         assertThat(gqs.getEffectivePower(gd, white)).isEqualTo(1);
@@ -101,7 +84,7 @@ class GiftOfTheDeityTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, white, Keyword.DEATHTOUCH)).isFalse();
 
         // Not a lure: a lone blocker is free to not block.
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
+        harness.addToBattlefield(player2, new GrizzlyBears());
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -110,8 +93,6 @@ class GiftOfTheDeityTest extends BaseCardTest {
 
         gs.declareBlockers(gd, player2, List.of());
     }
-
-    // ===== Targeting restriction =====
 
     @Test
     @DisplayName("Cannot target a noncreature permanent")
@@ -128,19 +109,48 @@ class GiftOfTheDeityTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+
+    @Test
+    @DisplayName("Both color bonuses apply after the Aura resolves on a black and green creature")
+    void bothColorBonusesApplyAfterResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new WoodlurkerMimic());
+        harness.setHand(player1, List.of(new GiftOfTheDeity()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(findPermanent(player1, "Gift of the Deity").getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Tapped creatures are not required to block a green enchanted creature")
+    void tappedCreatureIsNotRequiredToBlock() {
+        Permanent attacker = attach(new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent able = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent tapped = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        tapped.setTapped(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(able.isBlocking()).isTrue();
+        assertThat(tapped.isBlocking()).isFalse();
+    }
+
     private Permanent attach(com.github.laxika.magicalvibes.model.Card creature) {
-        Permanent creaturePerm = new Permanent(creature);
+        Permanent creaturePerm = harness.addToBattlefieldAndReturn(player1, creature);
         creaturePerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(creaturePerm);
-        Permanent gift = new Permanent(new GiftOfTheDeity());
+        Permanent gift = harness.addToBattlefieldAndReturn(player1, new GiftOfTheDeity());
         gift.setAttachedTo(creaturePerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(gift);
         return creaturePerm;
     }
 
-    private Permanent readyCreature(com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        return permanent;
-    }
 }

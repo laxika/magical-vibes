@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "131")
+@CardRegistration(set = "ARC", collectorNumber = "53")
 public class FeralHydra extends Card {
 
     public FeralHydra() {

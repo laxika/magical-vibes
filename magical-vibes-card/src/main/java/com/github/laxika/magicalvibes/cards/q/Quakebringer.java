@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "KHM", collectorNumber = "145")
+@CardRegistration(set = "KHM", collectorNumber = "297")
 public class Quakebringer extends Card {
 
     public Quakebringer() {

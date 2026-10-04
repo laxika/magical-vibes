@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 @CardRegistration(set = "CMD", collectorNumber = "117")
 @CardRegistration(set = "C15", collectorNumber = "146")
 @CardRegistration(set = "C20", collectorNumber = "148")
+@CardRegistration(set = "C17", collectorNumber = "132")
 public class CometStorm extends Card {
 
     public CometStorm() {

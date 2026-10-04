@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "205")
+@CardRegistration(set = "THB", collectorNumber = "357")
 @CardRegistration(set = "BLC", collectorNumber = "246")
 public class WolfwillowHaven extends Card {
 

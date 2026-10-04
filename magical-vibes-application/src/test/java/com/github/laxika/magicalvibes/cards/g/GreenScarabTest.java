@@ -168,4 +168,42 @@ class GreenScarabTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void canEnchantOpponentsGreenCreatureAndCountItForTheBoost() {
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new GreenScarab()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Green Scarab");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    void opponentsCreatureDoesNotGetBoostFromAuraControllersGreenPermanent() {
+        Permanent creature = addCreatureReady(player2, new KjeldoranWarrior());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new GreenScarab());
+        aura.setAttachedTo(creature.getId());
+        harness.addToBattlefield(player1, new BalduvianBears());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+    }
+
+    @Test
+    void multipleOpponentGreenPermanentsGrantOnlyOneBoost() {
+        Permanent creature = addCreatureReady(player1, new KjeldoranWarrior());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new GreenScarab());
+        aura.setAttachedTo(creature.getId());
+        harness.addToBattlefield(player2, new BalduvianBears());
+        harness.addToBattlefield(player2, new FreyalisesWinds());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
 }

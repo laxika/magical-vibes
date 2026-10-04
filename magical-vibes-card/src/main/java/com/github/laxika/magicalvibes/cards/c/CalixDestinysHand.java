@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "211")
+@CardRegistration(set = "THB", collectorNumber = "257")
 public class CalixDestinysHand extends Card {
 
     public CalixDestinysHand() {

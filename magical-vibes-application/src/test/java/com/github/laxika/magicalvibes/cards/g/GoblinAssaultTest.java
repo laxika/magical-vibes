@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.c.CylianElf;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,16 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinAssault.class, GoblinDeathraiders.class, CylianElf.class})
 class GoblinAssaultTest extends BaseCardTest {
-
-    private void beginDeclareAttackers(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-    }
-
-    // ===== Upkeep token =====
 
     @Test
     @DisplayName("Creates a 1/1 red Goblin token with haste during controller's upkeep")
@@ -62,20 +55,14 @@ class GoblinAssaultTest extends BaseCardTest {
         assertThat(tokens).isEmpty();
     }
 
-    // ===== Static "Goblin creatures attack each combat if able" =====
-
     @Test
     @DisplayName("A Goblin the controller controls must attack while Goblin Assault is out")
     void controllersGoblinMustAttack() {
         harness.addToBattlefield(player1, new GoblinAssault());
 
-        Permanent piker = new Permanent(new GoblinPiker());
-        piker.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(piker);
+        addCreatureReady(player1, new GoblinDeathraiders());
 
-        beginDeclareAttackers(player1);
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
@@ -85,14 +72,10 @@ class GoblinAssaultTest extends BaseCardTest {
     void nonGoblinNotForced() {
         harness.addToBattlefield(player1, new GoblinAssault());
 
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = addCreatureReady(player1, new CylianElf());
 
-        beginDeclareAttackers(player1);
-
-        // Grizzly Bears is not a Goblin, so Goblin Assault imposes no must-attack requirement.
-        gs.declareAttackers(gd, player1, List.of());
+        // Cylian Elf is not a Goblin, so Goblin Assault imposes no must-attack requirement.
+        declareAttackers(player1, List.of());
 
         assertThat(bears.isAttacking()).isFalse();
     }
@@ -102,13 +85,9 @@ class GoblinAssaultTest extends BaseCardTest {
     void opponentsGoblinMustAttack() {
         harness.addToBattlefield(player1, new GoblinAssault());
 
-        Permanent piker = new Permanent(new GoblinPiker());
-        piker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(piker);
+        addCreatureReady(player2, new GoblinDeathraiders());
 
-        beginDeclareAttackers(player2);
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of()))
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
@@ -116,14 +95,80 @@ class GoblinAssaultTest extends BaseCardTest {
     @Test
     @DisplayName("Without Goblin Assault, a Goblin is free to stay back")
     void goblinNotForcedWithoutAssault() {
-        Permanent piker = new Permanent(new GoblinPiker());
-        piker.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(piker);
+        Permanent piker = addCreatureReady(player1, new GoblinDeathraiders());
 
-        beginDeclareAttackers(player1);
-
-        gs.declareAttackers(gd, player1, List.of());
+        declareAttackers(player1, List.of());
 
         assertThat(piker.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Goblin without haste is not required to attack")
+    void summoningSickGoblinMayStayBack() {
+        harness.addToBattlefield(player1, new GoblinAssault());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinDeathraiders());
+        goblin.setSummoningSick(true);
+
+        declareAttackers(player1, List.of());
+
+        assertThat(goblin.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Goblin is not required to attack")
+    void tappedGoblinMayStayBack() {
+        harness.addToBattlefield(player1, new GoblinAssault());
+        Permanent goblin = addCreatureReady(player1, new GoblinDeathraiders());
+        goblin.tap();
+
+        declareAttackers(player1, List.of());
+
+        assertThat(goblin.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The upkeep token must attack immediately because it has haste")
+    void newTokenMustAttackAndCanAttack() {
+        harness.addToBattlefield(player1, new GoblinAssault());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        Permanent goblin = findPermanent(player1, "Goblin");
+        int goblinIndex = gd.playerBattlefields.get(player1.getId()).indexOf(goblin);
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(goblinIndex)));
+
+        assertThat(goblin.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An upkeep trigger still creates its token after Goblin Assault leaves")
+    void upkeepTriggerSurvivesSourceLeaving() {
+        Permanent assault = harness.addToBattlefieldAndReturn(player1, new GoblinAssault());
+        advanceToUpkeep(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(assault);
+        gd.playerGraveyards.get(player1.getId()).add(assault.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Goblin")).hasSize(1);
+        declareAttackers(player1, List.of());
+    }
+
+    @Test
+    @DisplayName("Each Goblin Assault creates its own upkeep token")
+    void multipleAssaultsCreateMultipleTokens() {
+        harness.addToBattlefield(player1, new GoblinAssault());
+        harness.addToBattlefield(player1, new GoblinAssault());
+        advanceToUpkeep(player1);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Goblin")).hasSize(2);
     }
 }

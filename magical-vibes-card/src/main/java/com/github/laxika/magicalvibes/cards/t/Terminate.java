@@ -17,12 +17,14 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "OMB", collectorNumber = "40")
 @CardRegistration(set = "MSC", collectorNumber = "189")
 @CardRegistration(set = "ECC", collectorNumber = "134")
+@CardRegistration(set = "ARC", collectorNumber = "95")
 @CardRegistration(set = "CMD", collectorNumber = "231")
 @CardRegistration(set = "M3C", collectorNumber = "274")
 @CardRegistration(set = "AFC", collectorNumber = "193")
 @CardRegistration(set = "DMC", collectorNumber = "172")
 @CardRegistration(set = "C20", collectorNumber = "231")
 @CardRegistration(set = "C16", collectorNumber = "225")
+@CardRegistration(set = "C17", collectorNumber = "199")
 @CardRegistration(set = "SCD", collectorNumber = "249")
 public class Terminate extends Card {
 

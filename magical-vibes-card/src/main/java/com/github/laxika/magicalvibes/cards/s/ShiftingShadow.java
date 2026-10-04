@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "NEC", collectorNumber = "109")
+@CardRegistration(set = "C17", collectorNumber = "28")
 public class ShiftingShadow extends Card {
 
     public ShiftingShadow() {

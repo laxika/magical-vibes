@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "MSC", collectorNumber = "427")
 @CardRegistration(set = "CMM", collectorNumber = "388")
 @CardRegistration(set = "CMM", collectorNumber = "606")
+@CardRegistration(set = "C17", collectorNumber = "51")
 public class HammerOfNazahn extends Card {
 
     public HammerOfNazahn() {

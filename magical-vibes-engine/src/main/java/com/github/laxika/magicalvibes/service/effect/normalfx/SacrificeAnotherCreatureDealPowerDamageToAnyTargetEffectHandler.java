@@ -66,7 +66,8 @@ public class SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffectHandler imp
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.SacrificeAnotherCreatureDealPowerDamage(
                         controllerId, entry.getCard(),
-                        sacrificeEffect.reflexiveFollowUps(), sacrificeEffect.targetPredicate()));
+                        sacrificeEffect.reflexiveFollowUps(), sacrificeEffect.targetPredicate(),
+                        sacrificeEffect.doubleDamageIfGiant()));
         playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
                 entry.getCard().getName() + " — Choose another creature to sacrifice.");
 

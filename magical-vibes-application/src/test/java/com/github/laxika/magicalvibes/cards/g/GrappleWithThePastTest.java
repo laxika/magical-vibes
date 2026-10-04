@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.AimHigh;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.y.YoungWolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GrappleWithThePast.class, Forest.class, YoungWolf.class, AimHigh.class})
 class GrappleWithThePastTest extends BaseCardTest {
 
     private void castAndResolveToMay() {
@@ -33,8 +35,7 @@ class GrappleWithThePastTest extends BaseCardTest {
         Forest f1 = new Forest();
         Forest f2 = new Forest();
         Forest f3 = new Forest();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(f1, f2, f3));
+        harness.setLibrary(player1, List.of(f1, f2, f3));
 
         castAndResolveToMay();
 
@@ -48,26 +49,24 @@ class GrappleWithThePastTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting may returns a milled creature to hand")
     void acceptingMayReturnsMilledCreature() {
-        GrizzlyBears bears = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(bears, new Forest(), new Forest()));
+        YoungWolf wolf = new YoungWolf();
+        harness.setLibrary(player1, List.of(wolf, new Forest(), new Forest()));
 
         castAndResolveToMay();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        // The graveyard holds only the milled cards at this point; bears is index 0 among legal picks
+        // The creature is at graveyard index 0.
         harness.handleGraveyardCardChosen(player1, 0);
 
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Young Wolf");
     }
 
     @Test
     @DisplayName("Accepting may returns a milled land to hand")
     void acceptingMayReturnsMilledLand() {
         Forest land = new Forest();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(land, new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(land, new YoungWolf(), new YoungWolf()));
 
         castAndResolveToMay();
         harness.handleMayAbilityChosen(player1, true);
@@ -80,8 +79,7 @@ class GrappleWithThePastTest extends BaseCardTest {
     @DisplayName("Declining may leaves milled cards in graveyard")
     void decliningMayLeavesCardsInGraveyard() {
         Forest land = new Forest();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(land, new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(land, new Forest(), new Forest()));
 
         castAndResolveToMay();
         harness.handleMayAbilityChosen(player1, false);
@@ -94,16 +92,88 @@ class GrappleWithThePastTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot choose a non-creature non-land from graveyard")
     void cannotChooseNonCreatureNonLand() {
-        harness.setGraveyard(player1, List.of(new Shock(), new Forest()));
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new Shock(), new Shock(), new Shock()));
+        harness.setGraveyard(player1, List.of(new AimHigh(), new Forest()));
+        harness.setLibrary(player1, List.of(new AimHigh(), new AimHigh(), new AimHigh()));
 
         castAndResolveToMay();
         harness.handleMayAbilityChosen(player1, true);
 
-        // Shock is first in graveyard but illegal; choosing it must fail
+        // AimHigh is first in graveyard but illegal; choosing it must fail
         assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid card index");
+    }
+
+    @Test
+    @DisplayName("Returns a creature already in the graveyard, not only a milled card")
+    void returnsPreviouslyBuriedCreature() {
+        YoungWolf wolf = new YoungWolf();
+        harness.setGraveyard(player1, List.of(wolf));
+        harness.setGraveyard(player2, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new AimHigh(), new AimHigh(), new AimHigh(), new Forest()));
+
+        castAndResolveToMay();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(wolf);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mills the available cards from a library smaller than three")
+    void shortLibraryStillAllowsReturn() {
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+
+        castAndResolveToMay();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Grapple with the Past");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent returning an existing land")
+    void emptyLibraryStillAllowsReturn() {
+        Forest land = new Forest();
+        harness.setGraveyard(player1, List.of(land));
+        harness.setLibrary(player1, List.of());
+
+        castAndResolveToMay();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        harness.assertInGraveyard(player1, "Grapple with the Past");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Resolves without a return when neither graveyard nor milled cards contain a creature or land")
+    void noEligibleCardsStillCompletesResolution() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new YoungWolf(), new Forest()));
+        harness.setLibrary(player1, List.of(new AimHigh(), new AimHigh(), new AimHigh()));
+
+        castAndResolveToMay();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

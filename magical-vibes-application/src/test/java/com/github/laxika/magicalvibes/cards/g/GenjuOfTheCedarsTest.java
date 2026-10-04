@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -39,7 +38,7 @@ class GenjuOfTheCedarsTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
         assertThat(gqs.getEffectiveColors(gd, forest)).containsExactly(CardColor.GREEN);
         assertThat(forest.getTransientSubtypes()).containsExactly(CardSubtype.SPIRIT);
-        assertThat(forest.getCard().hasType(CardType.LAND)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.FOREST)).isTrue();
     }
 
     @Test
@@ -91,8 +90,7 @@ class GenjuOfTheCedarsTest extends BaseCardTest {
     @Test
     @DisplayName("Genju can enchant only a Forest")
     void cannotEnchantNonForest() {
-        harness.addToBattlefield(player1, new Swamp());
-        Permanent swamp = findPermanent(player1, "Swamp");
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
         harness.setHand(player1, List.of(new GenjuOfTheCedars()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -119,6 +117,73 @@ class GenjuOfTheCedarsTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, forest)).isTrue();
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Removing Genju in response does not stop its pending animation")
+    void animatesUsingLastKnownAttachmentAfterGenjuLeaves() {
+        Permanent forest = addEnchantedForest(player1);
+        Permanent genju = findPermanent(player1, "Genju of the Cedars");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        activateGenju(player1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, genju));
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.isLand(gd, forest)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveColors(gd, forest)).containsExactly(CardColor.GREEN);
+        assertThat(gqs.hasEffectiveSubtype(gd, forest, CardSubtype.SPIRIT)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Resolved animation persists after Genju leaves the battlefield")
+    void animationPersistsAfterGenjuLeaves() {
+        Permanent forest = addEnchantedForest(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        activateGenju(player1);
+        harness.passBothPriorities();
+        Permanent genju = findPermanent(player1, "Genju of the Cedars");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, genju));
+
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("An opponent's unanimated Forest going to the graveyard returns your Genju")
+    void returnsGenjuWhenOpponentsForestGoesToGraveyard() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new GenjuOfTheCedars()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, forest));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Genju of the Cedars");
+        harness.assertNotInHand(player2, "Genju of the Cedars");
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Exiling the enchanted Forest does not trigger Genju's return")
+    void doesNotReturnWhenForestIsExiled() {
+        Permanent forest = addEnchantedForest(player1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, forest));
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Genju of the Cedars");
+        harness.assertNotInHand(player1, "Genju of the Cedars");
     }
 
     private Permanent addEnchantedForest(Player controller) {

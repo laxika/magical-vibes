@@ -45,10 +45,14 @@ class AetherfluxConduitTest extends BaseCardTest {
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
-                .containsExactly(ornithopter.getId());
+                .hasSize(8).contains(ornithopter.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        for (int i = 0; i < 7; i++) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
                 permanent -> permanent.getCard().getId().equals(ornithopter.getId()));

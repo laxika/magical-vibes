@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GoldMyr.class)
+@CardUsed({GoldMyr.class})
 class GoldMyrTest extends BaseCardTest {
 
     // ===== Mana production =====
@@ -50,5 +50,33 @@ class GoldMyrTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         assertThat(perm.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Gold Myr's mana ability resolves immediately without using the stack")
+    void manaAbilityDoesNotUseStack() {
+        addCreatureReady(player1, new GoldMyr());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Gold Myr can produce mana again after its controller's untap step")
+    void canTapAgainAfterUntapStep() {
+        Permanent perm = addCreatureReady(player1, new GoldMyr());
+        harness.tapPermanent(player1, 0);
+        gd.playerManaPools.get(player1.getId()).clear();
+
+        harness.performUntapStep(player1);
+
+        assertThat(perm.isTapped()).isFalse();
+        harness.tapPermanent(player1, 0);
+
+        assertThat(perm.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
     }
 }

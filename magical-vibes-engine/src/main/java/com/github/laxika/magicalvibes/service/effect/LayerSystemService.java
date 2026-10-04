@@ -741,11 +741,14 @@ public class LayerSystemService {
         synchronized (gameData.exiledCards) {
             for (ExiledCardEntry entry : gameData.exiledCards) {
                 h = mix(h, System.identityHashCode(entry.card()));
+                h = mix(h, entry.ownerId() == null ? 0 : entry.ownerId().hashCode());
                 h = mix(h, entry.sourcePermanentId() == null ? 0 : entry.sourcePermanentId().hashCode());
             }
         }
         h = mix(h, gameData.exiledCardsWithBrainCounters.hashCode());
         h = mix(h, gameData.exiledCardsWithBrainCounters.size());
+        h = mix(h, gameData.exiledCardsWithCageCounters.hashCode());
+        h = mix(h, gameData.exiledCardsWithCageCounters.size());
         h = mix(h, gameData.exiledCardsWithBloodCounters.hashCode());
         h = mix(h, gameData.exiledCardsWithBloodCounters.size());
         h = mix(h, gameData.exiledCardsWithIceCounters.hashCode());

@@ -3,26 +3,27 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.i.IronMyr;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.t.TumbleMagnet;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({GremlinMine.class, IronMyr.class, LlanowarElves.class, TumbleMagnet.class})
 class GremlinMineTest extends BaseCardTest {
 
     @Test
     @DisplayName("First ability deals 4 damage to target artifact creature")
     void dealsDamageToArtifactCreature() {
         harness.addToBattlefield(player1, new GremlinMine());
-        harness.addToBattlefield(player2, new IronMyr());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IronMyr());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent target = findPermanent(player2, "Iron Myr");
         harness.activateAbility(player1, 0, 0, null, target.getId());
         harness.passBothPriorities();
 
@@ -34,10 +35,9 @@ class GremlinMineTest extends BaseCardTest {
     @DisplayName("Gremlin Mine is sacrificed when activating first ability")
     void sacrificedOnFirstAbility() {
         harness.addToBattlefield(player1, new GremlinMine());
-        harness.addToBattlefield(player2, new IronMyr());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IronMyr());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent target = findPermanent(player2, "Iron Myr");
         harness.activateAbility(player1, 0, 0, null, target.getId());
 
         harness.assertNotOnBattlefield(player1, "Gremlin Mine");
@@ -48,10 +48,8 @@ class GremlinMineTest extends BaseCardTest {
     @DisplayName("First ability cannot target a non-artifact creature")
     void cannotTargetNonArtifactCreature() {
         harness.addToBattlefield(player1, new GremlinMine());
-        harness.addToBattlefield(player2, new LlanowarElves());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        Permanent target = findPermanent(player2, "Llanowar Elves");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -62,17 +60,18 @@ class GremlinMineTest extends BaseCardTest {
     @DisplayName("Second ability removes charge counters from target noncreature artifact")
     void removesChargeCounters() {
         harness.addToBattlefield(player1, new GremlinMine());
-        harness.addToBattlefield(player2, new TumbleMagnet());
+        Permanent magnet = harness.addToBattlefieldAndReturn(player2, new TumbleMagnet());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         // TumbleMagnet enters with 3 charge counters via EnterWithCountersEffect
         // but addToBattlefield doesn't trigger ETB, so set manually
-        Permanent magnet = findPermanent(player2, "Tumble Magnet");
         magnet.setCounterCount(CounterType.CHARGE, 3);
 
         harness.activateAbility(player1, 0, 1, null, magnet.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleXValueChosen(player1, 3);
         assertThat(magnet.getCounterCount(CounterType.CHARGE)).isZero();
     }
 
@@ -80,15 +79,16 @@ class GremlinMineTest extends BaseCardTest {
     @DisplayName("Second ability removes at most 4 charge counters when target has more")
     void removesAtMostFourChargeCounters() {
         harness.addToBattlefield(player1, new GremlinMine());
-        harness.addToBattlefield(player2, new TumbleMagnet());
+        Permanent magnet = harness.addToBattlefieldAndReturn(player2, new TumbleMagnet());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent magnet = findPermanent(player2, "Tumble Magnet");
         magnet.setCounterCount(CounterType.CHARGE, 6);
 
         harness.activateAbility(player1, 0, 1, null, magnet.getId());
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleXValueChosen(player1, 4);
         assertThat(magnet.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
@@ -96,10 +96,8 @@ class GremlinMineTest extends BaseCardTest {
     @DisplayName("Second ability cannot target an artifact creature")
     void secondAbilityCannotTargetArtifactCreature() {
         harness.addToBattlefield(player1, new GremlinMine());
-        harness.addToBattlefield(player2, new IronMyr());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IronMyr());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        Permanent target = findPermanent(player2, "Iron Myr");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -110,12 +108,73 @@ class GremlinMineTest extends BaseCardTest {
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
         harness.addToBattlefield(player1, new GremlinMine());
-        harness.addToBattlefield(player2, new IronMyr());
-
-        Permanent target = findPermanent(player2, "Iron Myr");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IronMyr());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Controller can choose to remove fewer than four charge counters")
+    void canChooseFewerChargeCounters() {
+        harness.addToBattlefield(player1, new GremlinMine());
+        Permanent magnet = harness.addToBattlefieldAndReturn(player2, new TumbleMagnet());
+        magnet.setCounterCount(CounterType.CHARGE, 6);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, magnet.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleXValueChosen(player1, 2);
+        assertThat(magnet.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Controller can choose to remove zero charge counters")
+    void canChooseZeroChargeCounters() {
+        harness.addToBattlefield(player1, new GremlinMine());
+        Permanent magnet = harness.addToBattlefieldAndReturn(player2, new TumbleMagnet());
+        magnet.setCounterCount(CounterType.CHARGE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, magnet.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleXValueChosen(player1, 0);
+        assertThat(magnet.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Gremlin Mine");
+    }
+
+    @Test
+    @DisplayName("Second ability can target an artifact with no charge counters and leaves other counters")
+    void canTargetArtifactWithoutChargeCounters() {
+        harness.addToBattlefield(player1, new GremlinMine());
+        Permanent magnet = harness.addToBattlefieldAndReturn(player2, new TumbleMagnet());
+        magnet.setCounterCount(CounterType.STUN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, magnet.getId());
+        harness.passBothPriorities();
+
+        assertThat(magnet.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(magnet.getCounterCount(CounterType.STUN)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Gremlin Mine");
+    }
+
+    @Test
+    @DisplayName("First ability marks exactly four damage on a surviving artifact creature")
+    void dealsExactlyFourDamage() {
+        harness.addToBattlefield(player1, new GremlinMine());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IronMyr());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Iron Myr");
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+    }
 }

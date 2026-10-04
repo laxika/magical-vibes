@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.OneOrMoreArtifactOrCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ArtifactGraveyardCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.LeavingPermanentCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
@@ -806,6 +807,7 @@ public class DeathTriggerCollectorService {
             );
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             entry.setTriggeringPermanentPowerAtTrigger(Math.max(0, sd.dyingPower()));
+            entry.setTriggeringCardGraveyardEntryVersion(match.gameData().graveyardEntryVersion(sd.dyingCard().getId()));
             match.gameData().stack.add(entry);
         }
         return true;
@@ -1020,6 +1022,7 @@ public class DeathTriggerCollectorService {
             entry.setDyingPermanentManaValue(sd.dyingPermanent() != null
                     ? sd.dyingPermanent().getCard().getManaValue()
                     : sd.dyingCard().getManaValue());
+            entry.setTriggeringCardGraveyardEntryVersion(match.gameData().graveyardEntryVersion(sd.dyingCard().getId()));
             match.gameData().stack.add(entry);
         }
         return true;
@@ -1278,7 +1281,7 @@ public class DeathTriggerCollectorService {
                 || resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
             gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(resolvedEffect)),
-                    null, new Permanent(match.permanent())
+                    null, new Permanent(match.permanent()), match.permanent().getCard().getTargetFilter()
             ));
         } else {
             gameData.stack.add(new StackEntry(
@@ -2407,6 +2410,25 @@ public class DeathTriggerCollectorService {
         ));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (permanent put into a graveyard from the battlefield)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = OneOrMoreArtifactOrCreatureDeathTriggerEffect.class,
+            slot = EffectSlot.ON_ALLY_ARTIFACT_OR_CREATURE_DIES)
+    boolean handleAllyArtifactOrCreatureDeath(TriggerMatchContext match,
+            OneOrMoreArtifactOrCreatureDeathTriggerEffect effect, TriggerContext ctx) {
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect.wrapped())),
+                null,
+                match.permanent().getId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (controlled artifact or creature put into a graveyard from the battlefield)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }

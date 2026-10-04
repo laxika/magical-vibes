@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "DDF", collectorNumber = "61")
 @CardRegistration(set = "MMA", collectorNumber = "196")
 @CardRegistration(set = "FDC", collectorNumber = "244")
+@CardRegistration(set = "ARC", collectorNumber = "102")
 public class AetherSpellbomb extends Card {
 
     public AetherSpellbomb() {

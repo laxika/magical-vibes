@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(Gamble.class)
+@CardUsed({Gamble.class})
 class GambleTest extends BaseCardTest {
 
     @Test
@@ -28,7 +27,6 @@ class GambleTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .containsExactly(searchedCard, remainingCard);
@@ -94,6 +92,53 @@ class GambleTest extends BaseCardTest {
         int shuffleLogIndex = indexOfLogContaining(logs, "shuffles their library");
         assertThat(discardLogIndex).isGreaterThanOrEqualTo(0);
         assertThat(shuffleLogIndex).isGreaterThan(discardLogIndex);
+    }
+
+    @Test
+    @DisplayName("Still shuffles when both the library and post-cast hand are empty")
+    void shufflesWithEmptyLibraryAndHand() {
+        Card gamble = new Gamble();
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, gamble, "{R}");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(gamble);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("shuffles their library"));
+    }
+
+    @Test
+    @DisplayName("Can select a card below the top without affecting the opponent's zones")
+    void searchesBelowTopAndAffectsOnlyController() {
+        Card gamble = new Gamble();
+        Card topCard = new Gamble();
+        Card searchedCard = new Gamble();
+        Card opponentHandCard = new Gamble();
+        Card opponentTopCard = new Gamble();
+        Card opponentBottomCard = new Gamble();
+        harness.setLibrary(player1, List.of(topCard, searchedCard));
+        harness.setHand(player2, List.of(opponentHandCard));
+        harness.setLibrary(player2, List.of(opponentTopCard, opponentBottomCard));
+        harness.castFromHand(player1, gamble, "{R}");
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(gamble, searchedCard);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentHandCard);
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactly(opponentTopCard, opponentBottomCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
     private static int indexOfLogContaining(List<String> logs, String text) {

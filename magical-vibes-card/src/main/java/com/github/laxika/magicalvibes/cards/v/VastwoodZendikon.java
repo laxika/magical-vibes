@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "117")
+@CardRegistration(set = "E01", collectorNumber = "77")
 public class VastwoodZendikon extends Card {
 
     public VastwoodZendikon() {

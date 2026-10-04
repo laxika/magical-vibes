@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "6")
+@CardRegistration(set = "MOM", collectorNumber = "320")
 public class ArchangelElspeth extends Card {
 
     public ArchangelElspeth() {
@@ -67,6 +68,7 @@ public class ArchangelElspeth extends Card {
                                 new CardMaxManaValuePredicate(3)
                         )))
                         .returnAll(true)
+                        .chooseAuraAttachment(true)
                         .build()),
                 "−6: Return all nonland permanent cards with mana value 3 or less from your graveyard to the battlefield."
         ));

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "165")
+@CardRegistration(set = "ARC", collectorNumber = "114")
 @CardRegistration(set = "MM3", collectorNumber = "225")
 @CardRegistration(set = "SLD", collectorNumber = "289")
 @CardRegistration(set = "GK2", collectorNumber = "76")
@@ -23,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "C16", collectorNumber = "268")
 @CardRegistration(set = "VOC", collectorNumber = "166")
 @CardRegistration(set = "BRC", collectorNumber = "156")
+@CardRegistration(set = "C17", collectorNumber = "221")
 @CardRegistration(set = "SCD", collectorNumber = "272")
 public class RakdosSignet extends Card {
 

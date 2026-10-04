@@ -72,10 +72,93 @@ class GarnetPrincessOfAlexandriaTest extends BaseCardTest {
         assertThat(garnet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Accepting the trigger still allows choosing no Sagas")
+    void acceptsButChoosesNoSagas() {
+        Permanent garnet = addCreatureReady(player1, new GarnetPrincessOfAlexandria());
+        Permanent history = addSaga(player1, new HistoryOfBenalia(), 2);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(history.getCounterCount(CounterType.LORE)).isEqualTo(2);
+        assertThat(garnet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Accepting with no Sagas puts no counters on Garnet")
+    void noSagasAddsNoCounters() {
+        Permanent garnet = addCreatureReady(player1, new GarnetPrincessOfAlexandria());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(garnet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Only controlled Sagas are eligible for counter removal")
+    void excludesOpponentSagasAndNonSagas() {
+        Permanent garnet = addCreatureReady(player1, new GarnetPrincessOfAlexandria());
+        Permanent history = addSaga(player1, new HistoryOfBenalia(), 2);
+        Permanent opposingFlame = addSaga(player2, new TheFlameOfKeld(), 2);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(history.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(history.getId()));
+
+        assertThat(history.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        assertThat(opposingFlame.getCounterCount(CounterType.LORE)).isEqualTo(2);
+        assertThat(garnet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Garnet counts counters actually removed rather than Sagas chosen")
+    void sagaWithoutLoreDoesNotAddACounter() {
+        Permanent garnet = addCreatureReady(player1, new GarnetPrincessOfAlexandria());
+        Permanent history = addSaga(player1, new HistoryOfBenalia(), 0);
+        Permanent flame = addSaga(player1, new TheFlameOfKeld(), 2);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultiplePermanentsChosen(player1, List.of(history.getId(), flame.getId()));
+
+        assertThat(history.getCounterCount(CounterType.LORE)).isZero();
+        assertThat(flame.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        assertThat(garnet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Removing a lore counter does not trigger an earlier chapter")
+    void removingLoreDoesNotRetriggerChapters() {
+        Permanent garnet = addCreatureReady(player1, new GarnetPrincessOfAlexandria());
+        Permanent history = addSaga(player1, new HistoryOfBenalia(), 2);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultiplePermanentsChosen(player1, List.of(history.getId()));
+
+        assertThat(history.getCounterCount(CounterType.LORE)).isEqualTo(1);
+        assertThat(garnet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(garnet, history);
+    }
+
     private Permanent addSaga(Player player, Card card, int loreCounters) {
-        Permanent saga = new Permanent(card);
+        Permanent saga = harness.addToBattlefieldAndReturn(player, card);
         saga.setCounterCount(CounterType.LORE, loreCounters);
-        gd.playerBattlefields.get(player.getId()).add(saga);
         return saga;
     }
 }

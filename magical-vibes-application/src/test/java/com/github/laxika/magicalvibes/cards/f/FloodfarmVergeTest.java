@@ -74,7 +74,7 @@ class FloodfarmVergeTest extends BaseCardTest {
     @Test
     void tappedPlainsStillEnablesBlueMana() {
         Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
-        plains.setTapped(true);
+        plains.tap();
         Permanent verge = addReadyVerge(player1);
 
         harness.activateAbility(player1, 1, 1, null, null);

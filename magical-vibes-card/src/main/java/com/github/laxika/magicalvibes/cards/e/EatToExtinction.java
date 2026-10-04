@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "90")
+@CardRegistration(set = "THB", collectorNumber = "312")
 public class EatToExtinction extends Card {
 
     public EatToExtinction() {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TibaltTrickeryEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "153")
+@CardRegistration(set = "KHM", collectorNumber = "360")
 public class TibaltsTrickery extends Card {
 
     public TibaltsTrickery() {

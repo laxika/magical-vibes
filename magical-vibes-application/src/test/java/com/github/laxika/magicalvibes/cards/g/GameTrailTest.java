@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GameTrail.class, Forest.class, Island.class, Mountain.class})
 class GameTrailTest extends BaseCardTest {
 
     @Test
@@ -57,6 +59,41 @@ class GameTrailTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Enters tapped when playing it leaves the hand empty")
+    void entersTappedWithEmptyHand() {
+        harness.setHand(player1, List.of(new GameTrail()));
+        playLand();
+
+        assertThat(findLand(player1).isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Mountain in an opponent's hand cannot be revealed")
+    void opponentsMountainDoesNotAllowUntappedEntry() {
+        harness.setHand(player1, List.of(new GameTrail()));
+        harness.setHand(player2, List.of(new Mountain()));
+        playLand();
+
+        assertThat(findLand(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Revealing keeps the card in hand and allows immediate mana activation")
+    void revealedCardStaysInHand() {
+        Mountain mountain = new Mountain();
+        harness.setHand(player1, List.of(new GameTrail(), mountain));
+        playLand();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(mountain);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(findLand(player1).isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Tapping for red mana produces one red")
     void tappingProducesRedMana() {
         addLandReady(player1);
@@ -85,9 +122,8 @@ class GameTrailTest extends BaseCardTest {
     }
 
     private Permanent addLandReady(Player player) {
-        Permanent permanent = new Permanent(new GameTrail());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GameTrail());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 

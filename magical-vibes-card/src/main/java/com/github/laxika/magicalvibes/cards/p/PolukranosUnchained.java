@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "224")
+@CardRegistration(set = "THB", collectorNumber = "342")
 public class PolukranosUnchained extends Card {
 
     public PolukranosUnchained() {

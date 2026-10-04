@@ -15,6 +15,10 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "39")
+@CardRegistration(set = "MAT", collectorNumber = "89")
+@CardRegistration(set = "MAT", collectorNumber = "139")
+@CardRegistration(set = "MAT", collectorNumber = "174")
+@CardRegistration(set = "MAT", collectorNumber = "218")
 public class NashiMoonsLegacy extends Card {
 
     private static final CardAnyOfPredicate LEGENDARY_OR_RAT = new CardAnyOfPredicate(List.of(

@@ -55,7 +55,7 @@ class DulcetSirensTest extends BaseCardTest {
     void tappedCreatureIsNotRequiredToAttack() {
         Permanent sirens = addCreatureReady(player1, new DulcetSirens());
         Permanent creature = addCreatureReady(player1, new DulcetSirens());
-        creature.setTapped(true);
+        creature.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(sirens), 0,

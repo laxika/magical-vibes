@@ -99,4 +99,39 @@ class GraniteGargoyleTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Boost applies only on resolution and only to the activating Gargoyle")
+    void boostWaitsForResolutionAndAffectsOnlySource() {
+        Permanent source = addCreatureReady(player1, new GraniteGargoyle());
+        Permanent other = addCreatureReady(player1, new GraniteGargoyle());
+        Permanent opponent = addCreatureReady(player2, new GraniteGargoyle());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(source.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(source.getEffectivePower()).isEqualTo(2);
+        assertThat(source.getEffectiveToughness()).isEqualTo(3);
+        assertThat(source.isTapped()).isFalse();
+        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(opponent.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Ability requires red mana rather than mana of another color")
+    void cannotActivateWithOnlyBlueMana() {
+        Permanent gargoyle = addCreatureReady(player1, new GraniteGargoyle());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gargoyle.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
 }

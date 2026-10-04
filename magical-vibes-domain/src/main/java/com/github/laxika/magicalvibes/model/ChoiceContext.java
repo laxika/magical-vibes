@@ -17,6 +17,14 @@ import java.util.UUID;
 
 public sealed interface ChoiceContext {
 
+    /** Orders simultaneous spell-cast triggers from the bottom of the stack upward. */
+    record SpellCastTriggerOrder(List<UUID> remainingIds, List<UUID> orderedIds) implements ChoiceContext {
+        public SpellCastTriggerOrder {
+            remainingIds = List.copyOf(remainingIds);
+            orderedIds = List.copyOf(orderedIds);
+        }
+    }
+
     /** Chooses the result of conflicting tapped and untapped entry replacements. */
     record TappedEntryStateChoice(BattlefieldEntryRequest request) implements ChoiceContext {
         public TappedEntryStateChoice {
@@ -894,8 +902,12 @@ public sealed interface ChoiceContext {
         }
     }
 
-    record CardTypeOnEnterChoice(Card card, UUID controllerId, List<CardType> excludedTypes)
-            implements ChoiceContext {}
+    record CardTypeOnEnterChoice(Card card, UUID controllerId, List<CardType> excludedTypes,
+                                 Permanent preparedPermanent) implements ChoiceContext {
+        public CardTypeOnEnterChoice(Card card, UUID controllerId, List<CardType> excludedTypes) {
+            this(card, controllerId, excludedTypes, null);
+        }
+    }
 
     record CraftedCardTypeOnEnterChoice(Permanent permanent, UUID controllerId,
                                          List<CardType> allowedTypes) implements ChoiceContext {}
@@ -1879,7 +1891,8 @@ public sealed interface ChoiceContext {
     }
 
     record RemoveChosenCountersChoice(UUID targetId, UUID controllerId, String sourceCardName,
-                                      int remainingSelections, List<CounterType> counterTypes)
+                                      int remainingSelections, List<CounterType> counterTypes,
+                                      boolean exactAmount)
             implements ChoiceContext {
 
         public static final String DONE = "Done";
@@ -2348,7 +2361,13 @@ public sealed interface ChoiceContext {
 
     record LibraryCastModeChoice(Card cardToCast, UUID controllerId, ChooseOneEffect effect,
                                  StackEntryType spellType, List<Integer> modeIndices,
-                                 Integer discoverValue) implements ChoiceContext {
+                                 Integer discoverValue, Zone sourceZone) implements ChoiceContext {
+
+        public LibraryCastModeChoice(Card cardToCast, UUID controllerId, ChooseOneEffect effect,
+                                     StackEntryType spellType, List<Integer> modeIndices,
+                                     Integer discoverValue) {
+            this(cardToCast, controllerId, effect, spellType, modeIndices, discoverValue, Zone.LIBRARY);
+        }
 
         public LibraryCastModeChoice {
             modeIndices = List.copyOf(modeIndices);

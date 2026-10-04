@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "176")
+@CardRegistration(set = "ZNC", collectorNumber = "103")
 public class SyggRiverCutthroat extends Card {
 
     public SyggRiverCutthroat() {

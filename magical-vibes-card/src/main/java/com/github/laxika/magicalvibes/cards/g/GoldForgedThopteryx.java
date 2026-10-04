@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 @CardRegistration(set = "MAT", collectorNumber = "31")
+@CardRegistration(set = "MAT", collectorNumber = "81")
+@CardRegistration(set = "MAT", collectorNumber = "131")
+@CardRegistration(set = "MAT", collectorNumber = "211")
 public class GoldForgedThopteryx extends Card {
 
     public GoldForgedThopteryx() {

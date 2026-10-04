@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -56,11 +57,57 @@ class GrimBountyTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
     }
 
-    private void cast(Permanent target) {
+    @Test
+    @DisplayName("Creates no Treasure when the only target leaves before resolution")
+    void noTreasureWhenTargetLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new GrimBounty()));
         addMana();
         harness.castSorcery(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerHands.get(player2.getId()).add(target.getCard());
         harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grim Bounty");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creates a Treasure even when the legal target is indestructible")
+    void createsTreasureWhenDestructionIsPrevented() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+
+        cast(target);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+        assertThat(findPermanent(player1, "Treasure").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can destroy your own creature and still creates a Treasure")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(target);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+    }
+
+    private void cast(Permanent target) {
+        harness.setHand(player1, List.of(new GrimBounty()));
+        addMana();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private void addMana() {

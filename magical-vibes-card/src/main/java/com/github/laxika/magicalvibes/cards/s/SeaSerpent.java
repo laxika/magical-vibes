@@ -15,11 +15,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "5ED", collectorNumber = "118")
+@CardRegistration(set = "LEA", collectorNumber = "76")
 @CardRegistration(set = "4ED", collectorNumber = "98")
 @CardRegistration(set = "SUM", collectorNumber = "78")
 @CardRegistration(set = "3ED", collectorNumber = "78")
 @CardRegistration(set = "ME4", collectorNumber = "60")
 @CardRegistration(set = "2ED", collectorNumber = "77")
+@CardRegistration(set = "LEB", collectorNumber = "77")
 public class SeaSerpent extends Card {
 
     public SeaSerpent() {

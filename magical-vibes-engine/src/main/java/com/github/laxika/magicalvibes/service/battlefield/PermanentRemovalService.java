@@ -234,6 +234,7 @@ public class PermanentRemovalService {
                                 gameData, permanent, EffectSlot.ON_ANY_CREATURE_DIES)));
             }
             removal.run();
+            triggerCollectionService.checkBatchedAllyArtifactOrCreatureDeathTriggers(gameData);
             triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
             gameData.simultaneousDyingPermanents.clear();
@@ -1294,7 +1295,8 @@ public class PermanentRemovalService {
             if (permanent == null) {
                 continue;
             }
-            UUID controllerId = action.controllerId() != null ? action.controllerId()
+            UUID controllerId = action.sacrificingPlayerId() != null ? action.sacrificingPlayerId()
+                    : action.controllerId() != null ? action.controllerId()
                     : gameQueryService.findPermanentController(gameData, permanent.getId());
             StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                     permanent.getCard(), controllerId,
@@ -1478,7 +1480,7 @@ public class PermanentRemovalService {
         boolean sourceRestrictedRedirect = false;
         if (target == null) {
             target = findControlledPermanentWithDamageRedirect(gameData, playerId, sourcePermanentId, null, sourceCard, false);
-            sourceRestrictedRedirect = target != null && target.getCard().getEffects(EffectSlot.STATIC).stream()
+            sourceRestrictedRedirect = target != null && gameQueryService.getActiveStaticEffects(gameData, target).stream()
                     .anyMatch(effect -> effect instanceof RedirectPlayerDamageToSelfEffect redirect
                             && redirect.onlyFromUnblockedCreatures());
         }
@@ -1581,7 +1583,7 @@ public class PermanentRemovalService {
             if (gameQueryService.hasLostAllAbilities(gameData, permanent)) {
                 continue;
             }
-            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+            for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
                 if (!(effect instanceof RedirectPlayerDamageToSelfEffect redirect)) continue;
                 if (sourcePredicateOnly && redirect.sourcePredicate() == null) continue;
                 if (redirect.requiresUntapped() && permanent.isTapped()) continue;

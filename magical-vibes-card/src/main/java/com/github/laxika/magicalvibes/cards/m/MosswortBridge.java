@@ -30,6 +30,8 @@ import java.util.List;
 @CardRegistration(set = "BLC", collectorNumber = "317")
 @CardRegistration(set = "C18", collectorNumber = "267")
 @CardRegistration(set = "FDC", collectorNumber = "307")
+@CardRegistration(set = "C17", collectorNumber = "261")
+@CardRegistration(set = "ARC", collectorNumber = "130")
 public class MosswortBridge extends Card {
 
     public MosswortBridge() {

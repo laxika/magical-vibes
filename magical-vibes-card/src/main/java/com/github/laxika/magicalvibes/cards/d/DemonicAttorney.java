@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AnteTopCardEffect;
 @CardRegistration(set = "SUM", collectorNumber = "103")
 @CardRegistration(set = "3ED", collectorNumber = "103")
 @CardRegistration(set = "2ED", collectorNumber = "103")
+@CardRegistration(set = "LEA", collectorNumber = "102")
+@CardRegistration(set = "LEB", collectorNumber = "103")
 public class DemonicAttorney extends Card {
 
     public DemonicAttorney() {

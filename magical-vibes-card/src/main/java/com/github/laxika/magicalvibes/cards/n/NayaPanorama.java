@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "ALA", collectorNumber = "227")
 @CardRegistration(set = "C13", collectorNumber = "308")
 @CardRegistration(set = "C19", collectorNumber = "263")
+@CardRegistration(set = "ZNC", collectorNumber = "136")
 public class NayaPanorama extends Card {
 
     public NayaPanorama() {

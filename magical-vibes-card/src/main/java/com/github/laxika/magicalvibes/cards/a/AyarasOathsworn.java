@@ -15,6 +15,10 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "11")
+@CardRegistration(set = "MAT", collectorNumber = "61")
+@CardRegistration(set = "MAT", collectorNumber = "111")
+@CardRegistration(set = "MAT", collectorNumber = "157")
+@CardRegistration(set = "MAT", collectorNumber = "195")
 public class AyarasOathsworn extends Card {
 
     public AyarasOathsworn() {

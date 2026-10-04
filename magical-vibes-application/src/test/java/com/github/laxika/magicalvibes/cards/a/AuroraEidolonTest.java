@@ -74,6 +74,7 @@ class AuroraEidolonTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
 
         harness.assertInHand(player1, "Aurora Eidolon");
         harness.assertNotInGraveyard(player1, "Aurora Eidolon");

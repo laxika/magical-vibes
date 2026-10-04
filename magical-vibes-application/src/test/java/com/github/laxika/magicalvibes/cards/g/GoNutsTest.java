@@ -67,6 +67,96 @@ class GoNutsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void teamworkCanTapMultipleCreaturesIncludingTheFightingCreature() {
+        Permanent fighter = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent teammate = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(new int[]{0, 1}, List.of(fighter.getId(), fighter.getId(), opponent.getId()),
+                List.of(fighter.getId(), teammate.getId()));
+
+        assertThat(fighter.isTapped()).isTrue();
+        assertThat(teammate.isTapped()).isTrue();
+        assertThat(fighter.getEffectivePower()).isEqualTo(3);
+        assertThat(fighter.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void teamworkRejectsInsufficientTotalPowerBeforeTheCounterIsPlaced() {
+        Permanent fighter = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareCard();
+
+        assertThatThrownBy(() -> harness.castModalSorceryWithModesAndTaps(
+                player1, 0, 1, 2, new int[]{0, 1},
+                List.of(fighter.getId(), fighter.getId(), opponent.getId()), List.of(fighter.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(fighter.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotChooseBothModesWithoutTeamwork() {
+        Permanent fighter = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareCard();
+
+        assertThatThrownBy(() -> harness.castModalSorceryWithModesAndTaps(
+                player1, 0, 1, 2, new int[]{0, 1},
+                List.of(fighter.getId(), fighter.getId(), opponent.getId()), List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotChooseOnlyOneModeWhenUsingTeamwork() {
+        Permanent teammate = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareCard();
+
+        assertThatThrownBy(() -> harness.castModalSorceryWithModesAndTaps(
+                player1, 0, 1, 2, new int[]{0}, List.of(target.getId()), List.of(teammate.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(teammate.isTapped()).isFalse();
+    }
+
+    @Test
+    void counterStillResolvesWhenAnOpposingFightTargetLeaves() {
+        Permanent fighter = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareCard();
+        harness.castModalSorceryWithModesAndTaps(player1, 0, 1, 2, new int[]{0, 1},
+                List.of(target.getId(), fighter.getId(), opponent.getId()), List.of(fighter.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(opponent);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(fighter.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Hill Giant");
+    }
+
+    @Test
+    void fightStillResolvesWhenTheSeparateCounterTargetLeaves() {
+        Permanent fighter = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareCard();
+        harness.castModalSorceryWithModesAndTaps(player1, 0, 1, 2, new int[]{0, 1},
+                List.of(target.getId(), fighter.getId(), opponent.getId()), List.of(fighter.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+
+        harness.passBothPriorities();
+
+        assertThat(fighter.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
     private void cast(int[] modes, List<java.util.UUID> targetIds, List<java.util.UUID> teamworkIds) {
         prepareCard();
         harness.castModalSorceryWithModesAndTaps(player1, 0, 1, 2, modes, targetIds, teamworkIds);

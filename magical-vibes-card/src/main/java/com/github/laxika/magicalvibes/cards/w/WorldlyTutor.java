@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "MIR", collectorNumber = "255")
 @CardRegistration(set = "DMR", collectorNumber = "185")
 @CardRegistration(set = "TLE", collectorNumber = "314")
+@CardRegistration(set = "CC1", collectorNumber = "6")
 public class WorldlyTutor extends Card {
 
     public WorldlyTutor() {

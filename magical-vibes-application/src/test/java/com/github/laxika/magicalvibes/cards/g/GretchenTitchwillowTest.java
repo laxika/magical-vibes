@@ -23,8 +23,7 @@ class GretchenTitchwillowTest extends BaseCardTest {
         addReadyGretchen(player1);
         Card forest = new Forest();
         Card island = new Island();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(island);
+        harness.setLibrary(player1, List.of(island));
         harness.setHand(player1, List.of(forest));
         addAbilityMana(player1);
 
@@ -48,8 +47,7 @@ class GretchenTitchwillowTest extends BaseCardTest {
         addReadyGretchen(player1);
         Card forest = new Forest();
         Card island = new Island();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(island);
+        harness.setLibrary(player1, List.of(island));
         harness.setHand(player1, List.of(forest));
         addAbilityMana(player1);
 
@@ -62,10 +60,45 @@ class GretchenTitchwillowTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard() == forest)).isTrue();
     }
 
+    @Test
+    void mayPutTheNewlyDrawnLandOntoBattlefield() {
+        addReadyGretchen(player1);
+        Card forest = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(forest));
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == forest && !permanent.isTapped());
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent gretchen = addReadyGretchen(player1);
+        gretchen.setTapped(true);
+        gretchen.setSummoningSick(true);
+        Card island = new Island();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(island));
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(island);
+        assertThat(gretchen.isTapped()).isTrue();
+    }
+
     private Permanent addReadyGretchen(Player player) {
-        Permanent gretchen = new Permanent(new GretchenTitchwillow());
+        Permanent gretchen = harness.addToBattlefieldAndReturn(player, new GretchenTitchwillow());
         gretchen.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(gretchen);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return gretchen;

@@ -40,6 +40,7 @@ class AmbassadorOfEvendoTest extends BaseCardTest {
 
         harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(permanent));
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .hasSize(handSizeBeforeTap + 1)
@@ -87,7 +88,7 @@ class AmbassadorOfEvendoTest extends BaseCardTest {
         Permanent permanent = harness.addToBattlefieldAndReturn(player1, modifiedLand);
         harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(permanent));
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
     }
@@ -150,6 +151,7 @@ class AmbassadorOfEvendoTest extends BaseCardTest {
 
         harness.tapPermanent(player2, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

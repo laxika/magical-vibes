@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -24,7 +25,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ArdentPlea.class, Forest.class, GrizzlyBears.class, HillGiant.class,
-        LlanowarElves.class, Mountain.class, Plains.class, RuleOfLaw.class})
+        LlanowarElves.class, Mountain.class, Plains.class, RuleOfLaw.class, Shock.class})
 class ArdentPleaTest extends BaseCardTest {
 
     @Test
@@ -165,6 +166,24 @@ class ArdentPleaTest extends BaseCardTest {
 
         assertThat(gd.getSpellsCastThisTurnCount(player1.getId(), Zone.EXILE)).isEqualTo(1);
         assertThat(gd.getSpellsCastThisTurnCount(player1.getId(), Zone.GRAVEYARD)).isZero();
+    }
+
+    @Test
+    @DisplayName("Choosing a target for the cascade hit preserves its exile casting origin")
+    void targetedCascadeHitIsCastFromExile() {
+        setupCasterTurn();
+        Shock shock = new Shock();
+        harness.setLibrary(player1, List.of(shock));
+        castArdentPlea();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId(), Zone.EXILE)).isEqualTo(1);
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId(), Zone.GRAVEYARD)).isZero();
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(shock.getId()));
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
     }
 
     @Test

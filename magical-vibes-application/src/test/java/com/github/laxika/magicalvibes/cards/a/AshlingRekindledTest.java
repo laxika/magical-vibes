@@ -103,7 +103,7 @@ class AshlingRekindledTest extends BaseCardTest {
     void rimeboundHasTwoIndependentMainPhaseTriggers() {
         addBackFace(player1);
 
-        advanceToPrecombatMain(player1);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> advanceToPrecombatMain(player1));
 
         assertThat(gd.stack).hasSize(2);
     }

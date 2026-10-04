@@ -112,6 +112,95 @@ class GraveVenerationsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("The monarch condition is checked again when the return ability resolves")
+    void losingMonarchBeforeResolutionPreventsReturn() {
+        harness.addToBattlefield(player1, new GraveVenerations());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        gd.monarchPlayerId = player1.getId();
+
+        advanceToEndStep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        gd.monarchPlayerId = player2.getId();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Only creature cards in your own graveyard can be selected")
+    void returnChoiceExcludesNoncreaturesAndOpponentsCards() {
+        harness.addToBattlefield(player1, new GraveVenerations());
+        GrizzlyBears ownBears = new GrizzlyBears();
+        Shock shock = new Shock();
+        GrizzlyBears opposingBears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownBears, shock));
+        harness.setGraveyard(player2, List.of(opposingBears));
+        gd.monarchPlayerId = player1.getId();
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                (PendingInteraction.MultiGraveyardChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validCardIds()).containsExactly(ownBears.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownBears.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Shock");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Being monarch does not return a creature during an opponent's end step")
+    void opponentsEndStepDoesNotReturnCreature() {
+        harness.addToBattlefield(player1, new GraveVenerations());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        gd.monarchPlayerId = player1.getId();
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An empty graveyard requires no target choice")
+    void emptyGraveyardDoesNotRequireTarget() {
+        harness.addToBattlefield(player1, new GraveVenerations());
+        harness.setGraveyard(player1, List.of());
+        gd.monarchPlayerId = player1.getId();
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A selected creature that leaves the graveyard is not returned")
+    void targetLeavingGraveyardPreventsReturn() {
+        harness.addToBattlefield(player1, new GraveVenerations());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        gd.monarchPlayerId = player1.getId();
+
+        advanceToEndStep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(bears));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(gd.findExiledCard(bears.getId())).isNotNull();
+    }
+
     private void killWithShock(Player caster, Permanent creature) {
         harness.setHand(caster, List.of(new Shock()));
         harness.addMana(caster, ManaColor.RED, 1);
@@ -122,7 +211,6 @@ class GraveVenerationsTest extends BaseCardTest {
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.END_STEP);
     }
 }

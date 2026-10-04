@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ONS", collectorNumber = "188")
+@CardRegistration(set = "ARC", collectorNumber = "30")
 public class BatteringCraghorn extends Card {
 
     public BatteringCraghorn() {

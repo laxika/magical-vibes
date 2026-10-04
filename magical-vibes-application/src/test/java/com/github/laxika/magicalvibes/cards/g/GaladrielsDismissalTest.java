@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.l.LoxodonWarhammer;
+import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +15,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GaladrielsDismissal.class, GrizzlyBears.class, Island.class})
+@CardUsed({GaladrielsDismissal.class, GrizzlyBears.class, Island.class,
+        LoxodonWarhammer.class, TrollAscetic.class})
 class GaladrielsDismissalTest extends BaseCardTest {
 
     @Test
@@ -58,6 +62,111 @@ class GaladrielsDismissalTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castKickedInstant(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only target players");
+    }
+
+    @Test
+    void unkickedSpellLeavesOtherCreaturesAlone() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castAndResolve(1, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(other);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).containsExactly(target);
+    }
+
+    @Test
+    void kickedSpellCanTargetItsControllerAndLeavesOpponentsCreaturesAlone() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castAndResolve(4, player1.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.phasedOutPermanents.get(player1.getId()))
+                .containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opponent);
+        harness.assertInGraveyard(player1, "Galadriel's Dismissal");
+    }
+
+    @Test
+    void kickedSpellCanTargetPlayerWithNoCreatures() {
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        castAndResolve(4, player2.getId());
+
+        harness.assertOnBattlefield(player2, "Island");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Galadriel's Dismissal");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void kickedSpellPhasesOutHexproofCreaturesWithoutTargetingThem() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new TrollAscetic());
+
+        castAndResolve(4, player2.getId());
+
+        harness.assertNotOnBattlefield(player2, "Troll Ascetic");
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).containsExactly(creature);
+    }
+
+    @Test
+    void creatureAndOpponentsEquipmentReturnTogetherOnCreaturesControllersUntap() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LoxodonWarhammer());
+        equipment.setAttachedTo(creature.getId());
+
+        castAndResolve(1, creature.getId());
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Loxodon Warhammer");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Loxodon Warhammer");
+
+        harness.performUntapStep(player1);
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Loxodon Warhammer");
+
+        harness.performUntapStep(player2);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(equipment);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    void unkickedSpellCannotTargetNoncreaturePermanent() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.setHand(player1, java.util.List.of(new GaladrielsDismissal()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void spellDoesNotResolveWhenItsCreatureTargetHasAlreadyPhasedOut() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, java.util.List.of(new GaladrielsDismissal()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, creature.getId());
+        harness.setHand(player2, java.util.List.of(new GaladrielsDismissal()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(other);
+        harness.assertInGraveyard(player1, "Galadriel's Dismissal");
+        harness.assertInGraveyard(player2, "Galadriel's Dismissal");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castAndResolve(int mana, UUID targetId) {

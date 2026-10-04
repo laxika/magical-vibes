@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromAllOtherManaVal
 import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "218")
+@CardRegistration(set = "THB", collectorNumber = "339")
 public class HaktosTheUnscarred extends Card {
 
     public HaktosTheUnscarred() {

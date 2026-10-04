@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.cards.s.SilentGravestone;
+import com.github.laxika.magicalvibes.cards.s.ShalaiVoiceOfPlenty;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,7 +22,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GaeasBlessing.class, CallOfTheWild.class, MindStone.class, Millstone.class, FuneralCharm.class})
+@CardUsed({GaeasBlessing.class, CallOfTheWild.class, MindStone.class, Millstone.class, FuneralCharm.class,
+        SilentGravestone.class, ShalaiVoiceOfPlenty.class})
 class GaeasBlessingTest extends BaseCardTest {
 
     // ===== Casting — graveyard targeting + draw =====
@@ -126,6 +129,92 @@ class GaeasBlessingTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only selected graveyard cards are shuffled into the library")
+    void unselectedGraveyardCardsRemain() {
+        Card selected = new MindStone();
+        Card unselected = new CallOfTheWild();
+        harness.setGraveyard(player2, List.of(selected, unselected));
+        int librarySizeBefore = gd.playerDecks.get(player2.getId()).size();
+        harness.setHand(player1, List.of(new GaeasBlessing()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(unselected);
+        assertThat(gd.playerDecks.get(player2.getId())).contains(selected).hasSize(librarySizeBefore + 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Graveyard targets made illegal before resolution remain in the graveyard, but caster draws")
+    void graveyardTargetsMadeUntargetableAreNotShuffled() {
+        Card selected = new MindStone();
+        harness.setGraveyard(player2, List.of(selected));
+        int librarySizeBefore = gd.playerDecks.get(player2.getId()).size();
+        harness.setHand(player1, List.of(new GaeasBlessing()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        harness.addToBattlefield(player2, new SilentGravestone());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(selected);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySizeBefore);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Gaea's Blessing");
+    }
+
+    @Test
+    @DisplayName("Caster still draws when the player target becomes illegal but a graveyard target remains legal")
+    void illegalPlayerTargetDoesNotPreventDrawWithLegalCardTarget() {
+        Card selected = new MindStone();
+        harness.setGraveyard(player2, List.of(selected));
+        harness.setHand(player1, List.of(new GaeasBlessing()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        harness.addToBattlefield(player2, new ShalaiVoiceOfPlenty());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Gaea's Blessing");
+    }
+
+    @Test
+    @DisplayName("Each milled Blessing triggers and resolves even after the first trigger empties the graveyard")
+    void multipleMilledBlessingsTriggerIndependently() {
+        harness.addToBattlefield(player1, new Millstone());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Card first = new GaeasBlessing();
+        Card second = new GaeasBlessing();
+        harness.setLibrary(player2, List.of(first, second));
+        harness.addToBattlefield(player2, new SilentGravestone());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Can choose zero graveyard cards and still shuffle the library and draw")
     void canChooseZeroGraveyardCardsAndStillDraw() {
         harness.setGraveyard(player1, List.of(new MindStone()));
@@ -220,8 +309,7 @@ class GaeasBlessingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FuneralCharm(), new GaeasBlessing()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
 

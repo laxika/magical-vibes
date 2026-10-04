@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "FDN", collectorNumber = "549")
 @CardRegistration(set = "AFC", collectorNumber = "145")
 @CardRegistration(set = "FDC", collectorNumber = "179")
+@CardRegistration(set = "THB", collectorNumber = "295")
 public class TerrorOfMountVelus extends Card {
 
     public TerrorOfMountVelus() {

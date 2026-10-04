@@ -1677,7 +1677,8 @@ public class StepTriggerService {
                                 perm.getCard(), playerId, may, null, perm.getId(), activePlayerId,
                                 new Permanent(perm));
                     } else {
-                        gameData.queueMayAbility(perm.getCard(), playerId, may, null, perm.getId());
+                        gameData.queueMayAbility(perm.getCard(), playerId, may, null, perm.getId(),
+                                activePlayerId, new Permanent(perm));
                     }
                 } else if (!activePlayerPayment && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     TargetFilter targetFilter = perm.getCard().getTargetFilter();
@@ -3417,13 +3418,24 @@ public class StepTriggerService {
                             && !permanentTargetEffects.contains(effect)
                             && !graveyardTargetEffects.contains(effect))
                     .toList();
-            if (!nonTargetEffects.isEmpty()) {
+            List<List<CardEffect>> nonTargetAbilityGroups = new ArrayList<>();
+            List<CardEffect> combinedEffects = new ArrayList<>();
+            for (var registration : perm.getCard().getEffectRegistrations(EffectSlot.PRECOMBAT_MAIN_TRIGGERED)) {
+                if (!nonTargetEffects.contains(registration.effect())) continue;
+                if (registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT) {
+                    nonTargetAbilityGroups.add(List.of(registration.effect()));
+                } else {
+                    combinedEffects.add(registration.effect());
+                }
+            }
+            if (!combinedEffects.isEmpty()) nonTargetAbilityGroups.add(combinedEffects);
+            for (List<CardEffect> abilityEffects : nonTargetAbilityGroups.reversed()) {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         activePlayerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(nonTargetEffects),
+                        new ArrayList<>(abilityEffects),
                         null,
                         perm.getId()
                 );
@@ -4294,6 +4306,14 @@ public class StepTriggerService {
     private record DelayedReturningGraveyardCard(Card card, UUID ownerId) {}
 
     public void handleEndStepTriggers(GameData gameData) {
+        if (gameData.activePlayerId.equals(gameData.monarchPlayerId)) {
+            StackEntry monarchDraw = new StackEntry(StackEntryType.TRIGGERED_ABILITY, null,
+                    gameData.monarchPlayerId, "The monarch draws a card",
+                    List.of(new com.github.laxika.magicalvibes.model.effect.DrawCardForMonarchEndStepEffect()),
+                    gameData.monarchPlayerId, (UUID) null);
+            monarchDraw.setNonTargeting(true);
+            gameData.enqueueTrigger(monarchDraw);
+        }
         if (gameData.planechase != null) planechaseService.step(gameData,
                 EffectSlot.END_STEP_TRIGGERED, EffectSlot.CONTROLLER_END_STEP_TRIGGERED);
         expireNextEndStepTemporaryCopies(gameData);
@@ -5832,7 +5852,7 @@ public class StepTriggerService {
                                 || effect instanceof ConditionalEffect conditional
                                 && conditional.wrapped() instanceof EndStepPlayerTargetedEffect;
                         UUID endStepTargetId = targetsEndStepPlayer ? activePlayerId : null;
-                        gameData.stack.add(new StackEntry(
+                        StackEntry endStepEntry = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 playerId,
@@ -5840,7 +5860,9 @@ public class StepTriggerService {
                                 new ArrayList<>(List.of(effect)),
                                 endStepTargetId,
                                 perm.getId()
-                        ));
+                        );
+                        endStepEntry.setNonTargeting(targetsEndStepPlayer);
+                        gameData.stack.add(endStepEntry);
 
                         gameLogService.append(gameData,
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));

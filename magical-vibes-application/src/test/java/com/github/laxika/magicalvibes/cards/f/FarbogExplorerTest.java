@@ -88,7 +88,7 @@ class FarbogExplorerTest extends BaseCardTest {
     @DisplayName("A tapped defending Swamp still prevents blocking")
     void tappedDefendingSwampPreventsBlocking() {
         Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
         harness.addToBattlefield(player2, new FarbogExplorer());
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new FarbogExplorer());
         attacker.setSummoningSick(false);

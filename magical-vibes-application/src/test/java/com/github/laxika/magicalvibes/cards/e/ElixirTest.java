@@ -82,7 +82,7 @@ class ElixirTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent elixir = harness.addToBattlefieldAndReturn(player1, new Elixir());
-        elixir.setTapped(true);
+        elixir.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Malignus;
 import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
@@ -17,10 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GaseousForm.class, GrizzlyBears.class, Island.class, Malignus.class, MerfolkOfThePearlTrident.class, ProdigalSorcerer.class, Shock.class})
+@CardUsed({GaseousForm.class, Disenchant.class, GrizzlyBears.class, Island.class, Malignus.class, MerfolkOfThePearlTrident.class, ProdigalSorcerer.class, Shock.class})
 class GaseousFormTest extends BaseCardTest {
-
-    // ===== Targeting restriction =====
 
     @Test
     @DisplayName("Can target a creature with Gaseous Form")
@@ -82,8 +81,6 @@ class GaseousFormTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Combat damage prevention — enchanted creature deals no combat damage =====
-
     @Test
     @DisplayName("Enchanted creature deals no combat damage to defending player")
     void enchantedAttackerDealsNoCombatDamageToPlayer() {
@@ -95,9 +92,7 @@ class GaseousFormTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new GaseousForm());
         aura.setAttachedTo(bears.getId());
 
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of());
-        harness.passBothPriorities();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
@@ -121,8 +116,6 @@ class GaseousFormTest extends BaseCardTest {
         // Blocker survives because the enchanted attacker's combat damage is prevented
         harness.assertOnBattlefield(player2, "Merfolk of the Pearl Trident");
     }
-
-    // ===== Combat damage prevention — enchanted creature takes no combat damage =====
 
     @Test
     @DisplayName("Enchanted creature takes no combat damage when blocking")
@@ -182,8 +175,6 @@ class GaseousFormTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Malignus");
     }
 
-    // ===== Non-combat damage is NOT prevented =====
-
     @Test
     @DisplayName("Non-combat damage to enchanted creature is not prevented")
     void nonCombatDamageIsNotPrevented() {
@@ -219,5 +210,41 @@ class GaseousFormTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Gaseous Form does not prevent combat damage from other creatures")
+    void otherAttackerStillDealsCombatDamage() {
+        harness.setLife(player2, 20);
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new GaseousForm());
+        aura.setAttachedTo(enchanted.getId());
+        enchanted.setAttacking(true);
+        other.setAttacking(true);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Destroying Gaseous Form restores the creature's combat damage")
+    void destroyingAuraRestoresCombatDamage() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new GaseousForm());
+        aura.setAttachedTo(attacker.getId());
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0, aura.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Gaseous Form");
+        attacker.setAttacking(true);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
     }
 }

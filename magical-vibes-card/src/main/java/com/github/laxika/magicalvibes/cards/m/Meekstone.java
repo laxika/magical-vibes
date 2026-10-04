@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "7ED", collectorNumber = "307")
+@CardRegistration(set = "LEB", collectorNumber = "261")
 @CardRegistration(set = "2ED", collectorNumber = "261")
 @CardRegistration(set = "6ED", collectorNumber = "299")
 @CardRegistration(set = "5ED", collectorNumber = "389")
@@ -18,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "3ED", collectorNumber = "264")
 @CardRegistration(set = "MPS", collectorNumber = "40")
 @CardRegistration(set = "MB2", collectorNumber = "227")
+@CardRegistration(set = "LEA", collectorNumber = "260")
 public class Meekstone extends Card {
 
     public Meekstone() {

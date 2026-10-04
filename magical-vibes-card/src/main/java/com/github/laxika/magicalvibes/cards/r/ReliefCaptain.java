@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "OGW", collectorNumber = "32")
 @CardRegistration(set = "2X2", collectorNumber = "24")
 @CardRegistration(set = "GN2", collectorNumber = "11")
+@CardRegistration(set = "E01", collectorNumber = "19")
 public class ReliefCaptain extends Card {
 
     public ReliefCaptain() {

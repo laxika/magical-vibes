@@ -19,8 +19,7 @@ class GoblinPickerTest extends BaseCardTest {
     void discardingADrawsAndTapsGoblinPicker() {
         Permanent picker = addReadyPicker();
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -40,6 +39,76 @@ class GoblinPickerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void discardAndTapArePaidBeforeDrawing() {
+        Permanent picker = addReadyPicker();
+        Forest discarded = new Forest();
+        Forest drawn = new Forest();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(picker.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithOnlyGreenMana() {
+        Permanent picker = addReadyPicker();
+        Forest card = new Forest();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(picker.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent picker = addReadyPicker();
+        picker.setTapped(true);
+        Forest card = new Forest();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        Permanent picker = harness.addToBattlefieldAndReturn(player1, new GoblinPicker());
+        picker.setSummoningSick(true);
+        Forest card = new Forest();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(picker.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyPicker() {

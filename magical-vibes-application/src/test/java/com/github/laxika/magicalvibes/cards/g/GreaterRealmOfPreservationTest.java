@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.o.OrcishArtillery;
@@ -101,7 +100,7 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.addToBattlefield(player1, new GreaterRealmOfPreservation());
         Permanent chosen = addCreatureReady(player2, new HillGiant());
-        Permanent other = addCreatureReady(player2, new HillGiant());
+        addCreatureReady(player2, new HillGiant());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -185,5 +184,51 @@ class GreaterRealmOfPreservationTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerSourceNextDamageShields)
                 .anyMatch(shield -> shield.sourceId().equals(artillery.getId()));
+    }
+
+    @Test
+    @DisplayName("Later damage from the same source is dealt after its shield is consumed")
+    void laterDamageFromChosenSourceIsNotPrevented() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new GreaterRealmOfPreservation());
+        Permanent artillery = addCreatureReady(player2, new OrcishArtillery());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artillery.getId());
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+
+        artillery.setTapped(false);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Can prevent damage to you from a source you control")
+    void preventsDamageFromYourOwnSource() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new GreaterRealmOfPreservation());
+        Permanent artillery = addCreatureReady(player1, new OrcishArtillery());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artillery.getId());
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
     }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "224")
+@CardRegistration(set = "MOM", collectorNumber = "306")
 public class ErrantAndGiada extends Card {
 
     public ErrantAndGiada() {

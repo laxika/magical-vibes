@@ -170,7 +170,7 @@ class FearOfBurningAliveTest extends BaseCardTest {
     void combatDamageDoesNotTrigger() {
         addCreatureReady(player1, new FearOfBurningAlive());
         Permanent target = addCreatureReady(player2, new SpinedWurm());
-        target.setTapped(true);
+        target.tap();
         setDelirium();
 
         declareAttackers(List.of(0));

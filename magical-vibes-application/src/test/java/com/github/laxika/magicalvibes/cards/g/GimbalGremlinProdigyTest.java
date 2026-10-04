@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.n.NoggleRobber;
 import com.github.laxika.magicalvibes.cards.n.NoviceInspector;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -45,10 +45,10 @@ class GimbalGremlinProdigyTest extends BaseCardTest {
         advanceToEndStep(player1);
         harness.passBothPriorities();
 
-        Permanent gremlin = findPermanent(player1, "Gremlin");
-        assertThat(gremlin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        assertThat(gremlin.getEffectivePower()).isEqualTo(2);
-        assertThat(gremlin.getEffectiveToughness()).isEqualTo(2);
+        Permanent gremlin = gremlins(player1).getFirst();
+        assertThat(gremlin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gremlin.getEffectivePower()).isEqualTo(3);
+        assertThat(gremlin.getEffectiveToughness()).isEqualTo(3);
         assertThat(gqs.isArtifact(gd, gremlin)).isTrue();
         assertThat(gqs.hasKeyword(gd, gremlin, Keyword.TRAMPLE)).isTrue();
     }
@@ -63,8 +63,82 @@ class GimbalGremlinProdigyTest extends BaseCardTest {
         advanceToEndStep(player1);
         harness.passBothPriorities();
 
-        Permanent gremlin = findPermanent(player1, "Gremlin");
-        assertThat(gremlin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        Permanent gremlin = gremlins(player1).getFirst();
+        assertThat(gremlin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The newly created Gremlin counts itself even with no preexisting artifact tokens")
+    void firstGremlinSurvivesWithOneCounter() {
+        harness.addToBattlefield(player1, new GimbalGremlinProdigy());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gremlins(player1)).hasSize(1);
+        assertThat(gremlins(player1).getFirst().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated Gremlins share a name and do not increase the distinct-name count")
+    void repeatedGremlinsCountAsOneName() {
+        harness.addToBattlefield(player1, new GimbalGremlinProdigy());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gremlins(player1)).hasSize(2).allSatisfy(gremlin ->
+                assertThat(gremlin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1));
+    }
+
+    @Test
+    @DisplayName("Gimbal does not trigger at an opponent's end step")
+    void doesNotCreateGremlinOnOpponentsEndStep() {
+        harness.addToBattlefield(player1, new GimbalGremlinProdigy());
+
+        advanceToEndStep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gremlins(player1)).isEmpty();
+        assertThat(gremlins(player2)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Artifact tokens controlled by an opponent are not counted")
+    void ignoresOpponentsArtifactTokens() {
+        harness.addToBattlefield(player2, new GimbalGremlinProdigy());
+        advanceToEndStep(player2);
+        harness.passBothPriorities();
+        assertThat(gremlins(player2)).hasSize(1);
+        harness.addToBattlefield(player1, new GimbalGremlinProdigy());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gremlins(player1)).hasSize(1);
+        assertThat(gremlins(player1).getFirst().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The generated Gremlin has the default name Gremlin Token")
+    void createsGremlinWithDefaultTokenName() {
+        createClue();
+        harness.addToBattlefield(player1, new GimbalGremlinProdigy());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gremlins(player1)).hasSize(1);
+        assertThat(gremlins(player1).getFirst().getCard().getName()).isEqualTo("Gremlin Token");
+    }
+
+    private List<Permanent> gremlins(Player player) {
+        return gd.playerBattlefields.get(player.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.GREMLIN))
+                .toList();
     }
 
     private void createClue() {
@@ -73,8 +147,7 @@ class GimbalGremlinProdigyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void createClueAndTwoTreasures() {
@@ -84,22 +157,19 @@ class GimbalGremlinProdigyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player, TurnStep.END_STEP);
     }
 }

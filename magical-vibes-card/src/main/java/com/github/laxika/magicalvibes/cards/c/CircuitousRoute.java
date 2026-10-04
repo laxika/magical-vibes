@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "125")
+@CardRegistration(set = "ZNC", collectorNumber = "62")
 public class CircuitousRoute extends Card {
 
     public CircuitousRoute() {

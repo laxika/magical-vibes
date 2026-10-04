@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -24,10 +26,7 @@ class GhostSpectralSaboteurTest extends BaseCardTest {
         ghost.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
@@ -49,5 +48,21 @@ class GhostSpectralSaboteurTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"BLUE", "BLACK"})
+    @DisplayName("Ghost can be cast during an opponent's combat with either hybrid color")
+    void canBeCastDuringOpponentsCombat(ManaColor hybridColor) {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setHand(player1, List.of(new GhostSpectralSaboteur()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, hybridColor, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ghost, Spectral Saboteur");
     }
 }

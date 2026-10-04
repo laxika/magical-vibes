@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 
 @CardRegistration(set = "SOM", collectorNumber = "14")
 @CardRegistration(set = "2X2", collectorNumber = "16")
+@CardRegistration(set = "C17", collectorNumber = "64")
 public class LeoninArbiter extends Card {
 
     public LeoninArbiter() {
