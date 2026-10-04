@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FyndhornElves;
 import com.github.laxika.magicalvibes.model.Card;
@@ -20,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IceCauldron.class, BalduvianBears.class})
+@CardUsed({IceCauldron.class, BalduvianBears.class, Forest.class, FyndhornElves.class, Disenchant.class})
 class IceCauldronTest extends BaseCardTest {
 
     /**
@@ -241,5 +242,118 @@ class IceCauldronTest extends BaseCardTest {
         UUID cauldronCardId = findPermanent(player1, "Ice Cauldron").getCard().getId();
         assertThat(harness.getGameData().notedMana.get(cauldronCardId))
                 .containsEntry(ManaColor.GREEN, 1);
+    }
+
+    @Test
+    @DisplayName("Destroying Ice Cauldron in response does not prevent exiling and casting the card")
+    void firstAbilityResolvesAfterSourceIsDestroyed() {
+        Card bears = new BalduvianBears();
+        harness.addToBattlefield(player1, new IceCauldron());
+        harness.setHand(player1, List.of(bears));
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 0, 0, null);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Ice Cauldron"));
+        harness.assertNotOnBattlefield(player1, "Ice Cauldron");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertNotInHand(player1, "Balduvian Bears");
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromExile(player1, bears.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Exiled cards remain castable after Ice Cauldron is destroyed")
+    void castPermissionSurvivesSourceLeaving() {
+        Card bears = exileBalduvianBearsForOneGreenOneColorless();
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Ice Cauldron"));
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromExile(player1, bears.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("The exiled card can be cast without retrieving the noted mana")
+    void castsWithOtherManaWhileCounterRemains() {
+        Card bears = exileBalduvianBearsForOneGreenOneColorless();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castFromExile(player1, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+        assertThat(findPermanent(player1, "Ice Cauldron").getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Declining a later exile keeps the mana restricted to the last card actually exiled")
+    void decliningLaterExileRetainsLastExiledCard() {
+        Card bears = exileBalduvianBearsForOneGreenOneColorless();
+        Permanent cauldron = findPermanent(player1, "Ice Cauldron");
+        cauldron.untap();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.getGameData().playerManaPools.get(player1.getId()).clear();
+        cauldron.untap();
+        harness.setHand(player1, List.of(new FyndhornElves()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, 0, 2, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        cauldron.untap();
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.castFromExile(player1, bears.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInHand(player1, "Fyndhorn Elves");
+    }
+
+    @Test
+    @DisplayName("Mana from the latest activation cannot pay for an earlier exiled card")
+    void latestManaCannotCastEarlierCard() {
+        Card bears = exileBalduvianBearsForOneGreenOneColorless();
+        Permanent cauldron = findPermanent(player1, "Ice Cauldron");
+        cauldron.untap();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.getGameData().playerManaPools.get(player1.getId()).clear();
+        cauldron.untap();
+        Card elves = new FyndhornElves();
+        harness.setHand(player1, List.of(elves));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, 0, 2, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        cauldron.untap();
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.castFromExile(player1, elves.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Fyndhorn Elves");
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Cast permission does not allow casting a creature while another spell is on the stack")
+    void castPermissionRespectsNormalTiming() {
+        Card bears = exileBalduvianBearsForOneGreenOneColorless();
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Ice Cauldron"));
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
