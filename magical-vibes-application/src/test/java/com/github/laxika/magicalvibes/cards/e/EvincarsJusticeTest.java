@@ -28,8 +28,7 @@ class EvincarsJusticeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // 1/1 Raiders take lethal damage on both sides.
         assertThat(findPermanents(player1, "Mogg Raider")).isEmpty();
@@ -46,8 +45,7 @@ class EvincarsJusticeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(findPermanents(player2, "Horned Turtle")).hasSize(1);
         assertThat(turtle.getMarkedDamage()).isEqualTo(2);
@@ -61,8 +59,7 @@ class EvincarsJusticeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(handNames(player1)).isEmpty();
         assertThat(graveyardNames(player1)).containsExactly("Evincar's Justice");
@@ -122,6 +119,50 @@ class EvincarsJusticeTest extends BaseCardTest {
 
         assertThat(handNames(player1)).doesNotContain("Evincar's Justice");
         assertThat(graveyardNames(player1)).containsExactly("Evincar's Justice");
+    }
+
+    @Test
+    @DisplayName("Buyback can be paid again, but does not carry over to a later cast")
+    void buybackIsChosenSeparatelyForEachCast() {
+        harness.setHand(player1, List.of(new EvincarsJustice()));
+        for (int cast = 0; cast < 2; cast++) {
+            harness.addMana(player1, ManaColor.BLACK, 2);
+            harness.addMana(player1, ManaColor.COLORLESS, 5);
+            harness.castSorceryWithBuyback(player1, 0, null);
+            harness.passBothPriorities();
+            assertThat(handNames(player1)).containsExactly("Evincar's Justice");
+            assertThat(graveyardNames(player1)).isEmpty();
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        }
+
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(handNames(player1)).isEmpty();
+        assertThat(graveyardNames(player1)).containsExactly("Evincar's Justice");
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Damages creatures that entered after the spell was cast")
+    void damagesCreaturesPresentAtResolution() {
+        harness.setHand(player1, List.of(new EvincarsJustice()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, 0);
+        Permanent turtle = harness.addToBattlefieldAndReturn(player1, new HornedTurtle());
+        harness.addToBattlefield(player2, new MoggRaider());
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Horned Turtle");
+        assertThat(turtle.getMarkedDamage()).isEqualTo(2);
+        harness.assertNotOnBattlefield(player2, "Mogg Raider");
+        harness.assertInGraveyard(player2, "Mogg Raider");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
     }
 
     private List<String> handNames(Player player) {
