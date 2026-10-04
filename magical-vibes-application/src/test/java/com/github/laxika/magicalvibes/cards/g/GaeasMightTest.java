@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -26,14 +25,13 @@ class GaeasMightTest extends BaseCardTest {
     @Test
     @DisplayName("Boosts target creature +1/+1 for each distinct basic land type you control")
     void boostsByDomainCount() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Plains());
         harness.addToBattlefield(player1, new Swamp());
         harness.setHand(player1, List.of(new GaeasMight()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.getPowerModifier()).isEqualTo(3);
@@ -45,14 +43,13 @@ class GaeasMightTest extends BaseCardTest {
     @Test
     @DisplayName("Duplicate basic types and opponent lands do not raise the count")
     void countsDistinctControllerTypesOnly() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player2, new Island());
         harness.setHand(player1, List.of(new GaeasMight()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.getPowerModifier()).isEqualTo(1);
@@ -62,12 +59,11 @@ class GaeasMightTest extends BaseCardTest {
     @Test
     @DisplayName("Boost wears off at cleanup step")
     void boostWearsOffAtCleanup() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Forest());
         harness.setHand(player1, List.of(new GaeasMight()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
         harness.forceStep(TurnStep.END_STEP);
@@ -109,6 +105,37 @@ class GaeasMightTest extends BaseCardTest {
         assertThat(bear.getToughnessModifier()).isEqualTo(2);
         assertThat(bear.getEffectivePower()).isEqualTo(4);
         assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Counts basic land types at resolution rather than at casting")
+    void countsDomainAtResolution() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new GaeasMight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, bear.getId());
+        harness.addToBattlefield(player1, new Plains());
+        harness.passBothPriorities();
+
+        assertThat(bear.getPowerModifier()).isEqualTo(2);
+        assertThat(bear.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The resolved bonus does not change when domain changes")
+    void resolvedBonusRemainsFixed() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setHand(player1, List.of(new GaeasMight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+        harness.addToBattlefield(player1, new Plains());
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
     }
 
     @Test
