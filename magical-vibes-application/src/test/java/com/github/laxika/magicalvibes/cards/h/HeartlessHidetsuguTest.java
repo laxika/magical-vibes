@@ -86,4 +86,48 @@ class HeartlessHidetsuguTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sickness");
     }
+
+    @Test
+    @DisplayName("Uses each player's life total at resolution")
+    void usesLifeTotalsAtResolution() {
+        addCreatureReady(player1, new HeartlessHidetsugu());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.setLife(player1, 13);
+        harness.setLife(player2, 31);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 7);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Damages both players when the opponent controls Hidetsugu")
+    void opponentCanActivateAndDamageBothPlayers() {
+        addCreatureReady(player2, new HeartlessHidetsugu());
+        harness.setLife(player1, 17);
+        harness.setLife(player2, 24);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 9);
+        harness.assertLife(player2, 12);
+    }
+
+    @Test
+    @DisplayName("Cannot activate again while tapped")
+    void cannotActivateAgainWhileTapped() {
+        addCreatureReady(player1, new HeartlessHidetsugu());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 10);
+        assertThat(gd.stack).isEmpty();
+    }
 }
