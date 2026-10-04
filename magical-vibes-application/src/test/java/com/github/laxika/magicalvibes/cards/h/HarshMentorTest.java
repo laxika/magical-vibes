@@ -1,15 +1,20 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.b.BloodlustInciter;
+import com.github.laxika.magicalvibes.cards.c.Censor;
+import com.github.laxika.magicalvibes.cards.e.EvolvingWilds;
+import com.github.laxika.magicalvibes.cards.s.SacredCat;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HarshMentor.class, BloodlustInciter.class, EvolvingWilds.class, Censor.class, SacredCat.class})
 class HarshMentorTest extends BaseCardTest {
 
     @Test
@@ -87,6 +93,92 @@ class HarshMentorTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("A sacrificed land's non-mana ability still triggers before the land ability resolves")
+    void sacrificedLandAbilityTriggers() {
+        harness.addToBattlefield(player1, new HarshMentor());
+        harness.addToBattlefield(player2, new EvolvingWilds());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Two Harsh Mentors each deal damage for one opponent activation")
+    void multipleMentorsTriggerIndependently() {
+        harness.addToBattlefield(player1, new HarshMentor());
+        harness.addToBattlefield(player1, new HarshMentor());
+        harness.addToBattlefieldAndReturn(player2, new BloodlustInciter()).setSummoningSick(false);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2, 0, null, harness.getPermanentId(player1, "Harsh Mentor"));
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A Harsh Mentor trigger still deals damage after its source leaves the battlefield")
+    void triggerResolvesAfterMentorLeaves() {
+        harness.addToBattlefield(player1, new HarshMentor());
+        harness.addToBattlefieldAndReturn(player2, new BloodlustInciter()).setSummoningSick(false);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2, 0, null, harness.getPermanentId(player2, "Bloodlust Inciter"));
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Cycling from hand does not trigger Harsh Mentor")
+    void cyclingDoesNotTrigger() {
+        harness.addToBattlefield(player1, new HarshMentor());
+        harness.setHand(player2, List.of(new Censor()));
+        harness.setLibrary(player2, List.of(new Censor()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.setLife(player2, 20);
+
+        harness.activateHandAbility(player2, 0, null);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player2, "Censor");
+    }
+
+    @Test
+    @DisplayName("Embalm from the graveyard does not trigger Harsh Mentor")
+    void embalmDoesNotTrigger() {
+        harness.addToBattlefield(player1, new HarshMentor());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player2, List.of(new SacredCat()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.setLife(player2, 20);
+
+        harness.activateGraveyardAbility(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Sacred Cat");
+    }
+
     private void addPermanentWithNonManaAbility(Player player, CardType type) {
         addPermanentWithAbility(player, type, new BoostSelfEffect(1, 0));
     }
@@ -96,8 +188,6 @@ class HarshMentorTest extends BaseCardTest {
         card.setName("Ability Source");
         card.setType(type);
         card.addActivatedAbility(new ActivatedAbility(true, null, List.of(effect), "{T}: ability."));
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        harness.addToBattlefieldAndReturn(player, card).setSummoningSick(false);
     }
 }
