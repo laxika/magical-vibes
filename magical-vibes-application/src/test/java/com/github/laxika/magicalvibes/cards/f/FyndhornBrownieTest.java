@@ -130,6 +130,53 @@ class FyndhornBrownieTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
+    @Test
+    @DisplayName("Cannot activate the tap ability with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        Permanent brownie = addCreatureReady(player1, new FyndhornBrownie());
+        brownie.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new FyndhornBrownie());
+        addBrownieMana(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(brownie.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An already untapped creature is a legal target")
+    void canTargetUntappedCreature() {
+        Permanent brownie = addCreatureReady(player1, new FyndhornBrownie());
+        Permanent target = addCreatureReady(player2, new FyndhornBrownie());
+        addBrownieMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(brownie.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent brownie = addCreatureReady(player1, new FyndhornBrownie());
+        Permanent target = addCreatureReady(player2, new FyndhornBrownie());
+        target.tap();
+        addBrownieMana(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(brownie);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addBrownieMana(Player player) {
         harness.addMana(player, ManaColor.GREEN, 1);
         harness.addMana(player, ManaColor.COLORLESS, 2);
