@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -85,6 +84,63 @@ class GwaihirGreatestOfTheEaglesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Bird")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Gwaihir creates a Bird during an opponent's end step")
+    void createsBirdDuringOpponentsEndStep() {
+        addCreatureReady(player1, new GwaihirGreatestOfTheEagles());
+        gd.lifeGainedThisTurn.put(player1.getId(), 4);
+
+        advanceToEndStep(player2);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Bird")).hasSize(1);
+        assertThat(findPermanents(player2, "Bird")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's life gain does not satisfy Gwaihir's condition")
+    void opponentsLifeGainDoesNotCreateBird() {
+        addCreatureReady(player1, new GwaihirGreatestOfTheEagles());
+        gd.lifeGainedThisTurn.put(player2.getId(), 3);
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Bird")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Life gained after the end step begins does not trigger Gwaihir")
+    void lifeGainedTooLateDoesNotTrigger() {
+        addCreatureReady(player1, new GwaihirGreatestOfTheEagles());
+        gd.lifeGainedThisTurn.put(player1.getId(), 2);
+
+        harness.withAutoStop(TurnStep.END_STEP, () -> advanceToEndStep(player1));
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+        gd.lifeGainedThisTurn.put(player1.getId(), 3);
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Bird")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Gwaihir's flying grant expires at the end of the turn")
+    void grantedFlyingExpiresAtEndOfTurn() {
+        addCreatureReady(player1, new GwaihirGreatestOfTheEagles());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+        harness.handlePermanentChosen(player1, bears.getId());
+        resolveAllTriggers();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 
     private void advanceToEndStep(Player activePlayer) {
