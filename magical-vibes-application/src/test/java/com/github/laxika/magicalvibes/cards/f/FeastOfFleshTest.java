@@ -78,4 +78,51 @@ class FeastOfFleshTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Boreal Centaur");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
     }
+
+    @Test
+    @DisplayName("Counts copies at resolution rather than when cast")
+    void countsCopiesAtResolution() {
+        harness.addToBattlefield(player2, new BorealCentaur());
+        harness.setHand(player1, List.of(new FeastOfFlesh()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Boreal Centaur"));
+        harness.setGraveyard(player2, List.of(new FeastOfFlesh(), new FeastOfFlesh()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Boreal Centaur");
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Can target your own creature and gains the full amount even for lethal damage")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new BorealDruid());
+        harness.setGraveyard(player2, List.of(new FeastOfFlesh(), new FeastOfFlesh()));
+        harness.setHand(player1, List.of(new FeastOfFlesh()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, harness.getPermanentId(player1, "Boreal Druid"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Boreal Druid");
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not gain life when the only target has left the battlefield")
+    void doesNotGainLifeWithIllegalTarget() {
+        harness.addToBattlefield(player2, new BorealCentaur());
+        harness.setHand(player1, List.of(new FeastOfFlesh()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Boreal Centaur"));
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Feast of Flesh");
+    }
 }
