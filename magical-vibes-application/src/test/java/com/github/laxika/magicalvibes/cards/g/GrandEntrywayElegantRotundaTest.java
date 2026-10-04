@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.i.InnocuousRat;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -14,7 +14,7 @@ import java.util.List;
 import static com.github.laxika.magicalvibes.model.ManaColor.WHITE;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(GrandEntrywayElegantRotunda.class)
+@CardUsed({GrandEntrywayElegantRotunda.class, InnocuousRat.class})
 class GrandEntrywayElegantRotundaTest extends BaseCardTest {
 
     @Test
@@ -32,8 +32,8 @@ class GrandEntrywayElegantRotundaTest extends BaseCardTest {
     @Test
     void unlockingElegantRotundaPutsCountersOnUpToTwoTargetCreatures() {
         Permanent room = castRoom(0);
-        Permanent firstCreature = harness.addToBattlefieldAndReturn(player1, simpleCreature("First creature"));
-        Permanent secondCreature = harness.addToBattlefieldAndReturn(player1, simpleCreature("Second creature"));
+        Permanent firstCreature = harness.addToBattlefieldAndReturn(player1, new InnocuousRat());
+        Permanent secondCreature = harness.addToBattlefieldAndReturn(player1, new InnocuousRat());
         harness.addMana(player1, WHITE, 3);
 
         harness.unlockRoomDoor(player1, gd.playerBattlefields.get(player1.getId()).indexOf(room), 1);
@@ -52,18 +52,79 @@ class GrandEntrywayElegantRotundaTest extends BaseCardTest {
         harness.castModalSorcery(player1, 0, doorIndex, List.of());
         harness.passBothPriorities();
         resolveAllTriggers();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.ROOM))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Grand Entryway // Elegant Rotunda");
     }
 
-    private Card simpleCreature(String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}{W}");
-        card.setPower(1);
-        card.setToughness(1);
-        return card;
+    @Test
+    void castingElegantRotundaCanTargetAnOpponentsCreatureWithoutCreatingAGlimmer() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new InnocuousRat());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new InnocuousRat());
+
+        Permanent room = castRoom(1);
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(room.isRoomDoorUnlocked(0)).isFalse();
+        assertThat(room.isRoomDoorUnlocked(1)).isTrue();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(countPermanents(player1, "Glimmer")).isZero();
+    }
+
+    @Test
+    void elegantRotundaCanChooseZeroTargetsEvenWhenCreaturesAreAvailable() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new InnocuousRat());
+
+        castRoom(1);
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(countPermanents(player1, "Glimmer")).isZero();
+    }
+
+    @Test
+    void elegantRotundaCanResolveWithoutAnyCreatures() {
+        Permanent room = castRoom(1);
+
+        assertThat(room.isRoomDoorUnlocked(1)).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(countPermanents(player1, "Glimmer")).isZero();
+    }
+
+    @Test
+    void unlockingGrandEntrywayAfterCastingElegantRotundaCreatesExactlyOneGlimmer() {
+        Permanent room = castRoom(1);
+        harness.addMana(player1, WHITE, 2);
+
+        harness.unlockRoomDoor(player1, gd.playerBattlefields.get(player1.getId()).indexOf(room), 0);
+        resolveAllTriggers();
+
+        assertThat(room.isRoomFullyUnlocked()).isTrue();
+        assertThat(countPermanents(player1, "Glimmer")).isEqualTo(1);
+        Permanent glimmer = findPermanent(player1, "Glimmer");
+        assertThat(gqs.getEffectivePower(gd, glimmer)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, glimmer)).isEqualTo(1);
+        assertThat(glimmer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void elegantRotundaStillCountersTheRemainingTargetWhenOneTargetLeaves() {
+        Permanent room = castRoom(0);
+        Permanent glimmer = findPermanent(player1, "Glimmer");
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new InnocuousRat());
+        harness.addMana(player1, WHITE, 3);
+
+        harness.unlockRoomDoor(player1, gd.playerBattlefields.get(player1.getId()).indexOf(room), 1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, glimmer.getId());
+        harness.handlePermanentChosen(player1, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(glimmer);
+        resolveAllTriggers();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Glimmer")).isZero();
     }
 }
