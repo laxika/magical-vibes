@@ -56,4 +56,53 @@ class HaplessResearcherTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Border Patrol");
         harness.assertInGraveyard(player1, "Border Patrol");
     }
+
+    @Test
+    @DisplayName("May discard the drawn card instead of a card already in hand")
+    void mayDiscardTheDrawnCard() {
+        harness.addToBattlefield(player1, new HaplessResearcher());
+        harness.setHand(player1, List.of(new SuntailHawk()));
+        harness.setLibrary(player1, List.of(new BorderPatrol()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInHand(player1, "Suntail Hawk");
+        harness.assertNotInHand(player1, "Border Patrol");
+        harness.assertInGraveyard(player1, "Border Patrol");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick on the opponent's turn")
+    void activatesWhileTappedAndSummoningSickOnOpponentsTurn() {
+        var researcher = harness.addToBattlefieldAndReturn(player1, new HaplessResearcher());
+        researcher.tap();
+        researcher.setSummoningSick(true);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of(new SuntailHawk()));
+        harness.setLibrary(player1, List.of(new BorderPatrol()));
+        harness.setHand(player2, List.of(new SuntailHawk()));
+        harness.setLibrary(player2, List.of(new BorderPatrol()));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Hapless Researcher");
+        harness.assertNotInHand(player1, "Border Patrol");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Border Patrol");
+        harness.assertInGraveyard(player1, "Suntail Hawk");
+        harness.assertInHand(player2, "Suntail Hawk");
+        harness.assertNotInHand(player2, "Border Patrol");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
 }
