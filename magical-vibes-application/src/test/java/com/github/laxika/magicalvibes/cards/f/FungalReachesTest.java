@@ -35,6 +35,7 @@ class FungalReachesTest extends BaseCardTest {
 
         assertThat(reaches.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
         assertThat(reaches.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
     @Test
@@ -54,6 +55,63 @@ class FungalReachesTest extends BaseCardTest {
         assertThat(gameData.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gameData.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
         assertThat(reaches.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
+        assertThat(reaches.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Storage mana can be produced after tapping the land to pay its generic cost")
+    void storageManaCanBeProducedWhileTapped() {
+        Permanent reaches = harness.addToBattlefieldAndReturn(player1, new FungalReaches());
+        reaches.setCounterCount(CounterType.STORAGE, 2);
+        harness.tapPermanent(player1, 0);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "2");
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(reaches.getCounterCount(CounterType.STORAGE)).isZero();
         assertThat(reaches.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Storage mana can be produced repeatedly without tapping")
+    void storageManaCanBeProducedRepeatedly() {
+        Permanent reaches = harness.addToBattlefieldAndReturn(player1, new FungalReaches());
+        reaches.setCounterCount(CounterType.STORAGE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "1");
+        harness.handleListChoice(player1, "GREEN");
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "1");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(reaches.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(reaches.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Choosing zero storage counters still pays the generic cost")
+    void choosingZeroCountersProducesNoMana() {
+        Permanent reaches = harness.addToBattlefieldAndReturn(player1, new FungalReaches());
+        reaches.setCounterCount(CounterType.STORAGE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "0");
+
+        assertThat(reaches.getCounterCount(CounterType.STORAGE)).isEqualTo(2);
+        assertThat(reaches.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }
