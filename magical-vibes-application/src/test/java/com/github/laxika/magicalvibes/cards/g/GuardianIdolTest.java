@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GuardianIdol.class})
 class GuardianIdolTest extends BaseCardTest {
@@ -89,5 +90,81 @@ class GuardianIdolTest extends BaseCardTest {
 
     private Permanent addIdolReady(Player player) {
         return addCreatureReady(player, new GuardianIdol());
+    }
+
+    @Test
+    @DisplayName("A tapped Guardian Idol can animate and remains tapped")
+    void tappedIdolCanAnimate() {
+        Permanent idol = addIdolReady(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gqs.isCreature(gd, idol)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, idol)).isTrue();
+        assertThat(idol.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, idol)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, idol)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An animated Guardian Idol retains its mana ability")
+    void animatedIdolCanProduceMana() {
+        Permanent idol = addIdolReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gqs.isCreature(gd, idol)).isTrue();
+        assertThat(idol.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated animation does not accumulate power or toughness")
+    void repeatedAnimationKeepsTwoTwo() {
+        Permanent idol = addIdolReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, idol)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, idol)).isEqualTo(2);
+        assertThat(idol.getTransientSubtypes()).containsExactly(CardSubtype.GOLEM);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A newly controlled Idol cannot tap for mana after animation")
+    void animationMakesTapAbilitySubjectToSummoningSickness() {
+        Permanent idol = harness.addToBattlefieldAndReturn(player1, new GuardianIdol());
+        idol.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(idol.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A newly controlled noncreature Idol can tap for mana")
+    void noncreatureIdolIsNotRestrictedBySummoningSickness() {
+        Permanent idol = harness.addToBattlefieldAndReturn(player1, new GuardianIdol());
+        idol.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(idol.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 }
