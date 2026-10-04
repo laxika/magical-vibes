@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -8,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HamletbackGoliath.class, HillGiant.class, GrizzlyBears.class, Ornithopter.class,
+        GiantGrowth.class, GloriousAnthem.class})
 class HamletbackGoliathTest extends BaseCardTest {
 
     private Permanent goliath() {
@@ -28,9 +33,7 @@ class HamletbackGoliathTest extends BaseCardTest {
         assertThat(goliath().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Cast a 3/3 Hill Giant — Goliath's ability triggers for it entering.
-        harness.setHand(player1, List.of(new HillGiant()));
-        harness.addMana(player1, ManaColor.RED, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HillGiant(), "{3}{R}");
 
         harness.passBothPriorities(); // resolve Hill Giant spell → Goliath triggers, may-ability on stack
         harness.passBothPriorities(); // resolve may-ability → may prompt
@@ -49,9 +52,7 @@ class HamletbackGoliathTest extends BaseCardTest {
     void noCountersOnDecline() {
         harness.addToBattlefield(player1, new HamletbackGoliath());
 
-        harness.setHand(player1, List.of(new HillGiant()));
-        harness.addMana(player1, ManaColor.RED, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HillGiant(), "{3}{R}");
 
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -72,9 +73,7 @@ class HamletbackGoliathTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
 
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -89,9 +88,7 @@ class HamletbackGoliathTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger when Hamletback Goliath itself enters")
     void doesNotTriggerForSelfEntering() {
-        harness.setHand(player1, List.of(new HamletbackGoliath()));
-        harness.addMana(player1, ManaColor.RED, 7);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HamletbackGoliath(), "{6}{R}");
 
         harness.passBothPriorities(); // resolve Goliath spell — it enters
 
@@ -104,9 +101,7 @@ class HamletbackGoliathTest extends BaseCardTest {
     void zeroPowerCreatureYieldsNoCounters() {
         harness.addToBattlefield(player1, new HamletbackGoliath());
 
-        harness.setHand(player1, List.of(new Ornithopter()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Ornithopter(), "{0}");
 
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -116,5 +111,39 @@ class HamletbackGoliathTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(goliath().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+    @Test
+    @DisplayName("Uses the entering creature's power when the ability resolves")
+    void usesPowerAfterResponseToTrigger() {
+        harness.addToBattlefield(player1, new HamletbackGoliath());
+        harness.castFromHand(player1, new HillGiant(), "{3}{R}");
+        harness.passBothPriorities();
+
+        Permanent giant = gd.playerBattlefields.get(player1.getId()).get(1);
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, giant.getId());
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(6);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(goliath().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Includes continuous power modifiers on the entering creature")
+    void includesContinuousPowerModifiers() {
+        harness.addToBattlefield(player1, new HamletbackGoliath());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.castFromHand(player1, new HillGiant(), "{3}{R}");
+        harness.passBothPriorities();
+
+        Permanent giant = gd.playerBattlefields.get(player1.getId()).get(2);
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(4);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(goliath().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
 }
