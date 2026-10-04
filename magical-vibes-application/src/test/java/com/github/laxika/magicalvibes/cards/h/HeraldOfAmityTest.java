@@ -98,6 +98,87 @@ class HeraldOfAmityTest extends BaseCardTest {
         assertThat(herald.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Choosing one of multiple Auras returns the unchosen Aura to the library")
+    void castsOnlyOneAura() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        HolyStrength chosen = new HolyStrength();
+        HolyStrength unchosen = new HolyStrength();
+        castHerald(List.of(chosen, unchosen), 4);
+
+        PendingInteraction.ImprovisationCapstoneCastChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ImprovisationCapstoneCastChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(chosen.getId(), unchosen.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unchosen);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == chosen
+                        && target.getId().equals(permanent.getAttachedTo()))
+                .noneMatch(permanent -> permanent.getCard() == unchosen);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Declining the Aura cast returns a short library in full")
+    void mayDeclineAuraWithShortLibrary() {
+        HolyStrength aura = new HolyStrength();
+        List<Card> library = List.of(aura, new GrizzlyBears());
+        castHerald(library, 4);
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(library);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == aura);
+    }
+
+    @Test
+    @DisplayName("Only the top eight cards are exiled and returned below the untouched library")
+    void preservesCardsBelowTopEight() {
+        HolyStrength ninthCard = new HolyStrength();
+        Card tenthCard = new GrizzlyBears();
+        List<Card> library = List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                ninthCard, tenthCard);
+        castHerald(library, 4);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        List<Card> remainingLibrary = gd.playerDecks.get(player1.getId());
+        assertThat(remainingLibrary).hasSize(10);
+        assertThat(remainingLibrary.subList(0, 2)).containsExactly(ninthCard, tenthCard);
+        assertThat(remainingLibrary.subList(2, 10))
+                .containsExactlyInAnyOrderElementsOf(library.subList(0, 8));
+    }
+
+    @Test
+    @DisplayName("Attack boost counts Auras at resolution and retains that amount afterward")
+    void attackBoostUsesResolutionCount() {
+        Permanent herald = addCreatureReady(player1, new HeraldOfAmity());
+        Permanent firstAura = addAttachedAura(player1, herald);
+        declareAttackers(player1, List.of(0));
+        assertThat(gd.stack).isNotEmpty();
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstAura);
+        addAttachedAura(player1, herald);
+        addAttachedAura(player1, herald);
+        resolveAllTriggers();
+
+        assertThat(herald.getPowerModifier()).isEqualTo(2);
+        assertThat(herald.getToughnessModifier()).isEqualTo(2);
+        addAttachedAura(player1, herald);
+        assertThat(herald.getPowerModifier()).isEqualTo(2);
+        assertThat(herald.getToughnessModifier()).isEqualTo(2);
+    }
+
     private void castHerald(List<Card> library, int whiteMana) {
         harness.setLibrary(player1, library);
         harness.setHand(player1, List.of(new HeraldOfAmity()));
@@ -105,7 +186,7 @@ class HeraldOfAmityTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private Permanent addAttachedAura(Player controller, Permanent creature) {
