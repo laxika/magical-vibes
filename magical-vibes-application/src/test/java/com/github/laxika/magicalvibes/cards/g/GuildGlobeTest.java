@@ -52,4 +52,57 @@ class GuildGlobeTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Guild Globe");
         harness.assertInGraveyard(player1, "Guild Globe");
     }
+
+    @Test
+    @DisplayName("Cannot activate without paying two mana")
+    void cannotActivateWithInsufficientMana() {
+        harness.addToBattlefield(player1, new GuildGlobe());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Guild Globe");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        harness.addToBattlefieldAndReturn(player1, new GuildGlobe()).tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Guild Globe");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mana ability pays its costs immediately and cannot produce colorless mana")
+    void manaAbilityResolvesImmediatelyAndRejectsColorless() {
+        harness.addToBattlefield(player1, new GuildGlobe());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Guild Globe");
+        harness.assertInGraveyard(player1, "Guild Globe");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.handleListChoice(player1, ManaColor.COLORLESS.name()))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        harness.handleListChoice(player1, ManaColor.WHITE.name());
+        harness.handleListChoice(player1, ManaColor.GREEN.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
