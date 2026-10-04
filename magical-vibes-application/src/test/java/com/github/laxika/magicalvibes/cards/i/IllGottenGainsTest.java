@@ -91,13 +91,81 @@ class IllGottenGainsTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(gains);
     }
 
+    @Test
+    @DisplayName("Ill-Gotten Gains is already exiled when players choose cards to return")
+    void exilesItselfBeforeGraveyardChoices() {
+        IllGottenGains gains = new IllGottenGains();
+        castIllGottenGains(List.of(gains, new DarkRitual()), List.of(new Swamp()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(gains);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(gains);
+
+        harness.handleGraveyardCardChosen(player1, -1);
+        harness.handleGraveyardCardChosen(player2, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsOnly(gains);
+    }
+
+    @Test
+    @DisplayName("Cards remain in graveyards until both players have finished choosing")
+    void returnsChosenCardsSimultaneouslyAfterAllPlayersChoose() {
+        DarkRitual first = new DarkRitual();
+        Swamp second = new Swamp();
+        DarkRitual opponentCard = new DarkRitual();
+        castIllGottenGains(List.of(new IllGottenGains(), first, second), List.of(opponentCard));
+
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+
+        harness.handleGraveyardCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+
+        harness.handleGraveyardCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Players with empty hands can return cards already in their graveyards")
+    void returnsPreexistingGraveyardCardsWithEmptyHands() {
+        IllGottenGains gains = new IllGottenGains();
+        DarkRitual ritual = new DarkRitual();
+        Swamp swamp = new Swamp();
+        DarkRitual opponentRitual = new DarkRitual();
+        harness.setGraveyard(player1, List.of(ritual, swamp));
+        harness.setGraveyard(player2, List.of(opponentRitual));
+
+        castIllGottenGains(List.of(gains), List.of());
+        chooseCards(player1, 2);
+        chooseCards(player2, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(ritual, swamp);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentRitual);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsOnly(gains);
+    }
+
     private void castIllGottenGains(List<Card> player1Hand, List<Card> player2Hand) {
         harness.setHand(player1, player1Hand);
         harness.setHand(player2, player2Hand);
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private void chooseThree(Player player) {
