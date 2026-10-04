@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
+import com.github.laxika.magicalvibes.cards.s.ShinkaTheBloodsoakedKeep;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HonorWornShaku.class, IsamaruHoundOfKonda.class, HumbleBudoka.class})
+@CardUsed({HonorWornShaku.class, IsamaruHoundOfKonda.class, HumbleBudoka.class, ShinkaTheBloodsoakedKeep.class})
 class HonorWornShakuTest extends BaseCardTest {
 
     @Test
@@ -90,6 +91,61 @@ class HonorWornShakuTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Honor-Worn Shaku").isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Isamaru, Hound of Konda").isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick legendary creature taps as a cost before the untap ability resolves")
+    void summoningSickCreaturePaysCostBeforeResolution() {
+        var shaku = harness.addToBattlefieldAndReturn(player1, new HonorWornShaku());
+        var isamaru = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        isamaru.setSummoningSick(true);
+        harness.tapPermanent(player1, 0);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(isamaru.isTapped()).isTrue();
+        assertThat(shaku.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(shaku.isTapped()).isFalse();
+        assertThat(isamaru.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A legendary land can pay the untap cost without activating its mana ability")
+    void legendaryLandPaysUntapCostWithoutProducingMana() {
+        var shaku = harness.addToBattlefieldAndReturn(player1, new HonorWornShaku());
+        var shinka = harness.addToBattlefieldAndReturn(player1, new ShinkaTheBloodsoakedKeep());
+        harness.tapPermanent(player1, 0);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shaku.isTapped()).isFalse();
+        assertThat(shinka.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The untap ability untaps only the Shaku that activated it")
+    void untapsOnlySourceShaku() {
+        var firstShaku = harness.addToBattlefieldAndReturn(player1, new HonorWornShaku());
+        var secondShaku = harness.addToBattlefieldAndReturn(player1, new HonorWornShaku());
+        harness.addToBattlefield(player1, new IsamaruHoundOfKonda());
+        harness.tapPermanent(player1, 0);
+        harness.tapPermanent(player1, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(firstShaku.isTapped()).isTrue();
+        assertThat(secondShaku.isTapped()).isFalse();
         assertThat(findPermanent(player1, "Isamaru, Hound of Konda").isTapped()).isTrue();
     }
 }
