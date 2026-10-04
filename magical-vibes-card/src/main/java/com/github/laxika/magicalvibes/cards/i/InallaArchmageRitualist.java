@@ -25,6 +25,7 @@ import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1639")
 @CardRegistration(set = "FCA", collectorNumber = "52")
+@CardRegistration(set = "C17", collectorNumber = "38")
 public class InallaArchmageRitualist extends Card {
 
     public InallaArchmageRitualist() {

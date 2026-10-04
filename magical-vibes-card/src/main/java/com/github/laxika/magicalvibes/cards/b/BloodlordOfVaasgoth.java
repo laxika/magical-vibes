@@ -26,6 +26,7 @@ import java.util.List;
  */
 @CardRegistration(set = "M12", collectorNumber = "82")
 @CardRegistration(set = "VOC", collectorNumber = "121")
+@CardRegistration(set = "C17", collectorNumber = "102")
 public class BloodlordOfVaasgoth extends Card {
 
     public BloodlordOfVaasgoth() {

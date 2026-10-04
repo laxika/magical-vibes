@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "856")
 @CardRegistration(set = "CMM", collectorNumber = "196")
 @CardRegistration(set = "CMM", collectorNumber = "525")
+@CardRegistration(set = "C17", collectorNumber = "21")
 public class VindictiveLich extends Card {
 
     public VindictiveLich() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "HA3", collectorNumber = "6")
 @CardRegistration(set = "2X2", collectorNumber = "40")
 @CardRegistration(set = "CMM", collectorNumber = "75")
+@CardRegistration(set = "C17", collectorNumber = "83")
 public class BodyDouble extends Card {
 
     public BodyDouble() {

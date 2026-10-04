@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 @CardRegistration(set = "C13", collectorNumber = "92")
 @CardRegistration(set = "C21", collectorNumber = "153")
 @CardRegistration(set = "LTC", collectorNumber = "208")
+@CardRegistration(set = "C17", collectorNumber = "124")
 public class SanguineBond extends Card {
 
     public SanguineBond() {

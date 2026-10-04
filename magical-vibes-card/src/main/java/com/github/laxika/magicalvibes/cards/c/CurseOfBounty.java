@@ -12,11 +12,12 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
+@CardRegistration(set = "C17", collectorNumber = "30")
 @CardRegistration(set = "SCD", collectorNumber = "178")
 public class CurseOfBounty extends Card {
 
     public CurseOfBounty() {
-        var nonland = new PermanentNotPredicate(new PermanentIsLandPredicate());
+        PermanentNotPredicate nonland = new PermanentNotPredicate(new PermanentIsLandPredicate());
         addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,
                 new ConditionalEffect(
                         new AttacksEnchantedPlayer(),

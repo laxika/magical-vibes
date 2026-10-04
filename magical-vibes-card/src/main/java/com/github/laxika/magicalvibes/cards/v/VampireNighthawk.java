@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "C21", collectorNumber = "157")
 @CardRegistration(set = "C20", collectorNumber = "140")
 @CardRegistration(set = "VOC", collectorNumber = "140")
+@CardRegistration(set = "C17", collectorNumber = "129")
 @CardRegistration(set = "SCD", collectorNumber = "115")
 public class VampireNighthawk extends Card {
 }

@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "167")
 @CardRegistration(set = "AFC", collectorNumber = "231")
+@CardRegistration(set = "C17", collectorNumber = "243")
 public class CrucibleOfTheSpiritDragon extends Card {
 
     public CrucibleOfTheSpiritDragon() {

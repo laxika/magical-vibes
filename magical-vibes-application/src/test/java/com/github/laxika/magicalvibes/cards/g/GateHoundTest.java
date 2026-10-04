@@ -44,6 +44,50 @@ class GateHoundTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.VIGILANCE)).isFalse();
     }
 
+    @Test
+    void stopsGrantingVigilanceWhenAuraMovesToAnotherCreature() {
+        Permanent hound = addCreatureReady(player1, new GateHound());
+        Permanent otherCreature = addCreatureReady(player1, new GrayscaledGharial());
+        Permanent aura = attachAura(player1, hound);
+
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.VIGILANCE)).isTrue();
+
+        aura.setAttachedTo(otherCreature.getId());
+
+        assertThat(gqs.hasKeyword(gd, hound, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void grantsVigilanceToCreaturesEnteringAfterItIsEnchanted() {
+        Permanent hound = addCreatureReady(player1, new GateHound());
+        attachAura(player1, hound);
+
+        Permanent newCreature = harness.addToBattlefieldAndReturn(player1, new GrayscaledGharial());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrayscaledGharial());
+
+        assertThat(gqs.hasKeyword(gd, newCreature, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void remainsActiveUntilTheLastAuraLeaves() {
+        Permanent hound = addCreatureReady(player1, new GateHound());
+        Permanent otherCreature = addCreatureReady(player1, new GrayscaledGharial());
+        Permanent firstAura = attachAura(player1, hound);
+        Permanent secondAura = attachAura(player2, hound);
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstAura);
+
+        assertThat(gqs.hasKeyword(gd, hound, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.VIGILANCE)).isTrue();
+
+        gd.playerBattlefields.get(player2.getId()).remove(secondAura);
+
+        assertThat(gqs.hasKeyword(gd, hound, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.VIGILANCE)).isFalse();
+    }
+
     private Permanent attachAura(Player controller, Permanent creature) {
         Permanent aura = harness.addToBattlefieldAndReturn(controller, new FaithsFetters());
         aura.setAttachedTo(creature.getId());

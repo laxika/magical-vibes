@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "79")
+@CardRegistration(set = "C17", collectorNumber = "119")
 public class PalaceSiege extends Card {
 
     private static final String KHANS = "Khans";

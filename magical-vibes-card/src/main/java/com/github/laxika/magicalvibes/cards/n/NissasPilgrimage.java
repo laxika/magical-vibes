@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "190")
 @CardRegistration(set = "PIO", collectorNumber = "348")
+@CardRegistration(set = "C17", collectorNumber = "155")
 public class NissasPilgrimage extends Card {
 
     public NissasPilgrimage() {

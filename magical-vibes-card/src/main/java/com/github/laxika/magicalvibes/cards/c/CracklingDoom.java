@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "FIC", collectorNumber = "322")
 @CardRegistration(set = "C20", collectorNumber = "205")
 @CardRegistration(set = "C16", collectorNumber = "191")
+@CardRegistration(set = "C17", collectorNumber = "167")
 public class CracklingDoom extends Card {
 
     public CracklingDoom() {

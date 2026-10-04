@@ -55,12 +55,12 @@ public class TargetPlayerExilesFromHandEffectHandler implements NormalEffectHand
         }
 
         UUID playPermissionControllerId = e.controllerMayPlay() ? entry.getControllerId() : null;
-        if (!e.controllerMayPlay() && !e.returnOnSourceLeave()) {
+        if (!e.controllerMayPlay() && !e.returnOnSourceLeave() && !e.faceDown()) {
             playerInputService.beginExileFromHandChoice(gameData, targetPlayerId, sourcePermanentId,
                     null, e.amount());
         } else {
             playerInputService.beginExileFromHandChoice(gameData, targetPlayerId, sourcePermanentId,
-                    playPermissionControllerId, e.amount(), List.of(), 0, false, e.returnOnSourceLeave());
+                    playPermissionControllerId, e.amount(), List.of(), 0, e.faceDown(), e.returnOnSourceLeave());
         }
     
     }

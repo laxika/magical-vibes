@@ -67,8 +67,7 @@ class GangOfElkTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Unsummon()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castInstant(player2, 0, bouncedBlocker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bouncedBlocker.getId());
         harness.passBothPriorities();
 
         assertThat(gang.getPowerModifier()).isEqualTo(2);
@@ -83,6 +82,61 @@ class GangOfElkTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gang.getPowerModifier()).isZero();
+        assertThat(gang.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("No bonus is applied if the last blocker leaves before resolution")
+    void lastBlockerLeavesBeforeResolution() {
+        Permanent gang = addCreatureReady(player1, new GangOfElk());
+        gang.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, blocker.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gang.getPowerModifier()).isZero();
+        assertThat(gang.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing a blocker after resolution does not reduce the bonus")
+    void bonusIsFixedAfterResolution() {
+        Permanent gang = addCreatureReady(player1, new GangOfElk());
+        gang.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, blocker.getId());
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gang.getPowerModifier()).isEqualTo(2);
+        assertThat(gang.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Gang of Elk does not receive its bonus when it blocks")
+    void blockingDoesNotGiveBonus() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent gang = addCreatureReady(player2, new GangOfElk());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gang.getPowerModifier()).isZero();

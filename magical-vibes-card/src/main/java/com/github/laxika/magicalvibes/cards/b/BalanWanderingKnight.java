@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "16")
 @CardRegistration(set = "CMM", collectorNumber = "458")
+@CardRegistration(set = "C17", collectorNumber = "2")
 public class BalanWanderingKnight extends Card {
 
     public BalanWanderingKnight() {

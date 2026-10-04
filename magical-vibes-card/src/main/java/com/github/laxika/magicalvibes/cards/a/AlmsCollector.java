@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplaced
 @CardRegistration(set = "SLD", collectorNumber = "1227")
 @CardRegistration(set = "CMM", collectorNumber = "10")
 @CardRegistration(set = "CMM", collectorNumber = "455")
+@CardRegistration(set = "C17", collectorNumber = "1")
 public class AlmsCollector extends Card {
 
     public AlmsCollector() {

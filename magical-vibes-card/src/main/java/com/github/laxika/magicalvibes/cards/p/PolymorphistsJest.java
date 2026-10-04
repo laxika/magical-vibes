@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "75")
+@CardRegistration(set = "C17", collectorNumber = "90")
 public class PolymorphistsJest extends Card {
 
     public PolymorphistsJest() {

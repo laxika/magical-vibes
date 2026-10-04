@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "C19", collectorNumber = "262")
 @CardRegistration(set = "EOC", collectorNumber = "170")
 @CardRegistration(set = "C16", collectorNumber = "310")
+@CardRegistration(set = "C17", collectorNumber = "263")
 public class MysticMonastery extends Card {
 
     public MysticMonastery() {

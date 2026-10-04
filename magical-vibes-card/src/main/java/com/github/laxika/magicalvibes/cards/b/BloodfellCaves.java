@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "EMA", collectorNumber = "236")
 @CardRegistration(set = "DSC", collectorNumber = "264")
 @CardRegistration(set = "C19", collectorNumber = "230")
+@CardRegistration(set = "C17", collectorNumber = "236")
 @CardRegistration(set = "SCD", collectorNumber = "290")
 public class BloodfellCaves extends Card {
 

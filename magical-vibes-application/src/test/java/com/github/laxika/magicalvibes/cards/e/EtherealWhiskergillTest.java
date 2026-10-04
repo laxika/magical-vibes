@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AquitectsWill;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Pestermite;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;

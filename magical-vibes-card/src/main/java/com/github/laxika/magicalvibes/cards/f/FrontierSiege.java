@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "131")
 @CardRegistration(set = "TDC", collectorNumber = "256")
+@CardRegistration(set = "C17", collectorNumber = "150")
 @CardRegistration(set = "SCD", collectorNumber = "184")
 public class FrontierSiege extends Card {
 

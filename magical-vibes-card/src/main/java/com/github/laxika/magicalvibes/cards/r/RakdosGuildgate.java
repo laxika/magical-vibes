@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "RVR", collectorNumber = "284")
 @CardRegistration(set = "C13", collectorNumber = "314")
 @CardRegistration(set = "C19", collectorNumber = "267")
+@CardRegistration(set = "C17", collectorNumber = "271")
 public class RakdosGuildgate extends Card {
 
     public RakdosGuildgate() {

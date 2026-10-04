@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.e;
+package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.a.AdaptiveShimmerer;
 import com.github.laxika.magicalvibes.cards.a.AlmightyBrushwagg;

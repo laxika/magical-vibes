@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CMM", collectorNumber = "112")
 @CardRegistration(set = "C20", collectorNumber = "122")
+@CardRegistration(set = "C17", collectorNumber = "13")
 public class PortalMage extends Card {
 
     public PortalMage() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "ZEN", collectorNumber = "81")
+@CardRegistration(set = "C17", collectorNumber = "100")
 public class BloodTribute extends Card {
 
     public BloodTribute() {

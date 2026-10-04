@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOne
 
 @CardRegistration(set = "JUD", collectorNumber = "140")
 @CardRegistration(set = "DMR", collectorNumber = "193")
+@CardRegistration(set = "C17", collectorNumber = "188")
 public class PhantomNishoba extends Card {
 
     public PhantomNishoba() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.w.WeldingJar;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -101,5 +102,43 @@ class GateToTheAetherTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Uses the top card at resolution rather than the card present when upkeep began")
+    void revealsCurrentTopCardAtResolution() {
+        harness.addToBattlefield(player1, new GateToTheAether());
+        harness.setLibrary(player1, List.of(new Shatter(), new Forest()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        Card newTopCard = new LumengridWarden();
+        Card nextCard = new Shatter();
+        harness.setLibrary(player1, List.of(newTopCard, nextCard));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Lumengrid Warden");
+        assertThat(findPermanent(player1, "Lumengrid Warden").isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep ability still resolves after the Gate is destroyed")
+    void triggeredAbilitySurvivesSourceDestruction() {
+        harness.addToBattlefield(player1, new GateToTheAether());
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.setLibrary(player2, List.of(new LumengridWarden(), new Shatter()));
+
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, findPermanent(player1, "Gate to the Aether").getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Gate to the Aether");
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertOnBattlefield(player2, "Lumengrid Warden");
+        harness.assertNotOnBattlefield(player1, "Lumengrid Warden");
     }
 }

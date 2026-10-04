@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "LCC", collectorNumber = "185")
 @CardRegistration(set = "VOC", collectorNumber = "120")
+@CardRegistration(set = "C17", collectorNumber = "14")
 public class BloodlineNecromancer extends Card {
 
     public BloodlineNecromancer() {

@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.c.Char;
 import com.github.laxika.magicalvibes.cards.v.VotaryOfTheConclave;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;

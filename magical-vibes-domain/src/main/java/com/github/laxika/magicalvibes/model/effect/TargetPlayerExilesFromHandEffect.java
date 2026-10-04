@@ -12,17 +12,27 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param amount              number of cards to exile
  * @param controllerMayPlay   whether the source's controller may play the exiled cards
  * @param returnOnSourceLeave whether the exiled cards return to their owners' hands when the source leaves
+ * @param faceDown           whether the exiled cards are hidden from players other than the source's controller
  */
 public record TargetPlayerExilesFromHandEffect(int amount, boolean controllerMayPlay,
-                                               boolean returnOnSourceLeave)
+                                               boolean returnOnSourceLeave, boolean faceDown)
         implements CombatDamageTriggerContextEffect {
 
     public TargetPlayerExilesFromHandEffect(int amount) {
-        this(amount, false, false);
+        this(amount, false, false, false);
     }
 
     public TargetPlayerExilesFromHandEffect(int amount, boolean controllerMayPlay) {
-        this(amount, controllerMayPlay, false);
+        this(amount, controllerMayPlay, false, false);
+    }
+
+    public TargetPlayerExilesFromHandEffect(int amount, boolean controllerMayPlay,
+                                             boolean returnOnSourceLeave) {
+        this(amount, controllerMayPlay, returnOnSourceLeave, false);
+    }
+
+    public static TargetPlayerExilesFromHandEffect faceDown(int amount) {
+        return new TargetPlayerExilesFromHandEffect(amount, false, false, true);
     }
 
     @Override

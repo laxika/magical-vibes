@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GargoyleCastle.class})
 class GargoyleCastleTest extends BaseCardTest {
 
     // ===== Mana ability =====
@@ -171,5 +173,45 @@ class GargoyleCastleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Gargoyle") && log.contains("token"));
+    }
+
+    @Test
+    @DisplayName("Failed activation leaves the land and mana available")
+    void failedActivationPreservesResources() {
+        Permanent castle = harness.addToBattlefieldAndReturn(player1, new GargoyleCastle());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.assertOnBattlefield(player1, "Gargoyle Castle");
+        harness.assertNotInGraveyard(player1, "Gargoyle Castle");
+        assertThat(castle.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent can activate the land and receives exactly one untapped token")
+    void opponentReceivesToken() {
+        harness.addToBattlefield(player2, new GargoyleCastle());
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player2, 0, 1, null, null);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Gargoyle Castle");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        Permanent token = findPermanent(player2, "Gargoyle");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.isTapped()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Gargoyle");
+        assertThat(gd.stack).isEmpty();
     }
 }

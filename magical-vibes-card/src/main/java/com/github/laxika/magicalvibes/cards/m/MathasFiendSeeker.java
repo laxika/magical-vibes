@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "2X2", collectorNumber = "252")
+@CardRegistration(set = "C17", collectorNumber = "42")
 public class MathasFiendSeeker extends Card {
 
     public MathasFiendSeeker() {
