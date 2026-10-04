@@ -59,6 +59,60 @@ class HoldTheLineTest extends BaseCardTest {
         assertThat(blocker.getEffectiveToughness()).isEqualTo(5);
     }
 
+    @Test
+    @DisplayName("Every blocking creature is boosted when the defending player casts the spell")
+    void boostsAllBlockersForDefendingCaster() {
+        addCreatureReady(player1, new MossKami());
+        addCreatureReady(player1, new MossKami());
+        Permanent firstBlocker = addCreatureReady(player2, new MossKami());
+        Permanent secondBlocker = addCreatureReady(player2, new MossKami());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 1)));
+
+        harness.castFromHand(player2, new HoldTheLine(), "{1}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(firstBlocker.getEffectivePower()).isEqualTo(12);
+        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(12);
+        assertThat(secondBlocker.getEffectivePower()).isEqualTo(12);
+        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(12);
+    }
+
+    @Test
+    @DisplayName("Resolving before combat does not boost creatures that block later")
+    void doesNotBoostLaterBlockers() {
+        addCreatureReady(player1, new MossKami());
+        Permanent blocker = addCreatureReady(player2, new MossKami());
+
+        castHoldTheLine();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.getEffectivePower()).isEqualTo(5);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof HoldTheLine);
+    }
+
+    @Test
+    @DisplayName("The boost remains after combat ends")
+    void boostRemainsAfterCombat() {
+        addCreatureReady(player1, new MossKami());
+        Permanent blocker = addCreatureReady(player2, new MossKami());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        castHoldTheLine();
+
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(blocker.isBlocking()).isFalse();
+        assertThat(blocker.getEffectivePower()).isEqualTo(12);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(12);
+    }
+
     private void castHoldTheLine() {
         harness.castFromHand(player1, new HoldTheLine(), "{1}{W}{W}");
         harness.passBothPriorities();
