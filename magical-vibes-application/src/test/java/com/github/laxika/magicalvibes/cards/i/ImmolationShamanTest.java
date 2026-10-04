@@ -1,17 +1,14 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.d.DovinGrandArbiter;
+import com.github.laxika.magicalvibes.cards.s.SimicLocket;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,16 +16,18 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ImmolationShaman.class, IncubationDruid.class, SimicLocket.class, DovinGrandArbiter.class})
 class ImmolationShamanTest extends BaseCardTest {
 
     @Test
     @DisplayName("Opponent activating an artifact, creature, or land's non-mana ability deals 1 damage")
     void opponentNonManaAbilityDealsDamage() {
         harness.addToBattlefield(player1, new ImmolationShaman());
-        addPermanentWithNonManaAbility(player2, CardType.CREATURE);
+        harness.addToBattlefield(player2, new IncubationDruid());
+        harness.addMana(player2, ManaColor.GREEN, 5);
         harness.setLife(player2, 20);
 
-        harness.activateAbility(player2, 0, null, null);
+        harness.activateAbility(player2, 0, 1, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
@@ -38,10 +37,11 @@ class ImmolationShamanTest extends BaseCardTest {
     @DisplayName("A mana ability does not trigger Immolation Shaman")
     void manaAbilityDoesNotTrigger() {
         harness.addToBattlefield(player1, new ImmolationShaman());
-        addPermanentWithAbility(player2, CardType.CREATURE, new AwardManaEffect(ManaColor.GREEN));
+        harness.addToBattlefield(player2, new SimicLocket());
         harness.setLife(player2, 20);
 
         harness.activateAbility(player2, 0, null, null);
+        harness.handleListChoice(player2, "GREEN");
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -72,12 +72,113 @@ class ImmolationShamanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, shaman)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, shaman)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, shaman, Keyword.MENACE)).isFalse();
+    }
+
+    @Test
+    void adaptTriggersBeforeOpponentsCreatureAbilityResolves() {
+        harness.addToBattlefield(player1, new ImmolationShaman());
+        Permanent druid = harness.addToBattlefieldAndReturn(player2, new IncubationDruid());
+        harness.addMana(player2, ManaColor.GREEN, 5);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2, 0, 1, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        assertThat(gqs.getEffectivePower(gd, druid)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, druid)).isEqualTo(3);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void sacrificingArtifactAsActivationCostStillTriggers() {
+        harness.addToBattlefield(player1, new ImmolationShaman());
+        harness.addToBattlefield(player2, new SimicLocket());
+        harness.addMana(player2, ManaColor.GREEN, 4);
+        harness.setLibrary(player2, List.of(new ImmolationShaman(), new ImmolationShaman()));
+        harness.setLife(player2, 20);
+        int handSize = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbility(player2, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player2, "Simic Locket");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handSize);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handSize + 2);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void artifactManaAbilityDoesNotTrigger() {
+        harness.addToBattlefield(player1, new ImmolationShaman());
+        harness.addToBattlefield(player2, new SimicLocket());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.handleListChoice(player2, "GREEN");
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    void controllersOwnActivationDoesNotTrigger() {
+        addReadyShaman();
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void planeswalkerAbilityDoesNotTrigger() {
+        harness.addToBattlefield(player1, new ImmolationShaman());
+        Permanent dovin = harness.addToBattlefieldAndReturn(player2, new DovinGrandArbiter());
+        dovin.setCounterCount(CounterType.LOYALTY, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2, 0, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void repeatedActivationsStackBoosts() {
+        Permanent shaman = addReadyShaman();
+        harness.addMana(player1, ManaColor.RED, 10);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, shaman)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, shaman)).isEqualTo(9);
+        assertThat(gqs.hasKeyword(gd, shaman, Keyword.MENACE)).isTrue();
     }
 
     private Permanent addReadyShaman() {
@@ -86,17 +187,4 @@ class ImmolationShamanTest extends BaseCardTest {
         return shaman;
     }
 
-    private void addPermanentWithNonManaAbility(Player player, CardType type) {
-        addPermanentWithAbility(player, type, new BoostSelfEffect(1, 0));
-    }
-
-    private void addPermanentWithAbility(Player player, CardType type, CardEffect effect) {
-        Card card = new Card();
-        card.setName("Ability Source");
-        card.setType(type);
-        card.addActivatedAbility(new ActivatedAbility(true, null, List.of(effect), "{T}: ability."));
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-    }
 }
