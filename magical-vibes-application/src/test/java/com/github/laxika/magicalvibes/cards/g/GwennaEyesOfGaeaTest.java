@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.ArgothianSprite;
+import com.github.laxika.magicalvibes.cards.b.BoulderbranchGolem;
+import com.github.laxika.magicalvibes.cards.e.EnergyRefractor;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -11,6 +14,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,13 +23,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GwennaEyesOfGaea.class, Card.class, ArgothianSprite.class,
+        BoulderbranchGolem.class, EnergyRefractor.class})
 class GwennaEyesOfGaeaTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gwenna adds two independently chosen creature-spell-or-creature-ability mana")
     void manaAbilityAddsRestrictedMana() {
-        Permanent gwenna = harness.addToBattlefieldAndReturn(player1, new GwennaEyesOfGaea());
-        gwenna.setSummoningSick(false);
+        addCreatureReady(player1, new GwennaEyesOfGaea());
 
         harness.activateAbility(player1, 0, null, null);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
@@ -86,8 +91,7 @@ class GwennaEyesOfGaeaTest extends BaseCardTest {
     @Test
     @DisplayName("Casting a creature with power five or greater adds a counter and untaps Gwenna")
     void powerfulCreatureAddsCounterAndUntapsGwenna() {
-        Permanent gwenna = harness.addToBattlefieldAndReturn(player1, new GwennaEyesOfGaea());
-        gwenna.setSummoningSick(false);
+        Permanent gwenna = addCreatureReady(player1, new GwennaEyesOfGaea());
         gwenna.tap();
 
         Card creature = createCreature("Powerful Creature", "{5}", CardColor.GREEN, 5);
@@ -99,6 +103,144 @@ class GwennaEyesOfGaeaTest extends BaseCardTest {
 
         assertThat(gwenna.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gwenna.isTapped()).isFalse();
+    }
+
+    @Test
+    void generatedManaPaysForRealCreatureSpell() {
+        Permanent gwenna = addCreatureReady(player1, new GwennaEyesOfGaea());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "BLUE");
+        harness.setHand(player1, List.of(new ArgothianSprite()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Argothian Sprite");
+        assertThat(gd.playerManaPools.get(player1.getId()).getCreatureSpellOrAbilityManaTotal()).isZero();
+        assertThat(gwenna.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gwenna.isTapped()).isTrue();
+    }
+
+    @Test
+    void generatedManaPaysForRealCreatureAbility() {
+        addCreatureReady(player1, new GwennaEyesOfGaea());
+        Permanent sprite = harness.addToBattlefieldAndReturn(player1, new ArgothianSprite());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "BLUE");
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(sprite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getCreatureSpellOrAbilityManaTotal()).isZero();
+    }
+
+    @Test
+    void generatedManaCannotPayForNoncreatureSpellOrAbility() {
+        addCreatureReady(player1, new GwennaEyesOfGaea());
+        harness.addToBattlefield(player1, new EnergyRefractor());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+        harness.handleListChoice(player1, "BLUE");
+        harness.setHand(player1, List.of(new EnergyRefractor()));
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getCreatureSpellOrAbilityManaTotal()).isEqualTo(2);
+    }
+
+    @Test
+    void triggerResolvesBeforePowerfulCreatureSpell() {
+        Permanent gwenna = addCreatureReady(player1, new GwennaEyesOfGaea());
+        gwenna.tap();
+        harness.castFromHand(player1, new BoulderbranchGolem(), "{7}");
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gwenna.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gwenna.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gwenna.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gwenna.isTapped()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Boulderbranch Golem");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Boulderbranch Golem");
+    }
+
+    @Test
+    void prototypeUsesItsSmallerPowerAndDoesNotTrigger() {
+        Permanent gwenna = addCreatureReady(player1, new GwennaEyesOfGaea());
+        gwenna.tap();
+        harness.setHand(player1, List.of(new BoulderbranchGolem()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gwenna.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gwenna.isTapped()).isTrue();
+    }
+
+    @Test
+    void opponentsPowerfulCreatureDoesNotTrigger() {
+        Permanent gwenna = addCreatureReady(player1, new GwennaEyesOfGaea());
+        gwenna.tap();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new BoulderbranchGolem(), "{7}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gwenna.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gwenna.isTapped()).isTrue();
+    }
+
+    @Test
+    void bothManaCanBeTheSameColorAndAbilityDoesNotUseTheStack() {
+        Permanent gwenna = addCreatureReady(player1, new GwennaEyesOfGaea());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gwenna.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getCreatureSpellOrAbilityMana(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    void summoningSickGwennaCannotActivateItsTapAbility() {
+        harness.addToBattlefield(player1, new GwennaEyesOfGaea());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getCreatureSpellOrAbilityManaTotal()).isZero();
+    }
+
+    @Test
+    void triggerDoesNotCounterOrUntapReturnedSource() {
+        Permanent original = addCreatureReady(player1, new GwennaEyesOfGaea());
+        harness.castFromHand(player1, new BoulderbranchGolem(), "{7}");
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, original.getCard());
+        returned.tap();
+
+        harness.passBothPriorities();
+
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(returned.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
     }
 
     private static Card createCreature(String name, String manaCost, CardColor color, int power) {
