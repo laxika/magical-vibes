@@ -49,10 +49,10 @@ class HedronFieldsOfAgadeemTest extends BaseCardTest {
     @Test
     void creaturesWithPowerSevenOrGreaterCannotBlock() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, creature("Seven Power", 7, 7));
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(
@@ -76,10 +76,107 @@ class HedronFieldsOfAgadeemTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(token)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void creatureWithEffectivePowerSixCanAttack() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setPowerModifier(4);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(attacker.isAttacking()).isTrue();
+    }
+
+    @Test
+    void creatureWithEffectivePowerSixCanBlock() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setPowerModifier(4);
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void increasedPowerIsUsedForAttackRestriction() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setPowerModifier(5);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(attacker.isAttacking()).isFalse();
+    }
+
+    @Test
+    void increasedPowerIsUsedForBlockRestriction() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setPowerModifier(5);
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    void restrictionAlsoPreventsOpponentsCreaturesWithPowerAboveSevenFromAttacking() {
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.setPowerModifier(6);
+        gd.planechase.controllerId = player2.getId();
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(attacker.isAttacking()).isFalse();
+    }
+
+    @Test
+    void chaosCreatesTokenForCurrentPlanarController() {
+        harness.forceActivePlayer(player2);
+        gd.planechase.controllerId = player2.getId();
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player2, "Eldrazi")).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void chaosTokenCannotAttackWhilePlaneRemainsFaceUp() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+        Permanent token = findPermanent(player1, "Eldrazi");
+        token.setSummoningSick(false);
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(token.isAttacking()).isFalse();
+    }
+
+    @Test
+    void reducingTokenPowerAllowsAttackAndDefenderChoosesExactlyOnePermanentToSacrifice() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+        Permanent token = findPermanent(player1, "Eldrazi");
+        token.setSummoningSick(false);
+        token.setPowerModifier(-1);
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
     }
 
     private static Card creature(String name, int power, int toughness) {
