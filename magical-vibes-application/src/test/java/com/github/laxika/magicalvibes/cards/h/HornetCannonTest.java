@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.t.TorporOrb;
+import com.github.laxika.magicalvibes.cards.r.ReinsOfPower;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -13,9 +14,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(HornetCannon.class)
+@CardUsed({HornetCannon.class, TorporOrb.class, ReinsOfPower.class})
 class HornetCannonTest extends BaseCardTest {
 
     @Test
@@ -47,7 +50,7 @@ class HornetCannonTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(TorporOrb.class)
+    @CardUsed({HornetCannon.class, TorporOrb.class})
     @DisplayName("Destroys the Hornet token even when Torpor Orb suppresses creature ETB triggers")
     void delayedDestructionIsNotSuppressedByTorporOrb() {
         harness.addToBattlefield(player1, new TorporOrb());
@@ -55,7 +58,7 @@ class HornetCannonTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Hornet");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Hornet");
@@ -68,10 +71,76 @@ class HornetCannonTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Hornet");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Hornet");
+    }
+
+    @Test
+    @DisplayName("Delayed destruction uses Hornet Cannon as its source")
+    void delayedDestructionRetainsCannonSource() {
+        createHornetToken(player1);
+        Permanent cannon = findPermanent(player1, "Hornet Cannon");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Hornet");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getCard()).isSameAs(cannon.getCard());
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(cannon.getId());
+        assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("A Hornet created during an end step survives until the following end step")
+    void tokenCreatedDuringEndStepWaitsForFollowingEndStep() {
+        harness.forceStep(TurnStep.END_STEP);
+        createHornetToken(player1);
+
+        harness.assertOnBattlefield(player1, "Hornet");
+        assertThat(gd.stack).isEmpty();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Hornet");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hornet");
+    }
+
+    @Test
+    @DisplayName("A Hornet is destroyed at the opponent's end step too")
+    void destroysTokenAtOpponentsEndStep() {
+        createHornetToken(player1);
+        harness.forceActivePlayer(player2);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hornet");
+    }
+
+    @Test
+    @CardUsed({HornetCannon.class, ReinsOfPower.class})
+    @DisplayName("Changing control of the Hornet does not change the delayed trigger's controller")
+    void delayedTriggerKeepsOriginalControllerAfterTokenChangesControl() {
+        createHornetToken(player1);
+        harness.setHand(player1, List.of(new ReinsOfPower()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Hornet");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player1.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Hornet");
     }
 
     private Permanent createHornetToken(Player player) {
