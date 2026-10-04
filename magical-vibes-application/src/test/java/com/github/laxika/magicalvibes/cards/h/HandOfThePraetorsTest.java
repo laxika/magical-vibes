@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,17 +14,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HandOfThePraetors.class, BlackcleaveGoblin.class, GrizzlyBears.class})
 class HandOfThePraetorsTest extends BaseCardTest {
 
-    // ===== Static boost: other creatures with infect get +1/+1 =====
 
     @Test
     @DisplayName("Own creature with infect gets +1/+1")
     void ownInfectCreatureGetsBoosted() {
         harness.addToBattlefield(player1, new HandOfThePraetors());
-        harness.addToBattlefield(player1, new BlackcleaveGoblin());
-
-        Permanent goblin = findPermanent(player1, "Blackcleave Goblin");
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new BlackcleaveGoblin());
 
         // Blackcleave Goblin is 2/1; with +1/+1 boost = 3/2
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
@@ -33,9 +32,7 @@ class HandOfThePraetorsTest extends BaseCardTest {
     @Test
     @DisplayName("Does not boost itself")
     void doesNotBoostItself() {
-        harness.addToBattlefield(player1, new HandOfThePraetors());
-
-        Permanent hand = findPermanent(player1, "Hand of the Praetors");
+        Permanent hand = harness.addToBattlefieldAndReturn(player1, new HandOfThePraetors());
 
         // Hand of the Praetors is 3/2 base, should NOT get boosted by its own effect
         assertThat(gqs.getEffectivePower(gd, hand)).isEqualTo(3);
@@ -46,9 +43,7 @@ class HandOfThePraetorsTest extends BaseCardTest {
     @DisplayName("Does not boost creature without infect")
     void doesNotBoostNonInfectCreature() {
         harness.addToBattlefield(player1, new HandOfThePraetors());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         // Grizzly Bears is 2/2, no infect, should not be boosted
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -59,9 +54,7 @@ class HandOfThePraetorsTest extends BaseCardTest {
     @DisplayName("Does not boost opponent's infect creature")
     void doesNotBoostOpponentInfectCreature() {
         harness.addToBattlefield(player1, new HandOfThePraetors());
-        harness.addToBattlefield(player2, new BlackcleaveGoblin());
-
-        Permanent goblin = findPermanent(player2, "Blackcleave Goblin");
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new BlackcleaveGoblin());
 
         // Opponent's Blackcleave Goblin should remain 2/1
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(2);
@@ -72,9 +65,7 @@ class HandOfThePraetorsTest extends BaseCardTest {
     @DisplayName("Boost is lost when Hand of the Praetors leaves the battlefield")
     void boostLostWhenLordRemoved() {
         harness.addToBattlefield(player1, new HandOfThePraetors());
-        harness.addToBattlefield(player1, new BlackcleaveGoblin());
-
-        Permanent goblin = findPermanent(player1, "Blackcleave Goblin");
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new BlackcleaveGoblin());
         assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
 
         // Remove the lord
@@ -86,7 +77,6 @@ class HandOfThePraetorsTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(1);
     }
 
-    // ===== Triggered ability: casting infect creature gives opponent a poison counter =====
 
     @Test
     @DisplayName("Casting a creature with infect triggers poison counter on chosen player")
@@ -154,7 +144,6 @@ class HandOfThePraetorsTest extends BaseCardTest {
                 && e.getCard().getName().equals("Hand of the Praetors"));
     }
 
-    // ===== Multiple infect creature casts accumulate poison =====
 
     @Test
     @DisplayName("Multiple infect creature casts accumulate poison counters")
@@ -206,5 +195,110 @@ class HandOfThePraetorsTest extends BaseCardTest {
                 .isEqualTo(poisonBefore + 1);
         // Opponent should not have gotten a poison counter
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    void castingHandDoesNotTriggerItsOwnAbility() {
+        harness.setHand(player1, List.of(new HandOfThePraetors()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Hand of the Praetors");
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    void castingAnotherHandTriggersTheExistingHand() {
+        harness.addToBattlefield(player1, new HandOfThePraetors());
+        harness.setHand(player1, List.of(new HandOfThePraetors()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Hand of the Praetors")).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Hand of the Praetors")).isEqualTo(2);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    void multipleHandsBoostEachOtherAndStackTheirBoosts() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new HandOfThePraetors());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new HandOfThePraetors());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new BlackcleaveGoblin());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
+    }
+
+    @Test
+    void poisonTriggerResolvesAfterItsSourceLeavesTheBattlefield() {
+        Permanent hand = harness.addToBattlefieldAndReturn(player1, new HandOfThePraetors());
+        harness.setHand(player1, List.of(new BlackcleaveGoblin()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(hand);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Blackcleave Goblin");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Blackcleave Goblin");
+    }
+
+    @Test
+    void eachHandTriggersForTheSameInfectCreatureSpell() {
+        harness.addToBattlefield(player1, new HandOfThePraetors());
+        harness.addToBattlefield(player1, new HandOfThePraetors());
+        harness.setHand(player1, List.of(new BlackcleaveGoblin()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        harness.assertNotOnBattlefield(player1, "Blackcleave Goblin");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Blackcleave Goblin");
+    }
+
+    @Test
+    void handDealsPoisonInsteadOfLifeLossInCombat() {
+        Permanent hand = addCreatureReady(player1, new HandOfThePraetors());
+        hand.setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(3);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void lordBoostIncreasesAnInfectCreaturesCombatPoison() {
+        harness.addToBattlefield(player1, new HandOfThePraetors());
+        Permanent goblin = addCreatureReady(player1, new BlackcleaveGoblin());
+        goblin.setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(3);
+        harness.assertLife(player2, 20);
     }
 }
