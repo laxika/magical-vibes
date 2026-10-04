@@ -84,6 +84,20 @@ class HopeCharmTest extends BaseCardTest {
     class GainLifeMode {
 
         @Test
+        void canTargetControllerWithoutAffectingOpponent() {
+            harness.setHand(player1, List.of(new HopeCharm()));
+            harness.addMana(player1, ManaColor.WHITE, 1);
+            int controllerLife = gd.playerLifeTotals.get(player1.getId());
+            int opponentLife = gd.playerLifeTotals.get(player2.getId());
+
+            harness.castInstant(player1, 0, 1, player1.getId());
+            harness.passBothPriorities();
+
+            harness.assertLife(player1, controllerLife + 2);
+            harness.assertLife(player2, opponentLife);
+        }
+
+        @Test
         @DisplayName("Target player gains 2 life")
         void targetPlayerGainsLife() {
             harness.setHand(player1, List.of(new HopeCharm()));
@@ -100,6 +114,21 @@ class HopeCharmTest extends BaseCardTest {
     @Nested
     @DisplayName("Mode 2: Destroy target Aura")
     class DestroyAuraMode {
+
+        @Test
+        void canDestroyOwnAuraWithoutDestroyingEnchantedCreature() {
+            Permanent host = harness.addToBattlefieldAndReturn(player1, new DarajaGriffin());
+            Permanent aura = addAuraAttachedTo(player1, host);
+            harness.setHand(player1, List.of(new HopeCharm()));
+            harness.addMana(player1, ManaColor.WHITE, 1);
+
+            harness.castInstant(player1, 0, 2, aura.getId());
+            harness.passBothPriorities();
+
+            harness.assertNotOnBattlefield(player1, "Mortal Wound");
+            harness.assertInGraveyard(player1, "Mortal Wound");
+            harness.assertOnBattlefield(player1, "Daraja Griffin");
+        }
 
         @Test
         @DisplayName("Destroys the targeted Aura")
@@ -129,9 +158,8 @@ class HopeCharmTest extends BaseCardTest {
     }
 
     private Permanent addAuraAttachedTo(Player player, Permanent host) {
-        Permanent aura = new Permanent(new MortalWound());
+        Permanent aura = harness.addToBattlefieldAndReturn(player, new MortalWound());
         aura.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(player.getId()).add(aura);
         return aura;
     }
 }
