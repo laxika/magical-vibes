@@ -78,6 +78,64 @@ class HokoriDustDrinkerTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    @Test
+    @DisplayName("The active player may choose an already untapped land and leave a tapped land tapped")
+    void canChooseAnUntappedLand() {
+        harness.addToBattlefield(player1, new HokoriDustDrinker());
+        Permanent untappedLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent tappedLand = addTapped(player1, new Forest());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(untappedLand.getId()));
+
+        assertThat(untappedLand.isTapped()).isFalse();
+        assertThat(tappedLand.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent with no lands cannot untap the Hokori controller's land")
+    void opponentWithNoLandsHasNothingToUntap() {
+        harness.addToBattlefield(player1, new HokoriDustDrinker());
+        Permanent land = addTapped(player1, new Forest());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An upkeep trigger still untaps a land after Hokori leaves the battlefield")
+    void triggerSurvivesSourceRemoval() {
+        Permanent hokori = harness.addToBattlefieldAndReturn(player1, new HokoriDustDrinker());
+        Permanent land = addTapped(player2, new Forest());
+
+        advanceToUpkeep(player2);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, hokori));
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(land.getId()));
+
+        assertThat(land.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Hokori, Dust Drinker");
+    }
+
+    @Test
+    @DisplayName("Lands untap normally once Hokori leaves the battlefield")
+    void untapLockEndsWhenSourceLeaves() {
+        Permanent hokori = harness.addToBattlefieldAndReturn(player1, new HokoriDustDrinker());
+        Permanent land = addTapped(player2, new Forest());
+
+        harness.performUntapStep(player2);
+        assertThat(land.isTapped()).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, hokori));
+        harness.performUntapStep(player2);
+
+        assertThat(land.isTapped()).isFalse();
+    }
+
     private Permanent addTapped(Player player, Card card) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
