@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.i.Inspiration;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -9,9 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-@CardUsed({GerrardsWisdom.class, GrizzlyBears.class})
+@CardUsed({GerrardsWisdom.class, GrizzlyBears.class, Inspiration.class})
 class GerrardsWisdomTest extends BaseCardTest {
 
     @Test
@@ -26,12 +24,10 @@ class GerrardsWisdomTest extends BaseCardTest {
                 new GrizzlyBears()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        GameData gd = harness.getGameData();
         // 3 cards * 2 life = 6, 20 + 6 = 26
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(26);
+        harness.assertLife(player1, 26);
     }
 
     @Test
@@ -46,10 +42,10 @@ class GerrardsWisdomTest extends BaseCardTest {
                 new GrizzlyBears()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -58,7 +54,25 @@ class GerrardsWisdomTest extends BaseCardTest {
         harness.castFromHand(player1, new GerrardsWisdom(), "{2}{W}{W}");
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Counts cards in hand at resolution after drawing in response")
+    void countsHandAtResolution() {
+        harness.setHand(player1, List.of(
+                new GerrardsWisdom(), new Inspiration(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castSorcery(player1, 0);
+        harness.castInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 26);
+        harness.assertLife(player2, 20);
     }
 }
