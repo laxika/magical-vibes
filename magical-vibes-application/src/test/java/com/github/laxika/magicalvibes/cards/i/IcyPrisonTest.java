@@ -27,8 +27,7 @@ class IcyPrisonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castEnchantment(player1, 0, targetId);
-        harness.passBothPriorities(); // resolve enchantment -> ETB on stack
-        harness.passBothPriorities(); // resolve ETB -> exile
+        resolveAllTriggers();
     }
 
     private void resetForFollowUpSpell() {
@@ -84,6 +83,7 @@ class IcyPrisonTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, prisonId);
 
+        resolveAllTriggers();
         harness.assertOnBattlefield(player2, "Balduvian Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(c -> c.getName().equals("Balduvian Bears"));
@@ -134,6 +134,7 @@ class IcyPrisonTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertNotOnBattlefield(player1, "Icy Prison");
+        resolveAllTriggers();
         harness.assertOnBattlefield(player2, "Balduvian Bears");
     }
 
@@ -182,15 +183,48 @@ class IcyPrisonTest extends BaseCardTest {
         harness.setHand(player2, List.of(new IcyPrison()));
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.castEnchantment(player2, 0, bearsId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, false);
         harness.handleMayAbilityChosen(player1, false);
 
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Balduvian Bears");
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Leaving the battlefield queues a return trigger before the creature returns")
+    void returnWaitsForLeavesTriggerToResolve() {
+        harness.addToBattlefield(player2, new BalduvianBears());
+        castAndResolveIcyPrison(harness.getPermanentId(player2, "Balduvian Bears"));
+
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Icy Prison"));
+
+        harness.assertNotOnBattlefield(player1, "Icy Prison");
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Opponent's upkeep does not trigger Icy Prison's payment")
+    void doesNotTriggerOnOpponentsUpkeep() {
+        harness.addToBattlefield(player2, new BalduvianBears());
+        castAndResolveIcyPrison(harness.getPermanentId(player2, "Balduvian Bears"));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Icy Prison");
         harness.assertNotOnBattlefield(player2, "Balduvian Bears");
     }
 }
