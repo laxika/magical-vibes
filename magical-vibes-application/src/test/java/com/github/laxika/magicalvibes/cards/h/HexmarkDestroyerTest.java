@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Mortify;
+import com.github.laxika.magicalvibes.cards.s.SicarianInfiltrator;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HexmarkDestroyer.class, GrizzlyBears.class})
+@CardUsed({HexmarkDestroyer.class, SicarianInfiltrator.class, Mortify.class, Humility.class})
 class HexmarkDestroyerTest extends BaseCardTest {
 
     @Test
@@ -24,7 +25,7 @@ class HexmarkDestroyerTest extends BaseCardTest {
     void cannotBeBlockedByFewerThanSixCreatures() {
         addCreatureReady(player1, new HexmarkDestroyer());
         for (int i = 0; i < 5; i++) {
-            addCreatureReady(player2, new GrizzlyBears());
+            addCreatureReady(player2, new SicarianInfiltrator());
         }
 
         declareAttackersAndPrepareBlockers(List.of(0));
@@ -44,7 +45,7 @@ class HexmarkDestroyerTest extends BaseCardTest {
     void canBeBlockedBySixCreatures() {
         addCreatureReady(player1, new HexmarkDestroyer());
         for (int i = 0; i < 6; i++) {
-            addCreatureReady(player2, new GrizzlyBears());
+            addCreatureReady(player2, new SicarianInfiltrator());
         }
 
         declareAttackersAndPrepareBlockers(List.of(0));
@@ -82,5 +83,66 @@ class HexmarkDestroyerTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Hexmark Destroyer");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(cardInExile -> cardInExile.getName().equals("Hexmark Destroyer"));
+    }
+
+    @Test
+    void canBeBlockedByOneCreatureAfterLosingAbilities() {
+        addCreatureReady(player1, new HexmarkDestroyer());
+        addCreatureReady(player2, new SicarianInfiltrator());
+        harness.addToBattlefield(player1, new Humility());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().isBlocking()).isTrue();
+    }
+
+    @Test
+    void unearthCannotBeActivatedDuringCombat() {
+        harness.setGraveyard(player1, List.of(new HexmarkDestroyer()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        harness.assertInGraveyard(player1, "Hexmark Destroyer");
+    }
+
+    @Test
+    void unearthedDestroyerCanAttackImmediatelyAndRemainUnblocked() {
+        harness.setGraveyard(player1, List.of(new HexmarkDestroyer()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    void unearthedDestroyerIsExiledInsteadOfGoingToGraveyardWhenDestroyed() {
+        harness.setGraveyard(player1, List.of(new HexmarkDestroyer()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        Permanent destroyer = findPermanent(player1, "Hexmark Destroyer");
+        harness.setHand(player1, List.of(new Mortify()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, destroyer.getId());
+
+        harness.assertNotOnBattlefield(player1, "Hexmark Destroyer");
+        harness.assertNotInGraveyard(player1, "Hexmark Destroyer");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Hexmark Destroyer"));
     }
 }
