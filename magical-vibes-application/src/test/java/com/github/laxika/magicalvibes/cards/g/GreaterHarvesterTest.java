@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
+import com.github.laxika.magicalvibes.cards.d.DiscipleOfTheVault;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GreaterHarvester.class, DarksteelCitadel.class})
+@CardUsed({GreaterHarvester.class, DarksteelCitadel.class, DiscipleOfTheVault.class})
 class GreaterHarvesterTest extends BaseCardTest {
 
     @Test
@@ -85,5 +86,67 @@ class GreaterHarvesterTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player2, "Greater Harvester")).isEqualTo(1);
+    }
+
+    @Test
+    void upkeepSacrificesHarvesterWhenItIsTheOnlyPermanent() {
+        harness.addToBattlefield(player1, new GreaterHarvester());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Greater Harvester");
+        harness.assertInGraveyard(player1, "Greater Harvester");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotRequireASacrifice() {
+        harness.addToBattlefield(player1, new GreaterHarvester());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Greater Harvester");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void damagedPlayerWithOnlyOnePermanentSacrificesIt() {
+        Permanent harvester = addCreatureReady(player1, new GreaterHarvester());
+        harvester.setAttacking(true);
+        harness.addToBattlefield(player2, new DarksteelCitadel());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Darksteel Citadel");
+        harness.assertInGraveyard(player2, "Darksteel Citadel");
+        harness.assertOnBattlefield(player1, "Greater Harvester");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void twoPermanentsAreSacrificedSimultaneouslyWhenNoChoiceIsNeeded() {
+        Permanent harvester = addCreatureReady(player1, new GreaterHarvester());
+        harvester.setAttacking(true);
+        harness.addToBattlefield(player2, new DiscipleOfTheVault());
+        harness.addToBattlefield(player2, new DarksteelCitadel());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Disciple of the Vault");
+        harness.assertInGraveyard(player2, "Darksteel Citadel");
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.validIds()).containsExactly(player1.getId());
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player1, 19);
     }
 }
