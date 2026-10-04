@@ -43,11 +43,53 @@ class GreatOakGuardianTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, targetCreature)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, targetCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, targetCreature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Targeting yourself boosts and untaps the Guardian too")
+    void targetingYourselfIncludesGuardian() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new GreatOakGuardian());
+        existing.tap();
+
+        castGreatOakGuardian(player1.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        for (Permanent creature : gd.playerBattlefields.get(player1.getId())) {
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+            assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
+            assertThat(creature.isTapped()).isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void laterCreaturesAreNotBoosted() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player2, new GreatOakGuardian());
+
+        castGreatOakGuardian(player2.getId());
+        Permanent later = harness.addToBattlefieldAndReturn(player2, new GreatOakGuardian());
+
+        assertThat(gqs.getEffectivePower(gd, existing)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Flash allows casting during an opponent's end step")
+    void canCastDuringOpponentsEndStep() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+
+        castGreatOakGuardian(player1.getId());
+
+        Permanent guardian = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.getEffectivePower(gd, guardian)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, guardian)).isEqualTo(7);
     }
 
     private void castGreatOakGuardian(java.util.UUID targetPlayerId) {
