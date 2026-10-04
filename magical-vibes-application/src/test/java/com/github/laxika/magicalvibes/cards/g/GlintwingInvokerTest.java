@@ -38,7 +38,6 @@ class GlintwingInvokerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, invoker)).isEqualTo(3);
@@ -68,6 +67,55 @@ class GlintwingInvokerTest extends BaseCardTest {
     void cannotActivateWithoutEnoughMana() {
         harness.addToBattlefield(player1, new GlintwingInvoker());
         harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("A tapped Invoker can activate without becoming untapped")
+    void canActivateWhileTapped() {
+        Permanent invoker = harness.addToBattlefieldAndReturn(player1, new GlintwingInvoker());
+        invoker.setTapped(true);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(invoker.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, invoker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, invoker)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, invoker, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability affects only the Invoker that activated it")
+    void affectsOnlyItsSource() {
+        Permanent invoker = harness.addToBattlefieldAndReturn(player1, new GlintwingInvoker());
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GlintwingInvoker());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GlintwingInvoker());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, invoker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, invoker)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, invoker, Keyword.FLYING)).isTrue();
+        for (Permanent other : new Permanent[]{ally, opponent}) {
+            assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+            assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("One blue and six generic mana cannot pay the activation cost")
+    void cannotActivateWithTooLittleGenericMana() {
+        harness.addToBattlefield(player1, new GlintwingInvoker());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
