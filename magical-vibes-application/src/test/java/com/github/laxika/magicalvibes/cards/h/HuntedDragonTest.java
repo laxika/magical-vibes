@@ -69,4 +69,37 @@ class HuntedDragonTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Opponent targeting follows the Dragon's controller")
+    void etbTargetsOpponentOfSecondPlayer() {
+        harness.enterBattlefieldAndReturn(player2, new HuntedDragon());
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).containsExactly(player1.getId());
+
+        harness.handlePermanentChosen(player2, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Knight")).hasSize(3);
+        assertThat(findPermanents(player2, "Knight")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The opponent still creates Knights after the Dragon leaves the battlefield")
+    void etbResolvesAfterDragonLeavesBattlefield() {
+        Permanent dragon = harness.enterBattlefieldAndReturn(player1, new HuntedDragon());
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, dragon));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Hunted Dragon");
+        harness.assertNotOnBattlefield(player1, "Hunted Dragon");
+        assertThat(findPermanents(player2, "Knight")).hasSize(3);
+        assertThat(findPermanents(player1, "Knight")).isEmpty();
+    }
 }
