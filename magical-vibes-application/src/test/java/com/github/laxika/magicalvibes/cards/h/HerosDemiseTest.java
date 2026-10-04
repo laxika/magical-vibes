@@ -12,10 +12,63 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({HerosDemise.class, InkEyesServantOfOni.class, TeardropKami.class, ThatWhichWasTaken.class})
 class HerosDemiseTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Hero's Demise can destroy its controller's legendary creature")
+    void destroysOwnLegendaryCreature() {
+        Permanent inkEyes = addCreatureReady(player1, new InkEyesServantOfOni());
+        harness.setHand(player1, List.of(new HerosDemise()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, inkEyes.getId());
+
+        harness.assertNotOnBattlefield(player1, "Ink-Eyes, Servant of Oni");
+        harness.assertInGraveyard(player1, "Ink-Eyes, Servant of Oni");
+        harness.assertInGraveyard(player1, "Hero's Demise");
+    }
+
+    @Test
+    @DisplayName("A legendary creature can regenerate in response to Hero's Demise")
+    void regenerationPreventsDestruction() {
+        Permanent inkEyes = addCreatureReady(player2, new InkEyesServantOfOni());
+        harness.setHand(player1, List.of(new HerosDemise()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.castInstant(player1, 0, inkEyes.getId());
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Ink-Eyes, Servant of Oni");
+        harness.assertNotInGraveyard(player2, "Ink-Eyes, Servant of Oni");
+        assertThat(inkEyes.isTapped()).isTrue();
+        assertThat(inkEyes.getRegenerationShield()).isZero();
+        harness.assertInGraveyard(player1, "Hero's Demise");
+    }
+
+    @Test
+    @DisplayName("Hero's Demise targets but cannot destroy an indestructible legendary creature")
+    void indestructiblePreventsDestruction() {
+        harness.addToBattlefieldAndReturn(player2, new ThatWhichWasTaken());
+        Permanent inkEyes = addCreatureReady(player2, new InkEyesServantOfOni());
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player2, 0, null, inkEyes.getId());
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new HerosDemise()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0, inkEyes.getId());
+
+        harness.assertOnBattlefield(player2, "Ink-Eyes, Servant of Oni");
+        harness.assertNotInGraveyard(player2, "Ink-Eyes, Servant of Oni");
+        harness.assertInGraveyard(player1, "Hero's Demise");
+    }
 
     @Test
     @DisplayName("Resolving Hero's Demise destroys the target legendary creature")
