@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HeraldOfWar.class, AvacynianPriest.class, SerraAngel.class, GrizzlyBears.class})
 class HeraldOfWarTest extends BaseCardTest {
 
     @Test
@@ -115,5 +117,66 @@ class HeraldOfWarTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Attack counter is added on resolution only to the attacking Herald")
+    void attackCounterWaitsForResolutionAndUsesItsSource() {
+        Permanent attacker = addCreatureReady(player1, new HeraldOfWar());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent otherHerald = addCreatureReady(player1, new HeraldOfWar());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(otherHerald.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(otherHerald.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple Heralds add their reductions using their own counter counts")
+    void multipleHeraldsCombineReductions() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new HeraldOfWar());
+        first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new HeraldOfWar());
+        second.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new HeraldOfWar()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Other counter types do not reduce Angel costs")
+    void otherCountersDoNotReduceCosts() {
+        Permanent herald = harness.addToBattlefieldAndReturn(player1, new HeraldOfWar());
+        herald.setCounterCount(CounterType.CHARGE, 3);
+        harness.setHand(player1, List.of(new HeraldOfWar()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Excess reduction permits casting an Angel with exactly its colored cost")
+    void excessReductionLeavesOnlyColoredCost() {
+        Permanent herald = harness.addToBattlefieldAndReturn(player1, new HeraldOfWar());
+        herald.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        harness.setHand(player1, List.of(new HeraldOfWar()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }
