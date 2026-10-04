@@ -7,11 +7,10 @@ import com.github.laxika.magicalvibes.cards.a.AsariCaptain;
 import com.github.laxika.magicalvibes.cards.e.EaterOfVirtue;
 import com.github.laxika.magicalvibes.cards.e.EiganjoExemplar;
 import com.github.laxika.magicalvibes.cards.e.EiganjoUprising;
-import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.UnstoppableOgre;
+import com.github.laxika.magicalvibes.cards.p.PapercraftDecoy;
 import com.github.laxika.magicalvibes.cards.h.HeikoYamazakiTheGeneral;
 import com.github.laxika.magicalvibes.cards.i.ImperialSubduer;
-import com.github.laxika.magicalvibes.cards.m.MothriderSamurai;
 import com.github.laxika.magicalvibes.cards.n.NorikaYamazakiThePoet;
 import com.github.laxika.magicalvibes.cards.p.PeerlessSamurai;
 import com.github.laxika.magicalvibes.cards.r.ReinforcedRonin;
@@ -33,13 +32,13 @@ import static org.assertj.core.api.Assertions.assertThat;
         AsariCaptain.class, EaterOfVirtue.class, EiganjoExemplar.class, EiganjoUprising.class,
         HeikoYamazakiTheGeneral.class, ImperialSubduer.class, NorikaYamazakiThePoet.class,
         PeerlessSamurai.class, ReinforcedRonin.class, SelflessSamurai.class, SunbladeSamurai.class,
-        TemperedInSolitude.class, MothriderSamurai.class, ElvishWarrior.class, GrizzlyBears.class})
+        TemperedInSolitude.class, UnstoppableOgre.class, PapercraftDecoy.class})
 class ImperialBlademasterTest extends BaseCardTest {
 
     @Test
     void samuraiAttackingAloneOffersThreeSpellbookCards() {
         addCreatureReady(player1, new ImperialBlademaster());
-        addCreatureReady(player1, new MothriderSamurai());
+        addCreatureReady(player1, new SunbladeSamurai());
 
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
@@ -57,7 +56,7 @@ class ImperialBlademasterTest extends BaseCardTest {
     @Test
     void warriorAttackingAloneOffersThreeSpellbookCards() {
         addCreatureReady(player1, new ImperialBlademaster());
-        addCreatureReady(player1, new ElvishWarrior());
+        addCreatureReady(player1, new UnstoppableOgre());
 
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
@@ -70,7 +69,7 @@ class ImperialBlademasterTest extends BaseCardTest {
     @Test
     void nonSamuraiOrWarriorAttackingAloneDoesNotTrigger() {
         addCreatureReady(player1, new ImperialBlademaster());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new PapercraftDecoy());
 
         declareAttackers(player1, List.of(1));
         resolveAllTriggers();
@@ -81,8 +80,54 @@ class ImperialBlademasterTest extends BaseCardTest {
     @Test
     void multipleEligibleAttackersDoNotTrigger() {
         addCreatureReady(player1, new ImperialBlademaster());
-        addCreatureReady(player1, new MothriderSamurai());
-        addCreatureReady(player1, new ElvishWarrior());
+        addCreatureReady(player1, new SunbladeSamurai());
+        addCreatureReady(player1, new UnstoppableOgre());
+
+        declareAttackers(player1, List.of(1, 2));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class)).isNull();
+    }
+
+    @Test
+    void attackingAloneItselfDraftsExactlyOneChosenCardIntoControllersHand() {
+        addCreatureReady(player1, new ImperialBlademaster());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+
+        PendingInteraction.SpellbookDraftChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.cards()).extracting(Card::getName).doesNotHaveDuplicates();
+        Card chosen = choice.cards().getFirst();
+
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class)).isNull();
+    }
+
+    @Test
+    void opponentsEligibleAttackerDoesNotTrigger() {
+        addCreatureReady(player1, new ImperialBlademaster());
+        addCreatureReady(player2, new SunbladeSamurai());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class)).isNull();
+    }
+
+    @Test
+    void eligibleAttackerWithIneligibleCompanionDoesNotTrigger() {
+        addCreatureReady(player1, new ImperialBlademaster());
+        addCreatureReady(player1, new SunbladeSamurai());
+        addCreatureReady(player1, new PapercraftDecoy());
 
         declareAttackers(player1, List.of(1, 2));
         resolveAllTriggers();
