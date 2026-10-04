@@ -91,6 +91,53 @@ class GoblinTaskmasterTest extends BaseCardTest {
         assertThat(taskmaster.isFaceDown()).isFalse();
     }
 
+    @Test
+    @DisplayName("Taskmaster can repeatedly pump itself while tapped and summoning sick")
+    void repeatedlyBoostsItselfWhileTappedAndSummoningSick() {
+        Permanent taskmaster = harness.addToBattlefieldAndReturn(player1, new GoblinTaskmaster());
+        taskmaster.setTapped(true);
+        taskmaster.setSummoningSick(true);
+        int originalPower = taskmaster.getEffectivePower();
+        int originalToughness = taskmaster.getEffectiveToughness();
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        activateTaskmaster(taskmaster.getId());
+        activateTaskmaster(taskmaster.getId());
+
+        assertThat(taskmaster.getEffectivePower()).isEqualTo(originalPower + 2);
+        assertThat(taskmaster.getEffectiveToughness()).isEqualTo(originalToughness);
+        assertThat(taskmaster.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A face-down Taskmaster has no printed activated ability")
+    void cannotActivatePrintedAbilityWhileFaceDown() {
+        harness.setHand(player1, List.of(new GoblinTaskmaster()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+        Permanent goblin = addGoblin(player1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, goblin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A face-down Taskmaster is not a legal Goblin target")
+    void cannotTargetFaceDownTaskmaster() {
+        addTaskmaster();
+        harness.setHand(player1, List.of(new GoblinTaskmaster()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+        Permanent faceDown = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isFaceDown).findFirst().orElseThrow();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, faceDown.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void addTaskmaster() {
         addCreatureReady(player1, new GoblinTaskmaster());
         harness.addMana(player1, ManaColor.RED, 2);

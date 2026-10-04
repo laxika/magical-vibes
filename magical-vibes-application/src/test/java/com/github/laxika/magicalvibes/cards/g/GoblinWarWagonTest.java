@@ -94,4 +94,50 @@ class GoblinWarWagonTest extends BaseCardTest {
         assertThat(wagon.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
+    @Test
+    @DisplayName("Colored mana can pay Goblin War Wagon's generic upkeep cost")
+    void coloredManaPaysUpkeepCost() {
+        Permanent wagon = addCreatureReady(player1, new GoblinWarWagon());
+        wagon.tap();
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(wagon.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("An untapped Goblin War Wagon still triggers and permits payment during upkeep")
+    void untappedWagonStillPermitsUpkeepPayment() {
+        Permanent wagon = addCreatureReady(player1, new GoblinWarWagon());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(wagon.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Declining Goblin War Wagon's upkeep payment preserves available mana")
+    void decliningPaymentDoesNotSpendMana() {
+        Permanent wagon = addCreatureReady(player1, new GoblinWarWagon());
+        wagon.tap();
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, false));
+
+        assertThat(wagon.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
 }

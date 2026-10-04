@@ -127,7 +127,7 @@ class FearsomeTemperTest extends BaseCardTest {
     void abilityDoesNotRequireTapOrHaste() {
         Permanent creature = addEnchantedCreature();
         creature.setSummoningSick(true);
-        creature.setTapped(true);
+        creature.tap();
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new OreskosSunGuide());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

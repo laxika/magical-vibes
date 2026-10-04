@@ -12,8 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndPutMilledCreaturesOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -30,8 +28,7 @@ public class AvatarDestiny extends Card {
                 .addEffect(EffectSlot.STATIC,
                         new GrantSubtypeEffect(CardSubtype.AVATAR, GrantScope.ENCHANTED_CREATURE));
 
-        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD, SequenceEffect.of(
-                new MillControllerAndPutMilledCreaturesOntoBattlefieldEffect(new EventValue(), 1),
-                new ReturnSourceCardFromGraveyardToOwnerHandEffect()));
+        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
+                new MillControllerAndPutMilledCreaturesOntoBattlefieldEffect(new EventValue(), 1, true));
     }
 }

@@ -227,7 +227,7 @@ class FeelingOfDreadTest extends BaseCardTest {
     @DisplayName("Can target an already tapped creature and a creature you control")
     void canTargetTappedAndOwnCreatures() {
         Permanent tappedCreature = addReadyCreature(player2, new GrizzlyBears());
-        tappedCreature.setTapped(true);
+        tappedCreature.tap();
         Permanent ownCreature = addReadyCreature(player1, new GiantSpider());
         harness.setHand(player1, List.of(new FeelingOfDread()));
         harness.addMana(player1, ManaColor.WHITE, 2);

@@ -100,7 +100,7 @@ class DrogskolCavalryTest extends BaseCardTest {
     void tokenCreationTriggersLifeGainAndCanBeRepeated() {
         harness.setLife(player1, 20);
         Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new DrogskolCavalry());
-        cavalry.setTapped(true);
+        cavalry.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 

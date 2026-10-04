@@ -103,7 +103,7 @@ class FaithHealerTest extends BaseCardTest {
     @DisplayName("A tapped Faith Healer can activate and gains life only on resolution")
     void tappedHealerCanActivate() {
         Permanent healer = harness.addToBattlefieldAndReturn(player1, new FaithHealer());
-        healer.setTapped(true);
+        healer.tap();
         harness.addToBattlefield(player1, new DarkestHour());
         harness.setLife(player1, 10);
         harness.setLife(player2, 10);

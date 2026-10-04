@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
+import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
+import com.github.laxika.magicalvibes.cards.s.SylvokLifestaff;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GolemArtisan.class, GoldMyr.class, CarapaceForger.class, SylvokLifestaff.class})
 class GolemArtisanTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -248,9 +251,7 @@ class GolemArtisanTest extends BaseCardTest {
     @DisplayName("Cannot target non-artifact creature")
     void cannotTargetNonArtifactCreature() {
         addGolemReady(player1);
-        GoblinPiker nonArtifactCreature = new GoblinPiker();
-        Permanent perm = new Permanent(nonArtifactCreature);
-        gd.playerBattlefields.get(player2.getId()).add(perm);
+        Permanent perm = harness.addToBattlefieldAndReturn(player2, new CarapaceForger());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, perm.getId()))
@@ -262,9 +263,7 @@ class GolemArtisanTest extends BaseCardTest {
     @DisplayName("Cannot target artifact that is not a creature")
     void cannotTargetNonCreatureArtifact() {
         addGolemReady(player1);
-        AngelsFeather artifact = new AngelsFeather();
-        Permanent perm = new Permanent(artifact);
-        gd.playerBattlefields.get(player2.getId()).add(perm);
+        Permanent perm = harness.addToBattlefieldAndReturn(player2, new SylvokLifestaff());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, perm.getId()))
@@ -301,9 +300,7 @@ class GolemArtisanTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate ability with summoning sickness")
     void canActivateWithSummoningSickness() {
-        GolemArtisan card = new GolemArtisan();
-        Permanent golem = new Permanent(card);
-        gd.playerBattlefields.get(player1.getId()).add(golem);
+        harness.addToBattlefield(player1, new GolemArtisan());
         Permanent target = addArtifactCreature(player2);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -374,21 +371,113 @@ class GolemArtisanTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helper methods =====
+    @Test
+    void canBoostItself() {
+        Permanent golem = addGolemReady(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        int power = gqs.getEffectivePower(gd, golem);
+        int toughness = gqs.getEffectiveToughness(gd, golem);
+
+        harness.activateAbility(player1, 0, 0, null, golem.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(power + 1);
+        assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(toughness + 1);
+    }
+
+    @Test
+    void multipleActivationsGrantDifferentKeywordsToItself() {
+        Permanent golem = addGolemReady(player1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, 1, null, golem.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "FLYING");
+        harness.activateAbility(player1, 0, 1, null, golem.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "TRAMPLE");
+
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    void boostResolvesAfterSourceLeavesBattlefield() {
+        Permanent golem = addGolemReady(player1);
+        Permanent target = addArtifactCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(golem);
+        gd.playerGraveyards.get(player1.getId()).add(golem.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    void keywordResolvesAfterSourceLeavesBattlefield() {
+        Permanent golem = addGolemReady(player1);
+        Permanent target = addArtifactCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(golem);
+        gd.playerGraveyards.get(player1.getId()).add(golem.getCard());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "HASTE");
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void keywordAbilityRejectsNonArtifactCreature() {
+        addGolemReady(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CarapaceForger());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an artifact creature");
+    }
+
+    @Test
+    void keywordAbilityRejectsNonCreatureArtifact() {
+        addGolemReady(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SylvokLifestaff());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void keywordAbilityDoesNotPromptWhenTargetLeavesBattlefield() {
+        addGolemReady(player1);
+        Permanent target = addArtifactCreature(player2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+    }
 
     private Permanent addGolemReady(Player player) {
-        GolemArtisan card = new GolemArtisan();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GolemArtisan());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addArtifactCreature(Player player) {
-        GoldMyr card = new GoldMyr();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GoldMyr());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

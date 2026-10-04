@@ -52,7 +52,7 @@ class FreezeInPlaceTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureStillGetsThreeAdditionalStunCounters() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new TuinvaleGuide());
-        target.setTapped(true);
+        target.tap();
         target.setCounterCount(CounterType.STUN, 1);
 
         cast(target);

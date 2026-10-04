@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WoollyThoctar;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -73,6 +74,82 @@ class GeneralFerrousRokiricTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, general.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The controller can target the General with a monocolored spell")
+    void controllerCanTargetWithMonocoloredSpell() {
+        Permanent general = harness.addToBattlefieldAndReturn(player1, new GeneralFerrousRokiric());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, general.getId());
+
+        harness.assertNotOnBattlefield(player1, "General Ferrous Rokiric");
+        harness.assertInGraveyard(player1, "General Ferrous Rokiric");
+        assertThat(findPermanents(player1, "Golem")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Monocolored creatures can block the General and deal combat damage to it")
+    void monocoloredCreatureCanBlockAndKillGeneral() {
+        addCreatureReady(player1, new GeneralFerrousRokiric());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "General Ferrous Rokiric");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Hexproof does not prevent combat damage from a monocolored attacker")
+    void monocoloredAttackerDealsCombatDamageToGeneral() {
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GeneralFerrousRokiric());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "General Ferrous Rokiric");
+    }
+
+    @Test
+    @DisplayName("Casting the General itself does not trigger its battlefield ability")
+    void castingGeneralDoesNotCreateGolem() {
+        harness.setHand(player1, List.of(new GeneralFerrousRokiric()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "General Ferrous Rokiric");
+        assertThat(findPermanents(player1, "Golem")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Golem is created before the multicolored creature spell resolves")
+    void castTriggerResolvesBeforeCreatureSpell() {
+        harness.addToBattlefield(player1, new GeneralFerrousRokiric());
+        harness.setHand(player1, List.of(new WoollyThoctar()));
+        addWoollyThoctarMana(player1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Golem")).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Woolly Thoctar");
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Woolly Thoctar");
+        assertThat(findPermanents(player1, "Golem")).hasSize(1);
     }
 
     private void addWoollyThoctarMana(com.github.laxika.magicalvibes.model.Player player) {

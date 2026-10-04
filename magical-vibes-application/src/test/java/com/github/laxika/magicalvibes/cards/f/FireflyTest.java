@@ -19,7 +19,7 @@ class FireflyTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent firefly = harness.addToBattlefieldAndReturn(player1, new Firefly());
         firefly.setSummoningSick(true);
-        firefly.setTapped(true);
+        firefly.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

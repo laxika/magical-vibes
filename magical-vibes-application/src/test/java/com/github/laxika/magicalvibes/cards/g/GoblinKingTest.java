@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
+import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -16,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinKing.class, GoblinChariot.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({GoblinKing.class, GoblinChariot.class, GrizzlyBears.class, Mountain.class,
+        BoggartShenanigans.class, DarkBanishing.class})
 class GoblinKingTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -237,6 +241,47 @@ class GoblinKingTest extends BaseCardTest {
 
         // Mountainwalk should be gone, allowing blocking
         assertThat(gqs.hasKeyword(gd, goblinAttacker, Keyword.MOUNTAINWALK)).isFalse();
+    }
+
+    @Test
+    @CardUsed({GoblinKing.class, BoggartShenanigans.class})
+    @DisplayName("Noncreature Goblin permanents receive mountainwalk too")
+    void grantsMountainwalkToNoncreatureGoblins() {
+        harness.addToBattlefield(player1, new GoblinKing());
+        Permanent ownEnchantment = harness.addToBattlefieldAndReturn(player1, new BoggartShenanigans());
+        Permanent opposingEnchantment = harness.addToBattlefieldAndReturn(player2, new BoggartShenanigans());
+
+        assertThat(gqs.hasKeyword(gd, ownEnchantment, Keyword.MOUNTAINWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingEnchantment, Keyword.MOUNTAINWALK)).isTrue();
+    }
+
+    @Test
+    @CardUsed({GoblinKing.class, GoblinChariot.class, DarkBanishing.class})
+    @DisplayName("Destroying an opposing King removes only its contribution")
+    void destroyingOpposingKingRemovesOnlyItsBonus() {
+        Permanent ownKing = harness.addToBattlefieldAndReturn(player1, new GoblinKing());
+        Permanent opposingKing = harness.addToBattlefieldAndReturn(player2, new GoblinKing());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinChariot());
+
+        for (Permanent king : List.of(ownKing, opposingKing)) {
+            assertThat(gqs.getEffectivePower(gd, king)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, king)).isEqualTo(3);
+            assertThat(gqs.hasKeyword(gd, king, Keyword.MOUNTAINWALK)).isTrue();
+        }
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(4);
+
+        harness.setHand(player1, List.of(new DarkBanishing()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player1, 0, opposingKing.getId());
+
+        harness.assertInGraveyard(player2, "Goblin King");
+        assertThat(gqs.getEffectivePower(gd, ownKing)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownKing)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, ownKing, Keyword.MOUNTAINWALK)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.MOUNTAINWALK)).isTrue();
     }
 }
 

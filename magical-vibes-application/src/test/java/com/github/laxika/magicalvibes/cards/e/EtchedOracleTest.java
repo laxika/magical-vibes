@@ -152,7 +152,7 @@ class EtchedOracleTest extends BaseCardTest {
     void abilityWorksWhileTappedAndSummoningSick() {
         Permanent oracle = harness.addToBattlefieldAndReturn(player1, new EtchedOracle());
         oracle.setSummoningSick(true);
-        oracle.setTapped(true);
+        oracle.tap();
         oracle.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

@@ -110,8 +110,10 @@ class AviaryMechanicTest extends BaseCardTest {
     @Test
     @DisplayName("A controlled permanent owned by the opponent returns to the opponent's hand")
     void returnsControlledPermanentToItsOwner() {
-        UUID turtleId = harness.addToBattlefieldAndReturn(player1, new ThrivingTurtle()).getId();
-        gd.stolenCreatures.put(turtleId, player2.getId());
+        ThrivingTurtle turtle = new ThrivingTurtle();
+        turtle.setOwnerId(player2.getId());
+        UUID turtleId = harness.addToBattlefieldAndReturn(player1, turtle).getId();
+        harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.f.Forest());
 
         castAndResolveSpell();
         harness.handleMayAbilityChosen(player1, true);

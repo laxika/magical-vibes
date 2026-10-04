@@ -84,6 +84,56 @@ class GerrardsBattleCryTest extends BaseCardTest {
         assertThat(battleCry.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Creatures entering after activation but before resolution receive the boost")
+    void creaturesEnteringBeforeResolutionAreBoosted() {
+        addBattleCry();
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.activateAbility(player1, 0, null, null);
+
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new SoltariFootSoldier());
+        assertThat(soldier.getPowerModifier()).isZero();
+        assertThat(soldier.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(soldier.getPowerModifier()).isEqualTo(1);
+        assertThat(soldier.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The ability can resolve with no creatures and does not boost later arrivals")
+    void canActivateWithoutCreatures() {
+        Permanent battleCry = addBattleCry();
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        activateAndResolve();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(battleCry.getPowerModifier()).isZero();
+        assertThat(battleCry.getToughnessModifier()).isZero();
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new SoltariFootSoldier());
+        assertThat(soldier.getPowerModifier()).isZero();
+        assertThat(soldier.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Battle Cry can activate and boost tapped creatures")
+    void tappedPermanentsDoNotPreventActivationOrBoost() {
+        Permanent battleCry = addBattleCry();
+        battleCry.setTapped(true);
+        Permanent soldier = harness.addToBattlefieldAndReturn(player1, new SoltariFootSoldier());
+        soldier.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        activateAndResolve();
+
+        assertThat(soldier.getPowerModifier()).isEqualTo(1);
+        assertThat(soldier.getToughnessModifier()).isEqualTo(1);
+        assertThat(soldier.isTapped()).isTrue();
+        assertThat(battleCry.isTapped()).isTrue();
+    }
+
     private void activateAndResolve() {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

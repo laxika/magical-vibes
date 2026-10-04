@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveSuspendCounterFromExiledSpellEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ public class SuspendedCardTimeCounterChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.SuspendedCardTimeCounterChoice> {
 
     private final RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterHandler;
+    private final RemoveSuspendCounterFromExiledSpellEffectHandler removeSuspendedSpellCounterHandler;
     private final InputCompletionService inputCompletionService;
 
     @Override
@@ -47,7 +49,11 @@ public class SuspendedCardTimeCounterChoiceInteractionHandler
 
         gameData.interaction.clearAwaitingInput();
         for (int i = 0; i < interaction.amount(); i++) {
-            removeTimeCounterHandler.removeTimeCounter(gameData, cardId);
+            if (gameData.suspendedSpellExiles.stream().anyMatch(suspended -> suspended.cardId().equals(cardId))) {
+                removeSuspendedSpellCounterHandler.removeTimeCounter(gameData, cardId);
+            } else {
+                removeTimeCounterHandler.removeTimeCounter(gameData, cardId);
+            }
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
@@ -55,9 +61,9 @@ public class SuspendedCardTimeCounterChoiceInteractionHandler
     private ExiledCardEntry findEligibleCard(GameData gameData, UUID ownerId, UUID cardId) {
         synchronized (gameData.exiledCards) {
             for (ExiledCardEntry exiled : gameData.exiledCards) {
-                Integer counters = gameData.exiledCardTimeCounters.get(cardId);
                 if (ownerId.equals(exiled.ownerId()) && !exiled.faceDown()
-                        && cardId.equals(exiled.card().getId()) && counters != null && counters > 0) {
+                        && cardId.equals(exiled.card().getId())
+                        && RemoveTimeCounterFromExiledCardEffectHandler.isSuspended(gameData, exiled)) {
                     return exiled;
                 }
             }

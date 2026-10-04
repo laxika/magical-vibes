@@ -38,12 +38,56 @@ class GetALegUpTest extends BaseCardTest {
 
         cast(target);
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opposing target is boosted using the caster's creature count")
+    void opposingTargetUsesCastersCreatureCount() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new HillGiant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(target);
+
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Reach is granted even when the caster controls no creatures")
+    void grantsReachWithZeroCreatures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        cast(target);
+
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creature count is determined at resolution and stays fixed afterward")
+    void countsAtResolutionAndDoesNotRecalculate() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, java.util.List.of(new GetALegUp()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, target.getId());
+        harness.addToBattlefield(player1, new HillGiant());
+
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.REACH)).isTrue();
     }
 
     private void cast(Permanent target) {

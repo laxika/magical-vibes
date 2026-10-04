@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -56,5 +58,58 @@ class DuskTest extends BaseCardTest {
                 .doesNotContain(highPowerCreature, land);
         assertThat(gameData.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Dusk"));
+    }
+
+    @Test
+    @DisplayName("Dusk uses current power rather than printed power")
+    void duskUsesCurrentPower() {
+        Permanent boostedBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        boostedBear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent weakenedGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        weakenedGiant.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.setHand(player1, List.of(new Dusk()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player1, "Dusk");
+    }
+
+    @Test
+    @DisplayName("Dawn returns every eligible card only from its controller's graveyard")
+    void dawnReturnsAllOnlyFromControllersGraveyard() {
+        Card firstBear = new GrizzlyBears();
+        Card secondBear = new GrizzlyBears();
+        Card opponentsBear = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(new Dusk(), firstBear, secondBear));
+        harness.setGraveyard(player2, List.of(opponentsBear));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(firstBear, secondBear);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentsBear);
+        harness.assertNotInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Dawn still exiles the card when there are no eligible creatures")
+    void dawnExilesWithNoEligibleCreatures() {
+        Card giant = new HillGiant();
+        Card dusk = new Dusk();
+        harness.setGraveyard(player1, List.of(dusk, giant));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(giant);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(dusk);
+        harness.assertNotInHand(player1, "Hill Giant");
     }
 }

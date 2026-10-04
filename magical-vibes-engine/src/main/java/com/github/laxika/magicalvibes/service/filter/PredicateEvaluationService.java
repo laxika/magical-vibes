@@ -1309,8 +1309,12 @@ public class PredicateEvaluationService {
                 yield gameQueryService.isCreature(gameData, permanent);
             }
             case PermanentIsDamagedPredicate ignored -> permanent.getMarkedDamage() > 0;
-            case PermanentIsCommanderPredicate ignored ->
-                    permanent.isCommander()
+            case PermanentIsCommanderPredicate commander ->
+                    commander.ownedBySourceController()
+                            ? gameData != null && sourceControllerId != null
+                            && gameData.playerCommanders.getOrDefault(sourceControllerId, List.of()).stream()
+                            .anyMatch(card -> card.getId().equals(permanent.getOriginalCard().getId()))
+                            : permanent.isCommander()
                             || (gameData != null && gameData.isCommander(permanent.getOriginalCard().getId()));
             case PermanentIsLandPredicate ignored -> {
                 if (gameData == null) {
@@ -3207,8 +3211,13 @@ public class PredicateEvaluationService {
                     controllerControlsMatchingStatic(permanent, p, context);
             case PermanentControllerControlsPermanentCountAtMostPredicate p ->
                     controllerControlsAtMostMatchingStatic(permanent, p, context);
-            case PermanentIsCommanderPredicate ignored -> {
+            case PermanentIsCommanderPredicate commander -> {
                 GameData gameData = context == null ? null : context.gameData();
+                if (commander.ownedBySourceController()) {
+                    yield gameData != null && context.sourceControllerId() != null
+                            && gameData.playerCommanders.getOrDefault(context.sourceControllerId(), List.of()).stream()
+                            .anyMatch(card -> card.getId().equals(permanent.getOriginalCard().getId()));
+                }
                 yield permanent.isCommander()
                         || (gameData != null && gameData.isCommander(permanent.getOriginalCard().getId()));
             }
@@ -4430,7 +4439,13 @@ public class PredicateEvaluationService {
             case PermanentIsCreaturePredicate ignored ->
                     state.hasCardType(CardType.CREATURE) || isOneShotAnimated(permanent);
             case PermanentIsDamagedPredicate ignored -> permanent.getMarkedDamage() > 0;
-            case PermanentIsCommanderPredicate ignored -> permanent.isCommander();
+            case PermanentIsCommanderPredicate commander ->
+                    commander.ownedBySourceController()
+                            ? gameData != null && filterContext.sourceControllerId() != null
+                            && gameData.playerCommanders.getOrDefault(filterContext.sourceControllerId(), List.of()).stream()
+                            .anyMatch(card -> card.getId().equals(permanent.getOriginalCard().getId()))
+                            : permanent.isCommander()
+                            || (gameData != null && gameData.isCommander(permanent.getOriginalCard().getId()));
             case PermanentIsArtifactPredicate ignored ->
                     state.hasCardType(CardType.ARTIFACT);
             case PermanentIsLandPredicate ignored ->

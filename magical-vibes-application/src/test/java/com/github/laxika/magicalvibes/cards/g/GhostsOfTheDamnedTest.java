@@ -16,6 +16,71 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class GhostsOfTheDamnedTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The ability can target itself and reduce power below zero")
+    void canTargetItself() {
+        Permanent ghosts = addCreatureReady(player1, new GhostsOfTheDamned());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, ghosts.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ghosts)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, ghosts)).isEqualTo(2);
+        assertThat(ghosts.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Ghosts of the Damned");
+    }
+
+    @Test
+    @DisplayName("Reductions from two Ghosts accumulate on the same creature")
+    void reductionsAccumulate() {
+        addCreatureReady(player1, new GhostsOfTheDamned());
+        addCreatureReady(player1, new GhostsOfTheDamned());
+        Permanent boars = addCreatureReady(player2, new DurkwoodBoars());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, boars.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, boars.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, boars)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, boars)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Ghost cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent ghosts = harness.addToBattlefieldAndReturn(player1, new GhostsOfTheDamned());
+        ghosts.setSummoningSick(true);
+        Permanent boars = addCreatureReady(player2, new DurkwoodBoars());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, boars.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(ghosts.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An already tapped Ghost cannot activate again")
+    void cannotActivateWhileTapped() {
+        Permanent ghosts = addCreatureReady(player1, new GhostsOfTheDamned());
+        ghosts.tap();
+        Permanent boars = addCreatureReady(player2, new DurkwoodBoars());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, boars.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Tap ability gives target creature -1/-0 until end of turn")
     void shrinksTargetCreature() {
         Permanent ghosts = addCreatureReady(player1, new GhostsOfTheDamned());

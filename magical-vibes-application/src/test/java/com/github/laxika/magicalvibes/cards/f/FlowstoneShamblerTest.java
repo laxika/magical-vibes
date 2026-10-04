@@ -78,7 +78,7 @@ class FlowstoneShamblerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent shambler = harness.enterBattlefieldAndReturn(player1, new FlowstoneShambler());
         shambler.setSummoningSick(true);
-        shambler.setTapped(true);
+        shambler.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

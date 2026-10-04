@@ -112,6 +112,69 @@ class GoblinMachinistTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, machinist)).isZero();
     }
 
+    @Test
+    @DisplayName("Stops at the first nonland and puts the revealed cards below unrevealed cards")
+    void leavesUnrevealedCardsOnTop() {
+        Permanent machinist = addCreatureReady(player1, new GoblinMachinist());
+        Forest land = new Forest();
+        Shock shock = new Shock();
+        GoblinMachinist untouched = new GoblinMachinist();
+        harness.setLibrary(player1, List.of(land, shock, untouched));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, machinist)).isEqualTo(1);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, shock, land);
+    }
+
+    @Test
+    @DisplayName("Repeated activations accumulate even while tapped and summoning sick")
+    void repeatedActivationsAccumulate() {
+        Permanent machinist = harness.addToBattlefieldAndReturn(player1, new GoblinMachinist());
+        machinist.setSummoningSick(true);
+        machinist.setTapped(true);
+        Shock first = new Shock();
+        GoblinMachinist second = new GoblinMachinist();
+        harness.setLibrary(player1, List.of(first, second));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, machinist)).isEqualTo(1);
+        addActivationMana();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, machinist)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, machinist)).isEqualTo(5);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    @DisplayName("Still reveals and orders cards when the source leaves before resolution")
+    void sourceLeavesBeforeResolution() {
+        Permanent machinist = addCreatureReady(player1, new GoblinMachinist());
+        Forest land = new Forest();
+        Shock shock = new Shock();
+        GoblinMachinist untouched = new GoblinMachinist();
+        harness.setLibrary(player1, List.of(land, shock, untouched));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, machinist));
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, shock, land);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(machinist.getCard());
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

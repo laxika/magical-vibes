@@ -133,7 +133,7 @@ class ElvishGuidanceTest extends BaseCardTest {
 
         gd.playerBattlefields.get(player2.getId()).remove(elf);
         gd.playerGraveyards.get(player2.getId()).add(elf.getCard());
-        forest.setTapped(false);
+        forest.untap();
         harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);

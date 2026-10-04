@@ -243,7 +243,7 @@ class DuctCrawlerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent crawler = harness.addToBattlefieldAndReturn(player1, new DuctCrawler());
         crawler.setSummoningSick(true);
-        crawler.setTapped(true);
+        crawler.tap();
         Permanent target = addCreatureReady(player2, new DuctCrawler());
         addAbilityMana(player1, 1);
 

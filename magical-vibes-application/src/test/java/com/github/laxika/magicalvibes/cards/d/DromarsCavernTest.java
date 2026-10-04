@@ -191,7 +191,7 @@ class DromarsCavernTest extends BaseCardTest {
     void returnsTappedLandAmongLairs() {
         Permanent existingLair = harness.addToBattlefieldAndReturn(player1, new DromarsCavern());
         Permanent moraine = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
-        moraine.setTapped(true);
+        moraine.tap();
         DromarsCavern cavern = playAndResolveEtb();
 
         harness.handleMayAbilityChosen(player1, true);

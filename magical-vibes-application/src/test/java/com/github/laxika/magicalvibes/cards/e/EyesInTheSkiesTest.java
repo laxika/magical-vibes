@@ -98,7 +98,7 @@ class EyesInTheSkiesTest extends BaseCardTest {
         UUID centaurId = harness.getPermanentId(player1, "Centaur");
         Permanent centaur = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getId().equals(centaurId)).findFirst().orElseThrow();
-        centaur.setTapped(true);
+        centaur.tap();
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castAndResolveInstant(player1, 0);

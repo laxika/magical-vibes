@@ -55,7 +55,7 @@ class DutyBoundDeadTest extends BaseCardTest {
     @Test
     void regenerationCanBeActivatedWhileTappedAndSummoningSick() {
         Permanent dead = addCreatureReady(player1, new DutyBoundDead());
-        dead.setTapped(true);
+        dead.tap();
         dead.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

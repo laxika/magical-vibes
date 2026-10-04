@@ -106,7 +106,7 @@ class DrixInterlacerTest extends BaseCardTest {
     @Test
     void tappedArtifactCannotActivate() {
         Permanent drix = harness.addToBattlefieldAndReturn(player1, new DrixInterlacer());
-        drix.setTapped(true);
+        drix.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

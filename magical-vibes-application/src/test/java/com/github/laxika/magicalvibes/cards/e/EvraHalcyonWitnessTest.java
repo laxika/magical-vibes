@@ -229,7 +229,7 @@ class EvraHalcyonWitnessTest extends BaseCardTest {
     @Test
     void tappedSummoningSickEvraCanExchange() {
         Permanent evra = harness.addToBattlefieldAndReturn(player1, new EvraHalcyonWitness());
-        evra.setTapped(true);
+        evra.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DrippingDead;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -103,5 +104,39 @@ class GoblinGrapplerTest extends BaseCardTest {
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
                 .doesNotThrowAnyException();
         assertThat(blocker.getMustBlockIds()).containsExactly(grappler.getId());
+    }
+
+    @Test
+    @DisplayName("Provoke can require an already untapped creature to block")
+    void provokeCanTargetUntappedCreature() {
+        Permanent grappler = addCreatureReady(player1, new GoblinGrappler());
+        Permanent blocker = addCreatureReady(player2, new FugitiveWizard());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        prepareDeclareBlockers();
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        assertThat(blocker.getMustBlockIds()).containsExactly(grappler.getId());
+    }
+
+    @Test
+    @DisplayName("Provoke's blocking requirement expires when its combat ends")
+    void provokeRequirementExpiresAfterCombat() {
+        addCreatureReady(player1, new GoblinGrappler());
+        Permanent blocker = addCreatureReady(player2, new DrippingDead());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN,
+                () -> harness.handleMayAbilityChosen(player1, true));
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(blocker.getMustBlockIds()).isEmpty();
     }
 }

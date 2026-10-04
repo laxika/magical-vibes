@@ -123,10 +123,16 @@ class ArbalestEngineersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        if (targetId == null) {
-            harness.castCreature(player1, 0, mode);
-        } else {
-            harness.castCreature(player1, 0, mode, targetId);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, switch (mode) {
+            case 0 -> "This creature deals 1 damage to any target";
+            case 1 -> "Put a +1/+1 counter on target creature. It gains trample and haste until end of turn";
+            case 2 -> "Create a tapped Powerstone token";
+            default -> throw new IllegalArgumentException("Unexpected mode: " + mode);
+        });
+        if (targetId != null) {
+            harness.handlePermanentChosen(player1, targetId);
         }
     }
 

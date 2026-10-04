@@ -29,8 +29,7 @@ class GloomdrifterTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Drudge Skeletons");
         assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Hill Giant"))).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Hill Giant"))).isEqualTo(1);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Gloomdrifter"));
+        harness.assertOnBattlefield(player1, "Gloomdrifter");
     }
 
     @Test
@@ -82,6 +81,56 @@ class GloomdrifterTest extends BaseCardTest {
 
         harness.passUntil(TurnStep.CLEANUP);
 
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Hill Giant"))).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Hill Giant"))).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An opponent's graveyard does not enable threshold")
+    void opponentsGraveyardDoesNotEnableThreshold() {
+        addCreatures();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        castGloomdrifter();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Hill Giant"))).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Gaining threshold after entering does not trigger the ability")
+    void gainingThresholdAfterEnteringDoesNotTrigger() {
+        addCreatures();
+        harness.setGraveyard(player1, List.of());
+        castGloomdrifterSpell();
+        harness.setGraveyard(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Hill Giant"))).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The ability affects creatures present at resolution, not later arrivals")
+    void affectedCreaturesAreDeterminedAtResolution() {
+        harness.setGraveyard(player1, List.of(
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        castGloomdrifterSpell();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new DrudgeSkeletons());
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Drudge Skeletons");
+        harness.addToBattlefield(player2, new HillGiant());
         assertThat(gqs.getEffectivePower(gd, findPermanent(player2, "Hill Giant"))).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, findPermanent(player2, "Hill Giant"))).isEqualTo(3);
     }

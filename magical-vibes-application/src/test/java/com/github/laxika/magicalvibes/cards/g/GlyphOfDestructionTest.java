@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.CrimsonKobolds;
 import com.github.laxika.magicalvibes.cards.p.PsychicPurge;
+import com.github.laxika.magicalvibes.cards.r.RagingBull;
 import com.github.laxika.magicalvibes.cards.w.WallOfCaltrops;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GlyphOfDestruction.class, WallOfCaltrops.class, CrimsonKobolds.class, PsychicPurge.class})
+@CardUsed({GlyphOfDestruction.class, WallOfCaltrops.class, CrimsonKobolds.class, PsychicPurge.class, RagingBull.class})
 class GlyphOfDestructionTest extends BaseCardTest {
 
     @Test
@@ -33,8 +34,7 @@ class GlyphOfDestructionTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GlyphOfDestruction()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, wall.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, wall.getId());
 
         assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(12);
         assertThat(wall.getEffectiveToughness()).isEqualTo(1);
@@ -47,8 +47,7 @@ class GlyphOfDestructionTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new PsychicPurge()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castSorcery(player1, 0, wall.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, wall.getId());
 
         assertThat(wall.getMarkedDamage()).isEqualTo(0);
 
@@ -75,8 +74,7 @@ class GlyphOfDestructionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GlyphOfDestruction()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.passPriority(player2);
-        harness.castInstant(player1, 0, wall.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, wall.getId());
 
         assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(12);
 
@@ -120,6 +118,64 @@ class GlyphOfDestructionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, nonWall.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("blocking Wall you control");
+    }
+
+    @Test
+    @DisplayName("Prevents lethal combat damage to the Wall without preventing damage it deals")
+    void preventsIncomingCombatDamageOnly() {
+        Permanent wall = addCreatureReady(player2, new WallOfCaltrops());
+        addCreatureReady(player1, new RagingBull());
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.setHand(player2, List.of(new GlyphOfDestruction()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, wall.getId());
+        resolveCombat(player1);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(wall);
+        assertThat(wall.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Raging Bull");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not resolve when the target stops blocking before resolution")
+    void doesNotResolveWhenTargetStopsBlocking() {
+        Permanent wall = addBlockingWall(player1);
+        prepareSpellCast();
+        harness.castInstant(player1, 0, wall.getId());
+
+        wall.setBlocking(false);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, wall)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Glyph of Destruction");
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Wall of Caltrops");
+    }
+
+    @Test
+    @DisplayName("Prevents repeated noncombat damage only to the affected Wall")
+    void preventsRepeatedDamageOnlyToTarget() {
+        Permanent protectedWall = addBlockingWall(player1);
+        Permanent otherWall = addCreatureReady(player1, new WallOfCaltrops());
+        prepareSpellCast();
+        harness.castAndResolveInstant(player1, 0, protectedWall.getId());
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.setHand(player1, List.of(new PsychicPurge(), new PsychicPurge(), new PsychicPurge()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castAndResolveSorcery(player1, 0, protectedWall.getId());
+        harness.castAndResolveSorcery(player1, 0, protectedWall.getId());
+        assertThat(protectedWall.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(protectedWall);
+
+        harness.castAndResolveSorcery(player1, 0, otherWall.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(otherWall);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(protectedWall);
     }
 
     private Permanent addBlockingWall(Player player) {

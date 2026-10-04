@@ -27,7 +27,6 @@ class GhituWarCryTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(2);
@@ -76,6 +75,34 @@ class GhituWarCryTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(3);
+    }
+
+    @Test
+    void repeatedActivationsStackAndUseOneRedManaEach() {
+        Permanent warCry = harness.addToBattlefieldAndReturn(player1, new GhituWarCry());
+        Permanent wolf = harness.addToBattlefieldAndReturn(player1, new LoneWolf());
+        harness.addMana(player1, ManaColor.RED, 2);
+        int sourceIndex = gd.playerBattlefields.get(player1.getId()).indexOf(warCry);
+
+        harness.activateAbility(player1, sourceIndex, 0, null, wolf.getId());
+        harness.activateAbility(player1, sourceIndex, 0, null, wolf.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(3);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
+        assertThat(warCry.isTapped()).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
     }
 
     @Test

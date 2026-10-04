@@ -50,7 +50,7 @@ public class RevealUntilCardPredicateSetSelfBasePowerToughnessEffectHandler
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
 
-        if (deck == null || deck.isEmpty()) {
+        if (deck == null) {
             gameLogService.append(gameData, GameLog.text(
                     playerName + "'s library is empty — no cards are revealed."));
             return;
@@ -80,7 +80,6 @@ public class RevealUntilCardPredicateSetSelfBasePowerToughnessEffectHandler
         if (foundCard == null) {
             gameLogService.append(gameData, GameLog.text(
                     playerName + " reveals their entire library — no matching card was found."));
-            return;
         }
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -88,7 +87,9 @@ public class RevealUntilCardPredicateSetSelfBasePowerToughnessEffectHandler
             return;
         }
 
-        CardPowerToughness cardPowerToughness = currentPowerToughness(gameData, foundCard, controllerId);
+        CardPowerToughness cardPowerToughness = foundCard == null
+                ? new CardPowerToughness(0, 0)
+                : currentPowerToughness(gameData, foundCard, controllerId);
         int power = cardPowerToughness.power() * typedEffect.multiplier();
         int toughness = cardPowerToughness.toughness() * typedEffect.multiplier();
         gameData.addFloatingEffect(new FloatingContinuousEffect(

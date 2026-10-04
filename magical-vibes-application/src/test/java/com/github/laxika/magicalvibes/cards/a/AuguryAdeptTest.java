@@ -133,7 +133,7 @@ class AuguryAdeptTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> harness.passBothPriorities());
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(adept);
         gd.playerGraveyards.get(player1.getId()).add(adept.getCard());
@@ -156,7 +156,7 @@ class AuguryAdeptTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> harness.passBothPriorities());
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         harness.assertLife(player1, 20);

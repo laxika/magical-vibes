@@ -21,8 +21,7 @@ class GoblinCadetsTest extends BaseCardTest {
         Permanent cadets = addCreatureReady(player1, new GoblinCadets());
         Permanent blocker = addCreatureReady(player2, new GoblinPatrol());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
@@ -44,8 +43,7 @@ class GoblinCadetsTest extends BaseCardTest {
         addCreatureReady(player2, new GoblinPatrol());
         addCreatureReady(player2, new GoblinPatrol());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -66,8 +64,7 @@ class GoblinCadetsTest extends BaseCardTest {
         addCreatureReady(player1, new GoblinPatrol());
         Permanent cadets = addCreatureReady(player2, new GoblinCadets());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player2, player2.getId()))
@@ -79,5 +76,42 @@ class GoblinCadetsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(cadets);
         assertThat(cadets.isAttacking()).isFalse();
         assertThat(cadets.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An attacker remains blocked and deals no damage after blocking Goblin Cadets changes control")
+    void attackerRemainsBlockedAfterCadetsChangesControl() {
+        Permanent attacker = addCreatureReady(player1, new GoblinPatrol());
+        Permanent cadets = addCreatureReady(player2, new GoblinCadets());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.handlePermanentChosen(player2, player1.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(cadets);
+        assertThat(cadets.isBlocking()).isTrue();
+
+        resolveAllTriggers();
+        resolveCombat();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker, cadets);
+        assertThat(cadets.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Unblocked Goblin Cadets deals combat damage without changing control")
+    void unblockedAttackDoesNotChangeControl() {
+        Permanent cadets = addCreatureReady(player1, new GoblinCadets());
+        addCreatureReady(player2, new GoblinPatrol());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(cadets);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(cadets);
     }
 }

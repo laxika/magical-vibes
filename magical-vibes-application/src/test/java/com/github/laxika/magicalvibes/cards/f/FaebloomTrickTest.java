@@ -67,7 +67,7 @@ class FaebloomTrickTest extends BaseCardTest {
     @Test
     void canTargetAnAlreadyTappedOpponentCreature() {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opponentCreature.setTapped(true);
+        opponentCreature.tap();
         harness.setHand(player1, List.of(new FaebloomTrick()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 

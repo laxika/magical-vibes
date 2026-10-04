@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GiantShark.class, Squire.class, TropicalIsland.class})
+@CardUsed({GiantShark.class, Squire.class, TropicalIsland.class, BloodMoon.class})
 class GiantSharkTest extends BaseCardTest {
 
     @Test
@@ -133,6 +133,62 @@ class GiantSharkTest extends BaseCardTest {
 
         assertThat(shark.getPowerModifier()).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, shark, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each damaged blocker gives Giant Shark a separate bonus")
+    void multipleDamagedBlockersGiveSeparateBonuses() {
+        harness.addToBattlefield(player1, new TropicalIsland());
+        harness.addToBattlefield(player2, new TropicalIsland());
+        Permanent shark = addReadyShark(player1);
+        shark.setAttacking(true);
+        shark.setAttackTarget(player2.getId());
+        Permanent first = addCreatureReady(player2, new Squire());
+        Permanent second = addCreatureReady(player2, new Squire());
+        gd.permanentsDealtDamageThisTurn.add(first.getId());
+        gd.permanentsDealtDamageThisTurn.add(second.getId());
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(battlefieldIndex(player2, first), battlefieldIndex(player1, shark)),
+                new BlockerAssignment(battlefieldIndex(player2, second), battlefieldIndex(player1, shark))));
+        resolveAllTriggers();
+
+        assertThat(shark.getPowerModifier()).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, shark, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Giant Shark gets no bonus from an undamaged blocker")
+    void undamagedBlockerGivesNoBonus() {
+        harness.addToBattlefield(player1, new TropicalIsland());
+        harness.addToBattlefield(player2, new TropicalIsland());
+        Permanent shark = addReadyShark(player1);
+        shark.setAttacking(true);
+        shark.setAttackTarget(player2.getId());
+        Permanent blocker = addCreatureReady(player2, new Squire());
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                battlefieldIndex(player2, blocker), battlefieldIndex(player1, shark))));
+        harness.passBothPriorities();
+
+        assertThat(shark.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, shark, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Regaining an Island does not stop an already triggered sacrifice")
+    void regainingIslandDoesNotStopSacrifice() {
+        addReadyShark(player1);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addToBattlefield(player1, new TropicalIsland());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Giant Shark");
+        harness.assertInGraveyard(player1, "Giant Shark");
     }
 
     private Permanent addReadyShark(Player player) {

@@ -359,6 +359,13 @@ public class MultiPermanentChoiceHandlerService {
         }
 
         MultiPermanentChoiceContext context = multiPermanentChoice.context();
+        boolean mandatoryCounterChoice = context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacement own
+                && own.mandatory()
+                || context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference reference
+                && reference.mandatory();
+        if (mandatoryCounterChoice && permanentIds.size() != 1) {
+            throw new IllegalStateException("Exactly one permanent must be selected");
+        }
         if (context instanceof MultiPermanentChoiceContext.ChoosePlayersAsEnter
                 && permanentIds.size() != 2) {
             throw new IllegalStateException("Exactly two players must be selected");

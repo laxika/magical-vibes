@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaAbilities;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+
+import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "201")
 @CardRegistration(set = "SLD", collectorNumber = "589")
@@ -74,6 +77,8 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 public class ArcaneSignet extends Card {
 
     public ArcaneSignet() {
-        addActivatedAbility(ManaAbilities.tapForAnyColor());
+        addActivatedAbility(new ActivatedAbility(true, null,
+                List.of(AwardAnyColorManaEffect.forCommanderColorIdentity()),
+                "{T}: Add one mana of any color in your commander's color identity."));
     }
 }

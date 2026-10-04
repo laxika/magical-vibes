@@ -110,7 +110,7 @@ class FetidHorrorTest extends BaseCardTest {
     @DisplayName("Ability can be activated while Fetid Horror is tapped")
     void canActivateWhileTapped() {
         Permanent horror = addCreatureReady(player1, new FetidHorror());
-        horror.setTapped(true);
+        horror.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

@@ -2,27 +2,23 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({GoldenUrn.class})
 class GoldenUrnTest extends BaseCardTest {
-
-    // ===== Upkeep triggered ability =====
 
     @Test
     @DisplayName("Upkeep trigger may add a charge counter to Golden Urn")
     void upkeepTriggerMayAddChargeCounter() {
         Permanent urn = addReadyUrn(player1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to UPKEEP
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true); // inner resolves inline
 
@@ -34,10 +30,7 @@ class GoldenUrnTest extends BaseCardTest {
     void upkeepTriggerCanDeclineToAddCounter() {
         Permanent urn = addReadyUrn(player1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to UPKEEP
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, false);
 
@@ -50,27 +43,19 @@ class GoldenUrnTest extends BaseCardTest {
         Permanent urn = addReadyUrn(player1);
 
         // First upkeep - add counter
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to UPKEEP
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true); // inner resolves inline
 
         assertThat(urn.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         // Second upkeep - add counter
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to UPKEEP
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true); // inner resolves inline
 
         assertThat(urn.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
-
-    // ===== Activated ability: Tap and sacrifice to gain life =====
 
     @Test
     @DisplayName("Sacrificing Golden Urn gains life equal to charge counters")
@@ -126,10 +111,7 @@ class GoldenUrnTest extends BaseCardTest {
         Permanent urn = addReadyUrn(player1);
 
         // Add counters through multiple uptaps (manually for testing)
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to UPKEEP
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true); // inner resolves inline
 
@@ -158,13 +140,58 @@ class GoldenUrnTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Golden Urn");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Golden Urn does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent urn = addReadyUrn(player1);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(urn.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Sacrificing in response to upkeep gains life before the counter can be added")
+    void sacrificeInResponseToUpkeep() {
+        Permanent urn = addReadyUrn(player1);
+        urn.setCounterCount(CounterType.CHARGE, 2);
+        advanceToUpkeep(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertInGraveyard(player1, "Golden Urn");
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Golden Urn");
+        harness.assertLife(player1, 22);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A newly controlled noncreature Golden Urn can activate and counts only charge counters")
+    void newlyControlledUrnCountsOnlyChargeCounters() {
+        Permanent urn = harness.addToBattlefieldAndReturn(player1, new GoldenUrn());
+        urn.setSummoningSick(true);
+        urn.setCounterCount(CounterType.CHARGE, 2);
+        urn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Golden Urn");
+    }
 
     private Permanent addReadyUrn(Player player) {
-        GoldenUrn card = new GoldenUrn();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new GoldenUrn());
     }
 }

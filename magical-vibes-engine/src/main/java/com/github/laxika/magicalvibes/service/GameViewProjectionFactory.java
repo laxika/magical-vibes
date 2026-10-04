@@ -189,7 +189,11 @@ public class GameViewProjectionFactory {
                     playableLibraryTopCards, potentialPlayableCardIndices, potentialManaTotal,
                     potentialPayableAbilityIndices, speeds, gameData.dayNight,
                     gameData.planechase == null ? null : planarViews.create(gameData, playerId),
-                    gameData.monarchPlayerId, commanderView(gameData, playerId)
+                    gameData.monarchPlayerId, commanderView(gameData, playerId),
+                    gameData.exiledCards.stream()
+                            .filter(entry -> playerId.equals(gameData.exileLookPermissions.get(entry.card().getId())))
+                            .map(entry -> cardViewFactory.create(entry.card()))
+                            .toList()
             ));
         }
         return Collections.unmodifiableMap(messages);
@@ -928,6 +932,20 @@ public class GameViewProjectionFactory {
         }
 
         Card topCard = deck.getFirst();
+        Card physicalTopCard = topCard;
+        boolean castFaceDown = false;
+        if (topCard.getMorphCost() != null) {
+            Card faceDown = CastingPermissionService.faceDownSpellCharacteristics(topCard);
+            int faceDownCost = castingCostService.getCastCostModifierForFaceDownSpell(
+                    gameData, playerId, faceDown, Zone.LIBRARY);
+            ManaPool faceDownPool = new ManaPool(gameData.playerManaPools.get(playerId));
+            faceDownPool.promoteFaceDownSpellsOrTurnFaceUpMana();
+            if (castingPermissionService.canCastFromTopOfLibraryNormally(gameData, playerId, faceDown)
+                    && new ManaCost("{3}").canPay(faceDownPool, faceDownCost)) {
+                topCard = faceDown;
+                castFaceDown = true;
+            }
+        }
         boolean freeTopPlay = castingPermissionService.hasLibraryTopCardFreePlayPermission(gameData, playerId, topCard);
         boolean lifeTopPlay = castingPermissionService.hasLibraryTopCardLifePlayPermission(gameData, playerId, topCard);
 
@@ -946,7 +964,7 @@ public class GameViewProjectionFactory {
         }
 
         if (!castingPermissionService.canCastFromTopOfLibrary(gameData, playerId, topCard)
-                || (!freeTopPlay && !lifeTopPlay && topCard.getManaCost() == null)) {
+                || (!castFaceDown && !freeTopPlay && !lifeTopPlay && topCard.getManaCost() == null)) {
             return playable;
         }
 
@@ -987,14 +1005,14 @@ public class GameViewProjectionFactory {
             return playable;
         }
 
-        boolean canPayLifeAlternative = castingPermissionService
+        boolean canPayLifeAlternative = !castFaceDown && castingPermissionService
                 .canCastFromTopOfLibraryByPayingLifeEqualToManaValue(gameData, playerId, topCard)
                 && gameData.getLife(playerId) >= topCard.getManaValue()
                 && gameQueryService.canPlayerLifeChange(gameData, playerId)
                 && gameQueryService.canPayLifeForCosts(gameData);
-        boolean alternativeZeroCost = castingCostService.hasAlternativeZeroCostFromBattlefield(
+        boolean alternativeZeroCost = !castFaceDown && castingCostService.hasAlternativeZeroCostFromBattlefield(
                 gameData, playerId, topCard, Zone.LIBRARY);
-        CardView topCardView = cardViewFactory.create(topCard);
+        CardView topCardView = cardViewFactory.create(physicalTopCard);
         if (!freeTopPlay && !lifeTopPlay && !canPayLifeAlternative && !alternativeZeroCost) {
             int counterCost = castingPermissionService.findAdditionalCounterCostFromTopOfLibrary(
                     gameData, playerId, topCard).orElse(0);
@@ -1006,9 +1024,13 @@ public class GameViewProjectionFactory {
             playable.add(topCardView);
         } else {
             ManaCost cost = castingCostService.applyColoredManaCostReductions(
-                    gameData, playerId, topCard, topCard.getParsedManaCost());
+                    gameData, playerId, topCard, castFaceDown ? new ManaCost("{3}") : topCard.getParsedManaCost());
             ManaPool pool = gameData.playerManaPools.get(playerId);
             ManaPool cardPool = pool;
+            if (castFaceDown) {
+                cardPool = new ManaPool(pool);
+                cardPool.promoteFaceDownSpellsOrTurnFaceUpMana();
+            }
             if (!topCard.hasType(CardType.CREATURE) && pool.getNoncreatureSpellOnlyManaTotal() > 0) {
                 cardPool = new ManaPool(pool);
                 cardPool.promoteNoncreatureSpellOnlyMana();
@@ -1024,13 +1046,14 @@ public class GameViewProjectionFactory {
                 cardPool = new ManaPool(cardPool);
                 cardPool.promoteExactlyThreeColorSpellOnlyMana();
             }
-            int additionalCost = castingCostService.getCastCostModifier(
-                    gameData, playerId, topCard, 0, Zone.LIBRARY);
+            int additionalCost = castFaceDown
+                    ? castingCostService.getCastCostModifierForFaceDownSpell(gameData, playerId, topCard, Zone.LIBRARY)
+                    : castingCostService.getCastCostModifier(gameData, playerId, topCard, 0, Zone.LIBRARY);
             boolean canAfford = cost.canPay(cardPool, additionalCost);
             if (!canAfford && castingPermissionService.canSpendAnyManaTypeToCast(gameData, playerId, topCard)) {
                 canAfford = cost.canPayAsGeneric(cardPool, 0, additionalCost);
             }
-            if (!canAfford) {
+            if (!canAfford && !castFaceDown) {
                 canAfford = castingCostService.canAffordAlternativeCostFromBattlefield(
                         gameData, playerId, topCard, pool, additionalCost, Zone.LIBRARY);
             }

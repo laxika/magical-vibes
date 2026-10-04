@@ -110,7 +110,7 @@ class EarsplittingRatsTest extends BaseCardTest {
     void tappedSummoningSickRatsCanRegenerate() {
         Permanent rats = harness.addToBattlefieldAndReturn(player1, new EarsplittingRats());
         rats.setSummoningSick(true);
-        rats.setTapped(true);
+        rats.tap();
         harness.setHand(player1, List.of(new EarsplittingRats()));
 
         harness.activateAbility(player1, 0, null, null);

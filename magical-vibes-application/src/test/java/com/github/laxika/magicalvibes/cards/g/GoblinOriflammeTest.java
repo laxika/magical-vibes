@@ -55,6 +55,45 @@ class GoblinOriflammeTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
+    @Test
+    void multipleCopiesStackOnlyForAttackingCreatures() {
+        harness.addToBattlefield(player1, new GoblinOriflamme());
+        harness.addToBattlefield(player1, new GoblinOriflamme());
+        Permanent attacker = addAttackingBears(player1);
+        Permanent nonAttacker = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, nonAttacker)).isEqualTo(2);
+    }
+
+    @Test
+    void bonusDisappearsWhenEnchantmentLeavesBattlefield() {
+        Permanent oriflamme = harness.addToBattlefieldAndReturn(player1, new GoblinOriflamme());
+        Permanent attacker = addAttackingBears(player1);
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, oriflamme));
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    void attackingCreatureDealsIncreasedCombatDamage() {
+        harness.addToBattlefield(player1, new GoblinOriflamme());
+        Permanent attacker = addAttackingBears(player1);
+        attacker.setAttackTarget(player2.getId());
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player1);
+
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 17);
+    }
+
     private Permanent addAttackingBears(Player controller) {
         Permanent creature = addCreatureReady(controller, new GrizzlyBears());
         creature.setAttacking(true);

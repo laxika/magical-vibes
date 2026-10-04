@@ -105,7 +105,7 @@ class DwarvenStrikeForceTest extends BaseCardTest {
     @Test
     void tappedCreatureCanActivateRepeatedlyByPayingEachTime() {
         Permanent force = harness.addToBattlefieldAndReturn(player1, new DwarvenStrikeForce());
-        force.setTapped(true);
+        force.tap();
         harness.setHand(player1, List.of(new Forest(), new Forest()));
 
         harness.activateAbility(player1, 0, null, null);

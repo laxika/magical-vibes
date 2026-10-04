@@ -58,7 +58,7 @@ class FogwalkerTest extends BaseCardTest {
     @Test
     void tappedTargetSkipsOnlyItsNextUntapStep() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new WoodlandPatrol());
-        target.setTapped(true);
+        target.tap();
         castFogwalker(player2, "Woodland Patrol");
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -80,7 +80,7 @@ class FogwalkerTest extends BaseCardTest {
 
         assertThat(target.isTapped()).isFalse();
         harness.performUntapStep(player2);
-        target.setTapped(true);
+        target.tap();
         harness.performUntapStep(player2);
         assertThat(target.isTapped()).isFalse();
     }
@@ -88,7 +88,7 @@ class FogwalkerTest extends BaseCardTest {
     @Test
     void overlappingTriggersDoNotPreventTwoUntapSteps() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new WoodlandPatrol());
-        target.setTapped(true);
+        target.tap();
         castFogwalker(player2, "Woodland Patrol");
         harness.passBothPriorities();
         harness.passBothPriorities();

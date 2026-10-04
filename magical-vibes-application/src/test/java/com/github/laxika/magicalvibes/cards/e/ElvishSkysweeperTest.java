@@ -97,7 +97,7 @@ class ElvishSkysweeperTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new ElvishSkysweeper());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         Permanent target = addCreatureReady(player2, new CourierHawk());
         addAbilityMana();
 

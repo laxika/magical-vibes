@@ -75,6 +75,38 @@ class GohamDjinnTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts the black component of multicolored permanents in a tie")
+    void countsBlackComponentOfMulticoloredPermanent() {
+        Permanent goham = addGohamDjinn();
+        harness.addToBattlefield(player2, new VodalianZombie());
+        harness.addToBattlefield(player2, new MetathranZombie());
+
+        assertThat(gqs.getEffectivePower(gd, goham)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, goham)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Continuously updates the penalty as either player adds colored permanents")
+    void updatesPenaltyAsColorCountsChange() {
+        Permanent goham = addGohamDjinn();
+        harness.addToBattlefield(player2, new MetathranZombie());
+        harness.addToBattlefield(player2, new MetathranZombie());
+
+        assertThat(gqs.getEffectivePower(gd, goham)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, goham)).isEqualTo(5);
+
+        harness.addToBattlefield(player1, new GohamDjinn());
+
+        assertThat(gqs.getEffectivePower(gd, goham)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, goham)).isEqualTo(3);
+
+        harness.addToBattlefield(player2, new MetathranZombie());
+
+        assertThat(gqs.getEffectivePower(gd, goham)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, goham)).isEqualTo(5);
+    }
+
+    @Test
     @DisplayName("Does not count colorless permanents")
     void doesNotCountColorlessPermanents() {
         Permanent goham = addGohamDjinn();
@@ -108,6 +140,33 @@ class GohamDjinnTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Regeneration ability also requires the generic mana payment")
+    void regenerationAbilityRequiresGenericMana() {
+        addGohamDjinn();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Djinn can prepare regeneration without untapping")
+    void tappedDjinnCanActivateRegeneration() {
+        Permanent goham = addGohamDjinn();
+        goham.setTapped(true);
+        goham.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(goham.getRegenerationShield()).isEqualTo(1);
+        assertThat(goham.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Goham Djinn");
     }
 
     @Test

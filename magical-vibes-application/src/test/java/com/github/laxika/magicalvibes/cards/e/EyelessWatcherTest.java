@@ -72,7 +72,7 @@ class EyelessWatcherTest extends BaseCardTest {
         castEyelessWatcher();
 
         for (Permanent scion : findPermanents(player1, "Eldrazi Scion")) {
-            scion.setTapped(true);
+            scion.tap();
             int scionIndex = gd.playerBattlefields.get(player1.getId()).indexOf(scion);
             harness.activateAbility(player1, scionIndex, 0, null, null);
             assertThat(gd.stack).isEmpty();

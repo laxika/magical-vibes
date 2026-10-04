@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinWarDrums.class, BirdMaiden.class})
+@CardUsed({GoblinWarDrums.class, BirdMaiden.class, Opalescence.class})
 class GoblinWarDrumsTest extends BaseCardTest {
 
     @Test
@@ -104,8 +104,7 @@ class GoblinWarDrumsTest extends BaseCardTest {
         addCreatureReady(player2, new BirdMaiden());
         addCreatureReady(player2, new BirdMaiden());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -125,5 +124,53 @@ class GoblinWarDrumsTest extends BaseCardTest {
 
         assertThat(gqs.isCreature(gd, drums)).isTrue();
         assertThat(gqs.hasKeyword(gd, drums, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An attacker with granted menace may be left unblocked")
+    void grantedMenaceAllowsNoBlockers() {
+        addCreatureReady(player1, new BirdMaiden());
+        harness.addToBattlefield(player1, new GoblinWarDrums());
+        addCreatureReady(player2, new BirdMaiden());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Multiple copies of Goblin War Drums still allow two blockers")
+    void multipleCopiesDoNotIncreaseRequiredBlockers() {
+        addCreatureReady(player1, new BirdMaiden());
+        harness.addToBattlefield(player1, new GoblinWarDrums());
+        harness.addToBattlefield(player1, new GoblinWarDrums());
+        Permanent firstBlocker = addCreatureReady(player2, new BirdMaiden());
+        Permanent secondBlocker = addCreatureReady(player2, new BirdMaiden());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Menace remains while another Goblin War Drums is on the battlefield")
+    void removingOneOfMultipleSourcesRetainsMenace() {
+        Permanent creature = addCreatureReady(player1, new BirdMaiden());
+        Permanent firstDrums = harness.addToBattlefieldAndReturn(player1, new GoblinWarDrums());
+        Permanent secondDrums = harness.addToBattlefieldAndReturn(player1, new GoblinWarDrums());
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstDrums);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(secondDrums);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isFalse();
     }
 }

@@ -98,6 +98,63 @@ class GoblinGrenadiersTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Goblin can target itself and still destroy the land after being sacrificed")
+    void canTargetItself() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new GemstoneMine());
+        Permanent attacker = addAttacker();
+
+        declareNoBlocks();
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Goblin Grenadiers");
+        harness.assertInGraveyard(player2, "Gemstone Mine");
+        harness.assertNotOnBattlefield(player1, "Goblin Grenadiers");
+        harness.assertNotOnBattlefield(player2, "Gemstone Mine");
+    }
+
+    @Test
+    @DisplayName("Without a legal land target the ability cannot remain on the stack")
+    void noLandTargetRemovesTrigger() {
+        Permanent creature = addDefenderCreature();
+        addAttacker();
+
+        declareNoBlocks();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, creature.getId());
+        }
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Goblin Grenadiers");
+        harness.assertOnBattlefield(player2, "Benalish Infantry");
+    }
+
+    @Test
+    @DisplayName("The targets survive when the Goblin leaves before its ability resolves")
+    void missingSourceCannotPaySacrifice() {
+        Permanent creature = addDefenderCreature();
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new GemstoneMine());
+        Permanent attacker = addAttacker();
+
+        declareNoBlocks();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .sacrificePermanentToGraveyard(gd, attacker));
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.assertInGraveyard(player1, "Goblin Grenadiers");
+        harness.assertOnBattlefield(player2, "Benalish Infantry");
+        harness.assertOnBattlefield(player2, "Gemstone Mine");
+    }
+
+    @Test
     @DisplayName("A blocked attacker never triggers the ability")
     void blockedNoTrigger() {
         addDefenderCreature();

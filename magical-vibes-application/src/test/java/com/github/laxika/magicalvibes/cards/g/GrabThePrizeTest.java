@@ -60,4 +60,45 @@ class GrabThePrizeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
+
+    @Test
+    @DisplayName("Discard is paid before resolution, while drawing and damage wait for resolution")
+    void discardIsPaidBeforeResolution() {
+        GrabThePrize discarded = new GrabThePrize();
+        harness.setHand(player1, List.of(new GrabThePrize(), discarded));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castSorceryWithDiscard(player1, 0, 1);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Can discard a land positioned before the spell in hand")
+    void discardsCardBeforeSpellInHand() {
+        Forest discarded = new Forest();
+        harness.setHand(player1, List.of(discarded, new GrabThePrize()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setLife(player2, 20);
+
+        harness.castSorceryWithDiscard(player1, 1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        harness.assertLife(player2, 20);
+    }
 }

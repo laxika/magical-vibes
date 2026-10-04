@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.r.RaiseTheAlarm;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.p.PatientNaturalist;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GhiredMirrorOfTheWilds.class, RaiseTheAlarm.class})
+@CardUsed({GhiredMirrorOfTheWilds.class, RaiseTheAlarm.class, PatientNaturalist.class})
 class GhiredMirrorOfTheWildsTest extends BaseCardTest {
 
     @Test
@@ -43,9 +43,143 @@ class GhiredMirrorOfTheWildsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Ghired can use the granted tap ability on the turn it enters")
+    void hasteAllowsImmediateActivation() {
+        harness.castFromHand(player1, new GhiredMirrorOfTheWilds(), "{R}{G}{W}");
+        harness.passBothPriorities();
+        Permanent ghired = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent treasure = createTreasure(player1);
+
+        harness.activateAbility(player1, permanentIndex(ghired), null, treasure.getId());
+        harness.passBothPriorities();
+
+        assertThat(ghired.isTapped()).isTrue();
+        assertThat(tokens(player1)).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Other nontoken creatures can copy noncreature tokens")
+    void grantsAbilityToOtherNontokenCreature() {
+        addReadyGhired();
+        Permanent treasure = createTreasure(player1);
+        Permanent naturalist = findPermanent(player1, "Patient Naturalist");
+        naturalist.setSummoningSick(false);
+
+        harness.activateAbility(player1, permanentIndex(naturalist), null, treasure.getId());
+        harness.passBothPriorities();
+
+        assertThat(naturalist.isTapped()).isTrue();
+        assertThat(tokens(player1)).hasSize(2);
+        assertThat(tokens(player1)).allSatisfy(token -> assertThat(token.isTapped()).isFalse());
+    }
+
+    @Test
+    @DisplayName("Token creatures do not receive Ghired's ability")
+    void doesNotGrantAbilityToTokenCreatures() {
+        addReadyGhired();
+        List<Permanent> soldiers = createSoldiers();
+        soldiers.getFirst().setSummoningSick(false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                permanentIndex(soldiers.getFirst()), null, soldiers.getLast().getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Opponent-controlled tokens are not legal targets")
+    void cannotTargetOpponentsToken() {
+        Permanent ghired = addReadyGhired();
+        Permanent treasure = createTreasure(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                permanentIndex(ghired), null, treasure.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Opponent creatures do not receive the ability")
+    void doesNotGrantAbilityToOpponentsCreatures() {
+        addReadyGhired();
+        Permanent treasure = createTreasure(player2);
+        Permanent naturalist = findPermanent(player2, "Patient Naturalist");
+        naturalist.setSummoningSick(false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(naturalist), null, treasure.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A copy created by Ghired is itself a legal target this turn")
+    void canCopyNewlyCreatedCopy() {
+        Permanent ghired = addReadyGhired();
+        Permanent treasure = createTreasure(player1);
+        Permanent naturalist = findPermanent(player1, "Patient Naturalist");
+        naturalist.setSummoningSick(false);
+        harness.activateAbility(player1, permanentIndex(ghired), null, treasure.getId());
+        harness.passBothPriorities();
+        Permanent copy = tokens(player1).stream()
+                .filter(token -> !token.getId().equals(treasure.getId())).findFirst().orElseThrow();
+
+        harness.activateAbility(player1, permanentIndex(naturalist), null, copy.getId());
+        harness.passBothPriorities();
+
+        assertThat(tokens(player1)).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("The ability does not copy a token sacrificed before resolution")
+    void sacrificedTargetIsNotCopied() {
+        Permanent ghired = addReadyGhired();
+        Permanent treasure = createTreasure(player1);
+        harness.activateAbility(player1, permanentIndex(ghired), null, treasure.getId());
+        harness.activateAbility(player1, permanentIndex(treasure), null, null);
+        harness.handleListChoice(player1, "WHITE");
+        harness.passBothPriorities();
+
+        assertThat(tokens(player1)).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The granted tap ability still obeys summoning sickness on other creatures")
+    void otherCreaturesNeedToBeReady() {
+        addReadyGhired();
+        Permanent treasure = createTreasure(player1);
+        Permanent naturalist = findPermanent(player1, "Patient Naturalist");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                permanentIndex(naturalist), null, treasure.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A nontoken permanent is not a legal copy target")
+    void cannotTargetNontokenPermanent() {
+        Permanent ghired = addReadyGhired();
+        createTreasure(player1);
+        Permanent naturalist = findPermanent(player1, "Patient Naturalist");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                permanentIndex(ghired), null, naturalist.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private Permanent createTreasure(Player player) {
+        harness.setLibrary(player, List.of());
+        harness.enterBattlefieldAndReturn(player, new PatientNaturalist());
+        harness.passBothPriorities();
+        return tokens(player).getFirst();
+    }
+
+    private List<Permanent> tokens(Player player) {
+        return gd.playerBattlefields.get(player.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList();
+    }
+
     private Permanent addReadyGhired() {
-        Permanent ghired = harness.addToBattlefieldAndReturn(player1, new GhiredMirrorOfTheWilds());
-        ghired.setSummoningSick(false);
+        Permanent ghired = addCreatureReady(player1, new GhiredMirrorOfTheWilds());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -53,9 +187,7 @@ class GhiredMirrorOfTheWildsTest extends BaseCardTest {
     }
 
     private List<Permanent> createSoldiers() {
-        harness.setHand(player1, List.of(new RaiseTheAlarm()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new RaiseTheAlarm(), "{1}{W}");
         harness.passBothPriorities();
         return gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())

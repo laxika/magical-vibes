@@ -169,7 +169,7 @@ class AugurOfSkullsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.passBothPriorities());
 
         harness.activateAbility(player1, 0, 1, null, player2.getId());
 

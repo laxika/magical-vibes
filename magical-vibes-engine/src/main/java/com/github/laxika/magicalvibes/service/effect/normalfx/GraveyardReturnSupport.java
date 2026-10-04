@@ -328,7 +328,12 @@ public class GraveyardReturnSupport {
                 returnedPermanent = putCardOntoBattlefield(gameData, destinationPlayerId, targetCard,
                         effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking(),
                         null, effect.grantIndestructible(), losesAllAbilitiesBeforeEntering(effect), 0,
-                        permanent -> permanent.setEnteredFromGraveyardOwnerId(targetOwnerId));
+                        permanent -> {
+                            permanent.setEnteredFromGraveyardOwnerId(targetOwnerId);
+                            if (effect.grantSubtypes() != null) {
+                                permanent.getGrantedSubtypes().addAll(effect.grantSubtypes());
+                            }
+                        });
             }
         } else {
             moveCardToDestination(gameData, destinationPlayerId, targetCard, effect.destination(),
@@ -1683,6 +1688,19 @@ public class GraveyardReturnSupport {
         permanent.setEnteredFromGraveyardOwnerId(controllerId);
         beforeEntry.accept(permanent);
         if (!losesAllAbilities) {
+            var typeEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .filter(com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect.class::isInstance)
+                    .map(com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect.class::cast)
+                    .findFirst().orElse(null);
+            if (typeEffect != null) {
+                if (typeEffect.lookAtOpponentHand()) {
+                    cardRevealService.lookAtOpponentHand(gameData, controllerId);
+                }
+                if (enterAttacking) permanent.setAttacking(true);
+                playerInputService.beginCardTypeOnEnterChoice(
+                        gameData, controllerId, card, typeEffect.excludedTypes(), permanent);
+                return permanent;
+            }
             var nameEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                     .filter(com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect.class::isInstance)
                     .map(com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect.class::cast)
@@ -2007,7 +2025,8 @@ public class GraveyardReturnSupport {
                     : new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.EXILE_AT_END_STEP));
         }
         if (sacrificeAtEndStep) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+            gameData.queueDelayedAction(new DelayedPermanentAction(permanent.getId(),
+                    DelayedPermanentActionKind.SACRIFICE_AT_END_STEP, false, null, null, controllerId));
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -2412,6 +2431,10 @@ public class GraveyardReturnSupport {
 
             for (EffectSlot slot : EffectSlot.values()) {
                 for (EffectRegistration reg : sourceCard.getEffectRegistrations(slot)) {
+                    if ((powerOverride != null || toughnessOverride != null)
+                            && reg.effect().isPowerToughnessDefining()) {
+                        continue;
+                    }
                     tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
                 }
             }

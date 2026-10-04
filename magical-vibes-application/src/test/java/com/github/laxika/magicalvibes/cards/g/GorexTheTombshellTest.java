@@ -76,12 +76,99 @@ class GorexTheTombshellTest extends BaseCardTest {
     void returnsExiledCardWhenItDies() {
         Card exiledCard = new GrizzlyBears();
         Permanent gorex = castGorex(exiledCard);
-        Permanent dyingGorex = gorex;
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
-                .destroyPermanentToGraveyard(gd, dyingGorex));
+                .destroyPermanentToGraveyard(gd, gorex));
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(exiledCard);
+    }
+
+    @Test
+    @DisplayName("May cast Gorex without exiling any cards")
+    void mayDeclineAdditionalCost() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new GorexTheTombshell()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent gorex = findPermanent(player1, "Gorex, the Tombshell");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        gorex.setSummoningSick(false);
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("May exile more cards than needed to reduce the generic cost to zero")
+    void mayExileMoreThanThreeCreatures() {
+        List<Card> creatures = List.of(new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears());
+        harness.setGraveyard(player1, creatures);
+        harness.setHand(player1, List.of(new GorexTheTombshell()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castCreatureWithMultipleGraveyardExile(player1, 0, List.of(0, 1, 2, 3));
+        harness.passBothPriorities();
+
+        Permanent gorex = findPermanent(player1, "Gorex, the Tombshell");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(gorex.getId()))
+                .containsExactlyInAnyOrderElementsOf(creatures);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Exiling cards cannot pay Gorex's black mana requirement")
+    void reductionDoesNotRemoveColoredManaRequirement() {
+        List<Card> creatures = List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+        harness.setGraveyard(player1, creatures);
+        harness.setHand(player1, List.of(new GorexTheTombshell()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castCreatureWithMultipleGraveyardExile(
+                player1, 0, List.of(0, 1, 2)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(creatures);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Attack and death each return one card even when Gorex dies before its attack trigger resolves")
+    void attackAndDeathTriggersReturnDistinctCards() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card unrelated = new GrizzlyBears();
+        harness.setExile(player1, List.of(unrelated));
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new GorexTheTombshell()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreatureWithMultipleGraveyardExile(player1, 0, List.of(0, 1));
+        harness.passBothPriorities();
+        Permanent gorex = findPermanent(player1, "Gorex, the Tombshell");
+        gorex.setSummoningSick(false);
+
+        declareAttackers(List.of(0));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, gorex));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1)
+                .allMatch(card -> card == first || card == second);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.getCardsExiledByPermanent(gorex.getId())).isEmpty();
+        assertThat(gd.findExiledCard(unrelated.getId())).isNotNull();
     }
 
     private Permanent castGorex(Card exiledCard) {
@@ -91,9 +178,6 @@ class GorexTheTombshellTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castCreatureWithMultipleGraveyardExile(player1, 0, List.of(0));
         harness.passBothPriorities();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Gorex, the Tombshell"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Gorex, the Tombshell");
     }
 }

@@ -121,4 +121,70 @@ class GhostHoundsTest extends BaseCardTest {
                 .filter(entry -> entry.getCard().getName().equals("Ghost Hounds"))
                 .count()).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("A nonwhite blocker does not trigger Ghost Hounds")
+    void nonWhiteBlockerDoesNotCreateTrigger() {
+        Permanent hounds = addCreatureReady(player1, new GhostHounds());
+        hounds.setAttacking(true);
+        addCreatureReady(player2, new DwarvenPony());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the white blocker triggers Ghost Hounds among mixed-color blockers")
+    void mixedColorBlockersCreateOnlyOneTrigger() {
+        Permanent hounds = addCreatureReady(player1, new GhostHounds());
+        hounds.setAttacking(true);
+        addCreatureReady(player2, new AysenBureaucrats());
+        addCreatureReady(player2, new DwarvenPony());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, hounds, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("First strike still resolves after the white blocker leaves the battlefield")
+    void whiteBlockerLeavingDoesNotPreventFirstStrike() {
+        Permanent hounds = addCreatureReady(player1, new GhostHounds());
+        hounds.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new AysenBureaucrats());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(gd.stack).hasSize(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, blocker));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, hounds, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("First strike still resolves after the blocked white attacker leaves the battlefield")
+    void whiteAttackerLeavingDoesNotPreventFirstStrike() {
+        Permanent attacker = addCreatureReady(player1, new AysenBureaucrats());
+        attacker.setAttacking(true);
+        Permanent hounds = addCreatureReady(player2, new GhostHounds());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(gd.stack).hasSize(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, attacker));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, hounds, Keyword.FIRST_STRIKE)).isTrue();
+    }
 }

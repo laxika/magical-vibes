@@ -30,7 +30,7 @@ class FlowstoneHellionTest extends BaseCardTest {
     @DisplayName("The zero-cost ability can be activated while tapped")
     void canActivateWhileTapped() {
         Permanent hellion = harness.addToBattlefieldAndReturn(player1, new FlowstoneHellion());
-        hellion.setTapped(true);
+        hellion.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

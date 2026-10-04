@@ -169,7 +169,7 @@ class FerrovoreTest extends BaseCardTest {
     void sacrificesTappedArtifactCreatureAsCost() {
         Permanent ferrovore = harness.addToBattlefieldAndReturn(player1, new Ferrovore());
         Permanent memnite = harness.addToBattlefieldAndReturn(player1, new Memnite());
-        memnite.setTapped(true);
+        memnite.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

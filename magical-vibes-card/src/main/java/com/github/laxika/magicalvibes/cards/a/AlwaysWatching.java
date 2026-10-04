@@ -18,6 +18,6 @@ public class AlwaysWatching extends Card {
 
     public AlwaysWatching() {
         addEffect(EffectSlot.STATIC, new StaticBoostEffect(1, 1, Set.of(Keyword.VIGILANCE),
-                GrantScope.OWN_CREATURES, new PermanentNotPredicate(new PermanentIsTokenPredicate())));
+                GrantScope.ALL_OWN_CREATURES, new PermanentNotPredicate(new PermanentIsTokenPredicate())));
     }
 }

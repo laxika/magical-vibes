@@ -107,7 +107,7 @@ class EntrailsFeasterTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(creatureCard));
 
         advanceToUpkeep(player1);
-        feaster.setTapped(true);
+        feaster.tap();
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(creatureCard.getId()));
         resolveAllTriggers();

@@ -28,10 +28,8 @@ class GraftedButcherTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new GraftedButcher()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GraftedButcher(), "{1}{B}");
+
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -108,6 +106,105 @@ class GraftedButcherTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Only the Grafted Butcher whose ability was activated returns")
+    void returnsOnlyTheActivatedCopy() {
+        GraftedButcher activated = new GraftedButcher();
+        GraftedButcher other = new GraftedButcher();
+        harness.setGraveyard(player1, List.of(activated, other));
+        harness.addToBattlefield(player1, new Spellbook());
+        addReturnMana();
+        setSorcerySpeed();
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.assertInGraveyard(player1, "Spellbook");
+        harness.assertNotOnBattlefield(player1, "Grafted Butcher");
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Grafted Butcher").getCard().getId()).isEqualTo(activated.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(other).doesNotContain(activated);
+    }
+
+    @Test
+    @DisplayName("Returning from the graveyard triggers the menace ability")
+    void returningTriggersMenace() {
+        harness.setGraveyard(player1, List.of(new GraftedButcher()));
+        harness.addToBattlefield(player1, new Spellbook());
+        addReturnMana();
+        setSorcerySpeed();
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        Permanent butcher = findPermanent(player1, "Grafted Butcher");
+        assertThat(gqs.hasKeyword(gd, butcher, Keyword.MENACE)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, butcher, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Phyrexians entering after the menace trigger resolves do not gain menace")
+    void latePhyrexiansDoNotGainMenace() {
+        setSorcerySpeed();
+        harness.castFromHand(player1, new GraftedButcher(), "{1}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent original = findPermanent(player1, "Grafted Butcher");
+        Permanent latePhyrexian = harness.addToBattlefieldAndReturn(player1, new GraftedButcher());
+
+        assertThat(gqs.hasKeyword(gd, original, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, latePhyrexian, Keyword.MENACE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, latePhyrexian)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, latePhyrexian)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The graveyard ability requires a permanent you control to sacrifice")
+    void cannotSacrificeAnOpponentsPermanent() {
+        harness.setGraveyard(player1, List.of(new GraftedButcher()));
+        harness.addToBattlefield(player2, new GraftedButcher());
+        addReturnMana();
+        setSorcerySpeed();
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Grafted Butcher");
+        harness.assertNotOnBattlefield(player1, "Grafted Butcher");
+        harness.assertInGraveyard(player1, "Grafted Butcher");
+    }
+
+    @Test
+    @DisplayName("The graveyard ability cannot be activated during combat on your turn")
+    void cannotActivateDuringYourCombat() {
+        harness.setGraveyard(player1, List.of(new GraftedButcher()));
+        harness.addToBattlefield(player1, new Spellbook());
+        addReturnMana();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Spellbook");
+        harness.assertInGraveyard(player1, "Grafted Butcher");
+    }
+
+    @Test
+    @DisplayName("The graveyard ability cannot be activated with a spell on the stack")
+    void cannotActivateWithANonemptyStack() {
+        harness.setGraveyard(player1, List.of(new GraftedButcher()));
+        harness.addToBattlefield(player1, new Spellbook());
+        setSorcerySpeed();
+        harness.castFromHand(player1, new GraftedButcher(), "{1}{B}");
+        addReturnMana();
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Spellbook");
+        harness.assertInGraveyard(player1, "Grafted Butcher");
     }
 
     private void addReturnMana() {

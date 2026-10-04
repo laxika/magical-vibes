@@ -150,7 +150,7 @@ class DwarvenBlastminerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent blastminer = addCreatureReady(player1, new DwarvenBlastminer());
-        blastminer.setTapped(true);
+        blastminer.tap();
         harness.addToBattlefield(player2, new BloodstainedMire());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 @CardRegistration(set = "CMM", collectorNumber = "310")
 @CardRegistration(set = "CMM", collectorNumber = "568")
 @CardRegistration(set = "CMM", collectorNumber = "680")
+@CardRegistration(set = "CC1", collectorNumber = "2")
 public class OmnathLocusOfMana extends Card {
 
     public OmnathLocusOfMana() {

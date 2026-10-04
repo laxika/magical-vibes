@@ -80,9 +80,8 @@ class GeminiEngineTest extends BaseCardTest {
     @DisplayName("Twin lets its controller choose an opposing player or planeswalker to attack")
     void twinCanAttackOpposingPlaneswalker() {
         addCreatureReady(player1, new GeminiEngine());
-        Permanent jace = new Permanent(new JaceBeleren());
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
         jace.setCounterCount(CounterType.LOYALTY, 3);
-        gd.playerBattlefields.get(player2.getId()).add(jace);
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
             declareAttackers(List.of(0));
@@ -111,12 +110,71 @@ class GeminiEngineTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Twin")).hasSize(1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.passUntil(TurnStep.END_OF_COMBAT);
+            resolveAllTriggers();
+        });
 
         assertThat(findPermanents(player1, "Twin")).noneMatch(permanent -> permanent.getCard().isToken());
         assertThat(gameLogContains("Twin")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Twin preserves a negative source power")
+    void twinPreservesNegativePower() {
+        Permanent engine = addCreatureReady(player1, new GeminiEngine());
+        engine.setPowerModifier(-5);
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
+
+        Permanent twin = findPermanent(player1, "Twin");
+        assertThat(gqs.getEffectivePower(gd, twin)).isEqualTo(-2);
+        assertThat(gqs.getEffectiveToughness(gd, twin)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("End-of-combat sacrifice uses the stack and allows a response")
+    void sacrificeWaitsForDelayedTriggerToResolve() {
+        addCreatureReady(player1, new GeminiEngine());
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
+
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.passUntil(TurnStep.END_OF_COMBAT);
+            assertThat(findPermanents(player1, "Twin")).hasSize(1);
+            assertThat(gd.stack).hasSize(1);
+            resolveAllTriggers();
+            assertThat(findPermanents(player1, "Twin")).isEmpty();
+        });
+    }
+
+    @Test
+    @DisplayName("Original controller cannot sacrifice Twin after an opponent gains control")
+    void stolenTwinSurvivesEndOfCombat() {
+        addCreatureReady(player1, new GeminiEngine());
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
+
+        Permanent twin = findPermanent(player1, "Twin");
+        gd.playerBattlefields.get(player1.getId()).remove(twin);
+        gd.playerBattlefields.get(player2.getId()).add(twin);
+        twin.setAttacking(false);
+        twin.setAttackTarget(null);
+
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.passUntil(TurnStep.END_OF_COMBAT);
+            resolveAllTriggers();
+        });
+
+        assertThat(findPermanents(player2, "Twin")).containsExactly(twin);
     }
 }

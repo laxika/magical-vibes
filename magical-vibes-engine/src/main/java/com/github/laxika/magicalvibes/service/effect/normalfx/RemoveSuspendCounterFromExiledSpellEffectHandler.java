@@ -3,13 +3,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveSuspendCounterFromExiledSpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -19,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class RemoveSuspendCounterFromExiledSpellEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -28,6 +26,10 @@ public class RemoveSuspendCounterFromExiledSpellEffectHandler implements NormalE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID cardId = ((RemoveSuspendCounterFromExiledSpellEffect) effect).cardId();
+        removeTimeCounter(gameData, cardId);
+    }
+
+    public void removeTimeCounter(GameData gameData, UUID cardId) {
         int index = indexOf(gameData, cardId);
         if (index < 0) return;
 
@@ -48,14 +50,7 @@ public class RemoveSuspendCounterFromExiledSpellEffectHandler implements NormalE
         }
 
         gameData.suspendedSpellExiles.remove(index);
-        boolean creature = exiled.card().hasType(com.github.laxika.magicalvibes.model.CardType.CREATURE);
-        gameData.pendingMayAbilities.add(new PendingMayAbility(
-                exiled.card(),
-                pending.ownerId(),
-                List.of(new MayPlayExiledCardWithoutPayingManaCostEffect(false, creature)),
-                "You may cast " + exiled.card().getName() + " without paying its mana cost.",
-                cardId
-        ));
+        removeTimeCounterHandler.queueCastTrigger(gameData, exiled, true);
         gameLogService.append(gameData, GameLog.cardThen(exiled.card(),
                 " loses its last time counter. Its owner may cast it without paying its mana cost."));
     }

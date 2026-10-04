@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GlistenerSeer.class, Forest.class})
 class GlistenerSeerTest extends BaseCardTest {
 
     @Test
@@ -26,7 +29,7 @@ class GlistenerSeerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent seer = findSeer(player1);
+        Permanent seer = findPermanent(player1, "Glistener Seer");
         assertThat(seer.getCounterCount(CounterType.OIL)).isEqualTo(3);
     }
 
@@ -55,18 +58,106 @@ class GlistenerSeerTest extends BaseCardTest {
                 .hasMessageContaining("Not enough counters");
     }
 
-    private Permanent addReadySeer(Player player, int counters) {
-        Permanent seer = new Permanent(new GlistenerSeer());
-        seer.setSummoningSick(false);
-        seer.setCounterCount(CounterType.OIL, counters);
-        gd.playerBattlefields.get(player.getId()).add(seer);
-        return seer;
+    @Test
+    void paysCostsBeforeScryResolves() {
+        Permanent seer = addReadySeer(player1, 3);
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(seer.isTapped()).isTrue();
+        assertThat(seer.getCounterCount(CounterType.OIL)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    private Permanent findSeer(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof GlistenerSeer)
-                .findFirst()
-                .orElseThrow();
+    @Test
+    void canKeepTopCard() {
+        addReadySeer(player1, 1);
+        Forest top = new Forest();
+        GlistenerSeer next = new GlistenerSeer();
+        harness.setLibrary(player1, List.of(top, next));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, next);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canPutTopCardOnBottom() {
+        addReadySeer(player1, 1);
+        Forest top = new Forest();
+        GlistenerSeer next = new GlistenerSeer();
+        harness.setLibrary(player1, List.of(top, next));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, top);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void resolvesWithEmptyLibrary() {
+        Permanent seer = addReadySeer(player1, 1);
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(seer.getCounterCount(CounterType.OIL)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent seer = addReadySeer(player1, 3);
+        seer.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(seer.getCounterCount(CounterType.OIL)).isEqualTo(3);
+        assertThat(seer.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent seer = addReadySeer(player1, 3);
+        seer.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(seer.getCounterCount(CounterType.OIL)).isEqualTo(3);
+    }
+
+    @Test
+    void otherCounterTypesCannotPayOilCost() {
+        Permanent seer = addReadySeer(player1, 0);
+        seer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough counters");
+
+        assertThat(seer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(seer.isTapped()).isFalse();
+    }
+
+    private Permanent addReadySeer(Player player, int counters) {
+        Permanent seer = harness.addToBattlefieldAndReturn(player, new GlistenerSeer());
+        seer.setSummoningSick(false);
+        seer.setCounterCount(CounterType.OIL, counters);
+        return seer;
     }
 }

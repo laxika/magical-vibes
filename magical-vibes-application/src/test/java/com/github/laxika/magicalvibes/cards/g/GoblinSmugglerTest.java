@@ -3,16 +3,19 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinSmuggler.class, GrizzlyBears.class, HillGiant.class})
 class GoblinSmugglerTest extends BaseCardTest {
 
     @Test
@@ -65,14 +68,73 @@ class GoblinSmugglerTest extends BaseCardTest {
         assertThat(target.isCantBeBlocked()).isFalse();
     }
 
+    @Test
+    @DisplayName("Haste allows immediate activation and tapping pays the cost")
+    void hasteAllowsImmediateActivation() {
+        Permanent smuggler = harness.addToBattlefieldAndReturn(player1, new GoblinSmuggler());
+        smuggler.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GoblinSmuggler());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(smuggler.isTapped()).isTrue();
+        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A target whose power increases above two before resolution becomes illegal")
+    void increasedPowerBeforeResolutionInvalidatesTarget() {
+        addReadySmuggler(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GoblinSmuggler());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Power increases after resolution do not remove unblockability")
+    void increasedPowerAfterResolutionDoesNotRemoveEffect() {
+        addReadySmuggler(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GoblinSmuggler());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability resolves even if its source leaves the battlefield")
+    void abilitySurvivesSourceLeavingBattlefield() {
+        Permanent smuggler = addReadySmuggler(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GoblinSmuggler());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(smuggler);
+        gd.playerGraveyards.get(player1.getId()).add(smuggler.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
     private Permanent addReadySmuggler(Player player) {
         return addReady(new GoblinSmuggler(), player);
     }
 
     private Permanent addReady(Card card, Player player) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

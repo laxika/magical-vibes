@@ -110,7 +110,7 @@ class EpitaphGolemTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick")
     void activatesWhileTappedAndSummoningSick() {
         Permanent golem = harness.addToBattlefieldAndReturn(player1, new EpitaphGolem());
-        golem.setTapped(true);
+        golem.tap();
         golem.setSummoningSick(true);
         int golemIdx = gd.playerBattlefields.get(player1.getId()).indexOf(golem);
         Card tucked = new GrizzlyBears();

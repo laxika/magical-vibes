@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTarget
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -32,7 +33,9 @@ public class AncestralKatana extends Card {
                                 new AttacksAlone(),
                                 new MayPayManaEffect(
                                         "{1}",
-                                        new AttachSourceEquipmentToTargetCreatureEffect(),
+                                        new QueueReflexiveAbilityEffect(
+                                                AttachSourceEquipmentToTargetCreatureEffect.forTriggeringCreature(),
+                                                false, false, true),
                                         "Pay {1} to attach Ancestral Katana to it?"))));
 
         addActivatedAbility(new EquipActivatedAbility("{3}"));

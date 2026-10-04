@@ -26,6 +26,7 @@ public class ExileTargetCreaturesAndControllersGainLifeEqualToPowerEffectHandler
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final LifeSupport lifeSupport;
+    private final com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,7 +47,11 @@ public class ExileTargetCreaturesAndControllersGainLifeEqualToPowerEffectHandler
             }
 
             UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
-            int power = gameQueryService.getPowerBasedDamage(gameData, target);
+            StackEntry amountEntry = new StackEntry(entry);
+            amountEntry.setTargetId(targetId);
+            int power = amountEvaluationService.evaluate(gameData,
+                    ((ExileTargetCreaturesAndControllersGainLifeEqualToPowerEffect) effect).amount(),
+                    com.github.laxika.magicalvibes.service.effect.AmountContext.forStackEntry(amountEntry, null));
             if (!permanentRemovalService.removePermanentToExile(gameData, target)) {
                 continue;
             }

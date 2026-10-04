@@ -82,7 +82,7 @@ class EpharasWardenTest extends BaseCardTest {
     void canTargetTappedCreature() {
         Permanent warden = addCreatureReady(player1, new EpharasWarden());
         Permanent target = addCreatureReady(player2, new NessianCourser());
-        target.setTapped(true);
+        target.tap();
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -137,7 +137,7 @@ class EpharasWardenTest extends BaseCardTest {
     @DisplayName("An already tapped Warden cannot pay the tap cost")
     void cannotActivateWhileTapped() {
         Permanent warden = addCreatureReady(player1, new EpharasWarden());
-        warden.setTapped(true);
+        warden.tap();
         Permanent target = addCreatureReady(player2, new NessianCourser());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -30,7 +29,6 @@ class GiganticBigBearTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 3);
 
         harness.castCreature(player1, 0);
-        harness.passPriority(player1);
         harness.castInstant(player2, 0, bear.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -46,13 +44,25 @@ class GiganticBigBearTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, bear.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("hexproof");
+    }
+
+    @Test
+    @DisplayName("Hexproof allows the controller to target Gigantic Big Bear")
+    void controllerCanTargetWithSpell() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GiganticBigBear());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(bear.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Gigantic Big Bear");
+        harness.assertInGraveyard(player1, "Shock");
     }
 
     @Test

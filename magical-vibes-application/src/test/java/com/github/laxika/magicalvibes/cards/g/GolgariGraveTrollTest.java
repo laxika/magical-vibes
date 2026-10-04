@@ -122,12 +122,73 @@ class GolgariGraveTrollTest extends BaseCardTest {
         assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(1);
     }
 
-    private void castTroll() {
-        harness.setHand(player1, List.of(new GolgariGraveTroll()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+    @Test
+    @DisplayName("Dies when it enters with no creature cards in its controller's graveyard")
+    void diesWithoutEntryCounters() {
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setGraveyard(player2, List.of(new GolgariGraveTroll()));
 
-        harness.castCreature(player1, 0);
+        castTroll();
+
+        assertThat(findPermanents(player1, "Golgari Grave-Troll")).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof GolgariGraveTroll);
+    }
+
+    @Test
+    @DisplayName("Removing its last counter cannot regenerate a creature with zero toughness")
+    void diesWhenLastCounterIsRemoved() {
+        Permanent troll = addReadyTroll(player1, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        prepareTurn();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(troll);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(troll.getCard());
+    }
+
+    @Test
+    @DisplayName("A resolved regeneration shield protects against later lethal damage")
+    void regeneratesAfterLethalDamage() {
+        Permanent troll = addReadyTroll(player1, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        prepareTurn();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, troll.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(troll);
+        assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(troll.getRegenerationShield()).isZero();
+        assertThat(troll.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing a counter can make existing damage lethal before regeneration resolves")
+    void diesFromExistingDamageWhenCounterIsRemoved() {
+        Permanent troll = addReadyTroll(player1, 3);
+        prepareTurn();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, troll.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(troll);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(troll);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(troll.getCard());
+    }
+
+    private void castTroll() {
+        harness.castFromHand(player1, new GolgariGraveTroll(), "{4}{G}");
+
         harness.passBothPriorities();
     }
 

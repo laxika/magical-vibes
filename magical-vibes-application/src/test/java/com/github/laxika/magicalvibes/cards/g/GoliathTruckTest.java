@@ -17,9 +17,9 @@ class GoliathTruckTest extends BaseCardTest {
 
     @Test
     void stowagePutsTwoCountersOnAnotherAttackingCreature() {
-        Permanent truck = addReady(new GoliathTruck());
-        Permanent crew = addReady(new GrizzlyBears());
-        Permanent attacker = addReady(new GrizzlyBears());
+        Permanent truck = addCreatureReady(player1, new GoliathTruck());
+        Permanent crew = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, crew.getId());
@@ -40,9 +40,9 @@ class GoliathTruckTest extends BaseCardTest {
 
     @Test
     void stowageCannotTargetTheTruckOrANonattackingCreature() {
-        Permanent truck = addReady(new GoliathTruck());
-        Permanent crew = addReady(new GrizzlyBears());
-        Permanent attacker = addReady(new GrizzlyBears());
+        Permanent truck = addCreatureReady(player1, new GoliathTruck());
+        Permanent crew = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, crew.getId());
@@ -55,10 +55,72 @@ class GoliathTruckTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReady(com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
+    @Test
+    void attackingAloneDoesNotPutCountersOnTheTruck() {
+        Permanent truck = addCreatureReady(player1, new GoliathTruck());
+        Permanent crew = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, crew.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(truck.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(crew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void stowageDoesNotPutCountersOnATargetThatLeavesCombat() {
+        addCreatureReady(player1, new GoliathTruck());
+        Permanent crew = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, crew.getId());
+        harness.passBothPriorities();
+        declareAttackers(List.of(0, 2));
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void stowageResolvesAfterTheTruckLeavesTheBattlefield() {
+        Permanent truck = addCreatureReady(player1, new GoliathTruck());
+        Permanent crew = addCreatureReady(player1, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, crew.getId());
+        harness.passBothPriorities();
+        declareAttackers(List.of(0, 2));
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(truck);
+        gd.playerGraveyards.get(player1.getId()).add(truck.getCard());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+    @Test
+    void summoningSickCreatureCanCrewTheTruck() {
+        Permanent truck = addCreatureReady(player1, new GoliathTruck());
+        Permanent crew = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        crew.setSummoningSick(true);
+        addCreatureReady(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, crew.getId());
+        harness.passBothPriorities();
+
+        assertThat(crew.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, truck)).isTrue();
     }
 }

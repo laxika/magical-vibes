@@ -122,17 +122,77 @@ class GoblinSappersTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(player1, sappers), 0, null, attacker.getId());
         harness.passBothPriorities();
 
-        declareAttackers(List.of(indexOf(player1, attacker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, attacker)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(indexOf(player2, blocker), indexOf(player1, attacker)))))
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void cheapModeCreatesOneTriggerForBothDestructions() {
+        Permanent sappers = addCreatureReady(player1, new GoblinSappers());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, indexOf(player1, sappers), 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player1, "Goblin Sappers");
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Goblin Sappers");
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+    }
+
+    @Test
+    void delayedDestructionKeepsAbilitySourceAndControllerAfterTargetChangesControl() {
+        Permanent sappers = addCreatureReady(player1, new GoblinSappers());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.activateAbility(player1, indexOf(player1, sappers), 1, null, bears.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(sappers.getId());
+        resolveAllTriggers();
+    }
+
+    @Test
+    void activationDuringEndOfCombatWaitsForNextCombat() {
+        Permanent sappers = addCreatureReady(player1, new GoblinSappers());
+        Permanent bears = addCreatureReady(player1, new BalduvianBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, indexOf(player1, sappers), 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertOnBattlefield(player1, "Goblin Sappers");
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Goblin Sappers");
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+    }
+
     private void advanceThroughEndOfCombat() {
         harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
     }
 
     private int indexOf(Player player, Permanent permanent) {

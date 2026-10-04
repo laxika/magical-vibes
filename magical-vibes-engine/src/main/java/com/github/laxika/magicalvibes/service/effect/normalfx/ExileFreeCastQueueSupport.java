@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -15,12 +16,15 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,6 +58,7 @@ public class ExileFreeCastQueueSupport {
     private final SpellweaverVoluteSupport spellweaverVoluteSupport;
     private final AdditionalSpellCostService additionalSpellCostService;
     private final SpellCastingService spellCastingService;
+    private final CastingPermissionService castingPermissionService;
     private final OutsideGameNormalCostCastSupport outsideGameNormalCostCastSupport;
 
     // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
@@ -67,6 +72,7 @@ public class ExileFreeCastQueueSupport {
                                             @Lazy SpellweaverVoluteSupport spellweaverVoluteSupport,
                                             AdditionalSpellCostService additionalSpellCostService,
                                             @Lazy SpellCastingService spellCastingService,
+                                            CastingPermissionService castingPermissionService,
                                             @Lazy OutsideGameNormalCostCastSupport outsideGameNormalCostCastSupport) {
         this.gameLogService = gameLogService;
         this.playerInputService = playerInputService;
@@ -78,6 +84,7 @@ public class ExileFreeCastQueueSupport {
         this.spellweaverVoluteSupport = spellweaverVoluteSupport;
         this.additionalSpellCostService = additionalSpellCostService;
         this.spellCastingService = spellCastingService;
+        this.castingPermissionService = castingPermissionService;
         this.outsideGameNormalCostCastSupport = outsideGameNormalCostCastSupport;
     }
 
@@ -195,7 +202,8 @@ public class ExileFreeCastQueueSupport {
         }
 
         Card card = exiledEntry.card();
-        if (card.isCastOnlyFromGraveyard()) {
+        if (card.isCastOnlyFromGraveyard()
+                || !castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)) {
             if (asCopy) {
                 gameData.removeFromExile(cardId);
             }
@@ -245,6 +253,24 @@ public class ExileFreeCastQueueSupport {
         }
 
         if (additionalCosts.any()) {
+            if (modal == null && additionalCosts.discardCost() != null
+                    && spellEffects.stream().filter(CostEffect.class::isInstance)
+                    .allMatch(DiscardCardTypeCost.class::isInstance)
+                    && !needsCastTarget(cardToCast, spellEffects)
+                    && additionalSpellCostService.satisfiable(gameData, playerId, cardToCast)) {
+                List<Integer> validIndices = additionalSpellCostService.validDiscardCostIndices(
+                        gameData, playerId, cardToCast);
+                spellEffects.removeIf(DiscardCardTypeCost.class::isInstance);
+                StackEntry pendingCast = new StackEntry(spellType, cardToCast, playerId,
+                        cardToCast.getName(), spellEffects, 0, (UUID) null, null);
+                pendingCast.setCopy(asCopy);
+                if (!asCopy) pendingCast.setSourceZone(Zone.EXILE);
+                playerInputService.beginDiscardChoice(gameData, playerId, validIndices,
+                        "Choose a card to discard to cast " + cardToCast.getName() + ".",
+                        additionalCosts.discardCost().count(),
+                        DiscardFollowUp.NONE.withPendingSpellCast(pendingCast));
+                return;
+            }
             skipCardWithUnsupportedCost(gameData, playerId, card, asCopy);
             return;
         }
@@ -442,6 +468,20 @@ public class ExileFreeCastQueueSupport {
         if (asCopy && spellweaverVoluteSupport.handleSuccessfulCopyCast(gameData, physicalCard.getId())) {
             return;
         }
+        castNextFromQueue(gameData, playerId);
+    }
+
+    /** Adds a spell to the stack only after its queued discard cost has been paid. */
+    public void completeCastAfterDiscard(GameData gameData, StackEntry entry) {
+        UUID playerId = entry.getControllerId();
+        gameData.removeFromExile(entry.getCard().getId());
+        if (!entry.isCopy()) gameData.recordCardPlayedFromExile(playerId);
+        gameData.stack.add(entry);
+        gameData.recordSpellCast(playerId, entry.getCard());
+        gameData.priorityPassedBy.clear();
+        triggerCollectionService.checkSpellCastTriggers(gameData, entry.getCard(), playerId, false);
+        if (entry.isCopy() && spellweaverVoluteSupport.handleSuccessfulCopyCast(
+                gameData, entry.getCard().getId())) return;
         castNextFromQueue(gameData, playerId);
     }
 

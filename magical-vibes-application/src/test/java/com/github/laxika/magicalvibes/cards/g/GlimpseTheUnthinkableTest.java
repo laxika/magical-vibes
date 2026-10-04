@@ -59,6 +59,43 @@ class GlimpseTheUnthinkableTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
     }
 
+    @Test
+    @DisplayName("Mills the top ten cards and leaves the other player's library untouched")
+    void millsOnlyTopTenOfTargetLibrary() {
+        List<Card> targetLibrary = glimpseLibrary(12);
+        List<Card> controllerLibrary = glimpseLibrary(4);
+        harness.setLibrary(player2, targetLibrary);
+        harness.setLibrary(player1, controllerLibrary);
+        harness.setHand(player1, List.of(new GlimpseTheUnthinkable()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrderElementsOf(targetLibrary.subList(0, 10));
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactlyElementsOf(targetLibrary.subList(10, 12));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(controllerLibrary);
+    }
+
+    @Test
+    @DisplayName("Can resolve targeting an empty library without causing a loss")
+    void resolvesWithEmptyTargetLibrary() {
+        harness.setHand(player1, List.of(new GlimpseTheUnthinkable()));
+        harness.setLibrary(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.status).isNotEqualTo(com.github.laxika.magicalvibes.model.GameStatus.FINISHED);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Glimpse the Unthinkable");
+    }
+
     private List<Card> glimpseLibrary(int size) {
         return IntStream.range(0, size)
                 .mapToObj(ignored -> (Card) new GlimpseTheUnthinkable())

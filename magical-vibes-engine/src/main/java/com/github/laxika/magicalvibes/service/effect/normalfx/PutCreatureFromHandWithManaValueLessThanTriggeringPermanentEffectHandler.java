@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromHandWithManaValueLessThanTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -25,6 +27,7 @@ public class PutCreatureFromHandWithManaValueLessThanTriggeringPermanentEffectHa
 
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,7 +37,10 @@ public class PutCreatureFromHandWithManaValueLessThanTriggeringPermanentEffectHa
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID playerId = entry.getControllerId();
-        int triggeringManaValue = entry.getEventValue();
+        Permanent triggeringPermanent = entry.getTriggeringPermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+        int triggeringManaValue = triggeringPermanent == null ? entry.getEventValue()
+                : triggeringPermanent.getCard().getManaValue();
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = new ArrayList<>();
         if (hand != null) {
