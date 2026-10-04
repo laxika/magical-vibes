@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DragonstormGlobe;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,15 +14,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Hundred-Battle Veteran")
-@CardUsed({HundredBattleVeteran.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({HundredBattleVeteran.class, DragonstormGlobe.class})
 class HundredBattleVeteranTest extends BaseCardTest {
 
     @Test
     @DisplayName("gets +2/+4 with three different counter kinds among controlled creatures")
     void getsBoostWithThreeDifferentCounterKinds() {
         Permanent veteran = addCreatureReady(player1, new HundredBattleVeteran());
-        Permanent first = addCreatureReady(player1, new GrizzlyBears());
-        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        Permanent first = addCreatureReady(player1, new HundredBattleVeteran());
+        Permanent second = addCreatureReady(player1, new HundredBattleVeteran());
         first.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         second.setCounterCount(CounterType.LORE, 1);
 
@@ -40,13 +39,13 @@ class HundredBattleVeteranTest extends BaseCardTest {
     @DisplayName("counts only counter kinds on creatures controlled by its controller")
     void ignoresNoncreaturesAndOpponents() {
         Permanent veteran = addCreatureReady(player1, new HundredBattleVeteran());
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new HundredBattleVeteran());
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         creature.setCounterCount(CounterType.LORE, 1);
 
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new DragonstormGlobe());
         artifact.setCounterCount(CounterType.FINALITY, 1);
-        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new HundredBattleVeteran());
         opponentCreature.setCounterCount(CounterType.FINALITY, 1);
 
         assertThat(gqs.getEffectivePower(gd, veteran)).isEqualTo(4);
@@ -73,5 +72,80 @@ class HundredBattleVeteranTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Hundred-Battle Veteran");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Hundred-Battle Veteran"));
+    }
+
+    @Test
+    void repeatedCounterKindsDoNotMeetThreshold() {
+        Permanent veteran = addCreatureReady(player1, new HundredBattleVeteran());
+        Permanent first = addCreatureReady(player1, new HundredBattleVeteran());
+        Permanent second = addCreatureReady(player1, new HundredBattleVeteran());
+        first.setCounterCount(CounterType.LORE, 3);
+        second.setCounterCount(CounterType.LORE, 2);
+        second.setCounterCount(CounterType.FINALITY, 1);
+
+        assertThat(gqs.getEffectivePower(gd, veteran)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, veteran)).isEqualTo(2);
+    }
+
+    @Test
+    void threeKindsOnOneCreatureGrantBoostAndRemovingOneKindRemovesBoost() {
+        Permanent veteran = addCreatureReady(player1, new HundredBattleVeteran());
+        Permanent creature = addCreatureReady(player1, new HundredBattleVeteran());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        creature.setCounterCount(CounterType.LORE, 1);
+        creature.setCounterCount(CounterType.FINALITY, 1);
+
+        assertThat(gqs.getEffectivePower(gd, veteran)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, veteran)).isEqualTo(6);
+
+        creature.setCounterCount(CounterType.FINALITY, 0);
+
+        assertThat(gqs.getEffectivePower(gd, veteran)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, veteran)).isEqualTo(2);
+    }
+
+    @Test
+    void castFromHandDoesNotReceiveFinalityAndCanReturnFromGraveyard() {
+        harness.castFromHand(player1, new HundredBattleVeteran(), "{3}{B}");
+        harness.passBothPriorities();
+        Permanent veteran = findPermanent(player1, "Hundred-Battle Veteran");
+        assertThat(veteran.getCounterCount(CounterType.FINALITY)).isZero();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, veteran));
+        harness.assertInGraveyard(player1, "Hundred-Battle Veteran");
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Hundred-Battle Veteran")
+                .getCounterCount(CounterType.FINALITY)).isEqualTo(1);
+        harness.assertNotInGraveyard(player1, "Hundred-Battle Veteran");
+    }
+
+    @Test
+    void removingFinalityAllowsDeathAndAnotherGraveyardCast() {
+        harness.setGraveyard(player1, List.of(new HundredBattleVeteran()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+        Permanent veteran = findPermanent(player1, "Hundred-Battle Veteran");
+        veteran.setCounterCount(CounterType.FINALITY, 0);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, veteran));
+        harness.assertInGraveyard(player1, "Hundred-Battle Veteran");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Hundred-Battle Veteran")
+                .getCounterCount(CounterType.FINALITY)).isEqualTo(1);
     }
 }
