@@ -125,6 +125,67 @@ class HornedHelmTest extends BaseCardTest {
         assertThat(helm.getAttachedTo()).isEqualTo(creature.getId());
     }
 
+    @Test
+    @DisplayName("Green ability moves the boost and trample to the new creature")
+    void greenAbilityMovesBonusesToNewCreature() {
+        Permanent helm = addHelmReady(player1);
+        Permanent first = addCreatureReady(player1, new Arachnoid());
+        Permanent second = addCreatureReady(player1, new Arachnoid());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, first.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(helm.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(7);
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Green ability preserves the old attachment when its target leaves")
+    void greenAbilityPreservesAttachmentWhenTargetLeaves() {
+        Permanent helm = addHelmReady(player1);
+        Permanent first = addCreatureReady(player1, new Arachnoid());
+        Permanent second = addCreatureReady(player1, new Arachnoid());
+        helm.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 0, null, second.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+        harness.passBothPriorities();
+
+        assertThat(helm.getAttachedTo()).isEqualTo(first.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(7);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tapped Horned Helm can activate its green ability and grants its bonuses")
+    void tappedHelmCanAttachAndGrantBonuses() {
+        Permanent helm = addHelmReady(player1);
+        Permanent creature = addCreatureReady(player1, new Arachnoid());
+        helm.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(helm.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(helm.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(7);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
     private Permanent addHelmReady(Player player) {
         return harness.addToBattlefieldAndReturn(player, new HornedHelm());
     }
