@@ -23,7 +23,7 @@ class HornedCheetahTest extends BaseCardTest {
 
     private void resolveCombatAndTrigger() {
         resolveCombat();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     @Test
@@ -101,5 +101,42 @@ class HornedCheetahTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Blocking damage gains life for the defending controller even when the Cheetah dies")
+    void blockingDamageGainsLifeForDefender() {
+        Permanent attacker = addCreatureReady(player1, new HoodedKavu());
+        attacker.setAttacking(true);
+        Permanent cheetah = addCreatureReady(player2, new HornedCheetah());
+        cheetah.setBlocking(true);
+        cheetah.addBlockingTarget(0);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        resolveCombatAndTrigger();
+
+        harness.assertInGraveyard(player2, "Horned Cheetah");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 22);
+    }
+
+    @Test
+    @DisplayName("Life gain uses damage already dealt rather than power when the trigger resolves")
+    void lifeGainUsesDamageSnapshot() {
+        Permanent cheetah = addCreatureReady(player2, new HornedCheetah());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Backlash()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, cheetah.getId());
+
+        harness.assertLife(player2, 18);
+        cheetah.getCard().setPower(5);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
     }
 }
