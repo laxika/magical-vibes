@@ -27,8 +27,7 @@ class GrotesqueHybridTest extends BaseCardTest {
         Permanent gurzigost = addCreatureReady(player2, new Gurzigost());
         gurzigost.setRegenerationShield(1);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         resolveAllTriggers();
@@ -46,12 +45,47 @@ class GrotesqueHybridTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0, List.of(hybrid.getId(), gurzigost.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(hybrid.getId(), gurzigost.getId()));
         resolveAllTriggers();
 
         assertThat(gurzigost.getMarkedDamage()).isEqualTo(3);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(gurzigost);
+    }
+
+    @Test
+    @DisplayName("Another creature's combat damage does not trigger the Hybrid's destruction ability")
+    void otherCreatureCombatDamageDoesNotDestroy() {
+        addCreatureReady(player1, new GrotesqueHybrid());
+        addCreatureReady(player1, new Gurzigost());
+        Permanent blocker = addCreatureReady(player2, new Gurzigost());
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(6);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+    }
+
+    @Test
+    @DisplayName("Protection gained after blocking prevents green combat damage while the destruction trigger still resolves")
+    void protectionPreventsGreenCombatDamage() {
+        Permanent hybrid = addCreatureReady(player1, new GrotesqueHybrid());
+        Permanent blocker = addCreatureReady(player2, new Gurzigost());
+        harness.setHand(player1, List.of(new SpiritFlare()));
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(hybrid);
+        assertThat(hybrid.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
     }
 
     @Test
