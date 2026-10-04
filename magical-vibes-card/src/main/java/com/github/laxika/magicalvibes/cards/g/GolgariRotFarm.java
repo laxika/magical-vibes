@@ -32,6 +32,7 @@ import java.util.List;
 @CardRegistration(set = "C16", collectorNumber = "298")
 @CardRegistration(set = "KHC", collectorNumber = "112")
 @CardRegistration(set = "CMA", collectorNumber = "253")
+@CardRegistration(set = "CM2", collectorNumber = "254")
 public class GolgariRotFarm extends Card {
 
     public GolgariRotFarm() {

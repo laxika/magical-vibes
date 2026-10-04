@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaThenMillsEffect;
 
 @CardRegistration(set = "CMD", collectorNumber = "99")
+@CardRegistration(set = "CM2", collectorNumber = "76")
 public class SharedTrauma extends Card {
 
     public SharedTrauma() {

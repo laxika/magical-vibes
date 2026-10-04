@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "C14", collectorNumber = "41")
+@CardRegistration(set = "CM2", collectorNumber = "128")
 public class WarmongerHellkite extends Card {
 
     public WarmongerHellkite() {

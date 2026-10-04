@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "VOC", collectorNumber = "123")
 @CardRegistration(set = "C17", collectorNumber = "103")
 @CardRegistration(set = "CMA", collectorNumber = "50")
+@CardRegistration(set = "CM2", collectorNumber = "60")
 public class ButcherOfMalakir extends Card {
 
     public ButcherOfMalakir() {

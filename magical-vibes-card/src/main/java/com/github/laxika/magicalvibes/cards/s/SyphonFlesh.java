@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "MIC", collectorNumber = "129")
 @CardRegistration(set = "SCD", collectorNumber = "110")
 @CardRegistration(set = "CMA", collectorNumber = "69")
+@CardRegistration(set = "CM2", collectorNumber = "79")
 public class SyphonFlesh extends Card {
 
     public SyphonFlesh() {

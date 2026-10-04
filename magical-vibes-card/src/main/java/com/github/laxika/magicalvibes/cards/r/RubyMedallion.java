@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 @CardRegistration(set = "C14", collectorNumber = "265")
 @CardRegistration(set = "CMM", collectorNumber = "405")
 @CardRegistration(set = "CMM", collectorNumber = "613")
+@CardRegistration(set = "CM2", collectorNumber = "212")
 public class RubyMedallion extends Card {
 
     public RubyMedallion() {

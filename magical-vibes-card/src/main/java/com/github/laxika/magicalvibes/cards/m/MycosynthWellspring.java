@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 @CardRegistration(set = "C21", collectorNumber = "252")
 @CardRegistration(set = "C16", collectorNumber = "262")
 @CardRegistration(set = "BRC", collectorNumber = "150")
+@CardRegistration(set = "CM2", collectorNumber = "201")
 public class MycosynthWellspring extends Card {
 
     public MycosynthWellspring() {

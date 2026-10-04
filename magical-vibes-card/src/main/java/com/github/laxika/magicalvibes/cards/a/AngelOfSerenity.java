@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSour
 @CardRegistration(set = "C15", collectorNumber = "58")
 @CardRegistration(set = "C21", collectorNumber = "83")
 @CardRegistration(set = "KHC", collectorNumber = "18")
+@CardRegistration(set = "CM2", collectorNumber = "16")
 public class AngelOfSerenity extends Card {
 
     public AngelOfSerenity() {

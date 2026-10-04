@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "CMD", collectorNumber = "24")
 @CardRegistration(set = "C15", collectorNumber = "78")
 @CardRegistration(set = "CMA", collectorNumber = "18")
+@CardRegistration(set = "CM2", collectorNumber = "33")
 public class OrimsThunder extends Card {
 
     public OrimsThunder() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 @CardRegistration(set = "MOC", collectorNumber = "325")
 @CardRegistration(set = "MIC", collectorNumber = "149")
 @CardRegistration(set = "C16", collectorNumber = "196")
+@CardRegistration(set = "CM2", collectorNumber = "155")
 public class EnduringScalelord extends Card {
 
     public EnduringScalelord() {

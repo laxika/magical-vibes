@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "EOC", collectorNumber = "133")
 @CardRegistration(set = "C16", collectorNumber = "54")
+@CardRegistration(set = "CM2", collectorNumber = "183")
 public class CrystallineCrawler extends Card {
 
     public CrystallineCrawler() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "C15", collectorNumber = "25")
 @CardRegistration(set = "AFC", collectorNumber = "125")
 @CardRegistration(set = "SCD", collectorNumber = "139")
+@CardRegistration(set = "CM2", collectorNumber = "93")
 public class DreamPillager extends Card {
 
     public DreamPillager() {

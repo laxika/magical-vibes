@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "MB2", collectorNumber = "217")
 @CardRegistration(set = "LTC", collectorNumber = "274")
 @CardRegistration(set = "CMA", collectorNumber = "210")
+@CardRegistration(set = "CM2", collectorNumber = "173")
 @CardRegistration(set = "LEB", collectorNumber = "232")
 public class BasaltMonolith extends Card {
 

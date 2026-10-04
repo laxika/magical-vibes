@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "TSP", collectorNumber = "188")
 @CardRegistration(set = "C14", collectorNumber = "185")
 @CardRegistration(set = "C15", collectorNumber = "172")
+@CardRegistration(set = "CM2", collectorNumber = "131")
 public class WordOfSeizing extends Card {
 
     public WordOfSeizing() {

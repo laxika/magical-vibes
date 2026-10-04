@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "DGM", collectorNumber = "137")
 @CardRegistration(set = "C15", collectorNumber = "246")
+@CardRegistration(set = "CM2", collectorNumber = "175")
 public class BorosCluestone extends Card {
 
     public BorosCluestone() {

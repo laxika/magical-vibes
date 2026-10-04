@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "62")
 @CardRegistration(set = "C16", collectorNumber = "110")
+@CardRegistration(set = "CM2", collectorNumber = "63")
 public class Festercreep extends Card {
 
     public Festercreep() {

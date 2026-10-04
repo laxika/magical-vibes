@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ManifoldInsightsEffect;
 
 @CardRegistration(set = "C16", collectorNumber = "10")
+@CardRegistration(set = "CM2", collectorNumber = "44")
 public class ManifoldInsights extends Card {
 
     public ManifoldInsights() {

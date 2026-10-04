@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "FIC", collectorNumber = "439")
 @CardRegistration(set = "C16", collectorNumber = "335")
 @CardRegistration(set = "DRC", collectorNumber = "181")
+@CardRegistration(set = "CM2", collectorNumber = "275")
 public class UndergroundRiver extends Card {
 
     public UndergroundRiver() {

@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "GK2", collectorNumber = "128")
 @CardRegistration(set = "LCC", collectorNumber = "294")
 @CardRegistration(set = "C16", collectorNumber = "227")
+@CardRegistration(set = "CM2", collectorNumber = "169")
 public class VorelOfTheHullClade extends Card {
 
     public VorelOfTheHullClade() {

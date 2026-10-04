@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 
 @CardRegistration(set = "C15", collectorNumber = "31")
+@CardRegistration(set = "CM2", collectorNumber = "127")
 public class WarchiefGiant extends Card {
 
     public WarchiefGiant() {

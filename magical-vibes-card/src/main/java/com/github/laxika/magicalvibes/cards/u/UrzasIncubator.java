@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForChosenSubtyp
 @CardRegistration(set = "UDS", collectorNumber = "142")
 @CardRegistration(set = "DMR", collectorNumber = "239")
 @CardRegistration(set = "C15", collectorNumber = "273")
+@CardRegistration(set = "CM2", collectorNumber = "228")
 public class UrzasIncubator extends Card {
 
     public UrzasIncubator() {

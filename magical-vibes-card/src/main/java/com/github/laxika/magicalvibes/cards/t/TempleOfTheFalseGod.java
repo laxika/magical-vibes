@@ -37,6 +37,8 @@ import java.util.List;
 @CardRegistration(set = "C16", collectorNumber = "331")
 @CardRegistration(set = "VOC", collectorNumber = "187")
 @CardRegistration(set = "CMA", collectorNumber = "277")
+@CardRegistration(set = "CM2", collectorNumber = "271")
+@CardRegistration(set = "CM2", collectorNumber = "272")
 public class TempleOfTheFalseGod extends Card {
 
     public TempleOfTheFalseGod() {

@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "M12", collectorNumber = "217")
+@CardRegistration(set = "CM2", collectorNumber = "218")
+@CardRegistration(set = "CM2", collectorNumber = "219")
 @CardRegistration(set = "DRC", collectorNumber = "138")
 @CardRegistration(set = "MRD", collectorNumber = "245")
 @CardRegistration(set = "FDN", collectorNumber = "257")

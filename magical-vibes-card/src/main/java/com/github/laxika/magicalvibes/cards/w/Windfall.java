@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsHandThenDra
 @CardRegistration(set = "C20", collectorNumber = "128")
 @CardRegistration(set = "C16", collectorNumber = "104")
 @CardRegistration(set = "KHC", collectorNumber = "46")
+@CardRegistration(set = "CM2", collectorNumber = "55")
 public class Windfall extends Card {
 
     public Windfall() {

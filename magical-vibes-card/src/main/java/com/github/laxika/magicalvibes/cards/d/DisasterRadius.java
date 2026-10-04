@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "E02", collectorNumber = "26")
 @CardRegistration(set = "CMD", collectorNumber = "119")
 @CardRegistration(set = "C15", collectorNumber = "150")
+@CardRegistration(set = "CM2", collectorNumber = "92")
 public class DisasterRadius extends Card {
 
     public DisasterRadius() {

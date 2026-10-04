@@ -32,6 +32,7 @@ import java.util.List;
 @CardRegistration(set = "C18", collectorNumber = "242")
 @CardRegistration(set = "C16", collectorNumber = "290")
 @CardRegistration(set = "C17", collectorNumber = "245")
+@CardRegistration(set = "CM2", collectorNumber = "245")
 @CardRegistration(set = "ZNC", collectorNumber = "126")
 public class DimirAqueduct extends Card {
 

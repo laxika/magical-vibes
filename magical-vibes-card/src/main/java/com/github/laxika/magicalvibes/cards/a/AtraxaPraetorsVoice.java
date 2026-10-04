@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 @CardRegistration(set = "MUL", collectorNumber = "98")
 @CardRegistration(set = "MUL", collectorNumber = "163")
 @CardRegistration(set = "C16", collectorNumber = "28")
+@CardRegistration(set = "CM2", collectorNumber = "10")
 public class AtraxaPraetorsVoice extends Card {
 
     public AtraxaPraetorsVoice() {

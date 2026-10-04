@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "191")
 @CardRegistration(set = "C14", collectorNumber = "259")
+@CardRegistration(set = "CM2", collectorNumber = "208")
 public class PanicSpellbomb extends Card {
 
     public PanicSpellbomb() {

@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "C18", collectorNumber = "230")
 @CardRegistration(set = "C17", collectorNumber = "232")
 @CardRegistration(set = "SCD", collectorNumber = "288")
+@CardRegistration(set = "CM2", collectorNumber = "230")
 public class WornPowerstone extends Card {
 
     public WornPowerstone() {

@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "CHK", collectorNumber = "129")
 @CardRegistration(set = "CMD", collectorNumber = "92")
+@CardRegistration(set = "CM2", collectorNumber = "71")
 @CardRegistration(set = "PHUK", collectorNumber = "38")
 @CardRegistration(set = "PHUK", collectorNumber = "39")
 public class NezumiGraverobber extends Card {

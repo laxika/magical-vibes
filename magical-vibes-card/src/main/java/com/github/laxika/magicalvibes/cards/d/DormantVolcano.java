@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "161")
 @CardRegistration(set = "C14", collectorNumber = "291")
+@CardRegistration(set = "CM2", collectorNumber = "246")
 public class DormantVolcano extends Card {
 
     private static final PermanentAllOfPredicate UNTAPPED_MOUNTAIN = new PermanentAllOfPredicate(List.of(
