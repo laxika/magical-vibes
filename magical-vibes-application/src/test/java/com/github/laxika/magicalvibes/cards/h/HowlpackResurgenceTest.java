@@ -2,19 +2,21 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GreaterWerewolf;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MaskwoodNexus;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.w.WyluliWolf;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HowlpackResurgence.class, WyluliWolf.class, GreaterWerewolf.class, GrizzlyBears.class,
+        Opalescence.class, MaskwoodNexus.class})
 class HowlpackResurgenceTest extends BaseCardTest {
 
     @Test
@@ -87,14 +89,45 @@ class HowlpackResurgenceTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new HowlpackResurgence()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.getGameService().passPriority(gd, player2);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new HowlpackResurgence(), "{2}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Howlpack Resurgence");
+    }
+
+    @Test
+    @DisplayName("Multiple copies stack their boosts and removing the last copy removes trample")
+    void multipleCopiesAndRemoval() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new HowlpackResurgence());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new HowlpackResurgence());
+        Permanent wolf = harness.addToBattlefieldAndReturn(player1, new WyluliWolf());
+
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.TRAMPLE)).isTrue();
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, first);
+
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.TRAMPLE)).isTrue();
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, second);
+
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An animated Howlpack Resurgence with every creature type buffs itself once")
+    void buffsItselfWhenItIsAWolfAndWerewolfCreature() {
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.addToBattlefield(player1, new MaskwoodNexus());
+        Permanent resurgence = harness.addToBattlefieldAndReturn(player1, new HowlpackResurgence());
+
+        assertThat(gqs.getEffectivePower(gd, resurgence)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, resurgence)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, resurgence, Keyword.TRAMPLE)).isTrue();
     }
 }
