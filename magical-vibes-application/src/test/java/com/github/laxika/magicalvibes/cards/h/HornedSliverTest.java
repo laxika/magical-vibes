@@ -61,4 +61,43 @@ class HornedSliverTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, otherSliver, Keyword.TRAMPLE)).isFalse();
     }
+
+    @Test
+    @DisplayName("Grants trample to existing Slivers on both sides when it enters")
+    void grantsTrampleToExistingSlivers() {
+        Permanent ownSliver = addCreatureReady(player1, new MuscleSliver());
+        Permanent opposingSliver = addCreatureReady(player2, new MuscleSliver());
+        Permanent opposingTurtle = addCreatureReady(player2, new HornedTurtle());
+
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingSliver, Keyword.TRAMPLE)).isFalse();
+
+        addCreatureReady(player2, new HornedSliver());
+
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingSliver, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingTurtle, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Trample persists until the last Horned Sliver leaves the battlefield")
+    void overlappingSourcesKeepGrantingTrample() {
+        Permanent firstSource = addCreatureReady(player1, new HornedSliver());
+        Permanent secondSource = addCreatureReady(player2, new HornedSliver());
+        Permanent ownSliver = addCreatureReady(player1, new MuscleSliver());
+        Permanent opposingSliver = addCreatureReady(player2, new MuscleSliver());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, firstSource));
+
+        assertThat(gqs.hasKeyword(gd, secondSource, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingSliver, Keyword.TRAMPLE)).isTrue();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, secondSource));
+
+        assertThat(gqs.hasKeyword(gd, ownSliver, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingSliver, Keyword.TRAMPLE)).isFalse();
+    }
 }
