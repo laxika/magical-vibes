@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -67,7 +66,7 @@ class FurnaceLayerTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
                 .processNextSpellTargetTrigger(gd));
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
@@ -76,6 +75,92 @@ class FurnaceLayerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void randomPlayerIsTargetedBeforePlayersCanRespond() {
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of(new Forest()));
+
+        harness.inMutationScope(() -> planar.trigger(gd, source,
+                EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isIn(player1.getId(), player2.getId());
+    }
+
+    @Test
+    void landDiscardLosesLifeDuringTheOriginalResolution() {
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of(new Forest()));
+
+        harness.inMutationScope(() -> planar.trigger(gd, source,
+                EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+        harness.passBothPriorities();
+        PendingInteraction.DiscardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
+        Player selectedPlayer = choice.playerId().equals(player1.getId()) ? player1 : player2;
+        Player otherPlayer = selectedPlayer == player1 ? player2 : player1;
+        harness.handleCardChosen(selectedPlayer, 0);
+
+        harness.assertInGraveyard(selectedPlayer, "Forest");
+        harness.assertLife(selectedPlayer, 17);
+        harness.assertLife(otherPlayer, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void emptyHandsCauseNeitherDiscardNorLifeLoss() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+
+        harness.inMutationScope(() -> planar.trigger(gd, source,
+                EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void selectedPlayerChoosesWhichCardToDiscard() {
+        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new Forest(), new GrizzlyBears()));
+
+        harness.inMutationScope(() -> planar.trigger(gd, source,
+                EffectSlot.PLANESWALK_TO_TRIGGERED, player1.getId()));
+        harness.passBothPriorities();
+        PendingInteraction.DiscardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
+        Player selectedPlayer = choice.playerId().equals(player1.getId()) ? player1 : player2;
+        Player otherPlayer = selectedPlayer == player1 ? player2 : player1;
+        harness.handleCardChosen(selectedPlayer, 1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(selectedPlayer, "Grizzly Bears");
+        harness.assertInHand(selectedPlayer, "Forest");
+        assertThat(gd.playerHands.get(selectedPlayer.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(otherPlayer.getId())).hasSize(2);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void chaosDestructionCanBeDeclined() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+                .processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     private void resolveRandomDiscard(EffectSlot slot) {
