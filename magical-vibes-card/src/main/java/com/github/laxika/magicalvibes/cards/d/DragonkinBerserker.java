@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "131")
+@CardRegistration(set = "SCD", collectorNumber = "134")
 public class DragonkinBerserker extends Card {
 
     public DragonkinBerserker() {

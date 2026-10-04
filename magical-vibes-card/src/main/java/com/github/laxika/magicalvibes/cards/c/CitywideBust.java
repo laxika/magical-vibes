@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "4")
 @CardRegistration(set = "C20", collectorNumber = "82")
+@CardRegistration(set = "SCD", collectorNumber = "11")
 public class CitywideBust extends Card {
 
     public CitywideBust() {

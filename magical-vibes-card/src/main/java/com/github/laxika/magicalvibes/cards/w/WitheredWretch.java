@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "TSB", collectorNumber = "54")
 @CardRegistration(set = "LGN", collectorNumber = "86")
 @CardRegistration(set = "HOP", collectorNumber = "45")
+@CardRegistration(set = "SCD", collectorNumber = "120")
 public class WitheredWretch extends Card {
 
     public WitheredWretch() {

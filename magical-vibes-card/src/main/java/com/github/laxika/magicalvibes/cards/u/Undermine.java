@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerLosesLif
 
 @CardRegistration(set = "INV", collectorNumber = "282")
 @CardRegistration(set = "DDH", collectorNumber = "62")
+@CardRegistration(set = "SCD", collectorNumber = "254")
 public class Undermine extends Card {
 
     public Undermine() {

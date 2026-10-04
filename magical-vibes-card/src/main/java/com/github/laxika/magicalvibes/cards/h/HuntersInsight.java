@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "CMM", collectorNumber = "296")
 @CardRegistration(set = "C20", collectorNumber = "178")
 @CardRegistration(set = "NEC", collectorNumber = "119")
+@CardRegistration(set = "SCD", collectorNumber = "191")
 public class HuntersInsight extends Card {
 
     public HuntersInsight() {

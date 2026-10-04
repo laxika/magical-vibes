@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "C20", collectorNumber = "222")
 @CardRegistration(set = "C16", collectorNumber = "38")
 @CardRegistration(set = "KHC", collectorNumber = "87")
+@CardRegistration(set = "SCD", collectorNumber = "237")
 public class MigratoryRoute extends Card {
 
     public MigratoryRoute() {

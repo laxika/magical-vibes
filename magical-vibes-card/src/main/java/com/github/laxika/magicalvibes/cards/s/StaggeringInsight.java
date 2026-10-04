@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "THB", collectorNumber = "228")
+@CardRegistration(set = "SCD", collectorNumber = "246")
 public class StaggeringInsight extends Card {
 
     public StaggeringInsight() {

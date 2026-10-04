@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GRN", collectorNumber = "6")
 @CardRegistration(set = "MOC", collectorNumber = "178")
+@CardRegistration(set = "SCD", collectorNumber = "14")
 public class ConclaveTribunal extends Card {
 
     public ConclaveTribunal() {

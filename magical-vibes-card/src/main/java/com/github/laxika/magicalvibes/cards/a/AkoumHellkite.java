@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "BFZ", collectorNumber = "139")
 @CardRegistration(set = "GN2", collectorNumber = "36")
+@CardRegistration(set = "SCD", collectorNumber = "123")
 public class AkoumHellkite extends Card {
 
     public AkoumHellkite() {
