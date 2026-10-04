@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,9 +13,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HallsOfMist.class, BalduvianBears.class})
+@CardUsed({HallsOfMist.class, BalduvianBears.class, ImprisonedInTheMoon.class, RayOfCommand.class})
 class HallsOfMistTest extends BaseCardTest {
 
     private void advanceToNextUpkeep(Player activePlayer) {
@@ -97,7 +100,6 @@ class HallsOfMistTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ImprisonedInTheMoon.class)
     @DisplayName("A Halls of Mist with no abilities imposes no attack restriction")
     void losingAllAbilitiesOnHallsDisablesAttackRestriction() {
         Permanent bear = addCreatureReady(player1, new BalduvianBears());
@@ -142,5 +144,59 @@ class HallsOfMistTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(halls);
         harness.assertInGraveyard(player1, "Halls of Mist");
+    }
+
+    @Test
+    @DisplayName("Attack history follows the current controller's last turn after theft")
+    void stolenCreatureCanAttackIfItDidNotAttackDuringNewControllersLastTurn() {
+        Permanent bear = addCreatureReady(player2, new BalduvianBears());
+        harness.forceActivePlayer(player2);
+        bear.setAttacking(true);
+        bear.clearCombatState();
+
+        advanceToNextUpkeep(player1);
+        advanceToNextUpkeep(player2);
+        advanceToNextUpkeep(player1);
+        harness.addToBattlefieldAndReturn(player2, new HallsOfMist());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new RayOfCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(bear);
+        assertThat(harness.getCombatAttackService()
+                .getAttackableCreatureIndices(gd, player1.getId())).contains(0);
+    }
+
+    @Test
+    @DisplayName("Entering attacking does not count as having attacked on the previous turn")
+    void enteringAttackingDoesNotPreventNextTurnsAttack() {
+        Permanent bear = addCreatureReady(player1, new BalduvianBears());
+        harness.forceActivePlayer(player1);
+        bear.enterAttacking(true);
+        bear.clearCombatState();
+
+        advanceToNextUpkeep(player2);
+        advanceToNextUpkeep(player1);
+        harness.addToBattlefieldAndReturn(player2, new HallsOfMist());
+
+        assertThat(harness.getCombatAttackService()
+                .getAttackableCreatureIndices(gd, player1.getId())).contains(0);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep charges one mana for each age counter including the new one")
+    void upkeepIncludesExistingAgeCounters() {
+        Permanent halls = harness.addToBattlefieldAndReturn(player1, new HallsOfMist());
+        halls.setCounterCount(CounterType.AGE, 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(halls);
+        assertThat(halls.getCounterCount(CounterType.AGE)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }
