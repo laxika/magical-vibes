@@ -38,16 +38,13 @@ class GenerousPatronTest extends BaseCardTest {
 
     @Test
     void doesNotDrawWhenPuttingCountersOnControlledCreature() {
-        harness.setHand(player1, List.of(new GenerousPatron()));
         harness.setLibrary(player1, List.of(new Forest()));
-        addPatronMana();
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GenerousPatron(), "{2}{G}");
         resolveAllTriggers();
 
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new BondBeetle()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0, ownCreature.getId());
         resolveAllTriggers();
 
@@ -63,6 +60,89 @@ class GenerousPatronTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void drawsOnceForEachOfTwoOpposingCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GenerousPatron());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GenerousPatron());
+        harness.setHand(player1, List.of(new GenerousPatron()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        addPatronMana();
+
+        harness.castCreature(player1, 0, List.of(first.getId(), second.getId()));
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void canDeclineSupportEvenWithAnOpposingCreature() {
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new GenerousPatron());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.castFromHand(player1, new GenerousPatron(), "{2}{G}");
+        resolveAllTriggers();
+
+        assertThat(opposing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Generous Patron");
+    }
+
+    @Test
+    void eachControlledPatronDrawsForTheSameCounterPlacement() {
+        harness.addToBattlefield(player1, new GenerousPatron());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new GenerousPatron());
+        harness.setHand(player1, List.of(new GenerousPatron()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        addPatronMana();
+
+        harness.castCreature(player1, 0, opposing.getId());
+        resolveAllTriggers();
+
+        assertThat(opposing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotDrawForCountersPlacedByOpponent() {
+        Permanent patron = harness.addToBattlefieldAndReturn(player1, new GenerousPatron());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new GenerousPatron()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player2, 0, patron.getId());
+        resolveAllTriggers();
+
+        assertThat(patron.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void canSupportAnotherPatronWithoutSupportingItself() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GenerousPatron());
+        GenerousPatron entering = new GenerousPatron();
+        harness.setHand(player1, List.of(entering));
+        harness.setLibrary(player1, List.of(new Forest()));
+        addPatronMana();
+
+        harness.castCreature(player1, 0, other.getId());
+        resolveAllTriggers();
+
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getId().equals(entering.getId()))
+                .singleElement().satisfies(permanent ->
+                        assertThat(permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
     private void addPatronMana() {
