@@ -69,4 +69,50 @@ class HematiteGolemTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("The ability requires red mana even when enough generic mana is available")
+    void cannotActivateWithoutRedMana() {
+        addCreatureReady(player1, new HematiteGolem());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Golem can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, new HematiteGolem());
+        golem.setSummoningSick(true);
+        golem.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(golem.getPowerModifier()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(golem.getEffectivePower()).isEqualTo(3);
+        assertThat(golem.getEffectiveToughness()).isEqualTo(4);
+        assertThat(golem.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability boosts only the Golem that activated it")
+    void boostsOnlyItsSource() {
+        Permanent source = addCreatureReady(player1, new HematiteGolem());
+        Permanent other = addCreatureReady(player1, new HematiteGolem());
+        Permanent opposing = addCreatureReady(player2, new HematiteGolem());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(opposing.getPowerModifier()).isZero();
+    }
 }
