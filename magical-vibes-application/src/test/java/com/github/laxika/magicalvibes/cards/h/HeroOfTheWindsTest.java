@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -54,6 +55,60 @@ class HeroOfTheWindsTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    void boostResolvesBeforeTheTargetingSpellAndDoesNotAffectOpponents() {
+        Permanent hero = harness.addToBattlefieldAndReturn(player1, new HeroOfTheWinds());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, hero.getId());
+
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(5);
+    }
+
+    @Test
+    void repeatedTargetingSpellsGiveCumulativeBoosts() {
+        Permanent hero = harness.addToBattlefieldAndReturn(player1, new HeroOfTheWinds());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castGiantGrowth(player1, hero);
+        castGiantGrowth(player1, hero);
+
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(10);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    void boostDoesNotAffectCreaturesEnteringLaterAndExpiresAtEndOfTurn() {
+        Permanent hero = harness.addToBattlefieldAndReturn(player1, new HeroOfTheWinds());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castGiantGrowth(player1, hero);
+
+        Permanent newcomer = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(4);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
