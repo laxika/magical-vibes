@@ -17,6 +17,46 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class FurnaceBroodTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Regeneration shields created after the ability resolves cannot save the creature")
+    void preventsLaterRegenerationShield() {
+        addCreatureReady(player1, new FurnaceBrood());
+        Permanent troll = addCreatureReady(player2, new PygmyTroll());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, troll.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(troll.getRegenerationShield()).isEqualTo(1);
+
+        troll.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player2, "Pygmy Troll");
+        harness.assertInGraveyard(player2, "Pygmy Troll");
+    }
+
+    @Test
+    @DisplayName("A tapped newly entered Brood can activate repeatedly and target its own creatures")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent brood = harness.addToBattlefieldAndReturn(player1, new FurnaceBrood());
+        brood.setTapped(true);
+        Permanent troll = addCreatureReady(player1, new PygmyTroll());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, troll.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, brood.getId());
+        harness.passBothPriorities();
+
+        assertThat(troll.isCantRegenerateThisTurn()).isTrue();
+        assertThat(brood.isCantRegenerateThisTurn()).isTrue();
+        assertThat(brood.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("The red ability marks a target creature so it can't be regenerated this turn")
     void marksTargetCreature() {
         addCreatureReady(player1, new FurnaceBrood());
