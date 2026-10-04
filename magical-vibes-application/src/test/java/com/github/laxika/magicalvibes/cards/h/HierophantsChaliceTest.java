@@ -1,18 +1,20 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HierophantsChalice.class})
 class HierophantsChaliceTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts it on the stack as an artifact spell")
@@ -24,10 +26,8 @@ class HierophantsChaliceTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Hierophant's Chalice");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(HierophantsChalice.class);
     }
-
-    // ===== Resolving artifact spell =====
 
     @Test
     @DisplayName("Resolving puts Hierophant's Chalice on battlefield with ETB trigger on stack")
@@ -39,11 +39,9 @@ class HierophantsChaliceTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Hierophant's Chalice");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(HierophantsChalice.class);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
     }
-
-    // ===== ETB life drain =====
 
     @Test
     @DisplayName("ETB trigger causes target opponent to lose 1 life and controller to gain 1 life")
@@ -52,8 +50,8 @@ class HierophantsChaliceTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve artifact spell
         harness.passBothPriorities(); // resolve ETB
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 21);
     }
 
     @Test
@@ -66,8 +64,8 @@ class HierophantsChaliceTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve artifact spell
         harness.passBothPriorities(); // resolve ETB
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(11);
+        harness.assertLife(player2, 14);
+        harness.assertLife(player1, 11);
     }
 
     @Test
@@ -80,8 +78,6 @@ class HierophantsChaliceTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Mana ability =====
-
     @Test
     @DisplayName("Tapping for mana adds one colorless mana")
     void tapForColorlessMana() {
@@ -92,7 +88,57 @@ class HierophantsChaliceTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The entry trigger offers only an opponent as a target")
+    void entryTriggerTargetsOnlyOpponent() {
+        harness.enterBattlefieldAndReturn(player1, new HierophantsChalice());
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPlayerIds()).containsExactly(player2.getId());
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Mana can be produced immediately while the entry trigger is on the stack")
+    void manaAbilityResolvesImmediatelyWithEntryTriggerPending() {
+        castChalice();
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("A tapped Chalice cannot produce additional mana")
+    void cannotActivateWhileTapped() {
+        harness.addToBattlefield(player1, new HierophantsChalice());
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private void castChalice() {
         harness.setHand(player1, List.of(new HierophantsChalice()));
