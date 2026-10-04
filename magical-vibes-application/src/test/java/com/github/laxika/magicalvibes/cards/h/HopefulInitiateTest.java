@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HopefulInitiate.class, GrizzlyBears.class, LeoninScimitar.class, GloriousAnthem.class})
 class HopefulInitiateTest extends BaseCardTest {
-
-    // ===== Training =====
 
     @Test
     @DisplayName("Training triggers when attacking with a greater-power creature")
@@ -62,8 +62,6 @@ class HopefulInitiateTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Activated ability =====
 
     @Test
     @DisplayName("Removes two +1/+1 counters from one creature and destroys target artifact")
@@ -153,22 +151,135 @@ class HopefulInitiateTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void trainingDoesNotTriggerWithEqualPowerAlly() {
+        Permanent initiate = addReadyInitiate(player1);
+        initiate.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1));
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void trainingTriggersOnlyOnceWithMultipleGreaterPowerAttackers() {
+        Permanent initiate = addReadyInitiate(player1);
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0, 1, 2));
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(initiate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void trainingStillResolvesAfterGreaterPowerAttackerLeaves() {
+        Permanent initiate = addReadyInitiate(player1);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        declareAttackers(List.of(0, 1));
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerGraveyards.get(player1.getId()).add(bears.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(initiate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void greaterPowerCreatureThatDoesNotAttackDoesNotEnableTraining() {
+        addReadyInitiate(player1);
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void summoningSickInitiateCanPayUsingCountersEntirelyFromAnotherCreature() {
+        Permanent initiate = harness.addToBattlefieldAndReturn(player1, new HopefulInitiate());
+        initiate.setSummoningSick(true);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent target = addReadyArtifact(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertOnBattlefield(player1, "Leonin Scimitar");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+        harness.assertNotOnBattlefield(player1, "Leonin Scimitar");
+    }
+
+    @Test
+    void cannotPayUsingOpponentsCounters() {
+        addReadyInitiate(player1);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
+    }
+
+    @Test
+    void cannotPayUsingCountersOnNoncreaturePermanent() {
+        addReadyInitiate(player1);
+        Permanent artifact = addReadyArtifact(player1);
+        artifact.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(artifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void destructionStillResolvesAfterInitiateLeaves() {
+        Permanent initiate = addReadyInitiate(player1);
+        initiate.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent target = addReadyArtifact(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(initiate);
+        gd.playerGraveyards.get(player1.getId()).add(initiate.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
+    }
+
     private Permanent addReadyInitiate(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent perm = new Permanent(new HopefulInitiate());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new HopefulInitiate());
     }
 
     private Permanent addReadyArtifact(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent perm = new Permanent(new LeoninScimitar());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new LeoninScimitar());
     }
 
     private Permanent addReadyEnchantment(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent perm = new Permanent(new GloriousAnthem());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new GloriousAnthem());
     }
 }
