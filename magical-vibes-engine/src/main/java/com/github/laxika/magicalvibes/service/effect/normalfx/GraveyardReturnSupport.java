@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -326,7 +327,8 @@ public class GraveyardReturnSupport {
             } else {
                 returnedPermanent = putCardOntoBattlefield(gameData, destinationPlayerId, targetCard,
                         effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking(),
-                        null, effect.grantIndestructible(), losesAllAbilitiesBeforeEntering(effect));
+                        null, effect.grantIndestructible(), losesAllAbilitiesBeforeEntering(effect), 0,
+                        permanent -> permanent.setEnteredFromGraveyardOwnerId(targetOwnerId));
             }
         } else {
             moveCardToDestination(gameData, destinationPlayerId, targetCard, effect.destination(),
@@ -643,12 +645,23 @@ public class GraveyardReturnSupport {
                             && loses.duration() == EffectDuration.PERMANENT) {
                         p.setLosesAllAbilitiesPermanently(true);
                     }
+                    EffectDuration grantDuration = effect.battlefieldEffectGrantDuration() == null
+                            ? EffectDuration.PERMANENT : effect.battlefieldEffectGrantDuration();
+                    if (grantDuration == EffectDuration.PERMANENT
+                            && grantedEffect instanceof GrantKeywordEffect keywordGrant) {
+                        grantDuration = switch (keywordGrant.duration()) {
+                            case END_OF_TURN -> EffectDuration.UNTIL_END_OF_TURN;
+                            case UNTIL_END_OF_COMBAT -> EffectDuration.UNTIL_END_OF_COMBAT;
+                            case UNTIL_YOUR_NEXT_TURN -> EffectDuration.UNTIL_YOUR_NEXT_TURN;
+                            case UNTIL_YOUR_NEXT_UPKEEP -> EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP;
+                            case WHILE_SOURCE_ON_BATTLEFIELD -> EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
+                            case WHILE_SOURCE_REMAINS -> EffectDuration.WHILE_SOURCE_REMAINS;
+                            case INDEFINITE -> EffectDuration.PERMANENT;
+                        };
+                    }
                     gameData.addFloatingEffect(new FloatingContinuousEffect(
                             UUID.randomUUID(), sourceCardName, sourcePermanentId, controllerId,
-                            grantedEffect, p.getId(), null, null,
-                            effect.battlefieldEffectGrantDuration() == null
-                                    ? EffectDuration.PERMANENT
-                                    : effect.battlefieldEffectGrantDuration(), 0));
+                            grantedEffect, p.getId(), null, null, grantDuration, 0));
                 }
             }
             if (effect.perpetualBattlefieldEffectGrants() != null) {

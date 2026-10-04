@@ -580,7 +580,7 @@ public class MayMiscHandlerService {
                 perm.tap();
             }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
-            battlefieldEntryService.processCreatureETBEffects(gameData, controllerId, topCard, null, false);
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, topCard, null, false);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " puts ", topCard, " onto the battlefield."));
             log.info("Game {} - {} puts {} onto the battlefield from the top of their library",

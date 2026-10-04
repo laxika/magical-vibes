@@ -197,6 +197,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersSkipUpkeepStepEffect;
@@ -4682,15 +4684,16 @@ public class StepTriggerService {
                 if (permanent == null) {
                     continue;
                 }
-                CardEffect sacrifice = new ConditionalEffect(
-                        new com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate(
+                CardEffect sacrifice = new SacrificePermanentsEffect(1,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsSpecificPermanentPredicate(action.permanentId()),
                                 new com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate(
-                                        action.maxManaValue())),
-                        new SacrificeSelfEffect(), false);
+                                        action.maxManaValue()))),
+                        SacrificeRecipient.CONTROLLER);
                 StackEntry delayedTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                         action.sourceCard() != null ? action.sourceCard() : permanent.getCard(),
                         action.controllerId(), "Delayed conditional sacrifice",
-                        List.of(sacrifice), 0, permanent.getId());
+                        List.of(sacrifice), 0, (UUID) null);
                 delayedTrigger.setNonTargeting(true);
                 gameData.stack.add(delayedTrigger);
                 gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),

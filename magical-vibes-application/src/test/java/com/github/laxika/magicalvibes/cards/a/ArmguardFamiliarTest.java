@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -76,6 +77,49 @@ class ArmguardFamiliarTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Shock");
         assertThat(creature.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(ArnoDorian.class)
+    void equippedDisguisedCreatureHasTwoSeparateWardTriggers() {
+        harness.setHand(player1, List.of(new ArnoDorian()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
+        Permanent disguised = findPermanent(player1, "Arno Dorian");
+        Permanent armguard = addReadyArmguard(player1);
+        armguard.setAttachedTo(disguised.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        harness.castInstant(player2, 0, disguised.getId());
+
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.clearPriorityPassed();
+            harness.handleMayAbilityChosen(player2, true);
+        });
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.clearPriorityPassed();
+            harness.handleMayAbilityChosen(player2, false);
+        });
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
+
+        assertThat(disguised.isFaceDown()).isTrue();
+        assertThat(disguised.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Arno Dorian");
+        harness.assertInGraveyard(player2, "Shock");
     }
 
     @Test

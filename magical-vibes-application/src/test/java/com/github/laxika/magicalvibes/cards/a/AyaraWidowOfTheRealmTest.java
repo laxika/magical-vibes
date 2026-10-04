@@ -94,7 +94,7 @@ class AyaraWidowOfTheRealmTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Swordsworn Cavalier");
 
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         declareAttackers(player1, List.of());
         harness.passUntil(player1, TurnStep.END_STEP);
 

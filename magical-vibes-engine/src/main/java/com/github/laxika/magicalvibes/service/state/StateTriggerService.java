@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StateTriggerKey;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.PlaneswalkIfPlanarSourceHasCountersEffect;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -188,9 +187,14 @@ public class StateTriggerService {
         }
         for (var source : gameData.planechase.faceUp) {
             List<CardEffect> effects = source.getCard().getEffects(EffectSlot.STATE_TRIGGERED);
+            if (effects.isEmpty()) {
+                continue;
+            }
+            Permanent counterSnapshot = new Permanent(source.getCard());
+            counterSnapshot.getCounters().putAll(source.getCounters());
             for (int i = 0; i < effects.size(); i++) {
-                if (!(effects.get(i) instanceof PlaneswalkIfPlanarSourceHasCountersEffect threshold)
-                        || source.getCounters().getOrDefault(threshold.counterType(), 0) < threshold.threshold()) {
+                if (!(effects.get(i) instanceof StateTriggerEffect trigger)
+                        || !conditionMet(gameData, trigger, counterSnapshot, gameData.planechase.controllerId)) {
                     continue;
                 }
                 StateTriggerKey key = new StateTriggerKey(source.getId(), i);
@@ -199,7 +203,7 @@ public class StateTriggerService {
                 }
                 StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(),
                         gameData.planechase.controllerId, source.getCard().getName() + "'s state trigger",
-                        List.of(threshold), 0, null);
+                        new ArrayList<>(trigger.effects()), 0, (UUID) null);
                 entry.setSourcePlanarObject(source.copy());
                 entry.setStateTriggerEffectIndex(i);
                 gameData.stack.add(entry);

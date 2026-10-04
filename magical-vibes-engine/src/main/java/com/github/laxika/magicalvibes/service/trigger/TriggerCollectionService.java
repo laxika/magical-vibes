@@ -5504,14 +5504,14 @@ public class TriggerCollectionService {
                 && gameQueryService.hasKeyword(gameData, source, Keyword.WARD)) {
             if (wardSuppressed) return;
             enqueueCloakedWardTrigger(gameData, source, controllerId, triggeringEntry);
-            return;
         }
 
         List<CardEffect> effects = new ArrayList<>();
         boolean sourceIsTarget = source.getId().equals(triggeringEntry.getTargetId())
                 || source.getCard().getId().equals(triggeringEntry.getTargetId())
                 || triggeringEntry.getDeclaredTargetIds().contains(source.getId())
-                || triggeringEntry.getDeclaredTargetIds().contains(source.getCard().getId());
+                || triggeringEntry.getDeclaredTargetIds().contains(source.getCard().getId())
+                || triggeringEntry.getMixedZoneTargetPermanentIds().containsValue(source.getId());
         if (!gameQueryService.hasLostPrintedAbilities(gameData, source)
                 && (sourceIsTarget || !source.getCard().getKeywords().contains(Keyword.WARD))) {
             effects.addAll(source.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL));

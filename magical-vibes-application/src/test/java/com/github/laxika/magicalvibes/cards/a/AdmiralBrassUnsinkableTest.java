@@ -54,7 +54,7 @@ class AdmiralBrassUnsinkableTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Talas Scout");
         assertThat(returned.getCounterCount(CounterType.FINALITY)).isEqualTo(1);
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(4);
     }

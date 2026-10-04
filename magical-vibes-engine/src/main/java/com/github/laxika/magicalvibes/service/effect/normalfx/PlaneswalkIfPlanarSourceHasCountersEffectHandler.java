@@ -25,10 +25,6 @@ public class PlaneswalkIfPlanarSourceHasCountersEffectHandler implements NormalE
         if (gameData.planechase == null || entry.getSourcePlanarObject() == null) {
             return;
         }
-        if (entry.getStateTriggerEffectIndex() >= 0) {
-            planechaseService.planeswalk(gameData);
-            return;
-        }
 
         PlanarObject source = gameData.planechase.faceUp.stream()
                 .filter(object -> object.getId().equals(entry.getSourcePlanarObject().getId()))

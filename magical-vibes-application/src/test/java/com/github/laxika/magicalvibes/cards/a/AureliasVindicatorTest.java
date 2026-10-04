@@ -142,6 +142,7 @@ class AureliasVindicatorTest extends BaseCardTest {
         castFaceDown();
         UUID targetCardId = findPermanent(player2, "Aurelia's Vindicator").getCard().getId();
         turnFaceUpChoosingX(1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMultipleCardsChosen(player1, List.of(targetCardId));
         harness.passBothPriorities();
 

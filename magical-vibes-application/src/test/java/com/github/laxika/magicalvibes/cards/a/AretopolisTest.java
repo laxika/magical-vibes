@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.p.Panopticon;
+import com.github.laxika.magicalvibes.cards.s.StrionicResonator;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
@@ -112,5 +114,28 @@ class AretopolisTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(beforeHand + 3);
+    }
+
+    @Test
+    @CardUsed(StrionicResonator.class)
+    void copiedThresholdTriggerStillPlaneswalksAfterCounterCountDrops() {
+        harness.addToBattlefield(player1, new StrionicResonator());
+        source.getCounters().put(CounterType.SCROLL, 9);
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        assertThat(gd.stack).hasSize(1);
+        var originalTriggerId = gd.stack.getLast().getTargetableId();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, originalTriggerId);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        assertThat(gd.stack).hasSize(2);
+        source.getCounters().put(CounterType.SCROLL, 9);
+
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gd.planechase.faceUp).extracting(object -> object.getCard().getName())
+                .containsExactly("Panopticon");
+        assertThat(gd.stack).anyMatch(entry -> entry.getTargetableId().equals(originalTriggerId));
     }
 }
