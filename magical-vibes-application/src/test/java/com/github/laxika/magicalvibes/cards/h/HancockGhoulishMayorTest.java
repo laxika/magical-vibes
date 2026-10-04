@@ -67,12 +67,82 @@ class HancockGhoulishMayorTest extends BaseCardTest {
         harness.setHand(player1, java.util.List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, hancock.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, hancock.getId());
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Hancock, Ghoulish Mayor");
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertNotInGraveyard(player1, "Hancock, Ghoulish Mayor");
+    }
+
+    @Test
+    @DisplayName("All counter types on Hancock contribute to the boost and it updates immediately")
+    void countsAllCounterTypesAndUpdatesBoost() {
+        Permanent zombie = addCreatureReady(player1, new ZombieBrute());
+        Permanent mutant = addCreatureReady(player1, new MistformMutant());
+        int zombiePower = gqs.getEffectivePower(gd, zombie);
+        int zombieToughness = gqs.getEffectiveToughness(gd, zombie);
+        int mutantPower = gqs.getEffectivePower(gd, mutant);
+        int mutantToughness = gqs.getEffectiveToughness(gd, mutant);
+        Permanent hancock = addCreatureReady(player1, new HancockGhoulishMayor());
+
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(zombiePower);
+        assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(zombieToughness);
+        hancock.setCounterCount(CounterType.CHARGE, 2);
+
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(zombiePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(zombieToughness + 2);
+        assertThat(gqs.getEffectivePower(gd, mutant)).isEqualTo(mutantPower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, mutant)).isEqualTo(mutantToughness + 2);
+
+        hancock.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(zombiePower + 3);
+        assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(zombieToughness + 3);
+        assertThat(gqs.getEffectivePower(gd, mutant)).isEqualTo(mutantPower + 3);
+        assertThat(gqs.getEffectiveToughness(gd, mutant)).isEqualTo(mutantToughness + 3);
+
+        hancock.setCounterCount(CounterType.CHARGE, 0);
+
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(zombiePower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(zombieToughness + 1);
+    }
+
+    @Test
+    @DisplayName("Undying does not return Hancock if it dies with a +1/+1 counter")
+    void undyingDoesNotReturnWithPlusOneCounter() {
+        Permanent hancock = harness.addToBattlefieldAndReturn(player1, new HancockGhoulishMayor());
+        hancock.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, java.util.List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, hancock.getId());
+
+        harness.assertNotOnBattlefield(player1, "Hancock, Ghoulish Mayor");
+        harness.assertInGraveyard(player1, "Hancock, Ghoulish Mayor");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Other counter types do not prevent undying and disappear when Hancock returns")
+    void undyingReturnsWithOtherCounterTypes() {
+        Permanent hancock = harness.addToBattlefieldAndReturn(player1, new HancockGhoulishMayor());
+        hancock.setCounterCount(CounterType.CHARGE, 2);
+        Permanent zombie = addCreatureReady(player1, new ZombieBrute());
+        harness.setHand(player1, java.util.List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, hancock.getId());
+        harness.assertNotOnBattlefield(player1, "Hancock, Ghoulish Mayor");
+        int zombiePower = gqs.getEffectivePower(gd, zombie);
+        int zombieToughness = gqs.getEffectiveToughness(gd, zombie);
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Hancock, Ghoulish Mayor");
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(returned.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(zombiePower + 1);
+        assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(zombieToughness + 1);
         harness.assertNotInGraveyard(player1, "Hancock, Ghoulish Mayor");
     }
 }
