@@ -34,11 +34,7 @@ class FrogtosserBanneretTest extends BaseCardTest {
     void goblinNotCastableWithoutEnoughMana() {
         harness.addToBattlefield(player1, new FrogtosserBanneret());
         // Squeaking Pie Grubfellows is reduced to {2}{B}; only {1}{B} is available.
-        harness.setHand(player1, List.of(new SqueakingPieGrubfellows()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new SqueakingPieGrubfellows(), "{1}{B}"))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -57,11 +53,7 @@ class FrogtosserBanneretTest extends BaseCardTest {
     void nonMatchingSpellsNotReduced() {
         harness.addToBattlefield(player1, new FrogtosserBanneret());
         // Fertilid costs {2}{G}; without a reduction, {1}{G} is not enough.
-        harness.setHand(player1, List.of(new Fertilid()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+        assertThatThrownBy(() -> harness.castFromHand(player1, new Fertilid(), "{1}{G}"))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -104,11 +96,35 @@ class FrogtosserBanneretTest extends BaseCardTest {
     void doesNotReduceOpponentCosts() {
         harness.addToBattlefield(player1, new FrogtosserBanneret());
         // The opponent's Squeaking Pie Grubfellows still costs {3}{B}; only {2}{B} is available.
-        harness.setHand(player2, List.of(new SqueakingPieGrubfellows()));
-        harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        assertThatThrownBy(() -> harness.castFromHand(player2, new SqueakingPieGrubfellows(), "{2}{B}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
-        assertThatThrownBy(() -> harness.castCreature(player2, 0))
+    @Test
+    @DisplayName("Excess reduction leaves the colored mana requirement intact")
+    void excessReductionDoesNotReduceColoredMana() {
+        harness.addToBattlefield(player1, new FrogtosserBanneret());
+        harness.addToBattlefield(player1, new FrogtosserBanneret());
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new FrogtosserBanneret(), "{1}"))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Excess reduction can reduce the generic component to zero")
+    void excessReductionStopsAtZeroGenericMana() {
+        harness.addToBattlefield(player1, new FrogtosserBanneret());
+        harness.addToBattlefield(player1, new FrogtosserBanneret());
+
+        harness.castFromHand(player1, new FrogtosserBanneret(), "{B}");
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A Banneret in hand cannot reduce its own casting cost")
+    void banneretDoesNotReduceItsOwnCostFromHand() {
+        assertThatThrownBy(() -> harness.castFromHand(player1, new FrogtosserBanneret(), "{B}"))
                 .isInstanceOf(IllegalStateException.class);
     }
 

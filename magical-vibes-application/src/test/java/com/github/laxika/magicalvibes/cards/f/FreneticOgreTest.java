@@ -41,9 +41,7 @@ class FreneticOgreTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.CLEANUP);
 
         assertThat(ogre.getPowerModifier()).isEqualTo(0);
         assertThat(ogre.getToughnessModifier()).isEqualTo(0);
@@ -107,5 +105,29 @@ class FreneticOgreTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Ogre can activate repeatedly and the boosts stack")
+    void repeatedActivationsStackWhileTappedAndSummoningSick() {
+        Permanent ogre = harness.addToBattlefieldAndReturn(player1, new FreneticOgre());
+        ogre.tap();
+        ogre.setSummoningSick(true);
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(ogre.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+        assertThat(ogre.getPowerModifier()).isEqualTo(3);
+        harness.passBothPriorities();
+        assertThat(ogre.getPowerModifier()).isEqualTo(6);
+        assertThat(ogre.getToughnessModifier()).isZero();
     }
 }

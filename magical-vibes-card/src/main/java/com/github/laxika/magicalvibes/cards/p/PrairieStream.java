@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 @CardRegistration(set = "EXP", collectorNumber = "1")
+@CardRegistration(set = "BFZ", collectorNumber = "241")
 @CardRegistration(set = "EA3", collectorNumber = "24")
 @CardRegistration(set = "WHO", collectorNumber = "295")
 @CardRegistration(set = "WHO", collectorNumber = "508")

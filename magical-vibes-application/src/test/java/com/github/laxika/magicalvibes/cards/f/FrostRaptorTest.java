@@ -19,6 +19,68 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class FrostRaptorTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A tapped, summoning-sick raptor can activate its ability")
+    void tappedSummoningSickRaptorCanActivate() {
+        Permanent raptor = harness.addToBattlefieldAndReturn(player1, new FrostRaptor());
+        raptor.setSummoningSick(true);
+        raptor.tap();
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, raptor, Keyword.SHROUD)).isTrue();
+        assertThat(raptor.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Shroud in response makes a targeted spell fail to resolve")
+    void shroudInResponseStopsTargetedSpell() {
+        Permanent raptor = addCreatureReady(player1, new FrostRaptor());
+        harness.setHand(player2, List.of(new Resize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castInstant(player2, 0, raptor.getId());
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.BLUE, 1);
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, raptor, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, raptor)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, raptor)).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Resize");
+    }
+
+    @Test
+    @DisplayName("Shroud does not prevent activating the ability again")
+    void canActivateWhileShrouded() {
+        Permanent raptor = addCreatureReady(player1, new FrostRaptor());
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.BLUE, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, raptor, Keyword.SHROUD)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("One snow mana plus regular mana cannot pay the activation cost")
+    void mixedSnowAndRegularManaCannotPayCost() {
+        addCreatureReady(player1, new FrostRaptor());
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
     @DisplayName("Two snow mana grants shroud until end of turn")
     void snowManaGrantsShroud() {
         Permanent raptor = addCreatureReady(player1, new FrostRaptor());

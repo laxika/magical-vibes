@@ -49,6 +49,27 @@ class FrostwebSpiderTest extends BaseCardTest {
         assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("The end-of-combat counter uses the stack before it is placed")
+    void endOfCombatCounterCanBeRespondedTo() {
+        Permanent attacker = addCreatureReady(player1, new BorealGriffin());
+        attacker.setAttacking(true);
+        Permanent spider = addCreatureReady(player2, new FrostwebSpider());
+        spider.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareBlock(spider, attacker);
+        resolveAllTriggers();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(spider);
+        assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     private void declareBlock(Permanent blocker, Permanent attacker) {
         prepareDeclareBlockers();
 

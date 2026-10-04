@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FrozenAether.class, Forest.class, GrizzlyBears.class, Ornithopter.class})
+@CardUsed({FrozenAether.class, Forest.class, GrizzlyBears.class, HowlingMine.class, Ornithopter.class})
 class FrozenAetherTest extends BaseCardTest {
 
     @Test
@@ -91,6 +92,74 @@ class FrozenAetherTest extends BaseCardTest {
         harness.playLand(player1, 0);
 
         Permanent forest = findPermanent(player1, "Forest");
+        assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opponent's noncreature artifacts enter tapped without being cast")
+    void opponentsNoncreatureArtifactsEnterTapped() {
+        harness.addToBattlefield(player1, new FrozenAether());
+
+        Permanent mine = harness.enterBattlefieldAndReturn(player2, new HowlingMine());
+
+        assertThat(mine.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent's creatures enter tapped without being cast")
+    void opponentsUncastCreaturesEnterTapped() {
+        harness.addToBattlefield(player1, new FrozenAether());
+
+        Permanent bears = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(bears.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Controller's creatures and artifacts enter untapped")
+    void controllersCreaturesAndArtifactsEnterUntapped() {
+        harness.addToBattlefield(player1, new FrozenAether());
+
+        Permanent bears = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent mine = harness.enterBattlefieldAndReturn(player1, new HowlingMine());
+
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(mine.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Affected permanents untap normally")
+    void affectedPermanentsUntapNormally() {
+        harness.addToBattlefield(player1, new FrozenAether());
+        Permanent bears = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent mine = harness.enterBattlefieldAndReturn(player2, new HowlingMine());
+        Permanent forest = harness.enterBattlefieldAndReturn(player2, new Forest());
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(mine.isTapped()).isTrue();
+        assertThat(forest.isTapped()).isTrue();
+
+        harness.performUntapStep(player2);
+
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(mine.isTapped()).isFalse();
+        assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Resolving Frozen Aether does not tap permanents already on the battlefield")
+    void existingPermanentsRemainUntapped() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent mine = harness.addToBattlefieldAndReturn(player2, new HowlingMine());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new FrozenAether()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Frozen Aether");
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(mine.isTapped()).isFalse();
         assertThat(forest.isTapped()).isFalse();
     }
 }
