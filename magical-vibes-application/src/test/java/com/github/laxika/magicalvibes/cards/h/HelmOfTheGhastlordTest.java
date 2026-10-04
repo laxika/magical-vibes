@@ -3,11 +3,15 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.InkfathomInfiltrator;
+import com.github.laxika.magicalvibes.cards.p.PowerOfFire;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +20,24 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HelmOfTheGhastlord.class, FugitiveWizard.class, Forest.class, GrizzlyBears.class,
+        ScatheZombies.class, InkfathomInfiltrator.class, PowerOfFire.class})
 class HelmOfTheGhastlordTest extends BaseCardTest {
 
-    // ===== Blue enchanted creature: +1/+1 and draw on damage =====
+    @Test
+    @DisplayName("Helm resolves attached to a targeted opponent's creature")
+    void resolvesAttachedToOpposingCreature() {
+        Permanent creature = addCreatureReady(player2, new FugitiveWizard());
+        harness.setHand(player1, List.of(new HelmOfTheGhastlord()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        gs.playCard(gd, player1, 0, 0, creature.getId(), null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Helm of the Ghastlord").getAttachedTo())
+                .isEqualTo(creature.getId());
+    }
+
 
     @Test
     @DisplayName("Blue enchanted creature dealing combat damage draws a card for its controller")
@@ -51,7 +70,6 @@ class HelmOfTheGhastlordTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    // ===== Black enchanted creature: +1/+1 and discard on damage =====
 
     @Test
     @DisplayName("Black enchanted creature dealing combat damage makes the damaged player discard")
@@ -76,7 +94,6 @@ class HelmOfTheGhastlordTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(controllerHandBefore);
     }
 
-    // ===== Creature that is neither blue nor black gets nothing =====
 
     @Test
     @DisplayName("Non-blue, non-black enchanted creature gets no boost and no triggered ability")
@@ -98,16 +115,109 @@ class HelmOfTheGhastlordTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A blue-black creature receives both boosts and triggers both abilities")
+    void blueBlackCreatureGetsBothBonuses() {
+        Permanent creature = addCreatureReady(player1, new InkfathomInfiltrator());
+        attachHelm(player1, creature);
+        creature.setAttacking(true);
+        harness.setHand(player2, List.of(new Forest(), new Forest()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        resolveCombatAndTrigger();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The two granted abilities use separate stack entries")
+    void blueBlackCreatureHasTwoSeparateTriggers() {
+        Permanent creature = addCreatureReady(player1, new InkfathomInfiltrator());
+        attachHelm(player1, creature);
+        creature.setAttacking(true);
+        harness.setHand(player2, List.of(new Forest(), new Forest()));
+
+        resolveCombat();
+
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's enchanted blue creature draws for its own controller")
+    void opposingCreatureControllerDraws() {
+        Permanent creature = addCreatureReady(player2, new FugitiveWizard());
+        attachHelm(player1, creature);
+        creature.setAttacking(true);
+        int auraControllerHand = gd.playerHands.get(player1.getId()).size();
+        int creatureControllerHand = gd.playerHands.get(player2.getId()).size();
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(auraControllerHand);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(creatureControllerHand + 1);
+    }
+
+    @Test
+    @DisplayName("Blue creatures draw for noncombat damage to an opponent")
+    void blueCreatureDrawsOnNoncombatDamage() {
+        Permanent creature = addCreatureReady(player1, new FugitiveWizard());
+        attachHelm(player1, creature);
+        harness.addToBattlefieldAndReturn(player1, new PowerOfFire()).setAttachedTo(creature.getId());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Black creatures make the opponent discard for noncombat damage")
+    void blackCreatureDiscardsOnNoncombatDamage() {
+        Permanent creature = addCreatureReady(player1, new ScatheZombies());
+        attachHelm(player1, creature);
+        harness.addToBattlefieldAndReturn(player1, new PowerOfFire()).setAttachedTo(creature.getId());
+        harness.setHand(player2, List.of(new Forest(), new Forest()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 0);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Damage to the enchanted creature's controller grants neither trigger")
+    void damageToOwnControllerDoesNotTrigger() {
+        Permanent creature = addCreatureReady(player1, new InkfathomInfiltrator());
+        attachHelm(player1, creature);
+        harness.addToBattlefieldAndReturn(player1, new PowerOfFire()).setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 
     private void attachHelm(Player controller, Permanent creature) {
-        Permanent helm = new Permanent(new HelmOfTheGhastlord());
+        Permanent helm = harness.addToBattlefieldAndReturn(controller, new HelmOfTheGhastlord());
         helm.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(helm);
     }
 
     private void resolveCombatAndTrigger() {
         resolveCombat();
-        harness.passBothPriorities(); // resolve what combat damage triggered
+        resolveAllTriggers();
     }
 }
