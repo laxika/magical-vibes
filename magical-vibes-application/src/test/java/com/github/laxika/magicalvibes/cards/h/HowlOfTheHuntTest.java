@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.b.BirdAdmirer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HowlOfTheHunt.class, HowlpackWolf.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({HowlOfTheHunt.class, HowlpackWolf.class, GrizzlyBears.class, FountainOfYouth.class, BirdAdmirer.class})
 class HowlOfTheHuntTest extends BaseCardTest {
 
     @Test
@@ -74,13 +76,63 @@ class HowlOfTheHuntTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("A Werewolf that is not a Wolf is untapped")
+    void werewolfIsUntapped() {
+        Permanent werewolf = harness.addToBattlefieldAndReturn(player1, new BirdAdmirer());
+        werewolf.tap();
+
+        castHowl(werewolf);
+
+        assertThat(werewolf.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, werewolf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, werewolf)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, werewolf, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Flash allows enchanting and untapping an opponent's creature during their combat")
+    void canEnchantOpposingWolfDuringCombat() {
+        Permanent wolf = harness.addToBattlefieldAndReturn(player2, new HowlpackWolf());
+        wolf.tap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        castHowl(wolf);
+
+        assertThat(wolf.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.VIGILANCE)).isTrue();
+        harness.assertOnBattlefield(player1, "Howl of the Hunt");
+    }
+
+    @Test
+    @DisplayName("Untapping is a separate triggered ability after the Aura resolves")
+    void wolfRemainsTappedUntilEnterTriggerResolves() {
+        Permanent wolf = harness.addToBattlefieldAndReturn(player1, new HowlpackWolf());
+        wolf.tap();
+        harness.setHand(player1, List.of(new HowlOfTheHunt()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, wolf.getId());
+        harness.passBothPriorities();
+
+        assertThat(wolf.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(5);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(wolf.isTapped()).isFalse();
+    }
+
     private void castHowl(Permanent target) {
         harness.setHand(player1, List.of(new HowlOfTheHunt()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castEnchantment(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
