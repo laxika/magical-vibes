@@ -51,8 +51,34 @@ class GruulSignetTest extends BaseCardTest {
     }
 
     private Permanent addReadySignet() {
+        return addCreatureReady(player1, new GruulSignet());
+    }
+
+    @Test
+    @DisplayName("Gruul Signet can activate the turn it enters the battlefield")
+    void canActivateImmediately() {
         Permanent signet = harness.addToBattlefieldAndReturn(player1, new GruulSignet());
-        signet.setSummoningSick(false);
-        return signet;
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(signet.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay Gruul Signet's generic activation cost")
+    void canPayWithColoredMana() {
+        addReadySignet();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
     }
 }
