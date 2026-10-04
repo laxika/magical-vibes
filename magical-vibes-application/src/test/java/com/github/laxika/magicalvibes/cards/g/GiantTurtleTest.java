@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.r.RubiniaSoulsinger;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GiantTurtle.class})
+@CardUsed({GiantTurtle.class, RubiniaSoulsinger.class})
 class GiantTurtleTest extends BaseCardTest {
 
     @Test
@@ -93,6 +94,41 @@ class GiantTurtleTest extends BaseCardTest {
 
         assertThat(harness.getCombatAttackService()
                 .getAttackableCreatureIndices(gd, player1.getId())).contains(0);
+    }
+
+    @Test
+    @DisplayName("An attack this turn does not prevent attacking in another combat this turn")
+    void canAttackAgainDuringTheSameTurn() {
+        Permanent turtle = addCreatureReady(player1, new GiantTurtle());
+        harness.forceActivePlayer(player1);
+        turtle.setAttacking(true);
+        turtle.clearCombatState();
+
+        assertThat(harness.getCombatAttackService()
+                .getAttackableCreatureIndices(gd, player1.getId())).contains(0);
+    }
+
+    @Test
+    @DisplayName("Taking a Turtle after an opponent's attack does not restrict its new controller's next turn")
+    void canAttackAfterGainingControlDuringOpponentsTurn() {
+        Permanent turtle = addCreatureReady(player1, new GiantTurtle());
+        addCreatureReady(player2, new RubiniaSoulsinger());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        turtle.setAttacking(true);
+        turtle.clearCombatState();
+
+        harness.activateAbility(player2, 0, null, turtle.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(turtle);
+
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(harness.getCombatAttackService()
+                .getAttackableCreatureIndices(gd, player2.getId())).contains(1);
     }
 
     private void advanceToNextUpkeep(Player activePlayer) {

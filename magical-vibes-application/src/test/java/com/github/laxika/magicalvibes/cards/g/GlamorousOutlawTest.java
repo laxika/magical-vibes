@@ -24,13 +24,7 @@ class GlamorousOutlawTest extends BaseCardTest {
         Card topCard = new Island();
         Card secondCard = new Mountain();
         harness.setLibrary(player1, List.of(topCard, secondCard));
-        harness.setHand(player1, List.of(new GlamorousOutlaw()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GlamorousOutlaw(), "{3}{U}{B}{R}");
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -85,5 +79,83 @@ class GlamorousOutlawTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotCastWhenExiledWithoutResolvingItsHandAbility() {
+        GlamorousOutlaw outlaw = new GlamorousOutlaw();
+        harness.setExile(player1, List.of(outlaw));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, outlaw.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(outlaw.getId())).isNotNull();
+    }
+
+    @Test
+    void cannotCastFromExileWhenTargetLandIsGoneBeforeAbilityResolves() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Island());
+        GlamorousOutlaw outlaw = new GlamorousOutlaw();
+        harness.setHand(player1, List.of(outlaw));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateHandAbility(player1, 0, land.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, land);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, outlaw.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(outlaw.getId())).isNotNull();
+    }
+
+    @Test
+    void canGrantManaAbilityToOpponentsLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.setHand(player1, List.of(new GlamorousOutlaw()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateHandAbility(player1, 0, land.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleListChoice(player2, "RED");
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void enteringWithEmptyLibraryStillDamagesOpponent() {
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new GlamorousOutlaw(), "{3}{U}{B}{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Glamorous Outlaw");
+    }
+
+    @Test
+    void scryCanPutOneCardOnBottomAndKeepTheOtherOnTop() {
+        Card first = new Island();
+        Card second = new Mountain();
+        Card third = new Island();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.castFromHand(player1, new GlamorousOutlaw(), "{3}{U}{B}{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, third, first);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
     }
 }

@@ -59,6 +59,48 @@ class GlenElendraArchmageTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An archmage with a -1/-1 counter can counter a spell but does not persist again")
+    void counterOnArchmagePreventsPersistButNotActivation() {
+        Permanent archmage = addCreatureReady(player1, new GlenElendraArchmage());
+        archmage.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        archmage.setTapped(true);
+        archmage.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setLife(player1, 20);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.activateAbility(player1, 0, null, shock.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Glen Elendra Archmage");
+        harness.assertInGraveyard(player1, "Glen Elendra Archmage");
+        harness.assertInGraveyard(player2, "Shock");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Persist also returns the archmage after lethal damage")
+    void persistReturnsAfterLethalDamage() {
+        Permanent archmage = addCreatureReady(player1, new GlenElendraArchmage());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, archmage.getId());
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player1, "Glen Elendra Archmage");
+        assertThat(returned.getId()).isNotEqualTo(archmage.getId());
+        assertThat(returned.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.assertNotInGraveyard(player1, "Glen Elendra Archmage");
+    }
+
+    @Test
     @DisplayName("Cannot target a creature spell")
     void cannotTargetCreatureSpell() {
         addCreatureReady(player1, new GlenElendraArchmage());
@@ -76,6 +118,26 @@ class GlenElendraArchmageTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elves.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The counter ability requires blue mana and does not sacrifice on a rejected activation")
+    void cannotActivateWithoutBlueMana() {
+        addCreatureReady(player1, new GlenElendraArchmage());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Shock shock = new Shock();
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, shock.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Glen Elendra Archmage");
+        harness.assertNotInGraveyard(player1, "Glen Elendra Archmage");
+        resolveAllTriggers();
+        harness.assertLife(player1, 18);
     }
 
     @Test

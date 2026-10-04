@@ -14,9 +14,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.Player;
 
 @CardUsed({GlissaSunslayer.class, FleshlessGladiator.class, PhyrexianArena.class})
 class GlissaSunslayerTest extends BaseCardTest {
@@ -62,6 +59,7 @@ class GlissaSunslayerTest extends BaseCardTest {
     void destroyEnchantmentRejectsCreatureTarget() {
         addCreatureReady(player1, new GlissaSunslayer()).setAttacking(true);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new FleshlessGladiator());
+        harness.addToBattlefield(player2, new PhyrexianArena());
 
         resolveCombat();
         harness.passBothPriorities();
@@ -113,15 +111,57 @@ class GlissaSunslayerTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
-    private Permanent addReadyGlissa() {
-        Permanent glissa = new Permanent(new GlissaSunslayer());
-        glissa.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(glissa);
-        return glissa;
+    @Test
+    @DisplayName("Mode and target are chosen before the combat damage trigger resolves")
+    void choosesModeAndTargetBeforeResolution() {
+        addCreatureReady(player1, new GlissaSunslayer()).setAttacking(true);
+        Permanent arena = harness.addToBattlefieldAndReturn(player2, new PhyrexianArena());
+
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        harness.handleListChoice(player1, DESTROY_ENCHANTMENT);
+        harness.handlePermanentChosen(player1, arena.getId());
+
+        harness.assertOnBattlefield(player2, "Phyrexian Arena");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Phyrexian Arena");
+        harness.assertInGraveyard(player2, "Phyrexian Arena");
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @DisplayName("Counter mode may remove zero counters from your own permanent")
+    void mayRemoveZeroCounters() {
+        addCreatureReady(player1, new GlissaSunslayer()).setAttacking(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new FleshlessGladiator());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, REMOVE_COUNTERS);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Done");
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Counter mode can target an enchantment without counters")
+    void mayTargetPermanentWithoutCounters() {
+        addCreatureReady(player1, new GlissaSunslayer()).setAttacking(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PhyrexianArena());
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, REMOVE_COUNTERS);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Phyrexian Arena");
+        assertThat(target.getTotalCounterCount()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

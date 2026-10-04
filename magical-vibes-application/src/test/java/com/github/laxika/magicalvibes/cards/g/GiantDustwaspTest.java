@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GiantDustwasp.class})
+@CardUsed({GiantDustwasp.class, PithingNeedle.class})
 class GiantDustwaspTest extends BaseCardTest {
 
     @Test
@@ -67,6 +68,47 @@ class GiantDustwaspTest extends BaseCardTest {
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(card.getId());
         harness.assertNotOnBattlefield(player1, "Giant Dustwasp");
         harness.assertNotInGraveyard(player1, "Giant Dustwasp");
+    }
+
+    @Test
+    @DisplayName("Pithing Needle does not prevent the suspend special action")
+    void namedCardCanStillBeSuspended() {
+        harness.castFromHand(player1, new PithingNeedle(), "{1}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Giant Dustwasp");
+
+        GiantDustwasp card = suspendCard();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the owner's upkeep removes a suspend counter")
+    void opponentUpkeepDoesNotRemoveCounter() {
+        GiantDustwasp card = suspendCard();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 4);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        harness.assertNotOnBattlefield(player1, "Giant Dustwasp");
+    }
+
+    @Test
+    @DisplayName("Casting normally does not grant suspend haste")
+    void normalCastDoesNotGrantHaste() {
+        harness.castFromHand(player1, new GiantDustwasp(), "{3}{G}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Giant Dustwasp"), Keyword.HASTE)).isFalse();
     }
 
     private GiantDustwasp suspendCard() {

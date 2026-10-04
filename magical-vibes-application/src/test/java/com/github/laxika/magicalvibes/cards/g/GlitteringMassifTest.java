@@ -10,8 +10,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GlitteringMassif.class, GrizzlyBears.class})
+@CardUsed({GlitteringMassif.class})
 class GlitteringMassifTest extends BaseCardTest {
 
     @Test
@@ -44,7 +45,8 @@ class GlitteringMassifTest extends BaseCardTest {
     @DisplayName("Cycling discards the card and draws one")
     void cyclingDrawsACard() {
         harness.setHand(player1, List.of(new GlitteringMassif()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        GlitteringMassif drawnCard = new GlitteringMassif();
+        harness.setLibrary(player1, List.of(drawnCard));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateHandAbility(player1, 0, null);
@@ -52,7 +54,64 @@ class GlitteringMassifTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Glittering Massif");
-        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Cycling pays two generic mana and discards before the draw resolves")
+    void cyclingPaysCostsBeforeResolution() {
+        GlitteringMassif cycledCard = new GlitteringMassif();
+        GlitteringMassif drawnCard = new GlitteringMassif();
+        harness.setHand(player1, List.of(cycledCard));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(cycledCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling cannot discard the card when only one mana is available")
+    void cyclingRequiresTwoMana() {
+        GlitteringMassif card = new GlitteringMassif();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A land that entered tapped cannot immediately produce either color")
+    void tappedLandCannotProduceMana() {
+        harness.setHand(player1, List.of(new GlitteringMassif()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void tapFor(ManaColor color) {

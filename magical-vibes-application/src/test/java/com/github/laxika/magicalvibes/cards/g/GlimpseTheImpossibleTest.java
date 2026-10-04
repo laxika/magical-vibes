@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.s.ScourFromExistence;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GlimpseTheImpossible.class, Forest.class, Mountain.class})
+@CardUsed({GlimpseTheImpossible.class, Forest.class, Mountain.class, ScourFromExistence.class})
 class GlimpseTheImpossibleTest extends BaseCardTest {
 
     @Test
@@ -88,13 +89,73 @@ class GlimpseTheImpossibleTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Eldrazi Spawn")).isEmpty();
     }
 
+    @Test
+    @DisplayName("An empty library produces no delayed ability or Spawn")
+    void emptyLibraryProducesNoTokens() {
+        castGlimpse();
+        resolveNextEndStep();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A short library creates Spawn only for the available cards")
+    void shortLibraryCreatesOnlyTwoTokens() {
+        Card first = new Forest();
+        Card second = new Mountain();
+        castGlimpse(first, second);
+        resolveNextEndStep();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId)
+                .contains(first.getId(), second.getId());
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A spell can be cast from exile by paying its normal mana cost")
+    void castsSpellFromExile() {
+        Card secondGlimpse = new GlimpseTheImpossible();
+        castGlimpse(secondGlimpse);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromExile(player1, secondGlimpse.getId());
+        harness.passBothPriorities();
+        resolveNextEndStep();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId).contains(secondGlimpse.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A played card exiled again is no longer tracked by the delayed ability")
+    void doesNotTrackPlayedLandExiledAgain() {
+        Card land = new Mountain();
+        Card unplayed = new Forest();
+        castGlimpse(land, unplayed);
+        harness.castFromExile(player1, land.getId());
+        Permanent playedLand = findPermanent(player1, "Mountain");
+        harness.setHand(player1, List.of(new ScourFromExistence()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.castAndResolveInstant(player1, 0, playedLand.getId());
+        resolveNextEndStep();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getId).containsExactly(land.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId).contains(unplayed.getId()).doesNotContain(land.getId());
+        assertThat(findPermanents(player1, "Eldrazi Spawn")).hasSize(1);
+    }
+
     private void castGlimpse(Card... libraryCards) {
         harness.setLibrary(player1, List.of(libraryCards));
         harness.setHand(player1, List.of(new GlimpseTheImpossible()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
     }
 
     private void resolveNextEndStep() {

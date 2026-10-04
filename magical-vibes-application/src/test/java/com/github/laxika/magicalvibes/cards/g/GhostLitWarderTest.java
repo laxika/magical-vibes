@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,8 +12,62 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GhostLitWarder.class, GhostLitRedeemer.class})
+@CardUsed({GhostLitWarder.class, GhostLitRedeemer.class, Island.class})
 class GhostLitWarderTest extends BaseCardTest {
+
+    @Test
+    void battlefieldAbilityAllowsProducingPaymentManaDuringResolution() {
+        addCreatureReady(player1, new GhostLitWarder());
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new Island());
+        harness.forceActivePlayer(player2);
+        GhostLitRedeemer redeemer = new GhostLitRedeemer();
+        harness.castFromHand(player2, redeemer, "{W}");
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.passPriority(player2);
+        harness.activateAbility(player1, 0, null, redeemer.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.tapPermanent(player2, 0);
+        harness.tapPermanent(player2, 1);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Ghost-Lit Redeemer");
+        harness.assertNotInGraveyard(player2, "Ghost-Lit Redeemer");
+    }
+
+    @Test
+    void channelAllowsProducingPaymentManaDuringResolution() {
+        harness.setHand(player1, List.of(new GhostLitWarder()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player2, new Island());
+        }
+        harness.forceActivePlayer(player2);
+        GhostLitRedeemer redeemer = new GhostLitRedeemer();
+        harness.castFromHand(player2, redeemer, "{W}");
+
+        harness.passPriority(player2);
+        harness.activateHandAbility(player1, 0, redeemer.getId());
+        harness.assertInGraveyard(player1, "Ghost-Lit Warder");
+        harness.assertNotInHand(player1, "Ghost-Lit Warder");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        for (int i = 0; i < 4; i++) {
+            harness.tapPermanent(player2, i);
+        }
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Ghost-Lit Redeemer");
+        harness.assertNotInGraveyard(player2, "Ghost-Lit Redeemer");
+    }
 
     @Test
     void battlefieldAbilityCountersSpellWhenControllerCannotPay() {

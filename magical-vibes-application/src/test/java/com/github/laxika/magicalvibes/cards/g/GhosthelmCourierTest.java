@@ -137,4 +137,70 @@ class GhosthelmCourierTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.UNTAP);
         harness.handleMayAbilityChosen(player1, acceptUntap);
     }
+
+    @Test
+    @DisplayName("Ghosthelm Courier can target itself")
+    void canBoostItself() {
+        Permanent courier = addCreatureReady(player1, new GhosthelmCourier());
+        int basePower = gqs.getEffectivePower(gd, courier);
+        int baseToughness = gqs.getEffectiveToughness(gd, courier);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, courier.getId());
+        harness.passBothPriorities();
+
+        assertThat(courier.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, courier)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, courier)).isEqualTo(baseToughness + 2);
+        assertThat(gqs.hasKeyword(gd, courier, Keyword.SHROUD)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Untapping and retapping the Courier before resolution does not revive the original boost")
+    void untappingAndRetappingBeforeResolutionEndsOriginalDuration() {
+        Permanent courier = addCreatureReady(player1, new GhosthelmCourier());
+        Permanent wizard = addCreatureReady(player1, new AphettoAlchemist());
+        Permanent otherWizard = addCreatureReady(player1, new AphettoAlchemist());
+        int basePower = gqs.getEffectivePower(gd, wizard);
+        int baseToughness = gqs.getEffectiveToughness(gd, wizard);
+        int otherBasePower = gqs.getEffectivePower(gd, otherWizard);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, wizard.getId());
+        harness.activateAbility(player1, 1, null, courier.getId());
+        harness.passBothPriorities();
+        assertThat(courier.isTapped()).isFalse();
+        harness.activateAbility(player1, 0, null, otherWizard.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(courier.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, wizard)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, wizard)).isEqualTo(baseToughness);
+        assertThat(gqs.hasKeyword(gd, wizard, Keyword.SHROUD)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, otherWizard)).isEqualTo(otherBasePower + 2);
+        assertThat(gqs.hasKeyword(gd, otherWizard, Keyword.SHROUD)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Granted shroud prevents both players from targeting the Wizard")
+    void grantedShroudPreventsTargetingByEitherPlayer() {
+        addCreatureReady(player1, new GhosthelmCourier());
+        Permanent wizard = addCreatureReady(player1, new AphettoAlchemist());
+        addCreatureReady(player2, new AphettoAlchemist());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, wizard.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, wizard.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, wizard.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
 }
