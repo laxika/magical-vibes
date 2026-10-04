@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,8 +43,7 @@ class GoblinPsychopathTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player1, new GoblinPsychopath());
         addCreatureReady(player2, new GoblinBrigand());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
         resolveCombat(player2);
@@ -68,8 +68,7 @@ class GoblinPsychopathTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GoblinPsychopath());
         addCreatureReady(player2, new GoblinBrigand());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
         resolveCombat(player1);
@@ -84,6 +83,36 @@ class GoblinPsychopathTest extends BaseCardTest {
             harness.assertLife(player2, 20);
             harness.assertOnBattlefield(player1, "Goblin Psychopath");
             harness.assertOnBattlefield(player2, "Goblin Brigand");
+        }
+    }
+
+    @Test
+    @DisplayName("A lost flip redirects all simultaneous damage assigned to multiple blockers")
+    void redirectsEntireDamageEventWithTwoBlockers() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new GoblinPsychopath());
+        Permanent firstBlocker = addCreatureReady(player2, new GoblinBrigand());
+        Permanent secondBlocker = addCreatureReady(player2, new GoblinBrigand());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+        resolveCombat(player1);
+        harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(firstBlocker.getId(), 2, secondBlocker.getId(), 3));
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(4);
+        harness.assertLife(player2, 20);
+        if (coinFlipWon()) {
+            harness.assertLife(player1, 20);
+            assertThat(countPermanents(player2, "Goblin Brigand")).isZero();
+        } else {
+            harness.assertLife(player1, 15);
+            assertThat(countPermanents(player2, "Goblin Brigand")).isEqualTo(2);
+            assertThat(firstBlocker.getMarkedDamage()).isZero();
+            assertThat(secondBlocker.getMarkedDamage()).isZero();
         }
     }
 
