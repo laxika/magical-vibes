@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FatedReturn.class, GrizzlyBears.class, HolyDay.class, Terror.class})
 class FatedReturnTest extends BaseCardTest {
 
     @Test
@@ -31,13 +34,10 @@ class FatedReturnTest extends BaseCardTest {
         harness.castInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(creature.getId()))
-                .findFirst()
-                .orElseThrow();
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getCard().getId()).isEqualTo(creature.getId());
         assertThat(returned.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .noneMatch(card -> card.getId().equals(creature.getId()));
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -83,6 +83,45 @@ class FatedReturnTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, instant.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An illegal graveyard target prevents the entire spell from resolving, including scry")
+    void doesNotScryWhenTargetLeavesGraveyard() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        prepareCast(player1);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player2, List.of(creature));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Fated Return");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The returned creature survives a destroy spell")
+    void returnedCreatureSurvivesDestruction() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        prepareCast(player2);
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Terror()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Terror");
     }
 
     private void prepareCast(Player activePlayer) {
