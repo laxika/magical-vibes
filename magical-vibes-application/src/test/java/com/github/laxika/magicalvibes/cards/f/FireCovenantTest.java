@@ -108,4 +108,60 @@ class FireCovenantTest extends BaseCardTest {
                 harness.castInstantForX(player1, 0, 3, Map.of(bears.getId(), 2))
         ).isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Life is paid when casting, before damage resolves")
+    void lifeIsPaidBeforeResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        prepare();
+
+        harness.castInstantForX(player1, 0, 2, Map.of(bears.getId(), 2));
+
+        harness.assertLife(player1, 18);
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Damage may be divided unequally between your creature and an opponent's creature")
+    void dividesDamageUnequallyAcrossControllers() {
+        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        Permanent opposingBears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        prepare();
+
+        harness.castInstantForX(player1, 0, 3, Map.of(ownBears.getId(), 1, opposingBears.getId(), 2));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Balduvian Bears");
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Positive X cannot be cast without allocating damage to targets")
+    void positiveXRequiresTargets() {
+        prepare();
+
+        assertThatThrownBy(() ->
+                harness.castInstantForX(player1, 0, 2, Map.of())
+        ).isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("X equal to zero cannot include a target assigned zero damage")
+    void zeroXCannotIncludeTargets() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        prepare();
+
+        assertThatThrownBy(() ->
+                harness.castInstantForX(player1, 0, 0, Map.of(bears.getId(), 0))
+        ).isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 20);
+    }
 }
