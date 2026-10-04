@@ -81,7 +81,7 @@ class FogOfGnatsTest extends BaseCardTest {
     void regenerationCanBeActivatedWhileTappedAndSummoningSick() {
         harness.addToBattlefield(player1, new FogOfGnats());
         Permanent gnats = findPermanent(player1, "Fog of Gnats");
-        gnats.setTapped(true);
+        gnats.tap();
         gnats.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

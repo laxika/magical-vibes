@@ -110,7 +110,7 @@ class FlamekinSpitfireTest extends BaseCardTest {
     void activatesRepeatedlyWhileTappedAndSummoningSick() {
         Permanent spitfire = harness.addToBattlefieldAndReturn(player1, new FlamekinSpitfire());
         spitfire.setSummoningSick(true);
-        spitfire.setTapped(true);
+        spitfire.tap();
         harness.addMana(player1, ManaColor.RED, 8);
 
         harness.activateAbility(player1, 0, null, player2.getId());

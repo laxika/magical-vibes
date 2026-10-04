@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.e;
+package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;

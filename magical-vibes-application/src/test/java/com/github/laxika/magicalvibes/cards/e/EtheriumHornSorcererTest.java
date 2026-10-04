@@ -130,7 +130,7 @@ class EtheriumHornSorcererTest extends BaseCardTest {
         EtheriumHornSorcerer sorcerer = new EtheriumHornSorcerer();
         sorcerer.setOwnerId(player1.getId());
         var permanent = harness.addToBattlefieldAndReturn(player2, sorcerer);
-        permanent.setTapped(true);
+        permanent.tap();
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);

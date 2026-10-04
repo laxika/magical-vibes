@@ -117,7 +117,7 @@ class EzrimAgencyChiefTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickAndPaysSacrificeBeforeResolution() {
         Permanent ezrim = harness.addToBattlefieldAndReturn(player1, new EzrimAgencyChief());
         ezrim.setSummoningSick(true);
-        ezrim.setTapped(true);
+        ezrim.tap();
         harness.addToBattlefield(player1, new LeoninScimitar());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

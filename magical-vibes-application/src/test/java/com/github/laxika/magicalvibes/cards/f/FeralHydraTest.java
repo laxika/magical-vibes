@@ -86,7 +86,7 @@ class FeralHydraTest extends BaseCardTest {
     void tappedHydraCanActivateRepeatedly() {
         Permanent hydra = harness.addToBattlefieldAndReturn(player1, new FeralHydra());
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        hydra.setTapped(true);
+        hydra.tap();
         harness.addMana(player1, ManaColor.GREEN, 6);
 
         harness.activateAbility(player1, 0, null, null);

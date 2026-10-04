@@ -35,7 +35,7 @@ class FireNationSoldierTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)

@@ -109,7 +109,7 @@ class EchoStormTest extends BaseCardTest {
     @Test
     void copiesOpponentsTappedArtifactUnderSpellControllersControlUntapped() {
         Permanent fountain = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
-        fountain.setTapped(true);
+        fountain.tap();
 
         cast(fountain.getId());
 

@@ -77,7 +77,7 @@ class EnergyRefractorTest extends BaseCardTest {
     @Test
     void tappedRefractorCanActivateRepeatedly() {
         Permanent refractor = harness.addToBattlefieldAndReturn(player1, new EnergyRefractor());
-        refractor.setTapped(true);
+        refractor.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         harness.activateAbility(player1, 0, null, null);

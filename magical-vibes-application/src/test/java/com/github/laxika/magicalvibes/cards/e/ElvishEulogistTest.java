@@ -78,7 +78,7 @@ class ElvishEulogistTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Eulogist can activate and ignores opponents' Elf cards")
     void ignoresOpponentsGraveyardAndNeedsNoTap() {
-        harness.addToBattlefieldAndReturn(player1, new ElvishEulogist()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new ElvishEulogist()).tap();
         harness.setGraveyard(player2, List.of(new ElvishEulogist(), new ElvishPromenade(), new WoodlandChangeling()));
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

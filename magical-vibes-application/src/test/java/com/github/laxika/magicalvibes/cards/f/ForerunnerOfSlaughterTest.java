@@ -70,7 +70,7 @@ class ForerunnerOfSlaughterTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and grants haste even if the source leaves before resolution")
     void resolvesAfterTappedSourceLeavesBattlefield() {
         Permanent forerunner = addReadyForerunner(player1);
-        forerunner.setTapped(true);
+        forerunner.tap();
         Permanent target = addCreatureReady(player1, new EldraziDevastator());
         target.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

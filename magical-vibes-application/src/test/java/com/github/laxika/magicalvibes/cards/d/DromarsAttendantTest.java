@@ -57,7 +57,7 @@ class DromarsAttendantTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Dromar's Attendant accepts colored mana and adds mana only to its controller")
     void tappedAttendantCanActivateWithColoredMana() {
-        harness.addToBattlefieldAndReturn(player1, new DromarsAttendant()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new DromarsAttendant()).tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

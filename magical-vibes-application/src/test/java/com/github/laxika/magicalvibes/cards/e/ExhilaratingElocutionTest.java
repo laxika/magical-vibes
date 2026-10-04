@@ -74,7 +74,7 @@ class ExhilaratingElocutionTest extends BaseCardTest {
     void removedTargetPreventsOtherCreaturesFromBeingBoosted() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new SpinedKarok());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new SpinedKarok());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new ExhilaratingElocution()));
         harness.setHand(player2, List.of(new Expel()));
         harness.addMana(player1, ManaColor.WHITE, 2);

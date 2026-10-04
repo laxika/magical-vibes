@@ -75,7 +75,7 @@ class FlatmanTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent flatman = addCreatureReady(player1, new Flatman());
-        flatman.setTapped(true);
+        flatman.tap();
         flatman.setSummoningSick(true);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

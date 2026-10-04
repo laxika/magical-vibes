@@ -157,7 +157,7 @@ class EscapeRoutesTest extends BaseCardTest {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new EscapeRoutes());
         Permanent white = harness.addToBattlefieldAndReturn(player1, new SunscapeFamiliar());
         Permanent black = harness.addToBattlefieldAndReturn(player1, new NightscapeFamiliar());
-        source.setTapped(true);
+        source.tap();
         addAbilityMana();
         addAbilityMana();
 

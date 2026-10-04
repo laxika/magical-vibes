@@ -71,7 +71,7 @@ class DuchessWaywardTavernkeepTest extends BaseCardTest {
     @Test
     void opposingCombatDamageDoesNotAddQuestCounters() {
         Permanent duchess = addCreatureReady(player1, new DuchessWaywardTavernkeep());
-        duchess.setTapped(true);
+        duchess.tap();
         Permanent bear = addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player2, List.of(0));

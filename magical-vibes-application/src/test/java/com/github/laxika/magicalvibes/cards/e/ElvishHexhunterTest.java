@@ -107,7 +107,7 @@ class ElvishHexhunterTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent hexhunter = addCreatureReady(player1, new ElvishHexhunter());
-        hexhunter.setTapped(true);
+        hexhunter.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SanguineBond());
         harness.addMana(player1, ManaColor.GREEN, 1);
 

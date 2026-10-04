@@ -82,7 +82,7 @@ class DukharaPeafowlTest extends BaseCardTest {
     @DisplayName("A tapped summoning-sick Peafowl can activate its ability")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent peafowl = harness.addToBattlefieldAndReturn(player1, new DukharaPeafowl());
-        peafowl.setTapped(true);
+        peafowl.tap();
         peafowl.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

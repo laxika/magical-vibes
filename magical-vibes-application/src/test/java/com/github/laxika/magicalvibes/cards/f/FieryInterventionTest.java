@@ -143,8 +143,8 @@ class FieryInterventionTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FieryIntervention()));
         harness.addMana(player1, ManaColor.RED, 5);
         harness.castSorcery(player1, 0, 0, target.getId());
-        gd.battlefield.get(player2.getId()).remove(target);
-        gd.graveyards.get(player2.getId()).add(target.getCard());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
 
         harness.passBothPriorities();
 

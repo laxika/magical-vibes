@@ -84,7 +84,7 @@ class EnergizerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        energizer.setTapped(false);
+        energizer.untap();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 

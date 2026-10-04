@@ -92,7 +92,7 @@ class FangSkulkinTest extends BaseCardTest {
     void activatesWhileSummoningSickAndTapped() {
         Permanent skulkin = harness.addToBattlefieldAndReturn(player1, new FangSkulkin());
         skulkin.setSummoningSick(true);
-        skulkin.setTapped(true);
+        skulkin.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new CreakwoodGhoul());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

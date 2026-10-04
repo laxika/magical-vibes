@@ -150,7 +150,7 @@ class EncaseInIceTest extends BaseCardTest {
     void locksOnlyEnchantedCreature() {
         Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
         Permanent other = addCreatureReady(player1, new GrizzlyBears());
-        other.setTapped(true);
+        other.tap();
 
         castEncaseInIce(enchanted);
         harness.performUntapStep(player1);

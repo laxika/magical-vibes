@@ -103,7 +103,7 @@ class FlowstoneThopterTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Thopter can activate using colored mana")
     void canActivateWhileTappedAndSummoningSickWithColoredMana() {
         Permanent thopter = harness.addToBattlefieldAndReturn(player1, new FlowstoneThopter());
-        thopter.setTapped(true);
+        thopter.tap();
         thopter.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

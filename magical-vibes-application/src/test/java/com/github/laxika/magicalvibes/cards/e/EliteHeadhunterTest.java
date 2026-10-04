@@ -108,7 +108,7 @@ class EliteHeadhunterTest extends BaseCardTest {
     @DisplayName("A tapped Elite Headhunter can activate using only red mana")
     void tappedSourceCanActivateWithRedMana() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new EliteHeadhunter());
-        source.setTapped(true);
+        source.tap();
         harness.addToBattlefield(player1, new Spellbook());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 3);
