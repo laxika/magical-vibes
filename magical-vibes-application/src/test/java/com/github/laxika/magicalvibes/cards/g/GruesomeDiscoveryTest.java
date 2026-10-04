@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Peek;
+import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GruesomeDiscovery.class, Forest.class, GrizzlyBears.class, Peek.class})
 class GruesomeDiscoveryTest extends BaseCardTest {
 
     
@@ -57,8 +60,7 @@ class GruesomeDiscoveryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GruesomeDiscovery()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
@@ -82,8 +84,7 @@ class GruesomeDiscoveryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
         gd.creatureDeathCountThisTurn.merge(player1.getId(), 1, Integer::sum);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).choosingPlayerId()).isEqualTo(player1.getId());
@@ -127,8 +128,7 @@ class GruesomeDiscoveryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
         gd.creatureDeathCountThisTurn.merge(player1.getId(), 1, Integer::sum);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).remainingCount()).isEqualTo(1);
@@ -149,8 +149,7 @@ class GruesomeDiscoveryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
         gd.creatureDeathCountThisTurn.merge(player1.getId(), 1, Integer::sum);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("empty"));
@@ -164,8 +163,7 @@ class GruesomeDiscoveryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
         gd.creatureDeathCountThisTurn.merge(player1.getId(), 1, Integer::sum);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
                 .isInstanceOf(IllegalStateException.class)
@@ -179,8 +177,7 @@ class GruesomeDiscoveryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
         gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
 
@@ -191,5 +188,82 @@ class GruesomeDiscoveryTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
                 .contains("Gruesome Discovery", "Forest", "Peek");
+    }
+
+    @Test
+    @DisplayName("Without morbid, a player with one card discards it and resolution completes")
+    void withoutMorbidWithOneCard() {
+        Card discarded = new GruesomeDiscovery();
+        harness.setHand(player2, List.of(discarded));
+        harness.setHand(player1, List.of(new GruesomeDiscovery()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
+    }
+
+    @Test
+    @DisplayName("Without morbid, an empty hand does not prompt for a discard")
+    void withoutMorbidWithEmptyHand() {
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new GruesomeDiscovery()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Gruesome Discovery");
+    }
+
+    @Test
+    @DisplayName("Morbid selection cannot be declined and can include lands")
+    void morbidChoiceIsMandatoryAndIncludesLands() {
+        Card land = new Forest();
+        Card spell = new GruesomeDiscovery();
+        harness.setHand(player2, List.of(land, spell));
+        harness.setHand(player1, List.of(new GruesomeDiscovery()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrder(land, spell);
+    }
+
+    @Test
+    @CardUsed({TamiyoCollectorOfTales.class})
+    @DisplayName("Tamiyo prevents the morbid mode from causing an opponent to discard")
+    void morbidRespectsOpponentDiscardProtection() {
+        Card first = new GruesomeDiscovery();
+        Card second = new GruesomeDiscovery();
+        harness.addToBattlefield(player2, new TamiyoCollectorOfTales());
+        harness.setHand(player2, List.of(first, second));
+        harness.setHand(player1, List.of(new GruesomeDiscovery()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        gd.creatureDeathCountThisTurn.merge(player1.getId(), 1, Integer::sum);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.RevealedHandChoice) {
+            harness.handleCardChosen(player1, 0);
+            harness.handleCardChosen(player1, 0);
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 }
