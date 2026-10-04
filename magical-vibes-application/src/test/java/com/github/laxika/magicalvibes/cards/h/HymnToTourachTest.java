@@ -23,8 +23,7 @@ class HymnToTourachTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HymnToTourach()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
@@ -38,8 +37,7 @@ class HymnToTourachTest extends BaseCardTest {
                 new CombatMedic(), new IcatianInfantry(), new IcatianJavelineers(), new HymnToTourach()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 3, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 3, player1.getId());
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
@@ -52,8 +50,7 @@ class HymnToTourachTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HymnToTourach()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
@@ -66,10 +63,40 @@ class HymnToTourachTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HymnToTourach()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Discard uses the target's hand at resolution")
+    void discardsCardsPresentAtResolution() {
+        harness.setHand(player2, List.of(new IcatianJavelineers()));
+        harness.setHand(player1, List.of(new HymnToTourach()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        CombatMedic medic = new CombatMedic();
+        IcatianInfantry infantry = new IcatianInfantry();
+        harness.setHand(player2, List.of(medic, infantry));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrder(medic, infantry);
+        harness.assertInGraveyard(player1, "Hymn to Tourach");
+    }
+
+    @Test
+    @DisplayName("Targeting yourself with no other cards in hand resolves normally")
+    void selfTargetWithOnlyHymnInHand() {
+        harness.setHand(player1, List.of(new HymnToTourach()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Hymn to Tourach");
     }
 }
