@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CombatOpponentFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -32,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.EquippedCreatureDealsDamageTo
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import lombok.RequiredArgsConstructor;
@@ -118,6 +120,11 @@ public class CombatTriggerService {
                                 autoTargetOpponent = true;
                             }
                             // If subtype doesn't match, skip this effect
+                        } else if (effect instanceof CombatOpponentFilterEffect conditional) {
+                            if (matchesCombatOpponent(gameData, creature, combatOpponent,
+                                    conditional.opponentFilter())) {
+                                effectsForStack.add(conditional.wrapped());
+                            }
                         } else if (effect instanceof TriggeringPermanentConditionalEffect conditional
                                 && conditional.combatOpponent()) {
                             if (combatOpponent != null
@@ -352,6 +359,11 @@ public class CombatTriggerService {
                                     autoTargetBlocker = true;
                                 }
                                 // If subtype doesn't match, skip this effect for this blocker
+                            } else if (effect instanceof CombatOpponentFilterEffect conditional) {
+                                if (predicateEvaluationService.matchesPermanentPredicate(
+                                        gameData, blocker, conditional.opponentFilter())) {
+                                    transformedEffects.add(conditional.wrapped());
+                                }
                             } else if (effect instanceof TriggeringPermanentConditionalEffect conditional
                                     && conditional.combatOpponent()) {
                                 if (predicateEvaluationService.matchesPermanentPredicate(
@@ -442,5 +454,28 @@ public class CombatTriggerService {
      */
     private static boolean permanentHasSubtype(Permanent permanent, CardSubtype subtype) {
         return GameQueryService.permanentHasSubtype(permanent, subtype);
+    }
+
+    private boolean matchesCombatOpponent(GameData gameData, Permanent creature,
+                                          Permanent combatOpponent,
+                                          PermanentPredicate filter) {
+        if (combatOpponent != null) {
+            return predicateEvaluationService.matchesPermanentPredicate(gameData, combatOpponent, filter);
+        }
+        for (UUID blockedId : creature.getBlockingTargetIds()) {
+            Permanent blocked = gameQueryService.findPermanentById(gameData, blockedId);
+            if (blocked != null && predicateEvaluationService.matchesPermanentPredicate(gameData, blocked, filter)) {
+                return true;
+            }
+        }
+        final boolean[] matches = {false};
+        gameData.forEachPermanent((ownerId, permanent) -> {
+            if (!matches[0] && permanent.isBlocking()
+                    && permanent.getBlockingTargetIds().contains(creature.getId())
+                    && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter)) {
+                matches[0] = true;
+            }
+        });
+        return matches[0];
     }
 }
