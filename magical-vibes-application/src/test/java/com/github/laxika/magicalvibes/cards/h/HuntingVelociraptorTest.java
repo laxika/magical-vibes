@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HuntingVelociraptor.class, ThunderingSpineback.class, GrizzlyBears.class})
+@CardUsed({HuntingVelociraptor.class, ThunderingSpineback.class, GrizzlyBears.class, Humility.class})
 class HuntingVelociraptorTest extends BaseCardTest {
 
     @Test
@@ -25,7 +25,7 @@ class HuntingVelociraptorTest extends BaseCardTest {
         addSourceToBattlefield();
         recordDinosaurCombatDamage();
         harness.setHand(player1, List.of(new ThunderingSpineback()));
-        harness.addMana(player1, ManaColor.RED, 3); // granted prowl {2}{R}, not normal {4}{G}{G}
+        harness.addMana(player1, ManaColor.RED, 3); // granted prowl {2}{R}, not normal {5}{G}{G}
 
         assertThat(harness.getGameActionAvailabilityService()
                 .getPlayableCardIndices(gd, player1.getId())).contains(0);
@@ -57,6 +57,76 @@ class HuntingVelociraptorTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castWithProwl(player1, 0, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Humility removes the ability granting prowl")
+    void continuousAbilityLossStopsGrantingProwl() {
+        addSourceToBattlefield();
+        recordDinosaurCombatDamage();
+        harness.addToBattlefield(player2, new Humility());
+        harness.setHand(player1, List.of(new ThunderingSpineback()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castWithProwl(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An opponent's Velociraptor does not grant prowl to your spells")
+    void opponentSourceDoesNotGrantProwl() {
+        harness.addToBattlefield(player2, new HuntingVelociraptor());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        recordDinosaurCombatDamage();
+        harness.setHand(player1, List.of(new ThunderingSpineback()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castWithProwl(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Combat damage dealt by the opponent does not satisfy your prowl condition")
+    void opponentCombatDamageDoesNotQualify() {
+        addSourceToBattlefield();
+        gd.combatDamageToPlayerControllerSubtypesThisTurn
+                .computeIfAbsent(player2.getId(), k -> ConcurrentHashMap.newKeySet())
+                .add(CardSubtype.DINOSAUR);
+        harness.setHand(player1, List.of(new ThunderingSpineback()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castWithProwl(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Granted prowl still requires red mana")
+    void grantedProwlRequiresRedMana() {
+        addSourceToBattlefield();
+        recordDinosaurCombatDamage();
+        harness.setHand(player1, List.of(new ThunderingSpineback()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.castWithProwl(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Qualifying combat damage allows multiple Dinosaur spells to use prowl")
+    void qualifyingDamageIsNotConsumedByCasting() {
+        addSourceToBattlefield();
+        recordDinosaurCombatDamage();
+        harness.setHand(player1, List.of(new ThunderingSpineback(), new ThunderingSpineback()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castWithProwl(player1, 0, null);
+        harness.passBothPriorities();
+        harness.castWithProwl(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard() instanceof ThunderingSpineback).hasSize(2);
     }
 
     private void addSourceToBattlefield() {
