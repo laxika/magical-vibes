@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,9 +17,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.cards.h.HornedTroll;
 
-@CardUsed({HuntedWumpus.class, Forest.class, GrizzlyBears.class, HornedTroll.class})
+@CardUsed({HuntedWumpus.class, Forest.class, GrizzlyBears.class, Terror.class})
 class HuntedWumpusTest extends BaseCardTest {
 
     /**
@@ -29,6 +28,50 @@ class HuntedWumpusTest extends BaseCardTest {
      */
     private void setupAndCastWumpus() {
         harness.castFromHand(player1, new HuntedWumpus(), "{3}{G}");
+    }
+
+    @Test
+    @DisplayName("Opponent puts only one creature onto the battlefield without paying mana")
+    void opponentChoosesOnlyOneCreature() {
+        setupAndCastWumpus();
+        harness.passBothPriorities();
+        GrizzlyBears chosen = new GrizzlyBears();
+        GrizzlyBears remaining = new GrizzlyBears();
+        harness.setHand(player2, List.of(chosen, remaining));
+        gd.playerManaPools.get(player2.getId()).clear();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .singleElement().satisfies(permanent -> {
+                    assertThat(permanent.getCard()).isSameAs(chosen);
+                    assertThat(permanent.isTapped()).isFalse();
+                    assertThat(permanent.isSummoningSick()).isTrue();
+                });
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Wumpus's trigger resolves after Wumpus is destroyed")
+    void triggerResolvesAfterSourceLeaves() {
+        setupAndCastWumpus();
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new Terror(), new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Hunted Wumpus"));
+        harness.assertInGraveyard(player1, "Hunted Wumpus");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
