@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GuardianKirin.class, GrizzlyBears.class, Shock.class})
+@CardUsed({GuardianKirin.class, GrizzlyBears.class, Shock.class, Pyroclasm.class})
 class GuardianKirinTest extends BaseCardTest {
 
     @Test
@@ -41,8 +42,7 @@ class GuardianKirinTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearsId);
 
         assertThat(guardianKirin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -61,6 +61,73 @@ class GuardianKirinTest extends BaseCardTest {
         assertThat(guardianKirin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Counter is placed only when the death trigger resolves")
+    void counterWaitsForTriggerResolution() {
+        harness.addToBattlefield(player1, new GuardianKirin());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent guardianKirin = findPermanent(player1, "Guardian Kirin");
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(guardianKirin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(guardianKirin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Guardian Kirin does not trigger for its own death")
+    void doesNotTriggerForOwnDeath() {
+        harness.addToBattlefield(player1, new GuardianKirin());
+        UUID kirinId = harness.getPermanentId(player1, "Guardian Kirin");
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, kirinId);
+        harness.castAndResolveInstant(player1, 0, kirinId);
+
+        harness.assertNotOnBattlefield(player1, "Guardian Kirin");
+        harness.assertInGraveyard(player1, "Guardian Kirin");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Simultaneous deaths produce one trigger per other allied creature")
+    void simultaneousDeathsProduceSeparateTriggers() {
+        harness.addToBattlefield(player1, new GuardianKirin());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent guardianKirin = findPermanent(player1, "Guardian Kirin");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Pyroclasm()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(2);
+        assertThat(guardianKirin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+        assertThat(guardianKirin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(guardianKirin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void killCreature(Player controller) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -69,8 +136,7 @@ class GuardianKirinTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID bearsId = harness.getPermanentId(controller, "Grizzly Bears");
-        harness.castInstant(player2, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bearsId);
         harness.passBothPriorities();
     }
 }
