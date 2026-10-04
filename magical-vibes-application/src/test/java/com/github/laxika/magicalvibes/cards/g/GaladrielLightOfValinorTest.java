@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -113,6 +114,91 @@ class GaladrielLightOfValinorTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Counter mode includes Galadriel and excludes opposing creatures")
+    void counterModeIncludesSourceButNotOpponents() {
+        Permanent galadriel = harness.addToBattlefieldAndReturn(player1, new GaladrielLightOfValinor());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        triggerWithCreature(COUNTERS);
+
+        assertThat(galadriel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Grizzly Bears"))
+                .hasSize(1)
+                .allMatch(permanent -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) == 1);
+        assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Scrying both cards to the bottom draws the previously third card")
+    void scryBottomsBeforeDrawing() {
+        harness.addToBattlefield(player1, new GaladrielLightOfValinor());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GaladrielLightOfValinor();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        triggerWithCreature(SCRY);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(third);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    @DisplayName("A fourth creature gives no effect after all three modes have been chosen")
+    void noEffectAfterAllModesChosen() {
+        Permanent galadriel = harness.addToBattlefieldAndReturn(player1, new GaladrielLightOfValinor());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        triggerWithCreature(MANA);
+        triggerWithCreature(COUNTERS);
+        triggerWithCreature(SCRY);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
+        int manaBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(manaBefore - 2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore - 1);
+        assertThat(galadriel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A previously chosen mode becomes available on a later turn")
+    void modesResetOnNextTurn() {
+        harness.addToBattlefield(player1, new GaladrielLightOfValinor());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        triggerWithCreature(MANA);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        triggerWithCreature(MANA);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
     }
 
     private void triggerWithCreature(String mode) {
