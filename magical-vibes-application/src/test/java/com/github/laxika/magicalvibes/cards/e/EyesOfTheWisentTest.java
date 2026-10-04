@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,16 +18,17 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EyesOfTheWisent.class, GrizzlyBears.class, Unsummon.class, Shock.class})
 class EyesOfTheWisentTest extends BaseCardTest {
 
     /** Player1 controls Eyes of the Wisent and a bear; it is player1's turn. */
     private UUID setUpControllerTurn() {
         harness.addToBattlefield(player1, new EyesOfTheWisent());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        UUID bearsId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        return harness.getPermanentId(player1, "Grizzly Bears");
+        return bearsId;
     }
 
     @Test
@@ -39,11 +41,12 @@ class EyesOfTheWisentTest extends BaseCardTest {
         harness.castInstant(player2, 0, bearsId);
 
         GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve the token-creation trigger
 
         Permanent token = findPermanent(player1, "Elemental");
         assertThat(token).isNotNull();
@@ -59,6 +62,7 @@ class EyesOfTheWisentTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         harness.castInstant(player2, 0, bearsId);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertNotOnBattlefield(player1, "Elemental");
@@ -82,8 +86,7 @@ class EyesOfTheWisentTest extends BaseCardTest {
     @DisplayName("Opponent's blue spell during the opponent's own turn does not trigger")
     void blueSpellOnOpponentTurnDoesNotTrigger() {
         harness.addToBattlefield(player1, new EyesOfTheWisent());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -110,5 +113,42 @@ class EyesOfTheWisentTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         harness.assertNotOnBattlefield(player1, "Elemental");
+    }
+
+    @Test
+    @DisplayName("Opponent's blue spell during your combat also creates a token")
+    void blueSpellDuringControllerCombatCreatesToken() {
+        UUID bearsId = setUpControllerTurn();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player2, 0, bearsId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Elemental");
+        harness.assertNotOnBattlefield(player2, "Elemental");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Each copy triggers independently for the same blue spell")
+    void twoCopiesCreateTwoTokens() {
+        UUID bearsId = setUpControllerTurn();
+        harness.addToBattlefield(player1, new EyesOfTheWisent());
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player2, 0, bearsId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Elemental"))
+                .hasSize(2);
+        harness.assertNotOnBattlefield(player2, "Elemental");
     }
 }
