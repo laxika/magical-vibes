@@ -27,8 +27,7 @@ class HomesteadCourageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HomesteadCourage()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
@@ -50,8 +49,7 @@ class HomesteadCourageTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new HomesteadCourage()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castFlashback(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, target.getId());
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
@@ -71,5 +69,60 @@ class HomesteadCourageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature you control");
+    }
+
+    @Test
+    @DisplayName("Casting from hand then flashing back adds two permanent counters")
+    void canCastFromHandThenFlashback() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HomesteadCourage()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        harness.assertInGraveyard(player1, "Homestead Courage");
+        harness.castAndResolveFlashback(player1, 0, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isTrue();
+        harness.assertNotInGraveyard(player1, "Homestead Courage");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Homestead Courage"));
+    }
+
+    @Test
+    @DisplayName("Flashback exiles the spell even when its only target leaves the battlefield")
+    void flashbackExilesWithMissingTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new HomesteadCourage()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castFlashback(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
+        harness.assertNotInGraveyard(player1, "Homestead Courage");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Homestead Courage"));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature that changes to the opponent's control is no longer a legal target")
+    void targetMustStillBeControlledOnResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HomesteadCourage()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.VIGILANCE)).isFalse();
+        harness.assertInGraveyard(player1, "Homestead Courage");
+        assertThat(gd.stack).isEmpty();
     }
 }
