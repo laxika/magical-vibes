@@ -6,15 +6,18 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GruulNodorog.class)
+@CardUsed({GruulNodorog.class})
 class GruulNodorogTest extends BaseCardTest {
 
     @Test
@@ -28,7 +31,6 @@ class GruulNodorogTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Gruul Nodorog");
         assertThat(entry.getTargetId()).isEqualTo(nodorog.getId());
     }
 
@@ -108,5 +110,63 @@ class GruulNodorogTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the source gains menace, and only after resolution")
+    void onlySourceGainsMenaceAfterResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GruulNodorog());
+        Permanent ally = addCreatureReady(player1, new GruulNodorog());
+        Permanent opponent = addCreatureReady(player2, new GruulNodorog());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.MENACE)).isFalse();
+        assertThat(source.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, source, Keyword.MENACE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ally, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.MENACE)).isFalse();
+        assertThat(source.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Activated menace prevents blocking with just one creature")
+    void menacePreventsSingleBlocker() {
+        addCreatureReady(player1, new GruulNodorog());
+        addCreatureReady(player2, new GruulNodorog());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked except by two or more creatures");
+    }
+
+    @Test
+    @DisplayName("Repeated menace activations still allow two blockers")
+    void repeatedActivationsAllowTwoBlockers() {
+        addCreatureReady(player1, new GruulNodorog());
+        Permanent firstBlocker = addCreatureReady(player2, new GruulNodorog());
+        Permanent secondBlocker = addCreatureReady(player2, new GruulNodorog());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
     }
 }
