@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
@@ -17,9 +17,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GlissaTheTraitor.class, GrizzlyBears.class, LeoninScimitar.class, CruelEdict.class, Shock.class})
 class GlissaTheTraitorTest extends BaseCardTest {
-
-    // ===== Trigger fires when opponent's creature dies =====
 
     @Test
     @DisplayName("Triggers may ability when opponent's creature dies")
@@ -28,19 +27,15 @@ class GlissaTheTraitorTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setGraveyard(player1, List.of(new LeoninScimitar()));
 
-        // Player1 casts Cruel Edict targeting player2 → opponent's creature dies
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, 0);
 
-        harness.passBothPriorities(); // Resolve Cruel Edict
-
-        // Glissa's MayEffect goes on stack — resolve it to get prompt
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
-
-    // ===== Does NOT trigger when own creature dies =====
 
     @Test
     @DisplayName("Does not trigger when controller's own creature dies")
@@ -52,16 +47,12 @@ class GlissaTheTraitorTest extends BaseCardTest {
         setupPlayer2Active();
         harness.setHand(player2, List.of(new CruelEdict()));
         harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.castSorcery(player2, 0, player1.getId());
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Grizzly Bears"));
 
-        harness.passBothPriorities(); // Resolve Cruel Edict → player1's creature dies
-
-        // Glissa should NOT trigger — own creature died
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Glissa, the Traitor"));
     }
-
-    // ===== Accepting may ability and returning artifact =====
 
     @Test
     @DisplayName("Accepting may ability and choosing artifact returns it from graveyard to hand")
@@ -72,20 +63,15 @@ class GlissaTheTraitorTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-
-        harness.passBothPriorities(); // Resolve Cruel Edict → trigger
-        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
-        harness.handleMayAbilityChosen(player1, true); // Accept — inner resolves inline → graveyard choice
-
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0); // Choose Leonin Scimitar
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Leonin Scimitar");
         harness.assertNotInGraveyard(player1, "Leonin Scimitar");
     }
-
-    // ===== Declining may ability =====
 
     @Test
     @DisplayName("Declining may ability does not return artifact")
@@ -96,60 +82,101 @@ class GlissaTheTraitorTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
-        harness.passBothPriorities(); // Resolve Cruel Edict → trigger
-        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
-        harness.handleMayAbilityChosen(player1, false); // Decline
-
-        // Artifact stays in graveyard
         harness.assertInGraveyard(player1, "Leonin Scimitar");
         harness.assertNotInHand(player1, "Leonin Scimitar");
     }
 
-    // ===== No artifact in graveyard =====
-
     @Test
-    @DisplayName("No effect when graveyard has no artifact cards")
+    @DisplayName("Trigger is removed when there is no legal artifact target")
     void noEffectWithNoArtifactsInGraveyard() {
         harness.addToBattlefield(player1, new GlissaTheTraitor());
         harness.addToBattlefield(player2, new GrizzlyBears());
-        // No artifacts in graveyard
-
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
 
-        harness.passBothPriorities(); // Resolve Cruel Edict → trigger
-        harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
-        harness.handleMayAbilityChosen(player1, true); // Accept — inner resolves inline → no artifacts
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        // Should resolve with no effect (no graveyard choice prompt)
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(s -> s.contains("no artifact cards in graveyard"));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
-
-    // ===== Opponent creature killed by damage =====
-
     @Test
     @DisplayName("Triggers when opponent's creature is killed by damage spell")
     void triggersWhenOpponentCreatureKilledByDamage() {
         harness.addToBattlefield(player1, new GlissaTheTraitor());
-        harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setGraveyard(player1, List.of(new LeoninScimitar()));
 
-        harness.setHand(player1, List.of(new Shock(), new Shock()));
-        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities(); // Resolve first Shock (2 damage kills 2/2)
+        harness.castAndResolveInstant(player1, 0, bearsId);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, 0);
 
-        // Grizzly Bears dies → Glissa's MayEffect goes on stack — resolve it to get prompt
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Artifacts in an opponent's graveyard are not legal targets")
+    void cannotTargetOpponentsArtifact() {
+        harness.addToBattlefield(player1, new GlissaTheTraitor());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setGraveyard(player2, List.of(new LeoninScimitar()));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
+    }
+
+    @Test
+    @DisplayName("Nonartifact cards in the controller's graveyard are not legal targets")
+    void cannotTargetNonartifactCard() {
+        harness.addToBattlefield(player1, new GlissaTheTraitor());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An illegal target cannot be replaced with another artifact during resolution")
+    void cannotChooseAnotherArtifactWhenTargetLeavesGraveyard() {
+        harness.addToBattlefield(player1, new GlissaTheTraitor());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new LeoninScimitar(), new LeoninScimitar()));
+        var remainingArtifact = gd.playerGraveyards.get(player1.getId()).get(1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.setGraveyard(player1, List.of(remainingArtifact));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+        harness.assertNotInHand(player1, "Leonin Scimitar");
+    }
 
     private void setupPlayer2Active() {
         harness.forceActivePlayer(player2);
