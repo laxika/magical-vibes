@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.r.RootpathPurifier;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.v.VolrathsStronghold;
 import com.github.laxika.magicalvibes.model.Card;
@@ -110,9 +111,8 @@ class HermitDruidTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while summoning sick")
     void cannotActivateWhileSummoningSick() {
-        Permanent perm = new Permanent(new HermitDruid());
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new HermitDruid());
         perm.setSummoningSick(true);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(perm);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -128,6 +128,61 @@ class HermitDruidTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A basic land on top goes to hand without revealing the next card")
+    void basicLandOnTopStopsImmediately() {
+        addReadyDruid(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        Card forest = new Forest();
+        Card leftover = new Shock();
+        harness.setLibrary(player1, List.of(forest, leftover));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(leftover);
+    }
+
+    @Test
+    @DisplayName("The ability resolves after Hermit Druid is destroyed in response")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent druid = addReadyDruid(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.castAndResolveInstant(player1, 0, druid.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(druid);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({RootpathPurifier.class})
+    @DisplayName("Rootpath Purifier makes a nonbasic library land stop the reveal")
+    void stopsAtLandMadeBasicByRootpathPurifier() {
+        addReadyDruid(player1);
+        harness.addToBattlefield(player1, new RootpathPurifier());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        Card stronghold = new VolrathsStronghold();
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(stronghold, forest));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(stronghold).doesNotContain(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
     }
 
     private Permanent addReadyDruid(Player player) {
