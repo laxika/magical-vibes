@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,7 +19,7 @@ class HollowSpecterTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage lets the controller pay X and discard one of X revealed cards")
     void combatDamagePaysXAndDiscardsFromRevealedCards() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new HillGiant(), new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new HillGiant(), new GrizzlyBears()));
         Permanent specter = addCreatureReady(player1, new HollowSpecter());
         specter.setAttacking(true);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -62,7 +61,7 @@ class HollowSpecterTest extends BaseCardTest {
     @Test
     @DisplayName("When X exceeds the damaged player's hand, their whole hand is revealed")
     void positiveXRevealsWholeSmallerHand() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
         Permanent specter = addCreatureReady(player1, new HollowSpecter());
         specter.setAttacking(true);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -89,7 +88,7 @@ class HollowSpecterTest extends BaseCardTest {
     @Test
     @DisplayName("Mana restricted to Myr spells and abilities cannot pay this ability")
     void myrRestrictedManaCannotPayAbility() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
         Permanent specter = addCreatureReady(player1, new HollowSpecter());
         specter.setAttacking(true);
         gd.playerManaPools.get(player1.getId()).addMyrOnlyColorless(1);
@@ -105,7 +104,7 @@ class HollowSpecterTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing X=0 declines the ability and does not spend mana")
     void choosingZeroDeclines() {
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
         Permanent specter = addCreatureReady(player1, new HollowSpecter());
         specter.setAttacking(true);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -117,5 +116,69 @@ class HollowSpecterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Paying X with an empty opposing hand still spends the mana")
+    void payingWithEmptyHandSpendsMana() {
+        harness.setHand(player2, List.of());
+        Permanent specter = addCreatureReady(player1, new HollowSpecter());
+        specter.setAttacking(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.resolveCombatDamage();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Without available mana, combat damage does not discard a card")
+    void noManaDoesNotDiscard() {
+        HollowSpecter cardInHand = new HollowSpecter();
+        harness.setHand(player2, List.of(cardInHand));
+        Permanent specter = addCreatureReady(player1, new HollowSpecter());
+        specter.setAttacking(true);
+
+        harness.resolveCombatDamage();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(cardInHand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The controller's choice uses reveal order and leaves unrevealed cards in hand")
+    void discardChoiceUsesRevealOrder() {
+        HollowSpecter first = new HollowSpecter();
+        HollowSpecter hidden = new HollowSpecter();
+        HollowSpecter last = new HollowSpecter();
+        harness.setHand(player2, List.of(first, hidden, last));
+        Permanent specter = addCreatureReady(player1, new HollowSpecter());
+        specter.setAttacking(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.resolveCombatDamage();
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
+        harness.handleCardChosen(player2, 2);
+        harness.handleCardChosen(player2, 0);
+
+        PendingInteraction.RevealCardsDiscardChoice discard =
+                gd.interaction.activeInteraction(PendingInteraction.RevealCardsDiscardChoice.class);
+        assertThat(discard).isNotNull();
+        assertThat(discard.revealedCardIds()).containsExactly(last.getId(), first.getId());
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first, hidden);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(last);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 }
