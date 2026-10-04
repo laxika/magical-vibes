@@ -59,4 +59,54 @@ class HarrierGriffinTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
                 .validIds()).doesNotContain(artifact.getId());
     }
+
+    @Test
+    @DisplayName("Upkeep trigger must target the Griffin when it is the only creature")
+    void upkeepTriggerTargetsItselfWhenOnlyCreature() {
+        Permanent griffin = addCreatureReady(player1, new HarrierGriffin());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
+                .validIds()).containsExactly(griffin.getId());
+
+        harness.handlePermanentChosen(player1, griffin.getId());
+        harness.passBothPriorities();
+
+        assertThat(griffin.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Upkeep trigger can target an already tapped creature")
+    void upkeepTriggerCanTargetTappedCreature() {
+        Permanent griffin = addCreatureReady(player1, new HarrierGriffin());
+        Permanent target = addCreatureReady(player2, new GhostWarden());
+        target.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
+                .validIds()).contains(target.getId());
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(griffin.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Griffin does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent griffin = addCreatureReady(player1, new HarrierGriffin());
+        Permanent otherCreature = addCreatureReady(player2, new GhostWarden());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(griffin.isTapped()).isFalse();
+        assertThat(otherCreature.isTapped()).isFalse();
+    }
 }
