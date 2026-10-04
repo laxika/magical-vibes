@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HarshJustice.class, GrizzlyBears.class, JaceBeleren.class})
+@CardUsed({HarshJustice.class, GrizzlyBears.class, JaceBeleren.class, RayOfCommand.class})
 class HarshJusticeTest extends BaseCardTest {
 
     @Test
@@ -107,14 +108,54 @@ class HarshJusticeTest extends BaseCardTest {
         int player1LifeAfterFirstCombat = gd.getLife(player1.getId());
         int player2LifeAfterFirstCombat = gd.getLife(player2.getId());
 
-        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
-        addCreatureReady(player2, new GrizzlyBears());
-        declareAttackers(player2, List.of(0));
-        gs.declareBlockers(gd, player1, List.of());
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
+        declareAttackers(player1, List.of(0));
+        resolveCombat(player1);
         resolveAllTriggers();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeAfterFirstCombat - 2);
-        assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeAfterFirstCombat);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeAfterFirstCombat);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeAfterFirstCombat - 2);
+    }
+
+    @Test
+    @DisplayName("Reflection damages the creature's controller when the trigger resolves")
+    void reflectionUsesCurrentCreatureController() {
+        harness.forceActivePlayer(player1);
+        Permanent attacker = addAttacker(player1, player2);
+        harness.setHand(player2, List.of(new HarshJustice(), new RayOfCommand()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.castAndResolveInstant(player2, 0);
+
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Two copies create two independent reflections")
+    void multipleCopiesReflectSeparately() {
+        harness.forceActivePlayer(player1);
+        addAttacker(player1, player2);
+        harness.setHand(player2, List.of(new HarshJustice(), new HarshJustice()));
+        harness.addMana(player2, ManaColor.WHITE, 6);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        harness.castAndResolveInstant(player2, 0);
+        harness.castAndResolveInstant(player2, 0);
+        resolveCombat(player1);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 18);
     }
 
     @Test
