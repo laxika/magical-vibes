@@ -97,6 +97,69 @@ class HauntedCrossroadsTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
+    @Test
+    @DisplayName("Resolves into an empty library after the enchantment leaves the battlefield")
+    void resolvesWithoutSourceIntoEmptyLibrary() {
+        int crossroadsIndex = addCrossroadsIndex();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        Card creature = new RishadanCutpurse();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbilityWithGraveyardTargets(player1, crossroadsIndex, 0, List.of(creature.getId()));
+        Card crossroads = gd.playerBattlefields.get(player1.getId()).remove(crossroadsIndex).getCard();
+        harness.setGraveyard(player1, List.of(creature, crossroads));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(creature.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(crossroads.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Repeated activations targeting the same creature return it only once")
+    void repeatedActivationsReturnTargetOnlyOnce() {
+        int crossroadsIndex = addCrossroadsIndex();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        Card creature = new RishadanCutpurse();
+        Card existingTop = new Brainstorm();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of(existingTop));
+
+        harness.activateAbilityWithGraveyardTargets(player1, crossroadsIndex, 0, List.of(creature.getId()));
+        harness.activateAbilityWithGraveyardTargets(player1, crossroadsIndex, 0, List.of(creature.getId()));
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(creature.getId(), existingTop.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Rejects multiple targets without spending mana")
+    void rejectsMultipleTargets() {
+        int crossroadsIndex = addCrossroadsIndex();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        Card first = new RishadanCutpurse();
+        Card second = new RishadanCutpurse();
+        harness.setGraveyard(player1, List.of(first, second));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, crossroadsIndex, 0, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(first.getId(), second.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private int addCrossroadsIndex() {
         Permanent crossroads = harness.addToBattlefieldAndReturn(player1, new HauntedCrossroads());
         return gd.playerBattlefields.get(player1.getId()).indexOf(crossroads);
