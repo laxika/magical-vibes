@@ -23,8 +23,7 @@ class GushTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Island(), new Island()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getName)
@@ -46,6 +45,60 @@ class GushTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getName)
                 .containsExactly("Island", "Island", "Island", "Island");
+        harness.assertInGraveyard(player1, "Gush");
+    }
+
+    @Test
+    void returnsTappedIslandsAsACostBeforeDrawing() {
+        Permanent firstIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent secondIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        firstIsland.setTapped(true);
+        secondIsland.setTapped(true);
+        harness.setHand(player1, List.of(new Gush()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        harness.castWithAlternateCost(player1, 0, List.of(firstIsland.getId(), secondIsland.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Island", "Island");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        harness.assertNotInGraveyard(player1, "Gush");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Island", "Island", "Forest", "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Gush");
+    }
+
+    @Test
+    void alternateCostReturnsBorrowedIslandToItsOwner() {
+        Island borrowedIsland = new Island();
+        borrowedIsland.setOwnerId(player2.getId());
+        Permanent borrowed = harness.addToBattlefieldAndReturn(player1, borrowedIsland);
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.setHand(player1, List.of(new Gush()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        harness.castWithAlternateCost(player1, 0, List.of(borrowed.getId(), own.getId()));
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(borrowedIsland);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Island");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Island", "Forest", "Forest");
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(borrowedIsland);
         harness.assertInGraveyard(player1, "Gush");
     }
 
