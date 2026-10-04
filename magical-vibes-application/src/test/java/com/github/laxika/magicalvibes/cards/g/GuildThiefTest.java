@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GuildThief.class, GrizzlyBears.class})
+@CardUsed({GuildThief.class})
 class GuildThiefTest extends BaseCardTest {
 
     @Test
@@ -35,7 +35,7 @@ class GuildThiefTest extends BaseCardTest {
     void doesNotPutCounterWhenBlocked() {
         Permanent thief = addReadyGuildThief();
         thief.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GuildThief());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -83,10 +83,67 @@ class GuildThiefTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyGuildThief() {
+    @Test
+    @DisplayName("Only the Guild Thief that deals damage gets one counter regardless of damage amount")
+    void counterBelongsToDamageDealerAndIsNotBasedOnDamageAmount() {
+        Permanent attacker = addReadyGuildThief();
+        Permanent otherThief = addReadyGuildThief();
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        attacker.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(otherThief.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("The resolved ability prevents an actual blocker declaration")
+    void resolvedAbilityPreventsBlocking() {
+        Permanent thief = addReadyGuildThief();
+        addCreatureReady(player2, new GuildThief());
+        addAbilityMana();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        thief.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Cunning Action can be activated while tapped and summoning sick")
+    void abilityDoesNotRequireTappingOrHaste() {
         Permanent thief = harness.addToBattlefieldAndReturn(player1, new GuildThief());
-        thief.setSummoningSick(false);
-        return thief;
+        thief.setSummoningSick(true);
+        thief.setTapped(true);
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(thief.isCantBeBlocked()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(thief.isCantBeBlocked()).isTrue();
+        assertThat(thief.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Four generic mana cannot pay the blue component of Cunning Action")
+    void abilityRequiresBlueMana() {
+        addReadyGuildThief();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private Permanent addReadyGuildThief() {
+        return addCreatureReady(player1, new GuildThief());
     }
 
     private void addAbilityMana() {
