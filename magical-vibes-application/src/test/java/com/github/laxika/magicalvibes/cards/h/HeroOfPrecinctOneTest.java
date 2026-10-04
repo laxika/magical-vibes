@@ -2,10 +2,15 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GloryscaleViashino;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GrowthSpiral;
+import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HeroOfPrecinctOne.class, GloryscaleViashino.class, GrizzlyBears.class,
+        GrowthSpiral.class, MycosynthLattice.class})
 class HeroOfPrecinctOneTest extends BaseCardTest {
 
     @Test
@@ -49,15 +56,75 @@ class HeroOfPrecinctOneTest extends BaseCardTest {
     @DisplayName("An opponent casting a multicolored spell does not create a Human token")
     void opponentSpellDoesNotCreateHuman() {
         addCreatureReady(player1, new HeroOfPrecinctOne());
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        prepareMainPhase(player2);
         harness.setHand(player2, List.of(new GloryscaleViashino()));
         addGloryscaleViashinoMana(player2);
 
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
 
+        assertThat(countPermanents(player1, "Human")).isZero();
+    }
+
+    @Test
+    @DisplayName("A multicolored instant on an opponent's turn creates its token before the spell resolves")
+    void instantOnOpponentTurnCreatesHumanBeforeSpellResolves() {
+        addCreatureReady(player1, new HeroOfPrecinctOne());
+        prepareMainPhase(player2);
+        harness.setHand(player1, List.of(new GrowthSpiral()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0);
+        assertThat(countPermanents(player1, "Human")).isZero();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Human")).isEqualTo(1);
+        Permanent token = findPermanent(player1, "Human");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.getCard().getColors()).containsExactly(CardColor.WHITE);
+        assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.HUMAN);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+        assertThat(countPermanents(player2, "Human")).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(GrowthSpiral.class);
+    }
+
+    @Test
+    @DisplayName("Each Hero creates a token for the same multicolored spell")
+    void multipleHeroesEachCreateHuman() {
+        addCreatureReady(player1, new HeroOfPrecinctOne());
+        addCreatureReady(player1, new HeroOfPrecinctOne());
+        prepareMainPhase(player1);
+        harness.setHand(player1, List.of(new GrowthSpiral()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0);
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Human")).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Human")).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A spell made colorless by Mycosynth Lattice does not trigger Hero")
+    void colorlessSpellUnderMycosynthLatticeDoesNotTrigger() {
+        addCreatureReady(player1, new HeroOfPrecinctOne());
+        harness.addToBattlefield(player2, new MycosynthLattice());
+        prepareMainPhase(player1);
+        harness.setHand(player1, List.of(new GrowthSpiral()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
         assertThat(countPermanents(player1, "Human")).isZero();
     }
 
