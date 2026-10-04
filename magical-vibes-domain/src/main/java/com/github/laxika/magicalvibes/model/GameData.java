@@ -6844,6 +6844,8 @@ public class GameData {
         copy.eachPlayerSacrificeOrLoseLife.remaining.addAll(this.eachPlayerSacrificeOrLoseLife.remaining);
         copy.eachPlayerSacrificeOrLoseLife.currentPlayerId = this.eachPlayerSacrificeOrLoseLife.currentPlayerId;
         copy.eachPlayerSacrificeOrLoseLife.chosenMode = this.eachPlayerSacrificeOrLoseLife.chosenMode;
+        copy.eachPlayerSacrificeOrLoseLife.sacrificeIds.addAll(this.eachPlayerSacrificeOrLoseLife.sacrificeIds);
+        copy.eachPlayerSacrificeOrLoseLife.lifeLossPlayerIds.addAll(this.eachPlayerSacrificeOrLoseLife.lifeLossPlayerIds);
         copy.villainousChoice.active = this.villainousChoice.active;
         copy.villainousChoice.remaining.addAll(this.villainousChoice.remaining);
         copy.villainousChoice.currentPlayerId = this.villainousChoice.currentPlayerId;

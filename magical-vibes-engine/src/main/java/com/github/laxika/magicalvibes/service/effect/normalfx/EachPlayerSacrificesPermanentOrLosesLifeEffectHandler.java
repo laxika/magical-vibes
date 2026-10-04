@@ -73,14 +73,13 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements No
 
             List<UUID> matchingIds = matchingPermanentIds(gameData, entry, effect, playerId);
             if (matchingIds.isEmpty()) {
-                lifeSupport.applyLifeLoss(gameData, playerId,
-                        lifeLoss(gameData, entry, effect, playerId), sourceName);
+                state.lifeLossPlayerIds.add(playerId);
                 continue;
             }
 
             if (!effect.mayChooseLife()) {
                 if (matchingIds.size() == 1) {
-                    sacrifice(gameData, matchingIds.getFirst(), playerId);
+                    state.sacrificeIds.add(matchingIds.getFirst());
                     continue;
                 }
                 gameData.rerunCurrentEffectAfterInteraction = true;
@@ -105,6 +104,11 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements No
             return;
         }
 
+        destructionSupport.performSimultaneousSacrifice(gameData, state.sacrificeIds);
+        for (UUID playerId : state.lifeLossPlayerIds) {
+            lifeSupport.applyLifeLoss(gameData, playerId,
+                    lifeLoss(gameData, entry, effect, playerId), sourceName);
+        }
         state.reset();
         gameData.rerunCurrentEffectAfterInteraction = false;
     }
@@ -117,11 +121,10 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements No
                 effect.sacrificeDescription()).equals(chosenMode)) {
             List<UUID> matchingIds = matchingPermanentIds(gameData, entry, effect, playerId);
             if (matchingIds.isEmpty()) {
-                lifeSupport.applyLifeLoss(gameData, playerId,
-                        lifeLoss(gameData, entry, effect, playerId), entry.getCard().getName());
+                state.lifeLossPlayerIds.add(playerId);
                 advance(gameData, entry, effect, state);
             } else if (matchingIds.size() == 1) {
-                sacrifice(gameData, matchingIds.getFirst(), playerId);
+                state.sacrificeIds.add(matchingIds.getFirst());
                 advance(gameData, entry, effect, state);
             } else {
                 gameData.rerunCurrentEffectAfterInteraction = true;
@@ -132,8 +135,7 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements No
             return;
         }
 
-        lifeSupport.applyLifeLoss(gameData, playerId,
-                lifeLoss(gameData, entry, effect, playerId), entry.getCard().getName());
+        state.lifeLossPlayerIds.add(playerId);
         advance(gameData, entry, effect, state);
     }
 

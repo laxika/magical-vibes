@@ -740,6 +740,12 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         UUID sacrificingPlayerId = sacrificeCreature.sacrificingPlayerId();
+        if (gameData.eachPlayerSacrificeOrLoseLife.active
+                && gameData.rerunCurrentEffectAfterInteraction) {
+            gameData.eachPlayerSacrificeOrLoseLife.sacrificeIds.add(permanentId);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         Card sacrificedCard = target.getCard();
         permanentRemovalService.sacrificePermanentToGraveyard(gameData, target);
 

@@ -6512,6 +6512,18 @@ public class AbilityActivationService {
                 && gameQueryService.cantHaveCounters(gameData, permanent)) {
             throw new IllegalStateException("Counters can't be put on this permanent");
         }
+        boolean requiresMinusCounters = abilityEffects.stream().anyMatch(effect ->
+                effect instanceof PutCounterOnSourceCost cost && cost.powerModifier() < 0
+                        || effect instanceof PutTypedCounterOnSourceCost typedCost
+                        && typedCost.counterType() == CounterType.MINUS_ONE_MINUS_ONE);
+        boolean requiresPlusCounters = abilityEffects.stream().anyMatch(effect ->
+                effect instanceof PutCounterOnSourceCost cost && cost.powerModifier() > 0
+                        || effect instanceof PutTypedCounterOnSourceCost typedCost
+                        && typedCost.counterType() == CounterType.PLUS_ONE_PLUS_ONE);
+        if ((requiresMinusCounters && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, permanent))
+                || (requiresPlusCounters && gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent))) {
+            throw new IllegalStateException("Required counters can't be put on this permanent");
+        }
 
         // Untap requirement ({Q}): the permanent must be tapped, and creatures obey the same
         // summoning-sickness restriction as {T} (CR 302.6).

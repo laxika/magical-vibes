@@ -23,9 +23,8 @@ class BasilicaGuardsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BasilicaGuards());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
         harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -75,9 +74,8 @@ class BasilicaGuardsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BasilicaGuards());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-
         harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(2);
@@ -86,7 +84,8 @@ class BasilicaGuardsTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStopAtStep(TurnStep.PRECOMBAT_MAIN,
+                () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertLife(player1, 21);
         harness.assertLife(player2, 19);
@@ -99,9 +98,8 @@ class BasilicaGuardsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BasilicaGuards());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-
         harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.BLACK, 1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
