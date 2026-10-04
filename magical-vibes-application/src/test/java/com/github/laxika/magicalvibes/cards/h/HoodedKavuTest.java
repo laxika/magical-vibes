@@ -68,8 +68,7 @@ class HoodedKavuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatCode(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -86,8 +85,53 @@ class HoodedKavuTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Fear is gained only when the activated ability resolves and only by its source")
+    void fearWaitsForResolutionAndAffectsOnlySource() {
+        Permanent kavu = addCreatureReady(player1, new HoodedKavu());
+        Permanent otherKavu = addCreatureReady(player1, new HoodedKavu());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, kavu, Keyword.FEAR)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherKavu, Keyword.FEAR)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, kavu, Keyword.FEAR)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherKavu, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Hooded Kavu can activate its fear ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent kavu = harness.addToBattlefieldAndReturn(player1, new HoodedKavu());
+        kavu.setSummoningSick(true);
+        kavu.tap();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, kavu, Keyword.FEAR)).isTrue();
+        assertThat(kavu.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Without activating fear, a non-black non-artifact creature can block Hooded Kavu")
+    void ordinaryCreatureCanBlockWithoutActivation() {
+        addCreatureReady(player1, new HoodedKavu());
+        addCreatureReady(player2, new BenalishLancer());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatCode(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
