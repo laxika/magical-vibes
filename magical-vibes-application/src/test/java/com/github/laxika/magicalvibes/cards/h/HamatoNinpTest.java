@@ -65,17 +65,43 @@ class HamatoNinpTest extends BaseCardTest {
                 .hasMessageContaining("attacking or blocking creature");
     }
 
+    @Test
+    @DisplayName("Does not resolve when the target stops attacking before resolution")
+    void doesNotDamageCreatureThatLeftCombat() {
+        Permanent attacker = addCombatCreature(player2, new GrizzlyBears(), true);
+        harness.setHand(player1, List.of(new HamatoNinp()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player1, 0, attacker.getId());
+
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Hamato Ninpō");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target a blocking creature controlled by the caster")
+    void canDamageOwnBlocker() {
+        Permanent blocker = addCombatCreature(player1, new GrizzlyBears(), false);
+
+        castSpellAt(blocker.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
     private void castSpellAt(UUID targetId) {
         harness.setHand(player1, List.of(new HamatoNinp()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
     private Permanent addCombatCreature(Player owner, Card card, boolean attacking) {
-        harness.addToBattlefield(owner, card);
-        Permanent permanent = findPermanent(owner, card.getName());
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(owner, card);
         if (attacking) {
             permanent.setAttacking(true);
             permanent.setAttackTarget(player1.getId());
