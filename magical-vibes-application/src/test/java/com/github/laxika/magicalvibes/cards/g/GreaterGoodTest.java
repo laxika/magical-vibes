@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GreaterGood.class, LlanowarBehemoth.class, UtopiaTree.class, Forest.class})
 class GreaterGoodTest extends BaseCardTest {
@@ -164,6 +165,63 @@ class GreaterGoodTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The sacrifice is paid before the ability resolves")
+    void paysSacrificeBeforeDrawing() {
+        harness.addToBattlefield(player1, new GreaterGood());
+        harness.addToBattlefield(player1, new LlanowarBehemoth());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, forests(6));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Llanowar Behemoth");
+        harness.assertInGraveyard(player1, "Llanowar Behemoth");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(6);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot pay the sacrifice cost")
+    void cannotActivateWithOnlyAnOpponentsCreature() {
+        harness.addToBattlefield(player1, new GreaterGood());
+        harness.addToBattlefield(player2, new LlanowarBehemoth());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, forests(6));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Llanowar Behemoth");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(6);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A zero-power sacrifice with an empty hand completes without a discard choice")
+    void zeroPowerWithEmptyHandCompletes() {
+        harness.addToBattlefield(player1, new GreaterGood());
+        harness.addToBattlefield(player1, new UtopiaTree());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Utopia Tree");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private List<Card> forests(int count) {
