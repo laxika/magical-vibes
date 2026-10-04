@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaKavu;
+import com.github.laxika.magicalvibes.cards.c.CavernHarpy;
 import com.github.laxika.magicalvibes.cards.m.ManaCylix;
+import com.github.laxika.magicalvibes.cards.t.Terminate;
 import com.github.laxika.magicalvibes.cards.v.VolcanoImp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Hobble.class, AlphaKavu.class, ManaCylix.class, VolcanoImp.class})
+@CardUsed({Hobble.class, AlphaKavu.class, ManaCylix.class, VolcanoImp.class,
+        CavernHarpy.class, Terminate.class})
 class HobbleTest extends BaseCardTest {
 
     @Test
@@ -30,8 +33,7 @@ class HobbleTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castEnchantment(player1, 0, creature.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -100,6 +102,45 @@ class HobbleTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Hobble prevents a multicolored black creature from blocking")
+    void multicoloredBlackCreatureCannotBlock() {
+        Permanent creature = addCreatureReady(player2, new CavernHarpy());
+        attachAura(player1, creature);
+        Permanent attacker = addCreatureReady(player1, new AlphaKavu());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid blocker index");
+    }
+
+    @Test
+    @DisplayName("Hobble does not draw a card when its target is destroyed before resolution")
+    void noDrawWhenTargetIsDestroyedBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AlphaKavu());
+        harness.setLibrary(player1, List.of(new ManaCylix()));
+        harness.setHand(player1, List.of(new Hobble()));
+        harness.setHand(player2, List.of(new Terminate()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.castInstant(player2, 0, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Hobble");
+        harness.assertInGraveyard(player1, "Hobble");
+        harness.assertInGraveyard(player2, "Alpha Kavu");
     }
 
     private void attachAura(Player controller, Permanent creature) {
