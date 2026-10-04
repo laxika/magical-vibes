@@ -69,11 +69,69 @@ class HazeOfRageTest extends BaseCardTest {
 
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
 
-        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, ownCourser)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Storm copies boost creatures but do not return extra cards with buyback")
+    void stormWithBuybackReturnsOnlyOriginalCard() {
+        gd.recordSpellCast(player2.getId(), new NessianCourser());
+        Permanent courser = addCreatureReady(player1, new NessianCourser());
+        harness.setHand(player1, List.of(new HazeOfRage()));
+        addMana(4);
+
+        harness.castSorceryWithBuyback(player1, 0, null);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gqs.getEffectivePower(gd, ownCourser)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, courser)).isEqualTo(4);
+        harness.assertNotInHand(player1, "Haze of Rage");
+
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, courser)).isEqualTo(5);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Haze of Rage");
+        harness.assertNotInGraveyard(player1, "Haze of Rage");
+    }
+
+    @Test
+    @DisplayName("Recasting a bought-back Haze counts the original cast but not storm copies")
+    void recastCountsSpellsRatherThanCopies() {
+        Permanent courser = addCreatureReady(player1, new NessianCourser());
+        harness.setHand(player1, List.of(new HazeOfRage()));
+        addMana(4);
+        harness.castSorceryWithBuyback(player1, 0, null);
+        resolveAllTriggers();
+
+        addMana(4);
+        harness.castSorceryWithBuyback(player1, 0, null);
+        resolveAllTriggers();
+
+        addMana(2);
+        castHazeOfRage();
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, courser)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, courser)).isEqualTo(3);
+        harness.assertNotInHand(player1, "Haze of Rage");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void boostDoesNotApplyToLaterCreatures() {
+        harness.setHand(player1, List.of(new HazeOfRage()));
+        addMana(2);
+        castHazeOfRage();
+        resolveAllTriggers();
+
+        Permanent courser = addCreatureReady(player1, new NessianCourser());
+
+        assertThat(gqs.getEffectivePower(gd, courser)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, courser)).isEqualTo(3);
     }
 
     private void castHazeOfRage() {
