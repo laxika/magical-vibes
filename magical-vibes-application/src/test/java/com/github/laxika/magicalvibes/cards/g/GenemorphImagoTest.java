@@ -71,9 +71,7 @@ class GenemorphImagoTest extends BaseCardTest {
 
         triggerLandfall(target);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
         assertThat(target.getEffectiveToughness()).isEqualTo(2);
@@ -91,6 +89,64 @@ class GenemorphImagoTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");
+    }
+
+    @Test
+    @DisplayName("Landfall can target Genemorph Imago itself")
+    void landfallCanTargetItself() {
+        Permanent imago = harness.addToBattlefieldAndReturn(player1, new GenemorphImago());
+        harness.setHand(player1, List.of(new Forest()));
+
+        triggerLandfall(imago);
+
+        assertThat(imago.getEffectivePower()).isEqualTo(3);
+        assertThat(imago.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An opponent's land entering does not trigger landfall")
+    void opponentsLandDoesNotTrigger() {
+        harness.addToBattlefield(player1, new GenemorphImago());
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opponent lands do not count toward the six-land threshold")
+    void opponentsLandsDoNotCountTowardThreshold() {
+        Permanent imago = harness.addToBattlefieldAndReturn(player1, new GenemorphImago());
+        for (int i = 0; i < 6; i++) {
+            harness.addToBattlefield(player2, new Forest());
+        }
+        harness.setHand(player1, List.of(new Forest()));
+
+        triggerLandfall(imago);
+
+        assertThat(imago.getEffectivePower()).isEqualTo(3);
+        assertThat(imago.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Losing the sixth land before resolution gives the target base power and toughness 3/3")
+    void losingSixthLandBeforeResolutionUsesThreeThree() {
+        Permanent imago = harness.addToBattlefieldAndReturn(player1, new GenemorphImago());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new Forest());
+        }
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, imago.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        gd.playerGraveyards.get(player1.getId()).add(land.getCard());
+        harness.passBothPriorities();
+
+        assertThat(imago.getEffectivePower()).isEqualTo(3);
+        assertThat(imago.getEffectiveToughness()).isEqualTo(3);
     }
 
     private Permanent addImagoAndTarget() {
