@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.s.SavageSummoning;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.f.FreshFacedRecruit;
+import com.github.laxika.magicalvibes.cards.h.HitchclawRecluse;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GuildmagesForum.class, GrizzlyBears.class, SavageSummoning.class})
+@CardUsed({GuildmagesForum.class, FreshFacedRecruit.class, HitchclawRecluse.class, SavageSummoning.class})
 class GuildmagesForumTest extends BaseCardTest {
 
     @Test
@@ -24,13 +23,12 @@ class GuildmagesForumTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GuildmagesForum());
         harness.setHand(player1, List.of(new SavageSummoning()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "RED");
-        Card creature = multicoloredCreature();
+        FreshFacedRecruit creature = new FreshFacedRecruit();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setHand(player1, List.of(creature));
 
@@ -39,6 +37,77 @@ class GuildmagesForumTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, creature.getName())
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void manaFromTwoForumsGivesTwoCounters() {
+        harness.addToBattlefield(player1, new GuildmagesForum());
+        harness.addToBattlefield(player1, new GuildmagesForum());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "RED");
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, "WHITE");
+        harness.setHand(player1, List.of(new FreshFacedRecruit()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Fresh-Faced Recruit")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void forumManaCanPayGenericPartOfMulticoloredCreatureCost() {
+        harness.addToBattlefield(player1, new GuildmagesForum());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new FreshFacedRecruit()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Fresh-Faced Recruit")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void spendingForumManaOnAnInstantDoesNotGrantALaterCreatureACounter() {
+        harness.addToBattlefield(player1, new GuildmagesForum());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.setHand(player1, List.of(new SavageSummoning()));
+        harness.castAndResolveInstant(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new FreshFacedRecruit()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Fresh-Faced Recruit")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void unspentForumManaDoesNotGrantACounter() {
+        harness.addToBattlefield(player1, new GuildmagesForum());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "BLUE");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new FreshFacedRecruit()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Fresh-Faced Recruit")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
 
     @Test
@@ -59,7 +128,7 @@ class GuildmagesForumTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "RED");
 
-        Card creature = multicoloredCreature();
+        FreshFacedRecruit creature = new FreshFacedRecruit();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.setHand(player1, List.of(creature));
         harness.castCreature(player1, 0);
@@ -77,24 +146,13 @@ class GuildmagesForumTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "GREEN");
 
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player1, List.of(new HitchclawRecluse()));
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(findPermanent(player1, "Grizzly Bears")
+        assertThat(findPermanent(player1, "Hitchclaw Recluse")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    private Card multicoloredCreature() {
-        Card card = new Card();
-        card.setName("Test Red-Blue Creature");
-        card.setType(CardType.CREATURE);
-        card.setManaCost("{1}{R}");
-        card.setColor(CardColor.RED);
-        card.setColors(List.of(CardColor.RED, CardColor.BLUE));
-        card.setPower(2);
-        card.setToughness(2);
-        return card;
-    }
 }
