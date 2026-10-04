@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HofriGhostforge.class, GrizzlyBears.class, Shock.class, Clone.class})
 class HofriGhostforgeTest extends BaseCardTest {
 
     @Test
@@ -88,8 +91,65 @@ class HofriGhostforgeTest extends BaseCardTest {
     private void destroyWithShock(Permanent target) {
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+    }
+
+    @Test
+    @DisplayName("Copies the creature's last battlefield copy values rather than its graveyard card")
+    void preservesCopyValuesAtDeath() {
+        harness.addToBattlefield(player1, new HofriGhostforge());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        destroyWithShock(findPermanent(player1, "Grizzly Bears"));
+        harness.passBothPriorities();
+
+        Permanent copy = findPermanent(player1, "Grizzly Bears");
+        assertThat(copy).isNotNull();
+        assertThat(copy.getCard().isToken()).isTrue();
+        assertThat(copy.getCard().getSubtypes()).contains(CardSubtype.BEAR, CardSubtype.SPIRIT);
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(3);
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card().getName().equals("Clone"));
+    }
+
+    @Test
+    @DisplayName("Hofri does not trigger for its own death")
+    void doesNotCopyItself() {
+        Permanent hofri = harness.addToBattlefieldAndReturn(player1, new HofriGhostforge());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, hofri));
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Hofri Ghostforge");
+        assertThat(findPermanents(player1, "Hofri Ghostforge")).isEmpty();
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Spirit's link survives Hofri leaving and returns its card when bounced")
+    void linkedReturnWorksAfterHofriLeaves() {
+        Permanent hofri = harness.addToBattlefieldAndReturn(player1, new HofriGhostforge());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        destroyWithShock(findPermanent(player1, "Grizzly Bears"));
+        harness.passBothPriorities();
+        Permanent copy = findPermanent(player1, "Grizzly Bears");
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, hofri));
+        assertThat(gqs.getEffectivePower(gd, copy)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, copy, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, copy, Keyword.TRAMPLE)).isFalse();
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, copy));
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.exiledCards).isEmpty();
     }
 
     private Card spiritToken(String name, int power, int toughness) {
