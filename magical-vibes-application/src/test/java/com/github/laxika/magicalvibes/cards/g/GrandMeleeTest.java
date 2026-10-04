@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.AscendingAven;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GrandMelee.class, GlorySeeker.class})
+@CardUsed({GrandMelee.class, GlorySeeker.class, AscendingAven.class})
 class GrandMeleeTest extends BaseCardTest {
 
     @Test
@@ -66,9 +67,7 @@ class GrandMeleeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrandMelee());
         Permanent attacker = addCreatureReady(player1, new GlorySeeker());
         Permanent blocker = addCreatureReady(player2, new GlorySeeker());
-        attacker.setAttacking(true);
-        attacker.setAttackTarget(player2.getId());
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)
@@ -86,13 +85,92 @@ class GrandMeleeTest extends BaseCardTest {
     void creaturesThatCannotBlockAreExempt() {
         harness.addToBattlefield(player1, new GrandMelee());
         Permanent attacker = addCreatureReady(player1, new GlorySeeker());
-        attacker.setAttacking(true);
-        attacker.setAttackTarget(player2.getId());
         Permanent blocker = addCreatureReady(player2, new GlorySeeker());
         blocker.tap();
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Tapped creatures are not forced to attack")
+    void tappedCreaturesAreExemptFromAttacking() {
+        harness.addToBattlefield(player1, new GrandMelee());
+        addCreatureReady(player1, new GlorySeeker()).tap();
+
+        assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Every able creature must attack, not just one")
+    void cannotLeaveAnAbleCreatureOutOfAttack() {
+        harness.addToBattlefield(player1, new GrandMelee());
+        Permanent first = addCreatureReady(player1, new GlorySeeker());
+        addCreatureReady(player1, new GlorySeeker());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(first))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
+
+    @Test
+    @DisplayName("Summoning sickness does not exempt a creature from blocking")
+    void summoningSickCreatureMustBlock() {
+        harness.addToBattlefield(player2, new GrandMelee());
+        Permanent attacker = addCreatureReady(player1, new GlorySeeker());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GlorySeeker());
+        blocker.setSummoningSick(true);
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Losing Grand Melee's abilities removes its block requirement")
+    void losingAllAbilitiesRemovesBlockRequirement() {
+        Permanent melee = harness.addToBattlefieldAndReturn(player1, new GrandMelee());
+        melee.setLosesAllAbilitiesUntilEndOfTurn(true);
+        addCreatureReady(player1, new GlorySeeker());
+        addCreatureReady(player2, new GlorySeeker());
+        declareAttackersAndPrepareBlockers(List.of(1));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Ground creatures are not forced to block flying attackers")
+    void evasionMakesBlockingOptionalWhenNoLegalBlockExists() {
+        harness.addToBattlefield(player1, new GrandMelee());
+        addCreatureReady(player1, new AscendingAven());
+        addCreatureReady(player2, new GlorySeeker());
+        declareAttackersAndPrepareBlockers(List.of(1));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("Every able defender must block even when another creature already blocks")
+    void cannotLeaveAnAbleDefenderOutOfBlocks() {
+        harness.addToBattlefield(player1, new GrandMelee());
+        addCreatureReady(player1, new GlorySeeker());
+        addCreatureReady(player2, new GlorySeeker());
+        addCreatureReady(player2, new GlorySeeker());
+        declareAttackersAndPrepareBlockers(List.of(1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
     }
 }
