@@ -1,25 +1,24 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HanweirBattlements.class, HanweirGarrison.class, HanweirTheWrithingTownship.class})
 class HanweirBattlementsTest extends BaseCardTest {
 
     @Test
     @DisplayName("{R}, {T} grants haste to a target creature")
     void grantsHaste() {
         harness.addToBattlefield(player1, new HanweirBattlements());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new HanweirGarrison());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 1, null, bears.getId());
@@ -43,7 +42,7 @@ class HanweirBattlementsTest extends BaseCardTest {
     @DisplayName("Meld ability exiles both halves and melds into Hanweir, the Writhing Township")
     void meldsWithGarrison() {
         Permanent battlements = harness.addToBattlefieldAndReturn(player1, new HanweirBattlements());
-        Permanent garrison = harness.addToBattlefieldAndReturn(player1, namedGarrison());
+        Permanent garrison = harness.addToBattlefieldAndReturn(player1, new HanweirGarrison());
         addMeldMana();
 
         harness.activateAbility(player1, 0, 2, null, null);
@@ -61,7 +60,7 @@ class HanweirBattlementsTest extends BaseCardTest {
     @DisplayName("Meld ability does nothing without an owned Hanweir Garrison")
     void doesNothingWithoutPartner() {
         harness.addToBattlefield(player1, new HanweirBattlements());
-        harness.addToBattlefield(player2, namedGarrison());
+        harness.addToBattlefield(player2, new HanweirGarrison());
         addMeldMana();
 
         harness.activateAbility(player1, 0, 2, null, null);
@@ -76,12 +75,20 @@ class HanweirBattlementsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
     }
 
-    private static Card namedGarrison() {
-        Card partner = new Card();
-        partner.setName("Hanweir Garrison");
-        partner.setType(CardType.CREATURE);
-        partner.setPower(2);
-        partner.setToughness(3);
-        return partner;
+    @Test
+    @DisplayName("A token copy of Garrison is exiled but cannot meld")
+    void tokenGarrisonCannotMeld() {
+        harness.addToBattlefield(player1, new HanweirBattlements());
+        HanweirGarrison token = new HanweirGarrison();
+        token.setToken(true);
+        harness.addToBattlefield(player1, token);
+        addMeldMana();
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hanweir Battlements");
+        harness.assertNotOnBattlefield(player1, "Hanweir Garrison");
+        harness.assertNotOnBattlefield(player1, "Hanweir, the Writhing Township");
     }
 }
