@@ -50,10 +50,8 @@ class HeartwoodGiantTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate without a Forest to sacrifice")
     void cannotActivateWithoutForest() {
-        harness.addToBattlefield(player1, new HeartwoodGiant());
+        addCreatureReady(player1, new HeartwoodGiant());
         harness.addToBattlefield(player1, new Island());
-
-        findPermanent(player1, "Heartwood Giant").setSummoningSick(false);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -91,5 +89,52 @@ class HeartwoodGiantTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Tapping and sacrificing are paid before damage resolves")
+    void paysCostsBeforeResolution() {
+        Permanent giant = addCreatureReady(player1, new HeartwoodGiant());
+        harness.addToBattlefield(player1, new Forest());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(giant.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Can sacrifice a tapped Forest and target its own controller")
+    void sacrificesTappedForestToDamageController() {
+        addCreatureReady(player1, new HeartwoodGiant());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setTapped(true);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Cannot activate an already tapped Heartwood Giant")
+    void cannotActivateWhenTapped() {
+        Permanent giant = addCreatureReady(player1, new HeartwoodGiant());
+        giant.setTapped(true);
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Forest");
     }
 }
