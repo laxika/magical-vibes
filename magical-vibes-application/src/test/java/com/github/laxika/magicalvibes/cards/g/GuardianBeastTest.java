@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.Aladdin;
 import com.github.laxika.magicalvibes.cards.a.AnimateArtifact;
+import com.github.laxika.magicalvibes.cards.a.AuraGraft;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.m.MagusOfTheUnseen;
 import com.github.laxika.magicalvibes.cards.m.ManaPrism;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Aladdin.class, AnimateArtifact.class, Disenchant.class, GuardianBeast.class,
+@CardUsed({Aladdin.class, AnimateArtifact.class, AuraGraft.class, Disenchant.class, GuardianBeast.class,
         MagusOfTheUnseen.class, ManaPrism.class, Spellbook.class, StealArtifact.class})
 class GuardianBeastTest extends BaseCardTest {
 
@@ -37,8 +38,7 @@ class GuardianBeastTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player2, 0, prism.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, prism.getId());
 
         assertThat(harness.getPermanentId(player1, "Mana Prism")).isEqualTo(prism.getId());
     }
@@ -50,10 +50,14 @@ class GuardianBeastTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GuardianBeast());
         harness.setHand(player2, List.of(new AnimateArtifact()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
 
         assertThatThrownBy(() -> harness.castEnchantment(player2, 0, prism.getId()))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be enchanted");
     }
 
     @Test
@@ -128,7 +132,8 @@ class GuardianBeastTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         assertThatThrownBy(() -> harness.castEnchantment(player2, 0, artifact.getId()))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be enchanted");
     }
 
     @Test
@@ -161,5 +166,165 @@ class GuardianBeastTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
+    }
+
+    @Test
+    @DisplayName("Guardian Beast leaves Auras already attached to noncreature artifacts in place")
+    void doesNotRemoveExistingAuras() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ManaPrism());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new StealArtifact()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, artifact.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Steal Artifact");
+        assertThat(aura.getAttachedTo()).isEqualTo(artifact.getId());
+
+        harness.enterBattlefieldAndReturn(player1, new GuardianBeast());
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura, artifact);
+        assertThat(aura.getAttachedTo()).isEqualTo(artifact.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Guardian Beast also prevents its controller's Auras from enchanting protected artifacts")
+    void preventsOwnAuras() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ManaPrism());
+        harness.addToBattlefield(player1, new GuardianBeast());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new AnimateArtifact()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be enchanted");
+    }
+
+    @Test
+    @DisplayName("A tapped Guardian Beast allows an artifact to be enchanted and stolen")
+    void tappedGuardianAllowsAuraAndControlChange() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ManaPrism());
+        Permanent guardian = harness.addToBattlefieldAndReturn(player1, new GuardianBeast());
+        guardian.tap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new StealArtifact()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player2, 0, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        assertThat(findPermanent(player2, "Steal Artifact").getAttachedTo()).isEqualTo(artifact.getId());
+    }
+
+    @Test
+    @DisplayName("An Aura on the stack cannot resolve onto an artifact protected before resolution")
+    void auraFailsIfGuardianUntapsBeforeResolution() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ManaPrism());
+        Permanent guardian = harness.addToBattlefieldAndReturn(player1, new GuardianBeast());
+        guardian.tap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new StealArtifact()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player2, 0, artifact.getId());
+
+        guardian.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card instanceof StealArtifact);
+    }
+
+    @Test
+    @DisplayName("Tapping Guardian Beast before destruction resolves removes indestructible")
+    void tappingBeforeResolutionAllowsDestruction() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ManaPrism());
+        Permanent guardian = harness.addToBattlefieldAndReturn(player1, new GuardianBeast());
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, artifact.getId());
+
+        guardian.tap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(artifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());
+    }
+
+    @Test
+    @DisplayName("Untapping Guardian Beast before destruction resolves restores indestructible")
+    void untappingBeforeResolutionPreventsDestruction() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ManaPrism());
+        Permanent guardian = harness.addToBattlefieldAndReturn(player1, new GuardianBeast());
+        guardian.tap();
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, artifact.getId());
+
+        guardian.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact);
+    }
+
+    @Test
+    @DisplayName("Animated artifacts are creatures and do not receive Guardian Beast's indestructible")
+    void doesNotProtectAnimatedArtifactsFromDestruction() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ManaPrism());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new AnimateArtifact()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player1, 0, artifact.getId());
+        harness.passBothPriorities();
+        harness.enterBattlefieldAndReturn(player1, new GuardianBeast());
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player2, 0, artifact.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(artifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());
+    }
+
+    @Test
+    @DisplayName("Aura Graft cannot move an Aura onto an artifact protected by Guardian Beast")
+    void protectedArtifactsAreNotLegalAuraGraftDestinations() {
+        Permanent originalHost = harness.addToBattlefieldAndReturn(player2, new ManaPrism());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new AnimateArtifact()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player2, 0, originalHost.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player2, "Animate Artifact");
+        Permanent protectedArtifact = harness.addToBattlefieldAndReturn(player1, new ManaPrism());
+        harness.enterBattlefieldAndReturn(player1, new GuardianBeast());
+        harness.setHand(player1, List.of(new AuraGraft()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(aura.getAttachedTo()).isEqualTo(originalHost.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura, protectedArtifact);
     }
 }
