@@ -1,46 +1,40 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
+import com.github.laxika.magicalvibes.cards.c.Clone;
+import com.github.laxika.magicalvibes.cards.b.BlinkOfAnEye;
+import com.github.laxika.magicalvibes.cards.i.InvokeTheDivine;
+import com.github.laxika.magicalvibes.cards.d.DivineVisitation;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HelmOfTheHost.class, GrizzlyBears.class, HallarTheFirefletcher.class,
+        Clone.class, InvokeTheDivine.class, BlinkOfAnEye.class, DivineVisitation.class})
 class HelmOfTheHostTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    
-
     @Test
-    @DisplayName("Helm of the Host has equip {5} ability")
-    void hasEquipAbility() {
-        HelmOfTheHost card = new HelmOfTheHost();
+    @DisplayName("Equipping requires five mana")
+    void equipRequiresFiveMana() {
+        Permanent helm = addHelmReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{5}");
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getTargetFilter())
-                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().getFirst().getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(EquipEffect.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(helm.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Equip ability =====
 
     @Test
     @DisplayName("Resolving equip ability attaches Helm to target creature")
@@ -55,8 +49,6 @@ class HelmOfTheHostTest extends BaseCardTest {
         assertThat(helm.getAttachedTo()).isEqualTo(creature.getId());
     }
 
-    // ===== Beginning of combat trigger =====
-
     @Test
     @DisplayName("At beginning of combat, creates a token copy of equipped creature")
     void createsTokenCopyAtBeginningOfCombat() {
@@ -67,8 +59,7 @@ class HelmOfTheHostTest extends BaseCardTest {
         // Advance from precombat main to beginning of combat
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to BEGINNING_OF_COMBAT, triggers fire
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities(); // resolve the triggered ability
 
         // Should have the original creature + a token copy
@@ -87,15 +78,14 @@ class HelmOfTheHostTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities();
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears") && p.getCard().isToken())
                 .findFirst().orElse(null);
         assertThat(token).isNotNull();
-        assertThat(token.getCard().getKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -107,8 +97,7 @@ class HelmOfTheHostTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities();
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
@@ -127,8 +116,7 @@ class HelmOfTheHostTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities();
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
@@ -148,8 +136,7 @@ class HelmOfTheHostTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities();
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
@@ -169,7 +156,7 @@ class HelmOfTheHostTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
         harness.passBothPriorities();
 
         long tokenCount = gd.playerBattlefields.get(player1.getId()).stream()
@@ -188,8 +175,8 @@ class HelmOfTheHostTest extends BaseCardTest {
         // Opponent's turn — trigger should not fire
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.stack).isEmpty();
 
         long tokenCount = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken())
@@ -206,8 +193,7 @@ class HelmOfTheHostTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to BEGINNING_OF_COMBAT, trigger on stack
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
 
         // Remove the equipped creature before resolution
         gd.playerBattlefields.get(player1.getId()).remove(creature);
@@ -221,19 +207,184 @@ class HelmOfTheHostTest extends BaseCardTest {
         assertThat(tokenCount).isEqualTo(0);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Copying a Helm token preserves nonlegendary status but does not copy granted haste")
+    void copyingTokenDoesNotCopyGrantedHaste() {
+        Permanent creature = addLegendaryCreature(player1);
+        Permanent helm = addHelmReady(player1);
+        helm.setAttachedTo(creature.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.passBothPriorities();
+
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()).findFirst().orElseThrow();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, token.getId());
+
+        Permanent clone = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getOriginalCard() instanceof Clone).findFirst().orElseThrow();
+        assertThat(clone.getCard().getSupertypes()).doesNotContain(CardSupertype.LEGENDARY);
+        assertThat(gqs.hasKeyword(gd, clone, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The trigger still copies the last equipped creature after Helm leaves")
+    void createsTokenAfterHelmLeaves() {
+        Permanent creature = addLegendaryCreature(player1);
+        Permanent helm = addHelmReady(player1);
+        helm.setAttachedTo(creature.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+
+        harness.setHand(player2, java.util.List.of(new InvokeTheDivine()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.castAndResolveInstant(player2, 0, helm.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(p -> {
+                    assertThat(p.getCard().isToken()).isTrue();
+                    assertThat(p.getCard().getName()).isEqualTo(creature.getCard().getName());
+                });
+    }
+
+    @Test
+    @DisplayName("After Helm leaves, the trigger uses last known information if the equipped creature also leaves")
+    void createsTokenAfterHelmAndCreatureLeave() {
+        Permanent creature = addLegendaryCreature(player1);
+        Permanent helm = addHelmReady(player1);
+        helm.setAttachedTo(creature.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+
+        harness.setHand(player2, java.util.List.of(new InvokeTheDivine(), new BlinkOfAnEye()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, helm.getId());
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anySatisfy(p -> {
+                    assertThat(p.getCard().isToken()).isTrue();
+                    assertThat(p.getCard().getName()).isEqualTo("Hallar, the Firefletcher");
+                    assertThat(p.getCard().getSupertypes()).doesNotContain(CardSupertype.LEGENDARY);
+                    assertThat(gqs.hasKeyword(gd, p, Keyword.HASTE)).isTrue();
+                });
+    }
+
+    @Test
+    @DisplayName("The creature equipped when the trigger resolves is copied")
+    void copiesCreatureEquippedAtResolution() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addLegendaryCreature(player1);
+        Permanent helm = addHelmReady(player1);
+        helm.setAttachedTo(first.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        helm.setAttachedTo(second.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken())
+                .singleElement().satisfies(p ->
+                        assertThat(p.getCard().getName()).isEqualTo(second.getCard().getName()));
+    }
+
+    @Test
+    @DisplayName("Helm's controller receives the token even if the equipped creature is controlled by an opponent")
+    void tokenBelongsToHelmController() {
+        Permanent creature = addLegendaryCreature(player2);
+        Permanent helm = addHelmReady(player1);
+        helm.setAttachedTo(creature.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken()).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("Divine Visitation's replacement token still gains haste from Helm")
+    void replacementTokenGainsHaste() {
+        Permanent creature = addLegendaryCreature(player1);
+        Permanent helm = addHelmReady(player1);
+        harness.addToBattlefield(player1, new DivineVisitation());
+        helm.setAttachedTo(creature.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken()).singleElement().satisfies(p -> {
+                    assertThat(p.getCard().getName()).isEqualTo("Angel");
+                    assertThat(gqs.hasKeyword(gd, p, Keyword.FLYING)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, p, Keyword.VIGILANCE)).isTrue();
+                    assertThat(gqs.hasKeyword(gd, p, Keyword.HASTE)).isTrue();
+                });
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void equipRejectsOpponentsCreature() {
+        Permanent helm = addHelmReady(player1);
+        Permanent creature = addLegendaryCreature(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(helm.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated during combat")
+    void equipRequiresSorceryTiming() {
+        Permanent helm = addHelmReady(player1);
+        Permanent creature = addLegendaryCreature(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(helm.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("A token copy retains all of the equipped creature's colors")
+    void copiesAllColorsOfMulticoloredCreature() {
+        Permanent creature = addLegendaryCreature(player1);
+        Permanent helm = addHelmReady(player1);
+        helm.setAttachedTo(creature.getId());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken()).singleElement().satisfies(p ->
+                        assertThat(gqs.getEffectiveColors(gd, p))
+                                .containsExactlyInAnyOrderElementsOf(gqs.getEffectiveColors(gd, creature)));
+    }
 
     private Permanent addHelmReady(Player player) {
-        Permanent perm = new Permanent(new HelmOfTheHost());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new HelmOfTheHost());
     }
 
     private Permanent addLegendaryCreature(Player player) {
-        Permanent perm = new Permanent(new HallarTheFirefletcher());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new HallarTheFirefletcher());
     }
 }
