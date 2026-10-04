@@ -69,4 +69,37 @@ class HengeGuardianTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, guardian, Keyword.TRAMPLE)).isTrue();
     }
+
+    @Test
+    @DisplayName("A tapped Guardian can activate without untapping")
+    void canActivateWhileTapped() {
+        Permanent guardian = addCreatureReady(player1, new HengeGuardian());
+        guardian.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, guardian, Keyword.TRAMPLE)).isTrue();
+        assertThat(guardian.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only the source Guardian gains trample, and only after resolution")
+    void grantsTrampleOnlyToSourceOnResolution() {
+        Permanent otherGuardian = addCreatureReady(player1, new HengeGuardian());
+        Permanent guardian = addCreatureReady(player1, new HengeGuardian());
+        Permanent opposingGuardian = addCreatureReady(player2, new HengeGuardian());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(gqs.hasKeyword(gd, guardian, Keyword.TRAMPLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, guardian, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherGuardian, Keyword.TRAMPLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingGuardian, Keyword.TRAMPLE)).isFalse();
+    }
 }
