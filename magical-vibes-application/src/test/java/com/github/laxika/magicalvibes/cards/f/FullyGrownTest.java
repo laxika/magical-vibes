@@ -24,15 +24,12 @@ class FullyGrownTest extends BaseCardTest {
     @Test
     @DisplayName("Gives the target creature +3/+3 and a trample counter")
     void givesBoostAndTrampleCounter() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new FullyGrown()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(3);
         assertThat(bear.getToughnessModifier()).isEqualTo(3);
         assertThat(bear.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
@@ -42,19 +39,16 @@ class FullyGrownTest extends BaseCardTest {
     @Test
     @DisplayName("The power and toughness boost expires but the trample counter remains")
     void boostExpiresButCounterRemains() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new FullyGrown()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getToughnessModifier()).isZero();
         assertThat(bear.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
@@ -62,9 +56,60 @@ class FullyGrownTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can boost an opponent's creature and give it a trample counter")
+    void canTargetOpponentsCreature() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FullyGrown()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(bear.getPowerModifier()).isEqualTo(3);
+        assertThat(bear.getToughnessModifier()).isEqualTo(3);
+        assertThat(bear.getCounterCount(CounterType.TRAMPLE)).isEqualTo(1);
+        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated casts stack the boosts and add separate trample counters")
+    void repeatedCastsStack() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FullyGrown(), new FullyGrown()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(bear.getPowerModifier()).isEqualTo(6);
+        assertThat(bear.getToughnessModifier()).isEqualTo(6);
+        assertThat(bear.getCounterCount(CounterType.TRAMPLE)).isEqualTo(2);
+        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not affect a creature that leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FullyGrown()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castInstant(player1, 0, bear.getId());
+        bear.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bear);
+        harness.passBothPriorities();
+
+        assertThat(bear.getPowerModifier()).isZero();
+        assertThat(bear.getToughnessModifier()).isZero();
+        assertThat(bear.getCounterCount(CounterType.TRAMPLE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof FullyGrown);
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new FullyGrown()));
         harness.addMana(player1, ManaColor.GREEN, 3);
