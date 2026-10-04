@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.c.CivicGardener;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GalaGreeters.class, GrizzlyBears.class})
+@CardUsed({GalaGreeters.class, CivicGardener.class})
 class GalaGreetersTest extends BaseCardTest {
 
     private static final String COUNTER = "Put a +1/+1 counter on this creature.";
@@ -24,7 +26,7 @@ class GalaGreetersTest extends BaseCardTest {
     void eachModeCanBeChosenOncePerTurn() {
         var greeters = harness.addToBattlefieldAndReturn(player1, new GalaGreeters());
         harness.setLife(player1, 20);
-        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new CivicGardener(), new CivicGardener(), new CivicGardener()));
         harness.addMana(player1, ManaColor.GREEN, 6);
 
         castCreatureAndChoose(COUNTER);
@@ -34,7 +36,7 @@ class GalaGreetersTest extends BaseCardTest {
         assertThat(greeters.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1)
                 .allMatch(permanent -> permanent.isTapped());
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        harness.assertLife(player1, 22);
     }
 
     @Test
@@ -42,7 +44,7 @@ class GalaGreetersTest extends BaseCardTest {
     void triggerHasNoEffectAfterAllModesWereChosen() {
         harness.addToBattlefield(player1, new GalaGreeters());
         harness.setHand(player1, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new CivicGardener(), new CivicGardener(), new CivicGardener(), new CivicGardener()));
         harness.addMana(player1, ManaColor.GREEN, 8);
 
         castCreatureAndChoose(COUNTER);
@@ -73,7 +75,7 @@ class GalaGreetersTest extends BaseCardTest {
     @DisplayName("Gala Greeters does not trigger for an opponent's creature")
     void doesNotTriggerForOpponentsCreature() {
         harness.addToBattlefield(player1, new GalaGreeters());
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new CivicGardener()));
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.forceActivePlayer(player2);
 
@@ -82,6 +84,53 @@ class GalaGreetersTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Gala Greeters can choose the same mode independently")
+    void modeRestrictionsAreIndependentForEachPermanent() {
+        harness.addToBattlefield(player1, new GalaGreeters());
+        harness.addToBattlefield(player1, new GalaGreeters());
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new CivicGardener()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, LIFE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, LIFE);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chosen modes become available again on the next turn")
+    void chosenModesResetOnTheNextTurn() {
+        var greeters = harness.addToBattlefieldAndReturn(player1, new GalaGreeters());
+        harness.setHand(player1, List.of(new CivicGardener()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        castCreatureAndChoose(COUNTER);
+
+        harness.setLibrary(player2, List.of(new CivicGardener()));
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new GalaGreeters()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+
+        harness.setLibrary(player1, List.of(new CivicGardener()));
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new CivicGardener()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        castCreatureAndChoose(COUNTER);
+
+        assertThat(greeters.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     private void castCreatureAndChoose(String mode) {
