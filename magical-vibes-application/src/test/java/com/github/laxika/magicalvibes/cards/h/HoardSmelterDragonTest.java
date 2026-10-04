@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,14 +18,15 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HoardSmelterDragon.class, FountainOfYouth.class, GrizzlyBears.class,
+        LeoninScimitar.class, RodOfRuin.class})
 class HoardSmelterDragonTest extends BaseCardTest {
 
-    // ===== Destroy artifact and boost =====
 
     @Test
     @DisplayName("Destroys target artifact and gets +X/+0 where X is that artifact's mana value")
     void destroysArtifactAndBoostsSelf() {
-        Permanent dragon = addDragon(player1);
+        Permanent dragon = addCreatureReady(player1, new HoardSmelterDragon());
         harness.addToBattlefield(player2, new RodOfRuin()); // MV = 4
         harness.addMana(player1, ManaColor.RED, 4);
 
@@ -43,7 +46,7 @@ class HoardSmelterDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Destroying a 0-MV artifact does not boost power")
     void zeroManaValueDoesNotBoost() {
-        Permanent dragon = addDragon(player1);
+        Permanent dragon = addCreatureReady(player1, new HoardSmelterDragon());
         harness.addToBattlefield(player2, new FountainOfYouth()); // MV = 0
         harness.addMana(player1, ManaColor.RED, 4);
 
@@ -61,7 +64,7 @@ class HoardSmelterDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Boost stacks when ability is activated multiple times")
     void boostStacks() {
-        Permanent dragon = addDragon(player1);
+        Permanent dragon = addCreatureReady(player1, new HoardSmelterDragon());
         harness.addToBattlefield(player2, new LeoninScimitar()); // MV = 1
         harness.addToBattlefield(player2, new RodOfRuin());      // MV = 4
         harness.addMana(player1, ManaColor.RED, 8);
@@ -81,12 +84,11 @@ class HoardSmelterDragonTest extends BaseCardTest {
         assertThat(dragon.getEffectivePower()).isEqualTo(10); // 5 + 1 + 4
     }
 
-    // ===== Targeting restrictions =====
 
     @Test
     @DisplayName("Cannot target a creature with the ability")
     void cannotTargetCreature() {
-        addDragon(player1);
+        addCreatureReady(player1, new HoardSmelterDragon());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 4);
 
@@ -95,12 +97,11 @@ class HoardSmelterDragonTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Ability fizzles if target artifact is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        Permanent dragon = addDragon(player1);
+        Permanent dragon = addCreatureReady(player1, new HoardSmelterDragon());
         harness.addToBattlefield(player2, new RodOfRuin());
         harness.addMana(player1, ManaColor.RED, 4);
 
@@ -116,15 +117,13 @@ class HoardSmelterDragonTest extends BaseCardTest {
         assertThat(dragon.getEffectivePower()).isEqualTo(5);
     }
 
-    // ===== Boost applies even if artifact is indestructible =====
 
     @Test
     @DisplayName("Boost applies even if target artifact is indestructible")
     void boostAppliesEvenIfIndestructible() {
-        Permanent dragon = addDragon(player1);
-        Permanent artifact = new Permanent(new RodOfRuin());
+        Permanent dragon = addCreatureReady(player1, new HoardSmelterDragon());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
         artifact.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
-        gd.playerBattlefields.get(player2.getId()).add(artifact);
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.activateAbility(player1, 0, null, artifact.getId());
@@ -137,12 +136,68 @@ class HoardSmelterDragonTest extends BaseCardTest {
         assertThat(dragon.getEffectivePower()).isEqualTo(9); // 5 + 4
     }
 
-    // ===== Helpers =====
 
-    private Permanent addDragon(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent perm = new Permanent(new HoardSmelterDragon());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Power bonus expires during cleanup")
+    void boostExpiresAtEndOfTurn() {
+        Permanent dragon = addCreatureReady(player1, new HoardSmelterDragon());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.passBothPriorities();
+        assertThat(dragon.getEffectivePower()).isEqualTo(9);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
+
+        assertThat(dragon.getEffectivePower()).isEqualTo(5);
+        assertThat(dragon.getEffectiveToughness()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Can destroy an artifact controlled by the Dragon's controller")
+    void canTargetOwnArtifact() {
+        Permanent dragon = addCreatureReady(player1, new HoardSmelterDragon());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new RodOfRuin());
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Rod of Ruin");
+        harness.assertInGraveyard(player1, "Rod of Ruin");
+        assertThat(dragon.getEffectivePower()).isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("Artifact is still destroyed if the Dragon leaves before resolution")
+    void destroysArtifactAfterSourceLeaves() {
+        Permanent dragon = addCreatureReady(player1, new HoardSmelterDragon());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.activateAbility(player1, 0, null, artifact.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(dragon);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Rod of Ruin");
+        harness.assertInGraveyard(player2, "Rod of Ruin");
+    }
+
+    @Test
+    @DisplayName("Ability can be activated while the Dragon is summoning sick and tapped")
+    void canActivateWithoutTapCost() {
+        Permanent dragon = harness.addToBattlefieldAndReturn(player1, new HoardSmelterDragon());
+        dragon.setSummoningSick(true);
+        dragon.setTapped(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Rod of Ruin");
+        assertThat(dragon.getEffectivePower()).isEqualTo(9);
+        assertThat(dragon.isTapped()).isTrue();
     }
 }
