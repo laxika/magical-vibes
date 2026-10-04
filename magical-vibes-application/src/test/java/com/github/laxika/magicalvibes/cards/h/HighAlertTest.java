@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AngelicWall;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ConcordiaPegasus;
 import com.github.laxika.magicalvibes.cards.w.WallOfVines;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HighAlert.class, AngelicWall.class, GrizzlyBears.class, WallOfVines.class})
+@CardUsed({HighAlert.class, AngelicWall.class, GrizzlyBears.class, WallOfVines.class, ConcordiaPegasus.class})
 class HighAlertTest extends BaseCardTest {
 
     @Test
@@ -39,9 +39,8 @@ class HighAlertTest extends BaseCardTest {
         Permanent wall = addCreatureReady(player1, new AngelicWall());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        beginAttackers(player1);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
-                () -> gs.declareAttackers(gd, player1,
+                () -> declareAttackers(player1,
                         List.of(gd.playerBattlefields.get(player1.getId()).indexOf(wall))));
 
         assertThat(wall.isAttacking()).isTrue();
@@ -54,9 +53,7 @@ class HighAlertTest extends BaseCardTest {
         Permanent wall = addCreatureReady(player2, new AngelicWall());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        beginAttackers(player2);
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player2,
+        assertThatThrownBy(() -> declareAttackers(player2,
                 List.of(gd.playerBattlefields.get(player2.getId()).indexOf(wall))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
@@ -91,16 +88,67 @@ class HighAlertTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("An unblocked creature actually deals combat damage equal to toughness")
+    void dealsToughnessInCombat() {
+        harness.addToBattlefield(player1, new HighAlert());
+        Permanent attacker = addCreatureReady(player1, new ConcordiaPegasus());
+        harness.setLife(player2, 20);
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Removing High Alert ends both static effects")
+    void staticEffectsEndWhenHighAlertLeaves() {
+        Permanent alert = harness.addToBattlefieldAndReturn(player1, new HighAlert());
+        Permanent wall = addCreatureReady(player1, new AngelicWall());
+        assertThat(gqs.getEffectiveCombatDamage(gd, wall)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player1.getId()).remove(alert);
+
+        assertThat(gqs.getEffectiveCombatDamage(gd, wall)).isZero();
+        assertThatThrownBy(() -> declareAttackers(player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(wall))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("An already untapped creature is a legal target")
+    void canTargetUntappedCreature() {
+        harness.addToBattlefield(player1, new HighAlert());
+        Permanent target = addCreatureReady(player1, new ConcordiaPegasus());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Defender permission does not override summoning sickness")
+    void doesNotAllowSummoningSickDefenderToAttack() {
+        harness.addToBattlefield(player1, new HighAlert());
+        Permanent wall = harness.addToBattlefieldAndReturn(player1, new AngelicWall());
+        wall.setSummoningSick(true);
+
+        assertThatThrownBy(() -> declareAttackers(player1,
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(wall))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+    }
+
     private Permanent addTappedCreature(Player player) {
         Permanent permanent = addCreatureReady(player, new GrizzlyBears());
         permanent.tap();
         return permanent;
     }
 
-    private void beginAttackers(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(activePlayer.getId()));
-    }
 }
