@@ -84,4 +84,51 @@ class EntrailsFeasterTest extends BaseCardTest {
         assertThat(feaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(feaster.isTapped()).isFalse();
     }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent feaster = addCreatureReady(player1, new EntrailsFeaster());
+        Card creatureCard = new ElvishWarrior();
+        harness.setGraveyard(player2, List.of(creatureCard));
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creatureCard);
+        assertThat(feaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(feaster.isTapped()).isFalse();
+    }
+
+    @Test
+    void successfulExileDoesNotUntapAnAlreadyTappedFeaster() {
+        Permanent feaster = addCreatureReady(player1, new EntrailsFeaster());
+        Card creatureCard = new ElvishWarrior();
+        harness.setGraveyard(player1, List.of(creatureCard));
+
+        advanceToUpkeep(player1);
+        feaster.setTapped(true);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(creatureCard.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(creatureCard);
+        assertThat(feaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(feaster.isTapped()).isTrue();
+    }
+
+    @Test
+    void tapsWhenBothGraveyardsAreEmpty() {
+        Permanent feaster = addCreatureReady(player1, new EntrailsFeaster());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(feaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(feaster.isTapped()).isTrue();
+    }
 }
