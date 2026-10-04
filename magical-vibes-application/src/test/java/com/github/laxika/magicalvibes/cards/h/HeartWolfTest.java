@@ -190,6 +190,58 @@ class HeartWolfTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
     }
 
+    @Test
+    @DisplayName("Can activate during an opponent's combat")
+    void canActivateDuringOpponentsCombat() {
+        Permanent wolf = addWolfReady();
+        Permanent dwarf = addDwarf();
+        int basePower = gqs.getEffectivePower(gd, dwarf);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, indexOf(wolf), 0, null, dwarf.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, dwarf)).isEqualTo(basePower + 2);
+        assertThat(gqs.hasKeyword(gd, dwarf, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not sacrifice when the target leaves before the ability resolves")
+    void targetLeavesBeforeResolution() {
+        Permanent wolf = addWolfReady();
+        Permanent dwarf = addDwarf();
+
+        enterCombat();
+        harness.activateAbility(player1, indexOf(wolf), 0, null, dwarf.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, dwarf));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Heart Wolf");
+        harness.assertInHand(player1, "Dwarven Trader");
+        assertThat(wolf.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Delayed sacrifice does not sacrifice a returned Heart Wolf")
+    void returnedWolfIsANewPermanent() {
+        Permanent wolf = addWolfReady();
+        Permanent dwarf = addDwarf();
+
+        enterCombat();
+        harness.activateAbility(player1, indexOf(wolf), 0, null, dwarf.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, wolf));
+        harness.setHand(player1, List.of());
+        Permanent returnedWolf = harness.addToBattlefieldAndReturn(player1, wolf.getCard());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, dwarf));
+        harness.passBothPriorities();
+
+        assertThat(gqs.findPermanentById(gd, returnedWolf.getId())).isNotNull();
+        harness.assertNotInGraveyard(player1, "Heart Wolf");
+    }
+
     private int indexOf(Permanent perm) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(perm);
     }
