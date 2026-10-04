@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(HeartOfRamos.class)
 class HeartOfRamosTest extends BaseCardTest {
@@ -50,5 +51,41 @@ class HeartOfRamosTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
         harness.assertNotOnBattlefield(player1, "Heart of Ramos");
         harness.assertInGraveyard(player1, "Heart of Ramos");
+    }
+
+    @Test
+    @DisplayName("An already tapped Heart of Ramos cannot produce mana by tapping again")
+    void cannotTapAgainWithoutUntapping() {
+        harness.addToBattlefield(player1, new HeartOfRamos());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Permanent is already tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Heart of Ramos");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both abilities resolve without the stack and give mana to their controller")
+    void manaAbilitiesResolveImmediatelyForTheirController() {
+        harness.addToBattlefield(player2, new HeartOfRamos());
+
+        harness.activateAbility(player2, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
+
+        harness.activateAbility(player2, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Heart of Ramos");
+        harness.assertInGraveyard(player2, "Heart of Ramos");
+        harness.assertNotInGraveyard(player1, "Heart of Ramos");
     }
 }
