@@ -14,6 +14,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HollowDogsTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Attack boost waits for the triggered ability to resolve")
+    void boostWaitsForTriggerResolution() {
+        Permanent dogs = addCreatureReady(player1, new HollowDogs());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(dogs.getPowerModifier()).isZero();
+        assertThat(dogs.getToughnessModifier()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(dogs.getPowerModifier()).isEqualTo(2);
+        assertThat(dogs.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two attacking Hollow Dogs each receive only their own boost")
+    void simultaneousAttackersEachGetTheirOwnBoost() {
+        Permanent firstDogs = addCreatureReady(player1, new HollowDogs());
+        Permanent secondDogs = addCreatureReady(player1, new HollowDogs());
+        Permanent defendingDogs = addCreatureReady(player2, new HollowDogs());
+
+        declareAttackers(player1, List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(firstDogs.getPowerModifier()).isEqualTo(2);
+        assertThat(firstDogs.getToughnessModifier()).isZero();
+        assertThat(secondDogs.getPowerModifier()).isEqualTo(2);
+        assertThat(secondDogs.getToughnessModifier()).isZero();
+        assertThat(defendingDogs.getPowerModifier()).isZero();
+        assertThat(defendingDogs.getToughnessModifier()).isZero();
+    }
+
+    @Test
     @DisplayName("Attacking puts ON_ATTACK trigger on the stack")
     void attackPutsTriggerOnStack() {
         addCreatureReady(player1, new HollowDogs());
