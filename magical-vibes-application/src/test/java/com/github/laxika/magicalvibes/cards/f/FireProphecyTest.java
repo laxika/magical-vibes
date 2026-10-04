@@ -25,8 +25,7 @@ class FireProphecyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FireProphecy()));
         addMana();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(target.getId()));
@@ -42,11 +41,9 @@ class FireProphecyTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         addMana();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(bottom.getId()));
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(keep, draw);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bottom);
@@ -61,8 +58,7 @@ class FireProphecyTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
         addMana();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of());
 
@@ -81,6 +77,70 @@ class FireProphecyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void drawsBottomedCardImmediatelyWhenLibraryWasEmpty() {
+        Mountain bottom = new Mountain();
+        harness.setHand(player1, List.of(new FireProphecy(), bottom));
+        harness.setLibrary(player1, List.of());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(bottom.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bottom);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void emptyHandDoesNotDraw() {
+        Shock draw = new Shock();
+        harness.setHand(player1, List.of(new FireProphecy()));
+        harness.setLibrary(player1, List.of(draw));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canDealThreeDamageToControllersCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        harness.setHand(player1, List.of(new FireProphecy()));
+        addMana();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
+        harness.assertInGraveyard(player1, "Hill Giant");
+    }
+
+    @Test
+    void illegalTargetPreventsBottomingAndDrawing() {
+        Mountain keep = new Mountain();
+        Shock draw = new Shock();
+        harness.setHand(player1, List.of(new FireProphecy(), keep));
+        harness.setLibrary(player1, List.of(draw));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shock()));
+        addMana();
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(keep);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        harness.assertInGraveyard(player1, "Fire Prophecy");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addMana() {
