@@ -18,13 +18,59 @@ class HalberdierTest extends BaseCardTest {
         addCreatureReady(player1, new Halberdier());
         addCreatureReady(player2, new PatrolHound());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat();
 
         harness.assertOnBattlefield(player1, "Halberdier");
         harness.assertInGraveyard(player2, "Patrol Hound");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("First strike lets a blocking Halberdier destroy the attacker before taking damage")
+    void firstStrikeWorksWhileBlocking() {
+        addCreatureReady(player1, new PatrolHound());
+        addCreatureReady(player2, new Halberdier());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Patrol Hound");
+        harness.assertOnBattlefield(player2, "Halberdier");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Opposing Halberdiers deal first strike damage simultaneously and both die")
+    void opposingFirstStrikersDealDamageSimultaneously() {
+        addCreatureReady(player1, new Halberdier());
+        addCreatureReady(player2, new Halberdier());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Halberdier");
+        harness.assertInGraveyard(player2, "Halberdier");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An unblocked Halberdier deals damage only once during combat")
+    void unblockedFirstStrikerDoesNotDealRegularCombatDamage() {
+        addCreatureReady(player1, new Halberdier());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
+        harness.assertOnBattlefield(player1, "Halberdier");
     }
 }
