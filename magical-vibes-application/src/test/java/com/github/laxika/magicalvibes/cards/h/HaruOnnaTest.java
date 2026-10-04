@@ -85,6 +85,44 @@ class HaruOnnaTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Haru-Onna");
     }
 
+    @Test
+    @DisplayName("Spirit tokens entering do not trigger Haru-Onna again")
+    void spiritTokenEnteringDoesNotTrigger() {
+        addHaruOnna();
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Spirit");
+        harness.assertOnBattlefield(player1, "Haru-Onna");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Haru-Onna returns itself independently before the Arcane spell resolves")
+    void multipleHaruOnnasReturnIndependently() {
+        addHaruOnna();
+        addHaruOnna();
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Haru-Onna");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .filteredOn(card -> card instanceof HaruOnna).hasSize(2);
+        harness.assertNotOnBattlefield(player1, "Spirit");
+
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Spirit");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void addHaruOnna() {
         harness.addToBattlefield(player1, new HaruOnna());
     }
