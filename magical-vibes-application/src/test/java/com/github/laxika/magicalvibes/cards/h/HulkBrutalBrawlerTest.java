@@ -40,4 +40,42 @@ class HulkBrutalBrawlerTest extends BaseCardTest {
         assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(opposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+
+    @Test
+    @DisplayName("Tapped Hulk is not required to attack")
+    void tappedHulkCanStayOutOfCombat() {
+        Permanent hulk = addCreatureReady(player1, new HulkBrutalBrawler());
+        hulk.setTapped(true);
+
+        declareAttackers(List.of());
+
+        assertThat(hulk.isAttacking()).isFalse();
+        assertThat(hulk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Summoning-sick Hulk is not required to attack")
+    void summoningSickHulkCanStayOutOfCombat() {
+        Permanent hulk = harness.addToBattlefieldAndReturn(player1, new HulkBrutalBrawler());
+
+        declareAttackers(List.of());
+
+        assertThat(hulk.isAttacking()).isFalse();
+        assertThat(hulk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Attack trigger includes creatures entering before resolution")
+    void countersCreaturesPresentAtResolution() {
+        Permanent hulk = addCreatureReady(player1, new HulkBrutalBrawler());
+        Permanent firstAlly = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        Permanent newAlly = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        resolveAllTriggers();
+
+        assertThat(hulk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(firstAlly.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(newAlly.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 }
