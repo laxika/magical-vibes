@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -12,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -76,5 +79,102 @@ class HogaakArisenNecropolisTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() instanceof HogaakArisenNecropolis);
+    }
+
+    @Test
+    void cannotSpendManaAlongsideConvoke() {
+        harness.setHand(player1, List.of(new HogaakArisenNecropolis()));
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null, List.of(),
+                List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotUseFloatingManaForHybridSymbols() {
+        harness.setHand(player1, List.of(new HogaakArisenNecropolis()));
+        harness.setGraveyard(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock(), new Shock()));
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null, List.of(),
+                List.of(creature.getId()), false, null, null, null, null, List.of(0, 1, 2, 3, 4)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void castsWithConvokeAloneUsingSummoningSickCreatures() {
+        harness.setHand(player1, List.of(new HogaakArisenNecropolis()));
+        List<Permanent> creatures = IntStream.range(0, 7)
+                .mapToObj(i -> addCreatureReady(player1, new GrizzlyBears())).toList();
+        creatures.forEach(creature -> creature.setSummoningSick(true));
+
+        gs.playCard(gd, player1, 0, 0, null, null, List.of(),
+                creatures.stream().map(Permanent::getId).toList());
+        assertThat(creatures).allMatch(Permanent::isTapped);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Hogaak, Arisen Necropolis");
+    }
+
+    @Test
+    void floatingManaDoesNotPreventGraveyardConvoke() {
+        harness.setGraveyard(player1, List.of(new HogaakArisenNecropolis()));
+        List<Permanent> creatures = IntStream.range(0, 7)
+                .mapToObj(i -> addCreatureReady(player1, new GrizzlyBears())).toList();
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        gs.playFlashbackSpell(gd, player1, 0, null, null, List.of(), List.of(),
+                null, List.of(), null, null, List.of(), Map.of(), List.of(), List.of(), List.of(),
+                creatures.stream().map(Permanent::getId).toList());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(7);
+        assertThat(creatures).allMatch(Permanent::isTapped);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Hogaak, Arisen Necropolis");
+    }
+
+    @Test
+    void cannotExileTheHogaakBeingCastForDelve() {
+        harness.setGraveyard(player1, List.of(new HogaakArisenNecropolis(),
+                new Shock(), new Shock(), new Shock(), new Shock()));
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, null, null, List.of(),
+                List.of(0, 1, 2, 3, 4), null, List.of(), null, null, List.of(), Map.of(),
+                List.of(), List.of(), List.of(), List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void graveyardPermissionDoesNotGrantInstantTiming() {
+        harness.setGraveyard(player1, List.of(new HogaakArisenNecropolis()));
+        List<Permanent> creatures = IntStream.range(0, 7)
+                .mapToObj(i -> addCreatureReady(player1, new GrizzlyBears())).toList();
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, null, null, List.of(), List.of(),
+                null, List.of(), null, null, List.of(), Map.of(), List.of(), List.of(), List.of(),
+                creatures.stream().map(Permanent::getId).toList()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void tramplesOverABear() {
+        addCreatureReady(player1, new HogaakArisenNecropolis());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 2, player2.getId(), 6));
+
+        harness.assertLife(player2, 14);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        harness.assertOnBattlefield(player1, "Hogaak, Arisen Necropolis");
     }
 }
