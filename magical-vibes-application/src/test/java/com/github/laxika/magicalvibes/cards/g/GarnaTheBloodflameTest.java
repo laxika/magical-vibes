@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,11 +17,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GarnaTheBloodflame.class, GrizzlyBears.class, Shock.class, DreamTwist.class})
 class GarnaTheBloodflameTest extends BaseCardTest {
-
-    
-
-    
 
     @Test
     @DisplayName("ETB returns creature that died this turn from the battlefield")
@@ -32,8 +31,7 @@ class GarnaTheBloodflameTest extends BaseCardTest {
         UUID targetCreatureId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, targetCreatureId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetCreatureId);
 
         // The killed creature should be in the graveyard now
         Card diedCreature = gd.playerGraveyards.get(player1.getId()).stream()
@@ -41,11 +39,7 @@ class GarnaTheBloodflameTest extends BaseCardTest {
                 .findFirst().orElseThrow();
 
         // Cast Garna
-        harness.setHand(player1, List.of(new GarnaTheBloodflame()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GarnaTheBloodflame(), "{3}{B}{R}");
         harness.passBothPriorities(); // resolve creature, ETB triggers
         harness.passBothPriorities(); // resolve ETB
 
@@ -65,19 +59,14 @@ class GarnaTheBloodflameTest extends BaseCardTest {
         // Self-mill with Dream Twist
         harness.setHand(player1, List.of(new DreamTwist()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         // Verify the creature was milled into graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(creatureInLibrary.getId()));
 
         // Cast Garna
-        harness.setHand(player1, List.of(new GarnaTheBloodflame()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GarnaTheBloodflame(), "{3}{B}{R}");
         harness.passBothPriorities(); // resolve creature, ETB triggers
         harness.passBothPriorities(); // resolve ETB
 
@@ -93,11 +82,7 @@ class GarnaTheBloodflameTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(oldCreature));
 
         // Cast Garna
-        harness.setHand(player1, List.of(new GarnaTheBloodflame()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GarnaTheBloodflame(), "{3}{B}{R}");
         harness.passBothPriorities(); // resolve creature, ETB triggers
         harness.passBothPriorities(); // resolve ETB
 
@@ -118,15 +103,10 @@ class GarnaTheBloodflameTest extends BaseCardTest {
         // Self-mill with Dream Twist to put the non-creature into graveyard
         harness.setHand(player1, List.of(new DreamTwist()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         // Cast Garna
-        harness.setHand(player1, List.of(new GarnaTheBloodflame()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GarnaTheBloodflame(), "{3}{B}{R}");
         harness.passBothPriorities(); // resolve creature, ETB triggers
         harness.passBothPriorities(); // resolve ETB
 
@@ -145,15 +125,10 @@ class GarnaTheBloodflameTest extends BaseCardTest {
         UUID targetCreatureId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, targetCreatureId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetCreatureId);
 
         // Cast Garna
-        harness.setHand(player1, List.of(new GarnaTheBloodflame()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GarnaTheBloodflame(), "{3}{B}{R}");
         harness.passBothPriorities(); // resolve creature, ETB triggers
         harness.passBothPriorities(); // resolve ETB
 
@@ -200,12 +175,77 @@ class GarnaTheBloodflameTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock(), new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
         // Garna is 3/3, needs two Shocks to kill
-        harness.castInstant(player1, 0, garnaPermId);
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, garnaPermId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, garnaPermId);
+        harness.castAndResolveInstant(player1, 0, garnaPermId);
 
         // Bears should no longer have haste
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("ETB returns all creatures milled in response to the trigger")
+    void returnsAllCreaturesMilledInResponse() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        Card third = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        harness.castFromHand(player1, new GarnaTheBloodflame(), "{3}{B}{R}");
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new DreamTwist()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second, third);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second, third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(first, second, third);
+        harness.assertInGraveyard(player1, "Dream Twist");
+    }
+
+    @Test
+    @DisplayName("Garna returns itself if it dies before its ETB resolves")
+    void returnsItselfWhenKilledInResponse() {
+        GarnaTheBloodflame garna = new GarnaTheBloodflame();
+        harness.castFromHand(player1, garna, "{3}{B}{R}");
+        harness.passBothPriorities();
+        UUID garnaId = harness.getPermanentId(player1, "Garna, the Bloodflame");
+
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, garnaId);
+        harness.castAndResolveInstant(player1, 0, garnaId);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(garna);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(garna);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(garna);
+        harness.assertNotOnBattlefield(player1, "Garna, the Bloodflame");
+    }
+
+    @Test
+    @DisplayName("Garna does not grant haste to opposing creatures")
+    void opponentsCreaturesDoNotHaveHaste() {
+        harness.addToBattlefield(player1, new GarnaTheBloodflame());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flash allows Garna to enter during an opponent's upkeep")
+    void canBeCastDuringOpponentsUpkeep() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.castFromHand(player1, new GarnaTheBloodflame(), "{3}{B}{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Garna, the Bloodflame");
+        assertThat(gd.activePlayerId).isEqualTo(player2.getId());
     }
 }
