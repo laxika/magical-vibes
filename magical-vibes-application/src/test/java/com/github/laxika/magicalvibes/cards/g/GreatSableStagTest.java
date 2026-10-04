@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.m.MindControl;
+import com.github.laxika.magicalvibes.cards.w.Weakness;
+import com.github.laxika.magicalvibes.cards.w.WarpathGhoul;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -13,6 +16,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +25,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GreatSableStag.class, Cancel.class, GrizzlyBears.class, Shock.class, GiantGrowth.class,
+        MindControl.class, Weakness.class, WarpathGhoul.class})
 class GreatSableStagTest extends BaseCardTest {
 
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
@@ -44,8 +50,6 @@ class GreatSableStagTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Can't be countered =====
-
     @Test
     @DisplayName("Great Sable Stag cannot be countered by Cancel")
     void cannotBeCounteredByCancel() {
@@ -68,17 +72,13 @@ class GreatSableStagTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Cancel");
     }
 
-    // ===== Protection - targeting =====
-
     @Test
     @DisplayName("Cannot be targeted by blue instant")
     void cannotBeTargetedByBlueInstant() {
         Permanent stag = addStagReady(player1);
 
         // Add valid target so spell is playable
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player2, List.of(createTargetedInstant("Blue Zap", CardColor.BLUE, "{U}")));
         harness.addMana(player2, ManaColor.BLUE, 1);
@@ -95,9 +95,7 @@ class GreatSableStagTest extends BaseCardTest {
         Permanent stag = addStagReady(player1);
 
         // Add valid target so spell is playable
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        addCreatureReady(player1, new GrizzlyBears());
 
         harness.setHand(player2, List.of(createTargetedInstant("Black Zap", CardColor.BLACK, "{B}")));
         harness.addMana(player2, ManaColor.BLACK, 1);
@@ -136,24 +134,17 @@ class GreatSableStagTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Giant Growth");
     }
 
-    // ===== Protection - blocking =====
-
     @Test
     @DisplayName("Blue creature cannot block Great Sable Stag")
     void blueCreatureCannotBlock() {
-        Permanent attacker = new Permanent(new GreatSableStag());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GreatSableStag());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Blue Flyer", 2, 2, CardColor.BLUE));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        Permanent blocker = addCreatureReady(player2, createCreature("Blue Flyer", 2, 2, CardColor.BLUE));
+
+
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -163,19 +154,14 @@ class GreatSableStagTest extends BaseCardTest {
     @Test
     @DisplayName("Black creature cannot block Great Sable Stag")
     void blackCreatureCannotBlock() {
-        Permanent attacker = new Permanent(new GreatSableStag());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GreatSableStag());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Black Shade", 2, 2, CardColor.BLACK));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        Permanent blocker = addCreatureReady(player2, createCreature("Black Shade", 2, 2, CardColor.BLACK));
+
+
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -185,40 +171,31 @@ class GreatSableStagTest extends BaseCardTest {
     @Test
     @DisplayName("Red creature can block Great Sable Stag")
     void redCreatureCanBlock() {
-        Permanent attacker = new Permanent(new GreatSableStag());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new GreatSableStag());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(createCreature("Red Goblin", 2, 2, CardColor.RED));
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        Permanent blocker = addCreatureReady(player2, createCreature("Red Goblin", 2, 2, CardColor.RED));
+
+
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
     }
 
-    // ===== Protection - combat damage =====
-
     @Test
     @DisplayName("Great Sable Stag takes no combat damage from blue creature")
     void takesNoDamageFromBlueCreature() {
-        Permanent attacker = new Permanent(createCreature("Blue Giant", 4, 4, CardColor.BLUE));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, createCreature("Blue Giant", 4, 4, CardColor.BLUE));
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GreatSableStag());
-        blocker.setSummoningSick(false);
+
+        Permanent blocker = addCreatureReady(player2, new GreatSableStag());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -234,16 +211,14 @@ class GreatSableStagTest extends BaseCardTest {
     @Test
     @DisplayName("Great Sable Stag takes normal combat damage from red creature")
     void takesNormalDamageFromRedCreature() {
-        Permanent attacker = new Permanent(createCreature("Red Giant", 4, 4, CardColor.RED));
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, createCreature("Red Giant", 4, 4, CardColor.RED));
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GreatSableStag());
-        blocker.setSummoningSick(false);
+
+        Permanent blocker = addCreatureReady(player2, new GreatSableStag());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -257,13 +232,51 @@ class GreatSableStagTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Red Giant");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Blue Aura already attached to Stag goes to the graveyard")
+    void removesAttachedBlueAura() {
+        Permanent stag = addStagReady(player1);
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new MindControl());
+        aura.setAttachedTo(stag.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Great Sable Stag");
+        harness.assertNotOnBattlefield(player2, "Mind Control");
+        harness.assertInGraveyard(player2, "Mind Control");
+    }
+
+    @Test
+    @DisplayName("Black Aura already attached to Stag goes to the graveyard")
+    void removesAttachedBlackAura() {
+        Permanent stag = addStagReady(player1);
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Weakness());
+        aura.setAttachedTo(stag.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Great Sable Stag");
+        harness.assertNotOnBattlefield(player2, "Weakness");
+        harness.assertInGraveyard(player2, "Weakness");
+    }
+
+    @Test
+    @DisplayName("Stag can block a black creature and prevents its combat damage")
+    void takesNoDamageFromBlackCreature() {
+        Permanent attacker = addCreatureReady(player1, new WarpathGhoul());
+        attacker.setAttacking(true);
+        addStagReady(player2);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Great Sable Stag");
+        harness.assertInGraveyard(player1, "Warpath Ghoul");
+        assertThat(player2.getLife()).isEqualTo(20);
+    }
 
     private Permanent addStagReady(Player player) {
-        GreatSableStag card = new GreatSableStag();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new GreatSableStag());
     }
 }
