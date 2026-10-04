@@ -9,12 +9,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GoblinFirestarter.class)
+@CardUsed({GoblinFirestarter.class, JaceBeleren.class})
 class GoblinFirestarterTest extends BaseCardTest {
 
     @Test
@@ -32,7 +30,6 @@ class GoblinFirestarterTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(JaceBeleren.class)
     @DisplayName("Deals 1 damage to target planeswalker")
     void deals1DamageToPlaneswalker() {
         Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
@@ -50,10 +47,8 @@ class GoblinFirestarterTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target creature, destroying a 1/1")
     void deals1DamageDestroying1Toughness() {
         setupFirestarterOnMyTurn(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player2, new GoblinFirestarter());
-
-        UUID targetId = harness.getPermanentId(player2, "Goblin Firestarter");
-        harness.activateAbility(player1, 0, null, targetId);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinFirestarter());
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Goblin Firestarter");
@@ -101,6 +96,74 @@ class GoblinFirestarterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("during your turn");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Firestarter can sacrifice itself during upkeep")
+    void canActivateWhileTappedAndSummoningSick() {
+        setupFirestarterOnMyTurn(TurnStep.UPKEEP);
+        Permanent firestarter = gd.playerBattlefields.get(player1.getId()).getFirst();
+        firestarter.tap();
+        firestarter.setSummoningSick(true);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.assertInGraveyard(player1, "Goblin Firestarter");
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Can target itself, but the sacrificed target is gone at resolution")
+    void canTargetItself() {
+        setupFirestarterOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null,
+                harness.getPermanentId(player1, "Goblin Firestarter"));
+        harness.assertInGraveyard(player1, "Goblin Firestarter");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A target can sacrifice itself in response, leaving the original ability without a target")
+    void targetLeavesBeforeResolution() {
+        setupFirestarterOnMyTurn(TurnStep.PRECOMBAT_MAIN);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GoblinFirestarter());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, player2.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 19);
+        harness.assertNotOnBattlefield(player1, "Goblin Firestarter");
+    }
+
+    @Test
+    @DisplayName("Cannot activate in the postcombat main phase even when no creatures attacked")
+    void cannotActivateDuringPostcombatMain() {
+        setupFirestarterOnMyTurn(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+
+        harness.assertOnBattlefield(player1, "Goblin Firestarter");
+        harness.assertNotInGraveyard(player1, "Goblin Firestarter");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void setupFirestarterOnMyTurn(TurnStep step) {
