@@ -71,6 +71,82 @@ class HanaKamiTest extends BaseCardTest {
         return addCreatureReady(player1, new HanaKami());
     }
 
+    @Test
+    @DisplayName("Sacrifice is paid before the ability resolves")
+    void sacrificesAsAnActivationCost() {
+        Permanent kami = addReadyKami();
+        Card breath = new BlessedBreath();
+        harness.setGraveyard(player1, List.of(breath));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 0, null, breath.getId(), Zone.GRAVEYARD);
+
+        harness.assertNotOnBattlefield(player1, "Hana Kami");
+        harness.assertInGraveyard(player1, "Hana Kami");
+        harness.assertInGraveyard(player1, "Blessed Breath");
+        harness.assertNotInHand(player1, "Blessed Breath");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Blessed Breath");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Hana Kami can activate during an opponent's turn")
+    void activatesWithoutTapOrTimingRestrictions() {
+        Permanent kami = harness.addToBattlefieldAndReturn(player1, new HanaKami());
+        kami.setSummoningSick(true);
+        kami.tap();
+        Card breath = new BlessedBreath();
+        harness.setGraveyard(player1, List.of(breath));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.activateAbility(player1, 0, 0, null, breath.getId(), Zone.GRAVEYARD);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Blessed Breath");
+        harness.assertInGraveyard(player1, "Hana Kami");
+    }
+
+    @Test
+    @DisplayName("Cannot activate targeting an opponent's Arcane card")
+    void rejectsOpponentGraveyardTarget() {
+        addReadyKami();
+        Card breath = new BlessedBreath();
+        harness.setGraveyard(player2, List.of(breath));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, breath.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Hana Kami");
+        harness.assertInGraveyard(player2, "Blessed Breath");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An absent target is not returned and the sacrifice is not refunded")
+    void targetLeavingGraveyardMakesAbilityFizzle() {
+        addReadyKami();
+        Card breath = new BlessedBreath();
+        harness.setGraveyard(player1, List.of(breath));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, 0, null, breath.getId(), Zone.GRAVEYARD);
+
+        gd.playerGraveyards.get(player1.getId()).remove(breath);
+        harness.setExile(player1, List.of(breath));
+        resolveAllTriggers();
+
+        harness.assertNotInHand(player1, "Blessed Breath");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(breath);
+        harness.assertInGraveyard(player1, "Hana Kami");
+        harness.assertNotOnBattlefield(player1, "Hana Kami");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void activate(Permanent kami, Card graveyardCard) {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.forceActivePlayer(player1);
