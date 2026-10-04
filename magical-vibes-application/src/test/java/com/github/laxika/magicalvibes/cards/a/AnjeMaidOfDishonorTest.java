@@ -159,6 +159,8 @@ class AnjeMaidOfDishonorTest extends BaseCardTest {
         addReadyAnje();
         harness.enterBattlefieldAndReturn(player1, new BloodPetalCelebrant());
         resolveAllTriggers();
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
+        declareAttackers(List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.enterBattlefieldAndReturn(player1, new BloodPetalCelebrant());
         resolveAllTriggers();

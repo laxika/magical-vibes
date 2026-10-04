@@ -227,6 +227,7 @@ public class PermanentChoiceSpellHandlerService {
                     null,
                     null
             );
+            entry.setSourceZone(lct.sourceZone());
             if (lct.ownerIdOverride() != null) {
                 entry.setOwnerIdOverride(lct.ownerIdOverride());
                 entry.setSourceZone(Zone.OUTSIDE_GAME);
@@ -243,7 +244,8 @@ public class PermanentChoiceSpellHandlerService {
             gameLogService.append(gameData, GameLog.builder().card(lct.cardToCast()).text(" targets " + targetName + ".").build());
             log.info("Game {} - {} cast-from-library targets {}", gameData.id, lct.cardToCast().getName(), targetName);
 
-            triggerCollectionService.checkSpellCastTriggers(gameData, lct.cardToCast(), lct.controllerId(), false);
+            triggerCollectionService.checkSpellCastTriggers(gameData, lct.cardToCast(), lct.controllerId(),
+                    lct.ownerIdOverride() != null ? Zone.OUTSIDE_GAME : lct.sourceZone());
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
             if (lct.cardsToBottom() != null) {
                 beginBottomReorder(gameData, lct.controllerId(), lct.cardsToBottom());

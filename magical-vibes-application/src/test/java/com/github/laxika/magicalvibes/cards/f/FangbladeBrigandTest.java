@@ -77,7 +77,7 @@ class FangbladeBrigandTest extends BaseCardTest {
     void backFaceSelfBoostStacksAndExpires() {
         Permanent brigand = addReadyBrigand();
         transformToBack(brigand);
-        brigand.setTapped(true);
+        brigand.tap();
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

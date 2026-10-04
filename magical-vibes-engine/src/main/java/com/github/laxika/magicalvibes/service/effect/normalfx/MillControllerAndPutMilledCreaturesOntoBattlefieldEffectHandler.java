@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndPutMilledCreaturesOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -32,6 +33,7 @@ public class MillControllerAndPutMilledCreaturesOntoBattlefieldEffectHandler
     private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
     private final ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler returnHandler;
+    private final ReturnSourceCardFromGraveyardToOwnerHandEffectHandler sourceReturnHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -45,7 +47,7 @@ public class MillControllerAndPutMilledCreaturesOntoBattlefieldEffectHandler
         if (choiceContext != null && choiceContext.chosenCardIds() != null) {
             gameData.graveyardTargetOperation.milledCreatureReturn = null;
             gameData.rerunCurrentEffectAfterInteraction = false;
-            returnCards(gameData, entry, choiceContext.chosenCardIds(), millEffect.maxCount());
+            returnCards(gameData, entry, choiceContext.chosenCardIds(), millEffect);
             return;
         }
 
@@ -60,6 +62,9 @@ public class MillControllerAndPutMilledCreaturesOntoBattlefieldEffectHandler
                 .filter(card -> gameQueryService.findCardInGraveyardById(gameData, card.getId()) != null)
                 .toList();
         if (eligibleCards.isEmpty()) {
+            if (millEffect.returnSourceToHand()) {
+                sourceReturnHandler.resolve(gameData, entry, new ReturnSourceCardFromGraveyardToOwnerHandEffect());
+            }
             return;
         }
 
@@ -76,18 +81,24 @@ public class MillControllerAndPutMilledCreaturesOntoBattlefieldEffectHandler
                         + " creature cards to put onto the battlefield.");
     }
 
-    private void returnCards(GameData gameData, StackEntry entry, List<UUID> cardIds, int maxCount) {
+    private void returnCards(GameData gameData, StackEntry entry, List<UUID> cardIds,
+                             MillControllerAndPutMilledCreaturesOntoBattlefieldEffect effect) {
         List<UUID> previousTargetCardIds = entry.getTargetCardIds();
         entry.setTargetCardIds(cardIds);
+        graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
+            if (effect.returnSourceToHand()) {
+                sourceReturnHandler.resolve(gameData, entry, new ReturnSourceCardFromGraveyardToOwnerHandEffect());
+            }
             returnHandler.resolveForController(
                     gameData,
                     entry,
                     new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
-                            new CardTypePredicate(CardType.CREATURE), maxCount, false, false),
+                            new CardTypePredicate(CardType.CREATURE), effect.maxCount(), false, false),
                     entry.getControllerId());
         } finally {
             entry.setTargetCardIds(previousTargetCardIds);
+            graveyardService.endGraveyardLeaveBatch(gameData);
         }
     }
 }

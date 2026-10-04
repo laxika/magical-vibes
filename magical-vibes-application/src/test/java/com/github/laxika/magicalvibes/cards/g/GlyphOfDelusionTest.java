@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.d.DarksteelMutation;
 import com.github.laxika.magicalvibes.cards.r.RagingBull;
 import com.github.laxika.magicalvibes.cards.w.WallOfEarth;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GlyphOfDelusion.class, WallOfEarth.class, RagingBull.class})
+@CardUsed({GlyphOfDelusion.class, WallOfEarth.class, RagingBull.class, DarksteelMutation.class})
 class GlyphOfDelusionTest extends BaseCardTest {
 
     @Test
@@ -102,10 +104,8 @@ class GlyphOfDelusionTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new GlyphOfDelusion(), new GlyphOfDelusion()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, List.of(wall.getId(), attacker.getId()));
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, List.of(wall.getId(), attacker.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(wall.getId(), attacker.getId()));
+        harness.castAndResolveInstant(player1, 0, List.of(wall.getId(), attacker.getId()));
 
         assertThat(attacker.getCounterCount(CounterType.GLYPH)).isEqualTo(4);
         attacker.tap();
@@ -117,10 +117,83 @@ class GlyphOfDelusionTest extends BaseCardTest {
         assertThat(attacker.isTapped()).isTrue();
     }
 
+    @Test
+    void usesTheBlockedCreaturesPowerAtResolution() {
+        Permanent attacker = addCreatureReady(player1, new RagingBull());
+        Permanent wall = addCreatureReady(player2, new WallOfEarth());
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.setHand(player1, List.of(new GlyphOfDelusion()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, List.of(wall.getId(), attacker.getId()));
+        attacker.setPowerModifier(3);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getCounterCount(CounterType.GLYPH)).isEqualTo(5);
+        assertThat(wall.getCounterCount(CounterType.GLYPH)).isZero();
+    }
+
+    @Test
+    void removesCountersOnlyDuringTheAffectedCreaturesControllersUpkeep() {
+        Permanent attacker = addCreatureReady(player1, new RagingBull());
+        Permanent wall = addCreatureReady(player2, new WallOfEarth());
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.setHand(player2, List.of(new GlyphOfDelusion()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, List.of(wall.getId(), attacker.getId()));
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(attacker.getCounterCount(CounterType.GLYPH)).isEqualTo(2);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(attacker.getCounterCount(CounterType.GLYPH)).isEqualTo(1);
+    }
+
+    @Test
+    void canTargetTheBlockedCreatureAfterCombat() {
+        Permanent attacker = addCreatureReady(player1, new RagingBull());
+        Permanent wall = addCreatureReady(player2, new WallOfEarth());
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        castGlyph(wall, attacker);
+
+        assertThat(attacker.getCounterCount(CounterType.GLYPH)).isEqualTo(2);
+    }
+
+    @Test
+    void laterAbilityRemovalAllowsTheCreatureToUntapDespiteItsGlyphCounters() {
+        Permanent attacker = addCreatureReady(player1, new RagingBull());
+        Permanent wall = addCreatureReady(player2, new WallOfEarth());
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        castGlyph(wall, attacker);
+        resolveCombat();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.setHand(player1, List.of(new DarksteelMutation()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+        attacker.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(attacker.isTapped()).isFalse();
+        resolveAllTriggers();
+        assertThat(attacker.getCounterCount(CounterType.GLYPH)).isEqualTo(2);
+    }
+
     private void castGlyph(Permanent wall, Permanent creature) {
         harness.setHand(player1, List.of(new GlyphOfDelusion()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, List.of(wall.getId(), creature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(wall.getId(), creature.getId()));
     }
 }

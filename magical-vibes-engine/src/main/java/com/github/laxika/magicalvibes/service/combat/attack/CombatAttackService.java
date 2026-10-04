@@ -1325,6 +1325,11 @@ public class CombatAttackService {
                             // xValue locks the attacker count for MinimumAttackers (Odric / similar).
                             List<CardEffect> bundledEffects = new ArrayList<>(otherEffects);
                             List<List<CardEffect>> abilities = new ArrayList<>();
+                            for (CardEffect granted : temporaryAttackEffects) {
+                                if (bundledEffects.remove(granted)) {
+                                    abilities.add(List.of(granted));
+                                }
+                            }
                             for (var registration : attacker.getCard().getEffectRegistrations(EffectSlot.ON_ATTACK)) {
                                 if (registration.triggerMode()
                                         == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT
@@ -2632,10 +2637,20 @@ public class CombatAttackService {
                 int previousCopies = beginAttackTriggerCopies(gameData, permController, perm);
                 try {
                     List<List<CardEffect>> triggerEffectGroups = new ArrayList<>();
-                    if (!playerAttackEffects.isEmpty()) {
-                        triggerEffectGroups.add(playerAttackEffects);
+                    List<CardEffect> bundledEffects = new ArrayList<>(playerAttackEffects);
+                    for (var registration : perm.getCard().getEffectRegistrations(EffectSlot.ON_ANY_PLAYER_ATTACKS)) {
+                        if (registration.triggerMode() == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT) {
+                            CardEffect registeredEffect = registration.effect();
+                            CardEffect resolvedEffect = registeredEffect instanceof ConditionalEffect conditional
+                                    ? conditional.wrapped() : registeredEffect;
+                            if (bundledEffects.remove(resolvedEffect)) {
+                                triggerEffectGroups.add(List.of(resolvedEffect));
+                            }
+                        }
                     }
-                    triggerEffectGroups.addAll(effectsByAttackedOpponent.values());
+                    if (!bundledEffects.isEmpty()) {
+                        triggerEffectGroups.addFirst(bundledEffects);
+                    }
 
                     for (List<CardEffect> triggerEffects : triggerEffectGroups) {
                         boolean needsTarget = triggerEffects.stream()

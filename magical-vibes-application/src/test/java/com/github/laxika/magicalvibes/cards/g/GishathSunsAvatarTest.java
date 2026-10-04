@@ -4,13 +4,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.a.AncientBrontodon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.o.Opt;
+import com.github.laxika.magicalvibes.cards.b.BishopOfTheBloodstained;
+import com.github.laxika.magicalvibes.cards.r.RampagingFerocidon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,9 +21,10 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GishathSunsAvatar.class, ColossalDreadmaw.class, AncientBrontodon.class,
+        Forest.class, Opt.class, BishopOfTheBloodstained.class, RampagingFerocidon.class})
 class GishathSunsAvatarTest extends BaseCardTest {
 
-    // ===== Combat damage trigger: reveals correct number of cards =====
 
     @Test
     @DisplayName("Reveals cards equal to combat damage dealt and allows choosing Dinosaur creatures")
@@ -30,8 +32,8 @@ class GishathSunsAvatarTest extends BaseCardTest {
         Card dino1 = new ColossalDreadmaw(); // Dinosaur creature
         Card dino2 = new AncientBrontodon(); // Dinosaur creature
         Card forest = new Forest();          // Land — not eligible
-        Card shock = new Shock();            // Instant — not eligible
-        setupLibrary(List.of(dino1, dino2, forest, shock));
+        Card opt = new Opt();            // Instant — not eligible
+        setupLibrary(List.of(dino1, dino2, forest, opt));
 
         harness.setLife(player2, 20);
 
@@ -52,11 +54,11 @@ class GishathSunsAvatarTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Colossal Dreadmaw");
         harness.assertOnBattlefield(player1, "Ancient Brontodon");
 
-        // Remaining cards (Forest + Shock) should be on the bottom of the library
+        // Remaining cards (Forest + Opt) should be on the bottom of the library
         List<Card> deck = gd.playerDecks.get(player1.getId());
         assertThat(deck).hasSize(2);
         assertThat(deck).extracting(Card::getName)
-                .containsExactlyInAnyOrder("Forest", "Shock");
+                .containsExactlyInAnyOrder("Forest", "Opt");
     }
 
     @Test
@@ -64,8 +66,8 @@ class GishathSunsAvatarTest extends BaseCardTest {
     void choosingNothingPutsAllOnBottom() {
         Card dino = new ColossalDreadmaw();
         Card forest = new Forest();
-        Card shock = new Shock();
-        setupLibrary(List.of(dino, forest, shock));
+        Card opt = new Opt();
+        setupLibrary(List.of(dino, forest, opt));
 
         harness.setLife(player2, 20);
         resolveCombatWithGishath();
@@ -83,14 +85,13 @@ class GishathSunsAvatarTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
     }
 
-    // ===== Non-Dinosaur creatures are not eligible =====
 
     @Test
     @DisplayName("Non-Dinosaur creature cards are not eligible")
     void nonDinosaurCreatureNotEligible() {
         Card dino = new ColossalDreadmaw();
-        Card bears = new GrizzlyBears(); // non-Dinosaur creature
-        setupLibrary(List.of(dino, bears));
+        Card bishop = new BishopOfTheBloodstained(); // non-Dinosaur creature
+        setupLibrary(List.of(dino, bishop));
 
         harness.setLife(player2, 20);
         resolveCombatWithGishath();
@@ -98,21 +99,24 @@ class GishathSunsAvatarTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
-        // Bears should not be selectable
+        // Bishop should not be selectable
         assertThatThrownBy(() ->
-                harness.handleMultipleCardsChosen(player1, List.of(bears.getId())))
+                harness.handleMultipleCardsChosen(player1, List.of(bishop.getId())))
                 .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(dino.getId()));
+        harness.assertOnBattlefield(player1, "Colossal Dreadmaw");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bishop);
     }
 
-    // ===== No eligible cards =====
 
     @Test
     @DisplayName("When no Dinosaur creature cards are found, all go to bottom immediately")
     void noEligibleCardsAllToBottom() {
         Card forest = new Forest();
-        Card shock = new Shock();
-        Card bears = new GrizzlyBears();
-        setupLibrary(List.of(forest, shock, bears));
+        Card opt = new Opt();
+        Card bishop = new BishopOfTheBloodstained();
+        setupLibrary(List.of(forest, opt, bishop));
 
         harness.setLife(player2, 20);
         resolveCombatWithGishath();
@@ -125,7 +129,6 @@ class GishathSunsAvatarTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
     }
 
-    // ===== Empty library =====
 
     @Test
     @DisplayName("Empty library does nothing")
@@ -140,7 +143,6 @@ class GishathSunsAvatarTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
-    // ===== Fewer cards than damage =====
 
     @Test
     @DisplayName("Fewer cards in library than damage reveals all available")
@@ -160,7 +162,6 @@ class GishathSunsAvatarTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
-    // ===== No trigger when blocked (no player damage) =====
 
     @Test
     @DisplayName("No trigger when Gishath is blocked and deals no player damage")
@@ -171,36 +172,29 @@ class GishathSunsAvatarTest extends BaseCardTest {
         setupLibrary(List.of(dino));
 
         harness.setLife(player2, 20);
-        Permanent gishath = addGishathReady(player1);
+        Permanent gishath = addCreatureReady(player1, new GishathSunsAvatar());
         gishath.setAttacking(true);
 
-        // Add a large blocker (we'll simulate with a 7+ toughness creature)
-        // Gishath has trample, so all damage is assigned to blocker up to its toughness.
-        // We need a blocker with toughness >= 7 to absorb all 7 damage.
-        // Use two blockers to absorb the damage
-        Permanent blocker1 = addCreatureReady(player2, new ColossalDreadmaw()); // 6/6
+        Permanent blocker1 = addCreatureReady(player2, new AncientBrontodon());
         blocker1.setBlocking(true);
         blocker1.addBlockingTarget(0);
-        Permanent blocker2 = addCreatureReady(player2, new ColossalDreadmaw()); // 6/6
-        blocker2.setBlocking(true);
-        blocker2.addBlockingTarget(0);
 
         harness.setHand(player1, new ArrayList<>());
         harness.setHand(player2, new ArrayList<>());
 
         harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         // No player damage = no trigger = no library reveal choice
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)).isNull();
         // Library should be untouched
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertLife(player2, 20);
+        assertThat(blocker1.getMarkedDamage()).isEqualTo(7);
     }
 
-    // ===== Partial selection =====
 
     @Test
     @DisplayName("Can choose only some Dinosaur creatures, rest go to bottom")
@@ -227,31 +221,90 @@ class GishathSunsAvatarTest extends BaseCardTest {
                 .containsExactlyInAnyOrder("Ancient Brontodon", "Forest");
     }
 
-    // ===== Helpers =====
 
-    private void setupLibrary(List<Card> cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+    @Test
+    @DisplayName("Reveals only the damage amount and puts the rest below unrevealed cards")
+    void remainingCardsGoBelowUnrevealedLibrary() {
+        Card dino = new AncientBrontodon();
+        List<Card> revealed = new ArrayList<>();
+        revealed.add(dino);
+        for (int i = 0; i < 6; i++) {
+            revealed.add(new Forest());
+        }
+        Card unrevealed1 = new Opt();
+        Card unrevealed2 = new ColossalDreadmaw();
+        List<Card> library = new ArrayList<>(revealed);
+        library.add(unrevealed1);
+        library.add(unrevealed2);
+        setupLibrary(library);
+
+        resolveCombatWithGishath();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealed1, unrevealed2);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(unrevealed2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(dino.getId()));
+
+        harness.assertOnBattlefield(player1, "Ancient Brontodon");
+        harness.assertNotOnBattlefield(player1, "Colossal Dreadmaw");
+        List<Card> remaining = gd.playerDecks.get(player1.getId());
+        assertThat(remaining).hasSize(8);
+        assertThat(remaining.subList(0, 2)).containsExactly(unrevealed1, unrevealed2);
+        assertThat(remaining.subList(2, 8)).containsExactlyInAnyOrderElementsOf(revealed.subList(1, 7));
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
-    private Permanent addGishathReady(Player player) {
-        Permanent perm = new Permanent(new GishathSunsAvatar());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Trample reveals cards equal to damage to the player, not Gishath's power")
+    void trampleUsesActualPlayerDamage() {
+        Card revealed = new AncientBrontodon();
+        Card unrevealed = new ColossalDreadmaw();
+        setupLibrary(List.of(revealed, unrevealed));
+        Permanent gishath = addCreatureReady(player1, new GishathSunsAvatar());
+        gishath.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new ColossalDreadmaw());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.forceActivePlayer(player1);
+
+        harness.resolveCombatDamage();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealed);
+        harness.handleMultipleCardsChosen(player1, List.of(revealed.getId()));
+        harness.assertOnBattlefield(player1, "Ancient Brontodon");
+        harness.assertNotOnBattlefield(player1, "Colossal Dreadmaw");
+    }
+
+    @Test
+    @DisplayName("Dinosaurs enter simultaneously so Ferocidon sees the other selected Dinosaur")
+    void selectedDinosaursEnterSimultaneously() {
+        Card dreadmaw = new ColossalDreadmaw();
+        Card ferocidon = new RampagingFerocidon();
+        setupLibrary(List.of(dreadmaw, ferocidon));
+        harness.setLife(player1, 20);
+
+        resolveCombatWithGishath();
+        harness.handleMultipleCardsChosen(player1, List.of(dreadmaw.getId(), ferocidon.getId()));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Colossal Dreadmaw");
+        harness.assertOnBattlefield(player1, "Rampaging Ferocidon");
+        harness.assertLife(player1, 19);
+    }
+
+    private void setupLibrary(List<Card> cards) {
+        harness.setLibrary(player1, cards);
     }
 
     private void resolveCombatWithGishath() {
-        Permanent gishath = addGishathReady(player1);
+        Permanent gishath = addCreatureReady(player1, new GishathSunsAvatar());
         gishath.setAttacking(true);
 
         harness.setHand(player1, new ArrayList<>());
         harness.setHand(player2, new ArrayList<>());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
     }
 }

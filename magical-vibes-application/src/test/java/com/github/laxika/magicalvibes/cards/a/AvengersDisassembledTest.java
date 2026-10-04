@@ -59,6 +59,7 @@ class AvengersDisassembledTest extends BaseCardTest {
         UUID landId = harness.getPermanentId(player2, "Forest");
         harness.setLibrary(player2, List.of());
         cast(new int[]{0, 1}, List.of(landId));
+        harness.handleMayAbilityChosen(player2, false);
 
         harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");

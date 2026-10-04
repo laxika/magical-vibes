@@ -86,7 +86,7 @@ class AnointerOfValorTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(1));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(gd.currentStep, () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).hasSize(1);

@@ -25,4 +25,17 @@ class GoblinRaiderTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid blocker index");
     }
+
+    @Test
+    @DisplayName("Goblin Raider can attack past an opposing Goblin Raider")
+    void canAttackPastOpposingGoblinRaider() {
+        addCreatureReady(player1, new GoblinRaider());
+        addCreatureReady(player2, new GoblinRaider());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+    }
 }

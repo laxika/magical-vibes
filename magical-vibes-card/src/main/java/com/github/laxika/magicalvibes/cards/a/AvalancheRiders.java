@@ -14,6 +14,6 @@ public class AvalancheRiders extends Card {
     public AvalancheRiders() {
         target(TargetFilters.land())
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{3}{R}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{3}{R}"));
     }
 }

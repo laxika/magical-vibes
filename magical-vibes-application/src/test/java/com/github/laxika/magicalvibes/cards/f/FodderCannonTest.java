@@ -124,7 +124,7 @@ class FodderCannonTest extends BaseCardTest {
         Permanent cannon = harness.addToBattlefieldAndReturn(player1, new FodderCannon());
         Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         fodder.setSummoningSick(true);
-        fodder.setTapped(true);
+        fodder.tap();
         Permanent victim = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         victim.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.forceActivePlayer(player1);

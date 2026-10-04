@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.u.UnholyHeat;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(GoblinTraprunner.class)
+@CardUsed({GoblinTraprunner.class, UnholyHeat.class})
 class GoblinTraprunnerTest extends BaseCardTest {
 
     @Test
@@ -50,6 +52,35 @@ class GoblinTraprunnerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(findPermanents(player1, "Goblin")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The attack trigger resolves after Traprunner dies and its tokens deal combat damage")
+    void attackTriggerSurvivesSourceRemoval() {
+        Permanent traprunner = addCreatureReady(player1, new GoblinTraprunner());
+        harness.setHand(player2, List.of(new UnholyHeat()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        declareAttackers(List.of(0));
+        harness.castAndResolveInstant(player2, 0, traprunner.getId());
+        harness.assertInGraveyard(player1, "Goblin Traprunner");
+
+        resolveAllTriggers();
+        resolveTokenAttackChoices();
+
+        int wins = gd.gameLog.stream()
+                .map(GameLogEntry::plainText)
+                .filter(log -> log.contains("flips 3 coins for Goblin Traprunner"))
+                .mapToInt(this::headsFromLog)
+                .findFirst()
+                .orElseThrow();
+        assertThat(findPermanents(player1, "Goblin")).hasSize(wins);
+        assertThat(findPermanents(player2, "Goblin")).isEmpty();
+
+        resolveCombat();
+
+        harness.assertLife(player2, 20 - wins);
+        assertThat(findPermanents(player1, "Goblin")).hasSize(wins);
     }
 
     private void resolveTokenAttackChoices() {

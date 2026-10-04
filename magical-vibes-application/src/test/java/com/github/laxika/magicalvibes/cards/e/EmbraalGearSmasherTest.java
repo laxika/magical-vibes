@@ -65,7 +65,7 @@ class EmbraalGearSmasherTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent smasher = addCreatureReady(player1, new EmbraalGearSmasher());
-        smasher.setTapped(true);
+        smasher.tap();
         harness.addToBattlefield(player1, new HopeOfGhirapur());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
@@ -78,7 +78,7 @@ class EmbraalGearSmasherTest extends BaseCardTest {
     void tappedArtifactIsSacrificedBeforeDamageResolves() {
         Permanent smasher = addCreatureReady(player1, new EmbraalGearSmasher());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new HopeOfGhirapur());
-        artifact.setTapped(true);
+        artifact.tap();
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 

@@ -87,10 +87,10 @@ class FloodbringerTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Floodbringer can activate its ability")
     void tappedSummoningSickSourceCanActivate() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new Floodbringer());
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
         Permanent costLand = harness.addToBattlefieldAndReturn(player1, new GodsEyeGateToTheReikai());
-        costLand.setTapped(true);
+        costLand.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GodsEyeGateToTheReikai());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

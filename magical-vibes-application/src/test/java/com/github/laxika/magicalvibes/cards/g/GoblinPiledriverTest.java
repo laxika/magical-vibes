@@ -85,6 +85,53 @@ class GoblinPiledriverTest extends BaseCardTest {
     }
 
     @Test
+    void eachAttackingPiledriverCountsTheOther() {
+        Permanent first = addPiledriver(player1);
+        Permanent second = addPiledriver(player1);
+        addGoblin(player1);
+
+        declareAttackers(List.of(0, 1, 2));
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(4);
+        assertThat(second.getPowerModifier()).isEqualTo(4);
+    }
+
+    @Test
+    void goblinKilledInResponseIsNotCounted() {
+        Permanent piledriver = addPiledriver(player1);
+        Permanent goblin = addGoblin(player1);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        declareAttackers(List.of(0, 1));
+        assertThat(gd.stack).hasSize(1);
+        harness.castAndResolveInstant(player2, 0, goblin.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Goblin Sledder");
+        assertThat(piledriver.getPowerModifier()).isZero();
+    }
+
+    @Test
+    void boostDoesNotShrinkWhenAnotherAttackerDiesAfterResolution() {
+        Permanent piledriver = addPiledriver(player1);
+        Permanent goblin = addGoblin(player1);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            resolveAllTriggers();
+            assertThat(piledriver.getPowerModifier()).isEqualTo(2);
+            harness.castAndResolveInstant(player2, 0, goblin.getId());
+        });
+
+        harness.assertInGraveyard(player1, "Goblin Sledder");
+        assertThat(piledriver.getPowerModifier()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("The attack boost wears off at end of turn")
     void attackBoostWearsOffAtEndOfTurn() {
         Permanent piledriver = addPiledriver(player1);
@@ -144,8 +191,7 @@ class GoblinPiledriverTest extends BaseCardTest {
         addCreatureReady(player1, new RiptideShapeshifter());
         Permanent piledriver = addPiledriver(player2);
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player1);
 

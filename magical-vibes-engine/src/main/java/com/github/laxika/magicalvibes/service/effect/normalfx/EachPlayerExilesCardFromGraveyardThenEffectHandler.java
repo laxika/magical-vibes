@@ -18,6 +18,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /** Resolves Augusta's each-player graveyard exile and its nonland-count reflexive trigger. */
@@ -46,12 +48,12 @@ public class EachPlayerExilesCardFromGraveyardThenEffectHandler implements Norma
             operation.anyNumber = false;
             context = new EachPlayerExilesCardFromGraveyardContext(
                     entry.getControllerId(), entry.getSourcePermanentId(), exileThen.thenEffect(),
-                    apnapOrder(gameData), null, 0);
+                    apnapOrder(gameData), null, Map.of());
             operation.eachPlayerExilesCardFromGraveyard = context;
         }
 
         List<UUID> remainingPlayerIds = new ArrayList<>(context.remainingPlayerIds());
-        int nonlandCardsExiled = context.nonlandCardsExiled();
+        Map<UUID, UUID> chosenCardIds = new LinkedHashMap<>(context.chosenCardIds());
         while (!remainingPlayerIds.isEmpty()) {
             UUID playerId = remainingPlayerIds.removeFirst();
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
@@ -62,7 +64,7 @@ public class EachPlayerExilesCardFromGraveyardThenEffectHandler implements Norma
             if (graveyard.size() > 1) {
                 operation.eachPlayerExilesCardFromGraveyard = new EachPlayerExilesCardFromGraveyardContext(
                         context.controllerId(), context.sourcePermanentId(), context.thenEffect(),
-                        remainingPlayerIds, playerId, nonlandCardsExiled);
+                        remainingPlayerIds, playerId, chosenCardIds);
                 gameData.rerunCurrentEffectAfterInteraction = true;
                 playerInputService.beginMultiGraveyardChoice(
                         gameData, playerId, new ArrayList<>(graveyard), 1, 1,
@@ -71,18 +73,25 @@ public class EachPlayerExilesCardFromGraveyardThenEffectHandler implements Norma
             }
 
             Card card = graveyard.getFirst();
-            exileCard(gameData, playerId, card);
-            if (!card.hasType(CardType.LAND)) {
-                nonlandCardsExiled++;
-            }
+            chosenCardIds.put(playerId, card.getId());
             context = new EachPlayerExilesCardFromGraveyardContext(
                     context.controllerId(), context.sourcePermanentId(), context.thenEffect(),
-                    remainingPlayerIds, null, nonlandCardsExiled);
+                    remainingPlayerIds, null, chosenCardIds);
             operation.eachPlayerExilesCardFromGraveyard = context;
         }
 
         operation.eachPlayerExilesCardFromGraveyard = null;
         gameData.rerunCurrentEffectAfterInteraction = false;
+        int nonlandCardsExiled = 0;
+        for (UUID playerId : apnapOrder(gameData)) {
+            UUID cardId = chosenCardIds.get(playerId);
+            if (cardId == null) continue;
+            Card card = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
+                    .filter(candidate -> candidate.getId().equals(cardId)).findFirst().orElse(null);
+            if (card == null) continue;
+            exileCard(gameData, playerId, card);
+            if (!card.hasType(CardType.LAND)) nonlandCardsExiled++;
+        }
         if (nonlandCardsExiled == 0) {
             return;
         }

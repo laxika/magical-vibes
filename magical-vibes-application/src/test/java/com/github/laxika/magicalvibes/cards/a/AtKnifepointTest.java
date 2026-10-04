@@ -189,7 +189,7 @@ class AtKnifepointTest extends BaseCardTest {
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(mercenary);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, index, 0, null, mercenary.getId()))
-                .isInstanceOf(IllegalStateException.class).hasMessageContaining("sorcery speed");
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("stack is empty");
         assertThat(mercenary.isTapped()).isFalse();
         resolveAllTriggers();
     }

@@ -159,7 +159,7 @@ class ExecutionersHoodTest extends BaseCardTest {
     void tappedHoodCanEquipSummoningSickCreature() {
         Permanent hood = harness.addToBattlefieldAndReturn(player1, new ExecutionersHood());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new DawntreaderElk());
-        hood.setTapped(true);
+        hood.tap();
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, creature.getId());

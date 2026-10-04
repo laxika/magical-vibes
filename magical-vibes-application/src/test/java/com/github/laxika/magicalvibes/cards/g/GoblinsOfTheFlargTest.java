@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.d.DwarvenTrader;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinsOfTheFlarg.class, DwarvenTrader.class, Mountain.class})
+@CardUsed({GoblinsOfTheFlarg.class, DwarvenTrader.class, Mountain.class, LightningBolt.class})
 class GoblinsOfTheFlargTest extends BaseCardTest {
 
     @Test
@@ -68,6 +69,61 @@ class GoblinsOfTheFlargTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not duplicate its sacrifice trigger while that trigger is on the stack")
+    void doesNotRetriggerWhilePending() {
+        harness.addToBattlefield(player1, new DwarvenTrader());
+        harness.addToBattlefield(player1, new DwarvenTrader());
+        castGoblins();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.runStateBasedActions();
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Goblins of the Flarg");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Still sacrifices itself if the Dwarf dies in response to the trigger")
+    void sacrificesAfterDwarfLeaves() {
+        Permanent dwarf = harness.addToBattlefieldAndReturn(player1, new DwarvenTrader());
+        castGoblins();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, dwarf.getId());
+
+        harness.assertInGraveyard(player1, "Dwarven Trader");
+        harness.assertOnBattlefield(player1, "Goblins of the Flarg");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Goblins of the Flarg");
+        harness.assertInGraveyard(player1, "Goblins of the Flarg");
+    }
+
+    @Test
+    @DisplayName("Its controller's Mountain does not prevent an opponent from blocking")
+    void controllersMountainDoesNotPreventBlocking() {
+        Permanent attacker = addCreatureReady(player1, new GoblinsOfTheFlarg());
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent blocker = addCreatureReady(player2, new DwarvenTrader());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Mountainwalk prevents blocking when the defending player controls a Mountain")
     void mountainwalkPreventsBlockingWhenDefenderControlsMountain() {
         harness.addToBattlefield(player2, new Mountain());
@@ -91,8 +147,7 @@ class GoblinsOfTheFlargTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GoblinsOfTheFlarg());
         Permanent blocker = addCreatureReady(player2, new DwarvenTrader());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);

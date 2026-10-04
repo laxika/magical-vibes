@@ -45,5 +45,14 @@ public record RawFace(
         String loyalty,
         String defense,
         List<String> keywords,
-        String watermark) {
+        String watermark,
+        String layout,
+        String manaValue) {
+    public RawFace(String name, String manaCost, String typeLine, String text,
+                   List<String> colors, List<String> colorIndicator, List<String> colorIdentity,
+                   String power, String toughness, String loyalty, String defense,
+                   List<String> keywords, String watermark) {
+        this(name, manaCost, typeLine, text, colors, colorIndicator, colorIdentity, power,
+                toughness, loyalty, defense, keywords, watermark, null, null);
+    }
 }

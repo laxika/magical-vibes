@@ -90,4 +90,67 @@ class GoblinLegionnaireTest extends BaseCardTest {
 
         harness.assertLife(player2, 19);
     }
+
+    @Test
+    @DisplayName("White ability prevents exactly two damage to a player across separate events")
+    void whiteAbilityPreventsPlayerDamageAndIsExhausted() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new GoblinLegionnaire());
+        addCreatureReady(player1, new RazorfinHunter());
+        addCreatureReady(player1, new RazorfinHunter());
+        addCreatureReady(player1, new RazorfinHunter());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, i, null, player2.getId());
+            harness.passBothPriorities();
+            harness.assertLife(player2, i < 2 ? 20 : 19);
+        }
+    }
+
+    @Test
+    @DisplayName("Damage exceeding the remaining prevention shield is still dealt")
+    void whiteAbilityAllowsDamageBeyondRemainingShield() {
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new GoblinLegionnaire());
+        addCreatureReady(player1, new RazorfinHunter());
+        harness.addToBattlefield(player1, new GoblinLegionnaire());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
+
+        harness.activateAbility(player1, 1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertNotOnBattlefield(player1, "Goblin Legionnaire");
+    }
+
+    @Test
+    @DisplayName("A self-targeted prevention ability loses its target when its sacrifice cost is paid")
+    void whiteAbilityCanTargetItselfButDoesNotProtectAnotherCreature() {
+        harness.addToBattlefield(player1, new GoblinLegionnaire());
+        addCreatureReady(player1, new RazorfinHunter());
+        harness.addToBattlefield(player2, new RazorfinHunter());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        Permanent legionnaire = findPermanent(player1, "Goblin Legionnaire");
+        Permanent target = findPermanent(player2, "Razorfin Hunter");
+
+        harness.activateAbility(player1, 0, 1, null, legionnaire.getId());
+        harness.assertInGraveyard(player1, "Goblin Legionnaire");
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Razorfin Hunter");
+    }
 }

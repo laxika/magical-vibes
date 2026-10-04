@@ -124,7 +124,7 @@ class FblthpTheLostTest extends BaseCardTest {
     @DisplayName("Being targeted by an activated ability does not shuffle Fblthp")
     void activatedAbilityDoesNotTriggerShuffle() {
         Permanent fblthp = harness.addToBattlefieldAndReturn(player1, new FblthpTheLost());
-        fblthp.setTapped(true);
+        fblthp.tap();
         harness.addToBattlefield(player1, new KioraBehemothBeckoner());
 
         harness.activateAbility(player1, 1, null, fblthp.getId());

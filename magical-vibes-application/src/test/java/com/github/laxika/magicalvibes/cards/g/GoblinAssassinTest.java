@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.c.ChanceEncounter;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GoblinAssassin.class, FugitiveWizard.class, GoblinGrappler.class})
+@CardUsed({GoblinAssassin.class, FugitiveWizard.class, GoblinGrappler.class, ChanceEncounter.class})
 class GoblinAssassinTest extends BaseCardTest {
 
     @Test
@@ -28,8 +29,7 @@ class GoblinAssassinTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         resolveSacrificeChoices();
 
         List<String> flipLogs = flipLogs();
@@ -56,8 +56,7 @@ class GoblinAssassinTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
 
         harness.castCreature(player2, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         resolveSacrificeChoices();
         assertThat(flipLogs()).hasSize(2);
 
@@ -66,6 +65,42 @@ class GoblinAssassinTest extends BaseCardTest {
 
         assertThat(flipLogs()).hasSize(2);
         assertThat(countPermanents(player1, "Goblin Assassin")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The only creature can sacrifice itself and a creatureless player still flips")
+    void assassinCanSacrificeItselfWithCreaturelessOpponent() {
+        harness.setHand(player1, List.of(new GoblinAssassin()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(flipLogs()).hasSize(2);
+        boolean controllerTails = flipLogs().stream().anyMatch(log ->
+                log.startsWith(gd.playerIdToName.get(player1.getId()) + " loses the coin flip "));
+        assertThat(countInGraveyard(player1, "Goblin Assassin")).isEqualTo(controllerTails ? 1 : 0);
+        assertThat(countPermanents(player1, "Goblin Assassin")).isEqualTo(controllerTails ? 0 : 1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Heads or tails flips do not trigger Chance Encounter")
+    void flipsHaveNoWinner() {
+        harness.addToBattlefield(player1, new ChanceEncounter());
+        harness.addToBattlefield(player2, new ChanceEncounter());
+        harness.setHand(player1, List.of(new GoblinAssassin()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(flipLogs()).hasSize(2);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void resolveSacrificeChoices() {

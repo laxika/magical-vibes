@@ -104,6 +104,8 @@ class AragornTheUniterTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.handlePermanentChosen(player1, aragorn.getId());
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, order.options().getFirst());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -145,6 +147,8 @@ class AragornTheUniterTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
         harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
+        declareAttackers(List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
@@ -181,6 +185,13 @@ class AragornTheUniterTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, aragorn.getId());
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        PendingInteraction.ColorChoice order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        harness.handleListChoice(player1, order.options().getFirst());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, aragorn)).isEqualTo(9);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Human Soldier");
     }
 
     private void addReadyAragorn() {

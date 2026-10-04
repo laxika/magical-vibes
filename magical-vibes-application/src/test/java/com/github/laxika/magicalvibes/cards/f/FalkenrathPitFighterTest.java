@@ -102,7 +102,7 @@ class FalkenrathPitFighterTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent fighter = harness.addToBattlefieldAndReturn(player1, new FalkenrathPitFighter());
         fighter.setSummoningSick(true);
-        fighter.setTapped(true);
+        fighter.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.END_STEP);
         dealShockTo(player2);

@@ -517,6 +517,22 @@ public class DamagePreventionService {
                 return damage;
             }
         }
+        boolean sourceDamageToCounters = gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
+                .filter(PreventDamageToOtherCreaturesAndAddPlusCountersEffect.class::isInstance)
+                .map(PreventDamageToOtherCreaturesAndAddPlusCountersEffect.class::cast)
+                .anyMatch(effect -> effect.sourceOnly() && (!isCombatDamage || !effect.noncombatOnly()));
+        if (damage > 0 && sourceDamageToCounters) {
+            if (!gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)) {
+                int counters = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, damage);
+                if (counters > 0) {
+                    permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                            permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
+                    recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent, counters);
+                }
+            }
+            return damageUnpreventable || !gameQueryService.isDamagePreventable(gameData, isCombatDamage)
+                    ? damage : 0;
+        }
         if (damageUnpreventable) return damage;
         if (gameQueryService.isDamagePreventable(gameData, isCombatDamage)) {
             if (applySelfDamagePrevention) {
@@ -1028,7 +1044,7 @@ public class DamagePreventionService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
         return battlefield.stream()
-                .anyMatch(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream()
                         .filter(PreventDamageToOtherCreaturesAndAddPlusCountersEffect.class::isInstance)
                         .map(PreventDamageToOtherCreaturesAndAddPlusCountersEffect.class::cast)
                         .anyMatch(effect -> (!isCombatDamage || !effect.noncombatOnly())
@@ -2310,7 +2326,7 @@ public class DamagePreventionService {
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(protectedPlayerId, List.of())) {
             if (permanent.isTapped() || !gameQueryService.isCreature(gameData, permanent)
                     || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-            boolean redirects = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+            boolean redirects = gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
                     .anyMatch(effect -> effect instanceof RedirectPlayerDamageToSelfEffect redirect
                             && redirect.onlyFromUnblockedCreatures());
             if (redirects) return permanent.getId();
@@ -2372,8 +2388,9 @@ public class DamagePreventionService {
 
         for (Permanent permanent : List.copyOf(battlefield)) {
             // "other permanents you control" — the absorbing permanent takes its own damage normally.
-            if (permanent.getId().equals(damagedPermanentId)) continue;
-            boolean absorbs = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+            if (permanent.getId().equals(damagedPermanentId)
+                    || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
+            boolean absorbs = gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
                     .anyMatch(effect -> effect instanceof RedirectPlayerDamageToSelfEffect e && e.includeOtherPermanents());
             if (!absorbs) continue;
             gameData.pendingSourceRedirectDamage.add(

@@ -75,7 +75,7 @@ class FelhideBrawlerTest extends BaseCardTest {
     void tappedSummoningSickMinotaurStillAllowsBlocking() {
         Permanent brawler = addCreatureReady(player2, new FelhideBrawler());
         Permanent other = harness.addToBattlefieldAndReturn(player2, new KragmaButcher());
-        other.setTapped(true);
+        other.tap();
         other.setSummoningSick(true);
         addCreatureReady(player1, new PainSeer());
         declareAttackersAndPrepareBlockers(List.of(0));

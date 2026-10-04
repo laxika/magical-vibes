@@ -38,8 +38,7 @@ class GlitteringLynxTest extends BaseCardTest {
         Permanent lynx = addCreatureReady(player1, new GlitteringLynx());
         Permanent snapper = addCreatureReady(player2, new VintaraSnapper());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -100,5 +99,69 @@ class GlitteringLynxTest extends BaseCardTest {
 
         assertThat(lynx.getMarkedDamage()).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(lynx);
+    }
+
+    @Test
+    @DisplayName("Damage in response to the activation is still prevented")
+    void preventionRemainsUntilActivationResolves() {
+        Permanent lynx = addCreatureReady(player1, new GlitteringLynx());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 0, null, null);
+
+        harness.setHand(player2, List.of(new SearingWind(), new SearingWind()));
+        harness.addMana(player2, ManaColor.COLORLESS, 16);
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, lynx.getId());
+
+        assertThat(lynx.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(lynx);
+
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, lynx.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(lynx);
+    }
+
+    @Test
+    @DisplayName("Turning off prevention affects only the activated Lynx")
+    void suppressionAffectsOnlyItsSource() {
+        Permanent suppressedLynx = addCreatureReady(player1, new GlitteringLynx());
+        Permanent protectedLynx = addCreatureReady(player1, new GlitteringLynx());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new SearingWind(), new SearingWind()));
+        harness.addMana(player2, ManaColor.COLORLESS, 16);
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, protectedLynx.getId());
+
+        assertThat(protectedLynx.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(protectedLynx);
+
+        harness.castAndResolveInstant(player2, 0, suppressedLynx.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(suppressedLynx);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(protectedLynx);
+    }
+
+    @Test
+    @DisplayName("The activated ability remains available after prevention is disabled")
+    void canActivateAgainAfterSuppression() {
+        Permanent lynx = addCreatureReady(player1, new GlitteringLynx());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new SearingWind()));
+        harness.addMana(player2, ManaColor.COLORLESS, 8);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, lynx.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(lynx);
     }
 }

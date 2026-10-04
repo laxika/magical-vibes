@@ -113,7 +113,7 @@ class FleshgrafterTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent fleshgrafter = harness.addToBattlefieldAndReturn(player1, new Fleshgrafter());
-        fleshgrafter.setTapped(true);
+        fleshgrafter.tap();
         fleshgrafter.setSummoningSick(true);
         int basePower = gqs.getEffectivePower(gd, fleshgrafter);
         int baseToughness = gqs.getEffectiveToughness(gd, fleshgrafter);

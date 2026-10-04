@@ -112,6 +112,79 @@ class GolgariGuildmageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A creature on the battlefield cannot become the target by being sacrificed for the cost")
+    void cannotTargetCreatureThatWillBeSacrificed() {
+        addCreatureReady(player1, new GolgariGuildmage());
+        Permanent creature = addCreatureReady(player1, new BorosRecruit());
+        addBlackActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, creature.getCard().getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Boros Recruit");
+        harness.assertOnBattlefield(player1, "Golgari Guildmage");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The first ability requires a graveyard target even when the Guildmage can sacrifice itself")
+    void cannotActivateWithoutGraveyardTarget() {
+        addCreatureReady(player1, new GolgariGuildmage());
+        addBlackActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, 0, null, null, Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Golgari Guildmage");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid before resolution and remains paid when the graveyard target disappears")
+    void targetLeavingGraveyardDoesNotRefundSacrifice() {
+        addCreatureReady(player1, new GolgariGuildmage());
+        Permanent sacrificed = addCreatureReady(player1, new BorosRecruit());
+        Card returned = new GolgariThug();
+        harness.setGraveyard(player1, List.of(returned));
+        addBlackActivationMana();
+
+        harness.activateAbility(player1, 0, 0, null, returned.getId(), Zone.GRAVEYARD);
+        harness.handlePermanentChosen(player1, sacrificed.getId());
+
+        harness.assertNotOnBattlefield(player1, "Boros Recruit");
+        harness.assertInGraveyard(player1, "Boros Recruit");
+        harness.assertNotInHand(player1, "Golgari Thug");
+        gd.playerGraveyards.get(player1.getId()).remove(returned);
+        harness.setExile(player1, List.of(returned));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Golgari Thug");
+        harness.assertInGraveyard(player1, "Boros Recruit");
+        assertThat(gd.findExiledCard(returned.getId())).isSameAs(returned);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Guildmage can activate its counter ability repeatedly")
+    void tappedSummoningSickGuildmageCanActivateRepeatedly() {
+        Permanent guildmage = harness.addToBattlefieldAndReturn(player1, new GolgariGuildmage());
+        guildmage.setSummoningSick(true);
+        guildmage.setTapped(true);
+        Permanent target = addCreatureReady(player1, new BorosRecruit());
+        addGreenActivationMana();
+        addGreenActivationMana();
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(guildmage.isTapped()).isTrue();
+    }
     private void addBlackActivationMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.BLACK, 1);

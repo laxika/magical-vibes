@@ -59,13 +59,8 @@ public class AttachTargetAuraToTargetCreatureEffectHandler implements NormalEffe
         if (host == null || host.getId().equals(destination.getId())) {
             return;
         }
-        boolean sameCreatureType = gameQueryService.isCreature(gameData, host)
-                && gameQueryService.isCreature(gameData, destination);
-        boolean sameLandType = gameQueryService.isLand(gameData, host)
-                && gameQueryService.isLand(gameData, destination);
         UUID auraControllerId = gameQueryService.findPermanentController(gameData, aura.getId());
-        if ((!sameCreatureType && !sameLandType)
-                || auraControllerId == null
+        if (auraControllerId == null
                 || !auraAttachmentService.canEnchant(gameData, aura.getCard(), auraControllerId, destination)
                 || gameQueryService.hasProtectionFromSource(gameData, destination, aura)) {
             return;

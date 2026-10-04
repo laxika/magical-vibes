@@ -106,7 +106,7 @@ class AvalancheRidersTest extends BaseCardTest {
         resolveAllTriggers();
 
         advanceToUpkeep(player1);
-        resolveAllTriggers();
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
@@ -131,7 +131,7 @@ class AvalancheRidersTest extends BaseCardTest {
         harness.assertInHand(player2, "Ghitu Encampment");
 
         advanceToUpkeep(player1);
-        resolveAllTriggers();
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 

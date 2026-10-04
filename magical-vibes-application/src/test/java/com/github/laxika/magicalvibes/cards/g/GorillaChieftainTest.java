@@ -36,7 +36,7 @@ class GorillaChieftainTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot activate with only green mana")
+    @DisplayName("Cannot activate with only one green mana")
     void requiresGenericMana() {
         addCreatureReady(player1, new GorillaChieftain());
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -104,5 +104,47 @@ class GorillaChieftainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(chieftain.getRegenerationShield()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Two green mana can pay for regeneration while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSickWithGreenMana() {
+        Permanent chieftain = harness.addToBattlefieldAndReturn(player1, new GorillaChieftain());
+        chieftain.setSummoningSick(true);
+        chieftain.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(chieftain.getRegenerationShield()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(chieftain.getRegenerationShield()).isEqualTo(1);
+        assertThat(chieftain.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Resolved regeneration prevents lethal combat damage and removes the creature from combat")
+    void resolvedActivationProtectsInCombat() {
+        Permanent chieftain = addCreatureReady(player1, new GorillaChieftain());
+        Permanent attacker = addCreatureReady(player2, new GorillaChieftain());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(chieftain.isTapped()).isFalse();
+        chieftain.setBlocking(true);
+        chieftain.addBlockingTarget(0);
+        attacker.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Gorilla Chieftain");
+        harness.assertNotInGraveyard(player1, "Gorilla Chieftain");
+        harness.assertInGraveyard(player2, "Gorilla Chieftain");
+        assertThat(chieftain.isTapped()).isTrue();
+        assertThat(chieftain.isBlocking()).isFalse();
+        assertThat(chieftain.getBlockingTargets()).isEmpty();
+        assertThat(chieftain.getMarkedDamage()).isZero();
+        assertThat(chieftain.getRegenerationShield()).isZero();
     }
 }

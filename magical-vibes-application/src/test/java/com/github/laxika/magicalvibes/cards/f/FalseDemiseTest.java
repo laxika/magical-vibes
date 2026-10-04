@@ -172,7 +172,7 @@ class FalseDemiseTest extends BaseCardTest {
     @DisplayName("The returned creature is untapped, undamaged, and summoning sick")
     void returnsCreatureAsNewPermanent() {
         Permanent creature = addCreatureReady(player1, new SteadfastGuard());
-        creature.setTapped(true);
+        creature.tap();
         creature.setMarkedDamage(1);
         castFalseDemise(player1, creature);
 

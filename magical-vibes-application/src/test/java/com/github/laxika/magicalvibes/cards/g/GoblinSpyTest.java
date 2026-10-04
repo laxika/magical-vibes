@@ -15,6 +15,60 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GoblinSpyTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Drawing reveals the new top card to both players")
+    void revealsNewTopCardAfterDrawing() {
+        harness.addToBattlefield(player1, new GoblinSpy());
+        harness.setLibrary(player1, List.of(new Forest(), new Island()));
+        harness.setLibrary(player2, List.of());
+        harness.publishState();
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.clearMessages();
+
+        harness.publishState();
+
+        for (var connection : List.of(harness.getConn1(), harness.getConn2())) {
+            assertThat(connection.getSentMessages())
+                    .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[{")
+                            && message.contains("Island"));
+        }
+    }
+
+    @Test
+    @DisplayName("An empty library has no card to reveal")
+    void revealsNothingForEmptyLibrary() {
+        harness.addToBattlefield(player1, new GoblinSpy());
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of(new Island()));
+        harness.clearMessages();
+
+        harness.publishState();
+
+        for (var connection : List.of(harness.getConn1(), harness.getConn2())) {
+            assertThat(connection.getSentMessages())
+                    .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[],[]]"));
+        }
+    }
+
+    @Test
+    @DisplayName("An opponent's Goblin Spy reveals only that opponent's top card")
+    void revealsOpponentsTopCardToBothPlayers() {
+        harness.addToBattlefield(player2, new GoblinSpy());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Island()));
+        harness.clearMessages();
+
+        harness.publishState();
+
+        for (var connection : List.of(harness.getConn1(), harness.getConn2())) {
+            assertThat(connection.getSentMessages())
+                    .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[],[{")
+                            && message.contains("Island"))
+                    .noneMatch(message -> message.contains("\"revealedLibraryTopCards\"")
+                            && message.contains("Forest"));
+        }
+    }
+
+    @Test
     @DisplayName("Reveals the controller's top library card to both players")
     void revealsTopLibraryCardToBothPlayers() {
         harness.addToBattlefield(player1, new GoblinSpy());

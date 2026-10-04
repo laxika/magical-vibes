@@ -74,6 +74,76 @@ class GhostLitRaiderTest extends BaseCardTest {
     }
 
     @Test
+    void channelDiscardsAsACostBeforeDamageResolves() {
+        harness.setHand(player1, List.of(new GhostLitRaider()));
+        Permanent target = addCreatureReady(player2, new RazorjawOni());
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateHandAbility(player1, 0, target.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Ghost-Lit Raider");
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    void channelCannotBeActivatedWithoutEnoughMana() {
+        GhostLitRaider raider = new GhostLitRaider();
+        harness.setHand(player1, List.of(raider));
+        Permanent target = addCreatureReady(player2, new RazorjawOni());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(raider);
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void battlefieldAbilityCannotBeActivatedWhileSummoningSick() {
+        Permanent raider = addCreatureReady(player1, new GhostLitRaider());
+        raider.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new RoninCavekeeper());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(raider.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void battlefieldAbilityCanTargetItsSource() {
+        Permanent raider = addCreatureReady(player1, new GhostLitRaider());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, raider.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ghost-Lit Raider");
+    }
+
+    @Test
+    void channelCanTargetOwnCreature() {
+        harness.setHand(player1, List.of(new GhostLitRaider()));
+        Permanent target = addCreatureReady(player1, new RazorjawOni());
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateHandAbility(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
     void damageAbilitiesCannotTargetPlayers() {
         addCreatureReady(player1, new GhostLitRaider());
         harness.addMana(player1, ManaColor.RED, 1);

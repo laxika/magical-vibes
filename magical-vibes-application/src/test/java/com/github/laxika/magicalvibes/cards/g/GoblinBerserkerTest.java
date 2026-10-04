@@ -35,15 +35,44 @@ class GoblinBerserkerTest extends BaseCardTest {
     @Test
     @DisplayName("First strike kills an equally sized blocker before regular damage")
     void firstStrikeKillsBlockerBeforeRegularDamage() {
-        Permanent berserker = addCreatureReady(player1, new GoblinBerserker());
-        berserker.setAttacking(true);
+        addCreatureReady(player1, new GoblinBerserker());
         addCreatureReady(player2, new WildColos());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
         harness.assertOnBattlefield(player1, "Goblin Berserker");
         harness.assertInGraveyard(player2, "Wild Colos");
+    }
+
+    @Test
+    @DisplayName("First strike works while blocking a creature that entered this turn")
+    void firstStrikeKillsAttackerBeforeRegularDamage() {
+        addCreatureReady(player1, new WildColos());
+        harness.addToBattlefield(player2, new GoblinBerserker());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Wild Colos");
+        harness.assertOnBattlefield(player2, "Goblin Berserker");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Opposing first strikers deal lethal damage to each other simultaneously")
+    void opposingFirstStrikersTrade() {
+        addCreatureReady(player1, new GoblinBerserker());
+        addCreatureReady(player2, new GoblinBerserker());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Goblin Berserker");
+        harness.assertInGraveyard(player2, "Goblin Berserker");
+        harness.assertLife(player2, 20);
     }
 }

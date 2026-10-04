@@ -4,15 +4,18 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinGlasswrightCraftWithPride.class})
 class GoblinGlasswrightCraftWithPrideTest extends BaseCardTest {
 
     @Test
@@ -65,13 +68,60 @@ class GoblinGlasswrightCraftWithPrideTest extends BaseCardTest {
     }
 
     private Permanent castGoblinGlasswright() {
-        harness.setHand(player1, List.of(new GoblinGlasswrightCraftWithPride()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new GoblinGlasswrightCraftWithPride(), "{1}{R}");
+        resolveAllTriggers();
 
         return findPermanent(player1, "Goblin Glasswright");
+    }
+
+    @Test
+    void preparationDoesNotUseTheStack() {
+        harness.castFromHand(player1, new GoblinGlasswrightCraftWithPride(), "{1}{R}");
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Goblin Glasswright").isPrepared()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void castingCopyUnpreparesBeforeResolution() {
+        Permanent glasswright = castGoblinGlasswright();
+        UUID copyId = glasswright.getPreparedSpellCardId();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castFromExile(player1, copyId);
+
+        assertThat(glasswright.isPrepared()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getId().equals(copyId));
+    }
+
+    @Test
+    void preparedCopyRequiresRedMana() {
+        Permanent glasswright = castGoblinGlasswright();
+        UUID copyId = glasswright.getPreparedSpellCardId();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, copyId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(glasswright.isPrepared()).isTrue();
+        assertThat(gd.findExiledCard(copyId)).isNotNull();
+    }
+
+    @Test
+    void preparedSorceryCannotBeCastInEndStep() {
+        Permanent glasswright = castGoblinGlasswright();
+        UUID copyId = glasswright.getPreparedSpellCardId();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, copyId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(glasswright.isPrepared()).isTrue();
+        assertThat(gd.findExiledCard(copyId)).isNotNull();
     }
 }

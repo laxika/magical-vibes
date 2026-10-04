@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GiantOpportunity.class, FeastingTrollKing.class})
 class GiantOpportunityTest extends BaseCardTest {
@@ -19,7 +20,7 @@ class GiantOpportunityTest extends BaseCardTest {
     @DisplayName("Sacrificing two Foods creates a 7/7 Giant")
     void sacrificesTwoFoodsForGiant() {
         castFoodProducer();
-        List<Permanent> foods = foodPermanents();
+        List<Permanent> foods = findPermanents(player1, "Food");
 
         castGiantOpportunity();
         harness.handleMultiplePermanentsChosen(player1,
@@ -65,13 +66,58 @@ class GiantOpportunityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GiantOpportunity()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
-    private List<Permanent> foodPermanents() {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> "Food".equals(permanent.getCard().getName()))
-                .toList();
+    @Test
+    @DisplayName("Created Foods can be sacrificed for three life")
+    void createdFoodGainsLife() {
+        castGiantOpportunity();
+        harness.setLife(player1, 10);
+
+        activateFood();
+
+        harness.assertLife(player1, 13);
+        assertThat(countPermanents(player1, "Food")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("One remaining Food is kept and three more are created")
+    void oneFoodIsNotSacrificed() {
+        castGiantOpportunity();
+        activateFood();
+        activateFood();
+        Permanent remainingFood = findPermanent(player1, "Food");
+
+        castGiantOpportunity();
+
+        assertThat(countPermanents(player1, "Food")).isEqualTo(4);
+        assertThat(findPermanents(player1, "Food")).contains(remainingFood);
+        harness.assertNotOnBattlefield(player1, "Giant");
+    }
+
+    @Test
+    @DisplayName("Choosing just one Food is rejected without sacrificing it")
+    void cannotSacrificeOnlyOneFood() {
+        castFoodProducer();
+        List<Permanent> foods = findPermanents(player1, "Food");
+        castGiantOpportunity();
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(foods.getFirst().getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player1, "Food")).containsExactlyElementsOf(foods);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        assertThat(countPermanents(player1, "Food")).isEqualTo(6);
+        harness.assertNotOnBattlefield(player1, "Giant");
+    }
+
+    private void activateFood() {
+        Permanent food = findPermanent(player1, "Food");
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(food);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, index, null, null);
+        harness.passBothPriorities();
     }
 }

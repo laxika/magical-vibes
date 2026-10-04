@@ -93,6 +93,71 @@ class GhorClanBloodscaleTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
+    @Test
+    @DisplayName("The activation limit applies before the first activation resolves")
+    void cannotActivateAgainWhileAbilityIsOnStack() {
+        Permanent bloodscale = addReadyBloodscale(player1);
+        addAbilityMana(player1);
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(bloodscale.getPowerModifier()).isZero();
+        assertThat(bloodscale.getToughnessModifier()).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(bloodscale.getPowerModifier()).isEqualTo(2);
+        assertThat(bloodscale.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each copy can activate once per turn and boosts only itself")
+    void activationLimitIsIndependentForEachPermanent() {
+        Permanent first = addReadyBloodscale(player1);
+        Permanent second = addReadyBloodscale(player1);
+        addAbilityMana(player1);
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getPowerModifier()).isEqualTo(2);
+        assertThat(first.getToughnessModifier()).isEqualTo(2);
+        assertThat(second.getPowerModifier()).isZero();
+        assertThat(second.getToughnessModifier()).isZero();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getPowerModifier()).isEqualTo(2);
+        assertThat(first.getToughnessModifier()).isEqualTo(2);
+        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(second.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick on an opponent's turn")
+    void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
+        Permanent bloodscale = addReadyBloodscale(player1);
+        bloodscale.setTapped(true);
+        bloodscale.setSummoningSick(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bloodscale.getPowerModifier()).isEqualTo(2);
+        assertThat(bloodscale.getToughnessModifier()).isEqualTo(2);
+        assertThat(bloodscale.isTapped()).isTrue();
+    }
+
     private Permanent addReadyBloodscale(Player player) {
         return addCreatureReady(player, new GhorClanBloodscale());
     }

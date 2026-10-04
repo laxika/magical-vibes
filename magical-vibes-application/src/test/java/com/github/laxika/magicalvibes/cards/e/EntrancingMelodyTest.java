@@ -173,7 +173,7 @@ class EntrancingMelodyTest extends BaseCardTest {
     @DisplayName("Gaining control leaves a tapped creature tapped and summoning sick")
     void doesNotUntapOrGrantHaste() {
         var target = harness.addToBattlefieldAndReturn(player2, new RaptorCompanion());
-        target.setTapped(true);
+        target.tap();
         target.setSummoningSick(false);
         harness.setHand(player1, List.of(new EntrancingMelody()));
         harness.addMana(player1, ManaColor.BLUE, 4);

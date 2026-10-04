@@ -111,6 +111,65 @@ class GiantSlugTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Each activation grants independently chosen landwalk at the next upkeep only")
+    void multipleActivationsGrantDifferentLandwalksOnce() {
+        Permanent slug = activateSlug();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "PLAINS");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "SWAMP");
+
+        assertThat(gqs.hasKeyword(gd, slug, Keyword.PLAINSWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, slug, Keyword.SWAMPWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, slug, Keyword.MOUNTAINWALK)).isFalse();
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The delayed ability still triggers and chooses a type after the Slug leaves")
+    void delayedAbilityTriggersAfterSourceLeavesBattlefield() {
+        Permanent slug = activateSlug();
+        gd.playerBattlefields.get(player1.getId()).remove(slug);
+        gd.playerGraveyards.get(player1.getId()).add(slug.getCard());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, "MOUNTAIN");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST"})
+    void grantsLandwalkOfEveryBasicLandType(String landType) {
+        Permanent slug = activateSlugAndChoose(landType);
+        assertThat(gqs.hasKeyword(gd, slug, Keyword.valueOf(landType + "WALK"))).isTrue();
+    }
+
+    @Test
+    @DisplayName("The land type is still chosen if the Slug leaves in response to its upkeep trigger")
+    void choosesLandTypeAfterSourceLeavesInResponse() {
+        Permanent slug = activateSlug();
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(slug);
+        gd.playerGraveyards.get(player1.getId()).add(slug.getCard());
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, "MOUNTAIN");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
     private Permanent activateSlugAndChoose(String landType) {
         Permanent slug = activateSlug();
 

@@ -69,6 +69,7 @@ class AvacynsJudgmentTest extends BaseCardTest {
     @Test
     void normalCastCanDamagePlaneswalker() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceUnravelerOfSecrets());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
         harness.setHand(player1, List.of(new AvacynsJudgment()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -96,8 +97,7 @@ class AvacynsJudgmentTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 0);
 
-        assertThat(gd.interaction.activeInteraction())
-                .isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
@@ -108,6 +108,7 @@ class AvacynsJudgmentTest extends BaseCardTest {
     @Test
     void madnessCanTargetPlaneswalker() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceUnravelerOfSecrets());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
         prepareMadnessChoice(3);
         harness.handleMayAbilityChosen(player1, true);
         harness.handleXValueChosen(player1, 3);

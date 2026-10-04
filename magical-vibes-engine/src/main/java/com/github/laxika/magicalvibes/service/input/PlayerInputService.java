@@ -1030,8 +1030,15 @@ public class PlayerInputService {
     public void beginLibraryCastModeChoice(GameData gameData, UUID controllerId, Card cardToCast,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, StackEntryType spellType,
             List<Integer> modeIndices, Integer discoverValue) {
+        beginLibraryCastModeChoice(gameData, controllerId, cardToCast, effect, spellType, modeIndices,
+                discoverValue, Zone.LIBRARY);
+    }
+
+    public void beginLibraryCastModeChoice(GameData gameData, UUID controllerId, Card cardToCast,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, StackEntryType spellType,
+            List<Integer> modeIndices, Integer discoverValue, Zone sourceZone) {
         ChoiceContext.LibraryCastModeChoice ctx = new ChoiceContext.LibraryCastModeChoice(
-                cardToCast, controllerId, effect, spellType, modeIndices, discoverValue);
+                cardToCast, controllerId, effect, spellType, modeIndices, discoverValue, sourceZone);
         List<String> optionLabels = effect.options().stream()
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
                 .toList();
@@ -1522,8 +1529,13 @@ public class PlayerInputService {
 
     public void beginCardTypeOnEnterChoice(GameData gameData, UUID playerId, Card card,
                                            List<CardType> excludedTypes) {
+        beginCardTypeOnEnterChoice(gameData, playerId, card, excludedTypes, null);
+    }
+
+    public void beginCardTypeOnEnterChoice(GameData gameData, UUID playerId, Card card,
+                                           List<CardType> excludedTypes, Permanent preparedPermanent) {
         ChoiceContext.CardTypeOnEnterChoice choiceContext =
-                new ChoiceContext.CardTypeOnEnterChoice(card, playerId, excludedTypes);
+                new ChoiceContext.CardTypeOnEnterChoice(card, playerId, excludedTypes, preparedPermanent);
         List<String> cardTypes = Arrays.stream(CardType.values())
                 .filter(type -> type != CardType.EMBLEM && !excludedTypes.contains(type))
                 .map(CardType::name)

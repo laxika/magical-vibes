@@ -168,7 +168,7 @@ class AngelsTrumpetTest extends BaseCardTest {
     void creatureMadeAttackingWithoutDeclarationIsTapped() {
         harness.addToBattlefield(player1, new AngelsTrumpet());
         Permanent creature = addCreatureReady(player1, new DevoutHarpist());
-        creature.setAttacking(true);
+        creature.enterAttacking(true);
         creature.setAttacking(false);
         harness.setLife(player1, 20);
 

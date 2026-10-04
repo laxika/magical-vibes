@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeEachMatchingPermanen
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +29,7 @@ public class SacrificeEachMatchingPermanentEffectHandler implements NormalEffect
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final PermanentRemovalService permanentRemovalService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -55,8 +57,10 @@ public class SacrificeEachMatchingPermanentEffectHandler implements NormalEffect
             }
         });
 
-        for (int i = 0; i < toSacrifice.size(); i++) {
-            destructionSupport.sacrificeAndLog(gameData, toSacrifice.get(i), controllerIds.get(i));
-        }
+        permanentRemovalService.performSimultaneousRemovals(gameData, toSacrifice, () -> {
+            for (int i = 0; i < toSacrifice.size(); i++) {
+                destructionSupport.sacrificeAndLog(gameData, toSacrifice.get(i), controllerIds.get(i));
+            }
+        });
     }
 }

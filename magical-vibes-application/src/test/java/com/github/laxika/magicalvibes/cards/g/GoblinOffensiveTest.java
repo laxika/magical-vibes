@@ -42,6 +42,19 @@ class GoblinOffensiveTest extends BaseCardTest {
         assertThat(goblinsOf(player1)).isEmpty();
     }
 
+    @Test
+    @DisplayName("With X=1, creates one untapped Goblin only for the caster")
+    void xOneCreatesTokenForCasterAndSpellGoesToGraveyard() {
+        cast(player1, 1);
+
+        assertThat(goblinsOf(player1)).singleElement().satisfies(goblin -> {
+            assertThat(goblin.isTapped()).isFalse();
+            assertThat(goblin.isAttacking()).isFalse();
+        });
+        assertThat(goblinsOf(player2)).isEmpty();
+        harness.assertInGraveyard(player1, "Goblin Offensive");
+    }
+
     private void cast(Player player, int xValue) {
         harness.setHand(player, List.of(new GoblinOffensive()));
         harness.addMana(player, ManaColor.RED, 2);

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.w.WallOfAir;
+import com.github.laxika.magicalvibes.cards.w.WallOfBone;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,8 +12,67 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinDiggingTeam.class, WallOfAir.class})
+@CardUsed({GoblinDiggingTeam.class, WallOfAir.class, WallOfBone.class})
 class GoblinDiggingTeamTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Ability can be activated during the opponent's turn")
+    void activatesDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        addCreatureReady(player1, new GoblinDiggingTeam());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfAir());
+
+        harness.activateAbility(player1, 0, 0, null, wall.getId());
+        harness.assertInGraveyard(player1, "Goblin Digging Team");
+        harness.assertOnBattlefield(player2, "Wall of Air");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Wall of Air");
+        harness.assertNotOnBattlefield(player2, "Wall of Air");
+    }
+
+    @Test
+    @DisplayName("Rejecting a non-Wall target does not tap or sacrifice the source")
+    void invalidTargetDoesNotPayCosts() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        Permanent team = addCreatureReady(player1, new GoblinDiggingTeam());
+        Permanent nonWall = harness.addToBattlefieldAndReturn(player2, new GoblinDiggingTeam());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, nonWall.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(team.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Goblin Digging Team");
+        harness.assertNotInGraveyard(player1, "Goblin Digging Team");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Wall can regenerate in response while the source remains sacrificed")
+    void wallRegeneratesInResponse() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        addCreatureReady(player1, new GoblinDiggingTeam());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new WallOfBone());
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, wall.getId());
+        harness.assertInGraveyard(player1, "Goblin Digging Team");
+        harness.activateAbility(player2, 0, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Wall of Bone");
+        harness.assertNotInGraveyard(player2, "Wall of Bone");
+        assertThat(wall.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Goblin Digging Team");
+        harness.assertInGraveyard(player1, "Goblin Digging Team");
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Ability destroys target Wall and sacrifices the source")

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.e.EpicStruggle;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -86,12 +85,41 @@ class GoldenWishTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
     }
 
+    @Test
+    @DisplayName("Puts a chosen enchantment into hand and leaves the artifact outside the game")
+    void choosesEnchantment() {
+        Card artifact = new Spellbook();
+        Card enchantment = new EpicStruggle();
+        setSideboard(artifact, enchantment);
+
+        GoldenWish wish = castGoldenWish();
+        choose(enchantment);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(enchantment);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(artifact);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(wish);
+    }
+
+    @Test
+    @DisplayName("Cannot retrieve artifacts or enchantments already in exile")
+    void doesNotSearchExile() {
+        Card artifact = new Spellbook();
+        Card enchantment = new EpicStruggle();
+        harness.setExile(player1, List.of(artifact, enchantment));
+        setSideboard();
+
+        GoldenWish wish = castGoldenWish();
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(artifact, enchantment, wish);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(wish);
+    }
+
     private GoldenWish castGoldenWish() {
         GoldenWish wish = new GoldenWish();
-        harness.setHand(player1, List.of(wish));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, wish, "{3}{W}{W}");
         harness.passBothPriorities();
         return wish;
     }

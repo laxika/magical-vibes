@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.c.CopperlineGorge;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,9 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Glimmerpost.class, CopperlineGorge.class})
 class GlimmerpostTest extends BaseCardTest {
-
-    // ===== ETB trigger =====
 
     @Test
     @DisplayName("Playing Glimmerpost puts ETB trigger on the stack")
@@ -24,7 +25,7 @@ class GlimmerpostTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Glimmerpost");
+        harness.assertLife(player1, 20);
     }
 
     @Test
@@ -84,8 +85,6 @@ class GlimmerpostTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("gains 1 life"));
     }
 
-    // ===== Land enters battlefield =====
-
     @Test
     @DisplayName("Glimmerpost enters the battlefield as a permanent")
     void entersBattlefieldAsPermanent() {
@@ -104,12 +103,85 @@ class GlimmerpostTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Tap adds one colorless mana immediately while the ETB trigger is pending")
+    void tapAddsColorlessManaWithoutUsingStack() {
+        playGlimmerpost(player1);
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(findPermanent(player1, "Glimmerpost").isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("ETB ignores non-Locus lands and Loci outside the battlefield")
+    void countsOnlyBattlefieldLoci() {
+        harness.addToBattlefield(player1, new CopperlineGorge());
+        harness.addToBattlefield(player2, new CopperlineGorge());
+        harness.setHand(player2, List.of(new Glimmerpost()));
+        harness.setGraveyard(player1, List.of(new Glimmerpost()));
+        playGlimmerpost(player1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("ETB includes Loci that arrive after the trigger is created")
+    void countsLociAtResolution() {
+        playGlimmerpost(player1);
+        harness.addToBattlefield(player2, new Glimmerpost());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("ETB resolves after its source leaves and counts only remaining Loci")
+    void sourceLeavingDoesNotPreventLifeGain() {
+        harness.addToBattlefield(player2, new Glimmerpost());
+        playGlimmerpost(player1);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(
+                gd, findPermanent(player1, "Glimmerpost"));
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Glimmerpost");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB gains no life when no Loci remain at resolution")
+    void gainsNoLifeWhenNoLociRemain() {
+        playGlimmerpost(player1);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(
+                gd, findPermanent(player1, "Glimmerpost"));
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private void playGlimmerpost(Player player) {
         harness.setHand(player, List.of(new Glimmerpost()));
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player, 0);
+        harness.playLand(player, 0);
     }
 }

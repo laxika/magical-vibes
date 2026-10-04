@@ -127,7 +127,7 @@ class EDELonesomeEyebotTest extends BaseCardTest {
     @Test
     void tappedSummoningSickEdEWithNoQuestCountersDrawsOnlyOneCard() {
         Permanent edE = addReadyEdE(player1);
-        edE.setTapped(true);
+        edE.tap();
         edE.setSummoningSick(true);
         edE.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

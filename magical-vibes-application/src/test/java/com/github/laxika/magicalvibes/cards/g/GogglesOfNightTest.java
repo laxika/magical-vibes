@@ -78,10 +78,72 @@ class GogglesOfNightTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
     }
 
+    @Test
+    @DisplayName("Bottoming the scryed card draws the next card")
+    void bottomingScryedCardDrawsNextCard() {
+        Card bottomedCard = new GrizzlyBears();
+        Card drawnCard = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(bottomedCard, drawnCard));
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addGogglesReady(player1).setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bottomedCard);
+    }
+
+    @Test
+    @DisplayName("Damage from an unequipped creature does not trigger the Goggles")
+    void unequippedCreatureDoesNotTrigger() {
+        Card topCard = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(topCard));
+        Permanent equippedCreature = addCreatureReady(player1, new GrizzlyBears());
+        addGogglesReady(player1).setAttachedTo(equippedCreature.getId());
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("The equipment controller scries and draws when another player controls the equipped creature")
+    void equipmentControllerScriesAndDraws() {
+        Card drawnCard = new GrizzlyBears();
+        Card remainingCard = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(drawnCard, remainingCard));
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addGogglesReady(player2).setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(scry).isNotNull();
+        assertThat(scry.cards()).containsExactly(drawnCard);
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remainingCard);
+    }
+
     private Permanent addGogglesReady(Player player) {
-        Permanent goggles = new Permanent(new GogglesOfNight());
-        goggles.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(goggles);
-        return goggles;
+        return addCreatureReady(player, new GogglesOfNight());
     }
 }

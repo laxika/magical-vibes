@@ -50,7 +50,7 @@ class DwarvenProvisionerTest extends BaseCardTest {
     @DisplayName("Repeated activations stack even while the provisioner is tapped and summoning sick")
     void repeatedActivationsStackWhileTapped() {
         Permanent provisioner = harness.addToBattlefieldAndReturn(player1, new DwarvenProvisioner());
-        provisioner.setTapped(true);
+        provisioner.tap();
         provisioner.setSummoningSick(true);
 
         activateProvisioner(provisioner);

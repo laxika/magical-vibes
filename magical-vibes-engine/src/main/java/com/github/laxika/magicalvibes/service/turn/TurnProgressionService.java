@@ -981,6 +981,17 @@ public class TurnProgressionService {
             }
         }
         gameData.turnNumber++;
+        gameData.exilePlayPermissionsAwaitNextTurnOfPlayer.entrySet().removeIf(permission -> {
+            if (permission.getValue().equals(gameData.activePlayerId)) {
+                if (gameData.exilePlayPermissionsExpireAtTurnBeginning.containsKey(permission.getKey())) {
+                    gameData.exilePlayPermissionsExpireAtTurnBeginning.put(permission.getKey(), gameData.turnNumber);
+                } else {
+                    gameData.exilePlayPermissionsExpireAtTurnEnd.put(permission.getKey(), gameData.turnNumber);
+                }
+                return true;
+            }
+            return false;
+        });
         gameData.exilePlayPermissionsExpireAtTurnBeginning.entrySet().removeIf(permission -> {
             if (permission.getValue() > gameData.turnNumber) {
                 return false;

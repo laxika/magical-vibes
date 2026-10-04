@@ -1064,6 +1064,21 @@ public class CastingPermissionService {
     private boolean canCastWithTiming(GameData gameData, UUID playerId, Card card,
                                       boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty,
                                       boolean fromLibraryTop, int xValue) {
+        return canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty,
+                fromLibraryTop, xValue, true);
+    }
+
+    /** Checks face-down characteristics while excluding timing tied to a different alternative cost. */
+    public boolean canCastFaceDownWithTiming(GameData gameData, UUID playerId, Card physicalCard) {
+        return canCastWithTiming(gameData, playerId, faceDownSpellCharacteristics(physicalCard),
+                playerId.equals(gameData.activePlayerId),
+                gameData.currentStep == TurnStep.PRECOMBAT_MAIN || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN,
+                gameData.stack.isEmpty(), false, 0, false);
+    }
+
+    private boolean canCastWithTiming(GameData gameData, UUID playerId, Card card,
+                                      boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty,
+                                      boolean fromLibraryTop, int xValue, boolean includeAlternativeCostFlash) {
         if (isSorcerySpeedOnlyForPlayer(gameData, playerId)) {
             return sorceryTimingAvailable(gameData, playerId);
         }
@@ -1074,7 +1089,7 @@ public class CastingPermissionService {
 
         boolean isInstantSpeed = card.hasType(CardType.INSTANT)
                 || cardHasFlash(gameData, card)
-                || hasFlashGrantForCard(gameData, playerId, card)
+                || hasFlashGrantForCard(gameData, playerId, card, includeAlternativeCostFlash)
                 || (fromLibraryTop && hasTopLibraryFlashGrant(gameData, playerId, card))
                 || grantsItselfFlashTiming(card)
                 || hasMetFlashCastCondition(gameData, playerId, card, xValue)
@@ -1351,6 +1366,11 @@ public class CastingPermissionService {
     }
 
     private boolean hasFlashGrantForCard(GameData gameData, UUID playerId, Card card) {
+        return hasFlashGrantForCard(gameData, playerId, card, true);
+    }
+
+    private boolean hasFlashGrantForCard(GameData gameData, UUID playerId, Card card,
+                                          boolean includeAlternativeCostFlash) {
         if (gameData.playersWithFlashUntilEndOfTurn.contains(playerId)) return true;
         if (gameData.hasCardTypeFlashGrant(playerId, card)) return true;
         if (gameData.hasCardTypeFlashGrantUntilNextTurn(playerId, card)) return true;
@@ -1384,6 +1404,7 @@ public class CastingPermissionService {
                         return true;
                     }
                     if (resolved instanceof GrantFlashToCardTypeEffect grant
+                            && (includeAlternativeCostFlash || !grant.alternativeCostOnly())
                             && !gameQueryService.hasLostAllAbilities(gameData, perm)
                             && (grant.appliesToAllPlayers() || ownerId.equals(playerId))
                             && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
@@ -1397,6 +1418,7 @@ public class CastingPermissionService {
             for (var planar : gameData.planechase.faceUp) {
                 for (CardEffect effect : planar.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof GrantFlashToCardTypeEffect grant
+                            && (includeAlternativeCostFlash || !grant.alternativeCostOnly())
                             && (grant.appliesToAllPlayers() || Objects.equals(planarControllerId, playerId))
                             && predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
                         return true;
@@ -2264,6 +2286,19 @@ public class CastingPermissionService {
                 && gameData.libraryTopCardLifePlayPermissionsUntilEndOfTurn.contains(playerId);
     }
 
+    /** Builds the characteristics used when announcing a face-down creature spell. */
+    public static Card faceDownSpellCharacteristics(Card card) {
+        Card face = new Card();
+        face.setName("");
+        face.setType(CardType.CREATURE);
+        face.setPower(2);
+        face.setToughness(2);
+        if (card.hasKeyword(Keyword.DISGUISE)) {
+            face.setKeywords(Set.of(Keyword.WARD));
+        }
+        return card.createRuntimeCopyWithFace(face);
+    }
+
     /** Returns whether a specific card may be cast from the top of the player's library. */
     public boolean canCastFromTopOfLibrary(GameData gameData, UUID playerId, Card card) {
         if (!card.hasType(CardType.LAND)
@@ -3021,6 +3056,8 @@ public class CastingPermissionService {
     private boolean applies(AllowCastFromCardsExiledWithSourceEffect permission,
                              GameData gameData, UUID playerId, Permanent source,
                              ExiledCardEntry entry) {
+        if (permission.persistsAfterSourceLeaves() && entry.exilerId() != null
+                && !playerId.equals(entry.exilerId())) return false;
         if (permission.collectionCounterOnly() || permission.fetchCounterOnly()) return false;
         if (permission.stashCounterOnly() && playerId.equals(entry.ownerId())) return false;
         if (permission.controllerTurnOnly() && !playerId.equals(gameData.activePlayerId)) return false;

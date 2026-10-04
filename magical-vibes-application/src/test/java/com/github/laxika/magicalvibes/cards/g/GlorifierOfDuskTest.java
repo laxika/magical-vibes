@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GlorifierOfDusk.class})
 class GlorifierOfDuskTest extends BaseCardTest {
 
     // ===== Activated ability: pay 2 life for flying =====
@@ -110,4 +112,72 @@ class GlorifierOfDuskTest extends BaseCardTest {
         assertThat(glorifier.getGrantedKeywords()).doesNotContain(Keyword.VIGILANCE);
     }
 
+    @Test
+    @DisplayName("Life is paid immediately while the keyword waits for resolution")
+    void lifeIsPaidBeforeEitherAbilityResolves() {
+        Permanent glorifier = addCreatureReady(player1, new GlorifierOfDusk());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        assertThat(glorifier.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+        harness.passBothPriorities();
+        assertThat(glorifier.getGrantedKeywords()).contains(Keyword.FLYING);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
+        assertThat(glorifier.getGrantedKeywords()).doesNotContain(Keyword.VIGILANCE);
+        harness.passBothPriorities();
+        assertThat(glorifier.getGrantedKeywords()).contains(Keyword.FLYING, Keyword.VIGILANCE);
+    }
+
+    @Test
+    @DisplayName("Vigilance cannot be activated with insufficient life")
+    void cannotActivateVigilanceWithInsufficientLife() {
+        Permanent glorifier = addCreatureReady(player1, new GlorifierOfDusk());
+        harness.setLife(player1, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough life");
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(glorifier.getGrantedKeywords()).doesNotContain(Keyword.VIGILANCE);
+    }
+
+    @Test
+    @DisplayName("Both abilities can be activated while tapped and summoning sick")
+    void tappedSummoningSickCreatureCanActivateBothAbilities() {
+        Permanent glorifier = harness.addToBattlefieldAndReturn(player1, new GlorifierOfDusk());
+        glorifier.setSummoningSick(true);
+        glorifier.setTapped(true);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
+        assertThat(glorifier.getGrantedKeywords()).contains(Keyword.FLYING, Keyword.VIGILANCE);
+        assertThat(glorifier.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Abilities grant keywords only to the activating creature")
+    void grantsKeywordsOnlyToSource() {
+        Permanent glorifier = addCreatureReady(player1, new GlorifierOfDusk());
+        Permanent ally = addCreatureReady(player1, new GlorifierOfDusk());
+        Permanent opponent = addCreatureReady(player2, new GlorifierOfDusk());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(glorifier.getGrantedKeywords()).contains(Keyword.FLYING, Keyword.VIGILANCE);
+        assertThat(ally.getGrantedKeywords()).doesNotContain(Keyword.FLYING, Keyword.VIGILANCE);
+        assertThat(opponent.getGrantedKeywords()).doesNotContain(Keyword.FLYING, Keyword.VIGILANCE);
+    }
 }

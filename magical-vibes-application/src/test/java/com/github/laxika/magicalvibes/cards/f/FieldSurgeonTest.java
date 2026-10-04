@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -208,7 +209,8 @@ class FieldSurgeonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         declareAttackersAndPrepareBlockers(List.of(indexOf(player1, attacker)));
-        gs.declareBlockers(gd, player2, java.util.Map.of(indexOf(player2, blocker), List.of(indexOf(player1, attacker))));
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(indexOf(player2, blocker), indexOf(player1, attacker))));
         resolveCombat();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");

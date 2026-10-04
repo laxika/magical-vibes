@@ -21,7 +21,7 @@ class DwarvenGruntTest extends BaseCardTest {
     void cannotBeBlockedWhenDefendersMountainIsTapped() {
         Permanent blockerPerm = addCreatureReady(player2, new DwarvenGrunt());
         Permanent mountain = harness.addToBattlefieldAndReturn(player2, new Mountain());
-        mountain.setTapped(true);
+        mountain.tap();
         Permanent atkPerm = addCreatureReady(player1, new DwarvenGrunt());
 
         declareAttackersAndPrepareBlockers(List.of(0));

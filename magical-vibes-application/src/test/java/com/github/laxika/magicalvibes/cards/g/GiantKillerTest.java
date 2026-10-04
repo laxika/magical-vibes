@@ -59,4 +59,111 @@ class GiantKillerTest extends BaseCardTest {
         assertThat(bears.isTapped()).isTrue();
         assertThat(giantKiller.isTapped()).isTrue();
     }
+
+    @Test
+    void creatureCanBeCastNormallyWithoutGoingOnAnAdventure() {
+        harness.castFromHand(player1, new GiantKiller(), "{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Giant Killer");
+        harness.assertNotInGraveyard(player1, "Giant Killer");
+    }
+
+    @Test
+    void creatureCanBeCastFromExileAfterAdventureResolves() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
+        GiantKiller card = new GiantKiller();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAdventure(player1, 0, wurm.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castFromExile(player1, card.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Giant Killer");
+        harness.assertInGraveyard(player2, "Craw Wurm");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void adventureDestroysCreatureWithExactlyFourEffectivePower() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
+        wurm.setPersistentPowerModifier(-2);
+        GiantKiller card = new GiantKiller();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAdventure(player1, 0, wurm.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Craw Wurm");
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
+    @Test
+    void adventureDoesNotResolveOrExileWhenTargetPowerDropsBelowFour() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player2, new CrawWurm());
+        GiantKiller card = new GiantKiller();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAdventure(player1, 0, wurm.getId());
+
+        wurm.setPersistentPowerModifier(-3);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Craw Wurm");
+        harness.assertInGraveyard(player1, "Giant Killer");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void summoningSickCreatureCannotPayTapCost() {
+        Permanent giantKiller = harness.addToBattlefieldAndReturn(player1, new GiantKiller());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(giantKiller.isTapped()).isFalse();
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    void activatedAbilityCanTargetItsOwnSource() {
+        Permanent giantKiller = addCreatureReady(player1, new GiantKiller());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, giantKiller.getId());
+        assertThat(giantKiller.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(giantKiller.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void activatedAbilityCannotBeActivatedAgainWhileSourceIsTapped() {
+        Permanent giantKiller = addCreatureReady(player1, new GiantKiller());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, bears.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(giantKiller.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isTrue();
+    }
 }

@@ -17,8 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({GoblinBalloonBrigade.class})
 class GoblinBalloonBrigadeTest extends BaseCardTest {
 
-    // ===== Flying ability =====
-
     @Test
     @DisplayName("Activating flying ability puts it on the stack")
     void activatingFlyingPutsOnStack() {
@@ -78,8 +76,6 @@ class GoblinBalloonBrigadeTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, brigade, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Activation constraints =====
-
     @Test
     @DisplayName("Activating ability does NOT tap Goblin Balloon Brigade")
     void activatingAbilityDoesNotTap() {
@@ -124,11 +120,9 @@ class GoblinBalloonBrigadeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
-    // ===== Fizzle =====
-
     @Test
-    @DisplayName("Ability fizzles if Goblin Balloon Brigade is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Ability resolves without effect if Goblin Balloon Brigade leaves before resolution")
+    void abilityResolvesWithoutEffectIfSourceRemoved() {
         addCreatureReady(player1, new GoblinBalloonBrigade());
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -139,6 +133,56 @@ class GoblinBalloonBrigadeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Nonred mana cannot pay for the flying ability")
+    void cannotActivateWithOnlyNonredMana() {
+        addCreatureReady(player1, new GoblinBalloonBrigade());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flying ability can be activated repeatedly and each activation costs red mana")
+    void canActivateRepeatedly() {
+        Permanent brigade = addCreatureReady(player1, new GoblinBalloonBrigade());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, brigade, Keyword.FLYING)).isTrue();
+        assertThat(brigade.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An activation does not grant flying to the same card after it reenters")
+    void returningSourceIsANewPermanent() {
+        GoblinBalloonBrigade card = new GoblinBalloonBrigade();
+        Permanent original = addCreatureReady(player1, card);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, card);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isFalse();
     }
 
 }

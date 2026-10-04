@@ -11,7 +11,12 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * <p>{@code appliesToAllPlayers} widens the grant to every player rather than only the source's
  * controller — "Any player may cast creature spells … as though they had flash" (Aluren).
  */
-public record GrantFlashToCardTypeEffect(CardPredicate filter, boolean appliesToAllPlayers) implements CardEffect {
+public record GrantFlashToCardTypeEffect(CardPredicate filter, boolean appliesToAllPlayers,
+                                         boolean alternativeCostOnly) implements CardEffect {
+
+    public GrantFlashToCardTypeEffect(CardPredicate filter, boolean appliesToAllPlayers) {
+        this(filter, appliesToAllPlayers, false);
+    }
 
     public GrantFlashToCardTypeEffect(CardPredicate filter) {
         this(filter, false);

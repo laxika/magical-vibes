@@ -123,7 +123,7 @@ class FledglingImpTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent imp = harness.addToBattlefieldAndReturn(player1, new FledglingImp());
-        imp.setTapped(true);
+        imp.tap();
         imp.setSummoningSick(true);
         harness.setHand(player1, List.of(new DuskImp()));
         harness.addMana(player1, ManaColor.BLACK, 1);

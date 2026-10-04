@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -77,7 +76,7 @@ class GlitchInterpreterTest extends BaseCardTest {
         addAttacker(new GrizzlyBears());
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        runCombatDamage();
+        resolveCombat();
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
@@ -91,11 +90,85 @@ class GlitchInterpreterTest extends BaseCardTest {
         addAttacker(new GrizzlyBears());
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        runCombatDamage();
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerWhenFaceDownPermanentIsPresentAtEntry() {
+        addFaceDownPermanent();
+        harness.setHand(player1, List.of(new GlitchInterpreter()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void rechecksFaceDownConditionWhenEntryTriggerResolves() {
+        GlitchInterpreter interpreter = new GlitchInterpreter();
+        harness.setHand(player1, List.of(interpreter));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        addFaceDownPermanent();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == interpreter);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(interpreter);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void manifestsDreadEvenWhenSourceLeavesBeforeEntryTriggerResolves() {
+        GlitchInterpreter interpreter = new GlitchInterpreter();
+        Card topCard = new Forest();
+        harness.setHand(player1, List.of(interpreter));
+        harness.setLibrary(player1, List.of(topCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId())
+                .removeIf(permanent -> permanent.getCard() == interpreter);
+        gd.playerGraveyards.get(player1.getId()).add(interpreter);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(topCard.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.isManifested()
+                        && permanent.getCard().getId().equals(topCard.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(interpreter);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(interpreter);
+    }
+
+    @Test
+    void drawsForCombatDamageFromFaceDownColoredCard() {
+        harness.addToBattlefield(player1, new GlitchInterpreter());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        attacker.setAttacking(true);
+        Card drawnCard = new Forest();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of());
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
     }
 
     private void addFaceDownPermanent() {
@@ -105,16 +178,8 @@ class GlitchInterpreterTest extends BaseCardTest {
     }
 
     private void addAttacker(Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player1, card);
         permanent.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
     }
 
-    private void runCombatDamage() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }

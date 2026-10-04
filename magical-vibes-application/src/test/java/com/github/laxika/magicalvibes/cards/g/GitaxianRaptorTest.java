@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GitaxianRaptor.class})
 class GitaxianRaptorTest extends BaseCardTest {
 
     @Test
@@ -54,6 +56,54 @@ class GitaxianRaptorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void counterIsPaidImmediatelyButBoostWaitsForResolution() {
+        Permanent raptor = addReadyRaptor(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(raptor.getCounterCount(CounterType.OIL)).isEqualTo(2);
+        assertThat(raptor.getEffectivePower()).isEqualTo(1);
+        assertThat(raptor.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(raptor.getEffectivePower()).isEqualTo(2);
+        assertThat(raptor.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    void canSpendAllThreeCountersAndBoostsAccumulate() {
+        Permanent raptor = addReadyRaptor(player1);
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        assertThat(raptor.getCounterCount(CounterType.OIL)).isZero();
+        assertThat(raptor.getEffectivePower()).isEqualTo(4);
+        assertThat(raptor.getEffectiveToughness()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Gitaxian Raptor");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent raptor = addReadyRaptor(player1);
+        raptor.setSummoningSick(true);
+        raptor.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(raptor.getCounterCount(CounterType.OIL)).isEqualTo(2);
+        assertThat(raptor.getEffectivePower()).isEqualTo(2);
+        assertThat(raptor.getEffectiveToughness()).isEqualTo(3);
+        assertThat(raptor.isTapped()).isTrue();
+    }
     private Permanent addReadyRaptor(Player player) {
         Permanent raptor = addCreatureReady(player, new GitaxianRaptor());
         raptor.setCounterCount(CounterType.OIL, 3);

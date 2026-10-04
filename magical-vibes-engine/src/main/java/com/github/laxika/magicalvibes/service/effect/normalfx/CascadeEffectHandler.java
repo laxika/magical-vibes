@@ -69,6 +69,7 @@ public class CascadeEffectHandler implements NormalEffectHandlerBean {
         while (!deck.isEmpty()) {
             Card top = deck.removeFirst();
             exiled.add(top);
+            gameData.addToExile(controllerId, top);
             boolean qualifyingType = cascade.instantOrSorceryOnly()
                     ? top.hasType(CardType.INSTANT) || top.hasType(CardType.SORCERY)
                     : !top.hasType(CardType.LAND);
@@ -87,6 +88,7 @@ public class CascadeEffectHandler implements NormalEffectHandlerBean {
         if (hit == null) {
             // Dug through the whole library without a qualifying card — bottom everything randomly.
             Collections.shuffle(exiled);
+            exiled.forEach(card -> gameData.removeFromExile(card.getId()));
             deck.addAll(exiled);
             gameLogService.append(gameData, GameLog.text(sourceName
                     + " (Cascade): no nonland card with lesser mana value found. Exiled cards go to the"

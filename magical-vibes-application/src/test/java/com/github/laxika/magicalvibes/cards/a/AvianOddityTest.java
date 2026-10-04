@@ -24,7 +24,8 @@ class AvianOddityTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new AlmightyBrushwagg()));
         addCyclingMana();
 
-        harness.activateHandAbility(player1, 0, target.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.FLYING)).isEqualTo(1);
@@ -58,8 +59,13 @@ class AvianOddityTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new AlmightyBrushwagg()));
         addCyclingMana();
 
-        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, target.getId()))
+        Permanent ownTarget = harness.addToBattlefieldAndReturn(player1, new AlmightyBrushwagg());
+        harness.activateHandAbility(player1, 0, null);
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, ownTarget.getId());
+        harness.passBothPriorities();
+        assertThat(ownTarget.getCounterCount(CounterType.FLYING)).isEqualTo(1);
     }
 
     @Test
@@ -70,7 +76,8 @@ class AvianOddityTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new AlmightyBrushwagg()));
         addCyclingMana();
 
-        harness.activateHandAbility(player1, 0, target.getId());
+        harness.activateHandAbility(player1, 0, null);
+        harness.handlePermanentChosen(player1, target.getId());
         gd.playerBattlefields.get(player1.getId()).remove(target);
         gd.playerGraveyards.get(player1.getId()).add(target.getCard());
         harness.passBothPriorities();

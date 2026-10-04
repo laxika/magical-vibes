@@ -63,6 +63,53 @@ class GoblinPlateMailTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.MENACE)).isTrue();
     }
 
+    @Test
+    void attachesToTheChosenArmyWhenSeveralArmiesExist() {
+        Permanent firstArmy = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondArmy = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        firstArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        secondArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+
+        castPlateMail();
+        harness.handleMultiplePermanentsChosen(player1, List.of(secondArmy.getId()));
+
+        Permanent plateMail = findPermanent(player1, "Goblin Plate Mail");
+        assertThat(plateMail.getAttachedTo()).isEqualTo(secondArmy.getId());
+        assertThat(firstArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(secondArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, firstArmy, Keyword.MENACE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, secondArmy, Keyword.MENACE)).isTrue();
+        assertThat(secondArmy.getGrantedSubtypes()).contains(CardSubtype.GOBLIN);
+    }
+
+    @Test
+    void createsOwnArmyEvenWhenOpponentControlsAnArmy() {
+        Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+
+        castPlateMail();
+
+        Permanent army = findPermanent(player1, "Goblin Army");
+        assertThat(findPermanent(player1, "Goblin Plate Mail").getAttachedTo()).isEqualTo(army.getId());
+        assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposingArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, opposingArmy, Keyword.MENACE)).isFalse();
+    }
+
+    @Test
+    void canPayHybridCostWithRedMana() {
+        harness.setHand(player1, List.of(new GoblinPlateMail()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent army = findPermanent(player1, "Goblin Army");
+        assertThat(findPermanent(player1, "Goblin Plate Mail").getAttachedTo()).isEqualTo(army.getId());
+        assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void castPlateMail() {
         harness.setHand(player1, List.of(new GoblinPlateMail()));
         harness.addMana(player1, ManaColor.BLACK, 1);

@@ -96,7 +96,7 @@ class DromokaMonumentTest extends BaseCardTest {
     @DisplayName("A tapped Monument can animate without untapping and pays its full cost")
     void tappedMonumentCanAnimate() {
         Permanent monument = addReadyMonument();
-        monument.setTapped(true);
+        monument.tap();
         addAnimationMana();
 
         harness.activateAbility(player1, 0, 1, null, null);

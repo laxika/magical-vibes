@@ -135,7 +135,7 @@ class DwarvenNomadTest extends BaseCardTest {
     @Test
     void tappedNomadCannotActivate() {
         Permanent nomad = addCreatureReady(player1, new DwarvenNomad());
-        nomad.setTapped(true);
+        nomad.tap();
         Permanent target = addCreatureReady(player1, new ZhalfirinKnight());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

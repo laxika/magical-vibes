@@ -496,6 +496,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
                                                 ExileGraveyardCardsEffect effect) {
         UUID controllerId = entry.getControllerId();
         UUID sourcePermanentId = effect.trackWithSource() ? entry.getSourcePermanentId() : null;
+        List<UUID> exiledCardIds = new ArrayList<>();
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) continue;
@@ -506,6 +507,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             List<Card> toExile = new ArrayList<>(graveyard);
             int count = toExile.size();
             for (Card card : toExile) {
+                exiledCardIds.add(card.getId());
                 if (sourcePermanentId == null) {
                     exileService.exileCard(gameData, playerId, card);
                 } else {
@@ -513,7 +515,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
                 }
             }
             graveyard.clear();
-        graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
+            graveyardService.notifyCardsExiledFromGraveyard(gameData, playerId, toExile);
 
             String playerName = gameData.playerIdToName.get(playerId);
             String logEntry = playerName + "'s graveyard is exiled (" + count + " card" + (count != 1 ? "s" : "") + ").";
@@ -521,5 +523,6 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             log.info("Game {} - {}'s graveyard ({} cards) exiled by ExileGraveyardCardsEffect(ALL_OPPONENTS)",
                     gameData.id, playerName, count);
         }
+        entry.setResolutionExiledCardIds(exiledCardIds);
     }
 }

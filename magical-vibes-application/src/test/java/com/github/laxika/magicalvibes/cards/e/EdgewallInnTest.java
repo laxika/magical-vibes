@@ -127,7 +127,7 @@ class EdgewallInnTest extends BaseCardTest {
     @DisplayName("Tapped Inn cannot activate either ability")
     void tappedInnCannotActivateAbilities() {
         Permanent inn = addReadyInn(player1, CardColor.GREEN);
-        inn.setTapped(true);
+        inn.tap();
         Card adventure = new BeanstalkWurm();
         harness.setGraveyard(player1, List.of(adventure));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

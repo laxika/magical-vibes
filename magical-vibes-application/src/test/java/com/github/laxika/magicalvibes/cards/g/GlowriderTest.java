@@ -60,4 +60,44 @@ class GlowriderTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
     }
+
+    @Test
+    @DisplayName("Multiple Glowriders increase the cost cumulatively across controllers")
+    void multipleGlowridersIncreaseCostCumulatively() {
+        harness.addToBattlefield(player1, new Glowrider());
+        harness.addToBattlefield(player2, new Glowrider());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The tax ends after Glowrider leaves the battlefield")
+    void taxEndsAfterGlowriderLeavesBattlefield() {
+        harness.addToBattlefield(player1, new Glowrider());
+        var glowrider = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, glowrider.getId());
+
+        harness.assertNotOnBattlefield(player1, "Glowrider");
+        harness.assertInGraveyard(player1, "Glowrider");
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }

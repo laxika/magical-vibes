@@ -97,7 +97,7 @@ class DruidsRepositoryTest extends BaseCardTest {
     @Test
     void tappedRepositoryCanProduceEveryColorRepeatedlyWithoutUsingTheStack() {
         Permanent repository = addRepository();
-        repository.setTapped(true);
+        repository.tap();
         repository.setCounterCount(CounterType.CHARGE, 5);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

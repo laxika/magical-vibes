@@ -525,6 +525,20 @@ public class DrawService {
             return;
         }
 
+        Permanent archmageAscensionSource = findCounterThresholdDrawReplacementSource(
+                gameData, playerId, CounterType.QUEST);
+        if (archmageAscensionSource != null) {
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    archmageAscensionSource.getCard(),
+                    playerId,
+                    List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ARCHMAGE_ASCENSION)),
+                    "Search your library for a card instead of drawing?",
+                    null,
+                    null,
+                    archmageAscensionSource.getId()));
+            return;
+        }
+
         // Sages of the Anima — "If you would draw a card, instead reveal the top three cards of your
         // library. Put all creature cards revealed this way into your hand and the rest on the bottom of
         // your library in any order." Mandatory replacement for the drawing controller.
@@ -561,20 +575,6 @@ public class DrawService {
                     null,
                     null,
                     counterDrawReplacementSource.getId()));
-            return;
-        }
-
-        Permanent archmageAscensionSource = findCounterThresholdDrawReplacementSource(
-                gameData, playerId, CounterType.QUEST);
-        if (archmageAscensionSource != null) {
-            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                    archmageAscensionSource.getCard(),
-                    playerId,
-                    List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ARCHMAGE_ASCENSION)),
-                    "Search your library for a card instead of drawing?",
-                    null,
-                    null,
-                    archmageAscensionSource.getId()));
             return;
         }
 

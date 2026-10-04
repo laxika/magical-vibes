@@ -133,7 +133,7 @@ class FamiliarsRuseTest extends BaseCardTest {
         DolmenGate target = new DolmenGate();
         harness.castFromHand(player1, target, "{2}");
         Permanent toReturn = harness.addToBattlefieldAndReturn(player1, new AvianChangeling());
-        toReturn.setTapped(true);
+        toReturn.tap();
         harness.setHand(player1, List.of(new FamiliarsRuse()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 

@@ -99,6 +99,7 @@ public class TriggeredAbilityQueueService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final TriggerTargetCollector triggerTargetCollector;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
     private ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler
@@ -1566,6 +1567,50 @@ public class TriggeredAbilityQueueService {
             log.info("Game {} - {} spell-target trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
         }
+        beginSpellCastTriggerOrder(gameData);
+    }
+
+    private void beginSpellCastTriggerOrder(GameData gameData) {
+        if (gameData.interaction.isAwaitingInput()
+                || gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)
+                || gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
+            return;
+        }
+        for (StackEntry candidate : gameData.stack) {
+            if (candidate.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                    || candidate.getTriggeringCardId() == null || candidate.isTriggerOrderChosen()) {
+                continue;
+            }
+            List<StackEntry> simultaneous = gameData.stack.stream()
+                    .filter(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                            && !entry.isTriggerOrderChosen()
+                            && candidate.getControllerId().equals(entry.getControllerId())
+                            && candidate.getTriggeringCardId().equals(entry.getTriggeringCardId()))
+                    .toList();
+            if (simultaneous.size() < 2) {
+                continue;
+            }
+            simultaneous.forEach(entry -> entry.setTriggerOrderChosen(true));
+            List<UUID> ids = simultaneous.stream().map(StackEntry::getTargetableId).toList();
+            interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
+                    candidate.getControllerId(), null, null,
+                    new com.github.laxika.magicalvibes.model.ChoiceContext.SpellCastTriggerOrder(ids, List.of()),
+                    java.util.stream.IntStream.range(0, ids.size()).mapToObj(index ->
+                            (index + 1) + ": " + spellCastTriggerOrderLabel(simultaneous.get(index))).toList(),
+                    "Choose the trigger to put on the stack first (it will resolve last)."));
+            return;
+        }
+    }
+
+    public static String spellCastTriggerOrderLabel(StackEntry entry) {
+        for (CardEffect effect : entry.getCard().getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)) {
+            if (effect instanceof com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect trigger
+                    && trigger.resolvedEffects().equals(entry.getEffectsToResolve())
+                    && trigger.spellFilter() instanceof com.github.laxika.magicalvibes.model.filter.CardColorPredicate color) {
+                return entry.getDescription() + " — cast a " + color.color().name().toLowerCase(java.util.Locale.ROOT) + " spell";
+            }
+        }
+        return entry.getDescription();
     }
 
     private void pushSpellTargetTriggerWithoutTarget(GameData gameData,
@@ -2405,10 +2450,12 @@ public class TriggeredAbilityQueueService {
             List<Card> matchingCards = new ArrayList<>();
             for (UUID playerId : searchPlayerIds) {
                 List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-                if (graveyard == null) {
+                if (graveyard == null || !gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
                     continue;
                 }
                 for (Card graveyardCard : graveyard) {
+                    if (gameQueryService.isLandCardTargetRestricted(gameData, graveyardCard,
+                            pending.controllerId())) continue;
                     if (returnEffect != null && returnEffect.targetPutIntoGraveyardFromBattlefieldThisTurn()
                             && !gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn
                                     .getOrDefault(playerId, Set.of()).contains(graveyardCard.getId())) {

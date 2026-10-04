@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
@@ -30,8 +30,8 @@ import java.util.Set;
 public class AzlaskTheSwellingScourge extends Card {
 
     public AzlaskTheSwellingScourge() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringCardConditionalEffect(
-                new CardIsColorlessPredicate(), new ExperienceCountersEffect(1)));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_DIES, new TriggeringPermanentConditionalEffect(
+                new PermanentIsColorlessPredicate(), new ExperienceCountersEffect(1)));
         addEffect(EffectSlot.ON_DEATH, new ExperienceCountersEffect(1));
 
         PermanentHasAnySubtypePredicate scionsAndSpawns = new PermanentHasAnySubtypePredicate(
@@ -42,7 +42,7 @@ public class AzlaskTheSwellingScourge extends Card {
                 "{W}{U}{B}{R}{G}",
                 List.of(
                         new BoostAllOwnCreaturesEffect(experienceCounters, experienceCounters),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_CREATURES,
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_OWN_CREATURES,
                                 scionsAndSpawns),
                         new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                                 EffectSlot.ON_ATTACK,

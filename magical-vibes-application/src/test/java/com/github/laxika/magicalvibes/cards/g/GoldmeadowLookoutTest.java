@@ -99,4 +99,83 @@ class GoldmeadowLookoutTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A land can pay the discard cost and the token is created on resolution")
+    void canDiscardLandToCreateToken() {
+        Permanent lookout = addCreatureReady(player1, new GoldmeadowLookout());
+        GroveOfTheBurnwillows discardedCard = new GroveOfTheBurnwillows();
+        harness.setHand(player1, List.of(discardedCard));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(lookout.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard);
+        assertThat(countPermanents(player1, "Goldmeadow Harrier")).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Goldmeadow Harrier")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Goldmeadow Harrier").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Newly created Harrier cannot activate its tap ability immediately")
+    void newlyCreatedTokenCannotActivate() {
+        addCreatureReady(player1, new GoldmeadowLookout());
+        harness.setHand(player1, List.of(new GoldmeadowLookout()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Goldmeadow Harrier");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoldmeadowLookout());
+        int tokenIndex = gd.playerBattlefields.get(player1.getId()).indexOf(token);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, tokenIndex, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(token.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Harrier can tap a creature controlled by its controller")
+    void tokenCanTapOwnCreature() {
+        Permanent lookout = addCreatureReady(player1, new GoldmeadowLookout());
+        harness.setHand(player1, List.of(new GoldmeadowLookout()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Goldmeadow Harrier");
+        token.setSummoningSick(false);
+        lookout.setTapped(false);
+        int tokenIndex = gd.playerBattlefields.get(player1.getId()).indexOf(token);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, tokenIndex, 0, null, lookout.getId());
+        harness.passBothPriorities();
+
+        assertThat(token.isTapped()).isTrue();
+        assertThat(lookout.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Lookout cannot activate while summoning sick")
+    void summoningSickLookoutCannotActivate() {
+        harness.addToBattlefield(player1, new GoldmeadowLookout());
+        harness.setHand(player1, List.of(new GoldmeadowLookout()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(countPermanents(player1, "Goldmeadow Harrier")).isZero();
+    }
 }

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.t.TirelessTracker;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -128,8 +129,10 @@ class AvengingDruidTest extends BaseCardTest {
         Card forest = new Forest();
         harness.setLibrary(player1, List.of(forest));
 
-        harness.activateAbility(player1, 0, null, player1.getId());
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.activateAbility(player1, 0, null, player1.getId());
+            resolveAllTriggers();
+        });
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
