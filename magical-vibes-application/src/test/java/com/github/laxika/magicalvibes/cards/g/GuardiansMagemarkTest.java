@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GruulSignet;
 import com.github.laxika.magicalvibes.cards.s.SilhanaLedgewalker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -118,5 +119,60 @@ class GuardiansMagemarkTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Guardian's Magemark can be cast during an opponent's upkeep")
+    void canCastDuringOpponentsUpkeep() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SilhanaLedgewalker());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.setHand(player1, List.of(new GuardiansMagemark()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() instanceof GuardiansMagemark
+                        && creature.getId().equals(permanent.getAttachedTo()));
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Guardian's Magemarks stack once each regardless of the number of Auras")
+    void multipleMagemarksStackOnceEach() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new SilhanaLedgewalker());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GuardiansMagemark());
+        first.setAttachedTo(creature.getId());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GuardiansMagemark());
+        second.setAttachedTo(creature.getId());
+        Permanent opponentAura = harness.addToBattlefieldAndReturn(player2, new FencersMagemark());
+        opponentAura.setAttachedTo(creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Losing the last Aura removes the bonus while Guardian's Magemark remains")
+    void bonusStopsWhenCreatureIsNoLongerEnchanted() {
+        Permanent guardianCreature = harness.addToBattlefieldAndReturn(player1, new SilhanaLedgewalker());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new SilhanaLedgewalker());
+        Permanent magemark = harness.addToBattlefieldAndReturn(player1, new GuardiansMagemark());
+        magemark.setAttachedTo(guardianCreature.getId());
+        Permanent otherAura = harness.addToBattlefieldAndReturn(player2, new FencersMagemark());
+        otherAura.setAttachedTo(otherCreature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(2);
+        gd.playerBattlefields.get(player2.getId()).remove(otherAura);
+
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, guardianCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, guardianCreature)).isEqualTo(2);
     }
 }
