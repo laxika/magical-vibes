@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,17 +13,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HamperingSnare.class, FugitiveWizard.class, GrizzlyBears.class})
+@CardUsed({HamperingSnare.class, GrizzlyBears.class, HumbleNaturalist.class})
 class HamperingSnareTest extends BaseCardTest {
 
     private void castSnare() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new HamperingSnare()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new HamperingSnare(), "{1}{U}");
         harness.passBothPriorities();
     }
 
@@ -71,5 +67,53 @@ class HamperingSnareTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Hampering Snare");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution are not affected")
+    void doesNotAffectLaterCreatures() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castSnare();
+        Permanent later = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(existing.getEffectivePower()).isZero();
+        assertThat(later.getEffectivePower()).isEqualTo(2);
+        assertThat(later.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Reduces every opposing creature and permits negative power")
+    void affectsMultipleCreaturesAndAllowsNegativePower() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent naturalist = harness.addToBattlefieldAndReturn(player2, new HumbleNaturalist());
+
+        castSnare();
+
+        assertThat(bears.getEffectivePower()).isZero();
+        assertThat(naturalist.getEffectivePower()).isEqualTo(-1);
+        assertThat(naturalist.getEffectiveToughness()).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Humble Naturalist");
+    }
+
+    @Test
+    @DisplayName("Cycling pays its discard cost immediately and does not reduce power")
+    void cyclingDoesNotApplySpellEffect() {
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HamperingSnare()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Hampering Snare");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(theirs.getEffectivePower()).isEqualTo(2);
+        assertThat(theirs.getEffectiveToughness()).isEqualTo(2);
     }
 }
