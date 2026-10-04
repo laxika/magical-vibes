@@ -67,13 +67,60 @@ class IgnorantBlissTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
 
+    @Test
+    @DisplayName("Returns the entire hand and draws during a single delayed ability resolution")
+    void returnsAndDrawsInOneResolution() {
+        Card first = new GuardianOfTheGuildpact();
+        Card second = new GuardianOfTheGuildpact();
+        Card drawn = new GuardianOfTheGuildpact();
+        harness.setHand(player1, List.of(new IgnorantBliss(), first, second));
+        harness.setLibrary(player1, List.of(drawn));
+        castIgnorantBliss();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second, drawn);
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting during an end step waits until the following end step")
+    void castDuringEndStepWaitsForFollowingEndStep() {
+        Card exiled = new GuardianOfTheGuildpact();
+        Card drawn = new GuardianOfTheGuildpact();
+        harness.setHand(player1, List.of(new IgnorantBliss(), exiled));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(ExiledCardEntry::card).containsExactly(exiled);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(exiled, drawn);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
     private void castIgnorantBliss() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 }
