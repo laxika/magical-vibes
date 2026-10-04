@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AbominationIrradiatedBrute;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SpiderManWebSlinger;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HulkStrongestThereIs.class, AbominationIrradiatedBrute.class, GrizzlyBears.class})
+@CardUsed({HulkStrongestThereIs.class, AbominationIrradiatedBrute.class, SpiderManWebSlinger.class})
 class HulkStrongestThereIsTest extends BaseCardTest {
 
     @Test
@@ -39,7 +39,7 @@ class HulkStrongestThereIsTest extends BaseCardTest {
 
         Permanent gamma = addCreatureReady(player1, new AbominationIrradiatedBrute());
         gamma.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        Permanent nonGamma = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonGamma = addCreatureReady(player1, new SpiderManWebSlinger());
         nonGamma.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
         Permanent opposingGamma = addCreatureReady(player2, new AbominationIrradiatedBrute());
         opposingGamma.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 7);
@@ -52,5 +52,45 @@ class HulkStrongestThereIsTest extends BaseCardTest {
         assertThat(gamma.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
         assertThat(nonGamma.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
         assertThat(opposingGamma.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Gamma creatures with no +1/+1 counters remain without counters")
+    void zeroCountersStayZero() {
+        Permanent hulk = harness.enterBattlefieldAndReturn(player1, new HulkStrongestThereIs());
+        Permanent gamma = harness.enterBattlefieldAndReturn(player1, new AbominationIrradiatedBrute());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(hulk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gamma.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Hulk does not double counters during an opponent's upkeep")
+    void opponentUpkeepDoesNotDoubleCounters() {
+        Permanent hulk = harness.enterBattlefieldAndReturn(player1, new HulkStrongestThereIs());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(hulk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isOne();
+    }
+
+    @Test
+    @DisplayName("Upkeep doubling uses the creatures and counters present when it resolves")
+    void doublingUsesResolutionState() {
+        Permanent hulk = harness.enterBattlefieldAndReturn(player1, new HulkStrongestThereIs());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        hulk.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Permanent gamma = harness.enterBattlefieldAndReturn(player1, new AbominationIrradiatedBrute());
+        gamma.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        assertThat(hulk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(gamma.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
 }
