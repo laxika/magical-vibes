@@ -46,4 +46,44 @@ class FlatmanTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, flatman)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, flatman)).isEqualTo(10);
     }
+
+    @Test
+    void twoActivationsSwitchPowerAndToughnessBack() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent flatman = addCreatureReady(player1, new Flatman());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, flatman)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, flatman)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, flatman)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, flatman)).isEqualTo(10);
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent flatman = addCreatureReady(player1, new Flatman());
+        flatman.setTapped(true);
+        flatman.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, flatman)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, flatman)).isEqualTo(1);
+    }
 }
