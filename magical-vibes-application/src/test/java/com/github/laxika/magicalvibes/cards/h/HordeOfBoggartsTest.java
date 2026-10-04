@@ -62,6 +62,58 @@ class HordeOfBoggartsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Horde of Boggarts updates as red permanents enter and leave")
+    void updatesWhenRedPermanentsEnterAndLeave() {
+        Permanent horde = addCreatureReady(player1, new HordeOfBoggarts());
+        Permanent secondHorde = harness.enterBattlefieldAndReturn(player1, new HordeOfBoggarts());
+
+        assertThat(gqs.getEffectivePower(gd, horde)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, horde)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondHorde)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondHorde)).isEqualTo(2);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, secondHorde));
+
+        assertThat(gqs.getEffectivePower(gd, horde)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, horde)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Horde of Boggarts defines its power and toughness in hand and graveyard")
+    void definesPowerAndToughnessOutsideBattlefield() {
+        HordeOfBoggarts inHand = new HordeOfBoggarts();
+        HordeOfBoggarts inGraveyard = new HordeOfBoggarts();
+        harness.setHand(player1, List.of(inHand));
+        harness.setGraveyard(player1, List.of(inGraveyard));
+
+        assertThat(gqs.getEffectiveCardPower(gd, inHand)).isZero();
+        assertThat(gqs.getEffectiveCardToughness(gd, inHand)).isZero();
+        assertThat(gqs.getEffectiveCardPower(gd, inGraveyard)).isZero();
+        assertThat(gqs.getEffectiveCardToughness(gd, inGraveyard)).isZero();
+
+        harness.addToBattlefield(player1, new EverlastingTorment());
+        harness.addToBattlefield(player2, new IntimidatorInitiate());
+
+        assertThat(gqs.getEffectiveCardPower(gd, inHand)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, inHand)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardPower(gd, inGraveyard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, inGraveyard)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Menace allows Horde of Boggarts to remain unblocked")
+    void menaceAllowsNoBlockers() {
+        Permanent horde = addCreatureReady(player1, new HordeOfBoggarts());
+        addCreatureReady(player2, new ZealousGuardian());
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(horde.isBlockedThisCombat()).isFalse();
+    }
+
+    @Test
     @DisplayName("Menace prevents Horde of Boggarts from being blocked by one creature")
     void menaceRequiresAtLeastTwoBlockers() {
         addCreatureReady(player1, new HordeOfBoggarts());
