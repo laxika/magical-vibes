@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -61,9 +60,7 @@ class GarrukCursedHuntsmanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -117,22 +114,50 @@ class GarrukCursedHuntsmanTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.TRAMPLE)).isFalse();
     }
 
+    @Test
+    @DisplayName("An illegal creature target prevents the draw")
+    void minusThreeDoesNotDrawWhenTargetLeavesBattlefield() {
+        Permanent garruk = addReadyGarruk(player1, new GarrukCursedHuntsman(), 5);
+        Permanent bears = addReadyCreature(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, 1, null, bears.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        harness.setGraveyard(player2, List.of(bears.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The emblem affects creatures entering after Garruk leaves")
+    void emblemBoostsLaterCreaturesWithoutGarruk() {
+        addReadyGarruk(player1, new GarrukCursedHuntsman(), 6);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Garruk, Cursed Huntsman");
+
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
     private Permanent addReadyGarruk(Player player, Card card, int loyalty) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;
     }
 
     private Permanent addReadyCreature(Player player, Card card) {
-        harness.addToBattlefield(player, card);
-        Permanent permanent = gd.playerBattlefields.get(player.getId()).stream()
-                .filter(candidate -> candidate.getCard() == card)
-                .findFirst()
-                .orElseThrow();
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
         return permanent;
     }
