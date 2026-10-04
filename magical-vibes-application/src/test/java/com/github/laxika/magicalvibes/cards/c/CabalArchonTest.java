@@ -106,7 +106,7 @@ class CabalArchonTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent archon = harness.addToBattlefieldAndReturn(player1, new CabalArchon());
         archon.setSummoningSick(true);
-        archon.setTapped(true);
+        archon.tap();
         prepareAbility();
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

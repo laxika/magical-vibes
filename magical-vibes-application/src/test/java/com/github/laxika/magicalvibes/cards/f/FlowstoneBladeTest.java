@@ -95,6 +95,59 @@ class FlowstoneBladeTest extends BaseCardTest {
     }
 
     @Test
+    void auraControllerCanBoostOpponentsEnchantedCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new MoggFlunkies());
+        harness.setHand(player1, List.of(new FlowstoneBlade()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Flowstone Blade");
+        harness.assertOnBattlefield(player2, "Mogg Flunkies");
+    }
+
+    @Test
+    void abilityStillResolvesAfterAuraLeavesBattlefield() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MoggFlunkies());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FlowstoneBlade());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, aura));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Flowstone Blade");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    void abilityDoesNotBoostAnotherCreatureWhenEnchantedCreatureLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MoggFlunkies());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new MoggFlunkies());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FlowstoneBlade());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 2, null, null);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mogg Flunkies");
+        harness.assertInGraveyard(player1, "Flowstone Blade");
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(3);
+    }
+
+    @Test
     void cannotEnchantANoncreaturePermanent() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new EnsnaringBridge());
         harness.setHand(player1, List.of(new FlowstoneBlade()));

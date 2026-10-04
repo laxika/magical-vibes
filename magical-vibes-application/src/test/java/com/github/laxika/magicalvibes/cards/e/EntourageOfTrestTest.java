@@ -31,12 +31,9 @@ class EntourageOfTrestTest extends BaseCardTest {
         Permanent entourage = addCreatureReady(player2, new EntourageOfTrest());
         gd.monarchPlayerId = player2.getId();
 
-        Permanent attacker1 = addCreatureReady(player1, new GrizzlyBears());
-        attacker1.setAttacking(true);
-        Permanent attacker2 = addCreatureReady(player1, new GrizzlyBears());
-        attacker2.setAttacking(true);
-
-        prepareDeclareBlockers(player1);
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -51,12 +48,57 @@ class EntourageOfTrestTest extends BaseCardTest {
         addCreatureReady(player2, new EntourageOfTrest());
         gd.monarchPlayerId = player1.getId();
 
-        Permanent attacker1 = addCreatureReady(player1, new GrizzlyBears());
-        attacker1.setAttacking(true);
-        Permanent attacker2 = addCreatureReady(player1, new GrizzlyBears());
-        attacker2.setAttacking(true);
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
 
-        prepareDeclareBlockers(player1);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("too many times");
+    }
+
+    @Test
+    @DisplayName("Entry trigger takes the monarchy even after its source leaves")
+    void entryTriggerResolvesWithoutSource() {
+        gd.monarchPlayerId = player2.getId();
+        Permanent entourage = harness.enterBattlefieldAndReturn(player1, new EntourageOfTrest());
+        assertThat(gd.monarchPlayerId).isEqualTo(player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(entourage);
+        gd.playerGraveyards.get(player1.getId()).add(entourage.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(gd.monarchPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Monarch's Entourage cannot block three creatures")
+    void cannotBlockThreeCreaturesWhileMonarch() {
+        addCreatureReady(player2, new EntourageOfTrest());
+        gd.monarchPlayerId = player2.getId();
+        addCreatureReady(player1, new EntourageOfTrest());
+        addCreatureReady(player1, new EntourageOfTrest());
+        addCreatureReady(player1, new EntourageOfTrest());
+        declareAttackersAndPrepareBlockers(List.of(0, 1, 2));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(0, 2))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("too many times");
+    }
+
+    @Test
+    @DisplayName("Cannot block an additional creature when there is no monarch")
+    void cannotBlockAdditionalCreatureWhenNoMonarch() {
+        addCreatureReady(player2, new EntourageOfTrest());
+        gd.monarchPlayerId = null;
+        addCreatureReady(player1, new EntourageOfTrest());
+        addCreatureReady(player1, new EntourageOfTrest());
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),

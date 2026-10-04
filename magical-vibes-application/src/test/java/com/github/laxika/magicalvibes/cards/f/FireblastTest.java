@@ -85,8 +85,7 @@ class FireblastTest extends BaseCardTest {
     @Test
     @DisplayName("Alternate cost fails with fewer than two Mountains")
     void alternateCostFailsWithOneMountain() {
-        harness.addToBattlefield(player1, new Mountain());
-        UUID mountain = harness.getPermanentId(player1, "Mountain");
+        UUID mountain = harness.addToBattlefieldAndReturn(player1, new Mountain()).getId();
 
         harness.setHand(player1, List.of(new Fireblast()));
 
@@ -108,5 +107,54 @@ class FireblastTest extends BaseCardTest {
         assertThatThrownBy(() ->
                 harness.castInstantWithAlternateCost(player1, 0, player2.getId(), List.of(mountain, nonMountain)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+    @Test
+    @DisplayName("Alternate cost rejects choosing the same Mountain twice")
+    void alternateCostRejectsDuplicateMountain() {
+        UUID mountain = harness.addToBattlefieldAndReturn(player1, new Mountain()).getId();
+        harness.setHand(player1, List.of(new Fireblast()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0, player2.getId(),
+                List.of(mountain, mountain))).isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Mountain");
+        harness.assertInHand(player1, "Fireblast");
+        harness.assertNotInGraveyard(player1, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Alternate cost cannot sacrifice an opponent's Mountain")
+    void alternateCostRejectsOpponentsMountain() {
+        UUID ownMountain = harness.addToBattlefieldAndReturn(player1, new Mountain()).getId();
+        UUID opposingMountain = harness.addToBattlefieldAndReturn(player2, new Mountain()).getId();
+        harness.setHand(player1, List.of(new Fireblast()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0, player2.getId(),
+                List.of(ownMountain, opposingMountain))).isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Mountain");
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertInHand(player1, "Fireblast");
+    }
+
+    @Test
+    @DisplayName("Mountains are sacrificed when casting, before damage resolves")
+    void alternateCostIsPaidBeforeResolution() {
+        UUID mountain1 = harness.addToBattlefieldAndReturn(player1, new Mountain()).getId();
+        UUID mountain2 = harness.addToBattlefieldAndReturn(player1, new Mountain()).getId();
+        harness.setHand(player1, List.of(new Fireblast()));
+        harness.setLife(player2, 20);
+
+        harness.castInstantWithAlternateCost(player1, 0, player2.getId(), List.of(mountain1, mountain2));
+
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.assertNotInHand(player1, "Fireblast");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+        harness.assertInGraveyard(player1, "Fireblast");
     }
 }

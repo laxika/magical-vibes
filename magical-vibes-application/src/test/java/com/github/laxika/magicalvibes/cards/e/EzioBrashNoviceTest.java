@@ -43,4 +43,45 @@ class EzioBrashNoviceTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, ezio, Keyword.FIRST_STRIKE)).isFalse();
         assertThat(gqs.hasEffectiveSubtype(gd, ezio, CardSubtype.ASSASSIN)).isFalse();
     }
+
+    @Test
+    void attackCounterTurnsOnBothBonuses() {
+        Permanent ezio = addCreatureReady(player1, new EzioBrashNovice());
+        ezio.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(ezio.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, ezio, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, ezio, CardSubtype.ASSASSIN)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, ezio, CardSubtype.HUMAN)).isTrue();
+    }
+
+    @Test
+    void bonusesDisappearWhenCounterCountFallsBelowTwo() {
+        Permanent ezio = addCreatureReady(player1, new EzioBrashNovice());
+        ezio.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        assertThat(gqs.hasKeyword(gd, ezio, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, ezio, CardSubtype.ASSASSIN)).isTrue();
+
+        ezio.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThat(gqs.hasKeyword(gd, ezio, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, ezio, CardSubtype.ASSASSIN)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, ezio, CardSubtype.HUMAN)).isTrue();
+    }
+
+    @Test
+    void countersOnOpponentEzioDoNotGrantBonusesToThisEzio() {
+        Permanent ezio = addCreatureReady(player1, new EzioBrashNovice());
+        Permanent opponentEzio = addCreatureReady(player2, new EzioBrashNovice());
+        opponentEzio.setCounterCount(CounterType.STUN, 2);
+
+        assertThat(gqs.hasKeyword(gd, ezio, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasEffectiveSubtype(gd, ezio, CardSubtype.ASSASSIN)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponentEzio, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, opponentEzio, CardSubtype.ASSASSIN)).isTrue();
+    }
 }

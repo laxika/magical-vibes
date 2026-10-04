@@ -23,7 +23,7 @@ class EronTheRelentlessTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveCombat();
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(15);
+        harness.assertLife(player2, 15);
     }
 
     @Test
@@ -86,5 +86,53 @@ class EronTheRelentlessTest extends BaseCardTest {
 
         assertThat(eron.getRegenerationShield()).isEqualTo(1);
         assertThat(eron.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creating a shield does not immediately tap Eron or remove its damage")
+    void shieldCreationDoesNotRegenerateImmediately() {
+        Permanent eron = addCreatureReady(player1, new EronTheRelentless());
+        eron.setMarkedDamage(1);
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(eron.getRegenerationShield()).isZero();
+        assertThat(eron.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(eron.getRegenerationShield()).isEqualTo(1);
+        assertThat(eron.isTapped()).isFalse();
+        assertThat(eron.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Repeated activations create separate shields and lethal damage consumes only one")
+    void repeatedActivationsProtectAgainstSeparateDestructionEvents() {
+        Permanent eron = addCreatureReady(player1, new EronTheRelentless());
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(eron.getRegenerationShield()).isEqualTo(2);
+
+        eron.setBlocking(true);
+        eron.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new EronTheRelentless());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Eron the Relentless");
+        harness.assertNotInGraveyard(player1, "Eron the Relentless");
+        assertThat(eron.getRegenerationShield()).isEqualTo(1);
+        assertThat(eron.getMarkedDamage()).isZero();
+        assertThat(eron.isTapped()).isTrue();
+        assertThat(eron.isBlocking()).isFalse();
+        assertThat(eron.getBlockingTargets()).isEmpty();
     }
 }

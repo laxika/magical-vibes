@@ -23,8 +23,7 @@ class EarthshakerDreadmawTest extends BaseCardTest {
         harness.addToBattlefield(player1, new PygmyAllosaurus());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new PygmyAllosaurus());
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
         harness.setHand(player1, List.of(new EarthshakerDreadmaw()));
         harness.addMana(player1, ManaColor.GREEN, 6);
 
@@ -39,8 +38,7 @@ class EarthshakerDreadmawTest extends BaseCardTest {
     @DisplayName("Does not draw when no other Dinosaur is controlled")
     void doesNotDrawWithoutOtherDinosaur() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player1, List.of(new EarthshakerDreadmaw()));
         harness.addMana(player1, ManaColor.GREEN, 6);
 
@@ -49,6 +47,63 @@ class EarthshakerDreadmawTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Counts another Earthshaker Dreadmaw added before the trigger resolves")
+    void countsDinosaursAtResolution() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new EarthshakerDreadmaw()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.addToBattlefield(player1, new EarthshakerDreadmaw());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not count a Dinosaur that left before the trigger resolves")
+    void doesNotCountDepartedDinosaur() {
+        var other = harness.addToBattlefieldAndReturn(player1, new EarthshakerDreadmaw());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new EarthshakerDreadmaw()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(other);
+        gd.playerGraveyards.get(player1.getId()).add(other.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Trigger still draws for other Dinosaurs after its source leaves")
+    void drawsAfterSourceLeaves() {
+        var other = harness.addToBattlefieldAndReturn(player1, new EarthshakerDreadmaw());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new EarthshakerDreadmaw()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        var source = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> !permanent.getId().equals(other.getId()))
+                .findFirst().orElseThrow();
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }

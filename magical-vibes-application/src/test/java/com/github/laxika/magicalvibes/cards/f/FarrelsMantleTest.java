@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.d.DwarvenRuins;
 import com.github.laxika.magicalvibes.cards.o.Orgg;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -27,9 +28,8 @@ class FarrelsMantleTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(attackerController, new FarrelitePriest());
         attacker.setAttacking(true);
 
-        Permanent aura = new Permanent(new FarrelsMantle());
+        Permanent aura = harness.addToBattlefieldAndReturn(auraController, new FarrelsMantle());
         aura.setAttachedTo(attacker.getId());
-        gd.playerBattlefields.get(auraController.getId()).add(aura);
         return attacker;
     }
 
@@ -60,10 +60,10 @@ class FarrelsMantleTest extends BaseCardTest {
 
         advanceToUnblockedTrigger();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, victim.getId());
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(3);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
@@ -78,6 +78,8 @@ class FarrelsMantleTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         advanceToUnblockedTrigger();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(victim.getMarkedDamage()).isZero();
@@ -85,13 +87,12 @@ class FarrelsMantleTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with no other creature leaves combat damage intact")
-    void acceptingWithNoOtherCreatureDoesNotPreventCombatDamage() {
+    @DisplayName("No other creature means no legal target and no optional choice")
+    void noOtherCreatureDoesNotPromptOrPreventCombatDamage() {
         Permanent attacker = addEnchantedAttacker();
         harness.setLife(player2, 20);
 
         advanceToUnblockedTrigger();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
@@ -107,10 +108,14 @@ class FarrelsMantleTest extends BaseCardTest {
 
         advanceToUnblockedTrigger(player2, player1);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, victim.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handlePermanentChosen(player1, victim.getId());
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(3);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
@@ -125,9 +130,9 @@ class FarrelsMantleTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         advanceToUnblockedTrigger();
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, victim.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(victim.getMarkedDamage()).isEqualTo(3);
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
@@ -141,7 +146,6 @@ class FarrelsMantleTest extends BaseCardTest {
         addVictim();
 
         advanceToUnblockedTrigger();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -151,13 +155,80 @@ class FarrelsMantleTest extends BaseCardTest {
     @DisplayName("The may ability cannot target a noncreature permanent")
     void noncreatureIsNotLegalTarget() {
         addEnchantedAttacker();
+        addVictim();
         Permanent land = harness.addToBattlefieldAndReturn(player2, new DwarvenRuins());
 
         advanceToUnblockedTrigger();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The trigger asks for a target before asking whether to deal damage")
+    void targetIsChosenBeforeResolutionChoice() {
+        addEnchantedAttacker();
+        Permanent victim = addVictim();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, victim.getId());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+    }
+
+    @Test
+    @DisplayName("Negative power is included before adding two to determine damage")
+    void negativePowerIsNotClampedBeforeAddingTwo() {
+        Permanent attacker = addEnchantedAttacker();
+        attacker.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+        Permanent victim = addVictim();
+
+        advanceToUnblockedTrigger();
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("Damage uses the enchanted creature's power at resolution")
+    void usesPowerAtResolution() {
+        Permanent attacker = addEnchantedAttacker();
+        Permanent victim = addVictim();
+
+        advanceToUnblockedTrigger();
+        harness.handlePermanentChosen(player1, victim.getId());
+        attacker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Removing the target before resolution leaves combat damage intact")
+    void missingTargetDoesNotPreventCombatDamage() {
+        Permanent attacker = addEnchantedAttacker();
+        Permanent victim = addVictim();
+        harness.setLife(player2, 20);
+
+        advanceToUnblockedTrigger();
+        harness.handlePermanentChosen(player1, victim.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(victim);
+        gd.playerGraveyards.get(player2.getId()).add(victim.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(attacker.getId());
+        harness.assertLife(player2, 19);
     }
 
     @Test

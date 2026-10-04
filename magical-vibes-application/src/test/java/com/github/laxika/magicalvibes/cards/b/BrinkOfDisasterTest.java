@@ -112,7 +112,7 @@ class BrinkOfDisasterTest extends BaseCardTest {
     @Test
     void enchantingAlreadyTappedLandDoesNotDestroyIt() {
         Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
         harness.setHand(player1, List.of(new BrinkOfDisaster()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 

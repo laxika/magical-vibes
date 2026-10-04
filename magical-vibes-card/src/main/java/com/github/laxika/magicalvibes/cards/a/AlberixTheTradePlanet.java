@@ -21,11 +21,11 @@ public class AlberixTheTradePlanet extends Card {
         addEffect(EffectSlot.PRECOMBAT_MAIN_TRIGGERED, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Discard a card. If you do, put two of Alberix's resources into its owner's hand.",
-                        new DiscardCardThenEffect(
+                        DiscardCardThenEffect.continuing(
                                 null,
                                 SequenceEffect.of(
-                                        new PutCardExiledWithSourceIntoHandEffect(),
-                                        new PutCardExiledWithSourceIntoHandEffect()),
+                                        PutCardExiledWithSourceIntoHandEffect.returningToOwner(),
+                                        PutCardExiledWithSourceIntoHandEffect.returningToOwner()),
                                 "a card")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile the top card of your library as a resource.",

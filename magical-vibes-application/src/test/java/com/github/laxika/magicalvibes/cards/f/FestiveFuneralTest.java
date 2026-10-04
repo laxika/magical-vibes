@@ -25,8 +25,7 @@ class FestiveFuneralTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FestiveFuneral()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getEffectivePower()).isEqualTo(1);
         assertThat(target.getEffectiveToughness()).isEqualTo(1);
@@ -39,14 +38,60 @@ class FestiveFuneralTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FestiveFuneral()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(3);
         assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    void emptyGraveyardGivesNoReductionAndDoesNotCountResolvingSpell() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new FestiveFuneral()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Festive Funeral");
+    }
+
+    @Test
+    void countsGraveyardAtResolutionAndKeepsThatReductionAfterward() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new FestiveFuneral()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+
+        harness.setGraveyard(player1, List.of());
+
+        assertThat(target.getEffectivePower()).isEqualTo(1);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    void canTargetOwnCreatureAndPutItInGraveyardForZeroToughness() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new FestiveFuneral()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test

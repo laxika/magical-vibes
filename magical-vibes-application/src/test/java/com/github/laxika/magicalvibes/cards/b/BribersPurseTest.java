@@ -137,7 +137,7 @@ class BribersPurseTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent purse = addReadyPurse(player1);
         purse.setCounterCount(CounterType.GEM, 1);
-        purse.setTapped(true);
+        purse.tap();
         Permanent creature = addCreatureReady(player2, new AlpineGrizzly());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

@@ -100,9 +100,7 @@ class EmergenceZoneTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -113,5 +111,81 @@ class EmergenceZoneTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately, but flash permission requires resolution")
+    void sacrificeIsACostAndPermissionWaitsForResolution() {
+        addZone(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Emergence Zone");
+        harness.assertInGraveyard(player1, "Emergence Zone");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The controller can activate and cast a creature during an opponent's turn")
+    void grantsPermissionDuringOpponentsTurn() {
+        addZone(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Flash permission does not allow lands to be played during combat")
+    void doesNotChangeLandPlayTiming() {
+        addZone(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new EmergenceZone()));
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Emergence Zone");
+    }
+
+    @Test
+    @DisplayName("A tapped Emergence Zone cannot pay the sacrifice ability's tap cost")
+    void cannotSacrificeAfterTappingForMana() {
+        addZone(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Emergence Zone");
+        harness.assertNotInGraveyard(player1, "Emergence Zone");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 }

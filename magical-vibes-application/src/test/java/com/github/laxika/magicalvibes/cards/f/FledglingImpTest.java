@@ -89,4 +89,50 @@ class FledglingImpTest extends BaseCardTest {
         harness.assertInHand(player1, "Dusk Imp");
         assertThat(gqs.hasKeyword(gd, imp, Keyword.FLYING)).isFalse();
     }
+
+    @Test
+    @DisplayName("Discard is paid before the ability resolves and only its source gains flying")
+    void discardIsPaidBeforeResolutionAndOnlySourceGainsFlying() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent imp = harness.addToBattlefieldAndReturn(player1, new FledglingImp());
+        Permanent otherImp = harness.addToBattlefieldAndReturn(player1, new FledglingImp());
+        harness.setHand(player1, List.of(new DuskImp()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertNotInHand(player1, "Dusk Imp");
+        harness.assertInGraveyard(player1, "Dusk Imp");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, imp, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherImp, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, imp, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherImp, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Imp can activate during an opponent's turn")
+    void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent imp = harness.addToBattlefieldAndReturn(player1, new FledglingImp());
+        imp.setTapped(true);
+        imp.setSummoningSick(true);
+        harness.setHand(player1, List.of(new DuskImp()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Dusk Imp");
+        assertThat(gqs.hasKeyword(gd, imp, Keyword.FLYING)).isTrue();
+        assertThat(imp.isTapped()).isTrue();
+    }
 }

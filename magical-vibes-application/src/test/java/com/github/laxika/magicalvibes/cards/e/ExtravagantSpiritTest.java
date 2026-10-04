@@ -119,4 +119,34 @@ class ExtravagantSpiritTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Extravagant Spirit");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    @DisplayName("Declining the zero-mana payment still sacrifices Extravagant Spirit")
+    void declineZeroCostPaymentSacrificesIt() {
+        harness.addToBattlefield(player1, new ExtravagantSpirit());
+        harness.setHand(player1, List.of());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Extravagant Spirit");
+        harness.assertInGraveyard(player1, "Extravagant Spirit");
+    }
+
+    @Test
+    @DisplayName("Insufficient mana is not partially spent on the upkeep payment")
+    void insufficientManaIsNotPartiallySpent() {
+        harness.addToBattlefield(player1, new ExtravagantSpirit());
+        harness.setHand(player1, List.of(new FreshVolunteers(), new FreshVolunteers()));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Extravagant Spirit");
+        harness.assertInGraveyard(player1, "Extravagant Spirit");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
 }

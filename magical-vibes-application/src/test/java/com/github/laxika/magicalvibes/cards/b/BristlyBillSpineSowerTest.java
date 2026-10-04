@@ -92,7 +92,7 @@ class BristlyBillSpineSowerTest extends BaseCardTest {
     @Test
     void activationUsesCreaturesAndCountersAtResolution() {
         Permanent bill = harness.addToBattlefieldAndReturn(player1, new BristlyBillSpineSower());
-        bill.setTapped(true);
+        bill.tap();
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new HardbristleBandit());
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());

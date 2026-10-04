@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.SageOfEpityr;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -50,11 +51,8 @@ class FledglingMawcorTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target planeswalker")
     void deals1DamageToPlaneswalker() {
         addCreatureReady(player1, new FledglingMawcor());
-        ChandraNalaar chandra = new ChandraNalaar();
-        chandra.setLoyalty(6);
-        Permanent planeswalker = new Permanent(chandra);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, 6);
-        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
 
         harness.activateAbility(player1, 0, null, planeswalker.getId());
         harness.passBothPriorities();
@@ -91,5 +89,98 @@ class FledglingMawcorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null,
                 harness.getPermanentId(player2, "Island")))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new FledglingMawcor());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent mawcor = addCreatureReady(player1, new FledglingMawcor());
+        mawcor.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void faceDownCreatureCannotUseDamageAbility() {
+        Permanent mawcor = castFaceDownMawcor();
+        mawcor.setSummoningSick(false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(mawcor.isTapped()).isFalse();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void turningFaceUpRequiresTwoBlueMana() {
+        Permanent mawcor = castFaceDownMawcor();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(mawcor.isFaceDown()).isTrue();
+    }
+
+    @Test
+    void turningFaceUpRestoresDamageAbilityWithoutUsingTheStack() {
+        Permanent mawcor = castFaceDownMawcor();
+        mawcor.setSummoningSick(false);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.turnFaceUp(player1, 0);
+
+        assertThat(mawcor.isFaceDown()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        assertThat(mawcor.isTapped()).isTrue();
+    }
+
+    @Test
+    void turningFaceUpDoesNotRemoveSummoningSickness() {
+        Permanent mawcor = castFaceDownMawcor();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.turnFaceUp(player1, 0);
+
+        assertThat(mawcor.isFaceDown()).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    void flyingPreventsGroundCreatureFromBlocking() {
+        addCreatureReady(player1, new FledglingMawcor());
+        addCreatureReady(player2, new SageOfEpityr());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    private Permanent castFaceDownMawcor() {
+        harness.setHand(player1, List.of(new FledglingMawcor()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        return findPermanent(player1, "Fledgling Mawcor");
     }
 }

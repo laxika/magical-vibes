@@ -2,14 +2,12 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -70,16 +68,75 @@ class FlashThompsonSpiderFanTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void bothModesAffectOnlyTheirRespectiveTargets() {
+        Permanent untapTarget = harness.addToBattlefieldAndReturn(player2, new FlashThompsonSpiderFan());
+        untapTarget.tap();
+
+        castFlash();
+        Permanent tapTarget = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.handleListChoice(player1, HECKLE);
+        harness.handleListChoice(player1, HERO_WORSHIP);
+        harness.handlePermanentChosen(player1, tapTarget.getId());
+        harness.handlePermanentChosen(player1, untapTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(tapTarget.isTapped()).isTrue();
+        assertThat(untapTarget.isTapped()).isFalse();
+    }
+
+    @Test
+    void choosingUntapBeforeTapStillResolvesInPrintedOrder() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FlashThompsonSpiderFan());
+
+        castFlash();
+        harness.handleListChoice(player1, HERO_WORSHIP);
+        harness.handleListChoice(player1, HECKLE);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void legalUntapTargetIsStillAffectedWhenTapTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FlashThompsonSpiderFan());
+        target.tap();
+
+        castFlash();
+        Permanent flash = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.handleListChoice(player1, HECKLE);
+        harness.handleListChoice(player1, HERO_WORSHIP);
+        harness.handlePermanentChosen(player1, flash.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(flash);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void canBeCastDuringOpponentsEndStepAndTargetItself() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+
+        castFlash();
+        Permanent flash = gd.playerBattlefields.get(player1.getId()).getFirst();
+        chooseMode(HECKLE);
+        harness.handlePermanentChosen(player1, flash.getId());
+        harness.passBothPriorities();
+
+        assertThat(flash.isTapped()).isTrue();
+    }
+
     private void chooseMode(String mode) {
         harness.handleListChoice(player1, mode);
         harness.handleListChoice(player1, ChooseOneEffect.FINISH_MODE_SELECTION);
     }
 
     private void castFlash() {
-        harness.setHand(player1, List.of(new FlashThompsonSpiderFan()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FlashThompsonSpiderFan(), "{1}{W}");
         harness.passBothPriorities();
     }
 }

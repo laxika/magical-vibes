@@ -77,6 +77,47 @@ class EphemeronTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A tapped Ephemeron can activate without paying mana or tapping")
+    void canActivateWhileTapped() {
+        var ephemeron = harness.addToBattlefieldAndReturn(player1, new Ephemeron());
+        ephemeron.setTapped(true);
+        harness.setHand(player1, List.of(new Spellbook()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Spellbook");
+        harness.assertInHand(player1, "Ephemeron");
+        harness.assertNotOnBattlefield(player1, "Ephemeron");
+    }
+
+    @Test
+    @DisplayName("Multiple activations each require a discard but return Ephemeron only once")
+    void multipleActivationsDoNotReturnAbsentSourceAgain() {
+        harness.addToBattlefield(player1, new Ephemeron());
+        harness.setHand(player1, List.of(new Spellbook(), new RagingGoblin()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.assertOnBattlefield(player1, "Ephemeron");
+        harness.assertInGraveyard(player1, "Spellbook");
+        harness.assertInGraveyard(player1, "Raging Goblin");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Ephemeron");
+        harness.assertNotOnBattlefield(player1, "Ephemeron");
+    }
+
+    @Test
     @DisplayName("Resolving returns an Ephemeron controlled by another player to its owner's hand")
     void discardCostReturnsEphemeronToOwnersHand() {
         Ephemeron ephemeron = new Ephemeron();

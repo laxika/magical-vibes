@@ -18,6 +18,71 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FadeAwayTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A creature paid for may be sacrificed for another creature's unpaid obligation")
+    void canSacrificeCreaturePaidFor() {
+        Permanent paidCreature = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        Permanent unpaidCreature = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        Permanent spellbook = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castFromHand(player1, new FadeAway(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(paidCreature.getId()));
+        harness.handleMultiplePermanentsChosen(player2, List.of(paidCreature.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(unpaidCreature, spellbook).doesNotContain(paidCreature);
+        harness.assertInGraveyard(player2, "Raging Goblin");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A player may decline payment even when sufficient mana is available")
+    void canDeclinePaymentWithManaAvailable() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
+        Permanent spellbook = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castFromHand(player1, new FadeAway(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of());
+        harness.handleMultiplePermanentsChosen(player2, List.of(spellbook.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature).doesNotContain(spellbook);
+        harness.assertInGraveyard(player2, "Spellbook");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Players without creatures do not pay or sacrifice anything")
+    void noCreaturesMeansNoSacrifices() {
+        Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+
+        harness.castFromHand(player1, new FadeAway(), "{2}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownArtifact);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentArtifact);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Fade Away");
+    }
+
+    @Test
+    @DisplayName("Sacrificing creatures does not reduce the number of required sacrifices")
+    void sacrificesEveryCreatureWhenNoManaOrOtherPermanents() {
+        harness.addToBattlefield(player2, new RagingGoblin());
+        harness.addToBattlefield(player2, new RagingGoblin());
+
+        harness.castFromHand(player1, new FadeAway(), "{2}{U}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Raging Goblin");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
     @DisplayName("A player can pay for some creatures and sacrifice other permanents for the rest")
     void paysForSomeCreaturesAndSacrificesOtherPermanent() {
         Permanent keptCreature = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());

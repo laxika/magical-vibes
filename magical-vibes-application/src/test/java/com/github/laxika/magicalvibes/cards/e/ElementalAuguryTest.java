@@ -116,4 +116,66 @@ class ElementalAuguryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, permanentTarget.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void showsTheOnlyLibraryCardPrivatelyToTheController() {
+        Card onlyCard = new ElementalAugury();
+        harness.setLibrary(player2, List.of(onlyCard));
+        harness.addToBattlefield(player1, new ElementalAugury());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.clearMessages();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains(onlyCard.getId().toString())
+                        && message.contains("Elemental Augury"));
+        assertThat(harness.getConn2().getSentMessages())
+                .noneMatch(message -> message.contains(onlyCard.getId().toString()));
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.LibraryReorder) {
+            gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
+        }
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(onlyCard);
+    }
+
+    @Test
+    void resolvesWithoutAnOrderingPromptForAnEmptyLibrary() {
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player1, new ElementalAugury());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void reordersExactlyThreeCardsAndPreservesTheRestOfTheLibrary() {
+        List<Card> cards = List.of(new ElementalAugury(), new ElementalAugury(),
+                new ElementalAugury(), new ElementalAugury(), new ElementalAugury());
+        harness.setLibrary(player2, cards);
+        harness.addToBattlefield(player1, new ElementalAugury());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 1, 0)));
+
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactly(cards.get(2), cards.get(1), cards.get(0), cards.get(3), cards.get(4));
+    }
+
+    @Test
+    void cannotActivateWithoutThreeMana() {
+        harness.addToBattlefield(player1, new ElementalAugury());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
 }

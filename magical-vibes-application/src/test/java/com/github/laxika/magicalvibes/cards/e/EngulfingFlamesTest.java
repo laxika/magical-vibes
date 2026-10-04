@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.d.DarkwaterEgg;
 import com.github.laxika.magicalvibes.cards.d.DwarvenGrunt;
+import com.github.laxika.magicalvibes.cards.f.Firebolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EngulfingFlames.class, DwarvenGrunt.class, EmberBeast.class, DarkwaterEgg.class})
+@CardUsed({EngulfingFlames.class, DwarvenGrunt.class, EmberBeast.class, DarkwaterEgg.class, Firebolt.class})
 class EngulfingFlamesTest extends BaseCardTest {
 
     @Test
@@ -78,6 +79,44 @@ class EngulfingFlamesTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Prevents regeneration from later damage even when its own damage is prevented")
+    void preventsRegenerationWhenDamageIsPrevented() {
+        Permanent grunt = harness.addToBattlefieldAndReturn(player1, new DwarvenGrunt());
+        grunt.setDamagePreventionShield(1);
+        harness.setHand(player1, List.of(new EngulfingFlames(), new Firebolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, grunt.getId());
+
+        harness.assertOnBattlefield(player1, "Dwarven Grunt");
+        assertThat(grunt.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Engulfing Flames");
+        grunt.setRegenerationShield(1);
+
+        harness.castAndResolveSorcery(player1, 0, grunt.getId());
+
+        harness.assertNotOnBattlefield(player1, "Dwarven Grunt");
+        harness.assertInGraveyard(player1, "Dwarven Grunt");
+    }
+
+    @Test
+    @DisplayName("Flashback prevents an existing regeneration shield from saving a creature")
+    void flashbackPreventsRegeneration() {
+        Permanent grunt = harness.addToBattlefieldAndReturn(player2, new DwarvenGrunt());
+        grunt.setRegenerationShield(1);
+        harness.setGraveyard(player1, List.of(new EngulfingFlames()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveFlashback(player1, 0, grunt.getId());
+
+        harness.assertNotOnBattlefield(player2, "Dwarven Grunt");
+        harness.assertInGraveyard(player2, "Dwarven Grunt");
+        harness.assertNotInGraveyard(player1, "Engulfing Flames");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Engulfing Flames"));
+    }
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {

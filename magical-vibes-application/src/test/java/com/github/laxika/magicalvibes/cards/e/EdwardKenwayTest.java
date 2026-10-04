@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.r.RenegadeFreighter;
 import com.github.laxika.magicalvibes.cards.t.TalasScout;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({EdwardKenway.class, RenegadeFreighter.class, TalasScout.class,
         GrizzlyBears.class, Divination.class})
@@ -27,7 +30,7 @@ class EdwardKenwayTest extends BaseCardTest {
         edward.tap();
         Permanent pirate = addCreatureReady(player1, new TalasScout());
         pirate.tap();
-        Permanent vehicle = addPermanent(player1, new RenegadeFreighter());
+        Permanent vehicle = addCreatureReady(player1, new RenegadeFreighter());
         vehicle.tap();
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.tap();
@@ -35,9 +38,8 @@ class EdwardKenwayTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(3);
     }
@@ -46,20 +48,17 @@ class EdwardKenwayTest extends BaseCardTest {
     @DisplayName("Vehicle combat damage exiles the damaged player's top card face down with play permission")
     void vehicleCombatDamageExilesTopCardFaceDown() {
         addCreatureReady(player1, new EdwardKenway());
-        Permanent vehicle = addPermanent(player1, new RenegadeFreighter());
+        Permanent vehicle = addCreatureReady(player1, new RenegadeFreighter());
         vehicle.setAnimatedUntilEndOfTurn(true);
-        vehicle.setAnimatedPower(3);
-        vehicle.setAnimatedToughness(2);
+        vehicle.setAnimatedPower(4);
+        vehicle.setAnimatedToughness(3);
         vehicle.setAttacking(true);
         vehicle.setAttackTarget(player2.getId());
 
         Card topCard = new Divination();
         harness.setLibrary(player2, List.of(topCard));
 
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveCombat();
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(topCard.getId()).faceDown()).isTrue();
@@ -76,18 +75,108 @@ class EdwardKenwayTest extends BaseCardTest {
         Card topCard = new Divination();
         harness.setLibrary(player2, List.of(topCard));
 
-        prepareDeclareBlockers();
-        gs.declareBlockers(gd, player2, List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveCombat();
+        resolveAllTriggers();
 
         assertThat(gd.findExiledCard(topCard.getId())).isNull();
     }
 
-    private Permanent addPermanent(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Exiled spells still require their normal mana colors")
+    void exiledSpellRequiresNormalManaColors() {
+        addCreatureReady(player1, new EdwardKenway());
+        attackingVehicle(player1, player2);
+        Card topCard = new Divination();
+        harness.setLibrary(player2, List.of(topCard));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, topCard.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Play permission survives the source leaving and permits casting with the correct mana")
+    void canCastAfterEdwardLeaves() {
+        Permanent edward = addCreatureReady(player1, new EdwardKenway());
+        attackingVehicle(player1, player2);
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(topCard));
+        resolveCombat();
+        resolveAllTriggers();
+        gd.playerBattlefields.get(player1.getId()).remove(edward);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player1, topCard.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(1);
+        assertThat(gd.findExiledCard(topCard.getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's Vehicle does not trigger Edward")
+    void opposingVehicleDoesNotTrigger() {
+        addCreatureReady(player1, new EdwardKenway());
+        attackingVehicle(player2, player1);
+        Card topCard = new Divination();
+        harness.setLibrary(player1, List.of(topCard));
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(topCard.getId())).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("Treasure count is determined on resolution and excludes untapped and opposing permanents")
+    void treasureCountUsesResolutionState() {
+        Permanent edward = addCreatureReady(player1, new EdwardKenway());
+        edward.tap();
+        Permanent vehicle = addCreatureReady(player1, new RenegadeFreighter());
+        addCreatureReady(player1, new TalasScout());
+        addCreatureReady(player2, new TalasScout()).tap();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+
+        edward.untap();
+        vehicle.tap();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty damaged library produces no exiled card")
+    void emptyLibraryDoesNotExile() {
+        addCreatureReady(player1, new EdwardKenway());
+        attackingVehicle(player1, player2);
+        harness.setLibrary(player2, List.of());
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.exilePlayPermissions).isEmpty();
+    }
+
+    private Permanent attackingVehicle(Player controller, Player defender) {
+        Permanent vehicle = addCreatureReady(controller, new RenegadeFreighter());
+        vehicle.setAnimatedUntilEndOfTurn(true);
+        vehicle.setAnimatedPower(4);
+        vehicle.setAnimatedToughness(3);
+        vehicle.setAttacking(true);
+        vehicle.setAttackTarget(defender.getId());
+        return vehicle;
     }
 }

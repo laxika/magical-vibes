@@ -159,12 +159,14 @@ class AmuletOfSafekeepingTest extends BaseCardTest {
 
     @Test
     void countersOpponentTriggeredAbility() {
+        harness.forceActivePlayer(player2);
         harness.addToBattlefield(player1, new AmuletOfSafekeeping());
         harness.setHand(player2, List.of(new ViashinoPyromancer()));
         harness.addMana(player2, ManaColor.RED, 2);
 
-        harness.castCreature(player2, 0, player1.getId());
+        harness.castCreature(player2, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -193,6 +195,7 @@ class AmuletOfSafekeepingTest extends BaseCardTest {
 
     @Test
     void multipleAmuletsReduceNewTokensBelowZeroPowerWithoutReducingToughness() {
+        harness.forceActivePlayer(player2);
         harness.addToBattlefield(player1, new AmuletOfSafekeeping());
         harness.addToBattlefield(player1, new AmuletOfSafekeeping());
         harness.setHand(player2, List.of(new GoblinInstigator()));

@@ -13,7 +13,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -25,9 +24,7 @@ class AvengingArrowTest extends BaseCardTest {
     @DisplayName("Destroys a creature that dealt combat damage to a player this turn")
     void destroysCreatureThatDealtCombatDamage() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        gd.combatDamageToPlayersThisTurn
-                .computeIfAbsent(bears.getId(), k -> ConcurrentHashMap.newKeySet())
-                .add(player1.getId());
+        gd.recordDamageDealtBySource(bears.getId(), 2);
 
         castArrow(bears);
 
@@ -82,9 +79,7 @@ class AvengingArrowTest extends BaseCardTest {
     void regenerationShieldSavesTheCreature() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.setRegenerationShield(1);
-        gd.combatDamageToPlayersThisTurn
-                .computeIfAbsent(bears.getId(), k -> ConcurrentHashMap.newKeySet())
-                .add(player1.getId());
+        gd.recordDamageDealtBySource(bears.getId(), 2);
 
         castArrow(bears);
 

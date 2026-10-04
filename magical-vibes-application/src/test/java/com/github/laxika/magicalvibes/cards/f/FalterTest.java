@@ -143,6 +143,38 @@ class FalterTest extends BaseCardTest {
                 gd.playerBattlefields.get(player2.getId()))).isTrue();
     }
 
+    @Test
+    @DisplayName("Falter resolving on an empty battlefield still restricts later creatures")
+    void resolvingOnEmptyBattlefieldAffectsLaterCreatures() {
+        castFalter();
+
+        Permanent attacker = addCreatureReady(player1, new GorillaWarrior());
+        Permanent groundBlocker = addCreatureReady(player2, new GorillaWarrior());
+        Permanent flyingBlocker = addCreatureReady(player2, new Zephid());
+
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(gd, groundBlocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(gd, flyingBlocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+    }
+
+    @Test
+    @DisplayName("Falter does not restrict blocking until it resolves")
+    void restrictionBeginsOnlyOnResolution() {
+        Permanent attacker = addCreatureReady(player1, new GorillaWarrior());
+        Permanent blocker = addCreatureReady(player2, new GorillaWarrior());
+
+        harness.castFromHand(player1, new Falter(), "{1}{R}");
+
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(harness.getBlockLegalityService().canBlockAttacker(gd, blocker, attacker,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
+    }
+
     private void castFalter() {
         harness.castFromHand(player1, new Falter(), "{1}{R}");
         harness.passBothPriorities();

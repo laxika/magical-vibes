@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FloweringOfTheWhiteTree.class, GrizzlyBears.class, IsamaruHoundOfKonda.class, Shock.class})
+@CardUsed({FloweringOfTheWhiteTree.class, GrizzlyBears.class, IsamaruHoundOfKonda.class, Shock.class, ProdigalPyromancer.class})
 class FloweringOfTheWhiteTreeTest extends BaseCardTest {
 
     @Test
@@ -76,10 +77,71 @@ class FloweringOfTheWhiteTreeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, nonlegendary.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, nonlegendary.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(nonlegendary.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Paying ward lets an opponent's spell resolve")
+    void payingWardLetsSpellResolve() {
+        harness.addToBattlefield(player1, new FloweringOfTheWhiteTree());
+        Permanent legendary = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player2, 0, legendary.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(legendary.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Isamaru, Hound of Konda");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Your own spells do not trigger the granted ward")
+    void ownSpellDoesNotTriggerWard() {
+        harness.addToBattlefield(player1, new FloweringOfTheWhiteTree());
+        Permanent legendary = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, legendary.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(legendary.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Granted ward counters an opponent's activated ability")
+    void wardCountersOpponentsActivatedAbility() {
+        harness.addToBattlefield(player1, new FloweringOfTheWhiteTree());
+        Permanent legendary = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        Permanent pyromancer = harness.addToBattlefieldAndReturn(player2, new ProdigalPyromancer());
+        pyromancer.setSummoningSick(false);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, legendary.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(legendary.getMarkedDamage()).isZero();
+        assertThat(pyromancer.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }

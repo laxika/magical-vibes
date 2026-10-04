@@ -56,7 +56,7 @@ class ErhnamDjinnTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Forestwalk lasts through the controller's next upkeep")
+    @DisplayName("Forestwalk expires at the beginning of the controller's next upkeep")
     void forestwalkLastsUntilNextUpkeep() {
         addCreatureReady(player1, new ErhnamDjinn());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
@@ -78,7 +78,7 @@ class ErhnamDjinnTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Forestwalk lasts through the source controller's next upkeep")
+    @DisplayName("Forestwalk expires at the beginning of the source controller's next upkeep")
     void forestwalkLastsUntilSourceControllerNextUpkeep() {
         addCreatureReady(player1, new ErhnamDjinn());
         Permanent target = addCreatureReady(player2, new AnuridBarkripper());
@@ -91,5 +91,81 @@ class ErhnamDjinnTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("No target choice is offered when the opponent controls only Walls")
+    void noLegalTargetDoesNotPrompt() {
+        addCreatureReady(player1, new ErhnamDjinn());
+        Permanent wall = addCreatureReady(player2, new WallOfStone());
+        harness.addToBattlefield(player2, new Forest());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, wall, Keyword.FORESTWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Erhnam Djinn does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentUpkeep() {
+        addCreatureReady(player1, new ErhnamDjinn());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The trigger resolves after the Djinn leaves and still expires at its controller's next upkeep")
+    void sourceLeavingDoesNotPreventOrEndGrant() {
+        Permanent djinn = addCreatureReady(player1, new ErhnamDjinn());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, djinn));
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isTrue();
+        advanceToUpkeep(player2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isTrue();
+        advanceToUpkeep(player1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FORESTWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Granted forestwalk prevents blocking only while the defender controls a Forest")
+    void forestwalkDependsOnDefendersForest() {
+        Permanent djinn = addCreatureReady(player1, new ErhnamDjinn());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        grantForestwalk(attacker);
+
+        assertThat(bls.canBlockAttacker(gd, djinn, attacker, gd.playerBattlefields.get(player1.getId()))).isTrue();
+        harness.addToBattlefield(player2, new Forest());
+        assertThat(bls.canBlockAttacker(gd, djinn, attacker, gd.playerBattlefields.get(player1.getId()))).isTrue();
+        harness.addToBattlefield(player1, new Forest());
+        assertThat(bls.canBlockAttacker(gd, djinn, attacker, gd.playerBattlefields.get(player1.getId()))).isFalse();
+    }
+
+    @Test
+    @DisplayName("The trigger does not grant forestwalk when its target leaves before resolution")
+    void removedTargetDoesNotReceiveGrant() {
+        addCreatureReady(player1, new ErhnamDjinn());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player2, new GrizzlyBears());
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FORESTWALK)).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
     }
 }

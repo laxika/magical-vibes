@@ -25,8 +25,7 @@ class FirebendingStudentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, student)).isEqualTo(2);
 
@@ -61,8 +60,7 @@ class FirebendingStudentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, student)).isEqualTo(2);
 
@@ -72,6 +70,48 @@ class FirebendingStudentTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, student)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, student)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each noncreature spell adds another prowess bonus")
+    void multipleSpellsStackProwess() {
+        Permanent student = addReadyStudent();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, student)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, student)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger prowess")
+    void opponentsSpellDoesNotPump() {
+        Permanent student = addReadyStudent();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, student)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, student)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An unpumped Student produces one red mana when attacking")
+    void unpumpedAttackProducesMana() {
+        addReadyStudent();
+
+        declareAttackers(List.of(0));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
     }
 
     private Permanent addReadyStudent() {

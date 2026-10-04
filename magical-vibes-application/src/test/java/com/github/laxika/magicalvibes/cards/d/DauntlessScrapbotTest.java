@@ -117,7 +117,7 @@ class DauntlessScrapbotTest extends BaseCardTest {
     @Test
     void tappedLanderCannotActivate() {
         Permanent lander = createLander();
-        lander.setTapped(true);
+        lander.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1,

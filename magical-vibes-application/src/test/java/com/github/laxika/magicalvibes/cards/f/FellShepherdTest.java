@@ -32,8 +32,7 @@ class FellShepherdTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, deadCreature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, deadCreature.getId());
 
         Permanent shepherd = gd.playerBattlefields.get(player1.getId()).getFirst();
         shepherd.setAttacking(true);
@@ -107,5 +106,83 @@ class FellShepherdTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(fodderCard.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(fodderCard);
+    }
+
+    @Test
+    @DisplayName("Combat damage returns all eligible creatures, but not an opponent's creatures")
+    void returnsAllOwnCreaturesThatDiedThisTurn() {
+        Permanent shepherd = addCreatureReady(player1, new FellShepherd());
+        Card firstCard = new GrizzlyBears();
+        Card secondCard = new GrizzlyBears();
+        Card opponentCard = new GrizzlyBears();
+        Permanent first = addCreatureReady(player1, firstCard);
+        Permanent second = addCreatureReady(player1, secondCard);
+        Permanent opponent = addCreatureReady(player2, opponentCard);
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, first.getId());
+        harness.castAndResolveInstant(player1, 0, second.getId());
+        harness.castAndResolveInstant(player1, 0, opponent.getId());
+        shepherd.setAttacking(true);
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(firstCard, secondCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(firstCard, secondCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(opponentCard);
+    }
+
+    @Test
+    @DisplayName("Declining leaves an eligible creature in the graveyard")
+    void declinesReturnOfCreatureThatActuallyDiedThisTurn() {
+        Permanent shepherd = addCreatureReady(player1, new FellShepherd());
+        Card creatureCard = new GrizzlyBears();
+        Permanent creature = addCreatureReady(player1, creatureCard);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        shepherd.setAttacking(true);
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creatureCard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creatureCard);
+    }
+
+    @Test
+    @DisplayName("Fell Shepherd can target itself while sacrificing another creature")
+    void canTargetItself() {
+        Permanent shepherd = addCreatureReady(player1, new FellShepherd());
+        Card fodder = new GrizzlyBears();
+        addCreatureReady(player1, fodder);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, shepherd.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(shepherd);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(fodder);
+        assertThat(shepherd.getPowerModifier()).isEqualTo(-2);
+        assertThat(shepherd.getToughnessModifier()).isEqualTo(-2);
+    }
+
+    @Test
+    @DisplayName("Fell Shepherd cannot pay its sacrifice cost with itself or an opponent's creature")
+    void cannotActivateWithoutAnotherOwnCreature() {
+        Permanent shepherd = addCreatureReady(player1, new FellShepherd());
+        Permanent opponent = addCreatureReady(player2, new AirElemental());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponent.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(shepherd);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponent);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 }

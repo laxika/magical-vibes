@@ -396,6 +396,9 @@ public class EnterTriggerCollectorService {
         if (conditional.wrapped() instanceof MayPayManaEffect mayPay) {
             return handleEnterMayPay(match, mayPay, pe);
         }
+        if (conditional.wrapped() instanceof ChooseOneAtTriggerTimeEffect modal) {
+            return handleAllyCreatureEnterModalAtTriggerTime(match, modal, pe);
+        }
         return enqueueAllyPermanentEnter(match, conditional.wrapped(), pe);
     }
 
@@ -656,6 +659,8 @@ public class EnterTriggerCollectorService {
             slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     @CollectsTrigger(value = ChooseOneAtTriggerTimeEffect.class,
             slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsTrigger(value = ChooseOneAtTriggerTimeEffect.class,
+            slot = EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD)
     private boolean handleAllyCreatureEnterModalAtTriggerTime(TriggerMatchContext match,
                                                                ChooseOneAtTriggerTimeEffect effect,
                                                                TriggerContext ctx) {
@@ -1102,6 +1107,9 @@ public class EnterTriggerCollectorService {
                     match.markSourceOncePerTurnOnAcceptance(),
                     enteringPermanent == null ? null : gameQueryService.getEffectiveToughness(
                             match.gameData(), enteringPermanent));
+            if (gainLifeEqualToEnteringPower) {
+                match.gameData().stack.getLast().setNonTargeting(true);
+            }
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (may effect)",

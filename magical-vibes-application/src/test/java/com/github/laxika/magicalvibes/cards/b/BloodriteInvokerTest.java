@@ -43,7 +43,7 @@ class BloodriteInvokerTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Invoker can activate repeatedly")
     void canActivateRepeatedlyWhileTappedAndSummoningSick() {
         var invoker = harness.addToBattlefieldAndReturn(player1, new BloodriteInvoker());
-        invoker.setTapped(true);
+        invoker.tap();
         invoker.setSummoningSick(true);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

@@ -116,7 +116,7 @@ class DeathgripTest extends BaseCardTest {
     @DisplayName("Can activate repeatedly while tapped; an ability with a departed target does nothing")
     void repeatedActivationsWithDepartedTarget() {
         Permanent deathgrip = harness.addToBattlefieldAndReturn(player1, new Deathgrip());
-        deathgrip.setTapped(true);
+        deathgrip.tap();
         harness.forceActivePlayer(player2);
         GrizzlyBears bears = new GrizzlyBears();
         harness.castFromHand(player2, bears, "{1}{G}");

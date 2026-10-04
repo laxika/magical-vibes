@@ -191,7 +191,7 @@ class DemonsHornTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Demon's Horn still triggers for a black spell")
     void tappedHornStillTriggers() {
-        harness.addToBattlefieldAndReturn(player1, new DemonsHorn()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new DemonsHorn()).tap();
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         harness.castFromHand(player1, new BogImp(), "{1}{B}");

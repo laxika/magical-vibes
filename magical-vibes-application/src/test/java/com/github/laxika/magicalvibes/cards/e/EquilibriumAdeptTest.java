@@ -43,12 +43,97 @@ class EquilibriumAdeptTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DarkRitual(), new DarkRitual(), new DarkRitual()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         assertThat(gqs.hasKeyword(gd, adept, Keyword.DOUBLE_STRIKE)).isFalse();
 
+        harness.castAndResolveInstant(player1, 0);
+        assertThat(gqs.hasKeyword(gd, adept, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent the Adept from entering")
+    void emptyLibraryDoesNotPreventEntering() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new EquilibriumAdept()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Equilibrium Adept");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The exiled land can be played through the normal land permission")
+    void canPlayExiledLand() {
+        Card land = new Island();
+        harness.setLibrary(player1, List.of(land));
+        harness.setHand(player1, List.of(new EquilibriumAdept()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.castFromExile(player1, land.getId());
+
+        harness.assertOnBattlefield(player1, "Island");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(land);
+    }
+
+    @Test
+    @DisplayName("Flurry counts the Adept itself as the first spell but does not trigger on its own cast")
+    void countsSpellCastBeforeEntering() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new EquilibriumAdept(), new EquilibriumAdept()));
+        harness.addMana(player1, ManaColor.RED, 8);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent first = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.DOUBLE_STRIKE)).isFalse();
+
+        harness.castCreature(player1, 0);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.DOUBLE_STRIKE)).isFalse();
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.DOUBLE_STRIKE)).isTrue();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent second = gd.playerBattlefields.get(player1.getId()).getLast();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flurry triggers during an opponent's turn for the controller's second spell")
+    void flurryTriggersDuringOpponentsTurn() {
+        Permanent adept = harness.addToBattlefieldAndReturn(player1, new EquilibriumAdept());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of(new DarkRitual(), new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player1, 0);
+        assertThat(gqs.hasKeyword(gd, adept, Keyword.DOUBLE_STRIKE)).isFalse();
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
+
         assertThat(gqs.hasKeyword(gd, adept, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's second spell does not trigger Flurry")
+    void opponentsSpellsDoNotTriggerFlurry() {
+        Permanent adept = harness.addToBattlefieldAndReturn(player1, new EquilibriumAdept());
+        harness.setHand(player2, List.of(new DarkRitual(), new DarkRitual()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.castAndResolveInstant(player2, 0);
+        harness.castAndResolveInstant(player2, 0);
+
+        assertThat(gqs.hasKeyword(gd, adept, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -128,7 +128,7 @@ class ArchnemesisTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         resolveTopTrigger();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_BLOCKERS, () -> harness.handleMayAbilityChosen(player1, false));
 
         assertThat(aura.getAttachedTo()).isEqualTo(player2.getId());
         assertThat(gd.stack).isEmpty();

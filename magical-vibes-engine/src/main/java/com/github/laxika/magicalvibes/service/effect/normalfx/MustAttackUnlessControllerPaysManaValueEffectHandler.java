@@ -46,7 +46,7 @@ public class MustAttackUnlessControllerPaysManaValueEffectHandler implements Nor
             return;
         }
 
-        int manaValue = target.getCard().getManaValue();
+        int manaValue = target.isFaceDown() ? 0 : target.getCard().getManaValue();
         String cost = "{" + manaValue + "}";
         String prompt = "Pay " + cost + "? If you don't, " + target.getCard().getName()
                 + " attacks this turn if able and is destroyed at the beginning of the next end step"
@@ -54,7 +54,7 @@ public class MustAttackUnlessControllerPaysManaValueEffectHandler implements Nor
 
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), gameData.activePlayerId, List.of((CardEffect) effect), prompt,
-                targetPermanentId, cost, entry.getSourcePermanentId()));
+                targetPermanentId, cost, entry.getSourcePermanentId(), null, 0, 0, null, null, null, null, entry.getControllerId()));
     }
 
     /**

@@ -28,12 +28,13 @@ public class BoostTargetCreaturesByPositionEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var positionalBoost = (BoostTargetCreaturesByPositionEffect) effect;
-        List<UUID> targetIds = entry.targetsForEffect(positionalBoost);
+        boolean singleTarget = entry.getDeclaredTargetIds().isEmpty() && entry.getTargetId() != null;
+        List<UUID> targetIds = singleTarget ? List.of(entry.getTargetId()) : entry.getDeclaredTargetIds();
         List<BoostTargetCreatureEffect> boosts = positionalBoost.boosts();
 
         for (int position = 0; position < targetIds.size() && position < boosts.size(); position++) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetIds.get(position));
-            if (target != null) {
+            if (target != null && (singleTarget || entry.isTargetLegal(position))) {
                 boostTargetCreatureEffectHandler.resolveForTarget(gameData, entry, target, boosts.get(position));
             }
         }

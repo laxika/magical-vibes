@@ -73,7 +73,7 @@ class CrashOfRhinoBeetlesTest extends BaseCardTest {
     @Test
     void moreThanTenTappedLandsStillGiveOnlyOneBoost() {
         addLands(player1, 12);
-        gd.playerBattlefields.get(player1.getId()).forEach(permanent -> permanent.setTapped(true));
+        gd.playerBattlefields.get(player1.getId()).forEach(permanent -> permanent.tap());
         Permanent first = harness.addToBattlefieldAndReturn(player1, new CrashOfRhinoBeetles());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new CrashOfRhinoBeetles());
 

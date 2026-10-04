@@ -100,7 +100,7 @@ class DismalBackwaterTest extends BaseCardTest {
         harness.playLand(player1, 0);
         harness.passBothPriorities();
         Permanent backwater = gd.playerBattlefields.get(player1.getId()).getFirst();
-        backwater.setTapped(false);
+        backwater.untap();
         backwater.setSummoningSick(true);
 
         harness.activateAbility(player1, 0, null, null);

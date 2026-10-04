@@ -78,7 +78,7 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
                     : gameData.playerIdToName.get(scryingPlayerId) + " scries " + scryAmount
                             + " but their library is empty.";
             gameLogService.append(gameData, GameLog.text(logMsg));
-            if (!targetLibrary) {
+            if (!targetLibrary && e.causesScryTriggers()) {
                 triggerCollectionService.checkScryTriggers(gameData, scryingPlayerId, 0);
             }
             return;
@@ -88,12 +88,14 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
         deck.subList(0, count).clear();
 
         interactionHandlerRegistry.begin(gameData,
-                new PendingInteraction.Scry(scryingPlayerId, topCards, false, libraryOwnerId));
+                new PendingInteraction.Scry(scryingPlayerId, topCards, false, libraryOwnerId, e.causesScryTriggers()));
 
         String logMsg = targetLibrary
                 ? gameData.playerIdToName.get(controllerId) + " looks at the top " + count
                         + " cards of " + libraryName(gameData, controllerId, libraryOwnerId) + "."
-                : gameData.playerIdToName.get(scryingPlayerId) + " scries " + count + ".";
+                : gameData.playerIdToName.get(scryingPlayerId)
+                        + (e.causesScryTriggers() ? " scries " + count + "."
+                        : " chooses whether to put the revealed card on the top or bottom of their library.");
         gameLogService.append(gameData, GameLog.text(logMsg));
         if (targetLibrary) {
             log.info("Game {} - {} looks at {} cards of {}", gameData.id,

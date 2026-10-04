@@ -125,6 +125,36 @@ class FlyingCarpetTest extends BaseCardTest {
     }
 
     @Test
+    void abilityResolvesAfterCarpetLeavesBattlefield() {
+        Permanent carpet = addReadyCarpet(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, carpet));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void flyingPersistsAfterCarpetLeavesAndExpiresAtCleanup() {
+        Permanent carpet = addReadyCarpet(player1);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, carpet));
+
+        assertThat(target.hasKeyword(Keyword.FLYING)).isTrue();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
     void cannotTargetNoncreaturePermanent() {
         Permanent carpet = addReadyCarpet(player1);
         Permanent target = addReadyCarpet(player1);

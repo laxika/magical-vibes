@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FightOn.class, GrizzlyBears.class, LlanowarElves.class, LeoninScimitar.class})
 class FightOnTest extends BaseCardTest {
@@ -79,5 +80,106 @@ class FightOnTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
                 .containsExactly(ownCreature.getId())
                 .doesNotContain(opponentCreature.getId());
+    }
+
+    @Test
+    @DisplayName("Returns only the single selected creature when two are available")
+    void returnsOnlySelectedCreature() {
+        Card selected = new GrizzlyBears();
+        Card unselected = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(selected, unselected));
+        harness.setHand(player1, List.of(new FightOn()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotInHand(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Can be cast with an empty graveyard")
+    void canBeCastWithEmptyGraveyard() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new FightOn()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Fight On!");
+    }
+
+    @Test
+    @DisplayName("Returns the remaining target when the other leaves the graveyard")
+    void returnsRemainingLegalTarget() {
+        Card remaining = new GrizzlyBears();
+        Card exiled = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(remaining, exiled));
+        harness.setHand(player1, List.of(new FightOn()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(remaining.getId(), exiled.getId()));
+        harness.setGraveyard(player1, List.of(remaining));
+        harness.setExile(player1, List.of(exiled));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Llanowar Elves");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card()).contains(exiled);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not return any cards when all chosen targets leave the graveyard")
+    void doesNotReturnCardsWhenAllTargetsAreIllegal() {
+        Card first = new GrizzlyBears();
+        Card second = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new FightOn()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(first, second));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(entry -> entry.card()).containsExactly(first, second);
+        harness.assertInGraveyard(player1, "Fight On!");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Rejects choosing more than two creature cards")
+    void rejectsMoreThanTwoTargets() {
+        Card first = new GrizzlyBears();
+        Card second = new LlanowarElves();
+        Card third = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second, third));
+        harness.setHand(player1, List.of(new FightOn()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(third);
     }
 }

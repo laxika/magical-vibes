@@ -94,7 +94,7 @@ class BolgsCompanyTest extends BaseCardTest {
     @DisplayName("A tapped Company cannot activate even with another Goblin")
     void tappedCompanyCannotActivate() {
         Permanent company = addCreatureReady(player1, new BolgsCompany());
-        company.setTapped(true);
+        company.tap();
         harness.addToBattlefield(player1, new GoblinTownFlunkies());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.DaruLancer;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -22,12 +23,10 @@ class FallenClericTest extends BaseCardTest {
     @Test
     @DisplayName("Cleric creature cannot block Fallen Cleric")
     void clericCreatureCannotBlock() {
-        Permanent fallenCleric = addCreatureReady(player1, new FallenCleric());
-        fallenCleric.setAttacking(true);
-
+        addCreatureReady(player1, new FallenCleric());
         addCreatureReady(player2, new Boneknitter());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -37,12 +36,23 @@ class FallenClericTest extends BaseCardTest {
     @Test
     @DisplayName("Non-Cleric creature can block Fallen Cleric")
     void nonClericCreatureCanBlock() {
-        Permanent fallenCleric = addCreatureReady(player1, new FallenCleric());
-        fallenCleric.setAttacking(true);
-
+        addCreatureReady(player1, new FallenCleric());
         Permanent blocker = addCreatureReady(player2, new DaruLancer());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A face-down Cleric card has no Cleric subtype and can block Fallen Cleric")
+    void faceDownClericCanBlock() {
+        addCreatureReady(player1, new FallenCleric());
+        Permanent blocker = addCreatureReady(player2, new Boneknitter());
+        blocker.setFaceDown(true);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -51,18 +61,16 @@ class FallenClericTest extends BaseCardTest {
     @Test
     @DisplayName("Fallen Cleric takes no combat damage from a Cleric")
     void takesNoCombatDamageFromCleric() {
-        Permanent attacker = addCreatureReady(player1, new FallenCleric());
-        attacker.setAttacking(true);
-
+        addCreatureReady(player1, new Boneknitter());
         Permanent fallenCleric = addCreatureReady(player2, new FallenCleric());
-        fallenCleric.setBlocking(true);
-        fallenCleric.addBlockingTarget(0);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat();
 
         assertThat(fallenCleric.getMarkedDamage()).isZero();
-        assertThat(attacker.getMarkedDamage()).isZero();
-        harness.assertOnBattlefield(player1, "Fallen Cleric");
+        harness.assertInGraveyard(player1, "Boneknitter");
         harness.assertOnBattlefield(player2, "Fallen Cleric");
     }
 
@@ -98,9 +106,7 @@ class FallenClericTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreatureWithMorph(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent fallenCleric = findPermanent(player1, "Fallen Cleric");
         assertThat(fallenCleric.isFaceDown()).isTrue();
@@ -111,5 +117,48 @@ class FallenClericTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(fallenCleric.isFaceDown()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Turning face up after a Cleric blocks prevents its damage without undoing the block")
+    void turningFaceUpAfterClericBlocksPreventsDamage() {
+        harness.setHand(player1, List.of(new FallenCleric()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+
+        Permanent fallenCleric = findPermanent(player1, "Fallen Cleric");
+        fallenCleric.setSummoningSick(false);
+        addCreatureReady(player2, new Boneknitter());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.turnFaceUp(player1, 0);
+        resolveCombat();
+
+        assertThat(fallenCleric.isFaceDown()).isFalse();
+        assertThat(fallenCleric.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Fallen Cleric");
+        harness.assertInGraveyard(player2, "Boneknitter");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Morph requires black mana to turn face up")
+    void cannotTurnFaceUpWithoutBlackMana() {
+        harness.setHand(player1, List.of(new FallenCleric()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        resolveAllTriggers();
+
+        Permanent fallenCleric = findPermanent(player1, "Fallen Cleric");
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.turnFaceUp(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(fallenCleric.isFaceDown()).isTrue();
     }
 }

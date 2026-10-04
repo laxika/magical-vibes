@@ -6,9 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -81,13 +79,33 @@ class FormationTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    void delayedDrawSurvivesTargetLeavingAfterResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AdarkarUnicorn());
+        harness.setHand(player1, List.of(new Formation()));
+        harness.setLibrary(player1, List.of(new AdarkarUnicorn(), new AdarkarUnicorn()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, target));
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 

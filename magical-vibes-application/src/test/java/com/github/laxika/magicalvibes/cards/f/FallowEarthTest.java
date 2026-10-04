@@ -58,6 +58,44 @@ class FallowEarthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A land controlled by another player goes to its owner's library without shuffling")
+    void putsBorrowedLandOnOwnersLibrary() {
+        Forest land = new Forest();
+        land.setOwnerId(player1.getId());
+        UUID landId = harness.addToBattlefieldAndReturn(player2, land).getId();
+        GrizzlyBears first = new GrizzlyBears();
+        Forest second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new FallowEarth()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, landId);
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land, first, second);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Forest");
+        harness.assertNotInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Can put your own land on top of an empty library")
+    void putsOwnLandOnEmptyLibrary() {
+        Forest land = new Forest();
+        UUID landId = harness.addToBattlefieldAndReturn(player1, land).getId();
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new FallowEarth()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, landId);
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        harness.assertInGraveyard(player1, "Fallow Earth");
+    }
+
+    @Test
     @DisplayName("Fizzles if target is removed before resolution")
     void fizzlesIfTargetRemoved() {
         harness.addToBattlefield(player2, new Forest());

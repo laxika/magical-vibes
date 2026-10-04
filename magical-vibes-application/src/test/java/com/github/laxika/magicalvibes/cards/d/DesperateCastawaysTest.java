@@ -75,7 +75,7 @@ class DesperateCastawaysTest extends BaseCardTest {
         harness.setLife(player2, 20);
         addCreatureReady(player1, new DesperateCastaways());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new PiratesCutlass());
-        artifact.setTapped(true);
+        artifact.tap();
 
         declareAttackers(player1, List.of(0));
 

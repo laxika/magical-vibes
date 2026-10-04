@@ -72,7 +72,7 @@ class ChillerpillarTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent chillerpillar = harness.addToBattlefieldAndReturn(player1, new Chillerpillar());
         chillerpillar.setSummoningSick(true);
-        chillerpillar.setTapped(true);
+        chillerpillar.tap();
         addMonstrosityMana(player1);
 
         harness.activateAbility(player1, 0, null, null);

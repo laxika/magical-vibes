@@ -81,7 +81,7 @@ class ChillOfTheGraveTest extends BaseCardTest {
     @DisplayName("Can target an already tapped creature you control and still draw")
     void alreadyTappedOwnCreatureStillLocksAndDraws() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new DawnhartDisciple());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new ChillOfTheGrave()));
         harness.setLibrary(player1, List.of(new Island(), new Island()));
         harness.addMana(player1, ManaColor.BLUE, 3);

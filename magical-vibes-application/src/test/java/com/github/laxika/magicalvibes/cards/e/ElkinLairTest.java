@@ -138,7 +138,8 @@ class ElkinLairTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        gs.playCardFromExile(gd, player1, land.getId(), null, null);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.castFromExile(player1, land.getId());
         harness.assertOnBattlefield(player1, "Undiscovered Paradise");
 
         harness.passUntil(player1, TurnStep.END_STEP);
@@ -188,11 +189,89 @@ class ElkinLairTest extends BaseCardTest {
         harness.addToBattlefield(player2, new JamuraanLion());
         var lion = findPermanent(player2, "Jamuraan Lion");
 
-        gs.playCardFromExile(gd, player1, fireblast.getId(), null, lion.getId());
+        harness.castFromExile(player1, fireblast.getId(), lion.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Jamuraan Lion");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .noneMatch(c -> c.getId().equals(fireblast.getId()));
+    }
+
+    @Test
+    @DisplayName("The delayed end-step ability retains the upkeep ability's controller")
+    void delayedAbilityRetainsOriginalController() {
+        harness.addToBattlefield(player1, new ElkinLair());
+        Card card = new Fireblast();
+        harness.setHand(player2, List.of(card));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Fireblast");
+        harness.assertNotInGraveyard(player1, "Fireblast");
+    }
+
+    @Test
+    @DisplayName("Permission does not allow playing a land during upkeep")
+    void cannotPlayExiledLandDuringUpkeep() {
+        harness.addToBattlefield(player1, new ElkinLair());
+        Card land = new UndiscoveredParadise();
+        harness.setHand(player1, List.of(land));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(land);
+        harness.assertNotOnBattlefield(player1, "Undiscovered Paradise");
+    }
+
+    @Test
+    @DisplayName("A creature exiled at upkeep must wait for normal casting timing")
+    void exiledCreatureRequiresNormalTiming() {
+        harness.addToBattlefield(player1, new ElkinLair());
+        Card lion = new JamuraanLion();
+        harness.setHand(player1, List.of(lion));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, lion.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(lion);
+
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castFromExile(player1, lion.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Jamuraan Lion");
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Jamuraan Lion");
+        harness.assertNotInGraveyard(player1, "Jamuraan Lion");
+    }
+
+    @Test
+    @DisplayName("Play permission does not waive a spell's mana cost")
+    void cannotCastExiledSpellWithoutPayingMana() {
+        harness.addToBattlefield(player1, new ElkinLair());
+        Card fireblast = new Fireblast();
+        harness.setHand(player1, List.of(fireblast));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, fireblast.getId(), player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(fireblast);
+        harness.assertLife(player2, 20);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Fireblast");
     }
 }

@@ -368,6 +368,7 @@ public sealed interface Condition permits
         SourceEnteredBattlefieldThisTurn,
         SourceHasChosenMode,
         SourceHasSubtype,
+        SourceMatchesPermanentPredicate,
         SourceWasCrewedBySubtypeThisTurn,
         SourceHasColor,
         SourceBlockedOrWasBlockedByColorThisTurn,

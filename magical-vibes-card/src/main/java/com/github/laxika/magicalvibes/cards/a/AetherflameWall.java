@@ -13,7 +13,7 @@ import java.util.List;
 public class AetherflameWall extends Card {
 
     public AetherflameWall() {
-        addEffect(EffectSlot.STATIC, new CanBlockCreaturesWithShadowEffect());
+        addEffect(EffectSlot.STATIC, new CanBlockCreaturesWithShadowEffect(true));
         addActivatedAbility(new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)), "{R}: This creature gets +1/+0 until end of turn."));
     }
 }

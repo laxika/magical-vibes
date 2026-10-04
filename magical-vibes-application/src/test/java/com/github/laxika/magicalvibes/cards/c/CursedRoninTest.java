@@ -99,7 +99,7 @@ class CursedRoninTest extends BaseCardTest {
     void pumpDoesNotRequireTapOrHaste() {
         Permanent ronin = addCreatureReady(player1, new CursedRonin());
         ronin.setSummoningSick(true);
-        ronin.setTapped(true);
+        ronin.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

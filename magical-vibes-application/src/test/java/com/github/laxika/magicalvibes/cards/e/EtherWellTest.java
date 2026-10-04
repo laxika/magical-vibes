@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.f.FeralShadow;
 import com.github.laxika.magicalvibes.cards.v.ViashinoWarrior;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EtherWell.class, FeralShadow.class, ViashinoWarrior.class})
+@CardUsed({EtherWell.class, FeralShadow.class, ViashinoWarrior.class, DarkBanishing.class})
 class EtherWellTest extends BaseCardTest {
 
     @Test
@@ -57,6 +58,70 @@ class EtherWellTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId()).getFirst().getName()).isEqualTo("Viashino Warrior");
+    }
+
+    @Test
+    @DisplayName("A stolen nonred creature goes on top of its owner's library")
+    void stolenNonredCreatureGoesToOwnersLibrary() {
+        FeralShadow shadowCard = new FeralShadow();
+        shadowCard.setOwnerId(player1.getId());
+        Permanent shadow = harness.addToBattlefieldAndReturn(player2, shadowCard);
+        FeralShadow existingTop = new FeralShadow();
+        harness.setLibrary(player1, List.of(existingTop));
+        List<?> opponentsLibrary = List.copyOf(gd.playerDecks.get(player2.getId()));
+
+        castEtherWell(shadow);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shadowCard, existingTop);
+        assertThat(gd.playerDecks.get(player2.getId())).isEqualTo(opponentsLibrary);
+    }
+
+    @Test
+    @DisplayName("A stolen red creature goes on the bottom of its owner's library when accepted")
+    void stolenRedCreatureGoesToOwnersLibraryBottom() {
+        ViashinoWarrior warriorCard = new ViashinoWarrior();
+        warriorCard.setOwnerId(player1.getId());
+        Permanent warrior = harness.addToBattlefieldAndReturn(player2, warriorCard);
+        FeralShadow existingTop = new FeralShadow();
+        harness.setLibrary(player1, List.of(existingTop));
+        List<?> opponentsLibrary = List.copyOf(gd.playerDecks.get(player2.getId()));
+
+        castEtherWell(warrior);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(existingTop, warriorCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEqualTo(opponentsLibrary);
+    }
+
+    @Test
+    @DisplayName("A creature destroyed in response is not put into a library and offers no choice")
+    void targetDestroyedInResponseDoesNotOfferChoice() {
+        Permanent warrior = harness.addToBattlefieldAndReturn(player2, new ViashinoWarrior());
+        FeralShadow existingTop = new FeralShadow();
+        harness.setLibrary(player2, List.of(existingTop));
+        harness.setHand(player1, List.of(new EtherWell()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castInstant(player1, 0, warrior.getId());
+
+        harness.setHand(player2, List.of(new DarkBanishing()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, warrior.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(existingTop);
+        harness.assertInGraveyard(player2, "Viashino Warrior");
+        harness.assertInGraveyard(player1, "Ether Well");
     }
 
     private void castEtherWell(Permanent target) {

@@ -168,7 +168,7 @@ class CombatMedicTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent medic = harness.addToBattlefieldAndReturn(player1, new CombatMedic());
         medic.setSummoningSick(true);
-        medic.setTapped(true);
+        medic.tap();
         Permanent goblin = addActivationManaAndGrenade();
 
         harness.activateAbility(player1, 0, null, player2.getId());

@@ -159,7 +159,7 @@ class DimirGuildmageTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new ZephyrSpirit()));
         harness.setHand(player2, List.of());
         Permanent guildmage = prepareGuildmage();
-        guildmage.setTapped(true);
+        guildmage.tap();
         guildmage.setSummoningSick(true);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 6);

@@ -187,7 +187,7 @@ class BloodsoakedAltarTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent altar = harness.addToBattlefieldAndReturn(player1, new BloodsoakedAltar());
-        altar.setTapped(true);
+        altar.tap();
         harness.addToBattlefield(player1, new GreenwoodSentinel());
         harness.setHand(player1, List.of(new Mountain()));
         harness.setLife(player1, 20);

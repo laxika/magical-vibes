@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.d.Disperse;
+import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,16 +18,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EngulfingSlagwurm.class, CarapaceForger.class, Disperse.class, DarksteelMyr.class})
 class EngulfingSlagwurmTest extends BaseCardTest {
 
-    // ===== When Slagwurm blocks =====
 
     @Test
     @DisplayName("Blocking creates a trigger that destroys the attacker and gains life equal to its toughness")
     void blockingDestroysAttackerAndGainsLife() {
         harness.setLife(player2, 20);
-        Permanent slagwurm = addReadySlagwurm(player2);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new EngulfingSlagwurm());
+        Permanent attacker = addCreatureReady(player1, new CarapaceForger());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -38,8 +42,8 @@ class EngulfingSlagwurmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Attacker destroyed
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Carapace Forger");
+        harness.assertInGraveyard(player1, "Carapace Forger");
 
         // Slagwurm still alive
         harness.assertOnBattlefield(player2, "Engulfing Slagwurm");
@@ -48,15 +52,14 @@ class EngulfingSlagwurmTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(22);
     }
 
-    // ===== When Slagwurm becomes blocked =====
 
     @Test
     @DisplayName("Becoming blocked creates a trigger that destroys the blocker and gains life equal to its toughness")
     void becomingBlockedDestroysBlockerAndGainsLife() {
         harness.setLife(player1, 20);
-        Permanent slagwurm = addReadySlagwurm(player1);
+        Permanent slagwurm = addCreatureReady(player1, new EngulfingSlagwurm());
         slagwurm.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new CarapaceForger());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
@@ -69,8 +72,8 @@ class EngulfingSlagwurmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blocker destroyed
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Carapace Forger");
+        harness.assertInGraveyard(player2, "Carapace Forger");
 
         // Controller gained life equal to blocker's toughness (2)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
@@ -80,10 +83,10 @@ class EngulfingSlagwurmTest extends BaseCardTest {
     @DisplayName("Becoming blocked by multiple creatures creates one trigger per blocker")
     void becomingBlockedByMultipleCreaturesCreatesMultipleTriggers() {
         harness.setLife(player1, 20);
-        Permanent slagwurm = addReadySlagwurm(player1);
+        Permanent slagwurm = addCreatureReady(player1, new EngulfingSlagwurm());
         slagwurm.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new CarapaceForger());
+        addCreatureReady(player2, new CarapaceForger());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(
@@ -96,29 +99,27 @@ class EngulfingSlagwurmTest extends BaseCardTest {
                 .count();
         assertThat(triggerCount).isEqualTo(2);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         // Both blockers destroyed
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Carapace Forger");
         assertThat(gd.playerGraveyards.get(player2.getId()))
-                .filteredOn(c -> c.getName().equals("Grizzly Bears"))
+                .filteredOn(c -> c.getName().equals("Carapace Forger"))
                 .hasSize(2);
 
         // Gained 2 life per blocker (toughness 2 each)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
     }
 
-    // ===== Life gain still happens if creature is indestructible =====
 
     @Test
     @DisplayName("Life gain occurs even if target creature is indestructible")
     void lifeGainOccursEvenIfTargetIsIndestructible() {
         harness.setLife(player1, 20);
-        Permanent slagwurm = addReadySlagwurm(player1);
+        Permanent slagwurm = addCreatureReady(player1, new EngulfingSlagwurm());
         slagwurm.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new CarapaceForger());
         blocker.getGrantedKeywords().add(com.github.laxika.magicalvibes.model.Keyword.INDESTRUCTIBLE);
 
         prepareDeclareBlockers();
@@ -126,40 +127,109 @@ class EngulfingSlagwurmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Blocker survives (indestructible)
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Carapace Forger");
 
         // Controller still gains life
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
     }
 
-    // ===== Trigger fizzles if target creature is gone =====
 
     @Test
-    @DisplayName("Trigger does nothing if target creature is removed before resolution")
-    void triggerFizzlesIfTargetGone() {
+    @DisplayName("Life gain uses last known toughness when the blocker leaves before resolution")
+    void gainsLifeIfBlockerLeavesBeforeResolution() {
         harness.setLife(player1, 20);
-        Permanent slagwurm = addReadySlagwurm(player1);
+        Permanent slagwurm = addCreatureReady(player1, new EngulfingSlagwurm());
         slagwurm.setAttacking(true);
-        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new CarapaceForger());
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-        // Remove blocker before trigger resolves
-        gd.playerBattlefields.get(player2.getId()).clear();
+        Permanent blocker = gd.playerBattlefields.get(player2.getId()).getFirst();
+        harness.setHand(player2, List.of(new Disperse()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, blocker.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player2, "Carapace Forger");
 
         harness.passBothPriorities();
 
-        // No life gain (target gone, can't determine toughness)
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 22);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Blocking gains life even when the attacker leaves before resolution")
+    void gainsLifeIfAttackerLeavesBeforeResolution() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player2, new EngulfingSlagwurm());
+        Permanent attacker = addCreatureReady(player1, new CarapaceForger());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
-    private Permanent addReadySlagwurm(Player player) {
-        Permanent perm = new Permanent(new EngulfingSlagwurm());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.setHand(player1, List.of(new Disperse()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Carapace Forger");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 22);
     }
+
+    @Test
+    @DisplayName("An indestructible blocker survives and its toughness still grants life")
+    void realIndestructibleBlockerStillGrantsLife() {
+        harness.setLife(player1, 20);
+        Permanent slagwurm = addCreatureReady(player1, new EngulfingSlagwurm());
+        slagwurm.setAttacking(true);
+        addCreatureReady(player2, new DarksteelMyr());
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Darksteel Myr");
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("The trigger resolves after Slagwurm leaves the battlefield")
+    void triggerResolvesWithoutItsSource() {
+        harness.setLife(player1, 20);
+        Permanent slagwurm = addCreatureReady(player1, new EngulfingSlagwurm());
+        slagwurm.setAttacking(true);
+        addCreatureReady(player2, new CarapaceForger());
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.setHand(player2, List.of(new Disperse()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, slagwurm.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Engulfing Slagwurm");
+        harness.assertInGraveyard(player2, "Carapace Forger");
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Life gain uses the creature's toughness at resolution rather than at blocking")
+    void gainsLifeForCurrentToughness() {
+        harness.setLife(player1, 20);
+        Permanent slagwurm = addCreatureReady(player1, new EngulfingSlagwurm());
+        slagwurm.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new CarapaceForger());
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Carapace Forger");
+        harness.assertLife(player1, 24);
+    }
+
+
+
 }

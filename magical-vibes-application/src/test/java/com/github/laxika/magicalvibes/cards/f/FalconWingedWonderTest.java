@@ -51,12 +51,84 @@ class FalconWingedWonderTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
     }
 
+    @Test
+    void redwingCanKeepTheSurveilledCardOnTop() {
+        Card topCard = new FalconWingedWonder();
+        Card nextCard = new FalconWingedWonder();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        castFalcon();
+
+        Permanent redwing = findPermanent(player1, "Redwing");
+        redwing.setSummoningSick(false);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(redwing)));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void redwingStillSurveilsAfterFalconLeavesTheBattlefield() {
+        Card topCard = new FalconWingedWonder();
+        Card nextCard = new FalconWingedWonder();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        castFalcon();
+        Permanent falcon = findPermanent(player1, "Falcon, Winged Wonder");
+        gd.playerBattlefields.get(player1.getId()).remove(falcon);
+        harness.setGraveyard(player1, List.of(falcon.getCard()));
+
+        Permanent redwing = findPermanent(player1, "Redwing");
+        redwing.setSummoningSick(false);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(redwing)));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+    }
+
+    @Test
+    void falconAttackingDoesNotSurveil() {
+        Card topCard = new FalconWingedWonder();
+        harness.setLibrary(player1, List.of(topCard));
+        castFalcon();
+
+        Permanent falcon = findPermanent(player1, "Falcon, Winged Wonder");
+        falcon.setSummoningSick(false);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(falcon)));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void redwingSurveilsAnEmptyLibraryWithoutAskingForAChoice() {
+        harness.setLibrary(player1, List.of());
+        castFalcon();
+
+        Permanent redwing = findPermanent(player1, "Redwing");
+        redwing.setSummoningSick(false);
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(redwing)));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castFalcon() {
         harness.setHand(player1, List.of(new FalconWingedWonder()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

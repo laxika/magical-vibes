@@ -65,13 +65,75 @@ class ExpropriateTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
     }
 
+    @Test
+    @DisplayName("Earlier votes are public before the next player votes")
+    void earlierVotesArePublic() {
+        cast();
+        assertThat(activeVote().playerId()).isEqualTo(player1.getId());
+
+        harness.handleListChoice(player1, ChoiceContext.ExpropriateChoice.TIME);
+
+        assertThat(activeVote().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.gameLog).anySatisfy(entry -> {
+            assertThat(entry.plainText()).contains(player1.getUsername());
+            assertThat(entry.plainText().toLowerCase()).contains("time");
+        });
+    }
+
+    @Test
+    @DisplayName("A mixed vote grants one turn and automatically takes the only owned permanent")
+    void mixedVotesWithSinglePermanent() {
+        Permanent permanent = addOwnedPermanent(player2, new GrizzlyBears());
+        Expropriate spell = cast();
+
+        harness.handleListChoice(player1, ChoiceContext.ExpropriateChoice.TIME);
+        harness.handleListChoice(player2, ChoiceContext.ExpropriateChoice.MONEY);
+
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(permanent);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(permanent);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Money votes with no owned permanents do not prevent the spell from being exiled")
+    void moneyVotesWithEmptyBattlefield() {
+        Expropriate spell = cast();
+
+        harness.handleListChoice(player1, ChoiceContext.ExpropriateChoice.MONEY);
+        harness.handleListChoice(player2, ChoiceContext.ExpropriateChoice.MONEY);
+
+        assertThat(gd.extraTurns).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Money choices use ownership even when the other player controls the permanent")
+    void moneyChoicesUseOwnershipRatherThanController() {
+        GrizzlyBears card = new GrizzlyBears();
+        card.setOwnerId(player1.getId());
+        Permanent borrowedPermanent = harness.addToBattlefieldAndReturn(player2, card);
+        Permanent opponentPermanent = addOwnedPermanent(player2, new GrizzlyBears());
+        Expropriate spell = cast();
+
+        harness.handleListChoice(player1, ChoiceContext.ExpropriateChoice.MONEY);
+        harness.handleListChoice(player2, ChoiceContext.ExpropriateChoice.TIME);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(borrowedPermanent);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentPermanent)
+                .doesNotContain(borrowedPermanent);
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(spell);
+    }
+
     private Expropriate cast() {
         Expropriate spell = new Expropriate();
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 7);
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         assertThat(activeVote()).isNotNull();
         return spell;
     }

@@ -93,6 +93,11 @@ class AnotherRoundTest extends BaseCardTest {
     void returnsStolenCreatureToItsOwnerAndLeavesOpposingCreaturesAlone() {
         Permanent stolen = harness.addToBattlefieldAndReturn(player1, new ArmoredArmadillo());
         gd.stolenCreatures.put(stolen.getId(), player2.getId());
+        gd.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
+                java.util.UUID.randomUUID(), "Control effect", null, player1.getId(),
+                new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
+                        com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                stolen.getId(), null, null, com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT, 0));
         Permanent opposing = harness.addToBattlefieldAndReturn(player2, new ArmoredArmadillo());
         castAnotherRound(1);
 

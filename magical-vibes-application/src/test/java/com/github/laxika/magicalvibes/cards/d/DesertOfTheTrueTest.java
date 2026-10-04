@@ -106,7 +106,7 @@ class DesertOfTheTrueTest extends BaseCardTest {
 
     @Test
     void tappedLandCannotProduceMana() {
-        harness.addToBattlefieldAndReturn(player1, new DesertOfTheTrue()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new DesertOfTheTrue()).tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

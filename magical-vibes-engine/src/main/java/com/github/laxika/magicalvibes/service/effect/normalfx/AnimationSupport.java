@@ -939,7 +939,9 @@ public class AnimationSupport {
                 ludevicCopySupport.resolveAfterTransform(gameData, self);
                 continue;
             }
-            if (e instanceof MayEffect may) {
+            if (e instanceof MayEffect may
+                    && !e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                    && !e.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                 gameData.queueMayAbility(triggerCard, controllerId, may, null, self.getId());
                 gameLogService.append(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));
                 log.info("Game {} - {} transform trigger queued (may ability)", gameData.id, triggerCard.getName());
@@ -970,7 +972,7 @@ public class AnimationSupport {
                     || e.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                 TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                         gameData, effects, triggerCard.getTargetFilter(), controllerId, triggerCard,
-                        TriggerTargetCollector.Options.ATTACK);
+                        TriggerTargetCollector.Options.ATTACK, self);
                 if (result.validTargets().isEmpty()) {
                     gameLogService.append(gameData, GameLog.cardThen(triggerCard,
                             "'s transform ability has no valid target."));

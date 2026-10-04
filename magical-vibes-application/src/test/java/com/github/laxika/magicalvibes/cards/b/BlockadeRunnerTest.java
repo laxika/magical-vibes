@@ -114,7 +114,7 @@ class BlockadeRunnerTest extends BaseCardTest {
     @DisplayName("A tapped Blockade Runner can activate its ability")
     void abilityCanBeActivatedWhileTapped() {
         Permanent runner = addCreatureReady(player1, new BlockadeRunner());
-        runner.setTapped(true);
+        runner.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

@@ -88,7 +88,7 @@ class BogardanDragonheartTest extends BaseCardTest {
     void activationDoesNotRequireTappingOrHaste() {
         Permanent dragonheart = harness.addToBattlefieldAndReturn(player1, new BogardanDragonheart());
         dragonheart.setSummoningSick(true);
-        dragonheart.setTapped(true);
+        dragonheart.tap();
         harness.addToBattlefield(player1, new MotherBear());
 
         harness.activateAbility(player1, 0, null, null);

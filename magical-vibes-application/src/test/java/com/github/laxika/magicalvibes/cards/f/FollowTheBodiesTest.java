@@ -32,8 +32,7 @@ class FollowTheBodiesTest extends BaseCardTest {
         UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearId);
 
         castFollowTheBodies();
         harness.passBothPriorities();
@@ -47,9 +46,73 @@ class FollowTheBodiesTest extends BaseCardTest {
     }
 
     private void castFollowTheBodies() {
-        harness.setHand(player1, List.of(new FollowTheBodies()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castFromHand(player1, new FollowTheBodies(), "{2}{U}");
+    }
+
+    @Test
+    void countsPermanentsThatDieInResponseToTheGravestormTrigger() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
+        castFollowTheBodies();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, bearId);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+
+        harness.passBothPriorities();
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Clue")).hasSize(2);
+    }
+
+    @Test
+    void sacrificedClueTokensCountAndCluesCanBeUsedToDrawCards() {
+        harness.setLibrary(player1, List.of(new FollowTheBodies()));
+        castFollowTheBodies();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Follow the Bodies");
+
+        castFollowTheBodies();
+        harness.passBothPriorities();
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Clue")).hasSize(2);
+    }
+
+    @Test
+    void countsMultipleSacrificedCluesWithoutCountingResolvedSorceries() {
+        harness.setLibrary(player1, List.of(new FollowTheBodies(), new FollowTheBodies()));
+        for (int i = 0; i < 2; i++) {
+            castFollowTheBodies();
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        }
+        assertThat(findPermanents(player1, "Clue")).hasSize(2);
+
+        for (int i = 0; i < 2; i++) {
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+            harness.activateAbility(player1, 0, null, null);
+            harness.passBothPriorities();
+        }
+
+        castFollowTheBodies();
+        harness.passBothPriorities();
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Clue")).hasSize(3);
     }
 }

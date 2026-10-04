@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.d.Dominate;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hammerhand;
+import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FeatherRadiantArbiter.class, GiantGrowth.class, GrizzlyBears.class, Hammerhand.class})
+@CardUsed({FeatherRadiantArbiter.class, GiantGrowth.class, GrizzlyBears.class, Hammerhand.class, Dominate.class, SerraAngel.class})
 class FeatherRadiantArbiterTest extends BaseCardTest {
 
     @Test
@@ -26,8 +28,7 @@ class FeatherRadiantArbiterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
-        harness.castInstant(player1, 0, feather.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, feather.getId());
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -87,5 +88,64 @@ class FeatherRadiantArbiterTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
         assertThat(gd.stack).noneMatch(StackEntry::isCopy);
+    }
+
+    @Test
+    void canDeclineCopiesWithoutPayingMana() {
+        Permanent feather = harness.addToBattlefieldAndReturn(player1, new FeatherRadiantArbiter());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveInstant(player1, 0, feather.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.stack).noneMatch(StackEntry::isCopy);
+        harness.passBothPriorities();
+
+        assertThat(feather.getEffectivePower()).isEqualTo(7);
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+    }
+
+    @Test
+    void canCopyOntoOpponentsCreature() {
+        Permanent feather = harness.addToBattlefieldAndReturn(player1, new FeatherRadiantArbiter());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveInstant(player1, 0, feather.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(feather.getEffectivePower()).isEqualTo(7);
+        assertThat(bear.getEffectivePower()).isEqualTo(5);
+    }
+
+    @Test
+    void evaluatesCopyTargetRestrictionsUsingChosenX() {
+        Permanent feather = harness.addToBattlefieldAndReturn(player1, new FeatherRadiantArbiter());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new SerraAngel());
+        harness.setHand(player1, List.of(new Dominate()));
+        harness.addMana(player1, ManaColor.BLUE, 8);
+
+        harness.castInstant(player1, 0, 3, feather.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(bear.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(bear.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(bear.getId()));
     }
 }

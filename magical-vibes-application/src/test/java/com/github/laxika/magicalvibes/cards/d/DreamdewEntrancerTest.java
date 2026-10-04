@@ -53,7 +53,7 @@ class DreamdewEntrancerTest extends BaseCardTest {
     @Test
     void addsStunCountersAndDrawsEvenWhenOwnTargetIsAlreadyTapped() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new DreamdewEntrancer());
-        target.setTapped(true);
+        target.tap();
         target.setCounterCount(CounterType.STUN, 1);
         harness.setLibrary(player1, List.of(new DreamdewEntrancer(), new DreamdewEntrancer()));
 

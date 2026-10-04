@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.b.BrazenScourge;
+import com.github.laxika.magicalvibes.cards.t.ThrivingRhino;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ElegantEdgecrafters.class, ThrivingRhino.class, BrazenScourge.class})
 class ElegantEdgecraftersTest extends BaseCardTest {
 
     @Test
@@ -42,19 +44,21 @@ class ElegantEdgecraftersTest extends BaseCardTest {
 
         assertThat(servos).hasSize(2);
         assertThat(servos).allSatisfy(servo -> {
+            assertThat(servo.getCard().isToken()).isTrue();
+            assertThat(servo.getCard().getColor()).isNull();
             assertThat(servo.getCard().hasType(CardType.CREATURE)).isTrue();
             assertThat(servo.getCard().hasType(CardType.ARTIFACT)).isTrue();
             assertThat(gqs.getEffectivePower(gd, servo)).isEqualTo(1);
             assertThat(gqs.getEffectiveToughness(gd, servo)).isEqualTo(1);
         });
+        assertThat(findPermanent(player1, "Elegant Edgecrafters")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
     @DisplayName("Elegant Edgecrafters can't be blocked by creatures with power 2 or less")
     void cannotBeBlockedByLowPowerCreature() {
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new ThrivingRhino());
         Permanent attacker = addAttackingElegantEdgecrafters();
 
         assertThatThrownBy(() -> declareBlock(blocker, attacker))
@@ -64,9 +68,7 @@ class ElegantEdgecraftersTest extends BaseCardTest {
     @Test
     @DisplayName("Elegant Edgecrafters can be blocked by creatures with power greater than 2")
     void canBeBlockedByHighPowerCreature() {
-        Permanent blocker = new Permanent(new HillGiant());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new BrazenScourge());
         Permanent attacker = addAttackingElegantEdgecrafters();
 
         declareBlock(blocker, attacker);
@@ -82,11 +84,40 @@ class ElegantEdgecraftersTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    @DisplayName("Fabricate creates Servos if its source leaves before the trigger resolves")
+    void fabricateCreatesServosWhenSourceIsGone() {
+        harness.setHand(player1, List.of(new ElegantEdgecrafters()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.castCreature(player1, 0, 0);
+        harness.passBothPriorities();
+
+        Permanent edgecrafters = findPermanent(player1, "Elegant Edgecrafters");
+        gd.playerBattlefields.get(player1.getId()).remove(edgecrafters);
+        gd.playerGraveyards.get(player1.getId()).add(edgecrafters.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SERVO))
+                .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Blocking restriction uses a creature's power including counters")
+    void canBeBlockedByCreatureBoostedAboveTwoPower() {
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new ThrivingRhino());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent attacker = addAttackingElegantEdgecrafters();
+
+        declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private Permanent addAttackingElegantEdgecrafters() {
-        Permanent attacker = new Permanent(new ElegantEdgecrafters());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new ElegantEdgecrafters());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
         return attacker;
     }
 

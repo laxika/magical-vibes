@@ -123,7 +123,7 @@ class CelestialSwordTest extends BaseCardTest {
     void cannotActivateTappedSword() {
         Permanent sword = harness.addToBattlefieldAndReturn(player1, new CelestialSword());
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
-        sword.setTapped(true);
+        sword.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))

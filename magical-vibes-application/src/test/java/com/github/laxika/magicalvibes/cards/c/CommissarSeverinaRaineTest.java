@@ -122,7 +122,7 @@ class CommissarSeverinaRaineTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Commissar can activate, paying the sacrifice before resolution")
     void sacrificeIsPaidBeforeLifeGainAndDraw() {
         harness.addToBattlefield(player1, new CommissarSeverinaRaine());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setLife(player1, 10);
         harness.setHand(player1, List.of());

@@ -13,6 +13,34 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FlamecoreElementalTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Echo does not create an enters-the-battlefield trigger")
+    void enteringDoesNotCreateAnEchoRegistrationTrigger() {
+        harness.castFromHand(player1, new FlamecoreElemental(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Flamecore Elemental");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not trigger echo")
+    void opponentsUpkeepDoesNotTriggerEcho() {
+        castAndResolveFlamecoreElemental();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Flamecore Elemental");
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Flamecore Elemental");
+    }
+
+    @Test
     @DisplayName("Declining echo sacrifices Flamecore Elemental at its next upkeep")
     void decliningEchoSacrificesFlamecoreElemental() {
         castAndResolveFlamecoreElemental();
@@ -47,8 +75,7 @@ class FlamecoreElementalTest extends BaseCardTest {
 
     private void castAndResolveFlamecoreElemental() {
         harness.castFromHand(player1, new FlamecoreElemental(), "{2}{R}{R}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Flamecore Elemental");
     }
 }

@@ -113,7 +113,7 @@ class CelestialReunionTest extends BaseCardTest {
     @Test
     void canBeholdOneTappedCreatureAndOneCardInHand() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new AirElemental());
-        first.setTapped(true);
+        first.tap();
         Card second = new AirElemental();
         Card found = new AirElemental();
         harness.setHand(player1, List.of(new CelestialReunion(), second));

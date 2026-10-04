@@ -64,10 +64,82 @@ class EnchantedCarriageTest extends BaseCardTest {
                 .hasMessageContaining("Not enough creature power to crew");
     }
 
+    @Test
+    void newlyCreatedMiceCanCrewBeforeTheyCanAttack() {
+        harness.setHand(player1, List.of(new EnchantedCarriage()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent carriage = findPermanent(player1, "Enchanted Carriage");
+        assertThat(findPermanents(player1, "Mouse")).isEmpty();
+        assertThat(gqs.isCreature(gd, carriage)).isFalse();
+
+        harness.passBothPriorities();
+        List<Permanent> mice = findPermanents(player1, "Mouse");
+        assertThat(mice).hasSize(2);
+        assertThat(mice).allMatch(Permanent::isSummoningSick);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(mice).allMatch(Permanent::isTapped);
+        assertThat(carriage.isTapped()).isFalse();
+        assertThat(gqs.isCreature(gd, carriage)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, carriage)).isTrue();
+        assertThat(carriage.isSummoningSick()).isTrue();
+        assertThat(findPermanents(player1, "Mouse")).hasSize(2);
+    }
+
+    @Test
+    void oneUntappedMouseIsNotEnoughToCrew() {
+        harness.setHand(player1, List.of(new EnchantedCarriage()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        List<Permanent> mice = findPermanents(player1, "Mouse");
+        mice.getFirst().tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough creature power to crew");
+
+        assertThat(mice.getLast().isTapped()).isFalse();
+        assertThat(gqs.isCreature(gd, findPermanent(player1, "Enchanted Carriage"))).isFalse();
+    }
+
+    @Test
+    void opposingCreaturesCannotPayCrewCost() {
+        addCarriageReady(player1);
+        Permanent opposingCrew = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough creature power to crew");
+
+        assertThat(opposingCrew.isTapped()).isFalse();
+    }
+
+    @Test
+    void anAnimatedCarriageCannotCrewItself() {
+        Permanent carriage = addCarriageReady(player1);
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, carriage)).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough creature power to crew");
+        assertThat(carriage.isTapped()).isFalse();
+    }
+
     private Permanent addCarriageReady(Player player) {
-        Permanent permanent = new Permanent(new EnchantedCarriage());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new EnchantedCarriage());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

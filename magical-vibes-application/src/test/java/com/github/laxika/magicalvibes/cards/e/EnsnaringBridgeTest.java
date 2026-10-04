@@ -19,6 +19,33 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class EnsnaringBridgeTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Every Bridge's restriction applies independently")
+    void stricterBridgePreventsAttack() {
+        harness.addToBattlefield(player1, new EnsnaringBridge());
+        harness.addToBattlefield(player2, new EnsnaringBridge());
+        harness.setHand(player1, List.of(new GiantGrowth(), new GiantGrowth(), new GiantGrowth()));
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(index)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped Bridge still restricts attacks")
+    void tappedBridgeStillRestrictsAttacks() {
+        harness.addToBattlefield(player1, new EnsnaringBridge());
+        findPermanent(player1, "Ensnaring Bridge").setTapped(true);
+        harness.setHand(player1, List.of());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(index)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Creature with power greater than controller's hand size cannot attack")
     void higherPowerCannotAttack() {
         harness.addToBattlefield(player1, new EnsnaringBridge());

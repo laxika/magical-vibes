@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BloodletterQuill;
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.g.GarruksGorehorn;
+import com.github.laxika.magicalvibes.cards.s.ShortSword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FaithsFetters.class, BorosRecruit.class, BloodletterQuill.class, Forest.class})
+@CardUsed({FaithsFetters.class, BorosRecruit.class, BloodletterQuill.class, Forest.class,
+        GarruksGorehorn.class, ShortSword.class})
 class FaithsFettersTest extends BaseCardTest {
 
     @Test
@@ -39,12 +41,7 @@ class FaithsFettersTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new BorosRecruit());
         attachAura(creature, player2);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -56,10 +53,7 @@ class FaithsFettersTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new BorosRecruit());
         attachAura(blocker, player1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -90,8 +84,68 @@ class FaithsFettersTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
-    private void attachAura(Permanent target, Player controller) {
+    @Test
+    void illegalTargetOnResolutionDoesNotGainLife() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new FaithsFetters()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castEnchantment(player1, 0, forest.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(forest);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertNotOnBattlefield(player1, "Faith's Fetters");
+        harness.assertInGraveyard(player1, "Faith's Fetters");
+    }
+
+    @Test
+    void enchantedEquipmentCannotEquip() {
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new ShortSword());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GarruksGorehorn());
+        attachAura(sword, player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(sword), null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+    }
+
+    @Test
+    void removingAuraRestoresActivatedAbilities() {
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new ShortSword());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GarruksGorehorn());
+        Permanent aura = attachAura(sword, player2);
+        gd.playerBattlefields.get(player2.getId()).remove(aura);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(sword), null, creature.getId());
+        resolveAllTriggers();
+
+        assertThat(sword.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    void removingAuraDoesNotCounterLifeGainTrigger() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new FaithsFetters()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Faith's Fetters");
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+    }
+
+    private Permanent attachAura(Permanent target, Player controller) {
         Permanent aura = harness.addToBattlefieldAndReturn(controller, new FaithsFetters());
         aura.setAttachedTo(target.getId());
+        return aura;
     }
 }

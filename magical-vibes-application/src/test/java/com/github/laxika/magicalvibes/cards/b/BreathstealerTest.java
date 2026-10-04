@@ -67,7 +67,7 @@ class BreathstealerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent breathstealer = addCreatureReady(player1, new Breathstealer());
         breathstealer.setSummoningSick(true);
-        breathstealer.setTapped(true);
+        breathstealer.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

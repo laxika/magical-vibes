@@ -55,8 +55,8 @@ class FactOrFictionTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(island, forest);
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .contains(swamp, plains, mountain)
-                .anyMatch(card -> card.getName().equals("Fact or Fiction"));
+                .contains(swamp, plains, mountain);
+        harness.assertInGraveyard(player1, "Fact or Fiction");
         assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
     }
 
@@ -77,8 +77,8 @@ class FactOrFictionTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(swamp, plains, mountain);
         assertThat(gd.playerGraveyards.get(player1.getId()))
-                .contains(island, forest)
-                .anyMatch(card -> card.getName().equals("Fact or Fiction"));
+                .contains(island, forest);
+        harness.assertInGraveyard(player1, "Fact or Fiction");
         assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
     }
 
@@ -113,8 +113,53 @@ class FactOrFictionTest extends BaseCardTest {
 
         assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Fact or Fiction"));
+        harness.assertInGraveyard(player1, "Fact or Fiction");
+    }
+
+    @Test
+    @DisplayName("Only the top five cards are separated, leaving the rest of the library in order")
+    void leavesUnrevealedCardsInLibrary() {
+        List<Card> revealed = List.of(new Island(), new Forest(), new Swamp(), new Plains(), new Mountain());
+        Card sixth = new Island();
+        Card seventh = new Forest();
+        harness.setLibrary(player1, List.of(revealed.get(0), revealed.get(1), revealed.get(2),
+                revealed.get(3), revealed.get(4), sixth, seventh));
+
+        cast();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrderElementsOf(
+                revealed.stream().map(Card::getId).toList());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(sixth, seventh);
+
+        harness.handleMultipleCardsChosen(player2, List.of(revealed.get(0).getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(revealed.get(0));
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsAll(revealed.subList(1, 5));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(sixth, seventh);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can put every revealed card into hand when the other pile is empty")
+    void choosesAllCardsAgainstEmptyPile() {
+        List<Card> cards = List.of(new Island(), new Forest(), new Swamp(), new Plains(), new Mountain());
+        harness.setLibrary(player1, cards);
+
+        cast();
+
+        harness.handleMultipleCardsChosen(player2, cards.stream().map(Card::getId).toList());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrderElementsOf(cards);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContainAnyElementsOf(cards);
+        harness.assertInGraveyard(player1, "Fact or Fiction");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void cast() {

@@ -102,7 +102,7 @@ class ChromeReplicatorTest extends BaseCardTest {
     @Test
     void losingMatchingPairBeforeResolutionPreventsToken() {
         Permanent matching = harness.addToBattlefieldAndReturn(player1, new ChromeReplicator());
-        matching.setTapped(true);
+        matching.tap();
         castChromeReplicator();
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
@@ -122,7 +122,7 @@ class ChromeReplicatorTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
         Permanent source = findPermanents(player1, "Chrome Replicator").getFirst();
-        source.setTapped(true);
+        source.tap();
 
         destroyTappedCreature(source);
         resolveAllTriggers();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.AshayaSoulOfTheWild;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Foratog.class, Forest.class, Island.class})
+@CardUsed({Foratog.class, Forest.class, Island.class, AshayaSoulOfTheWild.class})
 class ForatogTest extends BaseCardTest {
 
     @Test
@@ -123,5 +124,68 @@ class ForatogTest extends BaseCardTest {
                 .hasMessageContaining("No permanent to sacrifice matching: Sacrifice a Forest");
 
         harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Forest is sacrificed as a cost before the boost resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent foratog = addCreatureReady(player1, new Foratog());
+        harness.addToBattlefield(player1, new Forest());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(foratog.getEffectivePower()).isEqualTo(1);
+        assertThat(foratog.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(foratog.getEffectivePower()).isEqualTo(3);
+        assertThat(foratog.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick tapped Foratog can sacrifice a tapped Forest")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent foratog = harness.addToBattlefieldAndReturn(player1, new Foratog());
+        foratog.setSummoningSick(true);
+        foratog.setTapped(true);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setTapped(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(foratog.getEffectivePower()).isEqualTo(3);
+        assertThat(foratog.getEffectiveToughness()).isEqualTo(4);
+        assertThat(foratog.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Foratog can sacrifice itself when Ashaya makes it a Forest")
+    void canSacrificeItselfWhenItIsAForest() {
+        Permanent foratog = addCreatureReady(player1, new Foratog());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new AshayaSoulOfTheWild());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, foratog.getId());
+
+        harness.assertNotOnBattlefield(player1, "Foratog");
+        harness.assertInGraveyard(player1, "Foratog");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Ashaya, Soul of the Wild");
     }
 }

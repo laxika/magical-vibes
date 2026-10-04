@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SporecapSpider;
+import com.github.laxika.magicalvibes.cards.t.TimeWarp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,25 +14,25 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EscapeToTheWilds.class, Forest.class, GrizzlyBears.class})
+@CardUsed({EscapeToTheWilds.class, Forest.class, SporecapSpider.class})
 class EscapeToTheWildsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Exiles the top five cards, grants play permission, and adds a land play")
     void exilesTopFiveAndGrantsPlayPermission() {
         Card first = new Forest();
-        Card second = new GrizzlyBears();
+        Card second = new SporecapSpider();
         Card third = new Forest();
-        Card fourth = new GrizzlyBears();
+        Card fourth = new SporecapSpider();
         Card fifth = new Forest();
         harness.setLibrary(player1, List.of(first, second, third, fourth, fifth));
         harness.setHand(player1, List.of(new EscapeToTheWilds()));
         addManaForEscape();
         prepareMainPhase();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactly(first, second, third, fourth, fifth);
@@ -54,26 +55,134 @@ class EscapeToTheWildsTest extends BaseCardTest {
     @DisplayName("Allows playing an exiled land and casting an exiled creature")
     void playsAndCastsFromExile() {
         Card exiledLand = new Forest();
-        Card exiledCreature = new GrizzlyBears();
+        Card exiledCreature = new SporecapSpider();
         harness.setLibrary(player1, List.of(exiledLand, exiledCreature,
-                new Forest(), new GrizzlyBears(), new Forest()));
+                new Forest(), new SporecapSpider(), new Forest()));
         Card handLand = new Forest();
         harness.setHand(player1, List.of(new EscapeToTheWilds(), handLand));
         addManaForEscape();
         prepareMainPhase();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        gs.playCardFromExile(gd, player1, exiledLand.getId(), null, null);
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.castFromExile(player1, exiledLand.getId());
+        harness.playLand(player1, 0);
         assertThat(countPermanents(player1, "Forest")).isEqualTo(2);
 
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        gs.playCardFromExile(gd, player1, exiledCreature.getId(), null, null);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castFromExile(player1, exiledCreature.getId());
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Sporecap Spider");
+    }
+
+    @Test
+    void exilesOnlyAvailableCardsAndStillGrantsAdditionalLandWithEmptyLibrary() {
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+        prepareMainPhase();
+        harness.castFromHand(player1, new EscapeToTheWilds(), "{3}{R}{G}");
+        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(land);
+        harness.castFromExile(player1, land.getId());
+
+        harness.castFromHand(player1, new EscapeToTheWilds(), "{3}{R}{G}");
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.playLand(player1, 0);
+        harness.playLand(player1, 0);
+        assertThatThrownBy(() -> harness.playLand(player1, 0)).isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Forest")).isEqualTo(3);
+    }
+
+    @Test
+    void permissionLastsThroughNextTurnButAdditionalLandDoesNot() {
+        Card firstLand = new Forest();
+        Card remainingLand = new Forest();
+        setLibraryForTurnTests(firstLand, remainingLand);
+        prepareMainPhase();
+        harness.castFromHand(player1, new EscapeToTheWilds(), "{3}{R}{G}");
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThatThrownBy(() -> harness.castFromExile(player2, firstLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.castFromExile(player1, firstLand.getId());
+        assertThatThrownBy(() -> harness.castFromExile(player1, remainingLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        assertThatThrownBy(() -> harness.castFromExile(player1, remainingLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(remainingLand);
+    }
+
+    @Test
+    void exiledCreatureStillRequiresManaAndNormalTiming() {
+        Card creature = new SporecapSpider();
+        harness.setLibrary(player1, List.of(creature));
+        prepareMainPhase();
+        harness.castFromHand(player1, new EscapeToTheWilds(), "{3}{R}{G}");
+        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        assertThatThrownBy(() -> harness.castFromExile(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromExile(player1, creature.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Sporecap Spider");
+    }
+
+    @Test
+    @CardUsed(TimeWarp.class)
+    void permissionExpiresAfterCastersImmediateExtraTurn() {
+        Card land = new Forest();
+        setLibraryForTurnTests(land, new Forest());
+        prepareMainPhase();
+        harness.castFromHand(player1, new EscapeToTheWilds(), "{3}{R}{G}");
+        harness.passBothPriorities();
+        castTimeWarp(player1.getId());
+
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        assertThatThrownBy(() -> harness.castFromExile(player1, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(land);
+    }
+
+    @Test
+    @CardUsed(TimeWarp.class)
+    void permissionSurvivesOpponentsExtraTurnUntilCastersNextTurn() {
+        Card land = new Forest();
+        setLibraryForTurnTests(land, new Forest());
+        prepareMainPhase();
+        harness.castFromHand(player1, new EscapeToTheWilds(), "{3}{R}{G}");
+        harness.passBothPriorities();
+        castTimeWarp(player2.getId());
+
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.castFromExile(player1, land.getId());
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    private void castTimeWarp(java.util.UUID targetPlayerId) {
+        harness.setHand(player1, List.of(new TimeWarp()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveSorcery(player1, 0, targetPlayerId);
+    }
+
+    private void setLibraryForTurnTests(Card first, Card second) {
+        harness.setLibrary(player1, List.of(first, second, new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
     }
 
     private void addManaForEscape() {

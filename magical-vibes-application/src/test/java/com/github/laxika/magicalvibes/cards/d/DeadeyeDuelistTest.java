@@ -92,7 +92,7 @@ class DeadeyeDuelistTest extends BaseCardTest {
     @DisplayName("Cannot activate while already tapped")
     void cannotActivateWhileTapped() {
         Permanent duelist = addReadyDuelist();
-        duelist.setTapped(true);
+        duelist.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))

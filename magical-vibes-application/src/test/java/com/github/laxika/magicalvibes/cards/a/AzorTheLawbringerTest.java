@@ -109,6 +109,7 @@ class AzorTheLawbringerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveSorcery(player1, 0, 0);
 
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 1);

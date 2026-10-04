@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.l.LavaAxe;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FieryImpulse.class, HillGiant.class, GrizzlyBears.class, Shock.class, LightningBolt.class, LavaAxe.class})
 class FieryImpulseTest extends BaseCardTest {
 
     @Test
@@ -31,7 +32,7 @@ class FieryImpulseTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(permanentOf(player2, "Hill Giant").getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanent(player2, "Hill Giant").getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
@@ -61,7 +62,7 @@ class FieryImpulseTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(permanentOf(player2, "Hill Giant").getMarkedDamage()).isEqualTo(2);
+        assertThat(findPermanent(player2, "Hill Giant").getMarkedDamage()).isEqualTo(2);
     }
 
     @Test
@@ -87,13 +88,66 @@ class FieryImpulseTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
     }
 
-    private Permanent permanentOf(Player player, String name) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> name.equals(p.getCard().getName()))
-                .findFirst()
-                .orElseThrow();
+    @Test
+    @DisplayName("Two sorceries enable spell mastery")
+    void sorceriesEnableSpellMastery() {
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new FieryImpulse()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setGraveyard(player1, List.of(new LavaAxe(), new LavaAxe()));
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("An instant and a sorcery together enable spell mastery")
+    void mixedTypesEnableSpellMastery() {
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new FieryImpulse()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setGraveyard(player1, List.of(new Shock(), new LavaAxe()));
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Opponent's graveyard does not enable spell mastery")
+    void ignoresOpponentsGraveyard() {
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new FieryImpulse()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setGraveyard(player1, List.of(new Shock()));
+        harness.setGraveyard(player2, List.of(new Shock(), new LavaAxe()));
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Hill Giant").getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Spell mastery can become enabled by a spell resolving in response")
+    void checksSpellMasteryAtResolution() {
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new FieryImpulse(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setGraveyard(player1, List.of(new LavaAxe()));
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Hill Giant"));
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player2, "Hill Giant");
     }
 }

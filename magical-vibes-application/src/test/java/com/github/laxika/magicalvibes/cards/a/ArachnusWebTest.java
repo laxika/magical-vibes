@@ -141,12 +141,12 @@ class ArachnusWebTest extends BaseCardTest {
         Permanent troll = addCreatureReady(player2, new CudgelTroll());
         attachWeb(player1, troll);
         harness.setHand(player1, List.of(new TurnToFrog()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         assertThat(gd.stack).hasSize(1);
 
+        harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castInstant(player1, 0, troll.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -182,13 +182,13 @@ class ArachnusWebTest extends BaseCardTest {
         Permanent bear = addCreatureReady(player2, new RuneclawBear());
         attachWeb(player1, bear);
         harness.setHand(player1, List.of(new TitanicGrowth()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         gs.advanceStep(gd);
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
 
+        harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castInstant(player1, 0, bear.getId());
         harness.passBothPriorities();
 

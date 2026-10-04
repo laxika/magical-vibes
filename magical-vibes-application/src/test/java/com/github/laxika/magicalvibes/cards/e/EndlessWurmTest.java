@@ -97,8 +97,7 @@ class EndlessWurmTest extends BaseCardTest {
         addCreatureReady(player1, new EndlessWurm());
         var blocker = addCreatureReady(player2, new CoralMerfolk());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -109,5 +108,39 @@ class EndlessWurmTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @DisplayName("One enchantment can save only one of two Endless Wurms")
+    void oneEnchantmentCannotPayForTwoWurms() {
+        harness.addToBattlefield(player1, new EndlessWurm());
+        harness.addToBattlefield(player1, new EndlessWurm());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Glorious Anthem"));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Endless Wurm")).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Endless Wurm");
+        harness.assertInGraveyard(player1, "Glorious Anthem");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An ordinary creature cannot be sacrificed instead of Endless Wurm")
+    void nonEnchantmentCannotPayUpkeepCost() {
+        harness.addToBattlefield(player1, new EndlessWurm());
+        harness.addToBattlefield(player1, new CoralMerfolk());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Endless Wurm");
+        harness.assertInGraveyard(player1, "Endless Wurm");
+        harness.assertOnBattlefield(player1, "Coral Merfolk");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

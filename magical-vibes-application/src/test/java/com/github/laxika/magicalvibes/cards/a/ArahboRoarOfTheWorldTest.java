@@ -90,6 +90,22 @@ class ArahboRoarOfTheWorldTest extends BaseCardTest {
     }
 
     @Test
+    void eminenceDoesNotFollowArahboFromCommandZoneToBattlefield() {
+        ArahboRoarOfTheWorld arahbo = new ArahboRoarOfTheWorld();
+        addToCommandZone(player1, arahbo);
+        Permanent cat = addCreatureReady(player1, new ProwlingCaracal());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, cat.getId());
+        gd.playerCommandZones.get(player1.getId()).remove(arahbo);
+        harness.addToBattlefield(player1, arahbo);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, cat)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, cat)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Declining the attack payment leaves the Cat unchanged")
     void decliningAttackPaymentDoesNotBoostCat() {
         addCreatureReady(player1, new ArahboRoarOfTheWorld());

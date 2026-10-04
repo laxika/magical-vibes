@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -73,5 +74,69 @@ class ElderwoodScionTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent can pay the full increased cost to destroy Elderwood Scion")
+    void opponentCanPayTargetingTax() {
+        Permanent scion = harness.addToBattlefieldAndReturn(player1, new ElderwoodScion());
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castInstant(player2, 0, scion.getId());
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Elderwood Scion");
+    }
+
+    @Test
+    @DisplayName("The reduction cannot pay colored mana requirements")
+    void reductionDoesNotReplaceColoredMana() {
+        Permanent scion = harness.addToBattlefieldAndReturn(player1, new ElderwoodScion());
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, scion.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Another Elderwood Scion does not increase the tax for targeting this one")
+    void eachScionTaxesOnlyItself() {
+        Permanent scion = harness.addToBattlefieldAndReturn(player1, new ElderwoodScion());
+        harness.addToBattlefield(player1, new ElderwoodScion());
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 5);
+
+        harness.castInstant(player2, 0, scion.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Blocked combat damage tramples over and gains life for all damage dealt")
+    void trampleAndLifelinkApplyToCombatDamage() {
+        Permanent scion = harness.addToBattlefieldAndReturn(player1, new ElderwoodScion());
+        scion.setSummoningSick(false);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 18);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Elderwood Scion");
     }
 }

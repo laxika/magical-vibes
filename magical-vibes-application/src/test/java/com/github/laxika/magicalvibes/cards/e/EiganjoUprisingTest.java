@@ -39,7 +39,6 @@ class EiganjoUprisingTest extends BaseCardTest {
         });
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(ownTokens).allSatisfy(token -> {
@@ -58,13 +57,26 @@ class EiganjoUprisingTest extends BaseCardTest {
         assertThat(findPermanents(player2, "Samurai")).isEmpty();
     }
 
+    @Test
+    @DisplayName("Creates one Samurai for you and none for opponents when X is one")
+    void createsOneTokenAtOneX() {
+        castUprising(1);
+
+        assertThat(findPermanents(player1, "Samurai")).singleElement().satisfies(token -> {
+            assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, token, Keyword.MENACE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+            assertThat(token.isTapped()).isFalse();
+        });
+        assertThat(findPermanents(player2, "Samurai")).isEmpty();
+    }
+
     private void castUprising(int xValue) {
         harness.setHand(player1, List.of(new EiganjoUprising()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, xValue);
 
-        harness.castSorcery(player1, 0, xValue);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, xValue);
     }
 }

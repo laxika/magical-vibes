@@ -92,7 +92,7 @@ class DoggedHunterTest extends BaseCardTest {
     @DisplayName("A tapped Dogged Hunter cannot activate")
     void cannotActivateWhileTapped() {
         Permanent hunter = addHunter(player1);
-        hunter.setTapped(true);
+        hunter.tap();
         Permanent token = addCreature(player2, true);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

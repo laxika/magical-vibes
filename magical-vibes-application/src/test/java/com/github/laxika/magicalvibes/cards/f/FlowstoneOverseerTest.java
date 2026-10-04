@@ -38,7 +38,6 @@ class FlowstoneOverseerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
@@ -76,6 +75,64 @@ class FlowstoneOverseerTest extends BaseCardTest {
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("Can target itself while tapped and summoning sick")
+    void canTargetItselfWhileTappedAndSummoningSick() {
+        setupBattlefield();
+        Permanent overseer = findPermanent(player1, "Flowstone Overseer");
+        overseer.setTapped(true);
+        overseer.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, overseer.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, overseer)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, overseer)).isEqualTo(3);
+        assertThat(overseer.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations accumulate and put a zero-toughness creature into its graveyard")
+    void repeatedActivationsCanKillTarget() {
+        Permanent target = setupBattlefield(8);
+
+        for (int i = 1; i <= 3; i++) {
+            harness.activateAbility(player1, 0, null, target.getId());
+            harness.passBothPriorities();
+            assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4 + i);
+            assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4 - i);
+        }
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Flowstone Crusher");
+        harness.assertInGraveyard(player2, "Flowstone Crusher");
+        harness.assertOnBattlefield(player1, "Flowstone Overseer");
+    }
+
+    @Test
+    @DisplayName("An activated ability still resolves after the Overseer dies")
+    void abilityResolvesAfterSourceDies() {
+        Permanent target = setupBattlefield(10);
+        Permanent overseer = findPermanent(player1, "Flowstone Overseer");
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        for (int i = 0; i < 4; i++) {
+            harness.activateAbility(player1, 0, null, overseer.getId());
+        }
+        for (int i = 0; i < 4; i++) {
+            harness.passBothPriorities();
+        }
+
+        harness.assertNotOnBattlefield(player1, "Flowstone Overseer");
+        harness.assertInGraveyard(player1, "Flowstone Overseer");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
     }
 
     private Permanent setupBattlefield() {

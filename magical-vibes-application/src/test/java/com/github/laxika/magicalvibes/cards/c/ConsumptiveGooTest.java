@@ -79,7 +79,7 @@ class ConsumptiveGooTest extends BaseCardTest {
     @DisplayName("Self-targeting Goo survives because its counter is placed before state-based actions")
     void canTargetItselfAndSurvive() {
         Permanent goo = harness.addToBattlefieldAndReturn(player1, new ConsumptiveGoo());
-        goo.setTapped(true);
+        goo.tap();
 
         activateGoo(goo, goo);
 

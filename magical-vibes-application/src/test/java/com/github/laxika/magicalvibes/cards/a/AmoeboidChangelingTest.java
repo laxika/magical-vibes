@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.k.KithkinHealer;
+import com.github.laxika.magicalvibes.cards.d.DiregrafGhoul;
 import com.github.laxika.magicalvibes.cards.s.SecludedGlen;
 import com.github.laxika.magicalvibes.cards.w.WizenedCenn;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -238,5 +241,60 @@ class AmoeboidChangelingTest extends BaseCardTest {
                     .isInstanceOf(IllegalStateException.class);
             harness.passBothPriorities();
         }
+    }
+
+    @Test
+    @CardUsed({ArchghoulOfThraben.class, DiregrafGhoul.class})
+    @DisplayName("A Zombie that loses every creature type does not trigger Zombie death abilities")
+    void lostPrintedZombieTypeStaysAbsentForDeathTriggers() {
+        assertTypeLossSuppressesZombieDeathTrigger(new DiregrafGhoul());
+    }
+
+    @Test
+    @CardUsed(ArchghoulOfThraben.class)
+    @DisplayName("A changeling that loses every creature type does not trigger Zombie death abilities")
+    void lostChangelingTypesStayAbsentForDeathTriggers() {
+        assertTypeLossSuppressesZombieDeathTrigger(new AmoeboidChangeling());
+    }
+
+    private void assertTypeLossSuppressesZombieDeathTrigger(Card creature) {
+        addAmoeboidReady();
+        harness.addToBattlefield(player1, new ArchghoulOfThraben());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, creature);
+        Card topZombie = new ArchghoulOfThraben();
+        harness.setLibrary(player1, List.of(topZombie));
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topZombie);
+        harness.assertInGraveyard(player1, creature.getName());
+    }
+
+    @Test
+    @CardUsed(ArchghoulOfThraben.class)
+    @DisplayName("A creature that gains every creature type triggers Zombie death abilities")
+    void gainedZombieTypeIsRememberedForDeathTriggers() {
+        addAmoeboidReady();
+        harness.addToBattlefield(player1, new ArchghoulOfThraben());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Aethersnipe());
+        Card topZombie = new ArchghoulOfThraben();
+        harness.setLibrary(player1, List.of(topZombie));
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
+
+        assertThat(gd.stack).hasSize(1);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(topZombie);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }

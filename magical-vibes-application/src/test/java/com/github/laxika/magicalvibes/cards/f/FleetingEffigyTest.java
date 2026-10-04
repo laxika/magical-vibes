@@ -27,8 +27,7 @@ class FleetingEffigyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Fleeting Effigy");
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Fleeting Effigy"));
+        harness.assertInHand(player1, "Fleeting Effigy");
     }
 
     @Test
@@ -55,11 +54,61 @@ class FleetingEffigyTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, effigy)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Repeated activations stack and expire at cleanup")
+    void repeatedBoostsExpireAtCleanup() {
+        Permanent effigy = addReadyEffigy(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, effigy)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, effigy)).isEqualTo(2);
+
+        harness.passUntil(player1, TurnStep.UPKEEP);
+
+        harness.assertOnBattlefield(player1, "Fleeting Effigy");
+        assertThat(gqs.getEffectivePower(gd, effigy)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, effigy)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("End-step trigger cannot return a creature that has died")
+    void endStepTriggerDoesNotReturnDeadSource() {
+        Permanent effigy = addReadyEffigy(player1);
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        effigy.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Fleeting Effigy");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fleeting Effigy");
+        harness.assertNotInHand(player1, "Fleeting Effigy");
+    }
+
+    @Test
+    @DisplayName("A boost does not affect another Fleeting Effigy")
+    void boostOnlyAffectsItsSource() {
+        Permanent source = addReadyEffigy(player1);
+        Permanent other = addReadyEffigy(player1);
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+    }
+
     private Permanent addReadyEffigy(Player player) {
-        Permanent permanent = new Permanent(new FleetingEffigy());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new FleetingEffigy());
     }
 
     private void advanceToEndStep(Player activePlayer) {

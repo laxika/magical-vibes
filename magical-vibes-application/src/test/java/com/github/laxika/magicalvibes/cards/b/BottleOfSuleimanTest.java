@@ -135,7 +135,7 @@ class BottleOfSuleimanTest extends BaseCardTest {
     void tappedBottleCanBeActivatedByNonactivePlayer() {
         harness.addToBattlefield(player2, new EdgarKingOfFigaro());
         Permanent bottle = harness.addToBattlefieldAndReturn(player2, new BottleOfSuleiman());
-        bottle.setTapped(true);
+        bottle.tap();
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         int life1 = gd.playerLifeTotals.get(player1.getId());
         int life2 = gd.playerLifeTotals.get(player2.getId());

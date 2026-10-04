@@ -79,6 +79,64 @@ class ErraticApparitionTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, apparition)).isEqualTo(3);
     }
 
+    @Test
+    void roomEntryAndFullUnlockGiveSeparateCumulativeBoosts() {
+        Permanent apparition = harness.addToBattlefieldAndReturn(player1, new ErraticApparition());
+        harness.setHand(player1, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player1, ManaColor.WHITE, 7);
+
+        harness.castModalSorcery(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, apparition)).isEqualTo(4);
+
+        harness.unlockRoomDoor(player1, 1, 1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, apparition)).isEqualTo(5);
+    }
+
+    @Test
+    void doesNotTriggerWhenOpponentFullyUnlocksRoom() {
+        Permanent apparition = harness.addToBattlefieldAndReturn(player1, new ErraticApparition());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player2, ManaColor.WHITE, 7);
+
+        harness.castModalSorcery(player2, 0, 0, List.of());
+        harness.passBothPriorities();
+        harness.unlockRoomDoor(player2, 0, 1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, apparition)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, apparition)).isEqualTo(3);
+    }
+
+    @Test
+    void boostsOnlyItsOwnSourceWhenMultipleApparitionsTrigger() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ErraticApparition());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ErraticApparition());
+        harness.setHand(player1, List.of(new DazzlingTheaterPropRoom()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castModalSorcery(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+    }
+
     private Permanent castRoom() {
         harness.setHand(player1, List.of(new DazzlingTheaterPropRoom()));
         harness.addMana(player1, ManaColor.WHITE, 4);

@@ -115,7 +115,7 @@ class BroodstarTest extends BaseCardTest {
     void tappedArtifactsAndExcessAffinityReduction() {
         for (int i = 0; i < 10; i++) {
             Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
-            artifact.setTapped(true);
+            artifact.tap();
         }
         harness.setHand(player1, List.of(new Broodstar()));
         harness.addMana(player1, ManaColor.BLUE, 2);

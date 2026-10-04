@@ -55,8 +55,64 @@ class ExpeditionDivinerTest extends BaseCardTest {
         harness.setHand(caster, List.of(new Shock()));
         harness.addMana(caster, ManaColor.RED, 1);
 
-        harness.castInstant(caster, 0, target.getId());
+        harness.castAndResolveInstant(caster, 0, target.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Both Diviners draw when they die simultaneously")
+    void bothDrawWhenTheyDieSimultaneously() {
+        Permanent first = addCreatureReady(player1, new ExpeditionDiviner());
+        Permanent second = addCreatureReady(player1, new ExpeditionDiviner());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new ExpeditionDiviner(), new ExpeditionDiviner()));
+
+        first.setMarkedDamage(2);
+        second.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An already triggered draw resolves after the other Wizard dies")
+    void drawResolvesAfterOtherWizardDies() {
+        Permanent first = addCreatureReady(player1, new ExpeditionDiviner());
+        Permanent second = addCreatureReady(player1, new ExpeditionDiviner());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new ExpeditionDiviner()));
+
+        first.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        second.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Additional Wizards do not grant extra death triggers")
+    void multipleOtherWizardsStillDrawOnlyOneCard() {
+        Permanent diviner = addCreatureReady(player1, new ExpeditionDiviner());
+        addCreatureReady(player1, new ExpeditionDiviner());
+        addCreatureReady(player1, new ExpeditionDiviner());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new ExpeditionDiviner(), new ExpeditionDiviner()));
+
+        diviner.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
     }
 }
