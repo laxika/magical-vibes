@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.k.KolaghanStormsinger;
+import com.github.laxika.magicalvibes.cards.f.FoulTongueShriek;
+import com.github.laxika.magicalvibes.cards.t.TormentingVoice;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,15 +18,16 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
-@CardUsed({HedonistsTrove.class, Forest.class, GrizzlyBears.class, Shock.class})
+@CardUsed({HedonistsTrove.class, Forest.class, KolaghanStormsinger.class, FoulTongueShriek.class, TormentingVoice.class})
 class HedonistsTroveTest extends BaseCardTest {
 
     @Test
     @DisplayName("ETB exiles and tracks the targeted opponent's graveyard")
     void exilesTargetOpponentsGraveyardWithTrove() {
         Forest land = new Forest();
-        GrizzlyBears creature = new GrizzlyBears();
+        KolaghanStormsinger creature = new KolaghanStormsinger();
         Permanent trove = castTrove(List.of(land, creature));
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -37,25 +39,24 @@ class HedonistsTroveTest extends BaseCardTest {
     @DisplayName("Controller may play one tracked land and cast one tracked spell each turn")
     void playsLandAndCastsOneSpellFromTrove() {
         Forest land = new Forest();
-        GrizzlyBears firstSpell = new GrizzlyBears();
-        Shock secondSpell = new Shock();
+        KolaghanStormsinger firstSpell = new KolaghanStormsinger();
+        FoulTongueShriek secondSpell = new FoulTongueShriek();
         Permanent trove = castTrove(List.of(land, firstSpell, secondSpell));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        gs.playCardFromExile(gd, player1, land.getId(), null, null);
+        harness.castFromExile(player1, land.getId());
         harness.assertOnBattlefield(player1, "Forest");
 
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        gs.playCardFromExile(gd, player1, firstSpell.getId(), null, null);
-        harness.passBothPriorities();
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
-
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        assertThatThrownBy(() -> gs.playCardFromExile(gd, player1, secondSpell.getId(), null, player2.getId()))
+        harness.castFromExile(player1, firstSpell.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Kolaghan Stormsinger");
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        assertThatThrownBy(() -> harness.castFromExile(player1, secondSpell.getId(), player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("No permission");
         assertThat(gd.getCardsExiledByPermanent(trove.getId())).contains(secondSpell);
@@ -65,15 +66,15 @@ class HedonistsTroveTest extends BaseCardTest {
     @DisplayName("A tracked land can still be played after the turn's tracked spell")
     void playsLandAfterCastingSpellFromTrove() {
         Forest land = new Forest();
-        GrizzlyBears spell = new GrizzlyBears();
+        KolaghanStormsinger spell = new KolaghanStormsinger();
         castTrove(List.of(land, spell));
 
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
         harness.castFromExile(player1, spell.getId());
         harness.passBothPriorities();
         harness.castFromExile(player1, land.getId());
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Kolaghan Stormsinger");
         harness.assertOnBattlefield(player1, "Forest");
     }
 
@@ -87,6 +88,119 @@ class HedonistsTroveTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    void requiresTheSpellsNormalColoredManaAndFailedCastDoesNotUsePermission() {
+        KolaghanStormsinger spell = new KolaghanStormsinger();
+        Permanent trove = castTrove(List.of(spell));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getCardsExiledByPermanent(trove.getId())).contains(spell);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromExile(player1, spell.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Kolaghan Stormsinger");
+    }
+
+    @Test
+    void doesNotGrantTheOwnerPermissionToCastExiledCards() {
+        KolaghanStormsinger spell = new KolaghanStormsinger();
+        Permanent trove = castTrove(List.of(spell));
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player2, spell.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permission");
+        assertThat(gd.getCardsExiledByPermanent(trove.getId())).contains(spell);
+    }
+
+    @Test
+    void allowsAnInstantDuringTheOpponentsTurn() {
+        FoulTongueShriek spell = new FoulTongueShriek();
+        castTrove(List.of(spell));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castFromExile(player1, spell.getId(), player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(spell);
+    }
+
+    @Test
+    void doesNotGrantSorcerySpeedSpellsFlash() {
+        KolaghanStormsinger spell = new KolaghanStormsinger();
+        Permanent trove = castTrove(List.of(spell));
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery-speed");
+        assertThat(gd.getCardsExiledByPermanent(trove.getId())).contains(spell);
+    }
+
+    @Test
+    void doesNotGrantAdditionalLandPlays() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        Permanent trove = castTrove(List.of(first, second));
+        harness.castFromExile(player1, first.getId());
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, second.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getCardsExiledByPermanent(trove.getId())).contains(second);
+    }
+
+    @Test
+    void losesPlayPermissionWhenTroveLeavesTheBattlefield() {
+        KolaghanStormsinger spell = new KolaghanStormsinger();
+        Permanent trove = castTrove(List.of(spell));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, trove));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("No permission");
+        assertThat(gd.findExiledCard(spell.getId())).isNotNull();
+    }
+
+    @Test
+    void canInitiateCastingASpellWithAPayableAdditionalDiscardCost() {
+        TormentingVoice spell = new TormentingVoice();
+        castTrove(List.of(spell));
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatCode(() -> harness.castFromExile(player1, spell.getId()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void exilesOnlyTheTargetedOpponentsGraveyard() {
+        Forest ownCard = new Forest();
+        Forest opponentCard = new Forest();
+        harness.setGraveyard(player1, List.of(ownCard));
+
+        Permanent trove = castTrove(List.of(opponentCard));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(trove.getId())).containsExactly(opponentCard);
+    }
+
+    @Test
+    void resolvesWithAnEmptyOpponentsGraveyard() {
+        Permanent trove = castTrove(List.of());
+
+        assertThat(gd.getCardsExiledByPermanent(trove.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Hedonist's Trove");
     }
 
     private Permanent castTrove(List<Card> graveyard) {
