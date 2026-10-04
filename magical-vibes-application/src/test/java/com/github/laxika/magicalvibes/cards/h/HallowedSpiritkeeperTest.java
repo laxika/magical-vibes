@@ -55,6 +55,56 @@ class HallowedSpiritkeeperTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Spirit")).hasSize(2);
     }
 
+    @Test
+    void countsItselfWhenGraveyardWasInitiallyEmpty() {
+        harness.setGraveyard(player1, List.of());
+        harness.addToBattlefield(player1, new HallowedSpiritkeeper());
+
+        killWithShock(player2, player1, "Hallowed Spiritkeeper");
+        harness.assertInGraveyard(player1, "Hallowed Spiritkeeper");
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+    }
+
+    @Test
+    void countsCreatureCardsAtResolutionRatherThanAtDeath() {
+        harness.addToBattlefield(player1, new HallowedSpiritkeeper());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        killWithShock(player2, player1, "Hallowed Spiritkeeper");
+        killWithShock(player2, player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).hasSize(2);
+    }
+
+    @Test
+    void createsNoTokensWhenNoCreatureCardsRemainAtResolution() {
+        harness.addToBattlefield(player1, new HallowedSpiritkeeper());
+        killWithShock(player2, player1, "Hallowed Spiritkeeper");
+        harness.setGraveyard(player1, List.of(new Shock()));
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentsDeathTriggerCountsTheirGraveyardAndCreatesTheirTokens() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player2, new HallowedSpiritkeeper());
+
+        killWithShock(player1, player2, "Hallowed Spiritkeeper");
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Spirit")).hasSize(2);
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+    }
+
     private void killWithShock(Player caster, Player targetController, String targetName) {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -63,7 +113,6 @@ class HallowedSpiritkeeperTest extends BaseCardTest {
         harness.addMana(caster, ManaColor.RED, 1);
 
         UUID targetId = harness.getPermanentId(targetController, targetName);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, targetId);
     }
 }
