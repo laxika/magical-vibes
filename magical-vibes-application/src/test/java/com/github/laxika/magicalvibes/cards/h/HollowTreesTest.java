@@ -108,6 +108,46 @@ class HollowTreesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing to untap prevents the upkeep storage trigger")
+    void choosingToUntapPreventsUpkeepTrigger() {
+        Permanent trees = harness.addToBattlefieldAndReturn(player1, new HollowTrees());
+        trees.tap();
+
+        beginPlayer1UntapChoice();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+
+        assertThat(trees.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(trees.getCounterCount(CounterType.STORAGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Mana resolves immediately above an upkeep trigger and retapping satisfies its condition")
+    void manaAbilityResolvesImmediatelyWhileUpkeepTriggerIsPending() {
+        Permanent trees = addTreesWithCounters(3);
+        trees.tap();
+
+        beginPlayer1UntapChoice();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(gd.stack).hasSize(1);
+
+        trees.untap();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "2");
+
+        assertThat(greenMana()).isEqualTo(2);
+        assertThat(trees.isTapped()).isTrue();
+        assertThat(trees.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(trees.getCounterCount(CounterType.STORAGE)).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Removing fewer counters than present keeps the rest")
     void removingSomeCountersKeepsTheRest() {
         Permanent trees = addTreesWithCounters(3);
