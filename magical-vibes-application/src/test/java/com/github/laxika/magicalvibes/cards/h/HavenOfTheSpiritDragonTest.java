@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.d.DragonWhelp;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.s.StormwingDragon;
+import com.github.laxika.magicalvibes.cards.c.ColossodonYearling;
+import com.github.laxika.magicalvibes.cards.c.CribSwap;
 import com.github.laxika.magicalvibes.cards.u.UginTheSpiritDragon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -21,7 +22,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HavenOfTheSpiritDragon.class, DragonWhelp.class, LlanowarElves.class, UginTheSpiritDragon.class})
+@CardUsed({HavenOfTheSpiritDragon.class, StormwingDragon.class, ColossodonYearling.class, CribSwap.class, UginTheSpiritDragon.class})
 class HavenOfTheSpiritDragonTest extends BaseCardTest {
 
     @Test
@@ -57,9 +58,8 @@ class HavenOfTheSpiritDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "RED");
 
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.setHand(player1, List.of(new DragonWhelp()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.setHand(player1, List.of(new StormwingDragon()));
         harness.castCreature(player1, 0);
         assertThat(gd.stack).hasSize(1);
     }
@@ -69,8 +69,9 @@ class HavenOfTheSpiritDragonTest extends BaseCardTest {
     void restrictedManaCannotCastNonDragonCreatureSpell() {
         addReadyHaven();
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.handleListChoice(player1, "RED");
-        harness.setHand(player1, List.of(new LlanowarElves()));
+        harness.handleListChoice(player1, "GREEN");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player1, List.of(new ColossodonYearling()));
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
@@ -79,16 +80,16 @@ class HavenOfTheSpiritDragonTest extends BaseCardTest {
     @Test
     @DisplayName("Third ability returns a Dragon from the graveyard and sacrifices the land")
     void returnsDragonFromGraveyard() {
-        Permanent haven = addReadyHaven();
-        Card dragon = new DragonWhelp();
+        addReadyHaven();
+        Card dragon = new StormwingDragon();
         harness.setGraveyard(player1, List.of(dragon));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 2, null, dragon.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        harness.assertInHand(player1, "Dragon Whelp");
-        harness.assertNotInGraveyard(player1, "Dragon Whelp");
+        harness.assertInHand(player1, "Stormwing Dragon");
+        harness.assertNotInGraveyard(player1, "Stormwing Dragon");
         harness.assertNotOnBattlefield(player1, "Haven of the Spirit Dragon");
     }
 
@@ -111,19 +112,110 @@ class HavenOfTheSpiritDragonTest extends BaseCardTest {
     @DisplayName("Third ability cannot target an ineligible graveyard card")
     void rejectsIneligibleGraveyardCard() {
         addReadyHaven();
-        Card elves = new LlanowarElves();
-        harness.setGraveyard(player1, List.of(elves));
+        Card beast = new ColossodonYearling();
+        harness.setGraveyard(player1, List.of(beast));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() ->
-                harness.activateAbility(player1, 0, 2, null, elves.getId(), Zone.GRAVEYARD))
+                harness.activateAbility(player1, 0, 2, null, beast.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Third ability cannot return a noncreature changeling card")
+    void rejectsNoncreatureDragonCard() {
+        addReadyHaven();
+        Card card = new CribSwap();
+        harness.setGraveyard(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 2, null, card.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Third ability cannot target a Dragon in an opponent's graveyard")
+    void rejectsOpponentsDragon() {
+        addReadyHaven();
+        Card dragon = new StormwingDragon();
+        harness.setGraveyard(player2, List.of(dragon));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 2, null, dragon.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The land is sacrificed and mana is paid before its return ability resolves")
+    void paysCostsBeforeResolution() {
+        addReadyHaven();
+        Card dragon = new StormwingDragon();
+        harness.setGraveyard(player1, List.of(dragon));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 2, null, dragon.getId(), Zone.GRAVEYARD);
+
+        harness.assertNotOnBattlefield(player1, "Haven of the Spirit Dragon");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(dragon)
+                .anyMatch(card -> card instanceof HavenOfTheSpiritDragon);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A target that leaves the graveyard is not returned")
+    void doesNotReturnRemovedTarget() {
+        addReadyHaven();
+        Card dragon = new StormwingDragon();
+        harness.setGraveyard(player1, List.of(dragon));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 2, null, dragon.getId(), Zone.GRAVEYARD);
+        gd.playerGraveyards.get(player1.getId()).remove(dragon);
+        harness.setExile(player1, List.of(dragon));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(dragon);
+        assertThat(gd.findExiledCard(dragon.getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dragon-restricted mana can pay a Dragon spell's generic cost")
+    void restrictedManaPaysGenericDragonCost() {
+        addReadyHaven();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new StormwingDragon()));
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeCreatureManaForColor(Set.of(CardSubtype.DRAGON), ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Dragon-restricted mana cannot pay the land's return ability cost")
+    void restrictedManaCannotPayAbilityCost() {
+        Permanent haven = addReadyHaven();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        haven.setTapped(false);
+        Card dragon = new StormwingDragon();
+        harness.setGraveyard(player1, List.of(dragon));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbility(player1, 0, 2, null, dragon.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Haven of the Spirit Dragon");
+    }
     private Permanent addReadyHaven() {
-        Permanent haven = new Permanent(new HavenOfTheSpiritDragon());
-        haven.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(haven);
-        return haven;
+        return harness.addToBattlefieldAndReturn(player1, new HavenOfTheSpiritDragon());
     }
 }
