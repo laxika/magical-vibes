@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "C13", collectorNumber = "137")
 @CardRegistration(set = "C15", collectorNumber = "175")
 @CardRegistration(set = "FIC", collectorNumber = "299")
+@CardRegistration(set = "CC1", collectorNumber = "3")
 public class BaneOfProgress extends Card {
 
     public BaneOfProgress() {
