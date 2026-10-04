@@ -33,6 +33,7 @@ class HyldaOfTheIcyCrownTest extends BaseCardTest {
         triggerHylda();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, TOKEN);
+        harness.passBothPriorities();
 
         List<Permanent> elementals = findPermanents(player1, "Elemental");
         assertThat(elementals).hasSize(1);
@@ -52,8 +53,13 @@ class HyldaOfTheIcyCrownTest extends BaseCardTest {
         triggerHylda();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, COUNTERS);
+        harness.passBothPriorities();
 
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Hylda of the Icy Crown")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Icy Manipulator")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(findPermanents(player1, "Grizzly Bears"))
                 .allMatch(permanent -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) == 1);
         assertThat(findPermanents(player2, "Grizzly Bears"))
@@ -71,6 +77,7 @@ class HyldaOfTheIcyCrownTest extends BaseCardTest {
         triggerHylda();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, SCRY);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
@@ -104,6 +111,65 @@ class HyldaOfTheIcyCrownTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(findPermanents(player1, "Elemental")).isEmpty();
+    }
+
+    @Test
+    void paidModeUsesASeparateTriggerBeforeCreatingToken() {
+        setupBoard();
+        triggerHylda();
+
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleListChoice(player1, TOKEN);
+
+            assertThat(findPermanents(player1, "Elemental")).isEmpty();
+            assertThat(gd.stack).hasSize(1);
+
+            harness.passBothPriorities();
+
+            assertThat(findPermanents(player1, "Elemental")).hasSize(1);
+        });
+    }
+
+    @Test
+    void tappingYourOwnCreatureDoesNotTrigger() {
+        setupBoard();
+        Permanent ownCreature = findPermanent(player1, "Grizzly Bears");
+
+        harness.activateAbility(player1, 1, null, ownCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void tappingOpponentsNoncreatureDoesNotTrigger() {
+        setupBoard();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new IcyManipulator());
+
+        harness.activateAbility(player1, 1, null, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void opponentTappingTheirOwnCreatureDoesNotTrigger() {
+        harness.addToBattlefield(player1, new HyldaOfTheIcyCrown());
+        harness.addToBattlefield(player2, new IcyManipulator());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void setupBoard() {
