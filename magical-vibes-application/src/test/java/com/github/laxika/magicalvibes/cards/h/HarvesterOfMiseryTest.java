@@ -24,7 +24,7 @@ class HarvesterOfMiseryTest extends BaseCardTest {
         Permanent opposingGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
         castHarvester();
-        resolveHarvesterAndItsTrigger();
+        resolveAllTriggers();
 
         assertThat(ownGiant.getPowerModifier()).isEqualTo(-2);
         assertThat(ownGiant.getToughnessModifier()).isEqualTo(-2);
@@ -40,7 +40,7 @@ class HarvesterOfMiseryTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         castHarvester();
-        resolveHarvesterAndItsTrigger();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -108,8 +108,50 @@ class HarvesterOfMiseryTest extends BaseCardTest {
         harness.castCreature(player1, 0);
     }
 
-    private void resolveHarvesterAndItsTrigger() {
+    @Test
+    void etbDebuffExpiresAndDoesNotAffectLaterCreatures() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        castHarvester();
+        resolveAllTriggers();
+
+        Permanent harvester = findPermanent(player1, "Harvester of Misery");
+        assertThat(harvester.getPowerModifier()).isZero();
+        assertThat(harvester.getToughnessModifier()).isZero();
+        assertThat(giant.getPowerModifier()).isEqualTo(-2);
+        assertThat(giant.getToughnessModifier()).isEqualTo(-2);
+
+        Permanent lateCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        assertThat(lateCreature.getPowerModifier()).isZero();
+        assertThat(lateCreature.getToughnessModifier()).isZero();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passBothPriorities();
+
+        assertThat(giant.getPowerModifier()).isZero();
+        assertThat(giant.getToughnessModifier()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void discardIsPaidBeforeResolutionAndCanKillYourOwnCreatureOnOpponentsTurn() {
+        harness.setHand(player1, List.of(new HarvesterOfMisery()));
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, bear.getId());
+
+        harness.assertInGraveyard(player1, "Harvester of Misery");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bear.getToughnessModifier()).isZero();
         harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(giant.getPowerModifier()).isZero();
+        assertThat(giant.getToughnessModifier()).isZero();
     }
 }
