@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NervousGardener;
+import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -19,14 +20,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HedgeWhisperer.class, Forest.class, GrizzlyBears.class})
+@CardUsed({HedgeWhisperer.class, Forest.class, NervousGardener.class, Murder.class})
 class HedgeWhispererTest extends BaseCardTest {
 
     @Test
     void collectingEvidenceAnimatesAControlledLandWhileHedgeWhispererRemainsTapped() {
         Permanent hedgeWhisperer = addReadyHedgeWhisperer();
         Permanent forest = addReadyForest();
-        List<Card> evidence = List.of(new GrizzlyBears(), new GrizzlyBears());
+        List<Card> evidence = List.of(new NervousGardener(), new NervousGardener());
         harness.setGraveyard(player1, evidence);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -59,7 +60,7 @@ class HedgeWhispererTest extends BaseCardTest {
     void animationEndsWhenHedgeWhispererBecomesUntapped() {
         Permanent hedgeWhisperer = addReadyHedgeWhisperer();
         Permanent forest = addReadyForest();
-        List<Card> evidence = List.of(new GrizzlyBears(), new GrizzlyBears());
+        List<Card> evidence = List.of(new NervousGardener(), new NervousGardener());
         harness.setGraveyard(player1, evidence);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -87,11 +88,87 @@ class HedgeWhispererTest extends BaseCardTest {
         Permanent opponentsForest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new NervousGardener(), new NervousGardener()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, opponentsForest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land you control");
+    }
+
+    @Test
+    void decliningUntapKeepsTheLandAnimated() {
+        Permanent hedgeWhisperer = addReadyHedgeWhisperer();
+        Permanent forest = addReadyForest();
+        List<Card> evidence = List.of(new NervousGardener(), new NervousGardener());
+        harness.setGraveyard(player1, evidence);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.handleMultipleCardsChosen(player1, evidence.stream().map(Card::getId).toList());
+        harness.passBothPriorities();
+        advanceToNextTurnWithMayChoice(player2, false);
+
+        assertThat(hedgeWhisperer.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void insufficientEvidenceSelectionDoesNotPayTheCost() {
+        Permanent hedgeWhisperer = addReadyHedgeWhisperer();
+        Permanent forest = addReadyForest();
+        List<Card> evidence = List.of(new NervousGardener(), new NervousGardener());
+        harness.setGraveyard(player1, evidence);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, forest.getId());
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(evidence.getFirst().getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(hedgeWhisperer.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(evidence);
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
+    }
+
+    @Test
+    void cannotActivateOutsideAMainPhase() {
+        Permanent hedgeWhisperer = addReadyHedgeWhisperer();
+        Permanent forest = addReadyForest();
+        harness.setGraveyard(player1, List.of(new NervousGardener(), new NervousGardener()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(hedgeWhisperer.isTapped()).isFalse();
+    }
+
+    @Test
+    void removingTheSourceBeforeResolutionDoesNotAnimateTheLand() {
+        Permanent hedgeWhisperer = addReadyHedgeWhisperer();
+        Permanent forest = addReadyForest();
+        List<Card> evidence = List.of(new NervousGardener(), new NervousGardener());
+        harness.setGraveyard(player1, evidence);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.handleMultipleCardsChosen(player1, evidence.stream().map(Card::getId).toList());
+        harness.castAndResolveInstant(player2, 0, hedgeWhisperer.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hedge Whisperer");
+        assertThat(gqs.isLand(gd, forest)).isTrue();
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrderElementsOf(evidence);
     }
 
     private Permanent addReadyHedgeWhisperer() {
