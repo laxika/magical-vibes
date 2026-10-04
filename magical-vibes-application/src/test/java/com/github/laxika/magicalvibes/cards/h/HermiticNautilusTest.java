@@ -47,10 +47,64 @@ class HermiticNautilusTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, nautilus)).isEqualTo(baseToughness);
     }
 
-    private Permanent addReadyNautilus() {
+    @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
         Permanent nautilus = harness.addToBattlefieldAndReturn(player1, new HermiticNautilus());
-        nautilus.setSummoningSick(false);
-        return nautilus;
+        nautilus.setSummoningSick(true);
+        nautilus.setTapped(true);
+        int basePower = gqs.getEffectivePower(gd, nautilus);
+        int baseToughness = gqs.getEffectiveToughness(gd, nautilus);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, nautilus)).isEqualTo(basePower + 3);
+        assertThat(gqs.getEffectiveToughness(gd, nautilus)).isEqualTo(baseToughness - 3);
+        assertThat(nautilus.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A second activation reduces toughness below zero and puts the creature in the graveyard")
+    void secondActivationKillsNautilus() {
+        addReadyNautilus();
+        addActivationMana();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Hermitic Nautilus");
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hermitic Nautilus");
+        harness.assertInGraveyard(player1, "Hermitic Nautilus");
+    }
+
+    @Test
+    @DisplayName("The boost affects only the source creature")
+    void boostDoesNotAffectOtherCreatures() {
+        addReadyNautilus();
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new HermiticNautilus());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new HermiticNautilus());
+        int otherPower = gqs.getEffectivePower(gd, other);
+        int otherToughness = gqs.getEffectiveToughness(gd, other);
+        int opponentPower = gqs.getEffectivePower(gd, opponent);
+        int opponentToughness = gqs.getEffectiveToughness(gd, opponent);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(otherPower);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(otherToughness);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(opponentPower);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(opponentToughness);
+    }
+
+    private Permanent addReadyNautilus() {
+        return addCreatureReady(player1, new HermiticNautilus());
     }
 
     private void addActivationMana() {
