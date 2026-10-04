@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,10 +11,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HeartwoodShard.class, AlphaMyr.class})
+@CardUsed({HeartwoodShard.class, AlphaMyr.class, Shatter.class})
 class HeartwoodShardTest extends BaseCardTest {
 
     @Test
@@ -83,5 +86,57 @@ class HeartwoodShardTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, shard.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Ability resolves even if the shard is destroyed in response")
+    void abilityResolvesAfterSourceIsDestroyed() {
+        Permanent shard = addCreatureReady(player1, new HeartwoodShard());
+        Permanent target = addCreatureReady(player1, new AlphaMyr());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.castAndResolveInstant(player2, 0, shard.getId());
+        harness.assertInGraveyard(player1, "Heartwood Shard");
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability does not grant trample when its target is destroyed in response")
+    void destroyedTargetDoesNotGrantTrampleToAnotherCreature() {
+        Permanent shard = addCreatureReady(player1, new HeartwoodShard());
+        Permanent target = addCreatureReady(player1, new AlphaMyr());
+        Permanent other = addCreatureReady(player1, new AlphaMyr());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.assertInGraveyard(player1, "Alpha Myr");
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(shard.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A newly entered noncreature shard can pay its tap cost")
+    void newlyEnteredShardCanActivate() {
+        Permanent shard = harness.addToBattlefieldAndReturn(player1, new HeartwoodShard());
+        Permanent target = addCreatureReady(player1, new AlphaMyr());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        assertThat(shard.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
     }
 }
