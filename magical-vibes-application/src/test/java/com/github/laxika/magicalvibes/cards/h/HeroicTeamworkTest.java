@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -73,15 +74,129 @@ class HeroicTeamworkTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    void singleTargetBoostExpiresAtCleanup() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        cast(List.of(target.getId()), List.of());
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    void teamworkCanTapSummoningSickCreaturesIncludingItsTarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card drawnCard = new Island();
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        cast(List.of(first.getId()), List.of(first.getId(), second.getId()));
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    void teamworkCannotUseTheSpellsFutureBoostToReachRequiredPower() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HeroicTeamwork()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifices(
+                player1, 0, target.getId(), List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("total power at least 3");
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void teamworkRejectsAlreadyTappedCreatures() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent payer = addCreatureReady(player1, new AirElemental());
+        payer.tap();
+        harness.setHand(player1, List.of(new HeroicTeamwork()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifices(
+                player1, 0, target.getId(), List.of(payer.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    void teamworkRejectsOpponentsCreatures() {
+        Permanent target = addCreatureReady(player2, new AirElemental());
+        harness.setHand(player1, List.of(new HeroicTeamwork()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifices(
+                player1, 0, target.getId(), List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creatures you control");
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void teamworkCannotCountTheSameCreatureTwice() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HeroicTeamwork()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifices(
+                player1, 0, target.getId(), List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Duplicate creatures");
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void losingEveryTargetPreventsTheTeamworkDraw() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent payer = addCreatureReady(player1, new AirElemental());
+        Card libraryCard = new Island();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of(new HeroicTeamwork()));
+        addMana();
+        harness.castInstantWithSacrifices(player1, 0, target.getId(), List.of(payer.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(payer.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        harness.assertInGraveyard(player1, "Heroic Teamwork");
+    }
+
+    @Test
+    void survivingTargetStillReceivesBoost() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HeroicTeamwork()));
+        addMana();
+        harness.castInstant(player1, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(3);
+    }
+
     private void cast(List<UUID> targetIds, List<UUID> teamworkIds) {
         harness.setHand(player1, List.of(new HeroicTeamwork()));
         addMana();
         if (teamworkIds.isEmpty()) {
-            harness.castInstant(player1, 0, targetIds);
+            harness.castAndResolveInstant(player1, 0, targetIds);
         } else {
             harness.castInstantWithSacrifices(player1, 0, targetIds.get(0), teamworkIds);
+            harness.passBothPriorities();
         }
-        harness.passBothPriorities();
     }
 
     private void addMana() {
