@@ -9,12 +9,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IfnirDeadlands.class, AirElemental.class, GraspingDunes.class, GrizzlyBears.class})
 class IfnirDeadlandsTest extends BaseCardTest {
 
     @Test
@@ -63,9 +65,8 @@ class IfnirDeadlandsTest extends BaseCardTest {
     @DisplayName("With multiple Deserts, controller chooses which to sacrifice")
     void choosesWhichDesertToSacrifice() {
         Permanent deadlands = addReadyDeadlands(player1);
-        Permanent otherDesert = new Permanent(new GraspingDunes());
+        Permanent otherDesert = harness.addToBattlefieldAndReturn(player1, new GraspingDunes());
         otherDesert.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherDesert);
         Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -108,10 +109,96 @@ class IfnirDeadlandsTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
     }
 
+    @Test
+    @DisplayName("Black mana cannot be produced without enough life to pay")
+    void cannotPayLifeAtZeroLife() {
+        Permanent deadlands = addReadyDeadlands(player1);
+        harness.setLife(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough life");
+
+        assertThat(deadlands.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Black mana can be produced outside the controller's main phase")
+    void blackManaIsNotRestrictedToSorcerySpeed() {
+        Permanent deadlands = addReadyDeadlands(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        harness.assertLife(player1, lifeBefore - 1);
+        assertThat(deadlands.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Counter ability cannot be activated during upkeep")
+    void countersCannotBeActivatedDuringUpkeep() {
+        Permanent deadlands = addReadyDeadlands(player1);
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, elemental.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+
+        assertThat(deadlands.isTapped()).isFalse();
+        harness.assertNotInGraveyard(player1, "Ifnir Deadlands");
+    }
+
+    @Test
+    @DisplayName("Counter ability requires an empty stack and sacrifices the Desert before resolution")
+    void countersRequireAnEmptyStack() {
+        Permanent firstDeadlands = addReadyDeadlands(player1);
+        Permanent secondDeadlands = addReadyDeadlands(player1);
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, 0, 2, null, elemental.getId());
+        harness.handlePermanentChosen(player1, firstDeadlands.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInGraveyard(player1, "Ifnir Deadlands");
+        assertThat(elemental.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, elemental.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(secondDeadlands.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(elemental.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Two -1/-1 counters send a two-toughness creature to the graveyard")
+    void countersKillTwoToughnessCreature() {
+        addReadyDeadlands(player1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 2, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getId().equals(bears.getId()));
+    }
+
     private Permanent addReadyDeadlands(Player player) {
-        Permanent perm = new Permanent(new IfnirDeadlands());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new IfnirDeadlands());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
