@@ -104,8 +104,7 @@ class HorribleHordesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castInstant(player1, 0, removedBlocker.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(hordes.getPowerModifier()).isZero();
         assertThat(hordes.getToughnessModifier()).isZero();
@@ -129,9 +128,35 @@ class HorribleHordesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castInstant(player1, 0, leadingPermanent.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
+        assertThat(hordes.getPowerModifier()).isEqualTo(1);
+        assertThat(hordes.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Removing a blocker after rampage resolves does not reduce the bonus")
+    void blockerRemovedAfterResolutionDoesNotReduceBonus() {
+        Permanent hordes = addCreatureReady(player1, new HorribleHordes());
+        hordes.setAttacking(true);
+        addCreatureReady(player2, new IronTuskElephant());
+        Permanent removedBlocker = addCreatureReady(player2, new IronTuskElephant());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+        resolveAllTriggers();
+
+        assertThat(hordes.getPowerModifier()).isEqualTo(1);
+        assertThat(hordes.getToughnessModifier()).isEqualTo(1);
+
+        harness.setHand(player1, List.of(new Boomerang()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, removedBlocker.getId());
+
+        harness.assertInHand(player2, "Iron Tusk Elephant");
         assertThat(hordes.getPowerModifier()).isEqualTo(1);
         assertThat(hordes.getToughnessModifier()).isEqualTo(1);
     }
