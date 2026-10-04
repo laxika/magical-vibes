@@ -40,11 +40,11 @@ class HungryForMoreTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Vampire");
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-
-        harness.assertNotOnBattlefield(player1, "Vampire");
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(TurnStep.END_STEP);
+            harness.passBothPriorities();
+            harness.assertNotOnBattlefield(player1, "Vampire");
+        });
     }
 
     @Test
@@ -56,18 +56,56 @@ class HungryForMoreTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(findPermanents(player1, "Vampire")).hasSize(1);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(hungryForMore);
     }
 
-    private void castFromHand() {
-        harness.setHand(player1, List.of(new HungryForMore()));
+    @Test
+    @DisplayName("The token remains until the delayed sacrifice trigger resolves")
+    void tokenRemainsWhileSacrificeTriggerIsOnStack() {
+        castFromHand();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(TurnStep.END_STEP);
+            harness.assertOnBattlefield(player1, "Vampire");
+            assertThat(gd.stack).hasSize(1);
+
+            harness.passBothPriorities();
+            harness.assertNotOnBattlefield(player1, "Vampire");
+        });
+    }
+
+    @Test
+    @DisplayName("Casting from hand and then with flashback sacrifices both created tokens")
+    void handCastAndFlashbackEachScheduleTheirOwnTokenSacrifice() {
+        castFromHand();
+        harness.assertInGraveyard(player1, "Hungry for More");
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castSorcery(player1, 0, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(findPermanents(player1, "Vampire")).hasSize(2);
+        harness.assertNotInGraveyard(player1, "Hungry for More");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(card -> card.getName()).contains("Hungry for More");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.passUntil(TurnStep.END_STEP);
+            assertThat(findPermanents(player1, "Vampire")).hasSize(2);
+            harness.passBothPriorities();
+            assertThat(findPermanents(player1, "Vampire")).hasSize(1);
+            harness.passBothPriorities();
+            harness.assertNotOnBattlefield(player1, "Vampire");
+        });
+    }
+
+    private void castFromHand() {
+        harness.castFromHand(player1, new HungryForMore(), "{B}{R}");
         harness.passBothPriorities();
     }
 }
