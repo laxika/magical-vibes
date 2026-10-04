@@ -279,6 +279,44 @@ class IcyManipulatorTest extends BaseCardTest {
         assertThat(gameLogContains("taps")).isTrue();
     }
 
+    @Test
+    @DisplayName("Ability still taps its target after Icy Manipulator leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent icy = addReadyIcy(player1);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(icy);
+        gd.playerGraveyards.get(player1.getId()).add(icy.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Targeted land can produce mana in response and remains a legal target")
+    void targetedLandCanProduceManaInResponse() {
+        addReadyIcy(player1);
+        Permanent target = addReadyLand(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.tapPermanent(player2, 0);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+        assertThat(gameLogContains("fizzles")).isFalse();
+    }
+
     private Permanent addReadyIcy(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new IcyManipulator());
         perm.setSummoningSick(false);
