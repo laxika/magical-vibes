@@ -9699,8 +9699,8 @@ public class TriggerCollectionService {
         triggeredAbilityQueueService.processNextSpellTargetTrigger(gameData);
     }
 
-    public void beginSimultaneousTriggerOrder(GameData gameData) {
-        triggeredAbilityQueueService.beginSpellCastTriggerOrder(gameData);
+    public void beginEvokeTriggerOrder(GameData gameData) {
+        triggeredAbilityQueueService.beginEvokeTriggerOrder(gameData);
     }
 
     public void processNextETBSpellTargetTrigger(GameData gameData) {

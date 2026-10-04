@@ -236,7 +236,7 @@ public class AutoPassService {
         }
 
         if (!gameData.interaction.isAwaitingInput() && gameData.pendingInteractions.isEmpty()) {
-            triggerCollectionService.beginSimultaneousTriggerOrder(gameData);
+            triggerCollectionService.beginEvokeTriggerOrder(gameData);
         }
 
         boolean checkAfterStepAdvance = false;

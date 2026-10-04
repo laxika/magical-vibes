@@ -811,8 +811,9 @@ public class EtbTriggerService {
                             || effect instanceof com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect distribution
                             && distribution.etbAssignments())
                     ? new java.util.LinkedHashMap<>(gameData.pendingETBDamageAssignments) : Map.of();
-            if (!dividedAssignments.isEmpty()) gameData.pendingETBDamageAssignments = Map.of();
-            if (!dividedAssignments.isEmpty() && activeTargetIds.isEmpty()) {
+            if (!dividedAssignments.isEmpty() && activeTargetIds.isEmpty()
+                    && otherEffects.stream().noneMatch(
+                    com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect.class::isInstance)) {
                 activeTargetIds = List.copyOf(dividedAssignments.keySet());
             }
             boolean hasTarget = targetId != null || !activeTargetIds.isEmpty();
@@ -857,7 +858,7 @@ public class EtbTriggerService {
                     && (e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                     || e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)));
 
-            if ((hasDynamicTargetCount && !hasTarget)
+            if ((hasDynamicTargetCount && etbNeedsTarget && !hasTarget)
                     || hasUnselectedDynamicEtbTargetGroup(card, otherEffects, targetId, targetIds)
                     || gateConditionalNeedsTarget
                     || mayPayManaNeedsTarget
@@ -912,6 +913,9 @@ public class EtbTriggerService {
                             gameData.id, card.getName());
                 }
             } else if (!etbNeedsTarget || hasTarget) {
+                if (!dividedAssignments.isEmpty()) {
+                    gameData.pendingETBDamageAssignments = Map.of();
+                }
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 UUID sourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
 

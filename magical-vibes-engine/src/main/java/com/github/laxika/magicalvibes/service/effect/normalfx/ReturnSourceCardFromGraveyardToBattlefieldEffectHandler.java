@@ -79,9 +79,12 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
             permanent.tap();
         }
         if (e.enterWithCounter() != null) {
-            int counterCount = e.enterWithCounter() == CounterType.PLUS_ONE_PLUS_ONE
+            int counterCount = gameQueryService.cantHaveCountersForController(gameData, permanent, ownerId)
+                    ? 0
+                    : e.enterWithCounter() == CounterType.PLUS_ONE_PLUS_ONE
                     ? gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, ownerId, 1)
-                    : 1;
+                    : gameQueryService.replaceCounters(gameData, permanent, ownerId,
+                    e.enterWithCounter(), 1, entry.getControllerId());
             if (counterCount > 0) {
                 permanent.setCounterCount(e.enterWithCounter(), counterCount);
             }

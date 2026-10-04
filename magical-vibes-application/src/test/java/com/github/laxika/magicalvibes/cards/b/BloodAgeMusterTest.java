@@ -132,6 +132,13 @@ class BloodAgeMusterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         resolveAllTriggers();
+        if (gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.Scry.class) != null) {
+            gs.handleInteractionAnswer(gd, player1,
+                    new com.github.laxika.magicalvibes.service.interaction.InteractionAnswer.ScryOrder(
+                            List.of(0), List.of()));
+            resolveAllTriggers();
+        }
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
     }
 

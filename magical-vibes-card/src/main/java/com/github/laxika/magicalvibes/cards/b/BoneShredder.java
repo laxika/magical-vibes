@@ -31,6 +31,6 @@ public class BoneShredder extends Card {
                 )),
                 "Target must be a nonartifact, nonblack creature"
         )).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new DestroyTargetPermanentEffect());
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new RegisterEchoAtNextUpkeepEffect("{2}{B}"));
+        addEffect(EffectSlot.STATIC, new RegisterEchoAtNextUpkeepEffect("{2}{B}"));
     }
 }

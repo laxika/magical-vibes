@@ -1,5 +1,7 @@
 # Trigger Slot Targeting Reference
 
+`ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT` uses `TriggerMode.PER_COUNTER` for abilities that trigger for each individual counter, such as Bloodcrazed Hoplite. The counter-placement collector queues a separate ability and mandatory target choice for each counter actually placed; all targets are chosen before those abilities resolve. The default mode still fires once per placement event.
+
 `MultiTargetConstraint.ONE_PER_OPPONENT` requires one legal permanent target controlled by every opponent, even when an opponent has no legal targets. Spells using it cannot be cast without satisfying every opponent's target requirement. `ONE_PER_CONTROLLER_IF_ABLE` retains its optional omission for opponents without legal targets.
 
 `ON_CONTROLLER_CASTS_SPELL` same-name graveyard casts use the dedicated `CastSameNameCardFromGraveyardOnSpellCastEffect` collector path: the cast spell's name is snapshotted, the graveyard card is chosen through `SpellGraveyardTargetTrigger`, and the existing graveyard-cast effect offers the normal-cost cast after targeting.

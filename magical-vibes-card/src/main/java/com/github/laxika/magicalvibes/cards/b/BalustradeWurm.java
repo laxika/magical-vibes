@@ -6,11 +6,9 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 
 import java.util.List;
 
@@ -24,13 +22,7 @@ public class BalustradeWurm extends Card {
                 false,
                 "{2}{G}{G}",
                 List.of(
-                        ReturnCardFromGraveyardEffect.builder()
-                                .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                                .filter(new CardIsSelfPredicate())
-                                .returnAll(true)
-                                .enterWithCounter(CounterType.FINALITY)
-                                .enterWithCounterCount(1)
-                                .build()
+                        new ReturnSourceCardFromGraveyardToBattlefieldEffect(false, CounterType.FINALITY)
                 ),
                 "{2}{G}{G}: Return this card from your graveyard to the battlefield with a finality counter on it. "
                         + "Activate only if there are four or more card types among cards in your graveyard and only as a sorcery.",

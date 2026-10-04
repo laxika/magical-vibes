@@ -558,10 +558,15 @@ public class GraveyardService {
                     || opponentHasExileReplacementEffect(gameData, ownerId) != null
                     || shouldExileOwnCardInsteadOfGraveyard(
                     gameData, ownerId, card, battlefieldControllerId, battlefieldSnapshot)) {
-                gameData.pendingInteractions.addLast(new PendingInteraction.ColorChoice(
+                var choice = new PendingInteraction.ColorChoice(
                         ownerId, null, null,
                         new ChoiceContext.GraveyardShuffleOrExileReplacementChoice(ownerId, card),
-                        List.of("SHUFFLE", "EXILE"), "Choose whether to shuffle this card into its owner's library or exile it."));
+                        List.of("SHUFFLE", "EXILE"), "Choose whether to shuffle this card into its owner's library or exile it.");
+                if (gameData.interaction.isAwaitingInput()) {
+                    gameData.pendingInteractions.addLast(choice);
+                } else {
+                    interactionHandlerRegistry.begin(gameData, choice);
+                }
                 return false;
             }
             List<Card> deck = gameData.playerDecks.get(ownerId);

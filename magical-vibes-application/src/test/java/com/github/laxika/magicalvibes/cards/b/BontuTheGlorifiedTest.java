@@ -117,7 +117,11 @@ class BontuTheGlorifiedTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))));
-        assertThat(findPermanent(player1, "Bontu the Glorified").isBlockedThisTurn()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).allSatisfy(blocker -> {
+            assertThat(blocker.isBlocking()).isTrue();
+            assertThat(blocker.getBlockingTargetIds())
+                    .containsExactly(findPermanent(player1, "Bontu the Glorified").getId());
+        });
     }
 
     @Test

@@ -1571,6 +1571,14 @@ public class TriggeredAbilityQueueService {
     }
 
     public void beginSpellCastTriggerOrder(GameData gameData) {
+        beginSpellCastTriggerOrder(gameData, false);
+    }
+
+    public void beginEvokeTriggerOrder(GameData gameData) {
+        beginSpellCastTriggerOrder(gameData, true);
+    }
+
+    private void beginSpellCastTriggerOrder(GameData gameData, boolean evokeOnly) {
         if (gameData.interaction.isAwaitingInput()
                 || gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)
                 || gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
@@ -1581,9 +1589,17 @@ public class TriggeredAbilityQueueService {
                     || candidate.getTriggeringCardId() == null || candidate.isTriggerOrderChosen()) {
                 continue;
             }
+            if (evokeOnly && (candidate.getSourcePermanentSnapshot() == null
+                    || !candidate.getSourcePermanentSnapshot().isEvoked()
+                    || candidate.getCard() == null
+                    || !candidate.getTriggeringCardId().equals(candidate.getCard().getId()))) {
+                continue;
+            }
             List<StackEntry> simultaneous = gameData.stack.stream()
                     .filter(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                             && !entry.isTriggerOrderChosen()
+                            && (!evokeOnly || java.util.Objects.equals(
+                            candidate.getSourcePermanentId(), entry.getSourcePermanentId()))
                             && candidate.getControllerId().equals(entry.getControllerId())
                             && candidate.getTriggeringCardId().equals(entry.getTriggeringCardId()))
                     .toList();

@@ -576,7 +576,7 @@ public class PermanentCounterSupport {
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gets " + counterText + "."));
         log.info("Game {} - {} gets {} +1/+1 counter(s)", gameData.id, target.getCard().getName(), counters);
 
-        firePlusOnePlusOneCounterTriggers(gameData, target, placingPlayerId);
+        firePlusOnePlusOneCounterTriggers(gameData, target, placingPlayerId, List.of(), counters);
     }
 
     public void placeCountersOnPermanents(GameData gameData, StackEntry entry, List<UUID> permanentIds, CounterType counterType) {
@@ -731,7 +731,7 @@ public class PermanentCounterSupport {
                     yield null;
                 }
                 target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count);
-                firePlusOnePlusOneCounterTriggers(gameData, target, counterPlacingPlayerId);
+                firePlusOnePlusOneCounterTriggers(gameData, target, counterPlacingPlayerId, List.of(), count);
                 yield "+1/+1";
             }
             case PLUS_ONE_PLUS_ZERO -> {
@@ -1338,7 +1338,12 @@ public class PermanentCounterSupport {
 
     public void firePlusOnePlusOneCounterTriggers(GameData gameData, Permanent target,
                                                    UUID placingPlayerId, List<Permanent> excludedSources) {
-        firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target, placingPlayerId);
+        firePlusOnePlusOneCounterTriggers(gameData, target, placingPlayerId, excludedSources, 1);
+    }
+
+    private void firePlusOnePlusOneCounterTriggers(GameData gameData, Permanent target,
+                                                    UUID placingPlayerId, List<Permanent> excludedSources, int count) {
+        firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target, placingPlayerId, count);
         firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
                 gameData, target, 1, null, excludedSources);
         firePlusOnePlusOneCountersPutOnControlledHumanTriggers(gameData, target);
@@ -1630,6 +1635,11 @@ public class PermanentCounterSupport {
 
     private void firePlusOnePlusOneCountersPutOnSelfTriggers(GameData gameData, Permanent target,
                                                              UUID placingPlayerId) {
+        firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target, placingPlayerId, 1);
+    }
+
+    private void firePlusOnePlusOneCountersPutOnSelfTriggers(GameData gameData, Permanent target,
+                                                             UUID placingPlayerId, int count) {
         Card card = target.getCard();
         List<CardEffect> effects = card.getEffects(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT);
         if (effects.isEmpty()) {
@@ -1648,6 +1658,23 @@ public class PermanentCounterSupport {
             return;
         }
 
+        List<CardEffect> perCounter = card.getEffectRegistrations(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT)
+                .stream().filter(registration -> registration.triggerMode()
+                        == com.github.laxika.magicalvibes.model.TriggerMode.PER_COUNTER)
+                .map(registration -> registration.effect()).toList();
+        for (CardEffect effect : perCounter) {
+            for (int i = 0; i < count; i++) {
+                if (effect.targetSpec().declaredTarget() != null) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                            card, controllerId, List.of(effect), "+1/+1 counter placement", target.getId()));
+                } else {
+                    gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                            card, controllerId, card.getName() + "'s triggered ability",
+                            List.of(effect), null, target.getId()));
+                }
+            }
+        }
+        effects = effects.stream().filter(effect -> !perCounter.contains(effect)).toList();
         List<CardEffect> effectsToResolve = new ArrayList<>();
         boolean oncePerTurnQueued = false;
         for (CardEffect effect : effects) {

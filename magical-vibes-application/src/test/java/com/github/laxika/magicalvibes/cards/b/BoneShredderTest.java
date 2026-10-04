@@ -122,6 +122,7 @@ class BoneShredderTest extends BaseCardTest {
     @Test
     @DisplayName("Echo still triggers when there is no eligible entry target")
     void echoTriggersWithoutEligibleEntryTarget() {
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new BoneShredder()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
@@ -144,6 +145,7 @@ class BoneShredderTest extends BaseCardTest {
     @Test
     @DisplayName("Echo still triggers when the destruction target leaves before resolution")
     void echoTriggersAfterEntryAbilityLosesTarget() {
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player2, new BouncingBeebles());
         harness.setHand(player1, List.of(new BoneShredder(), new Snap()));
         harness.addMana(player1, ManaColor.BLACK, 3);

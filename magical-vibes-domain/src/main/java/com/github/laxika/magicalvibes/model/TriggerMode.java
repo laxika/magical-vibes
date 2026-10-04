@@ -5,6 +5,7 @@ package com.github.laxika.magicalvibes.model;
  * <ul>
  *   <li>{@link #NORMAL} — fires once per event (default)</li>
  *   <li>{@link #PER_BLOCKER} — fires once per blocking creature (e.g. "becomes blocked by a creature")</li>
+ *   <li>{@link #PER_COUNTER} — fires once for each counter put on the source in a placement event</li>
  *   <li>{@link #ONCE_PER_BLOCK} — fires once for a block declaration, even when the source blocks multiple creatures</li>
  *   <li>{@link #ONCE_PER_BATCH} — fires once when several matching objects are processed as one event</li>
  * </ul>
@@ -15,5 +16,7 @@ public enum TriggerMode {
     ONCE_PER_BLOCK,
     ONCE_PER_BATCH,
     /** This registration is its own triggered ability instead of another instruction in a shared ability. */
-    INDEPENDENT
+    INDEPENDENT,
+    /** Fires separately for each individual counter placed in a counter-placement event. */
+    PER_COUNTER
 }
