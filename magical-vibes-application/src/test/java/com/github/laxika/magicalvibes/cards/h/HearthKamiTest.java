@@ -81,4 +81,55 @@ class HearthKamiTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Ornithopter");
         harness.assertInGraveyard(player1, "Hearth Kami");
     }
+
+    @Test
+    @DisplayName("Sacrifices itself as a cost before destroying an artifact it controls")
+    void sacrificesImmediatelyAndCanTargetOwnArtifact() {
+        harness.addToBattlefield(player1, new HearthKami());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RodOfRuin());
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, 4, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Hearth Kami");
+        harness.assertInGraveyard(player1, "Hearth Kami");
+        harness.assertOnBattlefield(player1, "Rod of Ruin");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Rod of Ruin");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without enough mana to pay X")
+    void cannotActivateWithInsufficientMana() {
+        harness.addToBattlefield(player1, new HearthKami());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RodOfRuin());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 4, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Hearth Kami");
+        harness.assertNotInGraveyard(player1, "Hearth Kami");
+        harness.assertOnBattlefield(player2, "Rod of Ruin");
+    }
+
+    @Test
+    @DisplayName("Sacrifice cost remains paid when the target is sacrificed in response")
+    void targetCanBeSacrificedInResponse() {
+        harness.addToBattlefield(player1, new HearthKami());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BottleGnomes());
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, 3, target.getId());
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 23);
+        harness.assertInGraveyard(player2, "Bottle Gnomes");
+        harness.assertInGraveyard(player1, "Hearth Kami");
+        harness.assertNotOnBattlefield(player1, "Hearth Kami");
+    }
 }
