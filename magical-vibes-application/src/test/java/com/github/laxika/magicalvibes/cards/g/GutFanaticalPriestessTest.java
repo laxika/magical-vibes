@@ -31,9 +31,7 @@ class GutFanaticalPriestessTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(gut.getId()))
                 .extracting(Card::getName)
                 .containsExactly("Llanowar Elves");
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .extracting(Card::getName)
-                .doesNotContain("Llanowar Elves");
+        harness.assertNotInGraveyard(player2, "Llanowar Elves");
     }
 
     @Test
@@ -97,11 +95,115 @@ class GutFanaticalPriestessTest extends BaseCardTest {
         List<Permanent> tokens = specializeGut(new Forest(), 4);
         assertThat(gd.playerBattlefields.get(player1.getId())).containsAll(tokens);
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContainAnyElementsOf(tokens);
+    }
+
+    @Test
+    void whiteCopiesHaveOneSharedDelayedSacrificeTrigger() {
+        List<Permanent> tokens = specializeGut(new Plains(), 0);
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsAll(tokens);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContainAnyElementsOf(tokens);
+    }
+
+    @Test
+    void delayedSacrificeCannotSacrificeACopyControlledByAnOpponent() {
+        Permanent token = specializeGut(new Forest(), 4).getFirst();
+        gd.playerBattlefields.get(player1.getId()).remove(token);
+        gd.playerBattlefields.get(player2.getId()).add(token);
+
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(trigger -> assertThat(trigger.getControllerId()).isEqualTo(player1.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(token);
+    }
+
+    @Test
+    void optionalFightCanBeDeclinedAndLaterDeathStillExilesTheOpponent() {
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new GutFanaticalPriestess()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castCreature(player1, 0, List.of(opposingCreature.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingCreature);
+        assertThat(opposingCreature.getMarkedDamage()).isZero();
+        opposingCreature.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        Permanent gut = findPermanent(player1, "Gut, Fanatical Priestess");
+        assertThat(gd.getCardsExiledByPermanent(gut.getId()))
+                .extracting(Card::getName).containsExactly("Llanowar Elves");
+        harness.assertNotInGraveyard(player2, "Llanowar Elves");
+    }
+
+    @Test
+    void specializationWithoutAnExiledCreatureCreatesNoCopies() {
+        Permanent gut = harness.addToBattlefieldAndReturn(player1, new GutFanaticalPriestess());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(gut), 4, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(gut);
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Gut, Bestial Fanatic");
+    }
+
+    @Test
+    void specializationCanDiscardAGreenCreatureAndCopiesRetainItsActivatedAbility() {
+        Permanent token = specializeGut(new GrizzlyBears(), 4).getFirst();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        int manaBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN);
+
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(token));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(manaBefore + 1);
+    }
+
+    @Test
+    void exileReplacementExpiresAtTheEndOfTheTurn() {
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new GutFanaticalPriestess()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castCreature(player1, 0, List.of(opposingCreature.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent gut = findPermanent(player1, "Gut, Fanatical Priestess");
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        opposingCreature.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        assertThat(gd.getCardsExiledByPermanent(gut.getId())).isEmpty();
+    }
+
+    @Test
+    void specializationRemainsAfterGutDies() {
+        specializeGut(new Forest(), 4);
+        Permanent gut = findPermanent(player1, "Gut, Bestial Fanatic");
+
+        gut.setMarkedDamage(4);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Gut, Bestial Fanatic");
+        harness.assertInGraveyard(player1, "Gut, Bestial Fanatic");
+        harness.assertNotInGraveyard(player1, "Gut, Fanatical Priestess");
     }
 
     private List<Permanent> specializeGut(Card discard, int abilityIndex) {
@@ -131,9 +233,6 @@ class GutFanaticalPriestessTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Gut, Fanatical Priestess"))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Gut, Fanatical Priestess");
     }
 }
