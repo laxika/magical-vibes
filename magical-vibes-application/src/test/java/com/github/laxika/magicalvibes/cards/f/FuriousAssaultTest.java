@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FuriousAssault.class, GarrukWildspeaker.class, WildJhovall.class, Tremor.class})
 class FuriousAssaultTest extends BaseCardTest {
@@ -65,5 +66,48 @@ class FuriousAssaultTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("The creature's caster can target themselves with the mandatory trigger")
+    void creatureSpellCanDamageController() {
+        harness.addToBattlefield(player1, new FuriousAssault());
+        harness.castFromHand(player1, new WildJhovall(), "{3}{R}");
+
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A creature entering without being cast does not trigger Furious Assault")
+    void creatureEnteringWithoutCastDoesNotTrigger() {
+        harness.addToBattlefield(player1, new FuriousAssault());
+
+        harness.enterBattlefieldAndReturn(player1, new WildJhovall());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The damage trigger cannot target a creature")
+    void creatureIsNotALegalTarget() {
+        harness.addToBattlefield(player1, new FuriousAssault());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new WildJhovall());
+        harness.castFromHand(player1, new WildJhovall(), "{3}{R}");
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
     }
 }
