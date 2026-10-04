@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEffe
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "THB", collectorNumber = "84")
+@CardRegistration(set = "THB", collectorNumber = "311")
 public class AphemiaTheCacophony extends Card {
 
     public AphemiaTheCacophony() {

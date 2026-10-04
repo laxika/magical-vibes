@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 
 @CardRegistration(set = "THB", collectorNumber = "60")
+@CardRegistration(set = "THB", collectorNumber = "306")
 public class ProteanThaumaturge extends Card {
 
     public ProteanThaumaturge() {

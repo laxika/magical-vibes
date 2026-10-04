@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AllureOfTheUnknownEffect;
 
 @CardRegistration(set = "THB", collectorNumber = "207")
+@CardRegistration(set = "THB", collectorNumber = "332")
 public class AllureOfTheUnknown extends Card {
 
     public AllureOfTheUnknown() {

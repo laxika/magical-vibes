@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "93")
+@CardRegistration(set = "THB", collectorNumber = "262")
 public class ErebosBleakHearted extends Card {
 
     public ErebosBleakHearted() {

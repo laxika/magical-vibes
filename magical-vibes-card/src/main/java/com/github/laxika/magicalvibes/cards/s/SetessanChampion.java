@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "THB", collectorNumber = "198")
+@CardRegistration(set = "THB", collectorNumber = "331")
 @CardRegistration(set = "WOC", collectorNumber = "132")
 public class SetessanChampion extends Card {
 

@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "125")
+@CardRegistration(set = "THB", collectorNumber = "264")
 @CardRegistration(set = "CMM", collectorNumber = "204")
 public class AnaxHardenedInTheForge extends Card {
 

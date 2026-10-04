@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "1")
+@CardRegistration(set = "THB", collectorNumber = "353")
 public class AlseidOfLifesBounty extends Card {
 
     public AlseidOfLifesBounty() {

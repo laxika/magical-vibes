@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ReturnAurasFromGraveyardAttachedToCreaturesEffect;
 
 @CardRegistration(set = "THB", collectorNumber = "156")
+@CardRegistration(set = "THB", collectorNumber = "321")
 public class StormHerald extends Card {
 
     public StormHerald() {

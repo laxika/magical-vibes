@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 
 @CardRegistration(set = "NCC", collectorNumber = "318")
+@CardRegistration(set = "THB", collectorNumber = "297")
 public class TreeshakerChimera extends Card {
 
     public TreeshakerChimera() {

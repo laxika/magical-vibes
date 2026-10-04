@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterWith
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
+@CardRegistration(set = "THB", collectorNumber = "267")
 @CardRegistration(set = "THB", collectorNumber = "196")
 @CardRegistration(set = "MUL", collectorNumber = "28")
 @CardRegistration(set = "MUL", collectorNumber = "93")

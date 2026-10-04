@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceGraveyardSpellCastCostE
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 
 @CardRegistration(set = "THB", collectorNumber = "98")
+@CardRegistration(set = "THB", collectorNumber = "314")
 @CardRegistration(set = "SLD", collectorNumber = "953")
 @CardRegistration(set = "SLD", collectorNumber = "954")
 @CardRegistration(set = "SLD", collectorNumber = "1643")

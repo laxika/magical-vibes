@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "185")
+@CardRegistration(set = "THB", collectorNumber = "266")
 public class NyleaKeenEyed extends Card {
 
     public NyleaKeenEyed() {

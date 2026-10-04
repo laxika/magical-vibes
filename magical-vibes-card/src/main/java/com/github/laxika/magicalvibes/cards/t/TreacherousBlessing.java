@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 
 @CardRegistration(set = "THB", collectorNumber = "117")
+@CardRegistration(set = "THB", collectorNumber = "316")
 public class TreacherousBlessing extends Card {
 
     public TreacherousBlessing() {

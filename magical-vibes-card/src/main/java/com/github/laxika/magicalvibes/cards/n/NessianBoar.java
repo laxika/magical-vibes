@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEf
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerDrawsCardEffect;
 
 @CardRegistration(set = "THB", collectorNumber = "181")
+@CardRegistration(set = "THB", collectorNumber = "328")
 public class NessianBoar extends Card {
 
     public NessianBoar() {
