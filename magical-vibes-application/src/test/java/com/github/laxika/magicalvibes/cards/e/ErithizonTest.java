@@ -44,4 +44,61 @@ class ErithizonTest extends BaseCardTest {
         assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(defendingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+
+    @Test
+    @DisplayName("The defending player may choose the attacking Erithizon itself")
+    void canTargetItself() {
+        Permanent attacker = addCreatureReady(player1, new Erithizon());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player2, attacker.getId());
+        resolveAllTriggers();
+
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The defending player may put the counter on their own creature")
+    void canTargetDefendersCreature() {
+        Permanent attacker = addCreatureReady(player1, new Erithizon());
+        Permanent defender = addCreatureReady(player2, new Erithizon());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player2, defender.getId());
+        resolveAllTriggers();
+
+        assertThat(defender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The attack trigger resolves after Erithizon leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        Permanent attacker = addCreatureReady(player1, new Erithizon());
+        Permanent defender = addCreatureReady(player2, new Erithizon());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player2, defender.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        resolveAllTriggers();
+
+        assertThat(defender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A target that leaves the battlefield receives no counter and is not replaced")
+    void removedTargetDoesNotReceiveCounter() {
+        Permanent attacker = addCreatureReady(player1, new Erithizon());
+        Permanent defender = addCreatureReady(player2, new Erithizon());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player2, defender.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(defender);
+        resolveAllTriggers();
+
+        assertThat(defender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
