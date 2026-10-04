@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.s.ShivanHellkite;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HargildeKindlyRunechanter.class, CopperMyr.class, IcyManipulator.class, GrizzlyBears.class, MindStone.class})
+@CardUsed({HargildeKindlyRunechanter.class, CopperMyr.class, ShivanHellkite.class, GrizzlyBears.class, MindStone.class})
 class HargildeKindlyRunechanterTest extends BaseCardTest {
 
     @Test
@@ -51,6 +51,7 @@ class HargildeKindlyRunechanterTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -74,8 +75,48 @@ class HargildeKindlyRunechanterTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Hargilde's mana ability resolves immediately and pays its tap cost")
+    void manaAbilityResolvesImmediatelyAndCannotBeRepeatedWhileTapped() {
+        addReadyHargilde();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Hargilde, Kindly Runechanter").isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyColorless()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Hargilde cannot activate its tap ability while summoning sick")
+    void summoningSicknessPreventsManaAbility() {
+        Permanent hargilde = harness.addToBattlefieldAndReturn(player1, new HargildeKindlyRunechanter());
+        hargilde.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(hargilde.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyColorless()).isZero();
+    }
+
+    @Test
+    @DisplayName("Hargilde's mana cannot pay the generic cost of a nonartifact ability")
+    void artifactRestrictedManaCannotPayForNonartifactAbility() {
+        addReadyHargilde();
+        harness.addToBattlefield(player1, new ShivanHellkite());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactOnlyColorless()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
     private void addReadyHargilde() {
-        harness.addToBattlefield(player1, new HargildeKindlyRunechanter());
-        findPermanent(player1, "Hargilde, Kindly Runechanter").setSummoningSick(false);
+        harness.addToBattlefieldAndReturn(player1, new HargildeKindlyRunechanter()).setSummoningSick(false);
     }
 }
