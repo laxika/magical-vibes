@@ -19,7 +19,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(HuntedHorror.class)
+@CardUsed({HuntedHorror.class, VotaryOfTheConclave.class})
 class HuntedHorrorTest extends BaseCardTest {
 
     @Test
@@ -65,8 +65,7 @@ class HuntedHorrorTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new VotaryOfTheConclave());
         addCreatureReady(player1, new HuntedHorror());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -80,4 +79,50 @@ class HuntedHorrorTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
         assertThat(gd.getLife(player2.getId())).isEqualTo(14);
     }
+
+    @Test
+    @DisplayName("A Centaur prevents black combat damage while excess trample damage reaches its controller")
+    void centaurProtectionPreventsDamageButNotTrample() {
+        harness.setHand(player1, List.of(new HuntedHorror()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castCreature(player1, 0, 0, player2.getId());
+        resolveAllTriggers();
+
+        Permanent horror = findPermanent(player1, "Hunted Horror");
+        Permanent centaur = findPermanents(player2, "Centaur").getFirst();
+        horror.setSummoningSick(false);
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                centaur.getId(), 3,
+                player2.getId(), 4
+        ));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(centaur);
+        assertThat(centaur.getMarkedDamage()).isZero();
+        assertThat(horror.getMarkedDamage()).isEqualTo(3);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Hunted Horror cannot block a Centaur with protection from black")
+    void horrorCannotBlockProtectedCentaur() {
+        harness.setHand(player1, List.of(new HuntedHorror()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castCreature(player1, 0, 0, player2.getId());
+        resolveAllTriggers();
+        findPermanents(player2, "Centaur").forEach(centaur -> centaur.setSummoningSick(false));
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
 }
