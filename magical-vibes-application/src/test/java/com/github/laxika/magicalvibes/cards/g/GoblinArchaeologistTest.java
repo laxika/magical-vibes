@@ -56,4 +56,59 @@ class GoblinArchaeologistTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+    @Test
+    @DisplayName("An artifact leaving before resolution prevents the flip and both outcomes")
+    void missingTargetPreventsCoinFlip() {
+        Permanent archaeologist = addCreatureReady(player1, new GoblinArchaeologist());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DragonsClaw());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, artifact.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+        harness.passBothPriorities();
+
+        assertThat(archaeologist.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Goblin Archaeologist");
+        harness.assertNotInGraveyard(player1, "Goblin Archaeologist");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(log -> log.contains("coin flip for Goblin Archaeologist"));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without red mana")
+    void requiresRedMana() {
+        Permanent archaeologist = addCreatureReady(player1, new GoblinArchaeologist());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DragonsClaw());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(archaeologist.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void requiresSummoningSicknessToWearOff() {
+        harness.addToBattlefield(player1, new GoblinArchaeologist());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DragonsClaw());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void requiresUntappedSource() {
+        Permanent archaeologist = addCreatureReady(player1, new GoblinArchaeologist());
+        archaeologist.setTapped(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DragonsClaw());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
 }

@@ -58,16 +58,68 @@ class GlyphOfDoomTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Delayed destruction uses the stack at the beginning of end of combat")
+    void destructionCanBeRespondedTo() {
+        Permanent wall = addCreatureReady(player2, new WallOfEarth());
+        Permanent attacker = addCreatureReady(player1, new DurkwoodBoars());
+        attacker.setAttacking(true);
+        castGlyph(wall);
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Durkwood Boars");
+    }
+
+    @Test
+    @DisplayName("Casting during end of combat does not trigger retroactively")
+    void castingDuringEndOfCombatDoesNotDestroyThisCombat() {
+        Permanent wall = addCreatureReady(player2, new WallOfEarth());
+        Permanent attacker = addCreatureReady(player1, new DurkwoodBoars());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        castGlyph(wall);
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        harness.assertNotInGraveyard(player1, "Durkwood Boars");
+    }
+
+    @Test
+    @DisplayName("Casting after blockers are declared includes creatures already blocked")
+    void includesCreaturesBlockedBeforeResolution() {
+        Permanent wall = addCreatureReady(player2, new WallOfEarth());
+        Permanent attacker = addCreatureReady(player1, new DurkwoodBoars());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        castGlyph(wall);
+        advanceThroughEndOfCombat();
+
+        harness.assertInGraveyard(player1, "Durkwood Boars");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(wall);
+    }
+
     private void castGlyph(Permanent wall) {
         harness.setHand(player1, List.of(new GlyphOfDoom()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0, wall.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, wall.getId());
     }
 
     private void advanceThroughEndOfCombat() {
-        harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_OF_COMBAT);
         harness.passBothPriorities();
     }
 }
