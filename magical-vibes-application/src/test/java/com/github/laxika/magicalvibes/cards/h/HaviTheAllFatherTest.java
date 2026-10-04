@@ -61,11 +61,7 @@ class HaviTheAllFatherTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
         harness.passBothPriorities();
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getOriginalCard().getId().equals(eligible.getId()))
-                .findFirst()
-                .orElseThrow();
-        assertThat(returned.isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Isamaru, Hound of Konda").isTapped()).isTrue();
         harness.assertInGraveyard(player1, "Havi, the All-Father");
     }
 
@@ -89,11 +85,7 @@ class HaviTheAllFatherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Isamaru, Hound of Konda");
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getOriginalCard().getId().equals(eligible.getId()))
-                .findFirst()
-                .orElseThrow()
-                .isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Isamaru, Hound of Konda").isTapped()).isTrue();
     }
 
     @Test
@@ -109,6 +101,113 @@ class HaviTheAllFatherTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Isamaru, Hound of Konda");
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void legendaryCardsCountAsHistoricAndProtectionUpdatesWhenTheyLeave() {
+        harness.setGraveyard(player1, List.of(new IsamaruHoundOfKonda(),
+                new IsamaruHoundOfKonda(), new IsamaruHoundOfKonda(), new IsamaruHoundOfKonda()));
+        Permanent havi = harness.addToBattlefieldAndReturn(player1, new HaviTheAllFather());
+
+        destroyWithDestruction(havi);
+        harness.assertOnBattlefield(player1, "Havi, the All-Father");
+
+        harness.setGraveyard(player1, List.of(new Millstone(), new Millstone(), new Millstone()));
+        destroyWithDestruction(havi);
+        harness.assertInGraveyard(player1, "Havi, the All-Father");
+        harness.assertNotOnBattlefield(player1, "Havi, the All-Father");
+    }
+
+    @Test
+    void nonhistoricCardsDoNotMeetTheThreshold() {
+        harness.setGraveyard(player1, List.of(new Millstone(), new Millstone(),
+                new Millstone(), new GrizzlyBears()));
+        Permanent havi = harness.addToBattlefieldAndReturn(player1, new HaviTheAllFather());
+
+        destroyWithDestruction(havi);
+
+        harness.assertInGraveyard(player1, "Havi, the All-Father");
+        harness.assertNotOnBattlefield(player1, "Havi, the All-Father");
+    }
+
+    @Test
+    void opponentsHistoricCardsDoNotGrantIndestructible() {
+        harness.setGraveyard(player2, List.of(new Millstone(), new Millstone(),
+                new Millstone(), new Millstone()));
+        Permanent havi = harness.addToBattlefieldAndReturn(player1, new HaviTheAllFather());
+
+        destroyWithDestruction(havi);
+
+        harness.assertInGraveyard(player1, "Havi, the All-Father");
+        harness.assertNotOnBattlefield(player1, "Havi, the All-Father");
+    }
+
+    @Test
+    void deathTriggerTargetsOnlyLegendaryCreaturesInYourGraveyard() {
+        Card eligible = new IsamaruHoundOfKonda();
+        Card nonlegendary = new GrizzlyBears();
+        Card artifact = new Millstone();
+        Card opposingLegendary = new IsamaruHoundOfKonda();
+        harness.setGraveyard(player1, List.of(eligible, nonlegendary, artifact));
+        harness.setGraveyard(player2, List.of(opposingLegendary));
+        Permanent havi = harness.addToBattlefieldAndReturn(player1, new HaviTheAllFather());
+
+        destroy(havi);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(eligible.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Isamaru, Hound of Konda").isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Millstone");
+        harness.assertInGraveyard(player2, "Isamaru, Hound of Konda");
+    }
+
+    @Test
+    void anotherLegendarysDeathUsesItsManaValueRatherThanHavis() {
+        harness.setGraveyard(player1, List.of(new IsamaruHoundOfKonda()));
+        harness.addToBattlefield(player1, new HaviTheAllFather());
+        Permanent dyingLegendary = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+
+        destroy(dyingLegendary);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.assertNotOnBattlefield(player1, "Isamaru, Hound of Konda");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opposingLegendarysDeathDoesNotTriggerHavi() {
+        harness.setGraveyard(player1, List.of(new IsamaruHoundOfKonda()));
+        harness.addToBattlefield(player1, new HaviTheAllFather());
+        Permanent opposingLegendary = harness.addToBattlefieldAndReturn(player2, new HaviTheAllFather());
+
+        destroy(opposingLegendary);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Isamaru, Hound of Konda");
+        harness.assertNotOnBattlefield(player1, "Isamaru, Hound of Konda");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void targetLeavingTheGraveyardBeforeResolutionIsNotReturned() {
+        Card eligible = new IsamaruHoundOfKonda();
+        harness.setGraveyard(player1, List.of(eligible));
+        Permanent havi = harness.addToBattlefieldAndReturn(player1, new HaviTheAllFather());
+        destroy(havi);
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removeCardFromGraveyardById(gd, eligible.getId()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Isamaru, Hound of Konda");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void destroyWithDestruction(Permanent permanent) {
