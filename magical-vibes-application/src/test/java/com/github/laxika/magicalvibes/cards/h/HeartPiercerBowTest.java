@@ -7,14 +7,18 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HeartPiercerBow.class, GrizzlyBears.class, LlanowarElves.class})
 class HeartPiercerBowTest extends BaseCardTest {
 
     @Test
@@ -74,10 +78,93 @@ class HeartPiercerBowTest extends BaseCardTest {
     }
 
     private Permanent addBowReady(Player player) {
-        Permanent bow = new Permanent(new HeartPiercerBow());
+        Permanent bow = harness.addToBattlefieldAndReturn(player, new HeartPiercerBow());
         bow.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(bow);
         return bow;
+    }
+
+    @Test
+    void dealsExactlyOneDamageToLargerCreature() {
+        Permanent bow = addBowReady(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        bow.setAttachedTo(attacker.getId());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1));
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void anotherCreatureAttackingDoesNotTriggerBow() {
+        Permanent bow = addBowReady(player1);
+        Permanent equipped = addCreatureReady(player1, new GrizzlyBears());
+        bow.setAttachedTo(equipped.getId());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent victim = addCreatureReady(player2, new LlanowarElves());
+
+        declareAttackers(player1, List.of(2));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(victim.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void attackWithNoDefendingCreaturesDoesNotRequireTargetChoice() {
+        Permanent bow = addBowReady(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        bow.setAttachedTo(attacker.getId());
+
+        declareAttackers(player1, List.of(1));
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void triggerResolvesAfterBowLeavesBattlefield() {
+        Permanent bow = addBowReady(player1);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        bow.setAttachedTo(attacker.getId());
+        Permanent victim = addCreatureReady(player2, new LlanowarElves());
+
+        declareAttackers(player1, List.of(1));
+        harness.handlePermanentChosen(player1, victim.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bow);
+        gd.playerGraveyards.get(player1.getId()).add(bow.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+    }
+
+    @Test
+    void cannotEquipOpponentsCreature() {
+        Permanent bow = addBowReady(player1);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(bow.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void cannotEquipDuringOpponentsTurn() {
+        Permanent bow = addBowReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(bow.getAttachedTo()).isNull();
     }
 
 }
