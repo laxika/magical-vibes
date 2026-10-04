@@ -37,6 +37,7 @@ class EunuchsIntriguesTest extends BaseCardTest {
         Permanent only = addCreatureReady(player2, new ShuFootSoldiers());
 
         castEunuchsIntrigues();
+        harness.handleMultiplePermanentsChosen(player2, List.of(only.getId()));
 
         assertThat(only.isCantBlockThisTurn()).isFalse();
     }
@@ -66,32 +67,30 @@ class EunuchsIntriguesTest extends BaseCardTest {
     @Test
     @DisplayName("A restricted creature can't be declared as a blocker")
     void restrictedCreatureCantBlock() {
-        Permanent attacker = addCreatureReady(player1, new ShuFootSoldiers());
+        addCreatureReady(player1, new ShuFootSoldiers());
         Permanent kept = addCreatureReady(player2, new ShuFootSoldiers());
         addCreatureReady(player2, new ShuFootSoldiers()); // the restricted blocker (index 1)
 
         castEunuchsIntrigues();
         harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
 
-        attacker.setAttacking(true);
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0))))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("The chosen creature can be declared as a blocker")
     void chosenCreatureCanBeDeclaredAsBlocker() {
-        Permanent attacker = addCreatureReady(player1, new ShuFootSoldiers());
+        addCreatureReady(player1, new ShuFootSoldiers());
         Permanent kept = addCreatureReady(player2, new ShuFootSoldiers());
         addCreatureReady(player2, new ShuFootSoldiers());
 
         castEunuchsIntrigues();
         harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
 
-        attacker.setAttacking(true);
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .doesNotThrowAnyException();
@@ -100,15 +99,14 @@ class EunuchsIntriguesTest extends BaseCardTest {
     @Test
     @DisplayName("A creature entering later this turn also can't block")
     void laterCreatureCantBlock() {
-        Permanent attacker = addCreatureReady(player1, new ShuFootSoldiers());
+        addCreatureReady(player1, new ShuFootSoldiers());
         Permanent kept = addCreatureReady(player2, new ShuFootSoldiers());
 
         castEunuchsIntrigues();
         harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
 
         addCreatureReady(player2, new ShuFootSoldiers());
-        attacker.setAttacking(true);
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0))))
                 .isInstanceOf(IllegalStateException.class);
@@ -124,11 +122,36 @@ class EunuchsIntriguesTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("An opponent with creatures must choose exactly one")
+    void cannotDeclineCreatureChoice() {
+        Permanent kept = addCreatureReady(player2, new ShuFootSoldiers());
+        addCreatureReady(player2, new ShuFootSoldiers());
+
+        castEunuchsIntrigues();
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultiplePermanentsChosen(player2, List.of(kept.getId()));
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution with no creatures still can't block")
+    void laterCreatureCantBlockWhenNoCreatureWasChosen() {
+        addCreatureReady(player1, new ShuFootSoldiers());
+        castEunuchsIntrigues();
+        addCreatureReady(player2, new ShuFootSoldiers());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void castEunuchsIntrigues() {
         harness.setHand(player1, List.of(new EunuchsIntrigues()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 
 }
