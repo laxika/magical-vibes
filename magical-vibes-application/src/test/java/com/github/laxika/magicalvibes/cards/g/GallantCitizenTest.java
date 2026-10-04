@@ -22,10 +22,47 @@ class GallantCitizenTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
         harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("The draw waits for the enter trigger to resolve and draws exactly one card")
+    void drawWaitsForTriggerResolution() {
+        harness.setHand(player1, List.of(new GallantCitizen()));
+        Forest topCard = new Forest();
+        Forest nextCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castCreature(player1, 0, 0);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Gallant Citizen");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast draws for the creature's controller")
+    void enteringWithoutCastingDrawsForController() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        Forest drawnCard = new Forest();
+        harness.setLibrary(player2, List.of(drawnCard));
+
+        harness.enterBattlefieldAndReturn(player2, new GallantCitizen());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }
