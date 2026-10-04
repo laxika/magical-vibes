@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.b.BrassclawOrcs;
 import com.github.laxika.magicalvibes.cards.f.FarrelitePriest;
 import com.github.laxika.magicalvibes.cards.r.RiverMerfolk;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -112,6 +113,80 @@ class HeroismTest extends BaseCardTest {
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).doesNotContain(redNotAttacking.getId());
     }
 
+    @Test
+    @DisplayName("Each red attacker requires its own payment")
+    void paymentForOneAttackerDoesNotPayForAnother() {
+        addHeroismAndWhiteCreature();
+        Permanent paidAttacker = addAttacker(player2, new BrassclawOrcs());
+        Permanent unpaidAttacker = addAttacker(player2, new BrassclawOrcs());
+        harness.setLife(player1, 20);
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        activateHeroism();
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleMayAbilityChosen(player2, true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 17);
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(unpaidAttacker.getId())
+                .doesNotContain(paidAttacker.getId());
+    }
+
+    @Test
+    @DisplayName("The payment requires red mana even when three other mana are available")
+    void paymentRequiresRedMana() {
+        addHeroismAndWhiteCreature();
+        addAttacker(player2, new BrassclawOrcs());
+        harness.setLife(player1, 20);
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        activateHeroism();
+
+        harness.handleMayAbilityChosen(player2, true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Resolving Heroism before attackers are declared does not prevent later attackers")
+    void doesNotAffectCreaturesThatAttackAfterResolution() {
+        addHeroismAndWhiteCreature();
+        Permanent laterAttacker = addCreatureReady(player2, new BrassclawOrcs());
+        harness.setLife(player1, 20);
+
+        harness.withAutoStop(gd.currentStep, this::activateHeroism);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        laterAttacker.setAttacking(true);
+        laterAttacker.setAttackTarget(player1.getId());
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Paying for one activation does not bypass prevention from a later activation")
+    void eachActivationRequiresAnotherPayment() {
+        addHeroismAndWhiteCreature();
+        addAttacker(player2, new BrassclawOrcs());
+        harness.setLife(player1, 20);
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.withAutoStop(gd.currentStep, () -> {
+            activateHeroism();
+            harness.handleMayAbilityChosen(player2, true);
+        });
+
+        harness.addToBattlefield(player1, new FarrelitePriest());
+        activateHeroism();
+        harness.handleMayAbilityChosen(player2, false);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
+    }
+
     private void addHeroismAndWhiteCreature() {
         harness.addToBattlefield(player1, new Heroism());
         harness.addToBattlefield(player1, new FarrelitePriest());
@@ -123,9 +198,8 @@ class HeroismTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Farrelite Priest");
     }
 
-    private Permanent addAttacker(Player owner, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent attacker = harness.addToBattlefieldAndReturn(owner, card);
-        attacker.setSummoningSick(false);
+    private Permanent addAttacker(Player owner, Card card) {
+        Permanent attacker = addCreatureReady(owner, card);
         attacker.setAttacking(true);
         attacker.setAttackTarget(player1.getId());
         return attacker;
