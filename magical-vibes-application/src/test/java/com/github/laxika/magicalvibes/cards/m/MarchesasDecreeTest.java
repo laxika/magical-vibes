@@ -34,9 +34,9 @@ class MarchesasDecreeTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player2, List.of(0, 1));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> declareAttackers(player2, List.of(0, 1)));
+        harness.passUntil(TurnStep.DECLARE_BLOCKERS);
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);

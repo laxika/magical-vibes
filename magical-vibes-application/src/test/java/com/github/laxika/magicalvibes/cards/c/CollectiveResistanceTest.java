@@ -52,7 +52,9 @@ class CollectiveResistanceTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
 
-        harness.passUntil(TurnStep.UNTAP);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.HEXPROOF)).isFalse();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
