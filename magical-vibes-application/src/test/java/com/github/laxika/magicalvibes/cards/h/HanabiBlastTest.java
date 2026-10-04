@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.k.KitsuneBlademaster;
 import com.github.laxika.magicalvibes.cards.p.PerplexingChimera;
+import com.github.laxika.magicalvibes.cards.t.Twincast;
 import com.github.laxika.magicalvibes.cards.w.WanderingOnes;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HanabiBlast.class, KitsuneBlademaster.class, WanderingOnes.class})
+@CardUsed({HanabiBlast.class, KitsuneBlademaster.class, WanderingOnes.class,
+        PerplexingChimera.class, Twincast.class})
 class HanabiBlastTest extends BaseCardTest {
 
     @Test
@@ -83,6 +85,49 @@ class HanabiBlastTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getName)
                 .containsExactly("Wandering Ones");
+    }
+
+    @Test
+    @CardUsed(Twincast.class)
+    @DisplayName("A spell copy cannot be discarded from an otherwise empty hand")
+    void copyDoesNotCountAsDiscardedCard() {
+        HanabiBlast blast = new HanabiBlast();
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(blast, new Twincast()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, blast.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.cardsDiscardedThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Twincast");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An illegal sole target prevents both the return and the discard")
+    void illegalTargetPreventsReturnAndDiscard() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new WanderingOnes());
+        HanabiBlast blast = new HanabiBlast();
+        WanderingOnes cardInHand = new WanderingOnes();
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(blast, cardInHand));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castInstant(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(cardInHand);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(blast);
+        assertThat(gd.cardsDiscardedThisTurn.getOrDefault(player1.getId(), 0)).isZero();
     }
 
     private void castHanabiBlast(List<Card> hand, java.util.UUID targetId) {
