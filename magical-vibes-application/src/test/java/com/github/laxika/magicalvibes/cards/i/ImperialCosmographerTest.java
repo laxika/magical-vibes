@@ -25,8 +25,7 @@ class ImperialCosmographerTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Flicker()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castSorcery(player1, 0, leaving.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, leaving.getId());
         harness.passBothPriorities();
 
         assertThat(cosmographer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -40,6 +39,78 @@ class ImperialCosmographerTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, dying));
 
+        assertThat(cosmographer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void noCountersAreAddedAfterAnAllyDiesAndTriggersResolve() {
+        Permanent cosmographer = addCreatureReady(player1, new ImperialCosmographer());
+        Permanent dying = addCreatureReady(player1, new ImperialCosmographer());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, dying));
+        resolveAllTriggers();
+
+        assertThat(cosmographer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void triggersForEachOtherCreatureLeavingSimultaneously() {
+        Permanent cosmographer = addCreatureReady(player1, new ImperialCosmographer());
+        Permanent first = addCreatureReady(player1, new ImperialCosmographer());
+        Permanent second = addCreatureReady(player1, new ImperialCosmographer());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removeAllToLibraryBottom(gd, List.of(first, second)));
+        resolveAllTriggers();
+
+        assertThat(cosmographer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    void triggersWhenAnotherCreatureIsReturnedToHand() {
+        Permanent cosmographer = addCreatureReady(player1, new ImperialCosmographer());
+        Permanent leaving = addCreatureReady(player1, new ImperialCosmographer());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, leaving));
+        resolveAllTriggers();
+
+        assertThat(cosmographer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void doesNotTriggerForAnOpponentsCreature() {
+        Permanent cosmographer = addCreatureReady(player1, new ImperialCosmographer());
+        Permanent leaving = addCreatureReady(player2, new ImperialCosmographer());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, leaving));
+        resolveAllTriggers();
+
+        assertThat(cosmographer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void doesNotTriggerForItsOwnDeparture() {
+        Permanent cosmographer = addCreatureReady(player1, new ImperialCosmographer());
+
+        harness.setHand(player1, List.of(new Flicker()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveSorcery(player1, 0, cosmographer.getId());
+        resolveAllTriggers();
+
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void pendingTriggerDoesNothingAfterSourceLeaves() {
+        Permanent cosmographer = addCreatureReady(player1, new ImperialCosmographer());
+        Permanent leaving = addCreatureReady(player1, new ImperialCosmographer());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, leaving));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, cosmographer));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(cosmographer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
