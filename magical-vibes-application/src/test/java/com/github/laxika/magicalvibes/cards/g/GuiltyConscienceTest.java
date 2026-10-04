@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.AuraGraft;
+import com.github.laxika.magicalvibes.cards.d.DawnElemental;
 import com.github.laxika.magicalvibes.cards.e.ElvishAberration;
 import com.github.laxika.magicalvibes.cards.s.SiegeGangCommander;
 import com.github.laxika.magicalvibes.cards.u.Upwelling;
@@ -17,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GuiltyConscience.class, SiegeGangCommander.class, GoblinBrigand.class,
-        ElvishAberration.class, Upwelling.class, WipeClean.class})
+        ElvishAberration.class, Upwelling.class, WipeClean.class, DawnElemental.class, AuraGraft.class})
 class GuiltyConscienceTest extends BaseCardTest {
 
     @Test
@@ -61,8 +63,7 @@ class GuiltyConscienceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WipeClean()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aura.getId());
 
         assertThat(gd.stack).hasSize(1);
 
@@ -121,6 +122,72 @@ class GuiltyConscienceTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
         assertThat(creature.getMarkedDamage()).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A queued reflection damages the original creature after the Aura moves")
+    void queuedReflectionDamagesOriginalCreatureAfterAuraMoves() {
+        Permanent creature = addCreatureReady(player2, new SiegeGangCommander());
+        Permanent goblin = addCreatureReady(player2, new GoblinBrigand());
+        Permanent destination = addCreatureReady(player2, new ElvishAberration());
+        castGuiltyConscience(creature);
+        Permanent aura = findPermanent(player1, "Guilty Conscience");
+
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.handlePermanentChosen(player2, goblin.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player2, List.of(new AuraGraft()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, aura.getId());
+        harness.handlePermanentChosen(player2, destination.getId());
+        assertThat(aura.getAttachedTo()).isEqualTo(destination.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Siege-Gang Commander");
+        assertThat(destination.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Guilty Conscience");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Prevented damage does not trigger Guilty Conscience")
+    void fullyPreventedDamageDoesNotTriggerReflection() {
+        Permanent creature = addCreatureReady(player2, new SiegeGangCommander());
+        Permanent goblin = addCreatureReady(player2, new GoblinBrigand());
+        Permanent target = addCreatureReady(player1, new DawnElemental());
+        castGuiltyConscience(creature);
+
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.activateAbility(player2, 0, null, target.getId());
+        harness.handlePermanentChosen(player2, goblin.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Siege-Gang Commander");
+    }
+
+    @Test
+    @DisplayName("Guilty Conscience can enchant your creature and its damage can be prevented")
+    void reflectsOwnCreaturesDamageThroughPrevention() {
+        Permanent creature = addCreatureReady(player1, new DawnElemental());
+        castGuiltyConscience(creature);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 17);
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Dawn Elemental");
         assertThat(gd.stack).isEmpty();
     }
 
