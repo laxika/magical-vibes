@@ -83,4 +83,38 @@ class HiddenGibbonsTest extends BaseCardTest {
         assertThat(gqs.isEnchantment(gd, gibbons)).isTrue();
         assertThat(gqs.isCreature(gd, gibbons)).isFalse();
     }
+
+    @Test
+    void triggersForOpponentInstantDuringControllersTurn() {
+        Permanent gibbons = addHiddenGibbons();
+        prepareCast(player1);
+
+        harness.castFromHand(player2, new BlessedReversal(), "{1}{W}");
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gqs.isEnchantment(gd, gibbons)).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.isCreature(gd, gibbons)).isTrue();
+        assertThat(gqs.isEnchantment(gd, gibbons)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, gibbons)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, gibbons)).isEqualTo(4);
+    }
+
+    @Test
+    void remainsCreatureAfterTurnEnds() {
+        Permanent gibbons = addHiddenGibbons();
+        prepareCast(player2);
+
+        harness.castFromHand(player2, new BlessedReversal(), "{1}{W}");
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.isCreature(gd, gibbons)).isTrue();
+        assertThat(gqs.isEnchantment(gd, gibbons)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, gibbons)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, gibbons)).isEqualTo(4);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, gibbons)).containsExactly(CardSubtype.APE);
+    }
 }
