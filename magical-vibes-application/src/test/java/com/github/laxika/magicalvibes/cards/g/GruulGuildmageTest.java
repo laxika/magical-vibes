@@ -38,9 +38,8 @@ class GruulGuildmageTest extends BaseCardTest {
         addReadyGuildmage(player1);
         harness.addToBattlefield(player1, new GruulGuildgate());
 
-        Permanent planeswalker = new Permanent(new DomriRade());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new DomriRade());
         planeswalker.setCounterCount(CounterType.LOYALTY, 3);
-        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
 
         addRedAbilityMana();
         harness.activateAbility(player1, 0, 0, null, planeswalker.getId());
@@ -96,6 +95,86 @@ class GruulGuildmageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Sacrifice a land");
+    }
+
+    @Test
+    @DisplayName("A tapped land is sacrificed before damage resolves, and the controller can be targeted")
+    void paysSacrificeBeforeResolvingDamageToController() {
+        addReadyGuildmage(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new GruulGuildgate());
+        land.setTapped(true);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        addRedAbilityMana();
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+
+        harness.assertInGraveyard(player1, "Gruul Guildgate");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(land);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("An opponent's land cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsLand() {
+        addReadyGuildmage(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new GruulGuildgate());
+        addRedAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Sacrifice a land");
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(land);
+    }
+
+    @Test
+    @DisplayName("The damage ability requires red mana even when generic mana is available")
+    void cannotPayRedCostWithOnlyGreenMana() {
+        addReadyGuildmage(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new GruulGuildgate());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Guildmage can activate its pump repeatedly on itself")
+    void pumpCanBeRepeatedWhileTappedAndSummoningSick() {
+        Permanent guildmage = addReadyGuildmage(player1);
+        guildmage.setTapped(true);
+        guildmage.setSummoningSick(true);
+        int powerBefore = gqs.getEffectivePower(gd, guildmage);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, guildmage);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 1, null, guildmage.getId());
+        harness.activateAbility(player1, 0, 1, null, guildmage.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, guildmage)).isEqualTo(powerBefore + 4);
+        assertThat(gqs.getEffectiveToughness(gd, guildmage)).isEqualTo(toughnessBefore + 4);
+        assertThat(guildmage.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The pump ability cannot target a land")
+    void pumpCannotTargetLand() {
+        addReadyGuildmage(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new GruulGuildgate());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent addReadyGuildmage(Player player) {
