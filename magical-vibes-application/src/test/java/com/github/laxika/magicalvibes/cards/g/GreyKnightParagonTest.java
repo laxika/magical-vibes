@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.p.PlagueDrone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,41 +16,41 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GreyKnightParagon.class, GrizzlyBears.class, GrinningDemon.class})
+@CardUsed({GreyKnightParagon.class, PlagueDrone.class})
 class GreyKnightParagonTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters and destroys a non-Demon attacking creature")
     void destroysNonDemonAttacker() {
-        Permanent attacker = addAttacker(player2, new GrizzlyBears());
+        Permanent attacker = addAttacker(player2, new GreyKnightParagon());
 
         castGreyKnightParagon(attacker);
         resolveEntryTrigger();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grey Knight Paragon");
+        harness.assertInGraveyard(player2, "Grey Knight Paragon");
         harness.assertOnBattlefield(player1, "Grey Knight Paragon");
     }
 
     @Test
     @DisplayName("Enters and exiles an attacking Demon")
     void exilesDemonAttacker() {
-        Permanent attacker = addAttacker(player2, new GrinningDemon());
+        Permanent attacker = addAttacker(player2, new PlagueDrone());
 
         castGreyKnightParagon(attacker);
         resolveEntryTrigger();
 
-        harness.assertNotOnBattlefield(player2, "Grinning Demon");
-        harness.assertNotInGraveyard(player2, "Grinning Demon");
+        harness.assertNotOnBattlefield(player2, "Plague Drone");
+        harness.assertNotInGraveyard(player2, "Plague Drone");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(card -> card.getName())
-                .contains("Grinning Demon");
+                .contains("Plague Drone");
     }
 
     @Test
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
-        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GreyKnightParagon());
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -62,11 +63,92 @@ class GreyKnightParagonTest extends BaseCardTest {
                 .hasMessageContaining("attacking creature");
     }
 
+    @Test
+    @DisplayName("A creature that stops attacking before resolution is not destroyed")
+    void doesNotDestroyFormerAttacker() {
+        Permanent attacker = addAttacker(player2, new GreyKnightParagon());
+        castGreyKnightParagon(attacker);
+        harness.passBothPriorities();
+
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grey Knight Paragon");
+        harness.assertNotInGraveyard(player2, "Grey Knight Paragon");
+        harness.assertOnBattlefield(player1, "Grey Knight Paragon");
+    }
+
+    @Test
+    @DisplayName("A Demon that stops attacking before resolution is not exiled")
+    void doesNotExileFormerDemonAttacker() {
+        Permanent attacker = addAttacker(player2, new PlagueDrone());
+        castGreyKnightParagon(attacker);
+        harness.passBothPriorities();
+
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Plague Drone");
+        harness.assertNotInGraveyard(player2, "Plague Drone");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Non-Demon destruction permits regeneration")
+    void nonDemonCanRegenerate() {
+        Permanent attacker = addAttacker(player2, new GreyKnightParagon());
+        attacker.setRegenerationShield(1);
+
+        castGreyKnightParagon(attacker);
+        resolveEntryTrigger();
+
+        harness.assertOnBattlefield(player2, "Grey Knight Paragon");
+        harness.assertNotInGraveyard(player2, "Grey Knight Paragon");
+        assertThat(attacker.getRegenerationShield()).isZero();
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(attacker.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Exiling a Demon bypasses regeneration")
+    void demonCannotRegenerateFromExile() {
+        Permanent attacker = addAttacker(player2, new PlagueDrone());
+        attacker.setRegenerationShield(1);
+
+        castGreyKnightParagon(attacker);
+        resolveEntryTrigger();
+
+        harness.assertNotOnBattlefield(player2, "Plague Drone");
+        harness.assertNotInGraveyard(player2, "Plague Drone");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getName)
+                .contains("Plague Drone");
+    }
+
+    @Test
+    @DisplayName("The entry trigger resolves after Grey Knight Paragon leaves")
+    void triggerResolvesWithoutSource() {
+        Permanent attacker = addAttacker(player2, new PlagueDrone());
+        castGreyKnightParagon(attacker);
+        harness.passBothPriorities();
+
+        Permanent source = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, source));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grey Knight Paragon");
+        harness.assertNotOnBattlefield(player2, "Plague Drone");
+        harness.assertNotInGraveyard(player2, "Plague Drone");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getName)
+                .contains("Plague Drone");
+    }
+
     private Permanent addAttacker(Player player, Card card) {
-        Permanent attacker = new Permanent(card);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player, card);
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(attacker);
         return attacker;
     }
 
