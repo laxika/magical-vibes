@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MakeshiftMannequin;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +21,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HoardingDragon.class, DoomBlade.class, GrizzlyBears.class, Spellbook.class, MakeshiftMannequin.class})
 class HoardingDragonTest extends BaseCardTest {
 
-    // ===== ETB trigger =====
 
     @Test
     @DisplayName("ETB presents may prompt for library search")
@@ -107,7 +109,6 @@ class HoardingDragonTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 
-    // ===== Death trigger =====
 
     @Test
     @DisplayName("Death trigger returns imprinted card to owner's hand")
@@ -128,8 +129,7 @@ class HoardingDragonTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, dragonId);
-        harness.passBothPriorities(); // resolve Doom Blade — Dragon dies
+        harness.castAndResolveInstant(player2, 0, dragonId);
         harness.passBothPriorities(); // resolve MayEffect from stack
 
         // Death trigger should present may prompt
@@ -168,8 +168,7 @@ class HoardingDragonTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, dragonId);
-        harness.passBothPriorities(); // resolve Doom Blade — Dragon dies
+        harness.castAndResolveInstant(player2, 0, dragonId);
         harness.passBothPriorities(); // resolve MayEffect from stack
 
         harness.handleMayAbilityChosen(player1, false);
@@ -197,8 +196,7 @@ class HoardingDragonTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player2, 0, dragonId);
-        harness.passBothPriorities(); // resolve Doom Blade — Dragon dies
+        harness.castAndResolveInstant(player2, 0, dragonId);
         harness.passBothPriorities(); // resolve MayEffect from stack
 
         // May prompt should still fire
@@ -211,12 +209,83 @@ class HoardingDragonTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Hoarding Dragon");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Returning the Dragon before its death trigger resolves preserves the old hoard")
+    void returningDragonBeforeDeathTriggerStillReturnsOldArtifact() {
+        HoardingDragon dragon = new HoardingDragon();
+        Spellbook artifact = new Spellbook();
+        harness.setLibrary(player1, List.of(artifact));
+        harness.setHand(player1, List.of(dragon));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Hoarding Dragon"));
+        harness.assertInGraveyard(player1, "Hoarding Dragon");
+
+        harness.setHand(player1, List.of(new MakeshiftMannequin()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castAndResolveInstant(player1, 0, dragon.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Hoarding Dragon");
+        harness.assertInHand(player1, "Spellbook");
+        assertThat(gd.findExiledCard(artifact.getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("An artifact can be left unfound even when the library contains one")
+    void searchCanFailToFindArtifact() {
+        Spellbook artifact = new Spellbook();
+        harness.setLibrary(player1, List.of(artifact));
+        harness.setHand(player1, List.of(new HoardingDragon()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(artifact);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An artifact found after the Dragon dies remains exiled")
+    void dyingBeforeSearchResolvesLeavesArtifactExiled() {
+        Spellbook artifact = new Spellbook();
+        harness.setLibrary(player1, List.of(artifact));
+        harness.setHand(player1, List.of(new HoardingDragon()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Hoarding Dragon"));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertNotInHand(player1, "Spellbook");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        harness.assertInGraveyard(player1, "Hoarding Dragon");
+        harness.assertNotInHand(player1, "Spellbook");
+        assertThat(gd.findExiledCard(artifact.getId())).isNotNull();
+    }
 
     private void setupDeck(List<Card> cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        harness.setLibrary(player1, cards);
     }
 
 }
