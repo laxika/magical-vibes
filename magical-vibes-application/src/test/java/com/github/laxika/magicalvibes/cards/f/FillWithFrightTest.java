@@ -102,4 +102,89 @@ class FillWithFrightTest extends BaseCardTest {
                 harness.getPermanentId(player2, "Arachnoid")))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("The target chooses which two cards to discard from a larger hand")
+    void targetChoosesTwoCardsFromLargerHand() {
+        Arachnoid retained = new Arachnoid();
+        Arachnoid firstDiscard = new Arachnoid();
+        Arachnoid secondDiscard = new Arachnoid();
+        harness.setHand(player2, List.of(retained, firstDiscard, secondDiscard));
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new FillWithFright()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retained);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(firstDiscard, secondDiscard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Fill with Fright");
+    }
+
+    @Test
+    @DisplayName("Scry can keep one card on top and put one beneath the untouched library")
+    void scrySplitsCardsBetweenTopAndBottom() {
+        Arachnoid top = new Arachnoid();
+        Arachnoid bottom = new Arachnoid();
+        Arachnoid untouched = new Arachnoid();
+        harness.setLibrary(player1, List.of(bottom, top, untouched));
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new FillWithFright()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, untouched, bottom);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Fill with Fright");
+    }
+
+    @Test
+    @DisplayName("Scry can put both cards on the bottom in either order")
+    void scryPutsBothCardsOnBottomInChosenOrder() {
+        Arachnoid first = new Arachnoid();
+        Arachnoid second = new Arachnoid();
+        Arachnoid untouched = new Arachnoid();
+        harness.setLibrary(player1, List.of(first, second, untouched));
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new FillWithFright()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, second, first);
+        harness.assertInGraveyard(player1, "Fill with Fright");
+    }
+
+    @Test
+    @DisplayName("Scry two with one card in the library looks at only that card")
+    void scryWithOneCardInLibrary() {
+        Arachnoid onlyCard = new Arachnoid();
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new FillWithFright()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(onlyCard);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        harness.assertInGraveyard(player1, "Fill with Fright");
+    }
 }
