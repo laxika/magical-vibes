@@ -23,8 +23,7 @@ class GustcloakSaviorTest extends BaseCardTest {
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(savior.isTapped()).isFalse();
@@ -41,8 +40,7 @@ class GustcloakSaviorTest extends BaseCardTest {
 
         declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(savior.isTapped()).isTrue();
@@ -62,8 +60,7 @@ class GustcloakSaviorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 1),
                 new BlockerAssignment(1, 1)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleMayAbilityChosen(player1, true);
@@ -75,6 +72,57 @@ class GustcloakSaviorTest extends BaseCardTest {
         assertThat(savior.isTapped()).isFalse();
         assertThat(firstBlocker.isBlocking()).isTrue();
         assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A queued trigger still rescues another creature after the Savior leaves")
+    void triggerResolvesAfterSaviorLeavesBattlefield() {
+        Permanent savior = addSavior();
+        Permanent attacker = addCreatureReady(player1, new GlorySeeker());
+        addCreatureReady(player2);
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        gd.playerBattlefields.get(player1.getId()).remove(savior);
+        gd.playerGraveyards.get(player1.getId()).add(savior.getCard());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(attacker.getAttackTarget()).isNull();
+    }
+
+    @Test
+    @DisplayName("The Savior does not trigger when an opponent's creature becomes blocked")
+    void doesNotTriggerForOpponentsBlockedCreature() {
+        addSavior();
+        addCreatureReady(player2);
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Fleeting Aven");
+        harness.assertOnBattlefield(player1, "Gustcloak Savior");
+    }
+
+    @Test
+    @DisplayName("An unblocked attacker does not trigger the Savior")
+    void doesNotTriggerForUnblockedCreature() {
+        addSavior();
+        addCreatureReady(player1, new GlorySeeker());
+        addCreatureReady(player2);
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 18);
     }
 
     private Permanent addSavior() {
