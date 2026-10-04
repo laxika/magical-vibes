@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(FesteringGulch.class)
 class FesteringGulchTest extends BaseCardTest {
@@ -54,5 +55,38 @@ class FesteringGulchTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A single tap cannot produce both mana colors")
+    void cannotProduceBothColorsWithOneTap() {
+        harness.addToBattlefield(player1, new FesteringGulch());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entry damage resolves even after the land leaves the battlefield")
+    void entryDamageResolvesWithoutSource() {
+        harness.setHand(player1, List.of(new FesteringGulch()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+
+        Permanent land = gd.playerBattlefields.get(player1.getId()).removeFirst();
+        gd.playerGraveyards.get(player1.getId()).add(land.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
 }

@@ -65,6 +65,105 @@ class FormAPosseTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
     }
 
+    @Test
+    void zeroXCreatesNoTokens() {
+        castFormAPosse(0);
+
+        assertThat(findPermanents(player1, "Mercenary")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void newlyCreatedMercenaryCannotPayTapCost() {
+        castFormAPosse(1);
+        Permanent mercenary = findPermanent(player1, "Mercenary");
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(mercenary);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, 0, null, mercenary.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(mercenary.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void mercenaryCanBoostItselfAndBoostExpiresAtEndOfTurn() {
+        castFormAPosse(1);
+        Permanent mercenary = findPermanent(player1, "Mercenary");
+        mercenary.setSummoningSick(false);
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(mercenary);
+
+        harness.activateAbility(player1, index, 0, null, mercenary.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, mercenary)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, mercenary)).isEqualTo(1);
+        assertThat(mercenary.isTapped()).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, mercenary)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, mercenary)).isEqualTo(1);
+    }
+
+    @Test
+    void mercenaryCannotTargetOpponentsCreature() {
+        castFormAPosse(1);
+        Permanent mercenary = findPermanent(player1, "Mercenary");
+        mercenary.setSummoningSick(false);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new FormAPosse()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveSorcery(player2, 0, 1);
+        Permanent opponentMercenary = findPermanent(player2, "Mercenary");
+        harness.forceActivePlayer(player1);
+        harness.clearPriorityPassed();
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(mercenary);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, 0, null, opponentMercenary.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature you control");
+        assertThat(mercenary.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void mercenaryCannotActivateDuringOpponentsMainPhase() {
+        castFormAPosse(1);
+        Permanent mercenary = findPermanent(player1, "Mercenary");
+        mercenary.setSummoningSick(false);
+        harness.forceActivePlayer(player2);
+        harness.clearPriorityPassed();
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(mercenary);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, 0, null, mercenary.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(mercenary.isTapped()).isFalse();
+    }
+
+    @Test
+    void mercenaryCannotActivateWithSpellOnStack() {
+        castFormAPosse(1);
+        Permanent mercenary = findPermanent(player1, "Mercenary");
+        mercenary.setSummoningSick(false);
+        harness.setHand(player1, List.of(new FormAPosse()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castSorcery(player1, 0, 0);
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(mercenary);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, 0, null, mercenary.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(mercenary.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+    }
+
     private void castFormAPosse(int xValue) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -73,7 +172,6 @@ class FormAPosseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, xValue);
-        harness.castSorcery(player1, 0, xValue);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, xValue);
     }
 }

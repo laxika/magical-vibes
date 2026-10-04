@@ -73,7 +73,7 @@ class DreadDroneTest extends BaseCardTest {
         castDreadDrone();
 
         for (Permanent spawn : findPermanents(player1, "Eldrazi Spawn")) {
-            spawn.setTapped(true);
+            spawn.tap();
             int index = gd.playerBattlefields.get(player1.getId()).indexOf(spawn);
             harness.activateAbility(player1, index, null, null);
             assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(spawn);

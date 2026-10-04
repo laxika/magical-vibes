@@ -88,6 +88,43 @@ class EnigmaEidolonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A sacrificed Eidolon can return when its owner casts a multicolored spell")
+    void sacrificedEidolonReturnsToHand() {
+        EnigmaEidolon eidolon = new EnigmaEidolon();
+        harness.addToBattlefield(player1, eidolon);
+        harness.setLibrary(player2, List.of(new EnigmaEidolon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.assertNotOnBattlefield(player1, "Enigma Eidolon");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(eidolon);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+
+        harness.castFromHand(player1, new AssaultZeppelid(), "{2}{G}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(eidolon);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(eidolon);
+    }
+
+    @Test
+    @DisplayName("An Eidolon on the battlefield does not trigger when a multicolored spell is cast")
+    void battlefieldEidolonDoesNotTriggerReturn() {
+        harness.addToBattlefield(player1, new EnigmaEidolon());
+
+        harness.castFromHand(player1, new AssaultZeppelid(), "{2}{G}{U}");
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Enigma Eidolon");
+    }
+
+    @Test
     @DisplayName("An opponent's multicolored spell does not trigger Enigma Eidolon's graveyard ability")
     void opponentsMulticoloredSpellDoesNotTriggerReturn() {
         EnigmaEidolon eidolon = new EnigmaEidolon();

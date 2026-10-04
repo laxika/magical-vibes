@@ -117,7 +117,7 @@ class CorpseTradersTest extends BaseCardTest {
     void canSacrificeItselfWhileSummoningSick() {
         Permanent traders = harness.addToBattlefieldAndReturn(player1, new CorpseTraders());
         traders.setSummoningSick(true);
-        traders.setTapped(true);
+        traders.tap();
         harness.setHand(player2, new ArrayList<>(List.of(new MoorlandInquisitor(), new Forest())));
         readyForSorcerySpeed();
         harness.addMana(player1, ManaColor.BLACK, 3);

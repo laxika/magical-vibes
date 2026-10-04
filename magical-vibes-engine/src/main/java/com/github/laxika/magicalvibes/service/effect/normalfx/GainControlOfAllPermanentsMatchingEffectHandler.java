@@ -45,7 +45,7 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
         UUID controllerId = entry.getControllerId();
 
         // Collect first: applyControlEffect moves permanents between battlefield lists, so we can't
-        // seize while iterating. Skip permanents the controller already controls (a no-op steal).
+        // seize while iterating. A new effect also applies to permanents already controlled.
         // The predicate may be source-relative (e.g. "permanents you own" — Gruul Charm), so the
         // resolving controller has to reach the evaluation as the filter context's source controller.
         FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId)
@@ -55,7 +55,6 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
 
         List<Permanent> toSeize = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (playerId.equals(controllerId)) return;
             if (predicateEvaluationService.matchesPermanentPredicate(permanent, e.predicate(), filterContext)) {
                 toSeize.add(permanent);
             }

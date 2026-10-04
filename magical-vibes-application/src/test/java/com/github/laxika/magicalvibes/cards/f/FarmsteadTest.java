@@ -61,6 +61,52 @@ class FarmsteadTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a land");
     }
 
+    @Test
+    @DisplayName("An opponent's enchanted land does not trigger during the Aura controller's upkeep")
+    void doesNotTriggerDuringAuraControllersUpkeep() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        castFarmstead(land);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Paying the upkeep cost consumes two white mana and benefits only the land's controller")
+    void paymentConsumesTwoWhiteMana() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        castFarmstead(land);
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        harness.assertLife(player2, 21);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Attempting payment with only one white mana gains no life")
+    void insufficientManaDoesNotGainLife() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        castFarmstead(land);
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+    }
+
     private void castFarmstead(Permanent land) {
         harness.setHand(player1, List.of(new Farmstead()));
         harness.addMana(player1, ManaColor.WHITE, 3);

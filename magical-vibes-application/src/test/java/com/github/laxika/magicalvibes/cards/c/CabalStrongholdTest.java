@@ -113,7 +113,7 @@ class CabalStrongholdTest extends BaseCardTest {
     void secondAbilityCountsOnlyBasicSwampsRegardlessOfTapState() {
         Permanent stronghold = harness.addToBattlefieldAndReturn(player1, new CabalStronghold());
         Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
         harness.addToBattlefield(player1, new Plains());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

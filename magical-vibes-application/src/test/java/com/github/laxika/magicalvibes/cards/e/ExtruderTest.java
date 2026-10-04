@@ -112,9 +112,48 @@ class ExtruderTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Extruder");
     }
 
-    private void castAndResolveExtruder() {
+    @Test
+    @DisplayName("Echo does not create an enters-the-battlefield trigger")
+    void echoDoesNotTriggerOnEntry() {
         harness.castFromHand(player1, new Extruder(), "{4}");
         harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Extruder");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Extruder can activate its ability")
+    void tappedSummoningSickExtruderCanActivate() {
+        Permanent extruder = harness.addToBattlefieldAndReturn(player1, new Extruder());
+        extruder.setSummoningSick(true);
+        extruder.setTapped(true);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GoliathBeetle());
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.assertInGraveyard(player1, "Extruder");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Sacrificing the targeted Extruder leaves no legal target")
+    void sacrificingTargetedExtruderDoesNotPutCounterOnAnotherCreature() {
+        Permanent extruder = addCreatureReady(player1, new Extruder());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GoliathBeetle());
+
+        harness.activateAbility(player1, 0, 0, null, extruder.getId());
+        harness.assertInGraveyard(player1, "Extruder");
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void castAndResolveExtruder() {
+        harness.castFromHand(player1, new Extruder(), "{4}");
+        resolveAllTriggers();
     }
 }

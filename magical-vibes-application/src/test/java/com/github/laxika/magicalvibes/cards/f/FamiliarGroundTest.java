@@ -169,4 +169,44 @@ class FamiliarGroundTest extends BaseCardTest {
         assertThat(blockerOne.getBlockingTargetIds()).containsExactly(attacker.getId());
         assertThat(blockerTwo.getBlockingTargetIds()).containsExactly(attacker.getId());
     }
+
+    @Test
+    @DisplayName("Each attacking creature can have its own single blocker")
+    void separateAttackersCanEachBeBlocked() {
+        harness.addToBattlefield(player1, new FamiliarGround());
+        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent firstBlocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondBlocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(1, 2));
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(1, 2)
+        ));
+
+        assertThat(firstBlocker.getBlockingTargetIds()).containsExactly(firstAttacker.getId());
+        assertThat(secondBlocker.getBlockingTargetIds()).containsExactly(secondAttacker.getId());
+    }
+
+    @Test
+    @DisplayName("The restriction applies to the new controller's creatures after control changes")
+    void restrictionFollowsCurrentController() {
+        Permanent familiarGround = harness.addToBattlefieldAndReturn(player1, new FamiliarGround());
+        gd.playerBattlefields.get(player1.getId()).remove(familiarGround);
+        gd.playerBattlefields.get(player2.getId()).add(familiarGround);
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(1, 1)
+        )))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked by more than 1 creature");
+    }
 }

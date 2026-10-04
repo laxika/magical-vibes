@@ -104,7 +104,7 @@ class BloodswornSquireTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent squire = harness.addToBattlefieldAndReturn(player1, new BloodswornSquire());
         squire.setSummoningSick(true);
-        squire.setTapped(true);
+        squire.tap();
         harness.setHand(player1, List.of(new BloodswornSquire()));
         addAbilityMana();
 

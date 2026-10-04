@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EpitaphGolem.class, GrizzlyBears.class, HillGiant.class, Forest.class})
 class EpitaphGolemTest extends BaseCardTest {
 
     @Test
@@ -87,9 +90,84 @@ class EpitaphGolemTest extends BaseCardTest {
         assertThat(library.get(2).getId()).isEqualTo(second.getId());
     }
 
+    @Test
+    @DisplayName("Can put a noncreature card into an empty library")
+    void tucksLandIntoEmptyLibrary() {
+        int golemIdx = addGolem();
+        Card land = new Forest();
+        harness.setGraveyard(player1, List.of(land));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbilityWithGraveyardTargets(player1, golemIdx, 0, List.of(land.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, new EpitaphGolem());
+        golem.setTapped(true);
+        golem.setSummoningSick(true);
+        int golemIdx = gd.playerBattlefields.get(player1.getId()).indexOf(golem);
+        Card tucked = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(tucked));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbilityWithGraveyardTargets(player1, golemIdx, 0, List.of(tucked.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(tucked);
+        assertThat(golem.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An activation does nothing when a later activation already moved its target")
+    void doesNotMoveTargetTwiceOrChooseAnotherCard() {
+        int golemIdx = addGolem();
+        Card tucked = new GrizzlyBears();
+        Card other = new HillGiant();
+        harness.setGraveyard(player1, List.of(tucked, other));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithGraveyardTargets(player1, golemIdx, 0, List.of(tucked.getId()));
+        harness.activateAbilityWithGraveyardTargets(player1, golemIdx, 0, List.of(tucked.getId()));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(tucked);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Requires exactly one graveyard target")
+    void rejectsZeroOrMultipleTargets() {
+        int golemIdx = addGolem();
+        Card first = new GrizzlyBears();
+        Card second = new HillGiant();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, golemIdx, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, golemIdx, 0, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private int addGolem() {
-        harness.addToBattlefield(player1, new EpitaphGolem());
-        Permanent golem = findPermanent(player1, "Epitaph Golem");
+        Permanent golem = harness.addToBattlefieldAndReturn(player1, new EpitaphGolem());
         golem.setSummoningSick(false);
         return gd.playerBattlefields.get(player1.getId()).indexOf(golem);
     }

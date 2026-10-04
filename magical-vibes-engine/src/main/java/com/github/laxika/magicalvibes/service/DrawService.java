@@ -1011,7 +1011,7 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
-            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+            boolean hasEffect = gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
                     .anyMatch(ExileTopCardFaceDownInsteadOfDrawReplacement.class::isInstance);
             if (hasEffect) {
                 return permanent;
@@ -2208,6 +2208,11 @@ public class DrawService {
                         && !conditionEvaluationService.isMet(gameData, conditional.condition(),
                         ConditionContext.forPermanent(perm, drawingPlayerId))) {
                     continue;
+                }
+
+                if (effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof com.github.laxika.magicalvibes.model.condition.MaxSpeed) {
+                    effect = conditional.wrapped();
                 }
 
                 // Equipment-granted draw trigger (Diviner's Wand): the ability is granted to the

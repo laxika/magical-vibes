@@ -151,7 +151,7 @@ class BurnoutBashtronautTest extends BaseCardTest {
     @Test
     void canActivateWhileTappedOnOpponentsTurn() {
         Permanent bashtronaut = addCreatureReady(player1, new BurnoutBashtronaut());
-        bashtronaut.setTapped(true);
+        bashtronaut.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

@@ -82,10 +82,59 @@ class FellHorsemanTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         Permanent horseman = findPermanent(player1, "Fell Horseman");
-        harness.castSorcery(player1, 0, horseman.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, horseman.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard, card);
+    }
+
+    @Test
+    void adventureCannotTargetOpponentsCreatureCard() {
+        FellHorseman target = new FellHorseman();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(new FellHorseman()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThatThrownBy(() -> harness.castAdventure(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void adventureDoesNotExileItselfWhenItsTargetLeavesTheGraveyard() {
+        FellHorseman target = new FellHorseman();
+        FellHorseman card = new FellHorseman();
+        harness.setGraveyard(player1, List.of(target));
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAdventure(player1, 0, target.getId());
+
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
+    }
+
+    @Test
+    void deathTriggerDoesNotMoveTheCardAfterItLeavesTheGraveyard() {
+        FellHorseman card = new FellHorseman();
+        harness.addToBattlefield(player1, card);
+        Card libraryCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of(new Dreadbore()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveSorcery(player1, 0, findPermanent(player1, "Fell Horseman").getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(card);
+
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(card));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
     }
 }

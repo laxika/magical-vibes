@@ -26,11 +26,15 @@ class ErebossTitanTest extends BaseCardTest {
      * Leaves the Titan's may prompt pending.
      */
     private void opponentReturnsCreatureFromTheirGraveyard() {
+        harness.setGraveyard(player1, List.of(new ErebossTitan()));
+        triggerOpponentGraveyardDeparture();
+    }
+
+    private void triggerOpponentGraveyardDeparture() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setGraveyard(player1, new ArrayList<>(List.of(new ErebossTitan())));
         harness.setGraveyard(player2, new ArrayList<>(List.of(new GrizzlyBears())));
         harness.setHand(player2, new ArrayList<>(List.of(new Gravedigger())));
         harness.addMana(player2, ManaColor.BLACK, 4);
@@ -50,14 +54,11 @@ class ErebossTitanTest extends BaseCardTest {
     void indestructibleWithNoOpponentCreatures() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player1, new ErebossTitan());
-
-        Permanent titan = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent titan = harness.addToBattlefieldAndReturn(player1, new ErebossTitan());
 
         harness.setHand(player2, new ArrayList<>(List.of(new Murder())));
         harness.addMana(player2, ManaColor.BLACK, 4);
-        harness.castInstant(player2, 0, titan.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, titan.getId());
 
         harness.assertOnBattlefield(player1, "Erebos's Titan");
         harness.assertNotInGraveyard(player1, "Erebos's Titan");
@@ -68,15 +69,12 @@ class ErebossTitanTest extends BaseCardTest {
     void destructibleWhenOpponentControlsCreature() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.addToBattlefield(player1, new ErebossTitan());
+        Permanent titan = harness.addToBattlefieldAndReturn(player1, new ErebossTitan());
         harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent titan = gd.playerBattlefields.get(player1.getId()).getFirst();
 
         harness.setHand(player2, new ArrayList<>(List.of(new Murder())));
         harness.addMana(player2, ManaColor.BLACK, 4);
-        harness.castInstant(player2, 0, titan.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, titan.getId());
 
         harness.assertNotOnBattlefield(player1, "Erebos's Titan");
         harness.assertInGraveyard(player1, "Erebos's Titan");
@@ -98,10 +96,9 @@ class ErebossTitanTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
 
-        harness.passBothPriorities(); // resolve the reflexive return trigger
-
         harness.assertInHand(player1, "Erebos's Titan");
         harness.assertNotInGraveyard(player1, "Erebos's Titan");
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -136,5 +133,67 @@ class ErebossTitanTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Erebos's Titan");
+    }
+
+    @Test
+    @DisplayName("An empty hand cannot pay for returning the Titan")
+    void emptyHandDoesNotReturnTitan() {
+        opponentReturnsCreatureFromTheirGraveyard();
+        harness.setHand(player1, List.of());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Erebos's Titan");
+        harness.assertNotInHand(player1, "Erebos's Titan");
+    }
+
+    @Test
+    @DisplayName("Lethal damage remains marked and destroys the Titan when it loses indestructible")
+    void lethalDamageDestroysTitanWhenOpponentGainsCreature() {
+        Permanent titan = harness.addToBattlefieldAndReturn(player1, new ErebossTitan());
+        titan.setMarkedDamage(5);
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player1, "Erebos's Titan");
+
+        harness.addToBattlefield(player2, new ErebossTitan());
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Erebos's Titan");
+        harness.assertInGraveyard(player1, "Erebos's Titan");
+    }
+
+    @Test
+    @DisplayName("The graveyard ability does not trigger while the Titan is on the battlefield")
+    void battlefieldTitanDoesNotTrigger() {
+        harness.addToBattlefield(player1, new ErebossTitan());
+        harness.setGraveyard(player1, List.of());
+        triggerOpponentGraveyardDeparture();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Erebos's Titan");
+    }
+
+    @Test
+    @DisplayName("A Titan that died normally can return after discarding a card")
+    void returnsTitanThatEnteredGraveyardThroughGameActions() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent titan = harness.addToBattlefieldAndReturn(player1, new ErebossTitan());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Murder(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveInstant(player1, 0, titan.getId());
+        harness.assertInGraveyard(player1, "Erebos's Titan");
+
+        triggerOpponentGraveyardDeparture();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Erebos's Titan");
+        harness.assertNotInGraveyard(player1, "Erebos's Titan");
     }
 }

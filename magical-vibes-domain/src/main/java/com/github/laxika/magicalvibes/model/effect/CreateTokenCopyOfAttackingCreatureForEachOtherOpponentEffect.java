@@ -5,8 +5,14 @@ import java.util.UUID;
 /** Creates a tapped and attacking token copy of the triggering attacker for each other opponent. */
 public record CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(
         UUID opponentId, boolean mayCreate, boolean removeLegendary, boolean exileAtEndStep,
-        boolean exileAtEndOfCombat)
+        boolean exileAtEndOfCombat, UUID choiceBatchId)
         implements CardEffect {
+
+    public CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(
+            UUID opponentId, boolean mayCreate, boolean removeLegendary, boolean exileAtEndStep,
+            boolean exileAtEndOfCombat) {
+        this(opponentId, mayCreate, removeLegendary, exileAtEndStep, exileAtEndOfCombat, null);
+    }
 
     public CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect() {
         this(null, true, false, true, false);

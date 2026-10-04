@@ -104,7 +104,8 @@ class ArcadesTest extends BaseCardTest {
     void damageRevertsWhenArcadesLeaves() {
         Permanent arcades = harness.addToBattlefieldAndReturn(player1, new Arcades());
         Permanent wall = addCreatureReady(player1, new WallOfVines());
-        declareAttackers(player1, List.of(1));
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(1)));
 
         gd.playerBattlefields.get(player1.getId()).remove(arcades);
 

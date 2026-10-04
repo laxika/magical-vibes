@@ -132,7 +132,7 @@ class BloodBeckoningTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId)
                 .containsExactly(creature.getId());
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(removedCreature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(removedCreature);
         harness.assertInGraveyard(player1, "Blood Beckoning");
     }
 
@@ -151,7 +151,7 @@ class BloodBeckoningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(target);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
         harness.assertInGraveyard(player1, "Fearless Fledgling");
         harness.assertInGraveyard(player1, "Blood Beckoning");
     }

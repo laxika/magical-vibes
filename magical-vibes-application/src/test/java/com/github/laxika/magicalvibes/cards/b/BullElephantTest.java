@@ -78,7 +78,7 @@ class BullElephantTest extends BaseCardTest {
     void tappedForestsCanBeReturned() {
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
-        gd.playerBattlefields.get(player1.getId()).forEach(permanent -> permanent.setTapped(true));
+        gd.playerBattlefields.get(player1.getId()).forEach(permanent -> permanent.tap());
         castBullElephant();
 
         harness.handleMayAbilityChosen(player1, true);

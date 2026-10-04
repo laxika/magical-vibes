@@ -130,7 +130,7 @@ class DeceiverOfFormTest extends BaseCardTest {
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         bears.setPowerModifier(1);
         bears.setToughnessModifier(2);
-        bears.setTapped(true);
+        bears.tap();
         harness.setLibrary(player1, List.of(new HillGiant(), new Forest()));
 
         advanceToCombat(player1);

@@ -69,6 +69,32 @@ class FestivalTest extends BaseCardTest {
                 .hasMessageContaining("not playable");
     }
 
+    @Test
+    @DisplayName("Cannot be cast during your own upkeep")
+    void cannotCastDuringOwnUpkeep() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new Festival(), "{W}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("The attack restriction begins only when Festival resolves")
+    void restrictionBeginsOnResolution() {
+        Permanent creature = addCreatureReady(player2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.castFromHand(player1, new Festival(), "{W}");
+
+        assertThat(als.canAttack(gd, creature, player2.getId())).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(als.canAttack(gd, creature, player2.getId())).isFalse();
+    }
+
     private Permanent addCreatureReady(com.github.laxika.magicalvibes.model.Player player) {
         return addCreatureReady(player, new BogRats());
     }

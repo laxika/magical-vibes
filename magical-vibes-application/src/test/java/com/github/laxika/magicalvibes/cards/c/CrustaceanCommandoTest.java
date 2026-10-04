@@ -89,7 +89,7 @@ class CrustaceanCommandoTest extends BaseCardTest {
         castCrustaceanCommando();
         Permanent mutagen = findPermanent(player1, "Mutagen");
         Permanent creature = findPermanent(player1, "Crustacean Commando");
-        mutagen.setTapped(true);
+        mutagen.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(

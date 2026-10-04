@@ -104,8 +104,8 @@ class BoscoJustABearTest extends BaseCardTest {
     @DisplayName("A tapped Bosco can sacrifice a tapped Food, with counters added on resolution")
     void tappedPermanentsCanPayFoodCost() {
         Permanent bosco = castBosco();
-        bosco.setTapped(true);
-        findPermanent(player1, "Food").setTapped(true);
+        bosco.tap();
+        findPermanent(player1, "Food").tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

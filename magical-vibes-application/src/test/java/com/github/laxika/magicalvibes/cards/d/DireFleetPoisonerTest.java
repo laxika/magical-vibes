@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
 import com.github.laxika.magicalvibes.cards.s.SailorOfMeans;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -101,8 +101,8 @@ class DireFleetPoisonerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .extracting(permanent -> permanent.getCard().getClass())
-                .containsExactly(DireFleetPoisoner.class);
+                .singleElement().satisfies(permanent ->
+                        assertThat(permanent.getCard()).isExactlyInstanceOf(DireFleetPoisoner.class));
     }
 
     @Test

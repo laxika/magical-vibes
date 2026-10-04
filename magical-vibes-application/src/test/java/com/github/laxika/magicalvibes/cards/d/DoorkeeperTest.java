@@ -86,7 +86,7 @@ class DoorkeeperTest extends BaseCardTest {
     @DisplayName("Cannot activate an already tapped Doorkeeper")
     void cannotActivateWhileTapped() {
         Permanent doorkeeper = addCreatureReady(player1, new Doorkeeper());
-        doorkeeper.setTapped(true);
+        doorkeeper.tap();
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))

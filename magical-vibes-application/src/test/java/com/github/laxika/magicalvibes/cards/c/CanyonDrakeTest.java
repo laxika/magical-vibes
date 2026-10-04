@@ -142,7 +142,7 @@ class CanyonDrakeTest extends BaseCardTest {
     @DisplayName("A tapped Drake with summoning sickness can activate its ability")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent drake = harness.addToBattlefieldAndReturn(player1, new CanyonDrake());
-        drake.setTapped(true);
+        drake.tap();
         drake.setSummoningSick(true);
         harness.setHand(player1, List.of(new Mountain()));
         harness.addMana(player1, ManaColor.RED, 1);

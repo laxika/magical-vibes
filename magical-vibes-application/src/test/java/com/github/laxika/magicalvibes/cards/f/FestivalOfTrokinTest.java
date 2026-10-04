@@ -89,4 +89,35 @@ class FestivalOfTrokinTest extends BaseCardTest {
 
         harness.assertLife(player1, lifeBefore + 4);
     }
+
+    @Test
+    @DisplayName("Counts tapped creatures")
+    void countsTappedCreatures() {
+        harness.addToBattlefieldAndReturn(player1, new AlabornTrooper()).setTapped(true);
+        harness.addToBattlefield(player1, new AlabornTrooper());
+        harness.setHand(player1, List.of(new FestivalOfTrokin()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 12);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 12);
+    }
+
+    @Test
+    @DisplayName("Does not count creature cards outside the battlefield")
+    void doesNotCountCreatureCardsOutsideBattlefield() {
+        harness.addToBattlefield(player1, new AlabornTrooper());
+        harness.setHand(player1, List.of(new FestivalOfTrokin(), new AlabornTrooper()));
+        harness.setGraveyard(player1, List.of(new AlabornTrooper()));
+        harness.setExile(player1, List.of(new AlabornTrooper()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.setLife(player1, 10);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertLife(player1, 12);
+    }
 }

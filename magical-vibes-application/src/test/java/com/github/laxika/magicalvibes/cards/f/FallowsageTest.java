@@ -25,7 +25,7 @@ class FallowsageTest extends BaseCardTest {
 
         tap(fallowsage);
 
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -40,7 +40,7 @@ class FallowsageTest extends BaseCardTest {
 
         tap(fallowsage);
 
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
@@ -67,11 +67,61 @@ class FallowsageTest extends BaseCardTest {
 
         tap(fallowsage);
 
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore + 1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(ownHandBefore);
+    }
+
+    @Test
+    @DisplayName("Only the Fallowsage that becomes tapped triggers")
+    void anotherFallowsageDoesNotDuplicateTrigger() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Fallowsage());
+        harness.addToBattlefield(player1, new Fallowsage());
+        harness.setLibrary(player1, List.of(new AxegrinderGiant()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        tap(first);
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("The draw trigger resolves after Fallowsage leaves the battlefield")
+    void triggerSurvivesSourceLeaving() {
+        Permanent fallowsage = harness.addToBattlefieldAndReturn(player1, new Fallowsage());
+        harness.setLibrary(player1, List.of(new AxegrinderGiant()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        tap(fallowsage);
+        gd.playerBattlefields.get(player1.getId()).remove(fallowsage);
+        gd.playerGraveyards.get(player1.getId()).add(fallowsage.getCard());
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Attacking taps Fallowsage and allows its controller to draw")
+    void attackingTriggersDraw() {
+        Permanent fallowsage = addCreatureReady(player1, new Fallowsage());
+        harness.setLibrary(player1, List.of(new AxegrinderGiant()));
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(List.of(0));
+
+        assertThat(fallowsage.isTapped()).isTrue();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
     private void tap(Permanent permanent) {

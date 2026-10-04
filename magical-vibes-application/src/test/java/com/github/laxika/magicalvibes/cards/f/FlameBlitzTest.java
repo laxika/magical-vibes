@@ -47,6 +47,74 @@ class FlameBlitzTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("Does not trigger during the opponent's end step")
+    void doesNotTriggerAtOpponentEndStep() {
+        Permanent planeswalker = addPlaneswalker(player2, 6);
+        harness.addToBattlefield(player1, new FlameBlitz());
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Planeswalkers with five or fewer loyalty die on both battlefields")
+    void lethalDamageRemovesPlaneswalkers() {
+        addPlaneswalker(player1, 5);
+        addPlaneswalker(player2, 3);
+        harness.addToBattlefield(player1, new FlameBlitz());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Chandra Nalaar");
+        harness.assertNotOnBattlefield(player2, "Chandra Nalaar");
+        harness.assertInGraveyard(player1, "Chandra Nalaar");
+        harness.assertInGraveyard(player2, "Chandra Nalaar");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Resolves without planeswalkers and leaves creatures and players unharmed")
+    void doesNotDamageCreaturesOrPlayers() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FlameBlitz());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(ownCreature.getMarkedDamage()).isZero();
+        assertThat(opposingCreature.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cycling discards as a cost before its draw resolves")
+    void cyclingDiscardsBeforeResolution() {
+        harness.setHand(player1, List.of(new FlameBlitz()));
+        harness.setLibrary(player1, List.of(new FlameBlitz()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Flame Blitz");
+        harness.assertNotInHand(player1, "Flame Blitz");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Flame Blitz");
+        harness.assertInGraveyard(player1, "Flame Blitz");
+    }
+
     private Permanent addPlaneswalker(Player player, int loyalty) {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, loyalty);
@@ -57,6 +125,6 @@ class FlameBlitzTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }

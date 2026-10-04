@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -45,9 +47,38 @@ class FleetFootedMonkTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declares 1 blocker"));
     }
 
-    private Permanent attackingMonk() {
+    @ParameterizedTest
+    @ValueSource(ints = {-3, -2, -1})
+    @DisplayName("Reduced-power creatures can block using their current power")
+    void reducedPowerCreatureCanBlock(int powerModifier) {
+        attackingMonk();
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setPowerModifier(powerModifier);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("declares 1 blocker"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 2})
+    @DisplayName("A creature increased to power 2 or greater cannot block")
+    void increasedPowerCreatureCannotBlock(int powerModifier) {
+        attackingMonk();
+        Permanent blocker = addCreatureReady(player2, new MuckRats());
+        blocker.setPowerModifier(powerModifier);
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only be blocked by");
+    }
+
+    private void attackingMonk() {
         Permanent monk = addCreatureReady(player1, new FleetFootedMonk());
         monk.setAttacking(true);
-        return monk;
     }
 }

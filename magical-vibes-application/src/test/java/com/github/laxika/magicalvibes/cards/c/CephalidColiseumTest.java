@@ -163,7 +163,7 @@ class CephalidColiseumTest extends BaseCardTest {
     @Test
     void tappedColiseumCannotActivateEitherAbility() {
         Permanent coliseum = addReadyColiseum(player1);
-        coliseum.setTapped(true);
+        coliseum.tap();
         harness.setGraveyard(player1, graveyardCards(7));
         harness.addMana(player1, ManaColor.BLUE, 1);
         int lifeBefore = gd.getLife(player1.getId());

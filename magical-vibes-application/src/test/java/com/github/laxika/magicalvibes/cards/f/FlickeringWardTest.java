@@ -102,4 +102,60 @@ class FlickeringWardTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Another Ward choosing white removes the first Ward")
+    void protectionFromAnotherWardRemovesThisAura() {
+        Permanent turtle = addCreatureReady(player1, new HornedTurtle());
+        Permanent firstWard = attachWard(turtle, CardColor.GREEN);
+        harness.setHand(player1, List.of(new FlickeringWard()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0, turtle.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(firstWard.getId()));
+        harness.assertInGraveyard(player1, "Flickering Ward");
+        assertThat(countPermanents(player1, "Flickering Ward")).isEqualTo(1);
+        assertThat(gqs.hasProtectionFrom(gd, turtle, CardColor.WHITE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, turtle, CardColor.GREEN)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Returning and recasting the Ward allows choosing a different color")
+    void recastingChoosesANewColor() {
+        Permanent turtle = addCreatureReady(player1, new HornedTurtle());
+        attachWard(turtle, CardColor.GREEN);
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Flickering Ward");
+        assertThat(gqs.hasProtectionFrom(gd, turtle, CardColor.GREEN)).isFalse();
+
+        harness.castEnchantment(player1, 0, turtle.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+
+        harness.assertOnBattlefield(player1, "Flickering Ward");
+        assertThat(gqs.hasProtectionFrom(gd, turtle, CardColor.BLACK)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, turtle, CardColor.GREEN)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Its own protection from white still prevents targeting with another Ward")
+    void cannotTargetCreatureAlreadyProtectedFromWhite() {
+        Permanent turtle = addCreatureReady(player1, new HornedTurtle());
+        attachWard(turtle, CardColor.WHITE);
+        harness.setHand(player1, List.of(new FlickeringWard()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, turtle.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countPermanents(player1, "Flickering Ward")).isEqualTo(1);
+    }
 }

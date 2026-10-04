@@ -94,7 +94,7 @@ class DolmenGateTest extends BaseCardTest {
     @DisplayName("A tapped Dolmen Gate protects every attacking creature you control")
     void tappedGateProtectsMultipleAttackers() {
         Permanent gate = harness.addToBattlefieldAndReturn(player1, new DolmenGate());
-        gate.setTapped(true);
+        gate.tap();
         Permanent firstAttacker = addAttacker(player1);
         Permanent secondAttacker = addAttacker(player1);
         addBlocker(player2, firstAttacker);

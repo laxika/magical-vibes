@@ -131,7 +131,7 @@ class BrainWeevilTest extends BaseCardTest {
     @DisplayName("Sacrifice can be activated while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         var weevil = harness.addToBattlefieldAndReturn(player1, new BrainWeevil());
-        weevil.setTapped(true);
+        weevil.tap();
         weevil.setSummoningSick(true);
         harness.setHand(player2, List.of());
 

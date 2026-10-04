@@ -147,7 +147,7 @@ class CrimsonMuckwaderTest extends BaseCardTest {
     void regenerationDoesNotRequireTappingOrHaste() {
         Permanent muckwader = harness.addToBattlefieldAndReturn(player1, new CrimsonMuckwader());
         muckwader.setSummoningSick(true);
-        muckwader.setTapped(true);
+        muckwader.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

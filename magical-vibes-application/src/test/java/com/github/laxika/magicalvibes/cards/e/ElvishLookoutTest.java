@@ -54,4 +54,16 @@ class ElvishLookoutTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
     }
+
+    @Test
+    @DisplayName("Elvish Lookout cannot be targeted by its controller's activated ability")
+    void ownActivatedAbilityCannotTargetIt() {
+        Permanent lookout = addCreatureReady(player1, new ElvishLookout());
+        addCreatureReady(player1, new TemporalAdept());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, lookout.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
 }

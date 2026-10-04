@@ -49,4 +49,64 @@ class EarthbendingStudentTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, opponentLand.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void earthbendedLandReturnsTappedWithoutAnimationAfterDying() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new EarthbendingStudent()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0, land.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
+
+        land.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Forest");
+        harness.passBothPriorities();
+
+        Permanent returned = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Forest"));
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(gqs.isLand(gd, returned)).isTrue();
+        assertThat(gqs.isCreature(gd, returned)).isFalse();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void animationAndExileReturnPersistAfterStudentLeaves() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new EarthbendingStudent()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0, land.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent student = gqs.findPermanentById(gd,
+                harness.getPermanentId(player1, "Earthbending Student"));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, student));
+
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, land, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, land, Keyword.VIGILANCE)).isFalse();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, land));
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.passBothPriorities();
+
+        Permanent returned = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Forest"));
+        assertThat(returned.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, returned)).isFalse();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }

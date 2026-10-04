@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BeaconOfTomorrows;
+import com.github.laxika.magicalvibes.cards.e.EngineeredExplosives;
 import com.github.laxika.magicalvibes.cards.t.Tyrranax;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
@@ -9,11 +10,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FistOfSuns.class, Tyrranax.class, BeaconOfTomorrows.class})
+@CardUsed({FistOfSuns.class, Tyrranax.class, BeaconOfTomorrows.class, EngineeredExplosives.class})
 class FistOfSunsTest extends BaseCardTest {
 
     @Test
@@ -74,6 +76,44 @@ class FistOfSunsTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertWubrgSpent();
+    }
+
+    @Test
+    void controllerCanChooseWubrgEvenWhenNormalCostIsAffordable() {
+        harness.addToBattlefield(player1, new FistOfSuns());
+        harness.setHand(player1, List.of(new Tyrranax()));
+        addWubrg(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castWithAlternateCost(player1, 0, (UUID) null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void cannotAnnounceNonzeroXWhenOnlyFistAlternativeCostIsPayable() {
+        harness.addToBattlefield(player1, new FistOfSuns());
+        harness.setHand(player1, List.of(new EngineeredExplosives()));
+        addWubrg(player1);
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0, 6))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void fistInHandDoesNotOfferItsAlternativeCost() {
+        harness.setHand(player1, List.of(new Tyrranax(), new FistOfSuns()));
+        addWubrg(player1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addWubrg(Player player) {

@@ -31,9 +31,9 @@ class FangkeepersFamiliarTest extends BaseCardTest {
         harness.setLife(player1, 10);
 
         castFangkeepersFamiliar(0);
-        resolveCreatureAndEtb();
+        resolveAllTriggers();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(13);
+        harness.assertLife(player1, 13);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
 
         harness.getGameService().handleInteractionAnswer(gd, player1,
@@ -47,11 +47,10 @@ class FangkeepersFamiliarTest extends BaseCardTest {
     @Test
     @DisplayName("ETB mode destroys target enchantment")
     void destroyEnchantmentMode() {
-        harness.addToBattlefield(player2, new SealOfStrength());
-        Permanent enchantment = gd.playerBattlefields.get(player2.getId()).getLast();
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new SealOfStrength());
 
         castFangkeepersFamiliar(1, enchantment.getId());
-        resolveCreatureAndEtb();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(enchantment);
     }
@@ -59,12 +58,13 @@ class FangkeepersFamiliarTest extends BaseCardTest {
     @Test
     @DisplayName("Destroy mode rejects a creature target")
     void destroyModeRejectsCreatureTarget() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent creature = gd.playerBattlefields.get(player2.getId()).getLast();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new SealOfStrength());
 
-        assertThatThrownBy(() -> castFangkeepersFamiliar(1, creature.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target");
+        enterAndChooseMode("Destroy target enchantment");
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creature.getId()))
+                .isInstanceOf(RuntimeException.class);
     }
 
     @Test
@@ -81,10 +81,7 @@ class FangkeepersFamiliarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         FaerieInvaders creatureSpell = new FaerieInvaders();
-        harness.setHand(player2, List.of(creatureSpell));
-        harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 4);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, creatureSpell, "{4}{U}");
 
         harness.castCreature(player1, 0, 2, creatureSpell.getId());
         harness.passBothPriorities();
@@ -93,6 +90,56 @@ class FangkeepersFamiliarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Faerie Invaders");
+    }
+
+    @Test
+    void canChooseDestroyModeWhenEnteringWithoutBeingCast() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new SealOfStrength());
+
+        enterAndChooseMode("Destroy target enchantment");
+        harness.handlePermanentChosen(player1, enchantment.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Seal of Strength");
+        harness.assertInGraveyard(player2, "Seal of Strength");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @CardUsed(FangkeepersFamiliar.class)
+    void gainLifeModeStillGainsLifeWithAnEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.setLife(player1, 10);
+
+        castFangkeepersFamiliar(0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 13);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Fangkeeper's Familiar");
+    }
+
+    @Test
+    @CardUsed(FangkeepersFamiliar.class)
+    void surveilCanKeepAndReorderAllCardsInAShortLibrary() {
+        Card first = new FangkeepersFamiliar();
+        Card second = new FangkeepersFamiliar();
+        harness.setLibrary(player1, List.of(first, second));
+
+        castFangkeepersFamiliar(0);
+        resolveAllTriggers();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 23);
+    }
+
+    private void enterAndChooseMode(String mode) {
+        harness.enterBattlefieldAndReturn(player1, new FangkeepersFamiliar());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+        harness.handleListChoice(player1, mode);
     }
 
     private void castFangkeepersFamiliar(int mode) {
@@ -112,8 +159,4 @@ class FangkeepersFamiliarTest extends BaseCardTest {
         }
     }
 
-    private void resolveCreatureAndEtb() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-    }
 }

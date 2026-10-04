@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EliteJavelineer.class, GrizzlyBears.class, Entangler.class})
+@CardUsed({EliteJavelineer.class, GrizzlyBears.class, Entangler.class, Unsummon.class})
 class EliteJavelineerTest extends BaseCardTest {
 
     @Test
@@ -121,5 +122,41 @@ class EliteJavelineerTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.pendingInteractions).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The block trigger still deals damage after Javelineer leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        Permanent javelineer = addCreatureReady(player2, new EliteJavelineer());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.handlePermanentChosen(player2, attacker.getId());
+        harness.castAndResolveInstant(player1, 0, javelineer.getId());
+        harness.assertNotOnBattlefield(player2, "Elite Javelineer");
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A target that stops attacking before resolution takes no damage")
+    void targetMustStillBeAttackingOnResolution() {
+        addCreatureReady(player2, new EliteJavelineer());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.handlePermanentChosen(player2, attacker.getId());
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }

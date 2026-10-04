@@ -1,57 +1,30 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.d.Deathmark;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ForebearsBlade.class, GrizzlyBears.class, Deathmark.class})
 class ForebearsBladeTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    
-
-    
-
-    
-
-    @Test
-    @DisplayName("Forebear's Blade has equip {3} ability")
-    void hasEquipAbility() {
-        ForebearsBlade card = new ForebearsBlade();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{3}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().get(0).getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(EquipEffect.class);
-    }
-
-    // ===== Static effects =====
 
     @Test
     @DisplayName("Equipped creature gets +3/+0")
     void equippedCreatureGetsBoost() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent blade = addBladeReady(player1);
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new ForebearsBlade());
         blade.setAttachedTo(creature.getId());
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);   // 2 + 3
@@ -62,7 +35,7 @@ class ForebearsBladeTest extends BaseCardTest {
     @DisplayName("Equipped creature has vigilance")
     void equippedCreatureHasVigilance() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent blade = addBladeReady(player1);
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new ForebearsBlade());
         blade.setAttachedTo(creature.getId());
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
@@ -72,7 +45,7 @@ class ForebearsBladeTest extends BaseCardTest {
     @DisplayName("Equipped creature has trample")
     void equippedCreatureHasTrample() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent blade = addBladeReady(player1);
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new ForebearsBlade());
         blade.setAttachedTo(creature.getId());
 
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
@@ -82,7 +55,7 @@ class ForebearsBladeTest extends BaseCardTest {
     @DisplayName("Unequipped creature does not get boost or keywords")
     void unequippedCreatureNoBoost() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        addBladeReady(player1);
+        harness.addToBattlefieldAndReturn(player1, new ForebearsBlade());
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
@@ -94,7 +67,7 @@ class ForebearsBladeTest extends BaseCardTest {
     @DisplayName("Creature loses boost and keywords when blade is removed")
     void creatureLosesEffectsWhenBladeRemoved() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent blade = addBladeReady(player1);
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new ForebearsBlade());
         blade.setAttachedTo(creature.getId());
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
@@ -108,14 +81,12 @@ class ForebearsBladeTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
     }
 
-    // ===== Death trigger =====
-
     @Test
     @DisplayName("When equipped creature dies, blade attaches to target creature you control")
     void deathTriggerAttachesToAnotherCreature() {
         Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
         Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
-        Permanent blade = addBladeReady(player1);
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new ForebearsBlade());
         blade.setAttachedTo(creature1.getId());
 
         // Opponent destroys the equipped creature with Deathmark
@@ -124,8 +95,7 @@ class ForebearsBladeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Deathmark()));
         harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.castSorcery(player2, 0, creature1.getId());
-        harness.passBothPriorities(); // resolve Deathmark — creature dies, death trigger queued
+        harness.castAndResolveSorcery(player2, 0, creature1.getId());
 
         // Player chooses creature2 as the target for the blade's death trigger
         harness.handlePermanentChosen(player1, creature2.getId());
@@ -143,7 +113,7 @@ class ForebearsBladeTest extends BaseCardTest {
     @DisplayName("Death trigger has no valid targets when no other creatures exist — blade stays unattached")
     void deathTriggerNoValidTargets() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent blade = addBladeReady(player1);
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new ForebearsBlade());
         blade.setAttachedTo(creature.getId());
 
         // Opponent destroys the only creature
@@ -152,8 +122,7 @@ class ForebearsBladeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Deathmark()));
         harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.castSorcery(player2, 0, creature.getId());
-        harness.passBothPriorities(); // resolve Deathmark — creature dies, no valid target
+        harness.castAndResolveSorcery(player2, 0, creature.getId());
 
         // Blade should still be on the battlefield but unattached
         harness.assertOnBattlefield(player1, "Forebear's Blade");
@@ -165,7 +134,7 @@ class ForebearsBladeTest extends BaseCardTest {
     void triggerDoesNotFireForDifferentCreature() {
         Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
         Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
-        Permanent blade = addBladeReady(player1);
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new ForebearsBlade());
         blade.setAttachedTo(creature1.getId());
 
         // Opponent destroys the NON-equipped creature
@@ -174,8 +143,7 @@ class ForebearsBladeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Deathmark()));
         harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.castSorcery(player2, 0, creature2.getId());
-        harness.passBothPriorities(); // resolve Deathmark
+        harness.castAndResolveSorcery(player2, 0, creature2.getId());
 
         // Blade should still be attached to creature1
         assertThat(blade.getAttachedTo()).isEqualTo(creature1.getId());
@@ -186,7 +154,7 @@ class ForebearsBladeTest extends BaseCardTest {
     void bladeStaysOnBattlefieldAfterCreatureDies() {
         Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
         Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
-        Permanent blade = addBladeReady(player1);
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new ForebearsBlade());
         blade.setAttachedTo(creature1.getId());
 
         harness.forceActivePlayer(player2);
@@ -194,8 +162,7 @@ class ForebearsBladeTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Deathmark()));
         harness.addMana(player2, ManaColor.BLACK, 1);
-        harness.castSorcery(player2, 0, creature1.getId());
-        harness.passBothPriorities(); // resolve Deathmark
+        harness.castAndResolveSorcery(player2, 0, creature1.getId());
 
         // Choose creature2 as target
         harness.handlePermanentChosen(player1, creature2.getId());
@@ -207,12 +174,10 @@ class ForebearsBladeTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Forebear's Blade");
     }
 
-    // ===== Equip ability =====
-
     @Test
     @DisplayName("Resolving equip ability attaches blade to target creature")
     void resolvingEquipAttachesToCreature() {
-        Permanent blade = addBladeReady(player1);
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new ForebearsBlade());
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 3);
 
@@ -225,7 +190,7 @@ class ForebearsBladeTest extends BaseCardTest {
     @Test
     @DisplayName("Blade can be moved to another creature via equip")
     void canReEquipToAnotherCreature() {
-        Permanent blade = addBladeReady(player1);
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new ForebearsBlade());
         Permanent creature1 = addCreatureReady(player1, new GrizzlyBears());
         Permanent creature2 = addCreatureReady(player1, new GrizzlyBears());
 
@@ -241,12 +206,109 @@ class ForebearsBladeTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature2)).isEqualTo(5);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Blade can be cast with no creatures on the battlefield")
+    void canCastWithoutCreatures() {
+        harness.setHand(player1, List.of(new ForebearsBlade()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
 
-    private Permanent addBladeReady(Player player) {
-        Permanent perm = new Permanent(new ForebearsBlade());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.assertOnBattlefield(player1, "Forebear's Blade");
+        assertThat(findPermanent(player1, "Forebear's Blade").getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Equip pays three generic mana without tapping the Equipment")
+    void equipPaysThreeManaWithoutTapping() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new ForebearsBlade());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(blade.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(blade.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void cannotEquipOpponentsCreature() {
+        harness.addToBattlefield(player1, new ForebearsBlade());
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature you control");
+    }
+
+    @Test
+    @DisplayName("Equip cannot target a noncreature permanent")
+    void cannotEquipNoncreature() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new ForebearsBlade());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, blade.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Equip is restricted to sorcery speed")
+    void cannotEquipDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new ForebearsBlade());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    @DisplayName("Death trigger offers only creatures controlled by the Equipment's controller")
+    void deathTriggerExcludesOpponentsCreatures() {
+        Permanent equipped = addCreatureReady(player1, new GrizzlyBears());
+        Permanent ownTarget = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new ForebearsBlade());
+        blade.setAttachedTo(equipped.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Deathmark()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castAndResolveSorcery(player2, 0, equipped.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactly(ownTarget.getId());
+        harness.handlePermanentChosen(player1, ownTarget.getId());
+        harness.passBothPriorities();
+        assertThat(blade.getAttachedTo()).isEqualTo(ownTarget.getId());
+    }
+
+    @Test
+    @DisplayName("Death trigger has no legal target when only an opponent's creature remains")
+    void deathTriggerCannotUseOnlyOpponentsCreature() {
+        Permanent equipped = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new ForebearsBlade());
+        blade.setAttachedTo(equipped.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Deathmark()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.castAndResolveSorcery(player2, 0, equipped.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(blade.getAttachedTo()).isNull();
+        assertThat(gqs.getEffectivePower(gd, opponentCreature)).isEqualTo(2);
     }
 }

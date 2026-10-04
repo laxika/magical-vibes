@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FlamesOfTheBloodHand.class, VitalSurge.class})
+@CardUsed({FlamesOfTheBloodHand.class, VitalSurge.class, ChandraNalaar.class})
 class FlamesOfTheBloodHandTest extends BaseCardTest {
 
     @Test
@@ -30,8 +30,8 @@ class FlamesOfTheBloodHandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 16);
-        assertThat(gqs.canPlayerGainLife(gd, player2.getId())).isFalse();
-        // The lock is per-player: the caster is unaffected.
+        // Replacing life gain does not prohibit it: competing replacements must remain applicable.
+        assertThat(gqs.canPlayerGainLife(gd, player2.getId())).isTrue();
         assertThat(gqs.canPlayerGainLife(gd, player1.getId())).isTrue();
     }
 
@@ -65,7 +65,7 @@ class FlamesOfTheBloodHandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 16);
-        assertThat(gqs.canPlayerGainLife(gd, player1.getId())).isFalse();
+        assertThat(gqs.canPlayerGainLife(gd, player1.getId())).isTrue();
         assertThat(gqs.canPlayerGainLife(gd, player2.getId())).isTrue();
     }
 
@@ -83,7 +83,7 @@ class FlamesOfTheBloodHandTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
-        assertThat(gqs.canPlayerGainLife(gd, player2.getId())).isFalse();
+        assertThat(gqs.canPlayerGainLife(gd, player2.getId())).isTrue();
         assertThat(gqs.canPlayerGainLife(gd, player1.getId())).isTrue();
     }
 
@@ -111,5 +111,57 @@ class FlamesOfTheBloodHandTest extends BaseCardTest {
 
         assertThat(gd.playersWhoCantGainLifeThisTurn).isEmpty();
         assertThat(gqs.canPlayerGainLife(gd, player2.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("The caster can still gain life after targeting the opponent")
+    void unaffectedPlayerStillGainsLife() {
+        harness.setHand(player1, List.of(new FlamesOfTheBloodHand()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.castFromHand(player1, new VitalSurge(), "{1}{G}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @CardUsed(ChandraNalaar.class)
+    @DisplayName("Life gain remains replaced after the targeted planeswalker dies")
+    void lifeGainStillReplacedAfterPlaneswalkerDies() {
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 4);
+        harness.setHand(player1, List.of(new FlamesOfTheBloodHand()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, chandra.getId());
+
+        harness.assertInGraveyard(player2, "Chandra Nalaar");
+        harness.castFromHand(player2, new VitalSurge(), "{1}{G}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed(ChandraNalaar.class)
+    @DisplayName("An absent planeswalker target prevents the entire spell resolving")
+    void absentTargetDoesNotReplaceItsControllersLifeGain() {
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        harness.setHand(player1, List.of(new FlamesOfTheBloodHand()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, chandra.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(chandra);
+        harness.passBothPriorities();
+
+        harness.castFromHand(player2, new VitalSurge(), "{1}{G}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 23);
+        harness.assertInGraveyard(player1, "Flames of the Blood Hand");
     }
 }

@@ -4,16 +4,17 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.cards.n.NeoExdeathDimensionsEnd;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -65,17 +66,86 @@ class ExdeathVoidWarlockTest extends BaseCardTest {
     }
 
     private Permanent castExdeath() {
-        harness.setHand(player1, List.of(new ExdeathVoidWarlock()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ExdeathVoidWarlock(), "{1}{B}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getOriginalCard() instanceof ExdeathVoidWarlock)
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Exdeath, Void Warlock");
+    }
+
+    @Test
+    void doesNotTransformAtOpponentsEndStep() {
+        Permanent exdeath = harness.addToBattlefieldAndReturn(player1, new ExdeathVoidWarlock());
+        harness.setGraveyard(player1, permanentCards(6));
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(exdeath.isTransformed()).isFalse();
+    }
+
+    @Test
+    void rechecksPermanentThresholdWhenTransformTriggerResolves() {
+        Permanent exdeath = harness.addToBattlefieldAndReturn(player1, new ExdeathVoidWarlock());
+        harness.setGraveyard(player1, permanentCards(6));
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setGraveyard(player1, permanentCards(5));
+        harness.passBothPriorities();
+
+        assertThat(exdeath.isTransformed()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void reachingThresholdAfterEndStepBeginsDoesNotTriggerTransformation() {
+        Permanent exdeath = harness.addToBattlefieldAndReturn(player1, new ExdeathVoidWarlock());
+        harness.setGraveyard(player1, permanentCards(5));
+        advanceToEndStep(player1);
+        harness.setGraveyard(player1, permanentCards(6));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(exdeath.isTransformed()).isFalse();
+    }
+
+    @Test
+    void transformedPowerUpdatesAndEmptyGraveyardDoesNotTransformItBack() {
+        Permanent exdeath = harness.addToBattlefieldAndReturn(player1, new ExdeathVoidWarlock());
+        harness.setGraveyard(player1, permanentCards(6));
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        assertThat(exdeath.isTransformed()).isTrue();
+
+        harness.setGraveyard(player1, permanentCards(2));
+        harness.setGraveyard(player2, permanentCards(8));
+        assertThat(gqs.getEffectivePower(gd, exdeath)).isEqualTo(2);
+
+        harness.setGraveyard(player1, List.of());
+        assertThat(gqs.getEffectivePower(gd, exdeath)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, exdeath)).isEqualTo(3);
+        advanceToEndStep(player1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(exdeath.isTransformed()).isTrue();
+    }
+
+    @Test
+    void transformedCreatureTramplesOverBlocker() {
+        Permanent exdeath = harness.addToBattlefieldAndReturn(player1, new ExdeathVoidWarlock());
+        harness.setGraveyard(player1, permanentCards(6));
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        exdeath.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 2, player2.getId(), 4));
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(exdeath.isTransformed()).isTrue();
     }
 
     private List<Card> permanentCards(int count) {

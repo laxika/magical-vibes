@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ForbiddenLore.class, Forest.class, BalduvianBears.class})
+@CardUsed({ForbiddenLore.class, Forest.class, BalduvianBears.class, Disenchant.class})
 class ForbiddenLoreTest extends BaseCardTest {
 
     @Test
@@ -93,7 +94,6 @@ class ForbiddenLoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(bears.getEffectivePower()).isEqualTo(2);
@@ -130,6 +130,47 @@ class ForbiddenLoreTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
         assertThat(forest.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped enchanted land cannot pay the granted ability's tap cost")
+    void tappedLandCannotActivateGrantedAbility() {
+        Permanent forest = attachAura(player1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        forest.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, bears.getId(), null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Removing Forbidden Lore does not stop an already activated ability")
+    void activatedAbilitySurvivesAuraRemoval() {
+        Permanent forest = attachAura(player1);
+        Permanent aura = findPermanent(player1, "Forbidden Lore");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, bears.getId(), null);
+        harness.castInstant(player1, 0, aura.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(aura);
+        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(bears.getEffectivePower()).isEqualTo(4);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(3);
+
+        forest.setTapped(false);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, bears.getId(), null))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent attachAura(final Player player) {

@@ -43,7 +43,7 @@ class BorealGriffinTest extends BaseCardTest {
     void snowLandPaysForAbilityWithoutTapOrSummoningRestriction() {
         Permanent griffin = harness.addToBattlefieldAndReturn(player1, new BorealGriffin());
         griffin.setSummoningSick(true);
-        griffin.setTapped(true);
+        griffin.tap();
         Permanent otherGriffin = addCreatureReady(player1, new BorealGriffin());
         harness.addToBattlefield(player1, new SnowCoveredPlains());
         harness.tapPermanent(player1, 2);

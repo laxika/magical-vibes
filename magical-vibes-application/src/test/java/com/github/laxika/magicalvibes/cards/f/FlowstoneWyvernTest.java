@@ -84,10 +84,44 @@ class FlowstoneWyvernTest extends BaseCardTest {
         addCreatureReady(player1, new FlowstoneWyvern());
         addCreatureReady(player2, new FlowstoneGiant());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Ability can be activated while summoning sick and tapped")
+    void canActivateWhileSummoningSickAndTapped() {
+        Permanent wyvern = harness.addToBattlefieldAndReturn(player1, new FlowstoneWyvern());
+        wyvern.setSummoningSick(true);
+        wyvern.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(wyvern.getEffectivePower()).isEqualTo(5);
+        assertThat(wyvern.getEffectiveToughness()).isEqualTo(1);
+        assertThat(wyvern.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Boost applies only to the source Wyvern")
+    void boostOnlyAffectsSource() {
+        Permanent source = addCreatureReady(player1, new FlowstoneWyvern());
+        Permanent other = addCreatureReady(player1, new FlowstoneWyvern());
+        Permanent opponent = addCreatureReady(player2, new FlowstoneWyvern());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getEffectivePower()).isEqualTo(5);
+        assertThat(source.getEffectiveToughness()).isEqualTo(1);
+        assertThat(other.getEffectivePower()).isEqualTo(3);
+        assertThat(other.getEffectiveToughness()).isEqualTo(3);
+        assertThat(opponent.getEffectivePower()).isEqualTo(3);
+        assertThat(opponent.getEffectiveToughness()).isEqualTo(3);
     }
 }

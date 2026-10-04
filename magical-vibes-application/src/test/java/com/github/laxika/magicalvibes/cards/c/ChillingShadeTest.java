@@ -91,7 +91,7 @@ class ChillingShadeTest extends BaseCardTest {
     void tappedSummoningSickShadeCanBoost() {
         Permanent shade = addCreatureReady(player1, new ChillingShade());
         shade.setSummoningSick(true);
-        shade.setTapped(true);
+        shade.tap();
         gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

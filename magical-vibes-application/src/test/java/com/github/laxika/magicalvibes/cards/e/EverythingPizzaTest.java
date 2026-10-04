@@ -26,8 +26,7 @@ class EverythingPizzaTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
                 .params().cards()).hasSize(1);
@@ -65,16 +64,111 @@ class EverythingPizzaTest extends BaseCardTest {
         harness.addToBattlefield(player1, new EverythingPizza());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player2, List.of());
-        harness.setLibrary(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest()));
         addActivationMana();
 
         harness.activateAbilityWithMultiTargets(player1, 0, 0,
                 List.of(player2.getId(), player1.getId()));
         harness.passBothPriorities();
 
+        harness.handleCardChosen(player2, 0);
+
         harness.assertLife(player2, 23);
         harness.assertLife(player1, 17);
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Counters can be placed on an opponent's creature")
+    void activatedAbilityCanPutCountersOnOpponentsCreature() {
+        harness.addToBattlefield(player1, new EverythingPizza());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        addActivationMana();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(player1.getId(), player2.getId(), creature.getId()));
+        harness.assertInGraveyard(player1, "Everything Pizza");
+        harness.assertNotOnBattlefield(player1, "Everything Pizza");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
+        harness.assertInHand(player1, "Forest");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The life and damage targets can be the same player")
+    void activatedAbilityCanSharePlayerTargets() {
+        harness.addToBattlefield(player1, new EverythingPizza());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        addActivationMana();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(player1.getId(), player1.getId()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Damage and counters affect only their respective creature targets")
+    void activatedAbilityUsesSeparateCreatureTargets() {
+        harness.addToBattlefield(player1, new EverythingPizza());
+        Permanent counterTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        addActivationMana();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0,
+                List.of(player1.getId(), harness.getPermanentId(player2, "Grizzly Bears"),
+                        counterTarget.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(counterTarget.getMarkedDamage()).isZero();
+        assertThat(counterTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The entry ability can fail to find a basic land")
+    void entryAbilityCanFailToFind() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new EverythingPizza()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The entry ability completes with an empty library")
+    void entryAbilityHandlesEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new EverythingPizza()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Everything Pizza");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addActivationMana() {

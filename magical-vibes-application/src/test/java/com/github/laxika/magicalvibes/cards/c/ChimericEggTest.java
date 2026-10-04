@@ -123,7 +123,7 @@ class ChimericEggTest extends BaseCardTest {
     void activationPaysCountersImmediatelyAndWorksWhileTappedAndSummoningSick() {
         Permanent egg = addCreatureReady(player1, new ChimericEgg());
         egg.setSummoningSick(true);
-        egg.setTapped(true);
+        egg.tap();
         egg.setCounterCount(CounterType.CHARGE, 4);
 
         harness.activateAbility(player1, 0, 0, null, null);

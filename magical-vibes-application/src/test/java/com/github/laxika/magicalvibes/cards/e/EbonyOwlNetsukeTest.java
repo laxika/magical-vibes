@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.a.AkkiUnderling;
+import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -10,8 +11,41 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EbonyOwlNetsuke.class, AkkiUnderling.class})
+@CardUsed({EbonyOwlNetsuke.class, AkkiUnderling.class, IvoryMask.class})
 class EbonyOwlNetsukeTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Opponent with shroud still takes the non-targeting upkeep damage")
+    void opponentWithShroudStillTakesDamage() {
+        harness.addToBattlefield(player1, new EbonyOwlNetsuke());
+        harness.addToBattlefield(player2, new IvoryMask());
+        harness.setHand(player2, List.of(new AkkiUnderling(), new AkkiUnderling(), new AkkiUnderling(),
+                new AkkiUnderling(), new AkkiUnderling(), new AkkiUnderling(), new AkkiUnderling()));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 4);
+    }
+
+    @Test
+    @DisplayName("Eight cards in the opponent's hand deals damage even with an empty controller hand")
+    void aboveThresholdDoesNotDependOnControllerHand() {
+        harness.addToBattlefield(player1, new EbonyOwlNetsuke());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new AkkiUnderling(), new AkkiUnderling(), new AkkiUnderling(),
+                new AkkiUnderling(), new AkkiUnderling(), new AkkiUnderling(), new AkkiUnderling(),
+                new AkkiUnderling()));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int controllerLifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 4);
+        harness.assertLife(player1, controllerLifeBefore);
+    }
 
     @Test
     @DisplayName("Opponent's upkeep with seven cards in hand deals 4 damage to that opponent")

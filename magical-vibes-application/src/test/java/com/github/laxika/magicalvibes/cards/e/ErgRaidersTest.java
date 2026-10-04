@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.n.NevinyrralsDisk;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -12,12 +13,17 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ErgRaiders.class, NevinyrralsDisk.class})
+@CardUsed({ErgRaiders.class, NevinyrralsDisk.class, RayOfCommand.class})
 class ErgRaidersTest extends BaseCardTest {
 
     private Permanent addErgRaiders(boolean summoningSick) {
+        if (!summoningSick) {
+            return addCreatureReady(player1, new ErgRaiders());
+        }
         Permanent perm = harness.addToBattlefieldAndReturn(player1, new ErgRaiders());
         perm.setSummoningSick(summoningSick);
         return perm;
@@ -119,5 +125,50 @@ class ErgRaidersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("An opponent gaining control in response does not exempt the original controller from damage")
+    void stillDamagesOriginalControllerAfterOpponentGainsControl() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent erg = addErgRaiders(false);
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        advanceToEndStep();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, erg.getId());
+
+        harness.assertOnBattlefield(player2, "Erg Raiders");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A newly controlled Erg Raiders still deals no damage after leaving the battlefield")
+    void newlyControlledSourceLeavingBattlefieldDoesNotDealDamage() {
+        harness.setLife(player1, 20);
+        addErgRaiders(true);
+        harness.addToBattlefield(player2, new NevinyrralsDisk());
+
+        advanceToEndStep();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Erg Raiders");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
     }
 }

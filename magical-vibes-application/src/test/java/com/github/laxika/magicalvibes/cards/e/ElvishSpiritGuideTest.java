@@ -49,4 +49,41 @@ class ElvishSpiritGuideTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Elvish Spirit Guide");
     }
+
+    @Test
+    @DisplayName("Mana ability resolves immediately while a creature spell is on the stack")
+    void activatesWithSpellOnStack() {
+        ElvishSpiritGuide spell = new ElvishSpiritGuide();
+        ElvishSpiritGuide manaSource = new ElvishSpiritGuide();
+        harness.setHand(player1, List.of(spell, manaSource));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        var stackBeforeActivation = List.copyOf(gd.stack);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.stack).containsExactlyElementsOf(stackBeforeActivation);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(entry -> entry.card()).containsExactly(manaSource);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Elvish Spirit Guide");
+    }
+
+    @Test
+    @DisplayName("The nonactive player can exile a Spirit Guide for their own mana")
+    void activatesDuringOpponentsTurn() {
+        ElvishSpiritGuide manaSource = new ElvishSpiritGuide();
+        harness.setHand(player2, List.of(manaSource));
+        harness.forceActivePlayer(player1);
+
+        harness.activateHandAbility(player2, 0, null);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(entry -> entry.card()).containsExactly(manaSource);
+        assertThat(gd.stack).isEmpty();
+    }
 }

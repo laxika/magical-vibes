@@ -67,4 +67,34 @@ class FeudkillersVerdictTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(30);
         assertThat(giantTokenCount()).isZero();
     }
+
+    @Test
+    @DisplayName("Uses the opponent's life at resolution when it increased after casting")
+    void opponentLifeIncreaseBeforeResolutionPreventsToken() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.castFromHand(player1, new FeudkillersVerdict(), "{4}{W}{W}");
+
+        harness.setLife(player2, 35);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 30);
+        harness.assertLife(player2, 35);
+        assertThat(giantTokenCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("Uses the controller's life at resolution when it decreased after casting")
+    void controllerLifeDecreaseBeforeResolutionPreventsToken() {
+        harness.setLife(player1, 30);
+        harness.setLife(player2, 20);
+        harness.castFromHand(player1, new FeudkillersVerdict(), "{4}{W}{W}");
+
+        harness.setLife(player1, 5);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
+        assertThat(giantTokenCount()).isZero();
+    }
 }

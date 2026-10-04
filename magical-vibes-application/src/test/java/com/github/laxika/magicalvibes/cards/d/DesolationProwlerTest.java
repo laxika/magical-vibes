@@ -105,7 +105,7 @@ class DesolationProwlerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent prowler = harness.addToBattlefieldAndReturn(player1, new DesolationProwler());
         prowler.setSummoningSick(true);
-        prowler.setTapped(true);
+        prowler.tap();
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, null, null);

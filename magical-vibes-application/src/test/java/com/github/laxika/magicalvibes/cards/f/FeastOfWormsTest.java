@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.k.KamiOfOldStone;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.o.OkinaTempleToTheGrandfathers;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.t.ThatWhichWasTaken;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FeastOfWorms.class, Mountain.class, Forest.class, Plains.class,
-        OkinaTempleToTheGrandfathers.class, KamiOfOldStone.class})
+        OkinaTempleToTheGrandfathers.class, KamiOfOldStone.class, ThatWhichWasTaken.class})
 class FeastOfWormsTest extends BaseCardTest {
 
     private Permanent legendaryLand(Player owner) {
@@ -122,5 +123,76 @@ class FeastOfWormsTest extends BaseCardTest {
         UUID kamiId = harness.getPermanentId(player2, "Kami of Old Stone");
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, kamiId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    private Permanent indestructibleLegendaryLand() {
+        harness.addToBattlefield(player1, new ThatWhichWasTaken());
+        Permanent legendary = legendaryLand(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, legendary.getId());
+        harness.passBothPriorities();
+        return legendary;
+    }
+
+    @Test
+    @DisplayName("A surviving legendary target cannot itself be sacrificed when there is no other land")
+    void indestructibleLegendaryLandWithNoOtherLandSurvives() {
+        Permanent legendary = indestructibleLegendaryLand();
+
+        castAt(legendary.getId());
+
+        harness.assertOnBattlefield(player2, "Okina, Temple to the Grandfathers");
+        harness.assertNotInGraveyard(player2, "Okina, Temple to the Grandfathers");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A surviving legendary target still forces the only other land to be sacrificed")
+    void indestructibleLegendaryLandForcesOtherLandSacrifice() {
+        Permanent legendary = indestructibleLegendaryLand();
+        harness.addToBattlefield(player2, new Forest());
+
+        castAt(legendary.getId());
+
+        harness.assertOnBattlefield(player2, "Okina, Temple to the Grandfathers");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertNotOnBattlefield(player2, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A surviving legendary target is excluded from the sacrifice choices")
+    void indestructibleLegendaryLandIsExcludedFromChoices() {
+        Permanent legendary = indestructibleLegendaryLand();
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+
+        castAt(legendary.getId());
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(forest.getId(), plains.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(forest.getId()));
+
+        harness.assertOnBattlefield(player2, "Okina, Temple to the Grandfathers");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertOnBattlefield(player2, "Plains");
+    }
+
+    @Test
+    @DisplayName("Can target your own legendary land and sacrifice your own other land")
+    void canTargetOwnLegendaryLand() {
+        Permanent legendary = legendaryLand(player1);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Plains());
+
+        castAt(legendary.getId());
+
+        harness.assertInGraveyard(player1, "Okina, Temple to the Grandfathers");
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Plains");
     }
 }

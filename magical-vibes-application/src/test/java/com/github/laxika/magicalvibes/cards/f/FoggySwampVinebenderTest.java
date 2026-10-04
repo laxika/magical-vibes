@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.m.MeteorSword;
+import com.github.laxika.magicalvibes.cards.o.OtterPenguin;
+import com.github.laxika.magicalvibes.cards.y.YuyanArchers;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -16,16 +18,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FoggySwampVinebender.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({FoggySwampVinebender.class, OtterPenguin.class, YuyanArchers.class, MeteorSword.class})
 class FoggySwampVinebenderTest extends BaseCardTest {
 
     @Test
     @DisplayName("Foggy Swamp Vinebender cannot be blocked by a creature with power 2 or less")
     void cannotBeBlockedByPower2OrLess() {
         Permanent vinebender = attackingVinebender();
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new OtterPenguin());
 
         beginBlockerDeclaration();
 
@@ -41,9 +41,7 @@ class FoggySwampVinebenderTest extends BaseCardTest {
     @DisplayName("Foggy Swamp Vinebender can be blocked by a creature with power 3 or greater")
     void canBeBlockedByPower3OrGreater() {
         Permanent vinebender = attackingVinebender();
-        Permanent giant = new Permanent(new HillGiant());
-        giant.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(giant);
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new YuyanArchers());
 
         beginBlockerDeclaration();
 
@@ -59,10 +57,10 @@ class FoggySwampVinebenderTest extends BaseCardTest {
     @DisplayName("Waterbend taps five creatures and puts a +1/+1 counter on Foggy Swamp Vinebender")
     void waterbendPutsCounterOnThisCreature() {
         Permanent vinebender = harness.addToBattlefieldAndReturn(player1, new FoggySwampVinebender());
-        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent third = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent fourth = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new OtterPenguin());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new OtterPenguin());
+        Permanent third = harness.addToBattlefieldAndReturn(player1, new OtterPenguin());
+        Permanent fourth = harness.addToBattlefieldAndReturn(player1, new OtterPenguin());
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -83,18 +81,101 @@ class FoggySwampVinebenderTest extends BaseCardTest {
     @DisplayName("The Waterbend ability cannot be activated during an opponent's turn")
     void waterbendIsRestrictedToYourTurn() {
         Permanent vinebender = harness.addToBattlefieldAndReturn(player1, new FoggySwampVinebender());
+        harness.addMana(player1, ManaColor.GREEN, 5);
         harness.forceActivePlayer(player2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only be activated during your turn");
         assertThat(vinebender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Waterbend can be paid entirely with mana during your end step, repeatedly while tapped")
+    void waterbendWithManaDuringEndStep() {
+        Permanent vinebender = harness.addToBattlefieldAndReturn(player1, new FoggySwampVinebender());
+        vinebender.tap();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.GREEN, 10);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(vinebender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        assertThat(vinebender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(vinebender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(vinebender.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Waterbend combines mana with tapping summoning-sick creatures")
+    void waterbendWithManaAndCreatures() {
+        Permanent vinebender = harness.addToBattlefieldAndReturn(player1, new FoggySwampVinebender());
+        Permanent support = harness.addToBattlefieldAndReturn(player1, new FoggySwampVinebender());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(vinebender.isTapped()).isTrue();
+        assertThat(support.isTapped()).isTrue();
+        assertThat(vinebender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        assertThat(vinebender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(support.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Waterbend can tap a noncreature artifact and ignores already tapped creatures")
+    void waterbendWithArtifact() {
+        Permanent vinebender = harness.addToBattlefieldAndReturn(player1, new FoggySwampVinebender());
+        vinebender.tap();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new MeteorSword());
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(artifact.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(vinebender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Waterbend cannot use an opponent's creatures to cover missing payment")
+    void waterbendRequiresEnoughControlledResources() {
+        Permanent vinebender = harness.addToBattlefieldAndReturn(player1, new FoggySwampVinebender());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new FoggySwampVinebender());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(vinebender.isTapped()).isFalse();
+        assertThat(opponent.isTapped()).isFalse();
+        assertThat(vinebender.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Blocking uses current power, allowing a two-power creature with a +1/+1 counter")
+    void blockingUsesCurrentPower() {
+        Permanent vinebender = attackingVinebender();
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new OtterPenguin());
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        beginBlockerDeclaration();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(vinebender))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private Permanent attackingVinebender() {
-        Permanent vinebender = new Permanent(new FoggySwampVinebender());
+        Permanent vinebender = harness.addToBattlefieldAndReturn(player1, new FoggySwampVinebender());
         vinebender.setSummoningSick(false);
         vinebender.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(vinebender);
         return vinebender;
     }
 

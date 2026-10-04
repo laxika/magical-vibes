@@ -83,6 +83,46 @@ class ExpeditionLookoutTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("Seven cards in an opponent's graveyard do not permit attacking")
+    void cannotAttackWithSevenCards() {
+        harness.setGraveyard(player2, graveyardOfSize(7));
+        Permanent lookout = addCreatureReady(player1, new ExpeditionLookout());
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        assertThat(lookout.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Losing the threshold after attacking permits blockers without removing the attacker")
+    void canBeBlockedWhenThresholdIsLostAfterAttacking() {
+        harness.setGraveyard(player2, graveyardOfSize(8));
+        Permanent lookout = addCreatureReady(player1, new ExpeditionLookout());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.setGraveyard(player2, graveyardOfSize(7));
+        assertThat(lookout.isAttacking()).isTrue();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(lookout))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Graveyard permission is relative to the creature's controller")
+    void playerTwoCanAttackWhenPlayerOneHasEightCards() {
+        harness.setGraveyard(player1, graveyardOfSize(8));
+        Permanent lookout = addCreatureReady(player2, new ExpeditionLookout());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        assertThat(lookout.isAttacking()).isTrue();
+    }
     private List<Card> graveyardOfSize(int size) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < size; i++) {

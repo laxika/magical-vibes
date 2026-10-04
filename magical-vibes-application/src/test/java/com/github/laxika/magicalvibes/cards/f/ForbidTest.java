@@ -88,6 +88,77 @@ class ForbidTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Countering a bought-back Forbid does not refund its discard cost or return it to hand")
+    void counteredBuybackSpellStaysInGraveyard() {
+        GrizzlyBears bears = castTargetSpell();
+        Forbid forbid = new Forbid();
+        harness.setHand(player2, List.of(forbid, new Shock(), new MightOfOaks()));
+        addForbidMana();
+        harness.castInstantWithDiscardBuyback(player2, 0, bears.getId(), List.of(1, 2));
+
+        assertThat(handNames(player2)).isEmpty();
+        assertThat(graveyardNames(player2)).containsExactlyInAnyOrder("Shock", "Might of Oaks");
+
+        harness.passPriority(player2);
+        harness.setHand(player1, List.of(new Forbid()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, forbid.getId());
+        harness.passBothPriorities();
+
+        assertThat(handNames(player2)).isEmpty();
+        assertThat(graveyardNames(player2)).containsExactlyInAnyOrder("Forbid", "Shock", "Might of Oaks");
+        harness.assertInGraveyard(player1, "Forbid");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Buyback selects cards on both sides of Forbid's hand position")
+    void discardBuybackFromMiddleOfHand() {
+        GrizzlyBears bears = castTargetSpell();
+        harness.setHand(player2, List.of(new Shock(), new Forbid(), new MightOfOaks()));
+        addForbidMana();
+
+        harness.castInstantWithDiscardBuyback(player2, 1, bears.getId(), List.of(2, 0));
+        harness.passBothPriorities();
+
+        assertThat(handNames(player2)).containsExactly("Forbid");
+        assertThat(graveyardNames(player2)).containsExactlyInAnyOrder("Shock", "Might of Oaks");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Buyback cannot discard the same card twice")
+    void duplicateBuybackDiscardsAreRejected() {
+        GrizzlyBears bears = castTargetSpell();
+        harness.setHand(player2, List.of(new Forbid(), new Shock(), new MightOfOaks()));
+        addForbidMana();
+
+        assertThatThrownBy(() -> harness.castInstantWithDiscardBuyback(player2, 0, bears.getId(), List.of(1, 1)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(handNames(player2)).containsExactly("Forbid", "Shock", "Might of Oaks");
+        assertThat(graveyardNames(player2)).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Forbid cannot discard itself to pay its buyback cost")
+    void cannotDiscardItselfForBuyback() {
+        GrizzlyBears bears = castTargetSpell();
+        harness.setHand(player2, List.of(new Forbid(), new Shock(), new MightOfOaks()));
+        addForbidMana();
+
+        assertThatThrownBy(() -> harness.castInstantWithDiscardBuyback(player2, 0, bears.getId(), List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(handNames(player2)).containsExactly("Forbid", "Shock", "Might of Oaks");
+        assertThat(graveyardNames(player2)).isEmpty();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isEqualTo(3);
+    }
+
     private GrizzlyBears castTargetSpell() {
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));

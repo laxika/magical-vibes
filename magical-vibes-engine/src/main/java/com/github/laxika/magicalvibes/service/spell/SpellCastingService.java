@@ -3933,7 +3933,8 @@ public class SpellCastingService {
                     perTargetManaCost + escalateManaSuffix);
         }
 
-        if (!usingAlternateCost && !castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card)) {
+        if (!usingAlternateCost && (effectiveXValue != 0
+                || !castingCostService.hasAlternativeZeroCostFromBattlefield(gameData, playerId, card))) {
             // Check if a non-zero alternative cost from the battlefield is affordable (e.g. Jodah)
             ManaPool pool = gameData.playerManaPools.get(playerId);
             boolean manaValueAtLeastFiveOrX = card.getManaValue() >= 5
@@ -4958,6 +4959,7 @@ public class SpellCastingService {
             }
             if (castingFaceDown) {
                 entry.setCastFaceDown(true);
+                entry.setCastWithDisguise(physicalHandCard.hasKeyword(Keyword.DISGUISE));
             }
             // Evoke (CR 702.75): a permanent cast for its alternate (evoke) cost is flagged so its
             // "when it enters, sacrifice it" ETB trigger fires. Harmless for non-evoke alternate
@@ -9897,9 +9899,7 @@ public class SpellCastingService {
             throw new IllegalStateException("Card is not playable");
         }
 
-        // CR 601.2b: this path has no wire for additional-cost selections and pays no additional
-        // costs — reject such casts up front (before any payment) instead of silently casting the
-        // spell without its cost.
+        // Reject additional cast costs that this exile path cannot pay.
         AdditionalSpellCostService.ExtractedCosts additionalCosts =
                 additionalSpellCostService.peek(gameData, playerId, card);
         if ((additionalCosts.any() && additionalCosts.chooseXValueCost() == null)
@@ -10655,13 +10655,14 @@ public class SpellCastingService {
             throw new IllegalStateException("Card is not playable");
         }
 
-        // CR 601.2b: this path has no wire for additional-cost selections and pays no additional
-        // costs — reject such casts up front (before any payment) instead of silently casting the
-        // spell without its cost.
         AdditionalSpellCostService.ExtractedCosts additionalCosts =
                 additionalSpellCostService.peek(gameData, playerId, card);
-        if ((additionalCosts.any() && additionalCosts.chooseXValueCost() == null)
-                || additionalCosts.delveCost() != null) {
+        List<CardEffect> otherAdditionalEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        otherAdditionalEffects.removeIf(effect -> effect instanceof SacrificeCreatureCost);
+        boolean hasPlainSacrificeCreatureCost = new SacrificeCreatureCost().equals(additionalCosts.sacrificeCreatureCost())
+                && !additionalSpellCostService.extractAndRemove(gameData, playerId, card, otherAdditionalEffects).any();
+        if ((additionalCosts.any() && additionalCosts.chooseXValueCost() == null
+                && !hasPlainSacrificeCreatureCost) || additionalCosts.delveCost() != null) {
             throw new IllegalStateException("Cannot cast " + card.getName()
                     + " from the library — paying its additional cast cost is not supported from this zone");
         }
@@ -10670,9 +10671,12 @@ public class SpellCastingService {
         }
         List<UUID> topLibrarySacrificeIds = additionalCostSacrificePermanentIds == null
                 ? List.of() : additionalCostSacrificePermanentIds;
-        List<CastingCost> topLibraryAdditionalCosts = usesNormalTopLibraryPermission
+        List<CastingCost> topLibraryAdditionalCosts = new ArrayList<>(usesNormalTopLibraryPermission
                 ? castingPermissionService.findTopLibraryAdditionalCosts(gameData, playerId, card)
-                : List.of();
+                : List.of());
+        if (hasPlainSacrificeCreatureCost) {
+            topLibraryAdditionalCosts.add(new SacrificePermanentsCost(1, new PermanentIsCreaturePredicate()));
+        }
         castingCostService.validateTopLibraryAdditionalCosts(
                 gameData, playerId, card, topLibraryAdditionalCosts, topLibrarySacrificeIds);
         int additionalCounterCost = !freeTopPlay && !useManaValueLifeAlternative
@@ -10681,12 +10685,7 @@ public class SpellCastingService {
                 : 0;
         validateExileCounterCost(gameData, player, card, additionalCounterCost, counterCostPermanentIds);
 
-        // Remove from library
         gameData.spellAdditionalEnterCounters.remove(card.getId());
-        deck.removeFirst();
-        if (freeTopPlay) {
-            gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.remove(playerId);
-        }
 
         int phyrexianManaPaidWithLife = 0;
         if (useManaValueLifeAlternative) {
@@ -10701,6 +10700,10 @@ public class SpellCastingService {
         }
         payTopLibraryAdditionalCosts(gameData, player, card, topLibraryAdditionalCosts, topLibrarySacrificeIds);
         payExileCounterCost(gameData, player, card, additionalCounterCost, counterCostPermanentIds);
+        deck.remove(card);
+        if (freeTopPlay) {
+            gameData.libraryTopCardFreePlayPermissionsUntilEndOfTurn.remove(playerId);
+        }
 
         StackEntryType entryType = cardTypeToStackEntryType(card.getType());
 
@@ -11471,6 +11474,7 @@ public class SpellCastingService {
             throw new IllegalStateException("A permanent cannot be tapped twice to pay for convoke or improvise");
         }
         List<ManaColor> contributions = new ArrayList<>();
+        List<Set<ManaColor>> convokeColors = new ArrayList<>();
         Map<ManaColor, Integer> remainingColored = new EnumMap<>(ManaColor.class);
         if (card.getManaCost() != null) {
             remainingColored.putAll(new ManaCost(card.getManaCost()).getColoredCosts());
@@ -11501,9 +11505,13 @@ public class SpellCastingService {
             }
             if (hasImprovise && isArtifact && (!hasConvoke || !isCreature)) {
                 contributions.add(null);
+                convokeColors.add(Set.of());
                 continue;
             }
             Set<CardColor> creatureColors = gameQueryService.getEffectiveColors(gameData, creature);
+            convokeColors.add(creatureColors.stream()
+                    .map(color -> ManaColor.fromCode(color.getCode()))
+                    .filter(java.util.Objects::nonNull).collect(java.util.stream.Collectors.toSet()));
             ManaColor contribution = creatureColors == null || creatureColors.isEmpty()
                     ? null
                     : creatureColors.stream()
@@ -11527,7 +11535,10 @@ public class SpellCastingService {
             }
             contributions.add(contribution);
         }
-        return contributions;
+        List<ManaColor> chosen = card.getManaCost() == null ? null
+                : com.github.laxika.magicalvibes.service.cast.ConvokePaymentSupport.choose(
+                        new ManaCost(card.getManaCost()), gameData.playerManaPools.get(playerId), 0, convokeColors);
+        return chosen == null ? contributions : chosen;
     }
 
     private List<ManaColor> applyConvokeOrImprovise(GameData gameData, UUID playerId, Card card,
@@ -11839,7 +11850,8 @@ public class SpellCastingService {
         String extraMana = additionalManaCost != null ? additionalManaCost : "";
         String additionalCostsMana = extraMana + suffix;
         String totalMana = baseMana + additionalCostsMana;
-        if (totalMana.isEmpty() && !gameData.perpetualManaCostIncreases.containsKey(card.getId())) {
+        if (card.getManaCost() != null && totalMana.isEmpty()
+                && !gameData.perpetualManaCostIncreases.containsKey(card.getId())) {
             return new SpellManaPayment(0, 0);
         }
         ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -11850,7 +11862,7 @@ public class SpellCastingService {
 
         // Alternative zero cost (e.g. Rooftop Storm, As Foretold): skip the mana cost, but escalate
         // is still paid (CR 702.124c — free cast waives the mana cost, not additional costs).
-        if (!hasExileManaCostOverride
+        if (!hasExileManaCostOverride && effectiveXValue == 0
                 && castingCostService.consumeFreeCastFromBattlefield(gameData, playerId, card, sourceZone)) {
             ManaCost additionalCosts = castingCostService.applyColoredManaCostReductions(
                     gameData, playerId, card, new ManaCost(additionalCostsMana), castTargetIds);

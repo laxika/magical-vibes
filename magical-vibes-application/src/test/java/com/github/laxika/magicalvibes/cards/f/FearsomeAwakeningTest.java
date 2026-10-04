@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.c.Conspiracy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.p.PearlDragon;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FearsomeAwakening.class, GrizzlyBears.class, HolyDay.class, PearlDragon.class})
+@CardUsed({FearsomeAwakening.class, GrizzlyBears.class, HolyDay.class, PearlDragon.class, Conspiracy.class})
 class FearsomeAwakeningTest extends BaseCardTest {
 
     @Test
@@ -28,10 +30,9 @@ class FearsomeAwakeningTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FearsomeAwakening()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
-        Permanent returned = findOnBattlefield(creature);
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -43,10 +44,9 @@ class FearsomeAwakeningTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FearsomeAwakening()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, dragon.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, dragon.getId());
 
-        assertThat(findOnBattlefield(dragon).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(findPermanent(player1, "Pearl Dragon").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -74,9 +74,52 @@ class FearsomeAwakeningTest extends BaseCardTest {
                 .hasMessageContaining("your graveyard");
     }
 
-    private Permanent findOnBattlefield(Card card) {
-        return harness.getGameData().playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getId().equals(card.getId()))
-                .findFirst().orElseThrow();
+    @Test
+    void givesCountersToCreatureMadeADragonByConspiracy() {
+        harness.castFromHand(player1, new Conspiracy(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.DRAGON.name());
+
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new FearsomeAwakening()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+
+        assertThat(findPermanent(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(2);
+    }
+
+    @Test
+    void doesNotGiveCountersToDragonWhoseTypeConspiracyReplaces() {
+        harness.castFromHand(player1, new Conspiracy(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.BEAR.name());
+
+        Card dragon = new PearlDragon();
+        harness.setGraveyard(player1, List.of(dragon));
+        harness.setHand(player1, List.of(new FearsomeAwakening()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, dragon.getId());
+
+        assertThat(findPermanent(player1, "Pearl Dragon").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isZero();
+    }
+
+    @Test
+    void doesNotReturnTargetThatLeftGraveyardBeforeResolution() {
+        Card dragon = new PearlDragon();
+        harness.setGraveyard(player1, List.of(dragon));
+        harness.setHand(player1, List.of(new FearsomeAwakening()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, dragon.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(dragon));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Pearl Dragon");
     }
 }

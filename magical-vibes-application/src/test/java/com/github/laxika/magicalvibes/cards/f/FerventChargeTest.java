@@ -15,6 +15,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FerventChargeTest extends BaseCardTest {
 
     @Test
+    void multipleCopiesBoostTheSameAttackerIndependently() {
+        harness.addToBattlefield(player1, new FerventCharge());
+        harness.addToBattlefield(player1, new FerventCharge());
+        Permanent attacker = addCreatureReady(player1, new GaeasSkyfolk());
+
+        declareAttackers(List.of(2));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(6);
+    }
+
+    @Test
+    void triggerStillBoostsAttackerAfterEnchantmentLeavesBattlefield() {
+        Permanent charge = harness.addToBattlefieldAndReturn(player1, new FerventCharge());
+        Permanent attacker = addCreatureReady(player1, new GaeasSkyfolk());
+
+        declareAttackers(List.of(1));
+        assertThat(gd.stack).hasSize(1);
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, charge);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Fervent Charge");
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(4);
+    }
+
+    @Test
     void boostsEachCreatureYouControlThatAttacks() {
         harness.addToBattlefield(player1, new FerventCharge());
         Permanent firstSkyfolk = addCreatureReady(player1, new GaeasSkyfolk());

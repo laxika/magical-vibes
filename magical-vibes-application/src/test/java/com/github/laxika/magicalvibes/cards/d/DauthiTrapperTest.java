@@ -115,7 +115,7 @@ class DauthiTrapperTest extends BaseCardTest {
     @Test
     void tappedTrapperCannotActivate() {
         Permanent trapper = addCreatureReady(player1, new DauthiTrapper());
-        trapper.setTapped(true);
+        trapper.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, trapper.getId()))
                 .isInstanceOf(IllegalStateException.class);

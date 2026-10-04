@@ -75,6 +75,49 @@ class ExpendableTroopsTest extends BaseCardTest {
                 .hasMessageContaining("summoning sick");
     }
 
+    @Test
+    @DisplayName("Cannot activate while tapped and does not sacrifice itself")
+    void cannotActivateWhileTapped() {
+        Permanent troops = addReadyTroops(player1);
+        troops.setTapped(true);
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Expendable Troops");
+        harness.assertNotInGraveyard(player1, "Expendable Troops");
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can damage a friendly attacking creature")
+    void damagesFriendlyAttacker() {
+        addReadyTroops(player1);
+        Permanent attacker = addCombatCreature(player1, true, false);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Expendable Troops");
+    }
+
+    @Test
+    @DisplayName("Lethal damage destroys an attacking creature after the source is sacrificed")
+    void destroysAttackerWithLethalDamage() {
+        addReadyTroops(player1);
+        Permanent attacker = addReadyTroops(player2);
+        attacker.setAttacking(true);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.assertInGraveyard(player1, "Expendable Troops");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Expendable Troops");
+        harness.assertInGraveyard(player2, "Expendable Troops");
+    }
+
     private Permanent addReadyTroops(Player player) {
         return addCreatureReady(player, new ExpendableTroops());
     }

@@ -49,10 +49,12 @@ class EdgeOfMalacolTest extends BaseCardTest {
         assertThat(opposingCreature.isTapped()).isTrue();
         assertThat(opposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
+        gd.planechase.controllerId = player2.getId();
         advanceToUpkeep(player2);
 
-        assertThat(opposingCreature.isTapped()).isFalse();
-        assertThat(opposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opposingCreature.isTapped()).isTrue();
+        assertThat(opposingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -70,5 +72,53 @@ class EdgeOfMalacolTest extends BaseCardTest {
         assertThat(ownCreature.isTapped()).isFalse();
         assertThat(opposingCreature.isTapped()).isTrue();
         assertThat(ownLand.isTapped()).isTrue();
+    }
+
+    @Test
+    void alreadyUntappedCreaturesDoNotReceiveCounters() {
+        Permanent untappedCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent tappedCreature = addCreatureReady(player1, new GrizzlyBears());
+        tappedCreature.tap();
+
+        advanceToUpkeep(player1);
+
+        assertThat(untappedCreature.isTapped()).isFalse();
+        assertThat(untappedCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(tappedCreature.isTapped()).isTrue();
+        assertThat(tappedCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void creaturesThatStayTappedReceiveCountersOnEachOwnUntapStep() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        creature.tap();
+
+        advanceToUpkeep(player1);
+        advanceToUpkeep(player1);
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    void chaosUntapsAllOwnCreaturesWithoutAddingCounters() {
+        Permanent firstCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondCreature = addCreatureReady(player1, new GrizzlyBears());
+        firstCreature.tap();
+        secondCreature.tap();
+        advanceToUpkeep(player1);
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+
+        assertThat(firstCreature.isTapped()).isFalse();
+        assertThat(secondCreature.isTapped()).isFalse();
+        assertThat(firstCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(secondCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+
+        advanceToUpkeep(player1);
+
+        assertThat(firstCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(secondCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }

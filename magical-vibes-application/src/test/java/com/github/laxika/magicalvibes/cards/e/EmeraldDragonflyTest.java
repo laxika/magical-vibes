@@ -37,7 +37,6 @@ class EmeraldDragonflyTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, dragonfly, Keyword.FIRST_STRIKE)).isFalse();
@@ -87,6 +86,39 @@ class EmeraldDragonflyTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
 
+        assertThat(dragonfly.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("First strike is granted only when the ability resolves and only to its source")
+    void grantsFirstStrikeOnlyToSourceOnResolution() {
+        Permanent dragonfly = addCreatureReady(player1, new EmeraldDragonfly());
+        Permanent otherDragonfly = addCreatureReady(player1, new EmeraldDragonfly());
+        Permanent opposingDragonfly = addCreatureReady(player2, new EmeraldDragonfly());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, dragonfly, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, dragonfly, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherDragonfly, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingDragonfly, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness does not prevent activating the ability")
+    void canActivateWhileSummoningSick() {
+        Permanent dragonfly = harness.addToBattlefieldAndReturn(player1, new EmeraldDragonfly());
+        dragonfly.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, dragonfly, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(dragonfly.isTapped()).isFalse();
     }
 }

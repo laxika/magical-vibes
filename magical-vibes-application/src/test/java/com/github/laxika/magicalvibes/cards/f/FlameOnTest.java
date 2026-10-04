@@ -96,6 +96,48 @@ class FlameOnTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void grantsFlyingWithZeroQualifyingCardsAndIgnoresOpponentsGraveyard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Mountain()));
+        harness.setGraveyard(player2, List.of(new Shock(), new Shock()));
+        cast(target);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void countsGraveyardAtResolutionRatherThanWhenCast() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FlameOn()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castSorcery(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of(new Shock(), new Shock()));
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    void illegalTargetPreventsResolutionAndRebound() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        FlameOn card = new FlameOn();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Flame On!");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private void cast(Permanent target) {
         harness.setHand(player1, List.of(new FlameOn()));
         harness.addMana(player1, ManaColor.RED, 1);

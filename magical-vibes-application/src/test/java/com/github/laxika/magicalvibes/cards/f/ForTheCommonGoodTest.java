@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -30,8 +31,7 @@ class ForTheCommonGoodTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ForTheCommonGood()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castSorcery(player1, 0, 2, originalToken.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2, originalToken.getId());
 
         List<Permanent> ownTokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -66,6 +66,65 @@ class ForTheCommonGoodTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void zeroXStillProtectsTokensAndGainsLife() {
+        Permanent token = addToken(player1, "Rabbit Token");
+        harness.setHand(player1, List.of(new ForTheCommonGood()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0, token.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(token);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.INDESTRUCTIBLE)).isTrue();
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void missingTargetPreventsProtectionAndLifeGain() {
+        Permanent target = addToken(player1, "Rabbit Token");
+        Permanent other = addToken(player1, "Other Token");
+        harness.setHand(player1, List.of(new ForTheCommonGood()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, 1, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(other);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.INDESTRUCTIBLE)).isFalse();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void protectsNoncreatureTokensUntilCastersNextTurnButNotLaterTokens() {
+        Card treasure = new Card() {};
+        treasure.setName("Treasure");
+        treasure.setType(CardType.ARTIFACT);
+        treasure.setToken(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, treasure);
+        harness.setHand(player1, List.of(new ForTheCommonGood()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 1, target.getId());
+
+        List<Permanent> protectedTokens = List.copyOf(gd.playerBattlefields.get(player1.getId()));
+        assertThat(protectedTokens).hasSize(2);
+        assertThat(protectedTokens).allSatisfy(token ->
+                assertThat(gqs.hasKeyword(gd, token, Keyword.INDESTRUCTIBLE)).isTrue());
+        harness.assertLife(player1, 22);
+        Permanent laterToken = addToken(player1, "Later Token");
+        assertThat(gqs.hasKeyword(gd, laterToken, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(protectedTokens).allSatisfy(token ->
+                assertThat(gqs.hasKeyword(gd, token, Keyword.INDESTRUCTIBLE)).isTrue());
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(protectedTokens).allSatisfy(token ->
+                assertThat(gqs.hasKeyword(gd, token, Keyword.INDESTRUCTIBLE)).isFalse());
+    }
+
     private Permanent addToken(com.github.laxika.magicalvibes.model.Player player, String name) {
         return addPermanent(player, name, true);
     }
@@ -81,9 +140,8 @@ class ForTheCommonGoodTest extends BaseCardTest {
         card.setToughness(1);
         card.setToken(token);
 
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

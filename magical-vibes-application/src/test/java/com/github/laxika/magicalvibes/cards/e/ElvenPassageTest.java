@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -113,22 +112,91 @@ class ElvenPassageTest extends BaseCardTest {
                 .matches(permanent -> !permanent.isTapped());
     }
 
+    @Test
+    @DisplayName("A tapped Elf can be beheld without untapping it or another land")
+    void tappedElfUntapsOnlyFetchedLand() {
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        elf.setTapped(true);
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        otherLand.setTapped(true);
+        Forest forest = activatePassage();
+
+        chooseFetchedLand();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(elf.getCard().getId()));
+
+        assertThat(elf.isTapped()).isTrue();
+        assertThat(otherLand.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(elf);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() == forest)
+                .singleElement()
+                .matches(permanent -> !permanent.isTapped());
+    }
+
+    @Test
+    @DisplayName("An opponent's Elf cannot be beheld")
+    void opponentElfDoesNotEnableBehold() {
+        harness.addToBattlefield(player2, new LlanowarElves());
+        Forest forest = activatePassage();
+
+        chooseFetchedLand();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard() == forest)
+                .singleElement()
+                .matches(Permanent::isTapped);
+    }
+
+    @Test
+    @DisplayName("Failing to find a land still permits behold without untapping another land")
+    void failToFindStillAllowsBehold() {
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        otherLand.setTapped(true);
+        Forest forest = activatePassage();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(elf.getCard().getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).contains(forest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(elf, otherLand);
+        assertThat(otherLand.isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An empty library still permits revealing an Elf from hand")
+    void emptyLibraryStillAllowsBehold() {
+        Card elf = new LlanowarElves();
+        harness.setHand(player1, List.of(elf));
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player1, new ElvenPassage());
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(elf.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(elf);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private Forest activatePassage() {
         Forest forest = new Forest();
-        harness.addToBattlefield(player1, new ElvenPassage());
+        Permanent passage = harness.addToBattlefieldAndReturn(player1, new ElvenPassage());
         harness.setLibrary(player1, List.of(forest, new Plains(), new GrizzlyBears()));
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        int passageIndex = 0;
-        while (!(battlefield.get(passageIndex).getCard() instanceof ElvenPassage)) {
-            passageIndex++;
-        }
+        int passageIndex = gd.playerBattlefields.get(player1.getId()).indexOf(passage);
         harness.activateAbility(player1, passageIndex, null, null);
         return forest;
     }
 
     private void chooseFetchedLand() {
         harness.passBothPriorities();
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
     }
 }

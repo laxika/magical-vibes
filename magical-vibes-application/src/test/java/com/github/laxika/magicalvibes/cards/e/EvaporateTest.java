@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.cards.g.GiantOyster;
 import com.github.laxika.magicalvibes.cards.m.MesaFalcon;
 import com.github.laxika.magicalvibes.cards.r.RevekaWizardSavant;
 import com.github.laxika.magicalvibes.cards.r.Roterothopter;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.s.SerraAviary;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Evaporate.class, FolkOfAnHavva.class, GiantOyster.class, MesaFalcon.class,
-        RevekaWizardSavant.class, Roterothopter.class})
+        RevekaWizardSavant.class, Roterothopter.class, SerraAviary.class})
 class EvaporateTest extends BaseCardTest {
 
     private void castEvaporate() {
@@ -74,8 +75,30 @@ class EvaporateTest extends BaseCardTest {
 
         castEvaporate();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Evaporate damages a creature that is both white and blue only once")
+    void damagesWhiteAndBlueCreatureOnlyOnce() {
+        Permanent oyster = harness.addToBattlefieldAndReturn(player2, new GiantOyster());
+        oyster.getGrantedColors().add(CardColor.WHITE);
+
+        castEvaporate();
+
+        harness.assertOnBattlefield(player2, "Giant Oyster");
+        assertThat(oyster.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Evaporate does not damage a white noncreature permanent")
+    void sparesWhiteNoncreaturePermanent() {
+        Permanent aviary = harness.addToBattlefieldAndReturn(player2, new SerraAviary());
+
+        castEvaporate();
+
+        harness.assertOnBattlefield(player2, "Serra Aviary");
+        assertThat(aviary.getMarkedDamage()).isZero();
     }
 }

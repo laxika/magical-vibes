@@ -22,8 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({FalseSummoning.class, GrizzlyBears.class, LlanowarElves.class, MightOfOaks.class})
 class FalseSummoningTest extends BaseCardTest {
 
-    // ===== Casting =====
-
     @Test
     @DisplayName("Casting puts it on the stack targeting a creature spell")
     void castingPutsOnStackTargetingCreatureSpell() {
@@ -65,8 +63,6 @@ class FalseSummoningTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Resolving counters a creature spell")
     void countersCreatureSpell() {
@@ -79,8 +75,7 @@ class FalseSummoningTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, elves.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, elves.getId());
 
         // Countered spell goes to owner's graveyard
         harness.assertInGraveyard(player1, "Llanowar Elves");
@@ -88,7 +83,38 @@ class FalseSummoningTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Llanowar Elves");
     }
 
-    // ===== Fizzle =====
+    @Test
+    @DisplayName("Can counter its controller's own creature spell")
+    void countersOwnCreatureSpell() {
+        LlanowarElves elves = new LlanowarElves();
+        harness.setHand(player1, List.of(elves, new FalseSummoning()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player1, 0, elves.getId());
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "False Summoning");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature already on the battlefield")
+    void cannotTargetCreaturePermanent() {
+        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.setHand(player1, List.of(new FalseSummoning()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                harness.getPermanentId(player1, "Llanowar Elves")))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+        harness.assertInHand(player1, "False Summoning");
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Fizzles if target spell is no longer on the stack")

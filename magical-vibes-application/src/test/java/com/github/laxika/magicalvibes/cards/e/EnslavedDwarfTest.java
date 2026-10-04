@@ -49,9 +49,7 @@ class EnslavedDwarfTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(originalToughness);
@@ -85,5 +83,47 @@ class EnslavedDwarfTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Enslaved Dwarf");
         harness.assertOnBattlefield(player2, "Mortiphobia");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Sacrifice and mana are paid before the ability resolves, even when the Dwarf is tapped and summoning sick")
+    void paysCostsBeforeResolutionWithoutTapRequirement() {
+        Permanent dwarf = harness.addToBattlefieldAndReturn(player1, new EnslavedDwarf());
+        dwarf.setTapped(true);
+        dwarf.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SengirVampire());
+        int originalPower = gqs.getEffectivePower(gd, target);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Enslaved Dwarf");
+        harness.assertInGraveyard(player1, "Enslaved Dwarf");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower + 1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability cannot be activated without red mana")
+    void cannotPayWithOtherMana() {
+        harness.addToBattlefield(player1, new EnslavedDwarf());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SengirVampire());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Enslaved Dwarf");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
     }
 }

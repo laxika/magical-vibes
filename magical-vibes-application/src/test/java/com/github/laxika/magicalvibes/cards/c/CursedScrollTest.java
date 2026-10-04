@@ -211,7 +211,7 @@ class CursedScrollTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options());
         harness.handleListChoice(player1, "Cursed Scroll");
 
-        scroll.setTapped(false);
+        scroll.untap();
         harness.setHand(player2, List.of(new FightingDrake()));
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();

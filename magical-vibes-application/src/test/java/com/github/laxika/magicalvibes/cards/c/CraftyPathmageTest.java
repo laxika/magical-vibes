@@ -51,7 +51,7 @@ class CraftyPathmageTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent pathmage = addCreatureReady(player1, new CraftyPathmage());
-        pathmage.setTapped(true);
+        pathmage.tap();
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))

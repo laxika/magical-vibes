@@ -10,7 +10,16 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * can also be the resolving controller's opponent; that opponent makes the scry choices and is
  * not a target.
  */
-public record ScryEffect(DynamicAmount count, LibraryOwner owner) implements CardEffect {
+public record ScryEffect(DynamicAmount count, LibraryOwner owner, boolean causesScryTriggers) implements CardEffect {
+
+    public ScryEffect(DynamicAmount count, LibraryOwner owner) {
+        this(count, owner, true);
+    }
+
+    /** Shares the top/bottom choice for operations such as clash that are not scry events. */
+    public ScryEffect(int count, LibraryOwner owner, boolean causesScryTriggers) {
+        this(new Fixed(count), owner, causesScryTriggers);
+    }
 
     public ScryEffect(DynamicAmount count) {
         this(count, LibraryOwner.CONTROLLER);

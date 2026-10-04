@@ -16,8 +16,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Foresight.class, FatalLore.class, ForceOfWill.class})
+@CardUsed({Foresight.class, FatalLore.class, ForceOfWill.class, PsychogenicProbe.class})
 class ForesightTest extends BaseCardTest {
 
     @Test
@@ -90,10 +91,8 @@ class ForesightTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
         Card onlyCard = new FatalLore();
-        deck.add(onlyCard);
+        harness.setLibrary(player1, List.of(onlyCard));
 
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
@@ -112,10 +111,8 @@ class ForesightTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.castSorcery(player1, 0, 0);
 
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
         List<Card> libraryCards = List.of(new FatalLore(), new ForceOfWill(), new Foresight());
-        deck.addAll(libraryCards);
+        harness.setLibrary(player1, libraryCards);
         return libraryCards;
     }
 
@@ -139,19 +136,77 @@ class ForesightTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(PsychogenicProbe.class)
     @DisplayName("An empty library is still shuffled after the search")
     void emptyLibraryStillShuffles() {
         harness.addToBattlefield(player2, new PsychogenicProbe());
         harness.setLife(player1, 20);
         harness.setHand(player1, List.of(new Foresight()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("An unrestricted search cannot stop before all three cards are chosen")
+    void cannotDeclineAnyPick() {
+        List<Card> libraryCards = setupAndCast();
+        harness.passBothPriorities();
+
+        for (int pick = 0; pick < 3; pick++) {
+            assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                    .isInstanceOf(IllegalStateException.class);
+            harness.handleCardChosen(player1, 0);
+        }
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactlyInAnyOrderElementsOf(libraryCards);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A populated library is shuffled once after all three cards are exiled")
+    void populatedLibraryShufflesOnce() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        setupAndCast();
+        gd.playerDecks.get(player1.getId()).add(new FatalLore());
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("The delayed draw happens only once across successive upkeeps")
+    void delayedDrawDoesNotRepeat() {
+        setupAndCast();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        Card drawnCard = new FatalLore();
+        Card remainingCard = new ForceOfWill();
+        harness.setLibrary(player1, List.of(drawnCard, remainingCard));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
     }
 }

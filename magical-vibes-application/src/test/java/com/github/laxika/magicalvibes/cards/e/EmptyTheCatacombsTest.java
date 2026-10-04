@@ -50,4 +50,64 @@ class EmptyTheCatacombsTest extends BaseCardTest {
                 .contains(player2NonCreature.getId())
                 .doesNotContain(player2Creature.getId());
     }
+    @Test
+    @DisplayName("Returns the opponent's creatures even when the caster's graveyard is empty")
+    void returnsOpponentsCreaturesWithEmptyControllersGraveyard() {
+        Card creature = new BorosRecruit();
+        Card artifact = new BorosSignet();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(creature, artifact));
+        harness.setHand(player2, List.of());
+
+        harness.castFromHand(player1, new EmptyTheCatacombs(), "{3}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(artifact);
+        harness.assertInGraveyard(player1, "Empty the Catacombs");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Resolves when neither graveyard contains creatures")
+    void resolvesWithoutCreatureCards() {
+        Card artifact = new BorosSignet();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player2, List.of());
+        Card spell = new EmptyTheCatacombs();
+
+        harness.castFromHand(player1, spell, "{3}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact, spell);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returns creatures present at resolution rather than those present when cast")
+    void usesGraveyardsAtResolution() {
+        Card removedCreature = new BorosRecruit();
+        Card addedCreature = new BorosRecruit();
+        Card artifact = new BorosSignet();
+        harness.setGraveyard(player1, List.of(removedCreature));
+        harness.setGraveyard(player2, List.of(artifact));
+        harness.setHand(player2, List.of());
+        harness.castFromHand(player1, new EmptyTheCatacombs(), "{3}{B}");
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(removedCreature));
+        harness.setGraveyard(player2, List.of(artifact, addedCreature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(addedCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(artifact);
+        assertThat(gd.findExiledCard(removedCreature.getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+    }
 }

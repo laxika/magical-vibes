@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.UlamogsCrusher;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EldritchImmunity.class, GrizzlyBears.class})
+@CardUsed({EldritchImmunity.class, UlamogsCrusher.class})
 class EldritchImmunityTest extends BaseCardTest {
 
     @Test
@@ -76,11 +76,63 @@ class EldritchImmunityTest extends BaseCardTest {
         assertProtectedFromEachColor(target, false);
     }
 
+    @Test
+    void overloadIncludesCreaturesPresentAtResolutionButNotThoseAddedLater() {
+        harness.setHand(player1, List.of(new EldritchImmunity()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castWithOverload(player1, 0);
+        Permanent beforeResolution = addCreature(player1);
+        harness.passBothPriorities();
+        Permanent afterResolution = addCreature(player1);
+
+        assertProtectedFromEachColor(beforeResolution, true);
+        assertProtectedFromEachColor(afterResolution, false);
+    }
+
+    @Test
+    void overloadCanResolveWithNoCreatures() {
+        harness.setHand(player1, List.of(new EldritchImmunity()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castWithOverload(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof EldritchImmunity);
+    }
+
+    @Test
+    void overloadCannotPayItsColorlessRequirementWithColoredMana() {
+        addCreature(player1);
+        harness.setHand(player1, List.of(new EldritchImmunity()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        assertThatThrownBy(() -> harness.castWithOverload(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void normalSpellDoesNotProtectTargetThatChangedController() {
+        Permanent target = addCreature(player1);
+        harness.setHand(player1, List.of(new EldritchImmunity()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertProtectedFromEachColor(target, false);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new UlamogsCrusher());
     }
 
     private void assertProtectedFromEachColor(Permanent permanent, boolean expected) {

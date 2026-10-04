@@ -123,7 +123,7 @@ class CrystalGolemTest extends BaseCardTest {
     @DisplayName("Crystal Golem keeps its counters and untaps after phasing in")
     void retainsCountersAndUntapsWhenPhasingIn() {
         Permanent golem = addGolem();
-        golem.setTapped(true);
+        golem.tap();
         golem.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         advanceToEndStep(player1);
         harness.passBothPriorities();

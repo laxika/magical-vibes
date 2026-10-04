@@ -118,7 +118,7 @@ class ButcherOfTheHordeTest extends BaseCardTest {
     @DisplayName("Repeated activations accumulate different keywords until cleanup")
     void repeatedActivationsAccumulateKeywords() {
         Permanent butcher = addButcherReady(player1);
-        butcher.setTapped(true);
+        butcher.tap();
         butcher.setSummoningSick(true);
         addCreatureReady(player1);
 

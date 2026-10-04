@@ -64,8 +64,7 @@ class FlowstoneSlideTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FlowstoneSlide()));
         harness.addMana(player1, ManaColor.RED, 5); // X=1: {1}{2}{R}{R} = 5
 
-        harness.castSorcery(player1, 0, 1);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1);
 
         // Both bears should be 3/1 (2+1 / 2-1)
         assertThat(bear1.getPowerModifier()).isEqualTo(1);
@@ -83,8 +82,7 @@ class FlowstoneSlideTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FlowstoneSlide()));
         harness.addMana(player1, ManaColor.RED, 6); // X=2: {2}{2}{R}{R} = 6
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         // Both 2/2 bears get +2/-2 → 4/0 → die to SBA
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -100,8 +98,7 @@ class FlowstoneSlideTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FlowstoneSlide()));
         harness.addMana(player1, ManaColor.RED, 7); // X=3: {3}{2}{R}{R} = 7
 
-        harness.castSorcery(player1, 0, 3);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 3);
 
         // 2/2 bear gets +3/-3 → 5/-1 → dies
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -119,8 +116,7 @@ class FlowstoneSlideTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FlowstoneSlide()));
         harness.addMana(player1, ManaColor.RED, 4); // X=0: {0}{2}{R}{R} = 4
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Bear is unchanged
         assertThat(bear.getPowerModifier()).isEqualTo(0);
@@ -169,8 +165,7 @@ class FlowstoneSlideTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FlowstoneSlide()));
         harness.addMana(player1, ManaColor.RED, 6);
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Flowstone Slide") && log.contains("creature"));
@@ -189,5 +184,50 @@ class FlowstoneSlideTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void creaturesEnteringLaterAreUnaffected() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FlowstoneSlide()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+        Permanent newcomer = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(original.getPowerModifier()).isEqualTo(1);
+        assertThat(original.getToughnessModifier()).isEqualTo(-1);
+        assertThat(newcomer.getPowerModifier()).isZero();
+        assertThat(newcomer.getToughnessModifier()).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Successive casts accumulate their power and toughness changes")
+    void successiveCastsAccumulate() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new FlowstoneSlide(), new FlowstoneSlide()));
+        harness.addMana(player1, ManaColor.RED, 11);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+        harness.castAndResolveSorcery(player1, 0, 2);
+
+        assertThat(elemental.getPowerModifier()).isEqualTo(3);
+        assertThat(elemental.getToughnessModifier()).isEqualTo(-3);
+        harness.assertOnBattlefield(player2, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Resolves on an empty battlefield without requiring a target")
+    void resolvesWithoutCreatures() {
+        harness.setHand(player1, List.of(new FlowstoneSlide()));
+        harness.addMana(player1, ManaColor.RED, 7);
+
+        harness.castAndResolveSorcery(player1, 0, 3);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Flowstone Slide");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 }
 

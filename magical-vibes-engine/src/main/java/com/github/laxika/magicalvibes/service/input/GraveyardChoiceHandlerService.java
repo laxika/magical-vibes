@@ -1986,6 +1986,9 @@ public class GraveyardChoiceHandlerService {
                 }
             }
             gameData.stack.add(triggeredEntry);
+            if (mixedZoneEffect != null) {
+                triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, triggeredEntry);
+            }
             triggerCollectionService.checkTargetChoiceTriggers(gameData, triggeredEntry);
 
             if (cardIds.isEmpty()) {

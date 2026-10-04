@@ -27,8 +27,7 @@ class FarsightMaskTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         harness.castInstantWithSacrifice(player2, 0, player1.getId(), sacrifice.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -60,8 +59,7 @@ class FarsightMaskTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         harness.castInstantWithSacrifice(player2, 0, player1.getId(), sacrifice.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
@@ -80,8 +78,7 @@ class FarsightMaskTest extends BaseCardTest {
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         harness.castInstantWithSacrifice(player2, 0, player1.getId(), sacrifice.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
@@ -98,9 +95,66 @@ class FarsightMaskTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castInstantWithSacrifice(player1, 0, player1.getId(), sacrifice.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    void tappingMaskBeforeTriggerResolvesPreventsDraw() {
+        Permanent mask = harness.addToBattlefieldAndReturn(player1, new FarsightMask());
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.setHand(player2, List.of(new ShrapnelBlast()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstantWithSacrifice(player2, 0, player1.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        mask.tap();
+        resolveAllTriggers();
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void untappingMaskAfterDamageDoesNotCreateTrigger() {
+        Permanent mask = harness.addToBattlefieldAndReturn(player1, new FarsightMask());
+        mask.tap();
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.setHand(player2, List.of(new ShrapnelBlast()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstantWithSacrifice(player2, 0, player1.getId(), sacrifice.getId());
+        harness.passBothPriorities();
+        mask.untap();
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void simultaneousCombatDamageFromTwoSourcesAllowsTwoDraws() {
+        harness.addToBattlefield(player1, new FarsightMask());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        addCreatureReady(player2, new AlphaMyr());
+        addCreatureReady(player2, new AlphaMyr());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        declareAttackers(player2, List.of(0, 1));
+        resolveCombat(player2);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 }

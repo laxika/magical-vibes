@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -90,11 +91,99 @@ class EarthKingdomGeneralTest extends BaseCardTest {
                 .doesNotContain(opponentLand.getId());
     }
 
+    @Test
+    @DisplayName("Your counters on an opposing creature allow you to gain life")
+    void yourCountersOnOpposingCreatureTriggerLifeGain() {
+        harness.addToBattlefield(player1, new EarthKingdomGeneral());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new EarthKingdomGeneral());
+
+        castBurstOfStrength(opposingCreature);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An opponent putting counters on your creature does not trigger your General")
+    void opponentsCountersDoNotTriggerLifeGain() {
+        Permanent general = harness.addToBattlefieldAndReturn(player1, new EarthKingdomGeneral());
+        harness.setHand(player2, List.of(new BurstOfStrength()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castAndResolveInstant(player2, 0, general.getId());
+
+        assertThat(general.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The life gain is available again on the opponent's turn")
+    void lifeGainResetsOnNextTurn() {
+        Permanent general = harness.addToBattlefieldAndReturn(player1, new EarthKingdomGeneral());
+        castBurstOfStrength(general);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        castBurstOfStrength(general);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Multiple pending counter triggers still allow life gain only once")
+    void pendingTriggersShareOncePerTurnLimit() {
+        Permanent general = harness.addToBattlefieldAndReturn(player1, new EarthKingdomGeneral());
+        harness.setHand(player1, List.of(new BurstOfStrength(), new BurstOfStrength()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, general.getId());
+        harness.castAndResolveInstant(player1, 0, general.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("An earthbent land returns tapped without its animation or counters after dying")
+    void earthbentLandReturnsAfterDeath() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new EarthKingdomGeneral()));
+        addMana(player1, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, land.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        land.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Forest");
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Forest");
+        Permanent returnedLand = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(land.getCard().getId()))
+                .findFirst().orElseThrow();
+        assertThat(returnedLand.isTapped()).isTrue();
+        assertThat(gqs.isLand(gd, returnedLand)).isTrue();
+        assertThat(gqs.isCreature(gd, returnedLand)).isFalse();
+        assertThat(returnedLand.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private void castBurstOfStrength(Permanent target) {
         harness.setHand(player1, List.of(new BurstOfStrength()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities();
     }
 

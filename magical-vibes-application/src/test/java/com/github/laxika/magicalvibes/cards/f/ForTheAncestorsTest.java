@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.t.Tarfire;
 import com.github.laxika.magicalvibes.cards.w.WoodlandChangeling;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -75,11 +76,81 @@ class ForTheAncestorsTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(deepGiant);
     }
 
+    @Test
+    @DisplayName("may select only some matching cards and bottoms the unselected matches")
+    void maySelectOnlySomeMatchingCards() {
+        GrizzlyBears selected = new GrizzlyBears();
+        GrizzlyBears declined = new GrizzlyBears();
+        Shock nonmatching = new Shock();
+        harness.setLibrary(player1, List.of(selected, declined, nonmatching));
+
+        castForTheAncestors();
+        harness.handleListChoice(player1, "BEAR");
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(declined, nonmatching);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("can take every matching card when the library has fewer than six cards")
+    void takesAllMatchesFromShortLibrary() {
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second));
+
+        castForTheAncestors();
+        harness.handleListChoice(player1, "BEAR");
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("resolves with an empty library without drawing cards")
+    void resolvesWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+
+        castForTheAncestors();
+        harness.handleListChoice(player1, "BEAR");
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "For the Ancestors");
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("flashback resolves the selection and exiles the spell")
+    void flashbackResolvesAndExilesSpell() {
+        ForTheAncestors spell = new ForTheAncestors();
+        Tarfire matching = new Tarfire();
+        Shock nonmatching = new Shock();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(spell));
+        harness.setLibrary(player1, List.of(matching, nonmatching));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+        harness.handleListChoice(player1, "GOBLIN");
+        harness.handleMultipleCardsChosen(player1, List.of(matching.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(matching);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonmatching);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(spell);
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card().getId().equals(spell.getId()));
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castForTheAncestors() {
         harness.setHand(player1, List.of(new ForTheAncestors()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     private void setTopCards(List<Card> cards) {

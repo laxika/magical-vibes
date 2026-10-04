@@ -25,8 +25,7 @@ class FanaticOfTheHarrowingTest extends BaseCardTest {
         addFanaticMana();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player2, 0);
 
@@ -45,8 +44,7 @@ class FanaticOfTheHarrowingTest extends BaseCardTest {
         addFanaticMana();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -63,12 +61,53 @@ class FanaticOfTheHarrowingTest extends BaseCardTest {
         addFanaticMana();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(controllerDraw);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(controllerDiscard);
+    }
+
+    @Test
+    @CardUsed({FanaticOfTheHarrowing.class})
+    void discardChoicesStayHiddenUntilBothPlayersHaveChosen() {
+        FanaticOfTheHarrowing controllerDiscard = new FanaticOfTheHarrowing();
+        FanaticOfTheHarrowing opponentDiscard = new FanaticOfTheHarrowing();
+        FanaticOfTheHarrowing controllerDraw = new FanaticOfTheHarrowing();
+        harness.setHand(player1, List.of(new FanaticOfTheHarrowing(), controllerDiscard));
+        harness.setHand(player2, List.of(opponentDiscard));
+        harness.setLibrary(player1, List.of(controllerDraw));
+        addFanaticMana();
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(controllerDiscard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(opponentDiscard);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(controllerDraw);
+
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(controllerDiscard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentDiscard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(controllerDraw);
+    }
+
+    @Test
+    @CardUsed({FanaticOfTheHarrowing.class})
+    void neitherPlayerDiscardsOrDrawsWhenBothHandsAreEmpty() {
+        harness.setHand(player1, List.of(new FanaticOfTheHarrowing()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new FanaticOfTheHarrowing()));
+        addFanaticMana();
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void addFanaticMana() {

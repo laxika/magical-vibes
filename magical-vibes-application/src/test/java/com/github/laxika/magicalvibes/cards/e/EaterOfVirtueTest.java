@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KorFirewalker;
+import com.github.laxika.magicalvibes.cards.k.KnightOfGrace;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -19,9 +20,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({EaterOfVirtue.class, GrizzlyBears.class, SerraAngel.class, KorFirewalker.class,
-        DoomBlade.class})
+        DoomBlade.class, KnightOfGrace.class})
 class EaterOfVirtueTest extends BaseCardTest {
 
     @Test
@@ -79,11 +81,87 @@ class EaterOfVirtueTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, creature, CardColor.RED)).isTrue();
     }
 
+    @Test
+    void equipAttachesAndTransfersBoost() {
+        Permanent eater = addEaterReady(player1);
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        eater.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(eater.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+    }
+
+    @Test
+    void unrelatedCreatureDeathIsNotExiled() {
+        Permanent equipped = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new SerraAngel());
+        Permanent eater = addEaterReady(player1);
+        eater.setAttachedTo(equipped.getId());
+
+        killCreature(other);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(other.getCard());
+        assertThat(gd.getCardsExiledByPermanent(eater.getId())).isEmpty();
+    }
+
+    @Test
+    void inheritedKeywordsAreNotPassedOnByDyingRecipient() {
+        Permanent angel = addCreatureReady(player1, new SerraAngel());
+        Permanent eater = addEaterReady(player1);
+        eater.setAttachedTo(angel.getId());
+        killCreature(angel);
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        eater.setAttachedTo(bear.getId());
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
+
+        killCreature(bear);
+        gd.removeFromExile(angel.getCard().getId());
+        Permanent recipient = addCreatureReady(player1, new GrizzlyBears());
+        eater.setAttachedTo(recipient.getId());
+
+        assertThat(gqs.hasKeyword(gd, recipient, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, recipient, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void newEquipmentObjectDoesNotInheritOldExileLinks() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent oldEater = addEaterReady(player1);
+        gd.addToExile(player1.getId(), new SerraAngel(), oldEater.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(oldEater);
+        Permanent returnedEater = harness.addToBattlefieldAndReturn(player1, oldEater.getCard());
+        returnedEater.setAttachedTo(creature.getId());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void equippedCreatureInheritsHexproofFromBlack() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent eater = addEaterReady(player1);
+        gd.addToExile(player1.getId(), new KnightOfGrace(), eater.getId());
+        eater.setAttachedTo(creature.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("hexproof from black");
+    }
     private Permanent addEaterReady(Player player) {
-        Permanent eater = new Permanent(new EaterOfVirtue());
-        eater.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(eater);
-        return eater;
+        return addCreatureReady(player, new EaterOfVirtue());
     }
 
     private void killCreature(Permanent creature) {
@@ -93,8 +171,7 @@ class EaterOfVirtueTest extends BaseCardTest {
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
         harness.passBothPriorities();
     }
 }

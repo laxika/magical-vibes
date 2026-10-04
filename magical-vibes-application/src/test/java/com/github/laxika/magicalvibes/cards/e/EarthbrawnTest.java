@@ -26,8 +26,7 @@ class EarthbrawnTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, warrior.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, warrior.getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(warrior.getEffectivePower()).isEqualTo(5);
@@ -42,8 +41,7 @@ class EarthbrawnTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, warrior.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, warrior.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -112,5 +110,61 @@ class EarthbrawnTest extends BaseCardTest {
 
         assertThat(warrior.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Earthbrawn");
+    }
+
+    @Test
+    @DisplayName("Reinforce pays mana and discards before its counter resolves")
+    void reinforcePaysCostsBeforeResolution() {
+        harness.setHand(player1, List.of(new Earthbrawn()));
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, warrior.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Earthbrawn");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(warrior.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(warrior.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Reinforce counter survives end-of-turn cleanup")
+    void reinforceCounterSurvivesCleanup() {
+        harness.setHand(player1, List.of(new Earthbrawn()));
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, warrior.getId());
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(warrior.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(warrior.getEffectivePower()).isEqualTo(3);
+        assertThat(warrior.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Reinforce cannot be activated without green mana and does not discard")
+    void reinforceRequiresGreenMana() {
+        harness.setHand(player1, List.of(new Earthbrawn()));
+        Permanent warrior = harness.addToBattlefieldAndReturn(player1, new ElvishWarrior());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, warrior.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Earthbrawn");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(warrior.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

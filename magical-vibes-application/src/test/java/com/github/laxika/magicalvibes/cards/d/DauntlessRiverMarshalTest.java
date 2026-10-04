@@ -77,7 +77,7 @@ class DauntlessRiverMarshalTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickWithoutIsland() {
         Permanent marshal = harness.addToBattlefieldAndReturn(player1, new DauntlessRiverMarshal());
         marshal.setSummoningSick(true);
-        marshal.setTapped(true);
+        marshal.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.BLUE, 1);

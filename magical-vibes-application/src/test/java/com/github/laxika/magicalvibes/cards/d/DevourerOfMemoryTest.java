@@ -125,7 +125,7 @@ class DevourerOfMemoryTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DevourerOfMemory());
         Permanent devourer = gd.playerBattlefields.get(player1.getId()).getFirst();
         devourer.setSummoningSick(true);
-        devourer.setTapped(true);
+        devourer.tap();
         DevourerOfMemory topCard = new DevourerOfMemory();
         DevourerOfMemory nextCard = new DevourerOfMemory();
         harness.setLibrary(player1, List.of(topCard, nextCard));

@@ -106,7 +106,7 @@ class BloodfireMentorTest extends BaseCardTest {
     @DisplayName("A tapped Mentor cannot pay the tap cost")
     void cannotActivateWhileTapped() {
         Permanent mentor = addCreatureReady(player1, new BloodfireMentor());
-        mentor.setTapped(true);
+        mentor.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

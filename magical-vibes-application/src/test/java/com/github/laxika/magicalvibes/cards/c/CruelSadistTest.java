@@ -189,7 +189,7 @@ class CruelSadistTest extends BaseCardTest {
     @Test
     void tappedSourceCannotActivateEitherAbility() {
         Permanent sadist = addReadySadist(player1, 2);
-        sadist.setTapped(true);
+        sadist.tap();
         Permanent bear = addCreatureReady(player2, new RuneclawBear());
         harness.addMana(player1, ManaColor.BLACK, 4);
 

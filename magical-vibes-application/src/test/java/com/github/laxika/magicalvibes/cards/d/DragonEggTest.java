@@ -108,7 +108,7 @@ class DragonEggTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, egg.getId());
         resolveAllTriggers();
         Permanent token = findPermanent(player1, "Dragon");
-        token.setTapped(true);
+        token.tap();
         int tokenIndex = gd.playerBattlefields.get(player1.getId()).indexOf(token);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.activateAbility(player1, tokenIndex, null, null);

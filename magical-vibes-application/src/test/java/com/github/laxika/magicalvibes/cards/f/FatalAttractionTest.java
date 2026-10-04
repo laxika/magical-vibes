@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AncientBrontodon;
+import com.github.laxika.magicalvibes.cards.t.ThornwealdArcher;
 import com.github.laxika.magicalvibes.cards.t.TolariaWest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FatalAttraction.class, AncientBrontodon.class, TolariaWest.class})
+@CardUsed({FatalAttraction.class, AncientBrontodon.class, ThornwealdArcher.class, TolariaWest.class})
 class FatalAttractionTest extends BaseCardTest {
 
     @Test
@@ -69,12 +70,59 @@ class FatalAttractionTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Entering damage kills the enchanted creature and the unattached Aura goes to its owner's graveyard")
+    void enteringDamageKillsCreatureAndRemovesAura() {
+        Permanent creature = addCreatureReady(player2, new ThornwealdArcher());
+        castFatalAttraction(creature);
+
+        harness.assertNotOnBattlefield(player2, "Thornweald Archer");
+        harness.assertInGraveyard(player2, "Thornweald Archer");
+        harness.assertNotOnBattlefield(player1, "Fatal Attraction");
+        harness.assertInGraveyard(player1, "Fatal Attraction");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Upkeep damage kills the enchanted creature and removes the Aura")
+    void upkeepDamageKillsCreatureAndRemovesAura() {
+        Permanent creature = addCreatureReady(player2, new ThornwealdArcher());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FatalAttraction());
+        aura.setAttachedTo(creature.getId());
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Thornweald Archer");
+        harness.assertInGraveyard(player2, "Thornweald Archer");
+        harness.assertNotOnBattlefield(player1, "Fatal Attraction");
+        harness.assertInGraveyard(player1, "Fatal Attraction");
+    }
+
+    @Test
+    @DisplayName("A pending upkeep trigger cannot damage a different creature after the enchanted creature leaves")
+    void upkeepTriggerDoesNothingAfterEnchantedCreatureLeaves() {
+        Permanent creature = addCreatureReady(player2, new AncientBrontodon());
+        Permanent otherCreature = addCreatureReady(player2, new AncientBrontodon());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FatalAttraction());
+        aura.setAttachedTo(creature.getId());
+
+        advanceToUpkeep(player1);
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        resolveAllTriggers();
+
+        assertThat(otherCreature.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castFatalAttraction(Permanent creature) {
         harness.setHand(player1, List.of(new FatalAttraction()));
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.castEnchantment(player1, 0, creature.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

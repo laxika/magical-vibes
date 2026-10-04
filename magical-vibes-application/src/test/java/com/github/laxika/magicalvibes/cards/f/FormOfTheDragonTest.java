@@ -42,6 +42,19 @@ class FormOfTheDragonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Upkeep trigger can target its own controller")
+    void upkeepCanDamageController() {
+        harness.addToBattlefield(player1, new FormOfTheDragon());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 15);
+    }
+
+    @Test
     @DisplayName("Upkeep trigger can deal 5 damage to a creature, destroying it")
     void upkeepDealsFiveToCreature() {
         harness.addToBattlefield(player1, new FormOfTheDragon());
@@ -90,6 +103,30 @@ class FormOfTheDragonTest extends BaseCardTest {
         resolveEndStep(player1);
 
         harness.assertLife(player1, 5);
+    }
+
+    @Test
+    @DisplayName("Raising life to 5 counts as gaining the difference")
+    void endStepIncreaseCountsAsLifeGain() {
+        harness.addToBattlefield(player1, new FormOfTheDragon());
+        harness.setLife(player1, 2);
+
+        harness.withAutoStop(TurnStep.END_STEP, () -> resolveEndStep(player1));
+
+        harness.assertLife(player1, 5);
+        assertThat(gd.lifeGainedThisTurn.getOrDefault(player1.getId(), 0)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("End step at exactly 5 life does not gain life")
+    void endStepAtFiveDoesNotGainLife() {
+        harness.addToBattlefield(player1, new FormOfTheDragon());
+        harness.setLife(player1, 5);
+
+        harness.withAutoStop(TurnStep.END_STEP, () -> resolveEndStep(player1));
+
+        harness.assertLife(player1, 5);
+        assertThat(gd.lifeGainedThisTurn.getOrDefault(player1.getId(), 0)).isZero();
     }
 
     @Test

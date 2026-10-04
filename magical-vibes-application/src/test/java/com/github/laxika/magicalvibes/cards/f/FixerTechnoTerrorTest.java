@@ -56,4 +56,74 @@ class FixerTechnoTerrorTest extends BaseCardTest {
     private Permanent addFixer() {
         return addCreatureReady(player1, new FixerTechnoTerror());
     }
+
+    @Test
+    void opponentsArtifactDoesNotEnableAbility() {
+        addFixer();
+        harness.enterBattlefieldAndReturn(player2, new ChromaticStar());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Activate only if");
+    }
+
+    @Test
+    void paysLifeAndTapsBeforeDrawing() {
+        Permanent fixer = addFixer();
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLife(player1, 20);
+        harness.enterBattlefieldAndReturn(player1, new ChromaticStar());
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(fixer.isTapped()).isTrue();
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize + 1);
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void cannotPayWithOnlyOneLife() {
+        Permanent fixer = addFixer();
+        harness.setLife(player1, 1);
+        harness.enterBattlefieldAndReturn(player1, new ChromaticStar());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough life");
+
+        assertThat(fixer.isTapped()).isFalse();
+        harness.assertLife(player1, 1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void artifactEnteringBeforeFixerStillEnablesAbility() {
+        harness.enterBattlefieldAndReturn(player1, new ChromaticStar());
+        addFixer();
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void artifactEntryDoesNotBypassSummoningSickness() {
+        harness.enterBattlefieldAndReturn(player1, new FixerTechnoTerror());
+        harness.enterBattlefieldAndReturn(player1, new ChromaticStar());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+    }
 }

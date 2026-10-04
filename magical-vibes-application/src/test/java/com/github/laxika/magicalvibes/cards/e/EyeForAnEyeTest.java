@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.l.LivingArtifact;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
-import com.github.laxika.magicalvibes.cards.s.SolRing;
+import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,8 +21,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EyeForAnEye.class, GrizzlyBears.class, LightningBolt.class, LivingArtifact.class,
-        ProdigalSorcerer.class, SolRing.class})
+@CardUsed({EyeForAnEye.class, GrizzlyBears.class, Incinerate.class, LivingArtifact.class,
+        ProdigalSorcerer.class, Ornithopter.class})
 class EyeForAnEyeTest extends BaseCardTest {
 
     @Test
@@ -115,9 +115,10 @@ class EyeForAnEyeTest extends BaseCardTest {
     @DisplayName("Allows a spell on the stack as a source choice")
     void allowsSpellOnStackAsSourceChoice() {
         addCreatureReady(player2, new GrizzlyBears());
-        Card lightningBolt = new LightningBolt();
-        harness.setHand(player2, List.of(lightningBolt));
+        Card incinerate = new Incinerate();
+        harness.setHand(player2, List.of(incinerate));
         harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castInstant(player2, 0, player1.getId());
         castEyeForAnEye(player1);
 
@@ -126,7 +127,7 @@ class EyeForAnEyeTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIds()).contains(lightningBolt.getId());
+        assertThat(choice.validIds()).contains(incinerate.getId());
     }
 
     @Test
@@ -182,14 +183,99 @@ class EyeForAnEyeTest extends BaseCardTest {
         assertThat(gd.deferPlayerLossCheck).isFalse();
     }
 
+    @Test
+    void reflectsDamageFromChosenSpellOnStack() {
+        Card source = new Incinerate();
+        harness.setHand(player2, List.of(source));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        castEyeForAnEye(player1);
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void bothCopiesReflectTheSameCombatDamageEvent() {
+        Permanent source = addCreatureReady(player2, new GrizzlyBears());
+        castEyeForAnEye(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+        castEyeForAnEye(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+
+        source.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void reflectsOnlyTheFirstDamageEventFromChosenSource() {
+        Permanent source = addCreatureReady(player2, new ProdigalSorcerer());
+        castEyeForAnEye(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+        int index = gd.playerBattlefields.get(player2.getId()).indexOf(source);
+        harness.activateAbility(player2, index, null, player1.getId());
+        harness.passBothPriorities();
+        source.setTapped(false);
+        harness.activateAbility(player2, index, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void reflectsAbilityDamageAfterChosenSourceLeavesBattlefield() {
+        Permanent source = addCreatureReady(player2, new ProdigalSorcerer());
+        castEyeForAnEye(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+        int index = gd.playerBattlefields.get(player2.getId()).indexOf(source);
+        harness.activateAbility(player2, index, null, player1.getId());
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, source.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(source);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void reflectsDamageFromYourOwnSourceBackToYou() {
+        Permanent source = addCreatureReady(player1, new ProdigalSorcerer());
+        castEyeForAnEye(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(source);
+        harness.activateAbility(player1, index, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
     private void castEyeForAnEye(Player player) {
-        harness.setHand(player, List.of(new EyeForAnEye()));
-        harness.addMana(player, ManaColor.WHITE, 2);
-        harness.castInstant(player, 0);
+        harness.castFromHand(player, new EyeForAnEye(), "{W}{W}");
     }
 
     private Permanent addLivingArtifact(Player player) {
-        Permanent artifact = harness.addToBattlefieldAndReturn(player, new SolRing());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player, new Ornithopter());
         Permanent aura = harness.addToBattlefieldAndReturn(player, new LivingArtifact());
         aura.setAttachedTo(artifact.getId());
         return aura;

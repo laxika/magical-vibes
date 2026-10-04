@@ -72,7 +72,7 @@ class DecisionParalysisTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureSkipsOnlyItsControllersNextUntap() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setTapped(true);
+        bears.tap();
         harness.setHand(player1, List.of(new DecisionParalysis()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castAndResolveInstant(player1, 0, bears.getId());

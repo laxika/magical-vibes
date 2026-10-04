@@ -48,8 +48,12 @@ class EnduranceTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(graveyardCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Endurance");
     }
 
@@ -61,8 +65,7 @@ class EnduranceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Endurance(), greenCard));
         harness.setGraveyard(player2, List.of(graveyardCard));
 
-        gs.playCard(gd, player1, 0, 0, player2.getId(), null,
-                List.of(), List.of(), false, null, null, List.of(), null, List.of(), false, 1);
+        harness.castInstantWithAlternateExileFromHand(player1, 0, player2.getId(), 1);
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -82,6 +85,103 @@ class EnduranceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("player");
+    }
+
+    @Test
+    @DisplayName("ETB can put the controller's graveyard beneath the existing library")
+    void etbCanTargetController() {
+        Card graveyardCard = new GrizzlyBears();
+        Card existingTop = new Forest();
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.setLibrary(player1, List.of(existingTop));
+        harness.setHand(player1, List.of(new Endurance()));
+        giveHardcastMana();
+
+        harness.castCreature(player1, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(existingTop, graveyardCard);
+        harness.assertOnBattlefield(player1, "Endurance");
+    }
+
+    @Test
+    @DisplayName("Targeting an empty graveyard leaves the library unchanged")
+    void emptyGraveyardLeavesLibraryUnchanged() {
+        Card existingTop = new Forest();
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player2, List.of(existingTop));
+        harness.setHand(player1, List.of(new Endurance()));
+        giveHardcastMana();
+
+        harness.castCreature(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(existingTop);
+        harness.assertOnBattlefield(player1, "Endurance");
+    }
+
+    @Test
+    @DisplayName("A Forest cannot pay the green-card evoke cost")
+    void evokeCannotExileForest() {
+        harness.setHand(player1, List.of(new Endurance(), new Forest()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(
+                player1, 0, player2.getId(), 1))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("green");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Endurance cannot exile itself to pay its evoke cost")
+    void evokeCannotExileItself() {
+        harness.setHand(player1, List.of(new Endurance()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(
+                player1, 0, player2.getId(), 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Evoke works without an ETB target and with the payment before the spell in hand")
+    void evokeWithoutTargetExilesEarlierHandCard() {
+        Card greenCard = new GrizzlyBears();
+        Card graveyardCard = new Forest();
+        harness.setHand(player1, List.of(greenCard, new Endurance()));
+        harness.setGraveyard(player2, List.of(graveyardCard));
+
+        harness.castInstantWithAlternateExileFromHand(player1, 1, null, 0);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(greenCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(graveyardCard);
+        harness.assertInGraveyard(player1, "Endurance");
+        harness.assertNotOnBattlefield(player1, "Endurance");
+    }
+
+    @Test
+    @DisplayName("The controller can be selected as the target when the ETB trigger goes on the stack")
+    void etbTargetSelectionCanChooseController() {
+        Card graveyardCard = new GrizzlyBears();
+        Card existingTop = new Forest();
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.setLibrary(player1, List.of(existingTop));
+        harness.setHand(player1, List.of(new Endurance()));
+        giveHardcastMana();
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(existingTop, graveyardCard);
     }
 
     private void giveHardcastMana() {

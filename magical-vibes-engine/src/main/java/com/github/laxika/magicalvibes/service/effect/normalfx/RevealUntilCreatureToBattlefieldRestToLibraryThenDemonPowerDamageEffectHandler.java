@@ -49,6 +49,7 @@ public class RevealUntilCreatureToBattlefieldRestToLibraryThenDemonPowerDamageEf
         String playerName = gameData.playerIdToName.get(controllerId);
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             gameLogService.append(gameData, GameLog.text(
                     playerName + "'s library is empty — no cards are revealed."));
             return;
@@ -87,10 +88,8 @@ public class RevealUntilCreatureToBattlefieldRestToLibraryThenDemonPowerDamageEf
                     foundCreature.getName() + " can't enter the battlefield from a library; it stays in the library."));
         }
 
-        if (!revealedCards.isEmpty()) {
-            deck.addAll(revealedCards);
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-        }
+        deck.addAll(revealedCards);
+        LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
 
         boolean enteredDemon = enteredPermanent != null
                 && gameQueryService.effectiveCreatureSubtypes(gameData, enteredPermanent)

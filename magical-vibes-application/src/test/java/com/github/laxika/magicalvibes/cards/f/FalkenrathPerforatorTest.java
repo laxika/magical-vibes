@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.a.ArlinnThePacksHope;
+import com.github.laxika.magicalvibes.cards.a.ArlinnTheMoonsFury;
+import com.github.laxika.magicalvibes.cards.h.HarvesttideSentry;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +17,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FalkenrathPerforator.class, GrizzlyBears.class})
+@CardUsed({FalkenrathPerforator.class, HarvesttideSentry.class, ArlinnThePacksHope.class, ArlinnTheMoonsFury.class})
 class FalkenrathPerforatorTest extends BaseCardTest {
 
     @Test
@@ -26,7 +26,7 @@ class FalkenrathPerforatorTest extends BaseCardTest {
         harness.setLife(player2, 20);
         addCreatureReady(player1, new FalkenrathPerforator());
 
-        declareAttackers(player1, List.of(0), null);
+        declareAttackers(player1, List.of(0));
         assertThat(gd.stack).hasSize(1);
 
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
@@ -35,24 +35,27 @@ class FalkenrathPerforatorTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Attacking a planeswalker triggers 1 damage to that planeswalker")
-    void attackingDamagesPlaneswalkerBeingAttacked() {
+    @DisplayName("Attacking a planeswalker damages its controller and leaves its loyalty unchanged")
+    void attackingPlaneswalkerDamagesDefendingPlayer() {
+        harness.setLife(player2, 20);
         addCreatureReady(player1, new FalkenrathPerforator());
-        Permanent planeswalker = addPlaneswalker(player2, 4);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ArlinnThePacksHope());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
 
         declareAttackers(player1, List.of(0), Map.of(0, planeswalker.getId()));
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
-        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
     }
 
     @Test
     @DisplayName("Does not trigger when another creature attacks")
     void doesNotTriggerForAnotherCreature() {
         addCreatureReady(player1, new FalkenrathPerforator());
-        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new HarvesttideSentry());
 
-        declareAttackers(player1, List.of(1), null);
+        declareAttackers(player1, List.of(1));
 
         assertThat(gd.stack).isEmpty();
     }
@@ -65,14 +68,19 @@ class FalkenrathPerforatorTest extends BaseCardTest {
         gs.declareAttackers(gd, player, attackerIndices, attackTargets);
     }
 
-    private Permanent addPlaneswalker(Player player, int loyalty) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        card.setLoyalty(loyalty);
-        Permanent permanent = new Permanent(card);
-        permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("The attack trigger still damages the defending player after Perforator leaves")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        harness.setLife(player2, 20);
+        Permanent perforator = addCreatureReady(player1, new FalkenrathPerforator());
+
+        declareAttackers(player1, List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(perforator);
+        gd.playerGraveyards.get(player1.getId()).add(perforator.getCard());
+
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 }

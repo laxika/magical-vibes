@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.a.AdventurersGuildhouse;
 import com.github.laxika.magicalvibes.cards.c.ChainLightning;
 import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
+import com.github.laxika.magicalvibes.cards.s.SpiritLink;
+import com.github.laxika.magicalvibes.cards.w.WallOfBlossoms;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,8 +15,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Eureka.class, AdventurersGuildhouse.class, DurkwoodBoars.class, ChainLightning.class})
+@CardUsed({Eureka.class, AdventurersGuildhouse.class, DurkwoodBoars.class, ChainLightning.class,
+        SpiritLink.class, WallOfBlossoms.class})
 class EurekaTest extends BaseCardTest {
 
     @Test
@@ -102,10 +106,101 @@ class EurekaTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Eureka");
     }
 
+    @Test
+    void stopsWhenBothPlayersDeclineWithPermanentsStillInHand() {
+        DurkwoodBoars boars = new DurkwoodBoars();
+        AdventurersGuildhouse guildhouse = new AdventurersGuildhouse();
+        harness.setHand(player1, List.of(new Eureka(), boars));
+        harness.setHand(player2, List.of(guildhouse));
+
+        castEureka();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player2, List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(boars);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(guildhouse);
+        harness.assertNotOnBattlefield(player1, "Durkwood Boars");
+        harness.assertNotOnBattlefield(player2, "Adventurers' Guildhouse");
+        harness.assertInGraveyard(player1, "Eureka");
+    }
+
+    @Test
+    void rejectsPuttingTwoCardsOntoTheBattlefieldInOneChoice() {
+        DurkwoodBoars boars = new DurkwoodBoars();
+        AdventurersGuildhouse guildhouse = new AdventurersGuildhouse();
+        harness.setHand(player1, List.of(new Eureka(), boars, guildhouse));
+        harness.setHand(player2, List.of());
+
+        castEureka();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(boars.getId(), guildhouse.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(boars, guildhouse);
+        harness.assertNotOnBattlefield(player1, "Durkwood Boars");
+        harness.assertNotOnBattlefield(player1, "Adventurers' Guildhouse");
+        harness.handleMultipleCardsChosen(player1, List.of());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void auraCanEnchantACreaturePutOntoTheBattlefieldInAnEarlierRound() {
+        DurkwoodBoars boars = new DurkwoodBoars();
+        SpiritLink aura = new SpiritLink();
+        harness.setHand(player1, List.of(new Eureka(), aura));
+        harness.setHand(player2, List.of(boars));
+
+        castEureka();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player2, List.of(boars.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(aura.getId()));
+
+        assertThat(findPermanent(player1, "Spirit Link").getAttachedTo())
+                .isEqualTo(findPermanent(player2, "Durkwood Boars").getId());
+        harness.assertNotInHand(player1, "Spirit Link");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void auraWithoutALegalCreatureToEnchantRemainsInHand() {
+        SpiritLink aura = new SpiritLink();
+        harness.setHand(player1, List.of(new Eureka(), aura));
+        harness.setHand(player2, List.of());
+
+        castEureka();
+        harness.handleMultipleCardsChosen(player1, List.of(aura.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(aura);
+        harness.assertNotOnBattlefield(player1, "Spirit Link");
+        harness.assertNotInGraveyard(player1, "Spirit Link");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed({Eureka.class, WallOfBlossoms.class, AdventurersGuildhouse.class, DurkwoodBoars.class})
+    void enteringCreaturesTriggerTheirOwnAbilitiesAfterEurekaFinishes() {
+        WallOfBlossoms wall = new WallOfBlossoms();
+        AdventurersGuildhouse guildhouse = new AdventurersGuildhouse();
+        DurkwoodBoars drawnCard = new DurkwoodBoars();
+        harness.setHand(player1, List.of(new Eureka(), wall, guildhouse));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        castEureka();
+        harness.handleMultipleCardsChosen(player1, List.of(wall.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(guildhouse);
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        harness.assertOnBattlefield(player1, "Wall of Blossoms");
+        harness.assertInGraveyard(player1, "Eureka");
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(guildhouse, drawnCard);
+    }
+
     private void castEureka() {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }

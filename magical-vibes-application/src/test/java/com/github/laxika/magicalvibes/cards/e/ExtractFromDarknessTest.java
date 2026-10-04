@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ExtractFromDarkness.class, Forest.class, GrizzlyBears.class, HolyDay.class})
 class ExtractFromDarknessTest extends BaseCardTest {
@@ -54,11 +54,7 @@ class ExtractFromDarknessTest extends BaseCardTest {
     void doesNothingWithoutCreatureCard() {
         harness.setLibrary(player1, List.of(new Forest(), new HolyDay()));
         harness.setLibrary(player2, List.of(new Forest(), new HolyDay()));
-        harness.setHand(player1, List.of(new ExtractFromDarkness()));
-        addManaForExtractFromDarkness();
-
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        castExtractFromDarkness();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -72,16 +68,84 @@ class ExtractFromDarknessTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(Forest.class, HolyDay.class);
     }
 
-    private void castExtractFromDarkness() {
-        harness.setHand(player1, List.of(new ExtractFromDarkness()));
-        addManaForExtractFromDarkness();
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+    @Test
+    @DisplayName("A creature just milled from your library can be reanimated")
+    void reanimatesNewlyMilledOwnCreature() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), creature));
+        harness.setLibrary(player2, List.of(new Forest(), new HolyDay()));
+
+        castExtractFromDarkness();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId()).containsExactly(creature.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 
-    private void addManaForExtractFromDarkness() {
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+    @Test
+    @DisplayName("A creature just milled from the opponent's library enters under your control")
+    void reanimatesNewlyMilledOpponentCreature() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new HolyDay()));
+        harness.setLibrary(player2, List.of(creature, new Forest()));
+
+        castExtractFromDarkness();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId()).containsExactly(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Short and empty libraries do not prevent reanimation")
+    void reanimatesWithInsufficientCardsToMill() {
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setGraveyard(player2, List.of());
+
+        castExtractFromDarkness();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Reanimation cannot be declined when a creature card is available")
+    void cannotDeclineReanimation() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+
+        castExtractFromDarkness();
+
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    private void castExtractFromDarkness() {
+        harness.castFromHand(player1, new ExtractFromDarkness(), "{3}{U}{B}");
+        harness.passBothPriorities();
     }
 }

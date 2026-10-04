@@ -16,6 +16,6 @@ public class AvatarOfGrowth extends Card {
         addEffect(EffectSlot.STATIC,
                 new ReduceOwnCastCostEffect(new Sum(new PlayersInGame(), new Fixed(-1))));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect(2));
+                EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect.mandatory(2));
     }
 }

@@ -35,7 +35,7 @@ class CopperTabletTest extends BaseCardTest {
     @Test
     @DisplayName("A tapped Tablet still deals damage during the opponent's upkeep")
     void tappedTabletStillDealsDamage() {
-        harness.addToBattlefieldAndReturn(player1, new CopperTablet()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new CopperTablet()).tap();
 
         advanceToUpkeep(player2);
         resolveAllTriggers();

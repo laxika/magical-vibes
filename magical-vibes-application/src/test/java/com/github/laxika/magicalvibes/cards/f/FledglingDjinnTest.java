@@ -56,4 +56,36 @@ class FledglingDjinnTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
+
+    @Test
+    @DisplayName("A Djinn controlled by the second player damages only that player")
+    void upkeepDamagesSecondPlayerController() {
+        addCreatureReady(player1, new FledglingDjinn());
+        addCreatureReady(player2, new FledglingDjinn());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Upkeep damage still resolves after the Djinn leaves the battlefield")
+    void upkeepDamageResolvesAfterSourceLeaves() {
+        var djinn = addCreatureReady(player1, new FledglingDjinn());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, djinn);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        harness.assertInGraveyard(player1, "Fledgling Djinn");
+    }
 }

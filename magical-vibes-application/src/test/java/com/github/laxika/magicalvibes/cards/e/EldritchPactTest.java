@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.c.ChainsOfMephistopheles;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EldritchPact.class, Forest.class, GrizzlyBears.class})
+@CardUsed({EldritchPact.class, Forest.class, GrizzlyBears.class, ChainsOfMephistopheles.class})
 class EldritchPactTest extends BaseCardTest {
 
     @Test
@@ -28,8 +29,7 @@ class EldritchPactTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EldritchPact()));
         harness.addMana(player1, ManaColor.BLACK, 7);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrderElementsOf(drawnCards);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -45,5 +45,74 @@ class EldritchPactTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canTargetControllerAndDoesNotCountResolvingPact() {
+        List<Card> drawnCards = List.of(new Forest(), new Forest());
+        harness.setGraveyard(player1, List.of(new Forest(), new EldritchPact()));
+        harness.setGraveyard(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player1, drawnCards);
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new EldritchPact()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrderElementsOf(drawnCards);
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void emptyGraveyardDrawsNothingAndLosesNoLife() {
+        Card libraryCard = new Forest();
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(libraryCard));
+        harness.setHand(player1, List.of(new EldritchPact()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void graveyardSizeIsDeterminedAtResolution() {
+        List<Card> drawnCards = List.of(new Forest(), new Forest());
+        harness.setGraveyard(player2, List.of(new Forest()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, drawnCards);
+        harness.setHand(player1, List.of(new EldritchPact()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        harness.setGraveyard(player2, List.of(new Forest(), new EldritchPact()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrderElementsOf(drawnCards);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @CardUsed({EldritchPact.class, Forest.class, ChainsOfMephistopheles.class})
+    void drawReplacementChangingGraveyardDoesNotChangeLifeLoss() {
+        harness.addToBattlefield(player1, new ChainsOfMephistopheles());
+        harness.setGraveyard(player2, List.of(new Forest(), new EldritchPact()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new EldritchPact()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        harness.assertLife(player2, 18);
     }
 }

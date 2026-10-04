@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.c.CatharCommando;
 import com.github.laxika.magicalvibes.cards.c.Consider;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.DemonOfCatastrophes;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -23,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({AugurOfAutumn.class, Forest.class, GrizzlyBears.class, HillGiant.class, LlanowarElves.class,
-        CatharCommando.class, Consider.class, StitchedDrake.class})
+        CatharCommando.class, Consider.class, StitchedDrake.class, DemonOfCatastrophes.class})
 class AugurOfAutumnTest extends BaseCardTest {
 
     @Test
@@ -262,15 +263,21 @@ class AugurOfAutumnTest extends BaseCardTest {
     @Test
     void canBeginCastingCreatureWithPayableAdditionalCost() {
         harness.addToBattlefield(player1, new AugurOfAutumn());
-        harness.addToBattlefield(player1, new LlanowarElves());
+        var sacrifice = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
         harness.addToBattlefield(player1, new HillGiant());
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        harness.setLibrary(player1, List.of(new StitchedDrake()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        DemonOfCatastrophes demon = new DemonOfCatastrophes();
+        harness.setLibrary(player1, List.of(demon));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        assertThatCode(() -> harness.castFromLibraryTop(player1)).doesNotThrowAnyException();
+        harness.castFromLibraryTopWithAdditionalCost(player1, sacrifice.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sacrifice);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrifice.getCard());
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(demon.getId()));
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Demon of Catastrophes");
     }
 }

@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AlpineWatchdog;
 import com.github.laxika.magicalvibes.cards.o.Opt;
-import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
+import com.github.laxika.magicalvibes.cards.f.FranticInventory;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,17 +16,17 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ExperimentalOverload.class, Opt.class, FranticInventory.class, AlpineWatchdog.class})
 class ExperimentalOverloadTest extends BaseCardTest {
 
     @Test
     @DisplayName("Creates a blue and red Weird sized by instant and sorcery cards in the graveyard")
     void createsWeirdSizedByInstantAndSorceryCards() {
         harness.setHand(player1, List.of(new ExperimentalOverload()));
-        harness.setGraveyard(player1, List.of(new Opt(), new ThinkTwice(), new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new Opt(), new FranticInventory(), new AlpineWatchdog()));
         addMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -43,21 +44,59 @@ class ExperimentalOverloadTest extends BaseCardTest {
     @DisplayName("May return a chosen instant or sorcery and then exiles itself")
     void mayReturnChosenInstantOrSorcery() {
         harness.setHand(player1, List.of(new ExperimentalOverload()));
-        harness.setGraveyard(player1, List.of(new Opt(), new ThinkTwice(), new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new Opt(), new FranticInventory(), new AlpineWatchdog()));
         addMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
         harness.handleGraveyardCardChosen(player1, 1);
 
-        harness.assertInHand(player1, "Think Twice");
+        harness.assertInHand(player1, "Frantic Inventory");
         harness.assertInGraveyard(player1, "Opt");
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Alpine Watchdog");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Experimental Overload"));
+    }
+
+    @Test
+    void returnsSorceryWithoutShrinkingTokenOrCountingOpponentsGraveyard() {
+        ExperimentalOverload spell = new ExperimentalOverload();
+        ExperimentalOverload otherCopy = new ExperimentalOverload();
+        harness.setHand(player1, List.of(spell));
+        harness.setGraveyard(player1, List.of(new Opt(), otherCopy, new AlpineWatchdog()));
+        harness.setGraveyard(player2, List.of(new Opt(), new FranticInventory()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 1);
+
+        Permanent weird = findWeird();
+        assertThat(gqs.getEffectivePower(gd, weird)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, weird)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(otherCopy);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell);
+        harness.assertInGraveyard(player2, "Opt");
+        harness.assertInGraveyard(player2, "Frantic Inventory");
+    }
+
+    @Test
+    void emptyGraveyardCreatesZeroToughnessTokenAndStillExilesSpell() {
+        ExperimentalOverload spell = new ExperimentalOverload();
+        harness.setHand(player1, List.of(spell));
+        harness.setGraveyard(player1, List.of());
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Weird");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell);
+        harness.assertNotInGraveyard(player1, "Experimental Overload");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void addMana() {

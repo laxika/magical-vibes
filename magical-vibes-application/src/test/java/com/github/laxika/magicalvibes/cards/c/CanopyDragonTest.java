@@ -101,7 +101,7 @@ class CanopyDragonTest extends BaseCardTest {
     @DisplayName("The ability can be activated while its source is tapped")
     void activationWorksWhileTapped() {
         Permanent dragon = addCreatureReady(player1, new CanopyDragon());
-        dragon.setTapped(true);
+        dragon.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

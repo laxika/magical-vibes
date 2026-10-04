@@ -40,7 +40,56 @@ public record PendingExileReturn(
         int counterAmountOnReturn,
         Map<CounterType, Integer> countersOnReturn,
         boolean returnLandsTapped,
-        boolean returnCantBeBlockedUntilEndOfCombat) implements DelayedAction {
+        boolean returnCantBeBlockedUntilEndOfCombat,
+        Card triggerSourceCard,
+        UUID triggerControllerId) implements DelayedAction {
+
+    public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
+                              TurnStep returnStep, int plusOnePlusOneCounters, List<Card> additionalCards,
+                              boolean onlyOnControllersTurn, boolean grantHaste, boolean returnAttacking,
+                              boolean returnToGraveyard, UUID timingControllerId, Card followUpSourceCard,
+                              boolean discardControllerCardsEqualToReturnedToughness,
+                              boolean plusOnePlusOneCountersOnlyOnCreatures, int loyaltyCountersOnPlaneswalkers,
+                              Set<UUID> cardsToAttachToPrimary, CounterType counterTypeOnReturn,
+                              int counterAmountOnReturn, Map<CounterType, Integer> countersOnReturn,
+                              boolean returnLandsTapped, boolean returnCantBeBlockedUntilEndOfCombat) {
+        this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
+                additionalCards, onlyOnControllersTurn, grantHaste, returnAttacking,
+                returnToGraveyard, timingControllerId, followUpSourceCard,
+                discardControllerCardsEqualToReturnedToughness, plusOnePlusOneCountersOnlyOnCreatures,
+                loyaltyCountersOnPlaneswalkers, cardsToAttachToPrimary, counterTypeOnReturn,
+                counterAmountOnReturn, countersOnReturn, returnLandsTapped,
+                returnCantBeBlockedUntilEndOfCombat, null, null);
+    }
+
+    public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped, boolean returnToHand,
+                              TurnStep returnStep, int plusOnePlusOneCounters, List<Card> additionalCards,
+                              boolean onlyOnControllersTurn, boolean grantHaste, boolean returnAttacking,
+                              boolean returnToGraveyard, UUID timingControllerId, Card followUpSourceCard,
+                              boolean discardControllerCardsEqualToReturnedToughness,
+                              boolean plusOnePlusOneCountersOnlyOnCreatures, int loyaltyCountersOnPlaneswalkers,
+                              Set<UUID> cardsToAttachToPrimary, CounterType counterTypeOnReturn,
+                              int counterAmountOnReturn, Map<CounterType, Integer> countersOnReturn,
+                              boolean returnLandsTapped, Card triggerSourceCard, UUID triggerControllerId) {
+        this(card, controllerId, returnTapped, returnToHand, returnStep, plusOnePlusOneCounters,
+                additionalCards, onlyOnControllersTurn, grantHaste, returnAttacking,
+                returnToGraveyard, timingControllerId, followUpSourceCard,
+                discardControllerCardsEqualToReturnedToughness, plusOnePlusOneCountersOnlyOnCreatures,
+                loyaltyCountersOnPlaneswalkers, cardsToAttachToPrimary, counterTypeOnReturn,
+                counterAmountOnReturn, countersOnReturn, returnLandsTapped,
+                false, triggerSourceCard, triggerControllerId);
+    }
+
+    /** Remembers the spell or ability that created this delayed return independently of its recipient. */
+    public PendingExileReturn withTriggerSource(Card sourceCard, UUID sourceControllerId) {
+        return new PendingExileReturn(card, controllerId, returnTapped, returnToHand, returnStep,
+                plusOnePlusOneCounters, additionalCards, onlyOnControllersTurn, grantHaste,
+                returnAttacking, returnToGraveyard, timingControllerId, followUpSourceCard,
+                discardControllerCardsEqualToReturnedToughness, plusOnePlusOneCountersOnlyOnCreatures,
+                loyaltyCountersOnPlaneswalkers, cardsToAttachToPrimary, counterTypeOnReturn,
+                counterAmountOnReturn, countersOnReturn, returnLandsTapped,
+                returnCantBeBlockedUntilEndOfCombat, sourceCard, sourceControllerId);
+    }
 
     public PendingExileReturn(Card card, UUID controllerId, boolean returnTapped,
                               boolean returnToHand, TurnStep returnStep,

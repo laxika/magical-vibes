@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AncientZiggurat;
 import com.github.laxika.magicalvibes.cards.c.ChromaticLantern;
+import com.github.laxika.magicalvibes.cards.e.ExoticOrchard;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.ManaReflection;
 import com.github.laxika.magicalvibes.cards.r.RealityTwist;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FellwarStone.class, AncientZiggurat.class, ChromaticLantern.class, Forest.class,
+@CardUsed({FellwarStone.class, AncientZiggurat.class, ChromaticLantern.class, ExoticOrchard.class, Forest.class,
         Island.class, ManaReflection.class, RealityTwist.class, UrzasMine.class})
 class FellwarStoneTest extends BaseCardTest {
 
@@ -177,5 +178,33 @@ class FellwarStoneTest extends BaseCardTest {
         // Only the controller's land could make colored mana, and it must be ignored
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
+    }
+    @Test
+    @DisplayName("An opponent's Exotic Orchard contributes colors from the controller's lands")
+    void includesColorsOpponentOrchardCouldProduce() {
+        harness.addToBattlefield(player1, new FellwarStone());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new ExoticOrchard());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A tapped opponent land still contributes its mana color")
+    void tappedOpponentLandStillContributesColor() {
+        var stone = harness.addToBattlefieldAndReturn(player1, new FellwarStone());
+        harness.addToBattlefieldAndReturn(player2, new Forest()).setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(stone.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 }

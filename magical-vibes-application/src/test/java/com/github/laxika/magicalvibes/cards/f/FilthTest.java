@@ -106,6 +106,46 @@ class FilthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Filth leaving the graveyard removes swampwalk even while its owner controls a Swamp")
+    void leavingGraveyardRemovesSwampwalkWithSwampStillPresent() {
+        harness.setGraveyard(player1, List.of(new Filth()));
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.SWAMPWALK)).isTrue();
+
+        harness.setGraveyard(player1, List.of());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.SWAMPWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Filth on the battlefield does not grant swampwalk to other creatures")
+    void battlefieldFilthDoesNotGrantSwampwalk() {
+        harness.addToBattlefield(player1, new Filth());
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.SWAMPWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Granted swampwalk allows blocking when only the attacker controls a Swamp")
+    void grantedSwampwalkAllowsBlockingWithoutDefendingSwamp() {
+        harness.setGraveyard(player1, List.of(new Filth()));
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.SWAMPWALK)).isTrue();
+        prepareDeclareBlockers();
+        declareBlock(blocker, attacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     @DisplayName("Filth requires its graveyard controller to control a Swamp")
     void requiresSwampControlledByFilthController() {
         harness.setGraveyard(player2, List.of(new Filth()));

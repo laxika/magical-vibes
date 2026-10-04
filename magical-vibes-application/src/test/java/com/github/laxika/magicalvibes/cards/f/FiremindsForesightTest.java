@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FiremindsForesight.class, Cancel.class, Negate.class, Shock.class, EliteVanguard.class})
 class FiremindsForesightTest extends BaseCardTest {
 
     @Test
@@ -50,7 +51,7 @@ class FiremindsForesightTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         for (int i = 0; i < 3; i++) {
-            harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+            harness.handleCardChosen(player1, 0);
         }
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -68,7 +69,7 @@ class FiremindsForesightTest extends BaseCardTest {
         harness.passBothPriorities();
         GameData gd = harness.getGameData();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         var search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
@@ -81,14 +82,12 @@ class FiremindsForesightTest extends BaseCardTest {
     @DisplayName("A mana value absent from the library is skipped without a pick")
     void absentManaValueIsSkipped() {
         setupAndCast();
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Cancel(), new Shock(), new EliteVanguard()));
+        harness.setLibrary(player1, List.of(new Cancel(), new Shock(), new EliteVanguard()));
 
         harness.passBothPriorities();
         GameData gd = harness.getGameData();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         var search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search).isNotNull();
@@ -104,9 +103,9 @@ class FiremindsForesightTest extends BaseCardTest {
         harness.passBothPriorities();
         GameData gd = harness.getGameData();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
         for (int i = 0; i < 2; i++) {
-            harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+            harness.handleCardChosen(player1, 0);
         }
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -119,13 +118,84 @@ class FiremindsForesightTest extends BaseCardTest {
     @DisplayName("Empty library resolves without a search interaction")
     void emptyLibrary() {
         setupAndCast();
-        harness.getGameData().playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(e -> e.contains("it is empty"));
+    }
+
+    @Test
+    @DisplayName("Declining all three searches leaves every card in the library and shuffles once")
+    void mayDeclineEverySearch() {
+        setupAndCast();
+        setupFullLibrary();
+        harness.passBothPriorities();
+
+        for (int i = 0; i < 3; i++) {
+            harness.handleCardChosen(player1, -1);
+        }
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Cancel", "Negate", "Shock", "Elite Vanguard");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
+                .filter(e -> e.contains("shuffled"))).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A library with no eligible instants still shuffles without offering a creature")
+    void noEligibleInstants() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new EliteVanguard()));
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Elite Vanguard");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
+                .filter(e -> e.contains("shuffled"))).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each chosen instant is revealed and moved immediately, before the final shuffle")
+    void cardsAreRevealedAndMovedBeforeNextSearch() {
+        setupAndCast();
+        setupFullLibrary();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Cancel");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .doesNotContain("Cancel");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(e -> e.contains("reveals Cancel"))
+                .noneMatch(e -> e.contains("shuffled"));
+
+        harness.handleCardChosen(player1, 0);
+        var search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).extracting(Card::getName).containsExactly("Shock");
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Cancel", "Negate");
+
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Elite Vanguard");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(e -> e.contains("reveals Negate"))
+                .anyMatch(e -> e.contains("reveals Shock"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
+                .filter(e -> e.contains("shuffled"))).hasSize(1);
     }
 
     private void setupAndCast() {
@@ -137,9 +207,6 @@ class FiremindsForesightTest extends BaseCardTest {
     }
 
     private void setupFullLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        // Cancel MV 3, Negate MV 2, Shock MV 1; Elite Vanguard is a creature (must not be offered).
-        deck.addAll(List.of(new Cancel(), new Negate(), new Shock(), new EliteVanguard()));
+        harness.setLibrary(player1, List.of(new Cancel(), new Negate(), new Shock(), new EliteVanguard()));
     }
 }

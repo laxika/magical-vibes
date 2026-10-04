@@ -57,7 +57,7 @@ class DartingMerfolkTest extends BaseCardTest {
     @DisplayName("Tapped and summoning-sick Merfolk can return itself without tapping as a cost")
     void canActivateWhileTappedAndSummoningSick() {
         var merfolk = harness.addToBattlefieldAndReturn(player1, new DartingMerfolk());
-        merfolk.setTapped(true);
+        merfolk.tap();
         merfolk.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

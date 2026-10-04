@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ElspethsTalent.class, ChandraNalaar.class, GrizzlyBears.class})
+@CardUsed({ElspethsTalent.class, ChandraNalaar.class, GrizzlyBears.class, JaceBeleren.class})
 class ElspethsTalentTest extends BaseCardTest {
 
     @Test
@@ -72,11 +73,76 @@ class ElspethsTalentTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a planeswalker");
     }
 
+    @Test
+    void grantedAbilityCreatesTokensAfterPumpResolves() {
+        Permanent chandra = addReadyChandra(player1, 4);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingBears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent talent = harness.addToBattlefieldAndReturn(player1, new ElspethsTalent());
+        talent.setAttachedTo(chandra.getId());
+
+        int abilityIndex = gs.getEffectiveActivatedAbilities(gd, chandra).size() - 1;
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(chandra),
+                abilityIndex, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Soldier")).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, opposingBears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, opposingBears, Keyword.VIGILANCE)).isFalse();
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Soldier")).hasSize(3).allSatisfy(soldier -> {
+            assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(1);
+            assertThat(gqs.hasKeyword(gd, soldier, Keyword.VIGILANCE)).isFalse();
+        });
+    }
+
+    @Test
+    void activatingAnotherPlaneswalkerDoesNotPumpCreatures() {
+        Permanent enchantedChandra = addReadyChandra(player1, 4);
+        Permanent jace = harness.addToBattlefieldAndReturn(player1, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 11);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent talent = harness.addToBattlefieldAndReturn(player1, new ElspethsTalent());
+        talent.setAttachedTo(enchantedChandra.getId());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(jace),
+                2, null, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void opponentCanUseGrantedAbilityWithoutTriggeringAuraControllersPump() {
+        Permanent chandra = addReadyChandra(player2, 4);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingBears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent talent = harness.addToBattlefieldAndReturn(player1, new ElspethsTalent());
+        talent.setAttachedTo(chandra.getId());
+
+        int abilityIndex = gs.getEffectiveActivatedAbilities(gd, chandra).size() - 1;
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(chandra),
+                abilityIndex, null, null);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player2, "Soldier")).hasSize(3);
+        assertThat(findPermanents(player1, "Soldier")).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, opposingBears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, opposingBears, Keyword.VIGILANCE)).isFalse();
+    }
+
     private Permanent addReadyChandra(Player player, int loyalty) {
-        Permanent chandra = new Permanent(new ChandraNalaar());
+        Permanent chandra = harness.addToBattlefieldAndReturn(player, new ChandraNalaar());
         chandra.setCounterCount(CounterType.LOYALTY, loyalty);
         chandra.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(chandra);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return chandra;

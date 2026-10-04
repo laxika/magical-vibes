@@ -74,7 +74,7 @@ class CopperLeafAngelTest extends BaseCardTest {
         Permanent otherAngel = addCreatureReady(player1, new CopperLeafAngel());
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
-        forest.setTapped(true);
+        forest.tap();
 
         harness.activateAbility(player1, 0, 1, null);
         harness.handlePermanentChosen(player1, forest.getId());
@@ -106,7 +106,7 @@ class CopperLeafAngelTest extends BaseCardTest {
     @DisplayName("A tapped Copper-Leaf Angel cannot activate")
     void cannotActivateWhileTapped() {
         Permanent angel = addCreatureReady(player1, new CopperLeafAngel());
-        angel.setTapped(true);
+        angel.tap();
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null))

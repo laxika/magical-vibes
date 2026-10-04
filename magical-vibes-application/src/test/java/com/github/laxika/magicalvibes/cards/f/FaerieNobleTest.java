@@ -20,9 +20,7 @@ class FaerieNobleTest extends BaseCardTest {
     @DisplayName("Other Faerie creatures you control get +0/+1")
     void staticBuffsOtherFaeries() {
         harness.addToBattlefield(player1, new FaerieNoble());
-        harness.addToBattlefield(player1, new WillowFaerie());
-
-        Permanent faerie = findPermanent(player1, "Willow Faerie");
+        Permanent faerie = harness.addToBattlefieldAndReturn(player1, new WillowFaerie());
 
         assertThat(gqs.getEffectivePower(gd, faerie)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, faerie)).isEqualTo(3);
@@ -31,11 +29,8 @@ class FaerieNobleTest extends BaseCardTest {
     @Test
     @DisplayName("Faerie Noble does not buff itself or non-Faeries")
     void staticExcludesSelfAndNonFaeries() {
-        harness.addToBattlefield(player1, new FaerieNoble());
-        harness.addToBattlefield(player1, new AnabaBodyguard());
-
-        Permanent noble = findPermanent(player1, "Faerie Noble");
-        Permanent bodyguard = findPermanent(player1, "Anaba Bodyguard");
+        Permanent noble = harness.addToBattlefieldAndReturn(player1, new FaerieNoble());
+        Permanent bodyguard = harness.addToBattlefieldAndReturn(player1, new AnabaBodyguard());
 
         assertThat(gqs.getEffectiveToughness(gd, noble)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bodyguard)).isEqualTo(3);
@@ -45,9 +40,7 @@ class FaerieNobleTest extends BaseCardTest {
     @DisplayName("Static buff does not apply to opponent's Faeries")
     void staticExcludesOpponentFaeries() {
         harness.addToBattlefield(player1, new FaerieNoble());
-        harness.addToBattlefield(player2, new WillowFaerie());
-
-        Permanent faerie = findPermanent(player2, "Willow Faerie");
+        Permanent faerie = harness.addToBattlefieldAndReturn(player2, new WillowFaerie());
 
         assertThat(gqs.getEffectiveToughness(gd, faerie)).isEqualTo(2);
     }
@@ -133,6 +126,37 @@ class FaerieNobleTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, laterFaerie)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Faeries entering before the tap ability resolves receive its boost")
+    void tapAbilityIncludesFaeriesEnteringBeforeResolution() {
+        addCreatureReady(player1, new FaerieNoble());
+        harness.activateAbility(player1, 0, null, null);
+
+        Permanent faerie = harness.addToBattlefieldAndReturn(player1, new WillowFaerie());
+        assertThat(gqs.getEffectivePower(gd, faerie)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, faerie)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, faerie)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Tap ability resolves after its source leaves, while the static bonus ends")
+    void tapAbilityResolvesAfterSourceLeaves() {
+        Permanent noble = addCreatureReady(player1, new FaerieNoble());
+        Permanent faerie = addCreatureReady(player1, new WillowFaerie());
+        assertThat(gqs.getEffectiveToughness(gd, faerie)).isEqualTo(3);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, noble);
+        assertThat(gqs.getEffectiveToughness(gd, faerie)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, faerie)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, faerie)).isEqualTo(2);
+        advanceToNextTurn();
+        assertThat(gqs.getEffectivePower(gd, faerie)).isEqualTo(1);
+    }
     private void advanceToNextTurn() {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());

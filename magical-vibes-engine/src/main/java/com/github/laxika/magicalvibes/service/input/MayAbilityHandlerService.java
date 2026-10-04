@@ -202,15 +202,9 @@ public class MayAbilityHandlerService {
                         ability.sourceCard(), ability.controllerId(), ability.sourceCard().getName() + " is exerted",
                         exertCosts, null, ability.sourcePermanentId());
                 exert.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+                exert.getEffectsToResolve().addAll(triggeredEffects);
                 effectResolutionService.resolveEffects(gameData, exert);
-                if (!triggeredEffects.isEmpty()) {
-                    StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                            ability.sourceCard(), ability.controllerId(), ability.sourceCard().getName() + "'s exert ability",
-                            triggeredEffects, null, ability.sourcePermanentId());
-                    trigger.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
-                    trigger.setNonTargeting(true);
-                    gameData.stack.add(trigger);
-                }
+
             }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;

@@ -134,7 +134,7 @@ class ConstantMistsTest extends BaseCardTest {
     @DisplayName("A tapped land can pay buyback and prevention still applies")
     void tappedLandCanPayBuyback() {
         var land = harness.addToBattlefieldAndReturn(player1, new VolrathsStronghold());
-        land.setTapped(true);
+        land.tap();
         harness.setHand(player1, List.of(new ConstantMists()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
