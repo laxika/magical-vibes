@@ -81,6 +81,49 @@ class HeidarRimewindMasterTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can return itself to its owner's hand")
+    void canReturnItself() {
+        Permanent heidar = addCreatureReady(player1, new HeidarRimewindMaster());
+        addSnowPermanents(player1, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, heidar.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Heidar, Rimewind Master");
+        harness.assertInHand(player1, "Heidar, Rimewind Master");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new HeidarRimewindMaster());
+        addSnowPermanents(player1, 4);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SnowCoveredIsland());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Losing a snow permanent after activation does not stop resolution")
+    void resolvesAfterLosingFourthSnowPermanent() {
+        addCreatureReady(player1, new HeidarRimewindMaster());
+        addSnowPermanents(player1, 3);
+        Permanent fourthSnow = harness.addToBattlefieldAndReturn(player1, new SnowCoveredIsland());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SnowCoveredIsland());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.getPermanentRemovalService().removePermanentToHand(gd, fourthSnow);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Snow-Covered Island");
+        harness.assertInHand(player2, "Snow-Covered Island");
+    }
+
     private void addSnowPermanents(Player player, int count) {
         for (int i = 0; i < count; i++) {
             harness.addToBattlefield(player, new SnowCoveredIsland());
