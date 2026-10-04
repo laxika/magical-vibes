@@ -95,6 +95,52 @@ class IcatianMoneychangerTest extends BaseCardTest {
                 .hasMessageContaining("upkeep");
     }
 
+    @Test
+    @DisplayName("Entry counters are present before the damage trigger resolves")
+    void entryCountersPrecedeDamageTrigger() {
+        harness.castFromHand(player1, new IcatianMoneychanger(), "{W}");
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Icatian Moneychanger").getCounterCount(CREDIT)).isEqualTo(3);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Sacrificing in response to upkeep gains life from the counters before the trigger")
+    void sacrificeBeforeUpkeepTriggerResolves() {
+        Permanent moneychanger = addReadyMoneychanger();
+        moneychanger.setCounterCount(CREDIT, 3);
+        advanceToUpkeep(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertNotOnBattlefield(player1, "Icatian Moneychanger");
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
+        harness.assertNotOnBattlefield(player1, "Icatian Moneychanger");
+    }
+
+    @Test
+    @DisplayName("Sacrificing with no credit counters gains no life")
+    void sacrificeWithNoCounters() {
+        addReadyMoneychanger();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Icatian Moneychanger");
+        harness.assertLife(player1, 20);
+    }
     private Permanent addReadyMoneychanger() {
         return addCreatureReady(player1, new IcatianMoneychanger());
     }
