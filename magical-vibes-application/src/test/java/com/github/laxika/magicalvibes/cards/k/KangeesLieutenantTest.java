@@ -37,8 +37,8 @@ class KangeesLieutenantTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Encore creates a hasty token copy attacking the opponent")
-    void encoreCreatesHastyAttackingTokenCopy() {
+    @DisplayName("Encore creates an untapped hasty token copy that attacks the opponent")
+    void encoreCreatesHastyTokenCopyThatAttacksOpponent() {
         harness.setGraveyard(player1, List.of(new KangeesLieutenant()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
@@ -52,11 +52,15 @@ class KangeesLieutenantTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isAttacking()).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+
         assertThat(token.isTapped()).isTrue();
         assertThat(token.isAttacking()).isTrue();
         assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
-        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
-        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
-        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
     }
 }

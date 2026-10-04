@@ -45,6 +45,7 @@ class ExplosionOfRichesTest extends BaseCardTest {
     }
 
     private void cast() {
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new ExplosionOfRiches()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);

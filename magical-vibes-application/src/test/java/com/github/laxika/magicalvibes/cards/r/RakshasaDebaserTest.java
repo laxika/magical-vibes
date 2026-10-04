@@ -61,7 +61,7 @@ class RakshasaDebaserTest extends BaseCardTest {
     }
 
     @Test
-    void encoreCreatesHastyAttackingTokenCopyAndSacrificesItAtNextEndStep() {
+    void encoreCreatesHastyTokenCopyThatAttacksAndIsSacrificedAtNextEndStep() {
         RakshasaDebaser debaser = new RakshasaDebaser();
         harness.setGraveyard(player1, List.of(debaser));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -76,14 +76,20 @@ class RakshasaDebaserTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .findFirst()
                 .orElseThrow();
-        assertThat(token.isTapped()).isTrue();
-        assertThat(token.isAttacking()).isTrue();
-        assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isAttacking()).isFalse();
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(debaser.getId()));
 
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0)));
+
+        assertThat(token.isTapped()).isTrue();
+        assertThat(token.isAttacking()).isTrue();
+        assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
+
         advanceToEndStep(player1);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken());
