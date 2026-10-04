@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.Colossadactyl;
+import com.github.laxika.magicalvibes.cards.a.ArmoredKincaller;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,26 +15,26 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HuatlisFinalStrike.class, AirElemental.class, GrizzlyBears.class})
+@CardUsed({HuatlisFinalStrike.class, Colossadactyl.class, ArmoredKincaller.class})
 class HuatlisFinalStrikeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Boosts the chosen creature before it deals damage equal to its power")
     void boostsSourceBeforeDealingPowerDamage() {
-        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new ArmoredKincaller());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Colossadactyl());
 
         cast(source, target);
 
         assertThat(source.getPowerModifier()).isEqualTo(1);
-        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
     }
 
     @Test
     @DisplayName("The temporary boost expires at cleanup")
     void boostExpiresAtCleanup() {
-        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new ArmoredKincaller());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Colossadactyl());
 
         cast(source, target);
 
@@ -48,8 +48,8 @@ class HuatlisFinalStrikeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature you control as the damage recipient")
     void cannotTargetOwnCreatureAsDamageRecipient() {
-        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new ArmoredKincaller());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ArmoredKincaller());
 
         harness.setHand(player1, List.of(new HuatlisFinalStrike()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -59,11 +59,68 @@ class HuatlisFinalStrikeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void cast(Permanent source, Permanent target) {
+    @Test
+    void stillBoostsSourceWhenDamageRecipientLeavesBattlefield() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new ArmoredKincaller());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Colossadactyl());
+
+        prepareSpell();
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isZero();
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void dealsNoDamageWhenSourceLeavesBattlefield() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new ArmoredKincaller());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Colossadactyl());
+
+        prepareSpell();
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getPowerModifier()).isZero();
+    }
+
+    @Test
+    void lethalDamageDoesNotCauseRecipientToDealDamageBack() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new Colossadactyl());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArmoredKincaller());
+
+        cast(source, target);
+
+        harness.assertInGraveyard(player2, "Armored Kincaller");
+        harness.assertNotOnBattlefield(player2, "Armored Kincaller");
+        assertThat(source.getMarkedDamage()).isZero();
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void cannotUseOpponentsCreatureAsSource() {
+        Permanent source = harness.addToBattlefieldAndReturn(player2, new ArmoredKincaller());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Colossadactyl());
+
+        prepareSpell();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(source.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void prepareSpell() {
         harness.setHand(player1, List.of(new HuatlisFinalStrike()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
-        harness.passBothPriorities();
+    }
+
+    private void cast(Permanent source, Permanent target) {
+        prepareSpell();
+        harness.castAndResolveInstant(player1, 0, List.of(source.getId(), target.getId()));
     }
 }
