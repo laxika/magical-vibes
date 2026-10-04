@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GarruksPackleader;
+import com.github.laxika.magicalvibes.cards.t.TaureanMauler;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -16,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HeroicReturn.class, HerculesOlympianHero.class, GrizzlyBears.class, HolyDay.class})
+@CardUsed({HeroicReturn.class, HerculesOlympianHero.class, GrizzlyBears.class, HolyDay.class,
+        TaureanMauler.class, GarruksPackleader.class})
 class HeroicReturnTest extends BaseCardTest {
 
     @Test
@@ -27,8 +30,7 @@ class HeroicReturnTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HeroicReturn()));
         addFullMana();
 
-        harness.castInstant(player1, 0, hero.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, hero.getId());
 
         Permanent returned = findOnBattlefield(hero);
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -42,8 +44,7 @@ class HeroicReturnTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HeroicReturn()));
         addFullMana();
 
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         Permanent returned = findOnBattlefield(creature);
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -83,6 +84,92 @@ class HeroicReturnTest extends BaseCardTest {
     private void addFullMana() {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
+    }
+
+    @Test
+    void returnsChangelingWithHeroCounters() {
+        Card creature = new TaureanMauler();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new HeroicReturn()));
+        addFullMana();
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(findOnBattlefield(creature).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    void enteringPowerIncludesHeroCountersForPackleader() {
+        harness.addToBattlefield(player1, new GarruksPackleader());
+        Card creature = new TaureanMauler();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new HeroicReturn()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        addFullMana();
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void cannotTargetOpponentsCreatureCard() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player1, List.of(new HeroicReturn()));
+        addFullMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void requiresFullCostWithoutAnAttacker() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new HeroicReturn()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void attackingAnotherPlayerDoesNotReduceCost() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new HeroicReturn()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotReturnTargetThatLeavesGraveyardBeforeResolution() {
+        Card creature = new HerculesOlympianHero();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new HeroicReturn()));
+        addFullMana();
+        harness.castInstant(player1, 0, creature.getId());
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(creature));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(creature.getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent findOnBattlefield(Card card) {
