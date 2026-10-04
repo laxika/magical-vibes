@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.e.EndlessOne;
+import com.github.laxika.magicalvibes.cards.g.GaeasHerald;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
@@ -9,12 +11,16 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HorriblyAwry.class, GiantSpider.class, GrizzlyBears.class, MightOfOaks.class, SerraAngel.class})
+@CardUsed({HorriblyAwry.class, GiantSpider.class, GrizzlyBears.class, MightOfOaks.class,
+        SerraAngel.class, EndlessOne.class, GaeasHerald.class})
 class HorriblyAwryTest extends BaseCardTest {
 
     @Test
@@ -29,8 +35,7 @@ class HorriblyAwryTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, spider.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, spider.getId());
 
         harness.assertNotInGraveyard(player1, "Giant Spider");
         harness.assertNotOnBattlefield(player1, "Giant Spider");
@@ -73,5 +78,106 @@ class HorriblyAwryTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, might.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 4})
+    @DisplayName("Counters and exiles an X creature spell when its chosen X is at most four")
+    void countersXCreatureSpellWithinLimit(int x) {
+        EndlessOne creature = new EndlessOne();
+        harness.setHand(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.COLORLESS, x);
+        harness.setHand(player2, List.of(new HorriblyAwry()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0, x);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
+        harness.assertNotInGraveyard(player1, "Endless One");
+        harness.assertNotOnBattlefield(player1, "Endless One");
+        harness.assertInGraveyard(player2, "Horribly Awry");
+    }
+
+    @Test
+    @DisplayName("Cannot target an X creature spell cast with X equal to five")
+    void cannotTargetXCreatureSpellAboveLimit() {
+        EndlessOne creature = new EndlessOne();
+        harness.setHand(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.setHand(player2, List.of(new HorriblyAwry()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0, 5);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can counter and exile its controller's own creature spell")
+    void countersOwnCreatureSpell() {
+        EndlessOne creature = new EndlessOne();
+        harness.setHand(player1, List.of(creature, new HorriblyAwry()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0, 1);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Endless One");
+        harness.assertNotOnBattlefield(player1, "Endless One");
+        harness.assertInGraveyard(player1, "Horribly Awry");
+    }
+
+    @Test
+    @DisplayName("An uncounterable creature spell is a legal target but is not exiled")
+    void doesNotExileUncounterableCreatureSpell() {
+        harness.addToBattlefield(player1, new GaeasHerald());
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setHand(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new HorriblyAwry()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getId().equals(creature.getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(creature);
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Horribly Awry");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Does nothing when another counterspell has already removed its target")
+    void doesNothingWhenTargetLeavesStack() {
+        EndlessOne creature = new EndlessOne();
+        harness.setHand(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player2, List.of(new HorriblyAwry(), new HorriblyAwry()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, creature.getId());
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(creature);
+        harness.assertNotInGraveyard(player1, "Endless One");
+        harness.assertNotOnBattlefield(player1, "Endless One");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(card -> card instanceof HorriblyAwry).hasSize(2);
+        assertThat(gd.stack).isEmpty();
     }
 }
