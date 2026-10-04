@@ -135,6 +135,44 @@ class HailOfArrowsTest extends BaseCardTest {
         ).isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Unequal damage assignments can kill one attacker while leaving another alive")
+    void unequalAssignmentsDealLethalDamage() {
+        Permanent first = addAttacker(new HandOfHonor());
+        Permanent second = addAttacker(new InnerChamberGuard());
+        prepareHail(3);
+
+        harness.castInstantForX(player1, 0, 3, Map.of(first.getId(), 2, second.getId(), 1));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Hand of Honor");
+        harness.assertInGraveyard(player2, "Hand of Honor");
+        harness.assertOnBattlefield(player2, "Inner-Chamber Guard");
+        assertThat(second.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Hail of Arrows");
+    }
+
+    @Test
+    @DisplayName("X=0 cannot target an attacker with a zero damage assignment")
+    void zeroDamageCannotHaveTargets() {
+        Permanent attacker = addAttacker(new HandOfHonor());
+        prepareHail(0);
+
+        assertThatThrownBy(() ->
+                harness.castInstantForX(player1, 0, 0, Map.of(attacker.getId(), 0))
+        ).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Positive X requires at least one target to receive the damage")
+    void positiveDamageCannotHaveNoTargets() {
+        prepareHail(1);
+
+        assertThatThrownBy(() ->
+                harness.castInstantForX(player1, 0, 1, Map.of())
+        ).isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent addAttacker(Card card) {
         Permanent attacker = addCreatureReady(player2, card);
         attacker.setAttacking(true);
