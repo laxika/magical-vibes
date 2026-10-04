@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.a.AuriokEdgewright;
+import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,17 +15,16 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({FumeSpitter.class, AuriokEdgewright.class, Memnite.class})
 class FumeSpitterTest extends BaseCardTest {
-
-    // ===== Activation sacrifices and puts ability on stack =====
 
     @Test
     @DisplayName("Activating sacrifices Fume Spitter and puts ability on stack")
     void activatingSacrificesAndPutsOnStack() {
-        addReadyFumeSpitter(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FumeSpitter());
+        harness.addToBattlefield(player2, new AuriokEdgewright());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Auriok Edgewright");
         harness.activateAbility(player1, 0, null, targetId);
 
         // Fume Spitter should be sacrificed
@@ -39,19 +38,17 @@ class FumeSpitterTest extends BaseCardTest {
         assertThat(entry.getCard().getName()).isEqualTo("Fume Spitter");
     }
 
-    // ===== Puts -1/-1 counter on target creature =====
-
     @Test
     @DisplayName("Puts a -1/-1 counter on target creature")
     void putsCounterOnTarget() {
-        addReadyFumeSpitter(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FumeSpitter());
+        harness.addToBattlefield(player2, new AuriokEdgewright());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Auriok Edgewright");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = findPermanent(player2, "Auriok Edgewright");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
@@ -60,26 +57,24 @@ class FumeSpitterTest extends BaseCardTest {
     @Test
     @DisplayName("Kills a 1/1 creature with -1/-1 counter")
     void killsOneOneCreature() {
-        addReadyFumeSpitter(player1);
-        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player1, new FumeSpitter());
+        harness.addToBattlefield(player2, new Memnite());
 
-        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
+        UUID targetId = harness.getPermanentId(player2, "Memnite");
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Llanowar Elves");
-        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Memnite");
+        harness.assertInGraveyard(player2, "Memnite");
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Ability fizzles if target creature is removed before resolution")
     void fizzlesIfTargetRemoved() {
-        addReadyFumeSpitter(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FumeSpitter());
+        harness.addToBattlefield(player2, new AuriokEdgewright());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Auriok Edgewright");
         harness.activateAbility(player1, 0, null, targetId);
 
         // Remove target before resolution
@@ -90,13 +85,39 @@ class FumeSpitterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick, targeting own creature")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent spitter = harness.addToBattlefieldAndReturn(player1, new FumeSpitter());
+        spitter.setTapped(true);
+        spitter.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AuriokEdgewright());
 
-    private Permanent addReadyFumeSpitter(Player player) {
-        FumeSpitter card = new FumeSpitter();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.assertInGraveyard(player1, "Fume Spitter");
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Auriok Edgewright");
+    }
+
+    @Test
+    @DisplayName("Can target itself, but the sacrificed target is gone at resolution")
+    void canTargetItself() {
+        Permanent spitter = harness.addToBattlefieldAndReturn(player1, new FumeSpitter());
+
+        harness.activateAbility(player1, 0, null, spitter.getId());
+
+        harness.assertNotOnBattlefield(player1, "Fume Spitter");
+        harness.assertInGraveyard(player1, "Fume Spitter");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(spitter.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(spitter.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 }

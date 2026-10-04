@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ELD", collectorNumber = "11")
+@CardRegistration(set = "ELD", collectorNumber = "274")
 public class FaerieGuidemother extends Card {
 
     public FaerieGuidemother() {

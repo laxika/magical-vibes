@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DiscipleOfTheOldWays;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FuriousResistance.class, DiscipleOfTheOldWays.class})
 class FuriousResistanceTest extends BaseCardTest {
 
     @Test
@@ -53,14 +55,58 @@ class FuriousResistanceTest extends BaseCardTest {
     @DisplayName("Cannot target a creature that is not blocking")
     void cannotTargetNonBlockingCreature() {
         addBlockingBear(player1);
-        Permanent bystander = new Permanent(new GrizzlyBears());
-        bystander.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bystander);
+        Permanent bystander = harness.addToBattlefieldAndReturn(player1, new DiscipleOfTheOldWays());
         setupSpell();
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, bystander.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("blocking");
+    }
+
+    @Test
+    @DisplayName("Can boost an opponent's blocking creature")
+    void boostsOpponentsBlocker() {
+        Permanent blocker = addBlockingBear(player2);
+        setupSpell();
+
+        harness.castInstant(player1, 0, blocker.getId());
+        harness.passBothPriorities();
+
+        assertThat(blocker.getPowerModifier()).isEqualTo(3);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(0);
+        assertThat(blocker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not resolve if the target stops blocking")
+    void targetStopsBlockingBeforeResolution() {
+        Permanent blocker = addBlockingBear(player1);
+        setupSpell();
+
+        harness.castInstant(player1, 0, blocker.getId());
+        blocker.setBlocking(false);
+        harness.passBothPriorities();
+
+        assertThat(blocker.getPowerModifier()).isEqualTo(0);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(0);
+        assertThat(blocker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        harness.assertInGraveyard(player1, "Furious Resistance");
+    }
+
+    @Test
+    @DisplayName("Resolved effects remain when the creature stops blocking")
+    void resolvedEffectsDoNotRequireContinuedBlocking() {
+        Permanent blocker = addBlockingBear(player1);
+        setupSpell();
+
+        harness.castInstant(player1, 0, blocker.getId());
+        harness.passBothPriorities();
+        blocker.setBlocking(false);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(blocker.getPowerModifier()).isEqualTo(3);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(0);
+        assertThat(blocker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
     }
 
     private void setupSpell() {
@@ -72,10 +118,9 @@ class FuriousResistanceTest extends BaseCardTest {
     }
 
     private Permanent addBlockingBear(Player player) {
-        Permanent bear = new Permanent(new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player, new DiscipleOfTheOldWays());
         bear.setSummoningSick(false);
         bear.setBlocking(true);
-        gd.playerBattlefields.get(player.getId()).add(bear);
         return bear;
     }
 }

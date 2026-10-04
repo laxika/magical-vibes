@@ -1,4 +1,5 @@
 # CARD_PATTERN_INDEX
+| end-step draw after casting a spell from a graveyard or activating an ability of a graveyard card | `l/LaboratoryDrudge.java` + `ConditionalEffect(ControllerCastSpellFromGraveyardOrActivatedGraveyardAbilityThisTurn, DrawCardEffect)` |
 | sorcery that looks at six, may put one land tapped onto the battlefield and one Elf into hand, then random-bottoms the rest | `b/BountyOfSkemfar.java` + `LookAtTopCardsRevealTwoTypesToHandThenRestEffect.landAndSubtypeToBattlefieldAndHandRestOnBottomRandom(...)` |
 | hand-cast instant or sorcery during an opponent's turn exiled with three time counters after resolution | `g/GandalfOfTheSecretFire.java` + `SpellCastTriggerEffect(INSTANT_OR_SORCERY, ExileTriggeringSpellWithSuspendCountersOnResolutionEffect(3), StackEntryCastFromZonePredicate(HAND), onlyDuringOpponentTurn)` |
 | target opponent mills nine, then the controller may free-cast any instant or sorcery from that opponent's graveyard with exile replacement | `s/SorcerousSquall.java` + `MillTargetPlayerAndMayCastSpellFromGraveyardEffect` |
@@ -476,6 +477,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | first spell each turn, random opponent damage | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | first spell during each opponent's turn, face-down top-card exile with indefinite play permission | `b/BlightwingBandit.java` + `SpellCastTriggerEffect` + `ExileTopCardMayPlayWhileExiledEffect(true, true)` |
 | secret council vote, draw for one vote and damage a random opponent for the other | `t/TruthOrConsequences.java` + `TruthOrConsequencesEffect` |
+| controller draw, per-opponent may-draw choices, and one random-target damage trigger per card drawn | `e/ExplosionOfRiches.java` + `ExplosionOfRichesEffect` |
 | exact-1-damage source trigger reflected to each matching permanent or player | `g/GhyrsonStarnKelermorph.java` + `GhyrsonStarnKelermorphEffect` |
 | beginning-of-combat random opponent attack requirement | `r/RuhanOfTheFomori.java` |
 | attack-triggered left/right pile evasion | `r/RagingRiver.java` + `RagingRiverEffectHandler` |

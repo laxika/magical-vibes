@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "247")
 @CardRegistration(set = "SLD", collectorNumber = "353")
+@CardRegistration(set = "SCD", collectorNumber = "320")
 public class StensiaBloodhall extends Card {
 
     public StensiaBloodhall() {

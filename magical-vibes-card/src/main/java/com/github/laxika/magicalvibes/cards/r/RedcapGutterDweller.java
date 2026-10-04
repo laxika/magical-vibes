@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "146")
+@CardRegistration(set = "WOE", collectorNumber = "351")
 public class RedcapGutterDweller extends Card {
 
     public RedcapGutterDweller() {

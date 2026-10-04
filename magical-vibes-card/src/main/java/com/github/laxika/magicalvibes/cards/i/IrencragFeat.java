@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitControllerToOneMoreSpellThisTurnEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "127")
+@CardRegistration(set = "ELD", collectorNumber = "362")
 public class IrencragFeat extends Card {
 
     public IrencragFeat() {

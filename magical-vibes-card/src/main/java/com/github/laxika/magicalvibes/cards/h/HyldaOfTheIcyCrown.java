@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "206")
+@CardRegistration(set = "WOE", collectorNumber = "363")
 public class HyldaOfTheIcyCrown extends Card {
 
     public HyldaOfTheIcyCrown() {

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "C21", collectorNumber = "218")
+@CardRegistration(set = "ELD", collectorNumber = "327")
 public class GluttonousTroll extends Card {
 
     public GluttonousTroll() {

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "208")
+@CardRegistration(set = "WOE", collectorNumber = "364")
 public class LikenessLooter extends Card {
 
     public LikenessLooter() {

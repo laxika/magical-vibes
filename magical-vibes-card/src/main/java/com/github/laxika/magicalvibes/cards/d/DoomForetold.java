@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "187")
+@CardRegistration(set = "ELD", collectorNumber = "378")
 public class DoomForetold extends Card {
 
     public DoomForetold() {

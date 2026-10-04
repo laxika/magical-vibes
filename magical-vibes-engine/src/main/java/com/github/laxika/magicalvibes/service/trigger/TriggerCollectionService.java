@@ -1784,13 +1784,15 @@ public class TriggerCollectionService {
                     }
                     copyEffect = new ConditionalEffect(trigger.condition(), copyEffect);
                 }
-                gameData.stack.add(new StackEntry(
+                StackEntry copyTrigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         spellCard,
                         castingPlayerId,
                         spellCard.getName() + "'s ability",
                         new ArrayList<>(List.of(copyEffect))
-                ));
+                );
+                copyTrigger.setSourceZone(castZone);
+                gameData.stack.add(copyTrigger);
                 log.info("Game {} - {} self-cast copy trigger queued for {}",
                         gameData.id, spellCard.getName(), castingPlayerId);
             } else if (effect instanceof CopyThisSpellIfCasualtyPaidEffect casualtyTrigger) {

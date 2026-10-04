@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 @CardRegistration(set = "AFC", collectorNumber = "142")
 @CardRegistration(set = "M19", collectorNumber = "160")
 @CardRegistration(set = "TDC", collectorNumber = "234")
+@CardRegistration(set = "SCD", collectorNumber = "158")
 public class SpitFlame extends Card {
 
     public SpitFlame() {

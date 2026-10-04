@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "102")
+@CardRegistration(set = "WOE", collectorNumber = "341")
 public class RanklesPrank extends Card {
 
     public RanklesPrank() {

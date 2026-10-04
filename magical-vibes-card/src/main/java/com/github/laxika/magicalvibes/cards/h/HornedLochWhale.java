@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "WOE", collectorNumber = "53")
+@CardRegistration(set = "WOE", collectorNumber = "278")
 public class HornedLochWhale extends Card {
 
     public HornedLochWhale() {

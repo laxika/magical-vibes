@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "145")
+@CardRegistration(set = "WOE", collectorNumber = "350")
 public class RealmScorcherHellkite extends Card {
 
     public RealmScorcherHellkite() {

@@ -50,4 +50,34 @@ class FyndhornElderTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Mana ability resolves immediately into its controller's pool")
+    void manaAbilityResolvesImmediatelyForController() {
+        addCreatureReady(player2, new FyndhornElder());
+        harness.ensurePriority(player2);
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId()).getFirst().isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Fyndhorn Elder can produce mana again after untapping")
+    void canProduceManaAgainAfterUntapping() {
+        Permanent perm = addCreatureReady(player1, new FyndhornElder());
+        harness.tapPermanent(player1, 0);
+        gd.playerManaPools.get(player1.getId()).clear();
+
+        harness.performUntapStep(player1);
+        assertThat(perm.isTapped()).isFalse();
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(perm.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }

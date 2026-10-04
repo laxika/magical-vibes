@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "82")
+@CardRegistration(set = "ELD", collectorNumber = "352")
 public class TheCauldronOfEternity extends Card {
 
     public TheCauldronOfEternity() {

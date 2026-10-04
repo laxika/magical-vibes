@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "261")
+@CardRegistration(set = "WOE", collectorNumber = "307")
 public class RestlessVinestalk extends Card {
 
     public RestlessVinestalk() {

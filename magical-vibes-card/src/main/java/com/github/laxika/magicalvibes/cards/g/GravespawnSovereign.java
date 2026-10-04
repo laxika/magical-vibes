@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "152")
 @CardRegistration(set = "MIC", collectorNumber = "120")
+@CardRegistration(set = "SCD", collectorNumber = "79")
 public class GravespawnSovereign extends Card {
 
     public GravespawnSovereign() {

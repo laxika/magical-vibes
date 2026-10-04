@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "153")
+@CardRegistration(set = "WOE", collectorNumber = "378")
 public class TorchTheTower extends Card {
 
     public TorchTheTower() {

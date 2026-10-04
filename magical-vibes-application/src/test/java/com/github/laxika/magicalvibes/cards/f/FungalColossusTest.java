@@ -60,4 +60,47 @@ class FungalColossusTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
+
+    @Test
+    @DisplayName("Pays the full cost when no lands are controlled")
+    void paysFullCostWithoutLands() {
+        harness.setHand(player1, List.of(new FungalColossus()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Fungal Colossus");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Tapped lands still reduce the cost")
+    void tappedLandsReduceCost() {
+        harness.addToBattlefieldAndReturn(player1, new Forest()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Island()).setTapped(true);
+        harness.setHand(player1, List.of(new FungalColossus()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Fungal Colossus");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The reduction cannot pay the green mana requirement")
+    void reductionDoesNotRemoveGreenRequirement() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Island());
+        harness.setHand(player1, List.of(new FungalColossus()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        harness.assertInHand(player1, "Fungal Colossus");
+        assertThat(gd.stack).isEmpty();
+    }
 }

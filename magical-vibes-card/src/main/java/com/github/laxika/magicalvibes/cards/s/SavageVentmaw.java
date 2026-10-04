@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardPersistentManaEffect;
 
 @CardRegistration(set = "DTK", collectorNumber = "231")
 @CardRegistration(set = "AFC", collectorNumber = "191")
+@CardRegistration(set = "SCD", collectorNumber = "240")
 public class SavageVentmaw extends Card {
 
     public SavageVentmaw() {

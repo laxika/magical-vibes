@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import java.util.List;
 
 @CardRegistration(set = "C20", collectorNumber = "48")
+@CardRegistration(set = "SCD", collectorNumber = "112")
 public class TitanHunter extends Card {
 
     public TitanHunter() {

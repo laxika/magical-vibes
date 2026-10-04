@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "78")
+@CardRegistration(set = "WOE", collectorNumber = "297")
 public class AshiokWickedManipulator extends Card {
 
     public AshiokWickedManipulator() {

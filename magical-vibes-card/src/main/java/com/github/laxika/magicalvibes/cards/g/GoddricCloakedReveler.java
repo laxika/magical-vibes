@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "132")
+@CardRegistration(set = "WOE", collectorNumber = "347")
 public class GoddricCloakedReveler extends Card {
 
     public GoddricCloakedReveler() {

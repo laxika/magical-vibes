@@ -127,4 +127,53 @@ class FungusElementalTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Winding Canyons");
     }
+
+    @Test
+    @DisplayName("Each activation can add another +2/+2 counter during the entry turn")
+    void canActivateRepeatedlyDuringEntryTurn() {
+        castElementalWithForest();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(elemental().getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, elemental())).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, elemental())).isEqualTo(7);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.assertNotOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("An opponent's Forest cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsForest() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.castFromHand(player1, new FungusElemental(), "{3}{G}");
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(elemental().getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Forest alone cannot pay the green mana cost")
+    void cannotActivateWithoutGreenMana() {
+        castElementalWithForest();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(elemental().getCounterCount(CounterType.PLUS_TWO_PLUS_TWO)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 }

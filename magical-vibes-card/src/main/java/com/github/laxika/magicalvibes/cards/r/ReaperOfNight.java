@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "ELD", collectorNumber = "102")
+@CardRegistration(set = "ELD", collectorNumber = "289")
 public class ReaperOfNight extends Card {
 
     public ReaperOfNight() {

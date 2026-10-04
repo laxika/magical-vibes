@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
 @CardRegistration(set = "WOE", collectorNumber = "168")
+@CardRegistration(set = "WOE", collectorNumber = "355")
 public class ElvishArchivist extends Card {
 
     public ElvishArchivist() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "WOE", collectorNumber = "240")
+@CardRegistration(set = "WOE", collectorNumber = "296")
 public class TwiningTwins extends Card {
 
     public TwiningTwins() {

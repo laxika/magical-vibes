@@ -30,6 +30,7 @@ import java.util.Set;
 @CardRegistration(set = "WAR", collectorNumber = "49")
 @CardRegistration(set = "MIC", collectorNumber = "99")
 @CardRegistration(set = "DRC", collectorNumber = "76")
+@CardRegistration(set = "SCD", collectorNumber = "49")
 public class EternalSkylord extends Card {
 
     public EternalSkylord() {

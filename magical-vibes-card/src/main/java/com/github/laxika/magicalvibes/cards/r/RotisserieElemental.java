@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "WOE", collectorNumber = "148")
+@CardRegistration(set = "WOE", collectorNumber = "352")
 public class RotisserieElemental extends Card {
 
     public RotisserieElemental() {

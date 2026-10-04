@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "ELD", collectorNumber = "61")
+@CardRegistration(set = "ELD", collectorNumber = "285")
 public class QueenOfIce extends Card {
 
     public QueenOfIce() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "131")
+@CardRegistration(set = "ELD", collectorNumber = "293")
 public class MerchantOfTheVale extends Card {
 
     public MerchantOfTheVale() {

@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "WOE", collectorNumber = "230")
+@CardRegistration(set = "WOE", collectorNumber = "291")
+@CardRegistration(set = "WOE", collectorNumber = "298")
 public class KellanTheFaeBlooded extends Card {
 
     public KellanTheFaeBlooded() {

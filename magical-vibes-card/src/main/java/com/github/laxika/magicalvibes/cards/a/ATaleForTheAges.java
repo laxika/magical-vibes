@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 
 @CardRegistration(set = "WOE", collectorNumber = "34")
+@CardRegistration(set = "WOE", collectorNumber = "328")
 public class ATaleForTheAges extends Card {
 
     public ATaleForTheAges() {

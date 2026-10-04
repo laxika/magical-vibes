@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M21", collectorNumber = "170")
+@CardRegistration(set = "SCD", collectorNumber = "166")
 public class UnleashFury extends Card {
 
     public UnleashFury() {

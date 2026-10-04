@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "WOE", collectorNumber = "223")
+@CardRegistration(set = "WOE", collectorNumber = "287")
 public class DecadentDragonExpensiveTaste extends Card {
 
     public DecadentDragonExpensiveTaste() {

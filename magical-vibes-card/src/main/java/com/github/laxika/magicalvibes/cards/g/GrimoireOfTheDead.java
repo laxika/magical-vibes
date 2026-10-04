@@ -21,6 +21,7 @@ import java.util.List;
 
 @CardRegistration(set = "ISD", collectorNumber = "226")
 @CardRegistration(set = "C19", collectorNumber = "213")
+@CardRegistration(set = "SCD", collectorNumber = "265")
 public class GrimoireOfTheDead extends Card {
 
     public GrimoireOfTheDead() {

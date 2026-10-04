@@ -25,6 +25,35 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class FuneralPyreTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Can exile a card from the caster's graveyard and creates exactly one Spirit")
+    void exilesCardFromOwnGraveyard() {
+        Card target = new SuntailHawk();
+        target.setOwnerId(player1.getId());
+        harness.setGraveyard(player1, List.of(target));
+
+        castFuneralPyre(target);
+
+        harness.assertNotInGraveyard(player1, "Suntail Hawk");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertSpiritToken(player1);
+        harness.assertNotOnBattlefield(player2, "Spirit");
+        harness.assertInGraveyard(player1, "Funeral Pyre");
+    }
+
+    @Test
+    @DisplayName("Cannot target a card in a hand")
+    void cannotTargetHandCard() {
+        Card target = new BattleScreech();
+        harness.setHand(player2, List.of(target));
+        harness.setHand(player1, List.of(new FuneralPyre()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     @DisplayName("Exiles any target card and its owner creates a 1/1 white flying Spirit")
     void exilesAnyCardAndCreatesTokenForOwner() {
         Card target = new BattleScreech();

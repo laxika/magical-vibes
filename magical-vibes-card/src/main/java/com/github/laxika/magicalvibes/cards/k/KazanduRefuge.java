@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "C19", collectorNumber = "256")
 @CardRegistration(set = "C18", collectorNumber = "261")
 @CardRegistration(set = "CMD", collectorNumber = "280")
+@CardRegistration(set = "SCD", collectorNumber = "307")
 public class KazanduRefuge extends Card {
 
     public KazanduRefuge() {
