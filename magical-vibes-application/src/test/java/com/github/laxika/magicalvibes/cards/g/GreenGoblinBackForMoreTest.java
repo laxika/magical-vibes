@@ -17,15 +17,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GreenGoblinBackForMore.class, GrizzlyBears.class})
+@CardUsed({GreenGoblinBackForMore.class})
 class GreenGoblinBackForMoreTest extends BaseCardTest {
 
     @Test
     @DisplayName("At the beginning of combat, discarding a card makes each opponent discard a card")
     void beginningOfCombatDiscardTriggersOpponentDiscards() {
         addCreatureReady(player1, new GreenGoblinBackForMore());
-        Card ownCard = new GrizzlyBears();
-        Card opponentCard = new GrizzlyBears();
+        Card ownCard = new GreenGoblinBackForMore();
+        Card opponentCard = new GreenGoblinBackForMore();
         harness.setHand(player1, List.of(ownCard));
         harness.setHand(player2, List.of(opponentCard));
 
@@ -53,8 +53,8 @@ class GreenGoblinBackForMoreTest extends BaseCardTest {
     @DisplayName("Declining the beginning-of-combat ability does not cause discards")
     void decliningBeginningOfCombatAbilityDoesNothing() {
         addCreatureReady(player1, new GreenGoblinBackForMore());
-        Card ownCard = new GrizzlyBears();
-        Card opponentCard = new GrizzlyBears();
+        Card ownCard = new GreenGoblinBackForMore();
+        Card opponentCard = new GreenGoblinBackForMore();
         harness.setHand(player1, List.of(ownCard));
         harness.setHand(player2, List.of(opponentCard));
 
@@ -96,6 +96,102 @@ class GreenGoblinBackForMoreTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The opponent discards during the same resolution, without a second trigger")
+    void opponentDiscardContinuesOriginalResolution() {
+        addCreatureReady(player1, new GreenGoblinBackForMore());
+        Card ownCard = new GreenGoblinBackForMore();
+        Card opponentCard = new GreenGoblinBackForMore();
+        harness.setHand(player1, List.of(ownCard));
+        harness.setHand(player2, List.of(opponentCard));
+
+        triggerBeginningOfCombat(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        assertThat(gd.stack).isEmpty();
+        harness.handleCardChosen(player2, 0);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentCard);
+    }
+
+    @Test
+    @DisplayName("An empty controller hand cannot cause the opponent to discard")
+    void emptyControllerHandDoesNotCauseOpponentDiscard() {
+        addCreatureReady(player1, new GreenGoblinBackForMore());
+        Card opponentCard = new GreenGoblinBackForMore();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(opponentCard));
+
+        triggerBeginningOfCombat(player1);
+        resolveAllTriggers();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability does not trigger during an opponent's combat")
+    void doesNotTriggerDuringOpponentCombat() {
+        addCreatureReady(player1, new GreenGoblinBackForMore());
+        harness.setHand(player1, List.of(new GreenGoblinBackForMore()));
+
+        triggerBeginningOfCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mayhem still requires creature spell timing")
+    void mayhemCannotBeCastDuringCombat() {
+        GreenGoblinBackForMore card = new GreenGoblinBackForMore();
+        harness.setGraveyard(player1, List.of(card));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), java.util.Set.of(card.getId()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Discarding Green Goblin through the combat ability enables mayhem")
+    void actualDiscardEnablesMayhem() {
+        addCreatureReady(player1, new GreenGoblinBackForMore());
+        GreenGoblinBackForMore card = new GreenGoblinBackForMore();
+        harness.setHand(player1, List.of(card));
+        harness.setHand(player2, List.of());
+
+        triggerBeginningOfCombat(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFromGraveyard(player1, 0);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == card);
     }
 
     private void triggerBeginningOfCombat(Player activePlayer) {
