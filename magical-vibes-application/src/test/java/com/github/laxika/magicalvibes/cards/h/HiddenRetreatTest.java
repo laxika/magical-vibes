@@ -83,4 +83,70 @@ class HiddenRetreatTest extends BaseCardTest {
                 .hasMessageContaining("instant or sorcery");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosenCard);
     }
+
+    @Test
+    @DisplayName("The hand card is paid before resolution, even with an empty library")
+    void paysCostBeforeResolutionWithEmptyLibrary() {
+        harness.addToBattlefield(player1, new HiddenRetreat());
+        Shock chosenCard = new Shock();
+        Shock spell = new Shock();
+        harness.setHand(player1, List.of(chosenCard));
+        harness.setHand(player2, List.of(spell));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.activateAbility(player1, 0, null, spell.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(chosenCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without a card in hand to pay the cost")
+    void cannotActivateWithEmptyHand() {
+        harness.addToBattlefield(player1, new HiddenRetreat());
+        Shock spell = new Shock();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, spell.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Can prevent its controller's spell without preventing a different spell")
+    void preventsOwnSpellButNotAnotherSpell() {
+        harness.addToBattlefield(player1, new HiddenRetreat());
+        Shock spell = new Shock();
+        harness.setHand(player1, List.of(spell, new FoulImp()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.activateAbility(player1, 0, null, spell.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Shock");
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
 }
