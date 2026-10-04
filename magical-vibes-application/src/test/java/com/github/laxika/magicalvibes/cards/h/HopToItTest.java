@@ -22,8 +22,7 @@ class HopToItTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
@@ -34,5 +33,32 @@ class HopToItTest extends BaseCardTest {
                     assertThat(permanent.getEffectivePower()).isEqualTo(1);
                     assertThat(permanent.getEffectiveToughness()).isEqualTo(1);
                 });
+    }
+
+    @Test
+    @DisplayName("Creates untapped tokens only when the spell resolves, under its controller's control")
+    void createsTokensOnlyOnResolutionForItsController() {
+        harness.setHand(player1, List.of(new HopToIt()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .hasSize(3)
+                .allSatisfy(permanent -> {
+                    assertThat(permanent.getCard().isToken()).isTrue();
+                    assertThat(permanent.isTapped()).isFalse();
+                    assertThat(permanent.isAttacking()).isFalse();
+                });
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(1)
+                .allSatisfy(card -> assertThat(card).isInstanceOf(HopToIt.class));
     }
 }
