@@ -100,6 +100,71 @@ class ExtortionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The caster may look at a nonempty hand and choose zero cards")
+    void mayChooseZeroCards() {
+        Card first = new CateranBrute();
+        Card second = new CateranEnforcer();
+        Extortion spell = new Extortion();
+        harness.setHand(player2, List.of(first, second));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND"))
+                .anySatisfy(message -> assertThat(message)
+                        .contains(first.getId().toString(), second.getId().toString()));
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first, second);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("Choosing the only card in hand completes the spell without another choice")
+    void discardsOnlyCardInHand() {
+        Card chosen = new CateranBrute();
+        Extortion spell = new Extortion();
+        harness.setHand(player2, List.of(chosen));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(chosen);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    @DisplayName("The targeted player cannot choose which cards are discarded")
+    void targetCannotChooseCards() {
+        Card chosen = new CateranBrute();
+        Card kept = new CateranEnforcer();
+        harness.setHand(player2, List.of(chosen, kept));
+        harness.setHand(player1, List.of(new Extortion()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player2, 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(chosen, kept);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(chosen);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
     @DisplayName("An empty target hand results in no card choice")
     void emptyTargetHandResultsInNoChoice() {
         Extortion spell = new Extortion();
