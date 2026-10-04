@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CheckpointOfficer;
+import com.github.laxika.magicalvibes.cards.s.SolidFooting;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +15,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ExuberantWolfbear.class, EliteVanguard.class, GrizzlyBears.class})
+@CardUsed({ExuberantWolfbear.class, EliteVanguard.class, GrizzlyBears.class,
+        CheckpointOfficer.class, SolidFooting.class})
 class ExuberantWolfbearTest extends BaseCardTest {
 
     @Test
@@ -95,6 +98,50 @@ class ExuberantWolfbearTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The attack trigger reads the source's values at resolution and does not track later changes")
+    void readsSourceAtResolutionThenKeepsChosenValues() {
+        Permanent wolfbear = addCreatureReady(player1, new ExuberantWolfbear());
+        Permanent human = addCreatureReady(player1, new CheckpointOfficer());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, human.getId());
+        wolfbear.setPowerModifier(2);
+        wolfbear.setToughnessModifier(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(5);
+        wolfbear.setPowerModifier(3);
+        wolfbear.setToughnessModifier(2);
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Last-known source values include an Aura bonus even after the Aura leaves")
+    void preservesAuraBonusInLastKnownSourceValues() {
+        Permanent wolfbear = addCreatureReady(player1, new ExuberantWolfbear());
+        Permanent human = addCreatureReady(player1, new CheckpointOfficer());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SolidFooting());
+        aura.setAttachedTo(wolfbear.getId());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, human.getId());
+        assertThat(gqs.getEffectivePower(gd, wolfbear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, wolfbear)).isEqualTo(5);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, wolfbear));
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Solid Footing");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(5);
     }
 
     private void resolveAttackTrigger(Permanent human, boolean accept) {
