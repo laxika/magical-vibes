@@ -36,8 +36,7 @@ class HardlightContainmentTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Naturalize()));
         harness.addMana(player2, ManaColor.GREEN, 2);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, auraId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, auraId);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
@@ -103,6 +102,50 @@ class HardlightContainmentTest extends BaseCardTest {
                 List.of(artifact.getId(), creature.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature an opponent controls");
+    }
+
+    @Test
+    void doesNotExileIfAuraLeavesBeforeEnterTriggerResolves() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HardlightContainment()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castEnchantment(player1, 0, List.of(artifact.getId(), creature.getId()));
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Hardlight Containment"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Hardlight Containment");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void wardDoesNotCounterControllersSpellAndHostDestructionReturnsCreature() {
+        Permanent artifact = prepareHardlightContainment();
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, artifact.getId());
+
+        harness.assertInGraveyard(player1, "Fountain of Youth");
+        harness.assertInGraveyard(player1, "Hardlight Containment");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void cannotEnchantNonartifactYouControl() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HardlightContainment()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0,
+                List.of(creature.getId(), opponentCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private Permanent prepareHardlightContainment() {
