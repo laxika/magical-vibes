@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "2173")
 @CardRegistration(set = "2X2", collectorNumber = "270")
 @CardRegistration(set = "C13", collectorNumber = "206")
+@CardRegistration(set = "CMA", collectorNumber = "190")
 public class RoonOfTheHiddenRealm extends Card {
 
     public RoonOfTheHiddenRealm() {

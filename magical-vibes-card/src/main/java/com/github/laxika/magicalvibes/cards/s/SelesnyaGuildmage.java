@@ -21,6 +21,7 @@ import java.util.Set;
 @CardRegistration(set = "CMD", collectorNumber = "224")
 @CardRegistration(set = "C16", collectorNumber = "235")
 @CardRegistration(set = "SCD", collectorNumber = "242")
+@CardRegistration(set = "CMA", collectorNumber = "206")
 @CardRegistration(set = "ARC", collectorNumber = "94")
 public class SelesnyaGuildmage extends Card {
 

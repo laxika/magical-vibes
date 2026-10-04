@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 @CardRegistration(set = "PTK", collectorNumber = "48")
 @CardRegistration(set = "ME3", collectorNumber = "42")
 @CardRegistration(set = "C13", collectorNumber = "49")
+@CardRegistration(set = "CMA", collectorNumber = "41")
 public class LuXunScholarGeneral extends Card {
 
     public LuXunScholarGeneral() {

@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "128")
 @CardRegistration(set = "C13", collectorNumber = "160")
+@CardRegistration(set = "CMA", collectorNumber = "133")
 public class PhantomNantuko extends Card {
 
     public PhantomNantuko() {

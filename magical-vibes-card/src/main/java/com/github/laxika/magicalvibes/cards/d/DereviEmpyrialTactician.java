@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "C13", collectorNumber = "186")
 @CardRegistration(set = "BLC", collectorNumber = "87")
+@CardRegistration(set = "CMA", collectorNumber = "176")
 public class DereviEmpyrialTactician extends Card {
 
     public DereviEmpyrialTactician() {

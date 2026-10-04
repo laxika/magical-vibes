@@ -25,6 +25,7 @@ import java.util.List;
 @CardRegistration(set = "CMD", collectorNumber = "254")
 @CardRegistration(set = "M3C", collectorNumber = "303")
 @CardRegistration(set = "BRC", collectorNumber = "153")
+@CardRegistration(set = "CM2", collectorNumber = "205")
 public class OblivionStone extends Card {
 
     public OblivionStone() {

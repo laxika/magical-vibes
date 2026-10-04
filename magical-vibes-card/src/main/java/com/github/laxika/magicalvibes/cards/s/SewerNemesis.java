@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByChosenP
 import java.util.List;
 
 @CardRegistration(set = "CMD", collectorNumber = "98")
+@CardRegistration(set = "CM2", collectorNumber = "75")
 public class SewerNemesis extends Card {
 
     public SewerNemesis() {

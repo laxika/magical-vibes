@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "C13", collectorNumber = "40")
+@CardRegistration(set = "CMA", collectorNumber = "37")
 public class DivinerSpirit extends Card {
 
     public DivinerSpirit() {

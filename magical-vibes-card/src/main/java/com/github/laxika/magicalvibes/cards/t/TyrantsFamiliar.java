@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "C17", collectorNumber = "143")
 @CardRegistration(set = "SCD", collectorNumber = "165")
 @CardRegistration(set = "FDC", collectorNumber = "183")
+@CardRegistration(set = "CM2", collectorNumber = "125")
 public class TyrantsFamiliar extends Card {
 
     public TyrantsFamiliar() {

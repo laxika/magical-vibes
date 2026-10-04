@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "DST", collectorNumber = "90")
 @CardRegistration(set = "C15", collectorNumber = "210")
+@CardRegistration(set = "CMA", collectorNumber = "163")
 public class ViridianZealot extends Card {
 
     public ViridianZealot() {

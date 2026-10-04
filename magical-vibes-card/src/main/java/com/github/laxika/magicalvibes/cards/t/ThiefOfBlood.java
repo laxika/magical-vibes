@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromAllPermanentsThenEnterWithCountersEffect;
 
 @CardRegistration(set = "C15", collectorNumber = "22")
+@CardRegistration(set = "CMA", collectorNumber = "71")
 public class ThiefOfBlood extends Card {
 
     public ThiefOfBlood() {

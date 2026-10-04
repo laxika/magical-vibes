@@ -19,6 +19,7 @@ import java.util.List;
 
 @CardRegistration(set = "AA4", collectorNumber = "14")
 @CardRegistration(set = "CMD", collectorNumber = "79")
+@CardRegistration(set = "CMA", collectorNumber = "55")
 public class DreadCacodemon extends Card {
 
     public DreadCacodemon() {

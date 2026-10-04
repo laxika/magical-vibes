@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "C14", collectorNumber = "307")
 @CardRegistration(set = "C15", collectorNumber = "300")
 @CardRegistration(set = "40K", collectorNumber = "288")
+@CardRegistration(set = "CMA", collectorNumber = "265")
 public class PollutedMire extends Card {
 
     public PollutedMire() {

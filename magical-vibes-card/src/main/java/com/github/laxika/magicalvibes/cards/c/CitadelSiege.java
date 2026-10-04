@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "8")
+@CardRegistration(set = "CM2", collectorNumber = "21")
 @CardRegistration(set = "C21", collectorNumber = "85")
 @CardRegistration(set = "MIC", collectorNumber = "81")
 @CardRegistration(set = "C16", collectorNumber = "62")

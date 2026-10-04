@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 
 @CardRegistration(set = "C13", collectorNumber = "36")
+@CardRegistration(set = "CMA", collectorNumber = "35")
 public class CurseOfInertia extends Card {
 
     public CurseOfInertia() {

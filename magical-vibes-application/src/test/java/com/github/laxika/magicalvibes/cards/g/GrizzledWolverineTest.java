@@ -156,6 +156,55 @@ class GrizzledWolverineTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot activate a second time while the first activation is on the stack")
+    void cannotActivateAgainInResponse() {
+        Permanent wolverine = addCreatureReady(player1, new GrizzledWolverine());
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+        setupBlockedWolverine(wolverine, blocker);
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, battlefieldIndex(wolverine), null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(wolverine), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("once each turn");
+        harness.passBothPriorities();
+
+        assertThat(wolverine.getPowerModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cannot activate after the last blocker leaves the battlefield")
+    void cannotActivateAfterBlockerLeaves() {
+        Permanent wolverine = addCreatureReady(player1, new GrizzledWolverine());
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+        setupBlockedWolverine(wolverine, blocker);
+
+        harness.getPermanentRemovalService().removePermanentToHand(gd, blocker);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(wolverine), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("blocking this creature");
+    }
+
+    @Test
+    @DisplayName("An activated boost still resolves after the last blocker leaves")
+    void boostResolvesAfterBlockerLeaves() {
+        Permanent wolverine = addCreatureReady(player1, new GrizzledWolverine());
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+        setupBlockedWolverine(wolverine, blocker);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, battlefieldIndex(wolverine), null, null);
+        harness.getPermanentRemovalService().removePermanentToHand(gd, blocker);
+        harness.passBothPriorities();
+
+        assertThat(wolverine.getPowerModifier()).isEqualTo(2);
+        assertThat(wolverine.getToughnessModifier()).isEqualTo(0);
+    }
+
     private int battlefieldIndex(Permanent permanent) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
     }

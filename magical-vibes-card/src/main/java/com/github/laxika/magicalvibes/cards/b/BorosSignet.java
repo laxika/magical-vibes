@@ -22,6 +22,8 @@ import java.util.List;
 @CardRegistration(set = "BLC", collectorNumber = "128")
 @CardRegistration(set = "ONC", collectorNumber = "126")
 @CardRegistration(set = "C17", collectorNumber = "205")
+@CardRegistration(set = "CMA", collectorNumber = "212")
+@CardRegistration(set = "CM2", collectorNumber = "176")
 public class BorosSignet extends Card {
 
     public BorosSignet() {

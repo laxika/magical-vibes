@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "130")
+@CardRegistration(set = "CM2", collectorNumber = "85")
 @CardRegistration(set = "SLD", collectorNumber = "322")
 @CardRegistration(set = "SLD", collectorNumber = "1756")
 @CardRegistration(set = "SLD", collectorNumber = "1998")

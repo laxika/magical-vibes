@@ -23,6 +23,7 @@ import java.util.Set;
 @CardRegistration(set = "2X2", collectorNumber = "216")
 @CardRegistration(set = "CMD", collectorNumber = "200")
 @CardRegistration(set = "C16", collectorNumber = "200")
+@CardRegistration(set = "CM2", collectorNumber = "157")
 public class GhaveGuruOfSpores extends Card {
 
     public GhaveGuruOfSpores() {

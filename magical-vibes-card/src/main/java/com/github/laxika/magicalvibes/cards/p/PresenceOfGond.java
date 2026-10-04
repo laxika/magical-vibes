@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "A25", collectorNumber = "184")
 @CardRegistration(set = "C13", collectorNumber = "161")
 @CardRegistration(set = "SCD", collectorNumber = "203")
+@CardRegistration(set = "CMA", collectorNumber = "135")
 public class PresenceOfGond extends Card {
 
     public PresenceOfGond() {

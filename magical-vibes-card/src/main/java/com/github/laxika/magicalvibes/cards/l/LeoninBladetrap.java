@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "MRD", collectorNumber = "192")
 @CardRegistration(set = "C13", collectorNumber = "245")
+@CardRegistration(set = "CMA", collectorNumber = "219")
 public class LeoninBladetrap extends Card {
 
     public LeoninBladetrap() {

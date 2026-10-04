@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.TemptingOfferPutCountersEffect;
 
 @CardRegistration(set = "C13", collectorNumber = "24")
+@CardRegistration(set = "CMA", collectorNumber = "26")
 public class TemptWithGlory extends Card {
 
     public TemptWithGlory() {

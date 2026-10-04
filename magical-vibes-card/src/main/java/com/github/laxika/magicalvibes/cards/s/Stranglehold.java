@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipExtraTurnReplacementEffec
 
 @CardRegistration(set = "SLD", collectorNumber = "1804")
 @CardRegistration(set = "CMD", collectorNumber = "136")
+@CardRegistration(set = "CMA", collectorNumber = "87")
 public class Stranglehold extends Card {
 
     public Stranglehold() {

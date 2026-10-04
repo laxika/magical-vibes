@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "SHM", collectorNumber = "143")
 @CardRegistration(set = "C16", collectorNumber = "234")
+@CardRegistration(set = "CM2", collectorNumber = "162")
 public class Mirrorweave extends Card {
 
     public Mirrorweave() {

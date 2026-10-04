@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "MIR", collectorNumber = "325")
 @CardRegistration(set = "PD3", collectorNumber = "24")
 @CardRegistration(set = "C14", collectorNumber = "289")
+@CardRegistration(set = "CMA", collectorNumber = "246")
 public class CrystalVein extends Card {
 
     public CrystalVein() {

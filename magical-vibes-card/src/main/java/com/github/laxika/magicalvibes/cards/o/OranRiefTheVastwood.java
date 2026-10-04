@@ -28,6 +28,7 @@ import java.util.Set;
 @CardRegistration(set = "C20", collectorNumber = "296")
 @CardRegistration(set = "BLC", collectorNumber = "320")
 @CardRegistration(set = "NEC", collectorNumber = "173")
+@CardRegistration(set = "CMA", collectorNumber = "263")
 public class OranRiefTheVastwood extends Card {
 
     public OranRiefTheVastwood() {

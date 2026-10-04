@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "LRW", collectorNumber = "192")
 @CardRegistration(set = "C15", collectorNumber = "166")
+@CardRegistration(set = "CM2", collectorNumber = "121")
 public class SunriseSovereign extends Card {
 
     public SunriseSovereign() {

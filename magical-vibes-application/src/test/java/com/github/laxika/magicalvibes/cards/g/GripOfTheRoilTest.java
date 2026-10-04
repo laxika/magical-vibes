@@ -25,8 +25,7 @@ class GripOfTheRoilTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GripOfTheRoil()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.isTapped()).isTrue();
         assertThat(target.getSkipUntapCount()).isEqualTo(1);
@@ -44,8 +43,7 @@ class GripOfTheRoilTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, firstTarget.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, firstTarget.getId());
         harness.castInstantWithAlternateCost(player1, 0, secondTarget.getId(), List.of());
         harness.passBothPriorities();
 
@@ -75,5 +73,64 @@ class GripOfTheRoilTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An already tapped creature stays tapped only through its controller's next untap")
+    void alreadyTappedCreatureSkipsOnlyItsControllersNextUntap() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setTapped(true);
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setHand(player1, List.of(new GripOfTheRoil()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInHand(player1, "Island");
+        harness.performUntapStep(player1);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getSkipUntapCount()).isEqualTo(1);
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getSkipUntapCount()).isZero();
+        harness.performUntapStep(player2);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can target a creature controlled by the caster")
+    void canTargetOwnCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setHand(player1, List.of(new GripOfTheRoil()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.isTapped()).isTrue();
+        harness.assertInHand(player1, "Island");
+        harness.performUntapStep(player1);
+        assertThat(target.isTapped()).isTrue();
+        harness.performUntapStep(player1);
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not draw when its sole target leaves before resolution")
+    void doesNotDrawWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setHand(player1, List.of(new GripOfTheRoil(), new Shock()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grip of the Roil");
+        harness.assertNotInHand(player1, "Island");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }

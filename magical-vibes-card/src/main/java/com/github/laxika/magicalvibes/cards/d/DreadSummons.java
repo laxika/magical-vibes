@@ -16,6 +16,7 @@ import java.util.Set;
 @CardRegistration(set = "NCC", collectorNumber = "249")
 @CardRegistration(set = "MIC", collectorNumber = "113")
 @CardRegistration(set = "DRC", collectorNumber = "90")
+@CardRegistration(set = "CMA", collectorNumber = "56")
 public class DreadSummons extends Card {
 
     public DreadSummons() {

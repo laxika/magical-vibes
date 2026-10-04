@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "STA", collectorNumber = "12")
 @CardRegistration(set = "C13", collectorNumber = "32")
 @CardRegistration(set = "C15", collectorNumber = "88")
+@CardRegistration(set = "CMA", collectorNumber = "32")
 public class BlueSunsZenith extends Card {
 
     public BlueSunsZenith() {

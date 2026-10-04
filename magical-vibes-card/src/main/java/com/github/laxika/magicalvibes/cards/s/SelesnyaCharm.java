@@ -24,6 +24,7 @@ import java.util.Set;
 @CardRegistration(set = "GK1", collectorNumber = "117")
 @CardRegistration(set = "PIO", collectorNumber = "240")
 @CardRegistration(set = "C13", collectorNumber = "211")
+@CardRegistration(set = "CMA", collectorNumber = "192")
 public class SelesnyaCharm extends Card {
 
     public SelesnyaCharm() {

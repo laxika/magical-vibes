@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "CMD", collectorNumber = "118")
+@CardRegistration(set = "CMA", collectorNumber = "80")
 public class DeathByDragons extends Card {
 
     public DeathByDragons() {

@@ -14,6 +14,7 @@ import java.util.Set;
 @CardRegistration(set = "ROE", collectorNumber = "169")
 @CardRegistration(set = "2XM", collectorNumber = "149")
 @CardRegistration(set = "C14", collectorNumber = "183")
+@CardRegistration(set = "CM2", collectorNumber = "124")
 public class TuktukTheExplorer extends Card {
 
     public TuktukTheExplorer() {

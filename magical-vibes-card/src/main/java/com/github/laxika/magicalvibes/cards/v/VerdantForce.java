@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "HOP", collectorNumber = "81")
 @CardRegistration(set = "C15", collectorNumber = "207")
 @CardRegistration(set = "SCD", collectorNumber = "214")
+@CardRegistration(set = "CMA", collectorNumber = "161")
 public class VerdantForce extends Card {
 
     public VerdantForce() {

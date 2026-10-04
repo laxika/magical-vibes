@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CounteredSpellDestination;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryEffect;
 
 @CardRegistration(set = "CMD", collectorNumber = "63")
+@CardRegistration(set = "CM2", collectorNumber = "50")
 public class SpellCrumple extends Card {
 
     public SpellCrumple() {

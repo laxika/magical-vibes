@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 @CardRegistration(set = "MM3", collectorNumber = "69")
 @CardRegistration(set = "CMD", collectorNumber = "81")
 @CardRegistration(set = "C15", collectorNumber = "124")
+@CardRegistration(set = "CMA", collectorNumber = "59")
+@CardRegistration(set = "CM2", collectorNumber = "62")
 @CardRegistration(set = "ARC", collectorNumber = "15")
 public class ExtractorDemon extends Card {
 

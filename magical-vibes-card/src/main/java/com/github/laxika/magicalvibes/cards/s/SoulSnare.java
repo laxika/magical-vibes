@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "MKC", collectorNumber = "85")
 @CardRegistration(set = "C18", collectorNumber = "76")
 @CardRegistration(set = "SCD", collectorNumber = "34")
+@CardRegistration(set = "CMA", collectorNumber = "24")
 public class SoulSnare extends Card {
 
     public SoulSnare() {

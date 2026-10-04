@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "C14", collectorNumber = "60")
 @CardRegistration(set = "ECC", collectorNumber = "149")
+@CardRegistration(set = "CM2", collectorNumber = "251")
 public class FlamekinVillage extends Card {
 
     public FlamekinVillage() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingEnchantedPlayerPredicate;
 
 @CardRegistration(set = "C13", collectorNumber = "8")
+@CardRegistration(set = "CMA", collectorNumber = "8")
 public class CurseOfTheForsaken extends Card {
 
     public CurseOfTheForsaken() {

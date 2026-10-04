@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 @CardRegistration(set = "P02", collectorNumber = "108")
 @CardRegistration(set = "5DN", collectorNumber = "72")
 @CardRegistration(set = "C15", collectorNumber = "161")
+@CardRegistration(set = "CM2", collectorNumber = "111")
 public class MagmaGiant extends Card {
 
     public MagmaGiant() {

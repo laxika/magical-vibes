@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 @CardRegistration(set = "DDG", collectorNumber = "21")
 @CardRegistration(set = "MOC", collectorNumber = "330")
 @CardRegistration(set = "MIC", collectorNumber = "153")
+@CardRegistration(set = "CM2", collectorNumber = "158")
 public class JuniperOrderRanger extends Card {
 
     public JuniperOrderRanger() {

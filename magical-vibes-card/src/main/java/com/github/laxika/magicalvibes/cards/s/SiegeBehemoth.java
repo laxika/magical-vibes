@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "C14", collectorNumber = "46")
+@CardRegistration(set = "CMA", collectorNumber = "144")
 public class SiegeBehemoth extends Card {
 
     public SiegeBehemoth() {

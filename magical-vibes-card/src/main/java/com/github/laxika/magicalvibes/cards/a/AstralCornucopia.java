@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "SOC", collectorNumber = "342")
 @CardRegistration(set = "EOC", collectorNumber = "131")
 @CardRegistration(set = "C16", collectorNumber = "243")
+@CardRegistration(set = "CM2", collectorNumber = "172")
 public class AstralCornucopia extends Card {
 
     public AstralCornucopia() {

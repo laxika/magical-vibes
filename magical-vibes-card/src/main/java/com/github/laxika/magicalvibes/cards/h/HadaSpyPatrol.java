@@ -23,6 +23,7 @@ import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "71")
 @CardRegistration(set = "C13", collectorNumber = "46")
+@CardRegistration(set = "CMA", collectorNumber = "40")
 public class HadaSpyPatrol extends Card {
 
     public HadaSpyPatrol() {

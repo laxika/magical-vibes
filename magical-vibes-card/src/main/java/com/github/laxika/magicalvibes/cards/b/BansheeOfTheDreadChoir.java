@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 @CardRegistration(set = "C15", collectorNumber = "16")
+@CardRegistration(set = "CMA", collectorNumber = "47")
 public class BansheeOfTheDreadChoir extends Card {
 
     public BansheeOfTheDreadChoir() {

@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "EVE", collectorNumber = "89")
 @CardRegistration(set = "CMD", collectorNumber = "202")
+@CardRegistration(set = "CMA", collectorNumber = "201")
 public class GwyllionHedgeMage extends Card {
 
     public GwyllionHedgeMage() {

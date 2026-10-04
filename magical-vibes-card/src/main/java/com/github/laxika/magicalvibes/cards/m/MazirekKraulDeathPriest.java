@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "SOC", collectorNumber = "319")
 @CardRegistration(set = "C15", collectorNumber = "48")
 @CardRegistration(set = "EOC", collectorNumber = "122")
+@CardRegistration(set = "CMA", collectorNumber = "185")
 public class MazirekKraulDeathPriest extends Card {
 
     public MazirekKraulDeathPriest() {

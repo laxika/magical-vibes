@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 @CardRegistration(set = "IMA", collectorNumber = "227")
 @CardRegistration(set = "2XM", collectorNumber = "285")
 @CardRegistration(set = "CMM", collectorNumber = "406")
+@CardRegistration(set = "CM2", collectorNumber = "213")
 @CardRegistration(set = "ZNC", collectorNumber = "116")
 public class SandstoneOracle extends Card {
 

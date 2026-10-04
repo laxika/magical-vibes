@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.GreatestDamageDealtBySourceTh
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "C14", collectorNumber = "36")
+@CardRegistration(set = "CM2", collectorNumber = "107")
 public class ImpactResonance extends Card {
 
     public ImpactResonance() {

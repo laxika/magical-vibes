@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "M14", collectorNumber = "87")
 @CardRegistration(set = "C15", collectorNumber = "117")
+@CardRegistration(set = "CMA", collectorNumber = "49")
 public class BloodBairn extends Card {
 
     public BloodBairn() {

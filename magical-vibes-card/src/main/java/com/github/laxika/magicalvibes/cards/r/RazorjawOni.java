@@ -12,6 +12,7 @@ import java.util.Set;
 
 @CardRegistration(set = "SOK", collectorNumber = "87")
 @CardRegistration(set = "CMD", collectorNumber = "94")
+@CardRegistration(set = "CMA", collectorNumber = "63")
 public class RazorjawOni extends Card {
 
     public RazorjawOni() {

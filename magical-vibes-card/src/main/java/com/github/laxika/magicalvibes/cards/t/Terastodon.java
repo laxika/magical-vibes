@@ -23,6 +23,7 @@ import java.util.Set;
 @CardRegistration(set = "C15", collectorNumber = "204")
 @CardRegistration(set = "M3C", collectorNumber = "249")
 @CardRegistration(set = "C21", collectorNumber = "207")
+@CardRegistration(set = "CMA", collectorNumber = "153")
 public class Terastodon extends Card {
 
     public Terastodon() {

@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "ONS", collectorNumber = "281")
 @CardRegistration(set = "C13", collectorNumber = "169")
 @CardRegistration(set = "C14", collectorNumber = "214")
+@CardRegistration(set = "CMA", collectorNumber = "145")
 public class SilklashSpider extends Card {
 
     public SilklashSpider() {

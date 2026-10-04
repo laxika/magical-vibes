@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "270")
 @CardRegistration(set = "C14", collectorNumber = "210")
+@CardRegistration(set = "CMA", collectorNumber = "136")
 public class PriestOfTitania extends Card {
 
     public PriestOfTitania() {

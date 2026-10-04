@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "C21", collectorNumber = "173")
 @CardRegistration(set = "AFC", collectorNumber = "128")
 @CardRegistration(set = "SCD", collectorNumber = "147")
+@CardRegistration(set = "CM2", collectorNumber = "104")
 public class HoardSmelterDragon extends Card {
 
     public HoardSmelterDragon() {

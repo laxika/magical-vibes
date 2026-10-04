@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 @CardRegistration(set = "SLD", collectorNumber = "1884")
 @CardRegistration(set = "C15", collectorNumber = "51")
 @CardRegistration(set = "TDC", collectorNumber = "313")
+@CardRegistration(set = "CM2", collectorNumber = "174")
 public class BladeOfSelves extends Card {
 
     public BladeOfSelves() {

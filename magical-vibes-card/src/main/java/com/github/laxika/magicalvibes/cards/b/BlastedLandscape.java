@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 
 @CardRegistration(set = "USG", collectorNumber = "319")
 @CardRegistration(set = "C15", collectorNumber = "278")
+@CardRegistration(set = "CM2", collectorNumber = "238")
 public class BlastedLandscape extends Card {
 
     public BlastedLandscape() {

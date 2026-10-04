@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 @CardRegistration(set = "LTC", collectorNumber = "203")
 @CardRegistration(set = "TDC", collectorNumber = "185")
 @CardRegistration(set = "DSC", collectorNumber = "373")
+@CardRegistration(set = "CM2", collectorNumber = "68")
 public class LivingDeath extends Card {
 
     public LivingDeath() {

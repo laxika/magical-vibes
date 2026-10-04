@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import java.util.List;
 
 @CardRegistration(set = "C13", collectorNumber = "262")
+@CardRegistration(set = "CMA", collectorNumber = "232")
 public class SurveyorsScope extends Card {
 
     public SurveyorsScope() {

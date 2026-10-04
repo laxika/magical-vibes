@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "C14", collectorNumber = "230")
 @CardRegistration(set = "C21", collectorNumber = "237")
 @CardRegistration(set = "C18", collectorNumber = "198")
+@CardRegistration(set = "CM2", collectorNumber = "5")
 public class BoshIronGolem extends Card {
 
     public BoshIronGolem() {

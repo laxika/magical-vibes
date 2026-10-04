@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 
 @CardRegistration(set = "MBS", collectorNumber = "88")
 @CardRegistration(set = "C14", collectorNumber = "209")
+@CardRegistration(set = "CMA", collectorNumber = "134")
 public class PraetorsCounsel extends Card {
 
     public PraetorsCounsel() {

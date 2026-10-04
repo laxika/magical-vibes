@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "UDS", collectorNumber = "132")
 @CardRegistration(set = "C14", collectorNumber = "244")
+@CardRegistration(set = "CM2", collectorNumber = "195")
 public class JunkDiver extends Card {
 
     public JunkDiver() {

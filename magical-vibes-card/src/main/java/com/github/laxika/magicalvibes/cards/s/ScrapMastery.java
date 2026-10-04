@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 
 @CardRegistration(set = "C14", collectorNumber = "38")
+@CardRegistration(set = "CM2", collectorNumber = "116")
 public class ScrapMastery extends Card {
 
     public ScrapMastery() {

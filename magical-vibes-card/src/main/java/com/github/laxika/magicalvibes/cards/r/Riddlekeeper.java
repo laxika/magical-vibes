@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "CMD", collectorNumber = "59")
+@CardRegistration(set = "CM2", collectorNumber = "48")
 public class Riddlekeeper extends Card {
 
     public Riddlekeeper() {

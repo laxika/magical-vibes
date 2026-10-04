@@ -33,6 +33,7 @@ import java.util.List;
 @CardRegistration(set = "C20", collectorNumber = "117")
 @CardRegistration(set = "C18", collectorNumber = "94")
 @CardRegistration(set = "KHC", collectorNumber = "42")
+@CardRegistration(set = "CM2", collectorNumber = "47")
 public class Mulldrifter extends Card {
 
     public Mulldrifter() {

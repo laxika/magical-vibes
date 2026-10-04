@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "V15", collectorNumber = "3")
 @CardRegistration(set = "CMD", collectorNumber = "7")
+@CardRegistration(set = "CMA", collectorNumber = "5")
 public class ArchangelOfStrife extends Card {
 
     private static final String WAR = "War";

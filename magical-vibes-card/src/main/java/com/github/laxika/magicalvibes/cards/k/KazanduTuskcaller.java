@@ -23,6 +23,7 @@ import java.util.Set;
 @CardRegistration(set = "ROE", collectorNumber = "191")
 @CardRegistration(set = "C13", collectorNumber = "152")
 @CardRegistration(set = "C21", collectorNumber = "196")
+@CardRegistration(set = "CMA", collectorNumber = "121")
 public class KazanduTuskcaller extends Card {
 
     public KazanduTuskcaller() {

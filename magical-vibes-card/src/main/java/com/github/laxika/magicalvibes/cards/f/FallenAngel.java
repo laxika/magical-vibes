@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "DVD", collectorNumber = "42")
 @CardRegistration(set = "A25", collectorNumber = "91")
 @CardRegistration(set = "CMD", collectorNumber = "82")
+@CardRegistration(set = "CMA", collectorNumber = "60")
 public class FallenAngel extends Card {
 
     public FallenAngel() {

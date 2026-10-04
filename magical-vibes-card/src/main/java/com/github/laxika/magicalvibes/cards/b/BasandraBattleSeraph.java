@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "244")
 @CardRegistration(set = "CMD", collectorNumber = "184")
+@CardRegistration(set = "CMA", collectorNumber = "174")
 public class BasandraBattleSeraph extends Card {
 
     public BasandraBattleSeraph() {

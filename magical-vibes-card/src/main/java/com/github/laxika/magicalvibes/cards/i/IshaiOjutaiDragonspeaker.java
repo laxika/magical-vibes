@@ -10,6 +10,7 @@ import java.util.Set;
 @CardRegistration(set = "FCA", collectorNumber = "53")
 @CardRegistration(set = "BLC", collectorNumber = "89")
 @CardRegistration(set = "C16", collectorNumber = "33")
+@CardRegistration(set = "CM2", collectorNumber = "12")
 public class IshaiOjutaiDragonspeaker extends Card {
 
     public IshaiOjutaiDragonspeaker() {

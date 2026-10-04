@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "PLS", collectorNumber = "87")
 @CardRegistration(set = "C15", collectorNumber = "198")
+@CardRegistration(set = "CMA", collectorNumber = "137")
 public class PrimalGrowth extends Card {
 
     public PrimalGrowth() {

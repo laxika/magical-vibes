@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "ALA", collectorNumber = "221")
 @CardRegistration(set = "C13", collectorNumber = "276")
 @CardRegistration(set = "AFC", collectorNumber = "225")
+@CardRegistration(set = "CMA", collectorNumber = "241")
 public class BantPanorama extends Card {
 
     public BantPanorama() {

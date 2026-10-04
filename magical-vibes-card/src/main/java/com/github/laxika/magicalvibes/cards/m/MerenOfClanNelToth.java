@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureFromGrave
 @CardRegistration(set = "CMM", collectorNumber = "346")
 @CardRegistration(set = "CMM", collectorNumber = "584")
 @CardRegistration(set = "CMM", collectorNumber = "685")
+@CardRegistration(set = "CMA", collectorNumber = "186")
 @CardRegistration(set = "C15", collectorNumber = "49")
 @CardRegistration(set = "TDC", collectorNumber = "297")
 public class MerenOfClanNelToth extends Card {

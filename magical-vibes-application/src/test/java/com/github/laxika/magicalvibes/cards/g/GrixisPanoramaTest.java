@@ -6,18 +6,20 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GrixisPanorama.class, Island.class, Swamp.class, Mountain.class, Forest.class, Plains.class})
 class GrixisPanoramaTest extends BaseCardTest {
 
     @Test
@@ -82,6 +84,78 @@ class GrixisPanoramaTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Search costs mana and sacrifices Panorama before resolving")
+    void searchPaysCostsImmediately() {
+        activateSearch();
+
+        harness.assertNotOnBattlefield(player1, "Grixis Panorama");
+        harness.assertInGraveyard(player1, "Grixis Panorama");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Search cannot be activated without the generic mana payment")
+    void searchRequiresMana() {
+        harness.addToBattlefield(player1, new GrixisPanorama());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Grixis Panorama");
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Panorama cannot use its own mana ability and then pay the search tap cost")
+    void tappedPanoramaCannotSearch() {
+        harness.addToBattlefield(player1, new GrixisPanorama());
+        harness.tapPermanent(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Grixis Panorama");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Search with only ineligible lands resolves without finding a card")
+    void searchWithNoEligibleLand() {
+        harness.addToBattlefield(player1, new GrixisPanorama());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLibrary(player1, List.of(new Forest(), new Plains(), new GrixisPanorama()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        harness.assertInGraveyard(player1, "Grixis Panorama");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Searching an empty library finishes normally")
+    void searchEmptyLibrary() {
+        harness.addToBattlefield(player1, new GrixisPanorama());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Grixis Panorama");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void activateSearch() {
         harness.addToBattlefield(player1, new GrixisPanorama());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -90,8 +164,6 @@ class GrixisPanoramaTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Island(), new Swamp(), new Mountain(), new Forest(), new Plains()));
+        harness.setLibrary(player1, List.of(new Island(), new Swamp(), new Mountain(), new Forest(), new Plains()));
     }
 }

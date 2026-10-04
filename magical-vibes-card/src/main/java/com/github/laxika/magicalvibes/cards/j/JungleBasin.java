@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "164")
 @CardRegistration(set = "C14", collectorNumber = "302")
+@CardRegistration(set = "CMA", collectorNumber = "258")
 public class JungleBasin extends Card {
 
     private static final PermanentAllOfPredicate UNTAPPED_FOREST = new PermanentAllOfPredicate(List.of(

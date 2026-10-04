@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "226")
+@CardRegistration(set = "CM2", collectorNumber = "139")
 @CardRegistration(set = "C16", collectorNumber = "153")
 @CardRegistration(set = "DTK", collectorNumber = "191")
 @CardRegistration(set = "IMA", collectorNumber = "169")

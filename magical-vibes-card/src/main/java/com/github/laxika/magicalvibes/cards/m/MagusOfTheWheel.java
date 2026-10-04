@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "NCC", collectorNumber = "271")
 @CardRegistration(set = "C20", collectorNumber = "156")
 @CardRegistration(set = "C19", collectorNumber = "149")
+@CardRegistration(set = "CM2", collectorNumber = "113")
 public class MagusOfTheWheel extends Card {
 
     public MagusOfTheWheel() {

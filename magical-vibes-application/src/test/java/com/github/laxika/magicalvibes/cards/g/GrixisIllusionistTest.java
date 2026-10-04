@@ -6,18 +6,21 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GrixisIllusionist.class, Forest.class})
 class GrixisIllusionistTest extends BaseCardTest {
-
-    // ===== Activated ability =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack targeting a land you control")
@@ -35,8 +38,6 @@ class GrixisIllusionistTest extends BaseCardTest {
         assertThat(entry.getTargetId()).isEqualTo(forestId);
     }
 
-    // ===== Type replacement (rule 305.7) =====
-
     @Test
     @DisplayName("Chosen type overrides the land to the new basic type only (type-replacing)")
     void chosenTypeReplacesSubtypes() {
@@ -51,15 +52,11 @@ class GrixisIllusionistTest extends BaseCardTest {
     void overriddenForestProducesBlueMana() {
         becomeIsland(player1);
 
-        int forestIndex = gd.playerBattlefields.get(player1.getId())
-                .indexOf(gqs.findPermanentById(gd, harness.getPermanentId(player1, "Forest")));
-        gs.tapPermanent(gd, player1, forestIndex);
+        harness.tapPermanent(player1, 1);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
     }
-
-    // ===== Until end of turn =====
 
     @Test
     @DisplayName("Override is cleared at end of turn")
@@ -67,12 +64,10 @@ class GrixisIllusionistTest extends BaseCardTest {
         Permanent forest = becomeIsland(player1);
         assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
 
-        forest.resetModifiers();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(forest.getTransientLandTypeOverride()).isNull();
     }
-
-    // ===== Targeting restrictions ("land you control") =====
 
     @Test
     @DisplayName("Cannot target a land controlled by the opponent")
@@ -92,17 +87,61 @@ class GrixisIllusionistTest extends BaseCardTest {
     void cannotTargetNonLand() {
         addCreatureReady(player1, new GrixisIllusionist());
         harness.addToBattlefield(player1, new Forest()); // valid target so the ability is activatable
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrixisIllusionist());
         harness.forceActivePlayer(player1);
-        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID creatureId = harness.getPermanentId(player1, "Grixis Illusionist");
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bearsId))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creatureId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }
 
-    // ===== Helpers =====
+    @ParameterizedTest
+    @CsvSource({"PLAINS,WHITE", "ISLAND,BLUE", "SWAMP,BLACK", "MOUNTAIN,RED", "FOREST,GREEN"})
+    void canChooseEveryBasicLandType(String subtype, ManaColor color) {
+        addCreatureReady(player1, new GrixisIllusionist());
+        harness.addToBattlefield(player1, new Forest());
+        harness.forceActivePlayer(player1);
+        UUID forestId = harness.getPermanentId(player1, "Forest");
 
+        harness.activateAbility(player1, 0, null, forestId);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, subtype);
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        for (ManaColor other : new ManaColor[]{ManaColor.WHITE, ManaColor.BLUE, ManaColor.BLACK,
+                ManaColor.RED, ManaColor.GREEN}) {
+            if (other != color) {
+                assertThat(gd.playerManaPools.get(player1.getId()).get(other)).isZero();
+            }
+        }
+    }
+
+    @Test
+    void summoningSickIllusionistCannotActivate() {
+        harness.addToBattlefield(player1, new GrixisIllusionist());
+        harness.addToBattlefield(player1, new Forest());
+        harness.forceActivePlayer(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null,
+                harness.getPermanentId(player1, "Forest")))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void activationTapsIllusionistAndCannotBeRepeated() {
+        Permanent illusionist = addCreatureReady(player1, new GrixisIllusionist());
+        harness.addToBattlefield(player1, new Forest());
+        harness.forceActivePlayer(player1);
+        UUID forestId = harness.getPermanentId(player1, "Forest");
+
+        harness.activateAbility(player1, 0, null, forestId);
+
+        assertThat(illusionist.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forestId))
+                .isInstanceOf(IllegalStateException.class);
+    }
     /** Adds a Grixis Illusionist + Forest for {@code player}, then makes the Forest become an Island. */
     private Permanent becomeIsland(com.github.laxika.magicalvibes.model.Player player) {
         addCreatureReady(player, new GrixisIllusionist());

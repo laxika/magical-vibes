@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "C14", collectorNumber = "48")
 @CardRegistration(set = "NCC", collectorNumber = "314")
 @CardRegistration(set = "LTC", collectorNumber = "261")
+@CardRegistration(set = "CMA", collectorNumber = "150")
 public class SylvanOffering extends Card {
 
     public SylvanOffering() {

@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "EVE", collectorNumber = "156")
 @CardRegistration(set = "2X2", collectorNumber = "259")
 @CardRegistration(set = "C13", collectorNumber = "231")
+@CardRegistration(set = "CMA", collectorNumber = "204")
 public class MurkfiendLiege extends Card {
 
     public MurkfiendLiege() {

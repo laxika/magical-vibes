@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 
 @CardRegistration(set = "C15", collectorNumber = "28")
+@CardRegistration(set = "CM2", collectorNumber = "114")
 public class MeteorBlast extends Card {
 
     public MeteorBlast() {

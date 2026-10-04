@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MOR", collectorNumber = "87")
 @CardRegistration(set = "C15", collectorNumber = "142")
+@CardRegistration(set = "CM2", collectorNumber = "87")
 public class BorderlandBehemoth extends Card {
 
     public BorderlandBehemoth() {

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 @CardRegistration(set = "BLC", collectorNumber = "117")
 @CardRegistration(set = "C19", collectorNumber = "155")
 @CardRegistration(set = "FDC", collectorNumber = "186")
+@CardRegistration(set = "CM2", collectorNumber = "129")
 public class WarstormSurge extends Card {
 
     public WarstormSurge() {

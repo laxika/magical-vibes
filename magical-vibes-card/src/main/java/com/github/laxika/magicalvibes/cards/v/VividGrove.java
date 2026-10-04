@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "CMD", collectorNumber = "295")
 @CardRegistration(set = "C15", collectorNumber = "318")
 @CardRegistration(set = "C17", collectorNumber = "291")
+@CardRegistration(set = "CMA", collectorNumber = "281")
 public class VividGrove extends Card {
 
     public VividGrove() {

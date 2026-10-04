@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "A25", collectorNumber = "8")
 @CardRegistration(set = "DMR", collectorNumber = "4")
 @CardRegistration(set = "CMD", collectorNumber = "11")
+@CardRegistration(set = "CMA", collectorNumber = "7")
 public class Congregate extends Card {
 
     public Congregate() {
