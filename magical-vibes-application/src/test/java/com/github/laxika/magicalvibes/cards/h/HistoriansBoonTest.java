@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,17 +21,12 @@ class HistoriansBoonTest extends BaseCardTest {
 
     @Test
     void createsSoldiersForItsOwnAndAnotherNontokenEnchantmentEntry() {
-        harness.setHand(player1, List.of(new HistoriansBoon()));
-        addManaForHistoriansBoon();
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new HistoriansBoon(), "{3}{W}");
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Soldier")).hasSize(1);
 
-        harness.setHand(player1, List.of(new GloriousAnthem()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new GloriousAnthem(), "{1}{W}{W}");
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Soldier")).hasSize(2);
@@ -41,10 +35,7 @@ class HistoriansBoonTest extends BaseCardTest {
     @Test
     void doesNotTriggerForAnEnchantmentToken() {
         harness.addToBattlefield(player1, new HistoriansBoon());
-        harness.setHand(player1, List.of(new CelestineCaveWitch()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new CelestineCaveWitch(), "{3}{B}");
         resolveAllTriggers();
 
         Permanent witch = findPermanent(player1, "Celestine Cave Witch");
@@ -81,8 +72,67 @@ class HistoriansBoonTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, angel, Keyword.VIGILANCE)).isTrue();
     }
 
-    private void addManaForHistoriansBoon() {
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+    @Test
+    void angelTriggerResolvesBeforeTheFinalChapterAbility() {
+        harness.addToBattlefield(player1, new HistoriansBoon());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new HistoryOfBenalia());
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getCard()).isInstanceOf(HistoriansBoon.class);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Angel")).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getLast().getCard()).isInstanceOf(HistoryOfBenalia.class);
+        resolveAllTriggers();
+    }
+
+    @Test
+    void doesNotTriggerForAnOpponentsEnchantment() {
+        harness.addToBattlefield(player1, new HistoriansBoon());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new GloriousAnthem(), "{1}{W}{W}");
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Soldier")).isEmpty();
+        assertThat(findPermanents(player2, "Soldier")).isEmpty();
+    }
+
+    @Test
+    void doesNotCreateAnAngelForANonfinalChapter() {
+        harness.addToBattlefield(player1, new HistoriansBoon());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new HistoryOfBenalia());
+        saga.setCounterCount(CounterType.LORE, 1);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Knight")).hasSize(1);
+        assertThat(findPermanents(player1, "Angel")).isEmpty();
+    }
+
+    @Test
+    void doesNotCreateAnAngelForAnOpponentsFinalChapter() {
+        harness.addToBattlefield(player1, new HistoriansBoon());
+        Permanent saga = harness.addToBattlefieldAndReturn(player2, new HistoryOfBenalia());
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DRAW);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Angel")).isEmpty();
+        assertThat(findPermanents(player2, "Angel")).isEmpty();
     }
 }
