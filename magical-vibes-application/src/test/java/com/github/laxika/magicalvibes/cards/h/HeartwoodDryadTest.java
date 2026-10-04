@@ -69,4 +69,31 @@ class HeartwoodDryadTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("A creature with shadow cannot block an attacking Heartwood Dryad")
+    void cannotBeBlockedByShadowCreature() {
+        attacker(new HeartwoodDryad());
+        Permanent blocker = addCreatureReady(player2, new SoltariFootSoldier());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(blocker.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Heartwood Dryad cannot block a creature with shadow")
+    void tappedDryadCannotBlockShadow() {
+        Permanent dryad = addCreatureReady(player2, new HeartwoodDryad());
+        dryad.setTapped(true);
+        attacker(new SoltariFootSoldier());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(dryad.isBlocking()).isFalse();
+    }
 }
