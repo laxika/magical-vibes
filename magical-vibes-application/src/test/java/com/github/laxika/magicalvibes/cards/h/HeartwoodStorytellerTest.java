@@ -67,6 +67,70 @@ class HeartwoodStorytellerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("The controller can draw when an opponent casts a noncreature spell")
+    void controllerDrawsForOpponentsSpell() {
+        harness.addToBattlefield(player1, new HeartwoodStoryteller());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new BlindPhantasm()));
+        harness.setLibrary(player2, List.of(new BlindPhantasm()));
+
+        castNoncreatureSpell(player2);
+
+        PendingInteraction.MayAbilityChoice choice =
+                (PendingInteraction.MayAbilityChoice) gd.interaction.activeInteraction();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Multiple Storytellers offer independent draw choices")
+    void multipleStorytellersOfferIndependentChoices() {
+        harness.addToBattlefield(player1, new HeartwoodStoryteller());
+        harness.addToBattlefield(player1, new HeartwoodStoryteller());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new BlindPhantasm(), new BlindPhantasm()));
+
+        castNoncreatureSpell(player1);
+        harness.handleMayAbilityChosen(player2, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A pending draw trigger survives Storyteller leaving the battlefield")
+    void triggerSurvivesSourceLeavingBattlefield() {
+        HeartwoodStoryteller storyteller = new HeartwoodStoryteller();
+        harness.addToBattlefield(player1, storyteller);
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new BlindPhantasm()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new RitesOfFlourishing(), "{2}{G}");
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        gd.playerGraveyards.get(player1.getId()).add(storyteller);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Heartwood Storyteller");
+    }
+
     private void castNoncreatureSpell(com.github.laxika.magicalvibes.model.Player caster) {
         harness.forceActivePlayer(caster);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
