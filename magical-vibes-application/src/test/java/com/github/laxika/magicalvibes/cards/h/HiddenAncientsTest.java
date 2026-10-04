@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.a.Annul;
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HiddenAncients.class, Rescind.class, Telepathy.class, VoltaicKey.class})
+@CardUsed({HiddenAncients.class, Annul.class, Clone.class, Rescind.class, Telepathy.class, VoltaicKey.class})
 class HiddenAncientsTest extends BaseCardTest {
 
     @Test
@@ -63,8 +65,7 @@ class HiddenAncientsTest extends BaseCardTest {
         Permanent hiddenAncients = harness.addToBattlefieldAndReturn(player1, new HiddenAncients());
         prepareOpponentCast();
         harness.castFromHand(player2, new Telepathy(), "{U}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gqs.isCreature(gd, hiddenAncients)).isTrue();
 
         harness.castFromHand(player2, new Telepathy(), "{U}");
@@ -88,6 +89,46 @@ class HiddenAncientsTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Hidden Ancients");
         harness.assertInHand(player1, "Hidden Ancients");
+    }
+
+    @Test
+    @DisplayName("The cast trigger resolves even if the enchantment spell is countered")
+    void becomesCreatureEvenWhenEnchantmentSpellIsCountered() {
+        Permanent hiddenAncients = harness.addToBattlefieldAndReturn(player1, new HiddenAncients());
+        prepareOpponentCast();
+        Telepathy telepathy = new Telepathy();
+        harness.castFromHand(player2, telepathy, "{U}");
+        harness.setHand(player1, List.of(new Annul()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, telepathy.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Telepathy");
+        harness.assertNotOnBattlefield(player2, "Telepathy");
+        assertThat(gqs.isCreature(gd, hiddenAncients)).isTrue();
+        assertThat(gqs.isEnchantment(gd, hiddenAncients)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, hiddenAncients)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, hiddenAncients)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Copying animated Hidden Ancients produces an unanimated enchantment")
+    void copyingDoesNotCopyAnimation() {
+        Permanent hiddenAncients = harness.addToBattlefieldAndReturn(player1, new HiddenAncients());
+        prepareOpponentCast();
+        harness.castFromHand(player2, new Telepathy(), "{U}");
+        resolveAllTriggers();
+        assertThat(gqs.isCreature(gd, hiddenAncients)).isTrue();
+
+        harness.castFromHand(player2, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, hiddenAncients.getId());
+
+        Permanent copy = findPermanent(player2, "Hidden Ancients");
+        assertThat(gqs.isEnchantment(gd, copy)).isTrue();
+        assertThat(gqs.isCreature(gd, copy)).isFalse();
+        assertThat(gqs.isCreature(gd, hiddenAncients)).isTrue();
     }
 
     private void prepareOpponentCast() {
