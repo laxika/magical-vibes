@@ -61,4 +61,52 @@ class FangrenPathcutterTest extends BaseCardTest {
 
         assertThat(attackingCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
+
+    @Test
+    @DisplayName("Trample is granted only after the attack trigger resolves")
+    void trampleWaitsForTriggerResolution() {
+        Permanent pathcutter = addCreatureReady(player1, new FangrenPathcutter());
+        Permanent attacker = addCreatureReady(player1, new DrossCrocodile());
+        Permanent defender = addCreatureReady(player2, new DrossCrocodile());
+
+        declareAttackers(player1, List.of(0, 1));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(pathcutter.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isFalse();
+
+        resolveAllTriggers();
+
+        assertThat(pathcutter.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(defender.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The attack trigger still grants trample after Pathcutter leaves the battlefield")
+    void triggerResolvesWithoutItsSource() {
+        Permanent pathcutter = addCreatureReady(player1, new FangrenPathcutter());
+        Permanent attacker = addCreatureReady(player1, new DrossCrocodile());
+
+        declareAttackers(player1, List.of(0, 1));
+        assertThat(gd.stack).hasSize(1);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, pathcutter);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Fangren Pathcutter");
+        assertThat(attacker.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not gain trample")
+    void laterCreaturesDoNotGainTrample() {
+        Permanent pathcutter = addCreatureReady(player1, new FangrenPathcutter());
+
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        Permanent laterCreature = addCreatureReady(player1, new DrossCrocodile());
+
+        assertThat(pathcutter.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(laterCreature.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
 }
