@@ -42,8 +42,7 @@ class HumOfTheRadixTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HumOfTheRadix());
         harness.addToBattlefield(player1, new Bonesplitter());
         harness.forceActivePlayer(player2);
-        harness.forceStep(gd.currentStep);
-        harness.clearPriorityPassed();
+        harness.ensurePriority(player2);
         harness.setHand(player2, List.of(new Bonesplitter()));
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
@@ -99,5 +98,48 @@ class HumOfTheRadixTest extends BaseCardTest {
         harness.castFromHand(player1, new LeoninSkyhunter(), "{W}{W}");
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Multiple copies each increase the artifact spell's cost")
+    void multipleCopiesAddTheirTaxes() {
+        harness.addToBattlefield(player1, new HumOfTheRadix());
+        harness.addToBattlefield(player2, new HumOfTheRadix());
+        harness.addToBattlefield(player1, new Bonesplitter());
+        harness.setHand(player1, List.of(new Bonesplitter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent pays for their own artifacts, excluding the enchantment controller's artifacts")
+    void opponentPaysTaxBasedOnlyOnTheirArtifacts() {
+        harness.addToBattlefield(player1, new HumOfTheRadix());
+        harness.addToBattlefield(player1, new Bonesplitter());
+        harness.addToBattlefield(player1, new Bonesplitter());
+        harness.addToBattlefield(player2, new MyrRetriever());
+        harness.forceActivePlayer(player2);
+        harness.ensurePriority(player2);
+        harness.setHand(player2, List.of(new Bonesplitter()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castArtifact(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castArtifact(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
     }
 }
