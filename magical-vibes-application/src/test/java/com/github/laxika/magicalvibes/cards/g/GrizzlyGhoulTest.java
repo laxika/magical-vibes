@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GrizzlyGhoul.class, GrizzlyBears.class, Shock.class})
 class GrizzlyGhoulTest extends BaseCardTest {
 
     @Test
@@ -43,8 +44,7 @@ class GrizzlyGhoulTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bearsId);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
         castGhoul();
@@ -52,23 +52,73 @@ class GrizzlyGhoulTest extends BaseCardTest {
         assertThat(findGhoul().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
-    private void castGhoul() {
-        harness.setHand(player1, List.of(new GrizzlyGhoul()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    @Test
+    @DisplayName("Counts creatures from both players that actually died")
+    void countsActualDeathsFromBothPlayers() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID ownBearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID opposingBearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, ownBearsId);
+        harness.castAndResolveInstant(player1, 0, opposingBearsId);
 
-        harness.castCreature(player1, 0);
+        castGhoul();
+
+        assertThat(findGhoul().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Counts deaths after casting but before entering")
+    void countsDeathWhileGhoulIsOnStack() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castFromHand(player1, new GrizzlyGhoul(), "{2}{B}{G}");
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, bearsId);
+        harness.passBothPriorities();
+
+        assertThat(findGhoul().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Later deaths do not add counters to a Ghoul already on the battlefield")
+    void doesNotGainCountersForLaterDeaths() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        castGhoul();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, bearsId);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+
+        assertThat(findGhoul().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The entry replacement also applies when entering without being cast")
+    void entersWithCountersWithoutBeingCast() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, bearsId);
+
+        Permanent ghoul = harness.enterBattlefieldAndReturn(player1, new GrizzlyGhoul());
+
+        assertThat(ghoul.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void castGhoul() {
+        harness.castFromHand(player1, new GrizzlyGhoul(), "{2}{B}{G}");
         harness.passBothPriorities();
     }
 
     private Permanent findGhoul() {
-        return findGhoul(player1);
-    }
-
-    private Permanent findGhoul(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grizzly Ghoul"))
-                .findFirst().orElseThrow();
+        return findPermanent(player1, "Grizzly Ghoul");
     }
 }
