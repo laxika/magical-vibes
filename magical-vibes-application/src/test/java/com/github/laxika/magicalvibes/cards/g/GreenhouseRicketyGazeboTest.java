@@ -57,6 +57,113 @@ class GreenhouseRicketyGazeboTest extends BaseCardTest {
                 .contains(nonPermanent);
     }
 
+    @Test
+    void greenhouseDoesNotMillWhenItsDoorUnlocks() {
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+
+        castRoom(0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void ricketyGazeboAllowsReturningNoCards() {
+        Card first = new Forest();
+        Card second = new GreenhouseRicketyGazebo();
+        harness.setLibrary(player1, List.of(first, second));
+
+        castRoom(1);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void ricketyGazeboCanSkipAnEarlierCardAndReturnOnlyOne() {
+        Card skipped = new Forest();
+        Card returned = new GreenhouseRicketyGazebo();
+        Card alreadyInGraveyard = new Forest();
+        harness.setGraveyard(player1, List.of(alreadyInGraveyard));
+        harness.setLibrary(player1, List.of(skipped, returned));
+
+        castRoom(1);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(returned);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(alreadyInGraveyard, skipped);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void ricketyGazeboDoesNotOfferNonpermanentsOrOlderGraveyardCards() {
+        Card milled = new Shock();
+        Card olderPermanent = new Forest();
+        harness.setGraveyard(player1, List.of(olderPermanent));
+        harness.setLibrary(player1, List.of(milled));
+
+        castRoom(1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(olderPermanent, milled);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void unlockingRicketyGazeboAfterCastingGreenhouseTriggersRecovery() {
+        Card milled = new Forest();
+        harness.setLibrary(player1, List.of(milled));
+        castRoom(0);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.unlockRoomDoor(player1, 0, 1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(milled);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void ricketyGazeboWithAnEmptyLibraryFinishesWithoutAChoice() {
+        harness.setLibrary(player1, List.of());
+
+        castRoom(1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void unlockingGreenhouseAfterRicketyGazeboGrantsManaWithoutMillingAgain() {
+        harness.setLibrary(player1, List.of());
+        castRoom(1);
+        Card topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.unlockRoomDoor(player1, 0, 0);
+        resolveAllTriggers();
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
     private Permanent castRoom(int doorIndex) {
         harness.setHand(player1, List.of(new GreenhouseRicketyGazebo()));
         harness.addMana(player1, ManaColor.GREEN, doorIndex == 0 ? 3 : 4);
