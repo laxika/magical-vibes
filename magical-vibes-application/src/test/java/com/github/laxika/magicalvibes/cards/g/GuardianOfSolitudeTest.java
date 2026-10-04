@@ -75,8 +75,7 @@ class GuardianOfSolitudeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(retainer.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
     }
@@ -90,5 +89,44 @@ class GuardianOfSolitudeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's Arcane spell does not trigger Guardian of Solitude")
+    void opponentsArcaneSpellDoesNotTrigger() {
+        Permanent guardian = harness.addToBattlefieldAndReturn(player1, new GuardianOfSolitude());
+
+        harness.castFromHand(player2, new DesperateRitual(), "{1}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(guardian.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+    }
+
+    @Test
+    @DisplayName("Guardian of Solitude can target itself")
+    void guardianCanTargetItself() {
+        Permanent guardian = harness.addToBattlefieldAndReturn(player1, new GuardianOfSolitude());
+
+        harness.castFromHand(player1, new DesperateRitual(), "{1}{R}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, guardian.getId());
+        harness.passBothPriorities();
+
+        assertThat(guardian.getGrantedKeywords()).contains(Keyword.FLYING);
+    }
+
+    @Test
+    @DisplayName("Casting Guardian of Solitude does not trigger its own ability")
+    void castingGuardianDoesNotTriggerItself() {
+        harness.castFromHand(player1, new GuardianOfSolitude(), "{1}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Guardian of Solitude");
+        Permanent guardian = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(guardian.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
     }
 }
