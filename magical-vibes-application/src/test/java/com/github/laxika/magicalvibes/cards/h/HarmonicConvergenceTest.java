@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.cards.i.ImpendingDisaster;
 import com.github.laxika.magicalvibes.cards.r.Rivalry;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -94,9 +93,70 @@ class HarmonicConvergenceTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Harmonic Convergence");
     }
 
+    @Test
+    @DisplayName("Resolves without enchantments and leaves libraries unchanged")
+    void resolvesWithoutEnchantments() {
+        harness.addToBattlefield(player1, new GiantCockroach());
+        harness.setLibrary(player1, List.of(new GiantCockroach()));
+        harness.setLibrary(player2, List.of(new GiantCockroach()));
+
+        cast();
+
+        harness.assertOnBattlefield(player1, "Giant Cockroach");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Giant Cockroach");
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(card -> card.getName())
+                .containsExactly("Giant Cockroach");
+        harness.assertInGraveyard(player1, "Harmonic Convergence");
+    }
+
+    @Test
+    @DisplayName("Returns an enchantment to its owner rather than its controller")
+    void returnsEnchantmentToOwner() {
+        Rivalry stolen = new Rivalry();
+        stolen.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, stolen);
+        harness.setLibrary(player1, List.of(new GiantCockroach()));
+        harness.setLibrary(player2, List.of(new GiantCockroach()));
+
+        cast();
+
+        harness.assertNotOnBattlefield(player2, "Rivalry");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Rivalry", "Giant Cockroach");
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(card -> card.getName())
+                .containsExactly("Giant Cockroach");
+    }
+
+    @Test
+    @DisplayName("The active player chooses their library order first on the opponent's turn")
+    void activePlayerChoosesFirstOnOpponentsTurn() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Rivalry());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ImpendingDisaster());
+        Permanent opponentFirst = harness.addToBattlefieldAndReturn(player2, new Rivalry());
+        Permanent opponentSecond = harness.addToBattlefieldAndReturn(player2, new ImpendingDisaster());
+        gd.activePlayerId = player2.getId();
+
+        cast();
+
+        PendingInteraction.MultiPermanentChoice activeChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(activeChoice).isNotNull();
+        assertThat(activeChoice.playerId()).isEqualTo(player2.getId());
+        harness.handleMultiplePermanentsChosen(player2,
+                List.of(opponentSecond.getId(), opponentFirst.getId()));
+        PendingInteraction.MultiPermanentChoice nonactiveChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(nonactiveChoice).isNotNull();
+        assertThat(nonactiveChoice.playerId()).isEqualTo(player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId(), first.getId()));
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Impending Disaster");
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst().getName()).isEqualTo("Impending Disaster");
+        harness.assertInGraveyard(player1, "Harmonic Convergence");
+    }
+
     private void cast() {
-        harness.setHand(player1, List.of(new HarmonicConvergence()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castAndResolveInstant(player1, 0);
+        harness.castFromHand(player1, new HarmonicConvergence(), "{2}{G}");
+        harness.passBothPriorities();
     }
 }
