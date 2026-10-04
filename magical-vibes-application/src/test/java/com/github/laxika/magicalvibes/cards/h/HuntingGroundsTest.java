@@ -163,9 +163,35 @@ class HuntingGroundsTest extends BaseCardTest {
     }
 
     private void castOpponentCreatureSpellForJudReview() {
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.castFromHand(player2, new GiantWarthog(), "{5}{G}");
+        castOpponentSpell(new GiantWarthog(), "{5}{G}");
+    }
+
+    @Test
+    void opponentsGraveyardDoesNotProvideThreshold() {
+        addHuntingGroundsForJudReview(6);
+        harness.setGraveyard(player2, graveyardWithCards(7));
+        harness.setHand(player1, List.of(new GiantWarthog()));
+        castOpponentCreatureSpellForJudReview();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Giant Warthog");
+        harness.assertNotOnBattlefield(player1, "Giant Warthog");
+    }
+
+    @Test
+    void acceptingWithEmptyHandResolvesWithoutCardChoice() {
+        addHuntingGroundsForJudReview(7);
+        harness.setHand(player1, List.of());
+        castOpponentCreatureSpellForJudReview();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Giant Warthog");
+        harness.assertNotOnBattlefield(player2, "Giant Warthog");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Giant Warthog");
     }
 }
