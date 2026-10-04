@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(GohnTownOfRuin.class)
 class GohnTownOfRuinTest extends BaseCardTest {
@@ -45,9 +46,35 @@ class GohnTownOfRuinTest extends BaseCardTest {
     }
 
     private Permanent addReadyLand() {
-        Permanent land = new Permanent(new GohnTownOfRuin());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new GohnTownOfRuin());
         land.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(land);
         return land;
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        harness.setHand(player1, List.of(new GohnTownOfRuin()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void newlyControlledUntappedLandProducesManaWithoutUsingStack() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new GohnTownOfRuin());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(land.isTapped()).isTrue();
     }
 }
