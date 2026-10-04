@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
+import com.github.laxika.magicalvibes.cards.m.MendingHands;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,8 +13,42 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FirstVolley.class, GnarledMass.class})
+@CardUsed({FirstVolley.class, GnarledMass.class, MendingHands.class})
 class FirstVolleyTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Preventing creature damage does not prevent damage to its controller")
+    void creaturePreventionDoesNotPreventControllerDamage() {
+        var target = harness.addToBattlefieldAndReturn(player2, new GnarledMass());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new MendingHands(), new FirstVolley()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Gnarled Mass");
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Preventing controller damage does not prevent damage to the creature")
+    void controllerPreventionDoesNotPreventCreatureDamage() {
+        var target = harness.addToBattlefieldAndReturn(player2, new GnarledMass());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new MendingHands(), new FirstVolley()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Gnarled Mass");
+        harness.assertLife(player2, 20);
+    }
 
     @Test
     @DisplayName("Deals 1 damage to target creature and 1 damage to its controller")
