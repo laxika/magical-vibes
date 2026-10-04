@@ -79,6 +79,7 @@ class IcingdeathFrostTongueTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
         assertThat(victim.isTapped()).isFalse();
     }
@@ -113,6 +114,22 @@ class IcingdeathFrostTongueTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, victim.getId());
         gd.playerBattlefields.get(player1.getId()).remove(equipment);
+        harness.passBothPriorities();
+
+        assertThat(victim.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+    }
+
+    @Test
+    void attackTriggerStillResolvesAfterEquipmentBecomesUnattached() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new IcingdeathFrostTongue());
+        equipment.setAttachedTo(attacker.getId());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, victim.getId());
+        equipment.setAttachedTo(null);
         harness.passBothPriorities();
 
         assertThat(victim.isTapped()).isTrue();

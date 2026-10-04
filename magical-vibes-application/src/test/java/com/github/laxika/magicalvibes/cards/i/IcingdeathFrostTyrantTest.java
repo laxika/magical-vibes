@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({IcingdeathFrostTyrant.class, GrizzlyBears.class, DoomBlade.class})
 class IcingdeathFrostTyrantTest extends BaseCardTest {
@@ -81,6 +82,38 @@ class IcingdeathFrostTyrantTest extends BaseCardTest {
 
     private Permanent frostTongue() {
         return findPermanent(player1, "Icingdeath, Frost Tongue");
+    }
+
+    @Test
+    void deathTriggerCreatesTokenForItsController() {
+        harness.addToBattlefield(player2, new IcingdeathFrostTyrant());
+
+        killWithDoomBlade(player1, player2, "Icingdeath, Frost Tyrant");
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player2, "Icingdeath, Frost Tongue")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Icingdeath, Frost Tongue")).isZero();
+        assertThat(findPermanent(player2, "Icingdeath, Frost Tongue").isAttached()).isFalse();
+        harness.assertInGraveyard(player2, "Icingdeath, Frost Tyrant");
+    }
+
+    @Test
+    void createdEquipmentCannotTargetAttackingPlayersCreature() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent token = createFrostTongue();
+        token.setAttachedTo(attacker.getId());
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownCreature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid permanent");
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+        assertThat(victim.isTapped()).isTrue();
+        assertThat(ownCreature.isTapped()).isFalse();
     }
 
     private void killWithDoomBlade(Player caster, Player targetController, String targetName) {
