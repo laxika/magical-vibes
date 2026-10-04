@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BurningHands;
+import com.github.laxika.magicalvibes.cards.h.HillGiantHerdgorger;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +10,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -19,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Flumph.class, GrizzlyBears.class, Island.class, Shock.class})
+@CardUsed({Flumph.class, GrizzlyBears.class, Island.class, Shock.class,
+        BurningHands.class, HillGiantHerdgorger.class})
 class FlumphTest extends BaseCardTest {
 
     @Test
@@ -51,19 +53,14 @@ class FlumphTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage makes you and a target opponent each draw a card")
     void combatDamageMakesBothPlayersDraw() {
-        Permanent flumph = harness.addToBattlefieldAndReturn(player1, new Flumph());
-        Permanent attacker = addReadyCreature(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Flumph());
+        addReadyCreature(player2, new GrizzlyBears());
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(new Island()));
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 
@@ -80,9 +77,54 @@ class FlumphTest extends BaseCardTest {
                 .containsExactly("Grizzly Bears");
     }
 
-    private Permanent addReadyCreature(Player player, Card card) {
+    @Test
+    @DisplayName("Both players draw during the resolution of one targeted damage trigger")
+    void bothDrawsResolveAsOneAbility() {
+        harness.addToBattlefield(player1, new Flumph());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new BurningHands()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setLibrary(player2, List.of(new Island()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Flumph"));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Lethal combat damage still triggers both draws after Flumph dies")
+    void lethalCombatDamageStillTriggersDraws() {
+        harness.addToBattlefield(player1, new Flumph());
+        addReadyCreature(player2, new HillGiantHerdgorger());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.setLibrary(player2, List.of(new Island()));
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .contains("Flumph");
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    private void addReadyCreature(Player player, Card card) {
         Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        return permanent;
     }
 }
