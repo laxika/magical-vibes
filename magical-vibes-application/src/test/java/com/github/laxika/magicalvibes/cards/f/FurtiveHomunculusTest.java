@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FurtiveHomunculus.class, GrizzlyBears.class, HillGiant.class})
 class FurtiveHomunculusTest extends BaseCardTest {
 
     @Test
@@ -46,5 +48,49 @@ class FurtiveHomunculusTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIdx, attackerIdx)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Skulk allows a creature with lower current power to block")
+    void skulkAllowsLowerPowerCreatureToBlock() {
+        Permanent blocker = addCreatureReady(player2, new FurtiveHomunculus());
+        blocker.setPowerModifier(-1);
+        Permanent attacker = addCreatureReady(player1, new FurtiveHomunculus());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Skulk uses the blocker's increased current power")
+    void skulkPreventsBlockingAfterBlockerPowerIncreases() {
+        Permanent blocker = addCreatureReady(player2, new FurtiveHomunculus());
+        blocker.setPowerModifier(1);
+        Permanent attacker = addCreatureReady(player1, new FurtiveHomunculus());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("skulk");
+    }
+
+    @Test
+    @DisplayName("Skulk uses the attacker's reduced current power")
+    void skulkPreventsBlockingAfterAttackerPowerDecreases() {
+        addCreatureReady(player2, new FurtiveHomunculus());
+        Permanent attacker = addCreatureReady(player1, new FurtiveHomunculus());
+        attacker.setPowerModifier(-1);
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(
+                gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("skulk");
     }
 }

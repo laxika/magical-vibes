@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "9")
+@CardRegistration(set = "MOM", collectorNumber = "343")
 public class BoonBringerValkyrie extends Card {
 
     public BoonBringerValkyrie() {

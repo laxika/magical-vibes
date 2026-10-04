@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastSourceAsAdventureFro
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "WOE", collectorNumber = "231")
+@CardRegistration(set = "WOE", collectorNumber = "292")
 public class MosswoodDreadknight extends Card {
 
     public MosswoodDreadknight() {

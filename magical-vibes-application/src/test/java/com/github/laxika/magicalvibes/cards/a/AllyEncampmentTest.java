@@ -70,6 +70,24 @@ class AllyEncampmentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Restricted mana can cast a noncreature Ally spell")
+    void restrictedManaCastsNonCreatureAllySpell() {
+        Card spell = createCreature("Kindred Ally Spell", CardSubtype.ALLY);
+        spell.setType(CardType.SORCERY);
+        spell.setAdditionalTypes(Set.of(CardType.KINDRED));
+        harness.setHand(player1, List.of(spell));
+        harness.addToBattlefieldAndReturn(player1, new AllyEncampment());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        harness.castSorcery(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId())
+                .getSubtypeSpellOnlyManaTotal(Set.of(CardSubtype.ALLY))).isZero();
+    }
+
+    @Test
     @DisplayName("Third ability sacrifices the land and returns a controlled Ally to its owner's hand")
     void sacrificesAndReturnsAlly() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new AllyEncampment());

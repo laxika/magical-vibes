@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "122")
+@CardRegistration(set = "MOM", collectorNumber = "361")
 @CardRegistration(set = "MKC", collectorNumber = "134")
 public class PileOn extends Card {
 

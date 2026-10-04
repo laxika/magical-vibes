@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 
 @CardRegistration(set = "MOM", collectorNumber = "174")
+@CardRegistration(set = "MOM", collectorNumber = "368")
 public class AncientImperiosaur extends Card {
 
     public AncientImperiosaur() {

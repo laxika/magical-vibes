@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "WOE", collectorNumber = "38")
+@CardRegistration(set = "WOE", collectorNumber = "277")
 public class VirtueOfLoyalty extends Card {
 
     public VirtueOfLoyalty() {

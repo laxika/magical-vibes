@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "109")
+@CardRegistration(set = "MOM", collectorNumber = "359")
 public class GraftedButcher extends Card {
 
     public GraftedButcher() {

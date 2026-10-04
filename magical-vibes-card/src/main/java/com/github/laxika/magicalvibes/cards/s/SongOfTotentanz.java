@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "150")
+@CardRegistration(set = "WOE", collectorNumber = "353")
 public class SongOfTotentanz extends Card {
 
     public SongOfTotentanz() {

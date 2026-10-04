@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "257")
+@CardRegistration(set = "MOM", collectorNumber = "318")
 public class ZimoneAndDina extends Card {
 
     public ZimoneAndDina() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "KLD", collectorNumber = "155")
+@CardRegistration(set = "MOM", collectorNumber = "335")
 public class FairgroundsTrumpeter extends Card {
 
     public FairgroundsTrumpeter() {

@@ -136,6 +136,46 @@ class ReturnToHandEffectHandlerTest {
     class Target {
 
         @Test
+        @DisplayName("Remembers the controller before a target leaves the battlefield")
+        void remembersControllerBeforeReturningTarget() {
+            Card card = createCard("Boomerang");
+            Permanent target = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player2Id).add(target);
+            ReturnToHandEffect effect = ReturnToHandEffect.target();
+            StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenAnswer(
+                    invocation -> gd.playerBattlefields.get(player2Id).contains(target) ? player2Id : null);
+            when(permanentRemovalService.removePermanentToHand(gd, target)).thenAnswer(
+                    invocation -> gd.playerBattlefields.get(player2Id).remove(target));
+
+            handler.resolve(gd, entry, effect);
+
+            assertThat(gd.playerBattlefields.get(player2Id)).doesNotContain(target);
+            assertThat(entry.getRemovedPermanentControllers()).containsEntry(target.getId(), player2Id);
+        }
+
+        @Test
+        @DisplayName("Does not remember a target's controller when the return fails")
+        void doesNotRememberControllerWhenReturnFails() {
+            Card card = createCard("Boomerang");
+            Permanent target = createCreature("Grizzly Bears");
+            gd.playerBattlefields.get(player2Id).add(target);
+            ReturnToHandEffect effect = ReturnToHandEffect.target();
+            StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), target.getId());
+
+            when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
+            when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
+            when(permanentRemovalService.removePermanentToHand(gd, target)).thenReturn(false);
+
+            handler.resolve(gd, entry, effect);
+
+            assertThat(gd.playerBattlefields.get(player2Id)).contains(target);
+            assertThat(entry.getRemovedPermanentControllers()).isEmpty();
+        }
+
+        @Test
         @DisplayName("Returns target permanent to its owner's hand")
         void returnsTargetPermanentToHand() {
             Card card = createCard("Boomerang");
@@ -264,9 +304,12 @@ class ReturnToHandEffectHandlerTest {
             StackEntry entry = entryWithSource(card, player1Id, List.of(effect), permanent.getId());
 
             when(gameQueryService.findPermanentById(gd, permanent.getId())).thenReturn(permanent);
+            when(gameQueryService.findPermanentController(gd, permanent.getId())).thenReturn(player1Id);
+            when(permanentRemovalService.removePermanentToHand(gd, permanent)).thenReturn(true);
 
             handler.resolve(gd, entry, effect);
 
+            assertThat(entry.getRemovedPermanentControllers()).containsEntry(permanent.getId(), player1Id);
             verify(permanentRemovalService).removePermanentToHand(gd, permanent);
             verify(permanentRemovalService).removeOrphanedAuras(gd);
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Viashino Sandscout is returned to its owner's hand.")));
@@ -397,6 +440,8 @@ class ReturnToHandEffectHandlerTest {
             when(predicateEvaluationService.matchesPermanentPredicate(eq(match1), any(), any())).thenReturn(true);
             when(predicateEvaluationService.matchesPermanentPredicate(eq(match2), any(), any())).thenReturn(true);
             when(predicateEvaluationService.matchesPermanentPredicate(eq(nonMatch), any(), any())).thenReturn(false);
+            when(gameQueryService.findPermanentController(gd, match1.getId())).thenReturn(player1Id);
+            when(gameQueryService.findPermanentController(gd, match2.getId())).thenReturn(player2Id);
             when(permanentRemovalService.removePermanentToHand(eq(gd), any())).thenReturn(true);
 
             handler.resolve(gd, entry, effect);
@@ -405,6 +450,10 @@ class ReturnToHandEffectHandlerTest {
             verify(permanentRemovalService).removePermanentToHand(gd, match2);
             verify(permanentRemovalService, never()).removePermanentToHand(gd, nonMatch);
             verify(permanentRemovalService).removeOrphanedAuras(gd);
+            assertThat(entry.getRemovedPermanentControllers())
+                    .containsEntry(match1.getId(), player1Id)
+                    .containsEntry(match2.getId(), player2Id)
+                    .doesNotContainKey(nonMatch.getId());
         }
 
         @Test

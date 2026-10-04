@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "164")
+@CardRegistration(set = "WOE", collectorNumber = "283")
 public class BrambleFamiliar extends Card {
 
     public BrambleFamiliar() {

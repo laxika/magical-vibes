@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MOM", collectorNumber = "258")
+@CardRegistration(set = "MOM", collectorNumber = "319")
 public class ZurgoAndOjutai extends Card {
 
     public ZurgoAndOjutai() {

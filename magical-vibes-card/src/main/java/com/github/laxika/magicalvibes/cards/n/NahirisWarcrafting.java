@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "155")
+@CardRegistration(set = "MOM", collectorNumber = "365")
 public class NahirisWarcrafting extends Card {
 
     public NahirisWarcrafting() {

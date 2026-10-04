@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "MOM", collectorNumber = "228")
+@CardRegistration(set = "MOM", collectorNumber = "309")
 public class HidetsuguAndKairi extends Card {
 
     public HidetsuguAndKairi() {

@@ -11266,6 +11266,24 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.AnyPermanentGraveyard(
                 dyingCard, dyingControllerId, graveyardOwnerId, dyingPermanent, dyingPower, dyingToughness);
 
+        if (hasArtifactOrCreatureType(dyingPermanent)
+                && !gameData.simultaneousDyingPermanents.containsKey(dyingPermanent.getId())) {
+            TriggerContext artifactOrCreatureContext = new TriggerContext.ArtifactOrCreatureDeath(
+                    dyingPermanent.getCard(), dyingControllerId, graveyardOwnerId, dyingPermanent,
+                    dyingPower, dyingToughness, hasCreatureType(dyingPermanent));
+            gameData.forEachPermanent((playerId, perm) -> {
+                if (playerId.equals(dyingControllerId)) {
+                    dispatchSlot(gameData, perm, playerId,
+                            EffectSlot.ON_ALLY_ARTIFACT_OR_CREATURE_DIES, artifactOrCreatureContext);
+                }
+            });
+            if (dyingControllerId != null
+                    && gameQueryService.findPermanentById(gameData, dyingPermanent.getId()) == null) {
+                dispatchSlot(gameData, dyingPermanent, dyingControllerId,
+                        EffectSlot.ON_ALLY_ARTIFACT_OR_CREATURE_DIES, artifactOrCreatureContext);
+            }
+        }
+
         gameData.forEachPermanent((playerId, perm) -> {
             dispatchAnyPermanentDeathTriggersForWatcher(
                     gameData, playerId, perm, dyingCard, dyingPermanent, ctx);
@@ -16556,6 +16574,70 @@ public class TriggerCollectionService {
             }
         }
         collectBatchedGraveyardAllyCreatureDeathTriggers(gameData, dyingCreatures);
+    }
+
+    public void checkBatchedAllyArtifactOrCreatureDeathTriggers(GameData gameData) {
+        if (gameData.simultaneousDyingPermanents.isEmpty()) return;
+        List<Map.Entry<UUID, Permanent>> dyingPermanents =
+                new ArrayList<>(gameData.simultaneousDyingPermanents.entrySet());
+        for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
+            for (Permanent watcher : List.copyOf(battlefield.getValue())) {
+                collectBatchedAllyArtifactOrCreatureDeathTrigger(
+                        gameData, watcher, battlefield.getKey(), dyingPermanents);
+            }
+        }
+        for (Map.Entry<UUID, Permanent> dyingEntry : dyingPermanents) {
+            UUID controllerId = gameData.simultaneousDyingPermanentControllers.get(dyingEntry.getKey());
+            if (controllerId != null) {
+                collectBatchedAllyArtifactOrCreatureDeathTrigger(
+                        gameData, dyingEntry.getValue(), controllerId, dyingPermanents);
+            }
+        }
+    }
+
+    private void collectBatchedAllyArtifactOrCreatureDeathTrigger(
+            GameData gameData, Permanent watcher, UUID watcherControllerId,
+            List<Map.Entry<UUID, Permanent>> dyingPermanents) {
+        Map.Entry<UUID, Permanent> firstMatchingDeath = null;
+        boolean eventContainsCreature = false;
+        for (Map.Entry<UUID, Permanent> entry : dyingPermanents) {
+            UUID dyingControllerId = gameData.simultaneousDyingPermanentControllers.get(entry.getKey());
+            if (!watcherControllerId.equals(dyingControllerId)
+                    || !hasArtifactOrCreatureType(entry.getValue())) {
+                continue;
+            }
+            if (firstMatchingDeath == null) {
+                firstMatchingDeath = entry;
+            }
+            eventContainsCreature |= hasCreatureType(entry.getValue());
+        }
+        if (firstMatchingDeath == null) return;
+
+        Permanent dyingPermanent = firstMatchingDeath.getValue();
+        Card dyingCard = dyingPermanent.getCard();
+        TriggerContext context = new TriggerContext.ArtifactOrCreatureDeath(
+                dyingCard, watcherControllerId,
+                gameQueryService.findGraveyardOwnerById(gameData, dyingCard.getId()),
+                dyingPermanent, dyingPermanent.getEffectivePower(), dyingPermanent.getEffectiveToughness(),
+                eventContainsCreature);
+        dispatchSlot(gameData, watcher, watcherControllerId,
+                EffectSlot.ON_ALLY_ARTIFACT_OR_CREATURE_DIES, context);
+    }
+
+    private boolean hasArtifactOrCreatureType(Permanent permanent) {
+        return hasArtifactType(permanent) || hasCreatureType(permanent);
+    }
+
+    private boolean hasArtifactType(Permanent permanent) {
+        return permanent.getCard().hasType(CardType.ARTIFACT)
+                || permanent.getGrantedCardTypes().contains(CardType.ARTIFACT)
+                || permanent.getPersistentGrantedCardTypes().contains(CardType.ARTIFACT);
+    }
+
+    private boolean hasCreatureType(Permanent permanent) {
+        return permanent.getCard().hasType(CardType.CREATURE)
+                || permanent.getGrantedCardTypes().contains(CardType.CREATURE)
+                || permanent.getPersistentGrantedCardTypes().contains(CardType.CREATURE);
     }
 
     private void collectBatchedGraveyardAllyCreatureDeathTriggers(

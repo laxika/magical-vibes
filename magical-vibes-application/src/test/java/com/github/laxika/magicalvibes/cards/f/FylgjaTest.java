@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Fylgja.class, BalduvianBears.class, ZuranSpellcaster.class})
+@CardUsed({Fylgja.class, BalduvianBears.class, ZuranSpellcaster.class, Disenchant.class})
 class FylgjaTest extends BaseCardTest {
 
     private Permanent enchantBears() {
@@ -91,8 +92,7 @@ class FylgjaTest extends BaseCardTest {
         harness.activateAbility(player1, indexOf(aura), 0, null, null);
         harness.passBothPriorities();
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(indexOf(bears), 0)));
         harness.passBothPriorities();
 
@@ -156,5 +156,50 @@ class FylgjaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(bears.getDamagePreventionShield()).isEqualTo(0);
+    }
+
+    @Test
+    void preventionResolvesAfterAuraIsDestroyedInResponse() {
+        Permanent aura = enchantBears();
+        Permanent bears = enchantedCreature(aura);
+        Permanent spellcaster = addCreatureReady(player1, new ZuranSpellcaster());
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, indexOf(aura), 0, null, null);
+        assertThat(aura.getCounterCount(CounterType.HEALING)).isEqualTo(3);
+        harness.castInstant(player2, 0, aura.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Fylgja");
+        resolveAllTriggers();
+
+        harness.activateAbility(player1, indexOf(spellcaster), null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void multipleActivationsPreventSeparateDamageEventsAndThenRunOut() {
+        Permanent aura = enchantBears();
+        Permanent bears = enchantedCreature(aura);
+        Permanent first = addCreatureReady(player1, new ZuranSpellcaster());
+        Permanent second = addCreatureReady(player1, new ZuranSpellcaster());
+        Permanent third = addCreatureReady(player1, new ZuranSpellcaster());
+
+        harness.activateAbility(player1, indexOf(aura), 0, null, null);
+        harness.activateAbility(player1, indexOf(aura), 0, null, null);
+        assertThat(aura.getCounterCount(CounterType.HEALING)).isEqualTo(2);
+        resolveAllTriggers();
+
+        for (Permanent spellcaster : List.of(first, second)) {
+            harness.activateAbility(player1, indexOf(spellcaster), null, bears.getId());
+            harness.passBothPriorities();
+            assertThat(bears.getMarkedDamage()).isZero();
+        }
+        harness.activateAbility(player1, indexOf(third), null, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
     }
 }

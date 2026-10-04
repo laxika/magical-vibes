@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 
 @CardRegistration(set = "WOE", collectorNumber = "228")
+@CardRegistration(set = "WOE", collectorNumber = "290")
 public class HeartflameDuelist extends Card {
 
     public HeartflameDuelist() {

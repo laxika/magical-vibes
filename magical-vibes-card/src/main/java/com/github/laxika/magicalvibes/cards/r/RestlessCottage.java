@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "258")
+@CardRegistration(set = "WOE", collectorNumber = "304")
 public class RestlessCottage extends Card {
 
     private static final CreateTokenEffect FOOD_TOKEN = CreateTokenEffect.ofArtifactToken(

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealForMana
 import com.github.laxika.magicalvibes.model.effect.ReplaceManaDrainWithColorlessEffect;
 
 @CardRegistration(set = "MOM", collectorNumber = "249")
+@CardRegistration(set = "MOM", collectorNumber = "313")
+@CardRegistration(set = "MOM", collectorNumber = "387")
 public class OmnathLocusOfAll extends Card {
 
     public OmnathLocusOfAll() {
