@@ -26,8 +26,7 @@ class ExpediteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Expedite()));
         addMana();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -40,8 +39,7 @@ class ExpediteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Expedite()));
         addMana();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -75,6 +73,26 @@ class ExpediteTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+    }
+
+    @Test
+    void targetingCreatureAlreadyGrantedHasteStillDrawsACard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Expedite(), new Expedite()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.HASTE)).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void addMana() {
