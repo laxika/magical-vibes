@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.s.SorinLordOfInnistrad;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -19,6 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HuntmasterOfTheFells.class, GrizzlyBears.class, GiantSpider.class, SorinLordOfInnistrad.class})
 class HuntmasterOfTheFellsTest extends BaseCardTest {
 
     
@@ -73,8 +76,7 @@ class HuntmasterOfTheFellsTest extends BaseCardTest {
     @DisplayName("Ravager transform trigger can choose no creature target")
     void ravagerCanChooseNoCreatureTarget() {
         harness.addToBattlefield(player1, new HuntmasterOfTheFells());
-        harness.addToBattlefield(player2, new GiantSpider());
-        Permanent spider = findPermanent(player2, "Giant Spider");
+        Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
         int player2LifeBefore = gd.getLife(player2.getId());
 
         gd.spellsCastLastTurn.clear();
@@ -112,8 +114,7 @@ class HuntmasterOfTheFellsTest extends BaseCardTest {
     @Test
     @DisplayName("Ravager transforms back when a player cast two or more spells last turn and front trigger resolves")
     void ravagerTransformsBackAndFrontTriggerResolves() {
-        harness.addToBattlefield(player1, new HuntmasterOfTheFells());
-        Permanent huntmaster = findPermanent(player1, "Huntmaster of the Fells");
+        Permanent huntmaster = harness.addToBattlefieldAndReturn(player1, new HuntmasterOfTheFells());
 
         gd.spellsCastLastTurn.clear();
         advanceToUpkeepAndResolveTransform(player1);
@@ -142,8 +143,7 @@ class HuntmasterOfTheFellsTest extends BaseCardTest {
     @Test
     @DisplayName("Ravager has trample on the back face")
     void ravagerHasTrample() {
-        harness.addToBattlefield(player1, new HuntmasterOfTheFells());
-        Permanent huntmaster = findPermanent(player1, "Huntmaster of the Fells");
+        Permanent huntmaster = harness.addToBattlefieldAndReturn(player1, new HuntmasterOfTheFells());
 
         gd.spellsCastLastTurn.clear();
         advanceToUpkeepAndResolveTransform(player1);
@@ -151,6 +151,59 @@ class HuntmasterOfTheFellsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, huntmaster, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ravager can target a planeswalker controlled by either player")
+    void ravagerCanTargetEitherPlayersPlaneswalker() {
+        harness.addToBattlefield(player1, new HuntmasterOfTheFells());
+        Permanent ownSorin = harness.addToBattlefieldAndReturn(player1, new SorinLordOfInnistrad());
+        Permanent opponentSorin = harness.addToBattlefieldAndReturn(player2, new SorinLordOfInnistrad());
+
+        gd.spellsCastLastTurn.clear();
+        advanceToUpkeepAndResolveTransform(player1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(player2.getId(), ownSorin.getId(), opponentSorin.getId())
+                .doesNotContain(player1.getId());
+    }
+
+    @Test
+    @DisplayName("A spell cast by the opponent prevents Huntmaster's upkeep transformation")
+    void oneSpellPreventsFrontTransformation() {
+        Permanent huntmaster = harness.addToBattlefieldAndReturn(player1, new HuntmasterOfTheFells());
+        gd.spellsCastLastTurn.clear();
+        gd.spellsCastLastTurn.put(player2.getId(), 1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(huntmaster.isTransformed()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("One spell from each player does not transform Ravager back")
+    void spellsFromDifferentPlayersAreNotCombined() {
+        Permanent huntmaster = harness.addToBattlefieldAndReturn(player1, new HuntmasterOfTheFells());
+        gd.spellsCastLastTurn.clear();
+        advanceToUpkeepAndResolveTransform(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        assertThat(huntmaster.isTransformed()).isTrue();
+
+        gd.spellsCastLastTurn.clear();
+        gd.spellsCastLastTurn.put(player1.getId(), 1);
+        gd.spellsCastLastTurn.put(player2.getId(), 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(huntmaster.isTransformed()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void advanceToUpkeepAndResolveTransform(com.github.laxika.magicalvibes.model.Player activePlayer) {
