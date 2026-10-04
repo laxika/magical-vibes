@@ -24,12 +24,12 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({HazoretsUndyingFury.class, AvatarOfMight.class, CollectiveBrutality.class,
-        Forest.class, GrizzlyBears.class, Plains.class, Shock.class})
+        Forest.class, GrizzlyBears.class, HollowOne.class, Plains.class, Shock.class})
 class HazoretsUndyingFuryTest extends BaseCardTest {
 
-    // ===== Shuffle, exile, and free-cast =====
-
     @Nested
+    @CardUsed({HazoretsUndyingFury.class, AvatarOfMight.class, CollectiveBrutality.class,
+            Forest.class, GrizzlyBears.class, HollowOne.class, Shock.class})
     @DisplayName("Shuffle, exile the top four, may cast spells with mana value 5 or less")
     class ExileAndCast {
 
@@ -48,7 +48,7 @@ class HazoretsUndyingFuryTest extends BaseCardTest {
         void onlyOffersSpellsManaValueFiveOrLess() {
             Shock shock = new Shock();               // instant, MV 1
             GrizzlyBears bears = new GrizzlyBears();  // creature, MV 2
-            AvatarOfMight avatar = new AvatarOfMight(); // creature, MV 7
+            AvatarOfMight avatar = new AvatarOfMight(); // creature, MV 8
             Forest forest = new Forest();            // land, not a spell
 
             cast(List.of(shock, bears, avatar, forest));
@@ -106,11 +106,55 @@ class HazoretsUndyingFuryTest extends BaseCardTest {
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
             assertThat(gd.exiledCards).hasSize(2);
         }
+
+        @Test
+        void mayDeclineAllSpellsAndLeaveThemExiled() {
+            HollowOne hollowOne = new HollowOne();
+            cast(List.of(hollowOne));
+
+            harness.handleMultipleCardsChosen(player1, List.of());
+
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+            assertThat(gd.findExiledCard(hollowOne.getId())).isNotNull();
+            harness.assertNotOnBattlefield(player1, "Hollow One");
+        }
+
+        @Test
+        void castsMultipleManaValueFiveSpellsWithoutATotalManaValueLimit() {
+            HollowOne first = new HollowOne();
+            HollowOne second = new HollowOne();
+            cast(List.of(first, second));
+
+            harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+
+            assertThat(countPermanents(player1, "Hollow One")).isEqualTo(2);
+            assertThat(gd.findExiledCard(first.getId())).isNull();
+            assertThat(gd.findExiledCard(second.getId())).isNull();
+        }
+
+        @Test
+        void mayPayEscalateToChooseAnotherModeOfAFreeSpell() {
+            CollectiveBrutality brutality = new CollectiveBrutality();
+            harness.setHand(player2, List.of(new Shock()));
+            cast(List.of(brutality));
+            harness.setHand(player1, List.of(new Forest()));
+
+            harness.handleMultipleCardsChosen(player1, List.of(brutality.getId()));
+            harness.handleListChoice(player1,
+                    "Target opponent reveals their hand. You choose an instant or sorcery card from it. "
+                            + "That player discards that card");
+
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+            PendingInteraction.ColorChoice modes =
+                    (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
+            assertThat(modes.options()).contains("Target opponent loses 2 life and you gain 2 life");
+        }
     }
 
-    // ===== Lands you control don't untap during your next untap step =====
-
     @Nested
+    @CardUsed({HazoretsUndyingFury.class, Forest.class, Plains.class, Shock.class})
     @DisplayName("Lands you control don't untap during your next untap step")
     class LandsDontUntap {
 
@@ -165,17 +209,51 @@ class HazoretsUndyingFuryTest extends BaseCardTest {
 
             assertThat(opponentPlains.getSkipUntapCount()).isZero();
         }
-    }
 
-    // ===== Helpers =====
+        @Test
+        void landsEnteringAfterResolutionAlsoStayTapped() {
+            cast(List.of(new Forest()));
+            Permanent laterLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+            laterLand.tap();
+
+            harness.performUntapStep(player2);
+            harness.performUntapStep(player1);
+
+            assertThat(laterLand.isTapped()).isTrue();
+        }
+
+        @Test
+        void landGivenToOpponentMayUntapDuringOpponentsStep() {
+            Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+            land.tap();
+            cast(List.of(new Forest()));
+            gd.playerBattlefields.get(player1.getId()).remove(land);
+            gd.playerBattlefields.get(player2.getId()).add(land);
+
+            harness.performUntapStep(player2);
+
+            assertThat(land.isTapped()).isFalse();
+        }
+
+        @Test
+        void untapRestrictionExpiresAfterOneControllerUntapStep() {
+            Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+            land.tap();
+            cast(List.of(new Forest()));
+
+            harness.performUntapStep(player1);
+            assertThat(land.isTapped()).isTrue();
+            harness.performUntapStep(player1);
+            assertThat(land.isTapped()).isFalse();
+        }
+    }
 
     private void cast(List<Card> library) {
         harness.setLibrary(player1, library);
         harness.setHand(player1, List.of(new HazoretsUndyingFury()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
@@ -183,9 +261,7 @@ class HazoretsUndyingFuryTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn
+        Player nextPlayer = currentActivePlayer == player1 ? player2 : player1;
+        harness.passUntil(nextPlayer, TurnStep.UPKEEP);
     }
 }
