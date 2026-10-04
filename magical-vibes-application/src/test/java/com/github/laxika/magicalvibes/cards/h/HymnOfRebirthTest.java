@@ -83,6 +83,47 @@ class HymnOfRebirthTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Rejects a noncreature target even when a legal creature target exists")
+    void rejectsNonCreatureTargetWithLegalCreatureAvailable() {
+        BalduvianBears creature = new BalduvianBears();
+        HymnOfRebirth nonCreature = new HymnOfRebirth();
+        harness.setGraveyard(player2, List.of(creature, nonCreature));
+        harness.setHand(player1, List.of(new HymnOfRebirth()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, nonCreature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Returns only the chosen creature and leaves other graveyard cards alone")
+    void returnsOnlyChosenCreature() {
+        BalduvianBears chosen = new BalduvianBears();
+        BalduvianBears ownOther = new BalduvianBears();
+        BalduvianBears opponentOther = new BalduvianBears();
+        harness.setGraveyard(player1, List.of(ownOther));
+        harness.setGraveyard(player2, List.of(chosen, opponentOther));
+        harness.setHand(player1, List.of(new HymnOfRebirth()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castSorcery(player1, 0, chosen.getId());
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement().satisfies(p -> {
+                    assertThat(p.getCard().getId()).isEqualTo(chosen.getId());
+                    assertThat(p.isTapped()).isFalse();
+                });
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownOther);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentOther);
+        harness.assertInGraveyard(player1, "Hymn of Rebirth");
+    }
+
+    @Test
     @DisplayName("Fizzles if the targeted creature leaves the graveyard before resolution")
     void fizzlesIfTargetLeavesGraveyard() {
         BalduvianBears creature = new BalduvianBears();
