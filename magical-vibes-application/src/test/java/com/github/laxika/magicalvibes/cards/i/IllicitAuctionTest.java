@@ -23,12 +23,7 @@ class IllicitAuctionTest extends BaseCardTest {
         harness.setHand(caster, List.of(new IllicitAuction()));
         harness.addMana(caster, ManaColor.RED, 2);
         harness.addMana(caster, ManaColor.COLORLESS, 3);
-        harness.castSorcery(caster, 0, target.getId());
-        harness.passBothPriorities();
-    }
-
-    private boolean controls(Player player, Permanent perm) {
-        return gd.playerBattlefields.get(player.getId()).stream().anyMatch(p -> p.getId().equals(perm.getId()));
+        harness.castAndResolveSorcery(caster, 0, target.getId());
     }
 
     @Test
@@ -44,8 +39,8 @@ class IllicitAuctionTest extends BaseCardTest {
         harness.handleXValueChosen(player2, 0);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(controls(player1, creature)).isTrue();
-        assertThat(controls(player2, creature)).isFalse();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
         assertThat(harness.getConn1().getMessagesContaining("\"type\":\"GAME_STATE\""))
@@ -65,8 +60,8 @@ class IllicitAuctionTest extends BaseCardTest {
         harness.handleXValueChosen(player2, 0); // opponent passes; high bid stands
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(controls(player1, creature)).isTrue();
-        assertThat(controls(player2, creature)).isFalse();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertLife(player1, 12); // winner loses the high bid
         harness.assertLife(player2, 20); // losing bid costs nothing
     }
@@ -82,7 +77,7 @@ class IllicitAuctionTest extends BaseCardTest {
         harness.handleXValueChosen(player2, 1000);
         harness.handleXValueChosen(player1, 0);
 
-        assertThat(controls(player2, creature)).isTrue();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertLife(player2, 1000);
     }
 
@@ -97,7 +92,7 @@ class IllicitAuctionTest extends BaseCardTest {
         harness.handleXValueChosen(player2, 21);
         harness.handleXValueChosen(player1, 0);
 
-        assertThat(controls(player2, creature)).isTrue();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertLife(player2, -1);
     }
 
@@ -113,8 +108,8 @@ class IllicitAuctionTest extends BaseCardTest {
         harness.handleXValueChosen(player1, 0); // caster passes; opponent's bid stands
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(controls(player2, creature)).isTrue();
-        assertThat(controls(player1, creature)).isFalse();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 15);
     }
@@ -131,8 +126,8 @@ class IllicitAuctionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(controls(player1, creature)).isTrue();
-        assertThat(controls(player2, creature)).isFalse();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -176,5 +171,62 @@ class IllicitAuctionTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Matching the high bid does not win the auction")
+    void equalBidDoesNotTopHighBid() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        cast(player1, creature);
+        harness.handleXValueChosen(player2, 5);
+        harness.handleXValueChosen(player1, 5);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Gaining control preserves tapped status and gives summoning sickness")
+    void controlChangeDoesNotUntapOrGrantHaste() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        creature.setTapped(true);
+
+        cast(player1, creature);
+        harness.handleXValueChosen(player2, 0);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A later auction starts at zero and can override earlier control")
+    void subsequentAuctionStartsFresh() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        cast(player1, creature);
+        harness.handleXValueChosen(player2, 5);
+        harness.handleXValueChosen(player1, 8);
+        harness.handleXValueChosen(player2, 0);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 12);
+
+        cast(player1, creature);
+        harness.handleXValueChosen(player2, 1);
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 19);
     }
 }
