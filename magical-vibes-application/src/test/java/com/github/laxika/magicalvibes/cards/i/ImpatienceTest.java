@@ -1,15 +1,20 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GrizzlyBears.class, Impatience.class})
+@CardUsed({GrizzlyBears.class, GiantGrowth.class, Impatience.class})
 class ImpatienceTest extends BaseCardTest {
 
     private void advanceToEndStep(Player activePlayer) {
@@ -67,8 +72,12 @@ class ImpatienceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Impatience());
         harness.setLife(player1, 20);
 
+        var creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GiantGrowth()));
         advanceToEndStep(player1);
-        gd.recordSpellCast(player1.getId(), new GrizzlyBears());
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
@@ -80,16 +89,15 @@ class ImpatienceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Impatience());
         harness.setLife(player1, 20);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.END_STEP);
+        var creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        advanceToEndStep(player1);
         assertThat(gd.stack).hasSize(1);
-
-        // A spell cast after the intervening-if trigger is put on the stack still counts as cast.
-        gd.recordSpellCast(player1.getId(), new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
     }
 
     @Test
@@ -105,11 +113,52 @@ class ImpatienceTest extends BaseCardTest {
         harness.assertLife(player2, 18);
     }
 
-    private void advanceToEndStepTrigger(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(activePlayer, TurnStep.END_STEP);
-        harness.passBothPriorities(); // resolve trigger
+    @Test
+    @DisplayName("Another player's spell does not prevent damage to the active player")
+    void opponentsSpellDoesNotPreventDamage() {
+        harness.addToBattlefield(player1, new Impatience());
+        var creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.setLife(player1, 20);
+
+        advanceToEndStep(player1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Each copy deals its own damage")
+    void multipleCopiesDealDamage() {
+        harness.addToBattlefield(player1, new Impatience());
+        harness.addToBattlefield(player2, new Impatience());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Casting Impatience itself prevents its trigger that turn")
+    void castingImpatiencePreventsItsTrigger() {
+        harness.setHand(player1, List.of(new Impatience()));
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
     }
 
 }
