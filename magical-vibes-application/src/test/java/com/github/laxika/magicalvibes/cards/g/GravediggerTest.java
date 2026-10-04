@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Gravedigger.class, GrizzlyBears.class, Shatter.class, TrainedArmodon.class})
+@CardUsed({Gravedigger.class, GrizzlyBears.class, Shatter.class, TrainedArmodon.class, Unsummon.class})
 class GravediggerTest extends BaseCardTest {
 
     private void castGravedigger() {
@@ -296,5 +297,58 @@ class GravediggerTest extends BaseCardTest {
         castAndAcceptMay(target);
 
         harness.assertOnBattlefield(player1, "Gravedigger");
+    }
+
+    @Test
+    @DisplayName("Gravedigger's ability still returns its target after Gravedigger leaves the battlefield")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        castGravedigger();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Gravedigger"));
+
+        harness.assertNotOnBattlefield(player1, "Gravedigger");
+        harness.assertInHand(player1, "Gravedigger");
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot be chosen when the controller has a legal graveyard target")
+    void rejectsOpponentCreatureWithLegalOwnTarget() {
+        GrizzlyBears ownTarget = new GrizzlyBears();
+        GrizzlyBears opponentTarget = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownTarget));
+        harness.setGraveyard(player2, List.of(opponentTarget));
+        castGravedigger();
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(ownTarget.getId());
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(opponentTarget.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid card");
+
+        harness.handleMultipleCardsChosen(player1, List.of(ownTarget.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
     }
 }
