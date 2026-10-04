@@ -18,6 +18,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GristleGrinnerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Each simultaneous creature death gives a separate boost")
+    void getsSeparateBoostsForSimultaneousDeaths() {
+        Permanent grinner = harness.addToBattlefieldAndReturn(player1, new GristleGrinner());
+        Permanent ownVictim = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+        Permanent opposingVictim = harness.addToBattlefieldAndReturn(player2, new BorealDruid());
+        ownVictim.setMarkedDamage(1);
+        opposingVictim.setMarkedDamage(1);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, grinner)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, grinner)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Its own death still puts its ability on the stack")
+    void triggersForItsOwnDeath() {
+        Permanent grinner = harness.addToBattlefieldAndReturn(player1, new GristleGrinner());
+        grinner.setMarkedDamage(3);
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Gristle Grinner");
+        harness.assertNotOnBattlefield(player1, "Gristle Grinner");
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player1, "Gristle Grinner");
+    }
+
+    @Test
     @DisplayName("Gets +2/+2 whenever a creature dies")
     void getsBoostWhenCreatureDies() {
         Permanent grinner = harness.addToBattlefieldAndReturn(player1, new GristleGrinner());
