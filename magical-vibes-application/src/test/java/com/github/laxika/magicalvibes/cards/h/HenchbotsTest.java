@@ -32,9 +32,7 @@ class HenchbotsTest extends BaseCardTest {
         resetForFollowUpSpell();
         harness.setHand(player2, List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 2);
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, henchbots.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, henchbots.getId());
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -80,6 +78,41 @@ class HenchbotsTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(card -> card.equals(target.getCard()));
+    }
+
+    @Test
+    @DisplayName("Henchbots can enter when there is no legal target")
+    void entersWithoutLegalTarget() {
+        harness.setHand(player1, List.of(new Henchbots()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Henchbots");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing Henchbots before its trigger resolves leaves the target on the battlefield")
+    void sourceLeavesBeforeTriggerResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Henchbots());
+        target.tap();
+        harness.setHand(player1, List.of(new Henchbots()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        Permanent source = findPermanent(player1, "Henchbots");
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player2, 0, source.getId());
+        harness.assertNotOnBattlefield(player1, "Henchbots");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(target.getCard());
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent castHenchbots(java.util.UUID targetId) {
