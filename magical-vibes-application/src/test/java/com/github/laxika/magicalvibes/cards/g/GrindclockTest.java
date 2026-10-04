@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({Grindclock.class, Shatter.class})
 class GrindclockTest extends BaseCardTest {
 
-    // ===== Ability 0: Put a charge counter =====
 
     @Test
     @DisplayName("Tapping Grindclock puts a charge counter on it")
@@ -72,7 +74,6 @@ class GrindclockTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
-    // ===== Ability 1: Mill by charge counters =====
 
     @Test
     @DisplayName("Activating ability 1 targeting player puts it on the stack")
@@ -82,11 +83,10 @@ class GrindclockTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, player2.getId());
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Grindclock");
+        assertThat(entry.getSourcePermanentId()).isEqualTo(grindclock.getId());
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -243,7 +243,6 @@ class GrindclockTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
-    // ===== Both abilities share tap =====
 
     @Test
     @DisplayName("Cannot use both abilities in same turn (both require tap)")
@@ -261,7 +260,6 @@ class GrindclockTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
-    // ===== Charge counters are preserved after mill =====
 
     @Test
     @DisplayName("Charge counters are preserved after using mill ability")
@@ -276,28 +274,96 @@ class GrindclockTest extends BaseCardTest {
         assertThat(grindclock.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
-    // ===== No summoning sickness for artifacts =====
 
     @Test
     @DisplayName("Can activate ability the turn it enters the battlefield")
     void noSummoningSicknessForArtifact() {
-        Grindclock card = new Grindclock();
-        Permanent grindclock = new Permanent(card);
+        Permanent grindclock = harness.addToBattlefieldAndReturn(player1, new Grindclock());
         grindclock.setSummoningSick(true);
-        gd.playerBattlefields.get(player1.getId()).add(grindclock);
 
         harness.activateAbility(player1, 0, null, null);
 
         assertThat(grindclock.isTapped()).isTrue();
     }
 
-    // ===== Helpers =====
+
+    @Test
+    @DisplayName("Charge counter is added on resolution, not as an activation cost")
+    void counterAddedOnlyOnResolution() {
+        Permanent grindclock = addReadyGrindclock(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(grindclock.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.passBothPriorities();
+        assertThat(grindclock.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Mill counts charge counters at resolution and ignores other counters")
+    void millUsesCountersAtResolution() {
+        Permanent grindclock = addReadyGrindclock(player1);
+        grindclock.setCounterCount(CounterType.CHARGE, 1);
+        grindclock.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        int librarySize = gd.playerDecks.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        grindclock.untap();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(grindclock.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySize - 2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Mill uses the counters present when Grindclock leaves the battlefield")
+    void millUsesLastKnownCountersAfterDestruction() {
+        Permanent grindclock = addReadyGrindclock(player1);
+        grindclock.setCounterCount(CounterType.CHARGE, 1);
+        int librarySize = gd.playerDecks.get(player2.getId()).size();
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        grindclock.untap();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(grindclock.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, grindclock.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(librarySize - 2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Counter ability cannot put a counter on a destroyed Grindclock")
+    void counterAbilityDoesNothingAfterDestruction() {
+        Permanent grindclock = addReadyGrindclock(player1);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, grindclock.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(grindclock.getCard()).hasSize(2);
+        assertThat(grindclock.getCounterCount(CounterType.CHARGE)).isZero();
+    }
 
     private Permanent addReadyGrindclock(Player player) {
-        Grindclock card = new Grindclock();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new Grindclock());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
