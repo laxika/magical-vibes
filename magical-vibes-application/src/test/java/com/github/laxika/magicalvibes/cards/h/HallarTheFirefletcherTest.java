@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AcademyDrake;
+import com.github.laxika.magicalvibes.cards.b.BlessedLight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,11 +17,11 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({HallarTheFirefletcher.class, AcademyDrake.class, GrizzlyBears.class, BlessedLight.class})
 class HallarTheFirefletcherTest extends BaseCardTest {
 
     private static final int STARTING_LIFE = 20;
 
-    // ===== Kicked spell triggers =====
 
     @Test
     @DisplayName("Casting a kicked spell puts a +1/+1 counter on Hallar and deals 1 damage to each opponent")
@@ -65,7 +67,6 @@ class HallarTheFirefletcherTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE - 2);
     }
 
-    // ===== Non-kicked spells do not trigger =====
 
     @Test
     @DisplayName("Casting a non-kicked spell does not trigger Hallar")
@@ -105,7 +106,6 @@ class HallarTheFirefletcherTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE);
     }
 
-    // ===== Opponent's kicked spells do not trigger =====
 
     @Test
     @DisplayName("Opponent casting a kicked spell does not trigger Hallar")
@@ -126,12 +126,51 @@ class HallarTheFirefletcherTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Hallar uses its last known counters when exiled before its trigger resolves")
+    void exiledHallarStillDealsDamageFromLastKnownCounters() {
+        Permanent hallar = addReadyHallar(player1);
+        hallar.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.setHand(player1, List.of(new AcademyDrake()));
+        harness.castKickedCreature(player1, 0);
+
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.setHand(player1, List.of(new BlessedLight()));
+        harness.castInstant(player1, 0, hallar.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(hallar);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE - 3);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE);
+    }
+
+    @Test
+    @DisplayName("Damage counts counters at resolution rather than when the spell was cast")
+    void damageUsesCountersAtResolution() {
+        Permanent hallar = addReadyHallar(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.setHand(player1, List.of(new AcademyDrake()));
+        harness.castKickedCreature(player1, 0);
+
+        hallar.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.passBothPriorities();
+
+        assertThat(hallar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE - 5);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE);
+    }
 
     private Permanent addReadyHallar(Player player) {
-        Permanent perm = new Permanent(new HallarTheFirefletcher());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new HallarTheFirefletcher());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
