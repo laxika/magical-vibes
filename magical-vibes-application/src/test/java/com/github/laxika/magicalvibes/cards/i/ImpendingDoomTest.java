@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.f.FinalDeath;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NyxbornBrute;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ImpendingDoom.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({ImpendingDoom.class, FountainOfYouth.class, GrizzlyBears.class, FinalDeath.class, NyxbornBrute.class})
 class ImpendingDoomTest extends BaseCardTest {
 
     @Test
@@ -37,9 +39,8 @@ class ImpendingDoomTest extends BaseCardTest {
     @DisplayName("Impending Doom gives the enchanted creature +3/+3")
     void boostsEnchantedCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent doom = new Permanent(new ImpendingDoom());
+        Permanent doom = harness.addToBattlefieldAndReturn(player1, new ImpendingDoom());
         doom.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(doom);
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
@@ -50,9 +51,8 @@ class ImpendingDoomTest extends BaseCardTest {
     void enchantedCreatureMustAttackWhenAble() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         creature.setSummoningSick(false);
-        Permanent doom = new Permanent(new ImpendingDoom());
+        Permanent doom = harness.addToBattlefieldAndReturn(player1, new ImpendingDoom());
         doom.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(doom);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -68,9 +68,8 @@ class ImpendingDoomTest extends BaseCardTest {
     @DisplayName("When the enchanted creature dies, its controller takes 3 damage")
     void enchantedCreatureDeathDealsThreeDamageToItsController() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        Permanent doom = new Permanent(new ImpendingDoom());
+        Permanent doom = harness.addToBattlefieldAndReturn(player1, new ImpendingDoom());
         doom.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(doom);
 
         int lifeBefore = gd.getLife(player2.getId());
         creature.setMarkedDamage(5);
@@ -90,5 +89,80 @@ class ImpendingDoomTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void tappedEnchantedCreatureIsNotRequiredToAttack() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new NyxbornBrute());
+        creature.setSummoningSick(false);
+        creature.setTapped(true);
+        Permanent doom = harness.addToBattlefieldAndReturn(player1, new ImpendingDoom());
+        doom.setAttachedTo(creature.getId());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        gs.declareAttackers(gd, player1, List.of());
+
+        assertThat(creature.isAttacking()).isFalse();
+    }
+
+    @Test
+    void summoningSickEnchantedCreatureIsNotRequiredToAttack() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new NyxbornBrute());
+        creature.setSummoningSick(true);
+        Permanent doom = harness.addToBattlefieldAndReturn(player1, new ImpendingDoom());
+        doom.setAttachedTo(creature.getId());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        gs.declareAttackers(gd, player1, List.of());
+
+        assertThat(creature.isAttacking()).isFalse();
+    }
+
+    @Test
+    void ownEnchantedCreatureDeathDamagesOnlyItsControllerAfterAuraLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new NyxbornBrute());
+        Permanent doom = harness.addToBattlefieldAndReturn(player1, new ImpendingDoom());
+        doom.setAttachedTo(creature.getId());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        creature.setMarkedDamage(6);
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Nyxborn Brute");
+        harness.assertInGraveyard(player1, "Impending Doom");
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void exilingEnchantedCreatureDoesNotTriggerDeathDamage() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new NyxbornBrute());
+        Permanent doom = harness.addToBattlefieldAndReturn(player1, new ImpendingDoom());
+        doom.setAttachedTo(creature.getId());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new FinalDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card instanceof NyxbornBrute);
+        harness.assertInGraveyard(player1, "Impending Doom");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
