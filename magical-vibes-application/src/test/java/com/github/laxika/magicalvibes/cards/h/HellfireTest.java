@@ -4,14 +4,19 @@ import com.github.laxika.magicalvibes.cards.a.AmrouKithkin;
 import com.github.laxika.magicalvibes.cards.a.ArenaOfTheAncients;
 import com.github.laxika.magicalvibes.cards.b.BlightsteelColossus;
 import com.github.laxika.magicalvibes.cards.c.ClergyOfTheHolyNimbus;
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
+import com.github.laxika.magicalvibes.cards.s.SolkanarTheSwampKing;
 import com.github.laxika.magicalvibes.cards.w.WalkingDead;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({Hellfire.class, AmrouKithkin.class, ArenaOfTheAncients.class,
-        WalkingDead.class, BlightsteelColossus.class, ClergyOfTheHolyNimbus.class})
+        WalkingDead.class, BlightsteelColossus.class, ClergyOfTheHolyNimbus.class,
+        RestInPeace.class, SolkanarTheSwampKing.class})
 class HellfireTest extends BaseCardTest {
 
     @Test
@@ -68,6 +73,40 @@ class HellfireTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Arena of the Ancients");
         harness.assertOnBattlefield(player2, "Walking Dead");
         harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Does not count creatures exiled instead of dying")
+    void doesNotCountCreaturesExiledInsteadOfDying() {
+        harness.addToBattlefield(player1, new RestInPeace());
+        harness.addToBattlefield(player1, new AmrouKithkin());
+        harness.addToBattlefield(player2, new AmrouKithkin());
+
+        castHellfire();
+
+        harness.assertNotOnBattlefield(player1, "Amrou Kithkin");
+        harness.assertNotOnBattlefield(player2, "Amrou Kithkin");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(card -> card.getName()).contains("Amrou Kithkin");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(card -> card.getName()).contains("Amrou Kithkin");
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Spares a multicolored creature that is black")
+    void sparesMulticoloredBlackCreature() {
+        harness.addToBattlefield(player2, new SolkanarTheSwampKing());
+        harness.addToBattlefield(player1, new AmrouKithkin());
+
+        castHellfire();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Sol'kanar the Swamp King");
+        harness.assertNotOnBattlefield(player1, "Amrou Kithkin");
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 21);
     }
 
     private void castHellfire() {
