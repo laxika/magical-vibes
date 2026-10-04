@@ -17,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Hoodwink.class, BargainingTable.class, CoastalPiracy.class, Forest.class,
-        FreshVolunteers.class})
+        FreshVolunteers.class, HengeGuardian.class})
 class HoodwinkTest extends BaseCardTest {
 
     @Test
@@ -90,6 +90,48 @@ class HoodwinkTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
+        harness.assertInGraveyard(player1, "Hoodwink");
+    }
+
+    @Test
+    @DisplayName("Can return an artifact creature to its owner's hand")
+    void returnsArtifactCreatureToHand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HengeGuardian());
+
+        castHoodwink(target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Henge Guardian");
+        harness.assertInHand(player2, "Henge Guardian");
+        harness.assertNotInHand(player1, "Henge Guardian");
+    }
+
+    @Test
+    @DisplayName("Can return a land controlled by its caster")
+    void returnsOwnLandToHand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        castHoodwink(target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotInHand(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Does not return a new permanent when the original target leaves")
+    void doesNotReturnReplacementPermanent() {
+        BargainingTable artifact = new BargainingTable();
+        Permanent original = harness.addToBattlefieldAndReturn(player2, artifact);
+        harness.setHand(player1, List.of(new Hoodwink()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, original.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(original);
+        harness.addToBattlefield(player2, artifact);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Bargaining Table");
+        harness.assertNotInHand(player2, "Bargaining Table");
         harness.assertInGraveyard(player1, "Hoodwink");
     }
 
