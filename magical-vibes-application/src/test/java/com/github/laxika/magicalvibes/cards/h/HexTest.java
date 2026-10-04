@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.l.LastGasp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +18,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Hex.class, BorosRecruit.class, Forest.class})
+@CardUsed({Hex.class, BorosRecruit.class, Forest.class, LastGasp.class})
 class HexTest extends BaseCardTest {
 
     @Test
@@ -94,6 +95,27 @@ class HexTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, targets))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Destroys remaining legal targets when one target leaves before resolution")
+    void destroysRemainingLegalTargets() {
+        List<UUID> targets = addSixCreatures();
+        Permanent survivor = harness.addToBattlefieldAndReturn(player2, new BorosRecruit());
+        harness.setHand(player1, List.of(new Hex()));
+        harness.setHand(player2, List.of(new LastGasp()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.castSorcery(player1, 0, targets);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, targets.getFirst());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(survivor);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(card -> card instanceof BorosRecruit).hasSize(6);
+        harness.assertInGraveyard(player1, "Hex");
     }
 
     private List<UUID> addSixCreatures() {
