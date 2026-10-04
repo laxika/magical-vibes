@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +16,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HonorOfThePure.class, EliteVanguard.class, RuneclawBear.class, Opalescence.class})
 class HonorOfThePureTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting puts it on the stack as an enchantment spell")
@@ -29,7 +31,7 @@ class HonorOfThePureTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Honor of the Pure");
+        assertThat(entry.getCard()).isInstanceOf(HonorOfThePure.class);
     }
 
     @Test
@@ -45,76 +47,61 @@ class HonorOfThePureTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Honor of the Pure");
     }
 
-    // ===== Static effect: buffs own white creatures =====
 
     @Test
     @DisplayName("Own white creatures get +1/+1")
     void buffsOwnWhiteCreatures() {
         harness.addToBattlefield(player1, new HonorOfThePure());
-        harness.addToBattlefield(player1, new EliteVanguard());
-
-        Permanent vanguard = findPermanent(player1, "Elite Vanguard");
+        Permanent vanguard = harness.addToBattlefieldAndReturn(player1, new EliteVanguard());
 
         // Elite Vanguard is 2/1, with +1/+1 should be 3/2
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(2);
     }
 
-    // ===== Static effect: does not buff non-white creatures =====
 
     @Test
     @DisplayName("Own non-white creatures do not get buffed")
     void doesNotBuffNonWhiteCreatures() {
         harness.addToBattlefield(player1, new HonorOfThePure());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
-
-        // Grizzly Bears is 2/2, should remain 2/2
+        // Runeclaw Bear is 2/2, should remain 2/2
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
-    // ===== Static effect: does not buff opponent's white creatures =====
 
     @Test
     @DisplayName("Opponent's white creatures do not get buffed")
     void doesNotBuffOpponentWhiteCreatures() {
         harness.addToBattlefield(player1, new HonorOfThePure());
-        harness.addToBattlefield(player2, new EliteVanguard());
-
-        Permanent opponentVanguard = findPermanent(player2, "Elite Vanguard");
+        Permanent opponentVanguard = harness.addToBattlefieldAndReturn(player2, new EliteVanguard());
 
         // Opponent's white creature should NOT be buffed (OWN_CREATURES scope)
         assertThat(gqs.getEffectivePower(gd, opponentVanguard)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentVanguard)).isEqualTo(1);
     }
 
-    // ===== Multiple sources stack =====
 
     @Test
     @DisplayName("Two Honor of the Pure give +2/+2 to white creatures")
     void twoHonorsStack() {
         harness.addToBattlefield(player1, new HonorOfThePure());
         harness.addToBattlefield(player1, new HonorOfThePure());
-        harness.addToBattlefield(player1, new EliteVanguard());
-
-        Permanent vanguard = findPermanent(player1, "Elite Vanguard");
+        Permanent vanguard = harness.addToBattlefieldAndReturn(player1, new EliteVanguard());
 
         // 2/1 base + 2/2 from two Honors = 4/3
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(3);
     }
 
-    // ===== Bonus removed when source leaves =====
 
     @Test
     @DisplayName("Bonus is removed when Honor of the Pure leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
         harness.addToBattlefield(player1, new HonorOfThePure());
-        harness.addToBattlefield(player1, new EliteVanguard());
-
-        Permanent vanguard = findPermanent(player1, "Elite Vanguard");
+        Permanent vanguard = harness.addToBattlefieldAndReturn(player1, new EliteVanguard());
 
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(3);
 
@@ -125,7 +112,6 @@ class HonorOfThePureTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(1);
     }
 
-    // ===== Bonus applies when Honor resolves =====
 
     @Test
     @DisplayName("Bonus applies when Honor of the Pure resolves onto battlefield")
@@ -147,15 +133,12 @@ class HonorOfThePureTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(2);
     }
 
-    // ===== Static bonus survives end-of-turn reset =====
 
     @Test
     @DisplayName("Static bonus survives end-of-turn modifier reset")
     void staticBonusSurvivesEndOfTurnReset() {
         harness.addToBattlefield(player1, new HonorOfThePure());
-        harness.addToBattlefield(player1, new EliteVanguard());
-
-        Permanent vanguard = findPermanent(player1, "Elite Vanguard");
+        Permanent vanguard = harness.addToBattlefieldAndReturn(player1, new EliteVanguard());
 
         // Add a temporary spell boost
         vanguard.setPowerModifier(vanguard.getPowerModifier() + 3);
@@ -166,6 +149,31 @@ class HonorOfThePureTest extends BaseCardTest {
 
         // Spell bonus gone, static bonus still computed
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(3); // 2 base + 1 static
+        assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(2);
+    }
+    @Test
+    @DisplayName("Honor of the Pure boosts itself when Opalescence makes it a white creature")
+    void boostsItselfWhenAnimated() {
+        Permanent honor = harness.addToBattlefieldAndReturn(player1, new HonorOfThePure());
+        harness.addToBattlefield(player1, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, honor)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, honor)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, honor)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("White creatures entering after Honor of the Pure receive the bonus immediately")
+    void buffsWhiteCreatureEnteringLater() {
+        harness.addToBattlefield(player1, new HonorOfThePure());
+        harness.setHand(player1, List.of(new EliteVanguard()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent vanguard = findPermanent(player1, "Elite Vanguard");
+        assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(2);
     }
 }
