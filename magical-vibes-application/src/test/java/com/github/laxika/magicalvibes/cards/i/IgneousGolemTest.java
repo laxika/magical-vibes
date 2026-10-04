@@ -76,6 +76,26 @@ class IgneousGolemTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Ability can be activated while summoning sick and resolves on the stack")
+    void canActivateWhileSummoningSick() {
+        Permanent golem = addCreatureReady(player1, new IgneousGolem());
+        golem.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.TRAMPLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, golem, Keyword.TRAMPLE)).isTrue();
+        assertThat(golem.isTapped()).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
     @DisplayName("Cannot activate the ability without enough mana")
     void cannotActivateWithoutMana() {
         addCreatureReady(player1, new IgneousGolem());
