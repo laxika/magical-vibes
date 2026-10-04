@@ -74,11 +74,10 @@ class GoblinScoutsTest extends BaseCardTest {
 
         Permanent attacker = scoutTokens(player1).getFirst();
         attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
         harness.addToBattlefield(player2, new Mountain());
         Permanent blocker = addCreatureReady(player2, new FemerefKnight());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -96,15 +95,49 @@ class GoblinScoutsTest extends BaseCardTest {
 
         Permanent attacker = scoutTokens(player1).getFirst();
         attacker.setSummoningSick(false);
-        attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new FemerefKnight());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A Mountain controlled only by the attacker does not prevent blocking")
+    void attackersMountainDoesNotPreventBlocking() {
+        cast();
+
+        Permanent attacker = scoutTokens(player1).getFirst();
+        attacker.setSummoningSick(false);
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent blocker = addCreatureReady(player2, new FemerefKnight());
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The second player's spell creates tokens under that player's control")
+    void secondPlayerCreatesTokens() {
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new GoblinScouts(), "{3}{R}{R}");
+        harness.passBothPriorities();
+
+        assertThat(scoutTokens(player2)).hasSize(3);
+        assertThat(scoutTokens(player1)).isEmpty();
+        assertThat(scoutTokens(player2)).allSatisfy(token -> {
+            assertThat(token.isTapped()).isFalse();
+            assertThat(token.isSummoningSick()).isTrue();
+        });
+        harness.assertInGraveyard(player2, "Goblin Scouts");
     }
 }
