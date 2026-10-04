@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.b.BlessedBreath;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
+import com.github.laxika.magicalvibes.cards.r.RendFlesh;
 import com.github.laxika.magicalvibes.cards.s.SakuraTribeElder;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({HorizonSeed.class, BlessedBreath.class, HarshDeceiver.class,
-        IsamaruHoundOfKonda.class, SakuraTribeElder.class})
+        IsamaruHoundOfKonda.class, SakuraTribeElder.class, RendFlesh.class})
 class HorizonSeedTest extends BaseCardTest {
 
     @Test
@@ -89,5 +90,50 @@ class HorizonSeedTest extends BaseCardTest {
 
         assertThat(target.getRegenerationShield()).isZero();
         harness.assertOnBattlefield(player2, "Harsh Deceiver");
+    }
+
+    @Test
+    @DisplayName("Horizon Seed can target itself with its regeneration trigger")
+    void spiritSpellCanRegenerateHorizonSeed() {
+        Permanent source = addCreatureReady(player1, new HorizonSeed());
+        harness.castFromHand(player1, new HarshDeceiver(), "{3}{W}");
+
+        harness.handlePermanentChosen(player1, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.getRegenerationShield()).isEqualTo(1);
+        assertThat(source.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The regeneration trigger resolves before the Arcane destruction spell")
+    void regenerationProtectsAgainstTriggeringDestructionSpell() {
+        harness.addToBattlefield(player1, new HorizonSeed());
+        Permanent target = addCreatureReady(player1, new IsamaruHoundOfKonda());
+        harness.setHand(player1, List.of(new RendFlesh()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getRegenerationShield()).isEqualTo(1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Isamaru, Hound of Konda");
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Casting Horizon Seed does not trigger its own ability before it enters")
+    void horizonSeedDoesNotTriggerForItsOwnCasting() {
+        Permanent target = addCreatureReady(player1, new IsamaruHoundOfKonda());
+        harness.castFromHand(player1, new HorizonSeed(), "{4}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Horizon Seed");
+        assertThat(target.getRegenerationShield()).isZero();
     }
 }
