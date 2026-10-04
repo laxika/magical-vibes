@@ -74,6 +74,53 @@ class HavocDemonTest extends BaseCardTest {
         assertThat(survivor.getEffectiveToughness()).isEqualTo(6);
     }
 
+    @Test
+    void creaturesEnteringBeforeDeathTriggerResolvesAreAffected() {
+        Permanent demon = harness.addToBattlefieldAndReturn(player1, new HavocDemon());
+
+        destroyWithEyeblightsEnding(demon);
+        harness.assertInGraveyard(player1, "Havoc Demon");
+        assertThat(gd.stack).hasSize(1);
+        harness.enterBattlefieldAndReturn(player2, new EliteVanguard());
+        harness.assertOnBattlefield(player2, "Elite Vanguard");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Elite Vanguard");
+        harness.assertInGraveyard(player2, "Elite Vanguard");
+    }
+
+    @Test
+    void creaturesEnteringAfterDeathTriggerResolvesAreUnaffected() {
+        Permanent demon = harness.addToBattlefieldAndReturn(player1, new HavocDemon());
+
+        destroyWithEyeblightsEnding(demon);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+
+        harness.castFromHand(player2, new EliteVanguard(), "{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Elite Vanguard");
+        harness.assertNotInGraveyard(player2, "Elite Vanguard");
+    }
+
+    @Test
+    void opponentControlledDemonDeathAffectsBothPlayers() {
+        harness.addToBattlefield(player1, new EliteVanguard());
+        harness.addToBattlefield(player2, new EliteVanguard());
+        Permanent demon = harness.addToBattlefieldAndReturn(player2, new HavocDemon());
+
+        destroyWithEyeblightsEnding(demon);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Havoc Demon");
+        harness.assertNotOnBattlefield(player1, "Elite Vanguard");
+        harness.assertNotOnBattlefield(player2, "Elite Vanguard");
+        harness.assertInGraveyard(player1, "Elite Vanguard");
+        harness.assertInGraveyard(player2, "Elite Vanguard");
+    }
+
     private Permanent addSixSix(Player player) {
         EliteVanguard card = new EliteVanguard();
         card.setPower(6);
