@@ -80,6 +80,35 @@ class HerdGnarrTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, enteringGnarr)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Each entry creates a separate boost that applies only when its trigger resolves")
+    void repeatedEntriesAccumulateAfterTheirTriggersResolve() {
+        harness.addToBattlefield(player1, new HerdGnarr());
+        Permanent gnarr = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        castAshcoatBear(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, gnarr)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gnarr)).isEqualTo(2);
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, gnarr)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, gnarr)).isEqualTo(4);
+
+        castAshcoatBear(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, gnarr)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, gnarr)).isEqualTo(4);
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, gnarr)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, gnarr)).isEqualTo(6);
+    }
+
     private void castAshcoatBear(Player player) {
         harness.castFromHand(player, new AshcoatBear(), "{1}{G}");
     }
