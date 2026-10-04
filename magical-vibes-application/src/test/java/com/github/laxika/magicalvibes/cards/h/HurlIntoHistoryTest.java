@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.j.JadelightSpelunker;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({HurlIntoHistory.class, GiantGrowth.class, GrizzlyBears.class, HillGiant.class,
-        LlanowarElves.class, MightOfOaks.class, Millstone.class, Plains.class})
+        LlanowarElves.class, MightOfOaks.class, Millstone.class, Plains.class, JadelightSpelunker.class})
 class HurlIntoHistoryTest extends BaseCardTest {
 
     @Test
@@ -42,7 +41,7 @@ class HurlIntoHistoryTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).containsExactly(discovered);
 
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player2, 0);
 
         harness.assertInGraveyard(player1, "Millstone");
         assertThat(gd.stack).anyMatch(entry -> entry.getCard() == discovered
@@ -62,7 +61,7 @@ class HurlIntoHistoryTest extends BaseCardTest {
 
         castHurlAtCreature(target);
 
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player2, -1);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId())).contains(discovered);
@@ -79,7 +78,7 @@ class HurlIntoHistoryTest extends BaseCardTest {
 
         castHurlAtCreature(target);
 
-        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player2, 0);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player2.getId())).contains(discovered);
@@ -122,6 +121,55 @@ class HurlIntoHistoryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The target is countered before the discover choice is offered")
+    void countersTargetBeforeDiscoverChoice() {
+        Millstone target = new Millstone();
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        castHurlAtArtifact(target);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        harness.assertInGraveyard(player1, "Millstone");
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == target);
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent countering the target")
+    void countersTargetWithEmptyLibrary() {
+        harness.setLibrary(player2, List.of());
+
+        castHurlAtCreature(new GrizzlyBears());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Discover includes the chosen X in the target spell's mana value")
+    void discoversUsingChosenXValue() {
+        JadelightSpelunker target = new JadelightSpelunker();
+        HillGiant discovered = new HillGiant();
+        harness.setLibrary(player2, List.of(discovered));
+        harness.setHand(player1, List.of(target));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player2, List.of(new HurlIntoHistory()));
+        addHurlMana();
+
+        gs.playCard(gd, player1, 0, 3, null, null);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(discovered);
+        harness.handleCardChosen(player2, -1);
+        harness.assertInGraveyard(player1, "Jadelight Spelunker");
+        harness.assertInHand(player2, "Hill Giant");
+    }
+
     private void castHurlAtArtifact(Millstone artifact) {
         harness.setHand(player1, List.of(artifact));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -130,8 +178,7 @@ class HurlIntoHistoryTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, artifact.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, artifact.getId());
     }
 
     private void castHurlAtCreature(GrizzlyBears creature) {
@@ -142,8 +189,7 @@ class HurlIntoHistoryTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
     }
 
     private void addHurlMana() {
