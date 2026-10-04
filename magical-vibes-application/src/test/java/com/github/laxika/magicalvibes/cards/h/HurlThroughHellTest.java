@@ -27,14 +27,13 @@ class HurlThroughHellTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        int currentTurn = gd.turnNumber;
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.findExiledCard(bearsId)).isNotNull();
         assertThat(gd.exilePlayPermissions).containsEntry(bearsId, player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).containsEntry(bearsId, currentTurn + 2);
+        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd).containsEntry(bearsId, Integer.MAX_VALUE);
+        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer).containsEntry(bearsId, player1.getId());
         assertThat(gd.exilePlayAnyManaType).contains(bearsId);
 
         harness.forceActivePlayer(player1);
@@ -58,5 +57,30 @@ class HurlThroughHellTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void permissionDoesNotAllowCreatureCastingDuringCombatOrByItsOwner() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        UUID bearsId = bears.getOriginalCard().getId();
+        harness.setHand(player1, List.of(new HurlThroughHell()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        assertThatThrownBy(() -> harness.castFromExile(player1, bearsId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(bearsId)).isNotNull();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        assertThatThrownBy(() -> harness.castFromExile(player2, bearsId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(bearsId)).isNotNull();
     }
 }
