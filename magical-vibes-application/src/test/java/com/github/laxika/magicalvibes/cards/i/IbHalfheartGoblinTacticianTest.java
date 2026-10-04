@@ -23,6 +23,60 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class IbHalfheartGoblinTacticianTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Each blocked Goblin damages only its own blockers")
+    void multipleBlockedGoblinsDamageOnlyTheirOwnBlockers() {
+        Permanent firstGoblin = addCreatureReady(player1, new GoblinSkycutter());
+        Permanent secondGoblin = addCreatureReady(player1, new GoblinSkycutter());
+        firstGoblin.setAttacking(true);
+        secondGoblin.setAttacking(true);
+        Permanent ib = addCreatureReady(player1, new IbHalfheartGoblinTactician());
+        Permanent firstBlocker = addCreatureReady(player2, new DurkwoodBaloth());
+        Permanent secondBlocker = addCreatureReady(player2, new DurkwoodBaloth());
+        Permanent uninvolvedCreature = addCreatureReady(player2, new DurkwoodBaloth());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 1)));
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(ib).doesNotContain(firstGoblin, secondGoblin);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(firstGoblin.getCard(), secondGoblin.getCard());
+        assertThat(firstBlocker.getMarkedDamage()).isEqualTo(4);
+        assertThat(secondBlocker.getMarkedDamage()).isEqualTo(4);
+        assertThat(uninvolvedCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Tapped Mountains can pay the cost before the tokens are created")
+    void tappedMountainsAreSacrificedAsAnImmediateCost() {
+        Permanent ib = addCreatureReady(player1, new IbHalfheartGoblinTactician());
+        Permanent firstMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        Permanent secondMountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        firstMountain.setTapped(true);
+        secondMountain.setTapped(true);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(ib).doesNotContain(firstMountain, secondMountain);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(firstMountain.getCard(), secondMountain.getCard());
+        assertThat(findPermanents(player1, "Goblin")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Goblin")).hasSize(2);
+    }
+
+    @Test
     @DisplayName("Another Goblin that becomes blocked is sacrificed and damages each creature blocking it")
     void anotherBlockedGoblinIsSacrificedAndDamagesItsBlockers() {
         Permanent goblin = addCreatureReady(player1, new GoblinSkycutter());
