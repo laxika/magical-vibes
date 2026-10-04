@@ -1,9 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.ChildOfNight;
-import com.github.laxika.magicalvibes.cards.d.Duress;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Grief.class, Forest.class, Peek.class, Duress.class, ChildOfNight.class})
+@CardUsed({Grief.class, Forest.class, ChildOfNight.class})
 class GriefTest extends BaseCardTest {
 
     @Test
@@ -83,8 +81,7 @@ class GriefTest extends BaseCardTest {
         Card discard = new Grief();
         harness.setHand(player2, List.of(discard));
 
-        harness.getGameService().playCard(gd, player1, 0, 0, player2.getId(), null,
-                List.of(), List.of(), false, null, null, List.of(), null, null, false, 1);
+        harness.castInstantWithAlternateExileFromHand(player1, 0, player2.getId(), 1);
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
@@ -92,5 +89,66 @@ class GriefTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(blackCard);
         harness.assertInGraveyard(player1, "Grief");
         harness.assertNotOnBattlefield(player1, "Grief");
+    }
+
+    @Test
+    @DisplayName("An empty opponent hand does not prevent Grief entering normally")
+    void emptyHandDoesNotPreventNormalCast() {
+        harness.setHand(player1, List.of(new Grief()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Grief");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Evoke cannot exile a colorless land")
+    void evokeRejectsColorlessCard() {
+        harness.setHand(player1, List.of(new Grief(), new Forest()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(
+                player1, 0, player2.getId(), 1))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("black");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Grief cannot exile itself to pay its evoke cost")
+    void evokeCannotExileTheSpellItself() {
+        harness.setHand(player1, List.of(new Grief()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(
+                player1, 0, player2.getId(), 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("exile");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The controller chooses the order of Grief's discard and evoke sacrifice triggers")
+    void controllerChoosesEvokeTriggerOrder() {
+        harness.setHand(player1, List.of(new Grief(), new Grief()));
+        harness.setHand(player2, List.of(new Grief()));
+
+        harness.castInstantWithAlternateExileFromHand(player1, 0, player2.getId(), 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.ColorChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)
+                .playerId()).isEqualTo(player1.getId());
+        harness.assertOnBattlefield(player1, "Grief");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 }
