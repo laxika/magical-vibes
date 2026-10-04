@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Frostling;
 import com.github.laxika.magicalvibes.cards.g.GnarledMass;
 import com.github.laxika.magicalvibes.cards.i.IshiIshiAkkiCrackshot;
 import com.github.laxika.magicalvibes.cards.s.Shuko;
+import com.github.laxika.magicalvibes.cards.t.TerashisGrasp;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HeartOfLight.class, Frostling.class, GnarledMass.class, IshiIshiAkkiCrackshot.class, Shuko.class})
+@CardUsed({HeartOfLight.class, Frostling.class, GnarledMass.class, IshiIshiAkkiCrackshot.class, Shuko.class, TerashisGrasp.class})
 class HeartOfLightTest extends BaseCardTest {
 
     @Test
@@ -54,8 +55,7 @@ class HeartOfLightTest extends BaseCardTest {
         castHeartOfLight(enchantedCreature);
         Permanent blocker = addCreatureReady(player2, new Frostling());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player1);
 
@@ -111,6 +111,44 @@ class HeartOfLightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Prevents an unblocked enchanted attacker from damaging a player")
+    void preventsUnblockedCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new GnarledMass());
+        castHeartOfLight(attacker);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        declareAttackers(player1, List.of(0));
+        resolveCombat(player1);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Damage resumes after Heart of Light is destroyed")
+    void damageResumesAfterAuraLeaves() {
+        Permanent creature = addCreatureReady(player1, new GnarledMass());
+        castHeartOfLight(creature);
+        Permanent aura = findPermanent(player1, "Heart of Light");
+        harness.setHand(player1, List.of(new TerashisGrasp()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castSorcery(player1, 0, aura.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Heart of Light");
+        harness.assertNotOnBattlefield(player1, "Heart of Light");
+
+        addCreatureReady(player2, new Frostling());
+        harness.activateAbility(player2, 0, null, creature.getId());
+        harness.passBothPriorities();
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+        declareAttackers(player1, List.of(0));
+        resolveCombat(player1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
     }
 
     private void castHeartOfLight(Permanent enchantedCreature) {
