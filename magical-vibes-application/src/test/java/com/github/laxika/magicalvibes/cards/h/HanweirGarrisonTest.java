@@ -24,12 +24,7 @@ class HanweirGarrisonTest extends BaseCardTest {
     void attackCreatesTokensTappedAndAttacking() {
         addCreatureReady(player1, new HanweirGarrison());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -56,12 +51,7 @@ class HanweirGarrisonTest extends BaseCardTest {
     void noTokensWhenNotAttacking() {
         addCreatureReady(player1, new HanweirGarrison());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of());
+        declareAttackers(List.of());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
