@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(HighlandWeald.class)
 class HighlandWealdTest extends BaseCardTest {
@@ -36,6 +37,65 @@ class HighlandWealdTest extends BaseCardTest {
     @DisplayName("Highland Weald adds one green mana when green is chosen")
     void addsGreenMana() {
         addsChosenMana(ManaColor.GREEN, ManaColor.RED);
+    }
+
+    @Test
+    @DisplayName("Highland Weald cannot activate its mana ability while tapped after entry")
+    void cannotActivateWhileTapped() {
+        harness.setHand(player1, List.of(new HighlandWeald()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Highland Weald enters tapped when put directly onto the battlefield")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent weald = harness.enterBattlefieldAndReturn(player1, new HighlandWeald());
+
+        assertThat(weald.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Highland Weald produces mana after untapping without using the stack")
+    void producesManaAfterUntapping() {
+        harness.setHand(player1, List.of(new HighlandWeald()));
+        harness.playLand(player1, 0);
+        harness.performUntapStep(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Red mana produced by Highland Weald is tagged for snow costs")
+    void redManaIsSnowMana() {
+        addsChosenMana(ManaColor.RED, ManaColor.GREEN);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowMana(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Green mana produced by Highland Weald is tagged for snow costs")
+    void greenManaIsSnowMana() {
+        addsChosenMana(ManaColor.GREEN, ManaColor.RED);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowMana(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isEqualTo(1);
     }
 
     private void addsChosenMana(ManaColor chosenColor, ManaColor otherColor) {
