@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BurnishedHart;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HideousTaskmaster.class, GrizzlyBears.class})
+@CardUsed({HideousTaskmaster.class, BurnishedHart.class})
 class HideousTaskmasterTest extends BaseCardTest {
 
     @Test
@@ -40,7 +40,7 @@ class HideousTaskmasterTest extends BaseCardTest {
     @DisplayName("The stolen creature makes the defending player sacrifice one permanent when it attacks")
     void stolenCreatureHasAnnihilatorOne() {
         Permanent target = addCreatureReady(player2);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BurnishedHart());
 
         castHideousTaskmaster(List.of(target.getId()));
 
@@ -91,8 +91,69 @@ class HideousTaskmasterTest extends BaseCardTest {
                 .hasMessageContaining("one permanent per controller");
     }
 
+    @Test
+    @DisplayName("Taskmaster itself has annihilator one")
+    void taskmasterMakesDefenderSacrificeWhenItAttacks() {
+        Permanent taskmaster = harness.addToBattlefieldAndReturn(player1, new HideousTaskmaster());
+        Permanent defender = addCreatureReady(player2);
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(taskmaster)));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(defender);
+        harness.assertInGraveyard(player2, "Burnished Hart");
+    }
+
+    @Test
+    @DisplayName("Defending player chooses the permanent sacrificed to the granted annihilator")
+    void defendingPlayerChoosesSacrifice() {
+        Permanent target = addCreatureReady(player2);
+        Permanent first = addCreatureReady(player2);
+        Permanent second = addCreatureReady(player2);
+        castHideousTaskmaster(List.of(target.getId()));
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(target)));
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player2, List.of(second.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(first).doesNotContain(second);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        harness.assertInGraveyard(player2, "Burnished Hart");
+    }
+
+    @Test
+    @DisplayName("Entering without casting does not steal creatures")
+    void enteringWithoutCastingDoesNotTrigger() {
+        Permanent target = addCreatureReady(player2);
+        target.tap();
+
+        harness.addToBattlefield(player1, new HideousTaskmaster());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can decline to steal even when an opponent controls a creature")
+    void canDeclineAvailableTarget() {
+        Permanent target = addCreatureReady(player2);
+        target.tap();
+
+        castHideousTaskmaster(List.of());
+
+        harness.assertOnBattlefield(player1, "Hideous Taskmaster");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+    }
+
     private Permanent addCreatureReady(com.github.laxika.magicalvibes.model.Player player) {
-        return harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
+        return harness.addToBattlefieldAndReturn(player, new BurnishedHart());
     }
 
     private void castHideousTaskmaster(List<UUID> targetIds) {
@@ -100,9 +161,9 @@ class HideousTaskmasterTest extends BaseCardTest {
         harness.castCreature(player1, 0, targetIds);
         if (!targetIds.isEmpty()) {
             harness.handlePermanentChosen(player1, targetIds.getFirst());
-            if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
-                harness.handlePermanentChosen(player1, player1.getId());
-            }
+        }
+        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+            harness.handlePermanentChosen(player1, player1.getId());
         }
         harness.passBothPriorities();
         harness.passBothPriorities();
