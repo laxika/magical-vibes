@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -83,10 +80,87 @@ class HomaridTest extends BaseCardTest {
         assertThat(homarid.getCounterCount(CounterType.TIDE)).isZero();
     }
 
+    @Test
+    @DisplayName("No tide counters leave Homarid at its normal power and toughness")
+    void zeroTideCountersGiveNormalStats() {
+        Permanent homarid = addHomarid(player1);
+
+        assertThat(gqs.getEffectivePower(gd, homarid)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, homarid)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The upkeep tide counter waits for its triggered ability to resolve")
+    void upkeepCounterUsesTheStack() {
+        Permanent homarid = castHomarid(player1);
+
+        advanceToUpkeep(player1);
+
+        assertThat(homarid.getCounterCount(CounterType.TIDE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(homarid.getCounterCount(CounterType.TIDE)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, homarid)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, homarid)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Tide removal uses the stack and preserves other counters and other Homarids")
+    void tideRemovalPreservesOtherCountersAndPermanents() {
+        Permanent homarid = addHomarid(player1);
+        Permanent otherHomarid = addHomarid(player2);
+        homarid.setCounterCount(CounterType.TIDE, 4);
+        homarid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        otherHomarid.setCounterCount(CounterType.TIDE, 3);
+
+        harness.runStateBasedActions();
+
+        assertThat(homarid.getCounterCount(CounterType.TIDE)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, homarid)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, homarid)).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(homarid.getCounterCount(CounterType.TIDE)).isZero();
+        assertThat(homarid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(otherHomarid.getCounterCount(CounterType.TIDE)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+
+        homarid.setCounterCount(CounterType.TIDE, 4);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(homarid.getCounterCount(CounterType.TIDE)).isZero();
+        assertThat(homarid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Tide removal still resolves after the tide count falls below four")
+    void tideRemovalDoesNotRecheckItsTriggerCondition() {
+        Permanent homarid = addHomarid(player1);
+        homarid.setCounterCount(CounterType.TIDE, 4);
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(1);
+
+        homarid.setCounterCount(CounterType.TIDE, 3);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(homarid.getCounterCount(CounterType.TIDE)).isZero();
+        assertThat(gqs.getEffectivePower(gd, homarid)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, homarid)).isEqualTo(2);
+    }
+
     private Permanent castHomarid(Player player) {
-        harness.setHand(player, List.of(new Homarid()));
-        harness.addMana(player, ManaColor.BLUE, 3);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new Homarid(), "{2}{U}");
         harness.passBothPriorities();
         return findPermanent(player, "Homarid");
     }
