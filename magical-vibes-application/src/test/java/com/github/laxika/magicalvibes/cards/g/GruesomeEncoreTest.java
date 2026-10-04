@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.p.Persuasion;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.Card;
@@ -25,9 +27,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GruesomeEncore.class, GrizzlyBears.class, Pacifism.class, Shock.class, Unsummon.class, Persuasion.class})
 class GruesomeEncoreTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Gruesome Encore puts it on the stack with graveyard target")
@@ -56,8 +57,7 @@ class GruesomeEncoreTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         // Creature should be on player1's battlefield
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -65,7 +65,7 @@ class GruesomeEncoreTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
 
         // Creature should have haste
-        Permanent creature = findCreatureOnBattlefield(player1.getId(), "Grizzly Bears");
+        Permanent creature = findPermanent(player1, "Grizzly Bears");
         assertThat(creature.getGrantedKeywords()).contains(Keyword.HASTE);
 
         // Creature should be marked for exile at end step
@@ -87,13 +87,12 @@ class GruesomeEncoreTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        // Advance to end step to trigger exile (must force to POSTCOMBAT_MAIN so
-        // passBothPriorities naturally advances to END_STEP, firing handleEndStepTriggers)
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         harness.passBothPriorities();
 
         // Creature should no longer be on the battlefield
@@ -112,10 +111,9 @@ class GruesomeEncoreTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        Permanent creature = findCreatureOnBattlefield(player1.getId(), "Grizzly Bears");
+        Permanent creature = findPermanent(player1, "Grizzly Bears");
         UUID creatureId = creature.getId();
 
         // Reset game state so player2 can cast an instant
@@ -145,10 +143,9 @@ class GruesomeEncoreTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.WHITE, 2);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
-        Permanent creature = findCreatureOnBattlefield(player1.getId(), "Grizzly Bears");
+        Permanent creature = findPermanent(player1, "Grizzly Bears");
         UUID creatureId = creature.getId();
 
         // Reset game state so player2 can cast an instant
@@ -215,10 +212,61 @@ class GruesomeEncoreTest extends BaseCardTest {
                 .hasMessageContaining("creature card");
     }
 
-    private Permanent findCreatureOnBattlefield(UUID playerId, String cardName) {
-        return gd.playerBattlefields.get(playerId).stream()
-                .filter(p -> p.getCard().getName().equals(cardName))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError(cardName + " not found on battlefield"));
+    @Test
+    @DisplayName("Reanimated creature can attack during the turn it enters")
+    void hasteAllowsImmediateAttack() {
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(new GruesomeEncore()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(findPermanent(player1, "Grizzly Bears").isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Delayed exile retains Gruesome Encore as its source")
+    void delayedExileHasSpellSource() {
+        Card target = new GrizzlyBears();
+        Card encore = new GruesomeEncore();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(encore));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(encore.getId());
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Delayed exile remains controlled by the caster after the creature changes control")
+    void delayedExileRetainsCasterAfterControlChange() {
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(new GruesomeEncore()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+        UUID creatureId = harness.getPermanentId(player1, "Grizzly Bears");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Persuasion()));
+        harness.addMana(player2, ManaColor.BLUE, 5);
+        harness.castEnchantment(player2, 0, creatureId);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target);
     }
 }
