@@ -96,10 +96,26 @@ class HeatOfBattleTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, blocker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
         resolveAllTriggers();
 
         harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Each Heat of Battle deals damage independently for the same blocker")
+    void multipleEnchantmentsTriggerIndependently() {
+        Permanent attacker = addCreatureReady(player1, new SpinedWurm());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new SpinedWurm());
+        harness.addToBattlefield(player1, new HeatOfBattle());
+        harness.addToBattlefield(player2, new HeatOfBattle());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
     }
 }
