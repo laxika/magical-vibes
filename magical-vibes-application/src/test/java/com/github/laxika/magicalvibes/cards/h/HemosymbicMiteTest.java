@@ -67,4 +67,60 @@ class HemosymbicMiteTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Power is evaluated when the triggered ability resolves")
+    void usesPowerAtResolution() {
+        Permanent mite = addCreatureReady(player1, new HemosymbicMite());
+        Permanent target = addCreatureReady(player1, new HemosymbicMite());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        mite.setPowerModifier(3);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Another creature becoming tapped does not trigger the Mite")
+    void anotherCreatureBecomingTappedDoesNotTrigger() {
+        addCreatureReady(player1, new HemosymbicMite());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("With no other creature to target the ability does not remain on the stack")
+    void noLegalTarget() {
+        addCreatureReady(player1, new HemosymbicMite());
+        addCreatureReady(player2, new HemosymbicMite());
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Negative source power produces a zero boost")
+    void negativePowerProducesZeroBoost() {
+        Permanent mite = addCreatureReady(player1, new HemosymbicMite());
+        Permanent target = addCreatureReady(player1, new HemosymbicMite());
+        target.setToughnessModifier(3);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        mite.setPowerModifier(-3);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
 }
