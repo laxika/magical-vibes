@@ -160,6 +160,34 @@ class HandOfCrueltyTest extends BaseCardTest {
         assertThat(hand.getToughnessModifier()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Attacking without being blocked does not trigger Bushido")
+    void unblockedAttackDoesNotTriggerBushido() {
+        Permanent hand = addHandReady(player1);
+        addCreatureReady(player2, new GodosIrregulars());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        assertThat(hand.getPowerModifier()).isZero();
+        assertThat(hand.getToughnessModifier()).isZero();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Protection also prevents its controller from targeting it with a white Aura")
+    void ownWhiteAuraCannotTarget() {
+        Permanent hand = addHandReady(player1);
+        harness.setHand(player1, List.of(new CowedByWisdom()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, hand.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from white");
+    }
+
     private Permanent addHandReady(Player player) {
         return addCreatureReady(player, new HandOfCruelty());
     }
