@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.c.CloudchaserEagle;
+import com.github.laxika.magicalvibes.cards.e.ElvishFury;
+import com.github.laxika.magicalvibes.cards.f.Flight;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.p.ProdigalSorcerer;
+import com.github.laxika.magicalvibes.cards.s.SkyshroudElf;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Humility.class, AirElemental.class, ProdigalSorcerer.class})
+@CardUsed({Humility.class, AirElemental.class, ProdigalSorcerer.class, Opalescence.class,
+        CloudchaserEagle.class, ElvishFury.class, SkyshroudElf.class, Flight.class})
 class HumilityTest extends BaseCardTest {
 
     @Test
@@ -46,7 +51,7 @@ class HumilityTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("+1/+1 counters still apply on top of the 1/1 base (layer 7d after 7b)")
+    @DisplayName("+1/+1 counters still apply on top of the 1/1 base")
     void countersApplyOnTopOfBase() {
         Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         elemental.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
@@ -82,7 +87,6 @@ class HumilityTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Opalescence.class)
     @DisplayName("Humility affects itself when Opalescence makes it a creature")
     void animatedHumilityIsAlsoAffected() {
         harness.addToBattlefield(player1, new Opalescence());
@@ -93,11 +97,113 @@ class HumilityTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, humility)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Animated Humility continues setting ordinary creatures to 1/1")
+    void animatedHumilityStillAffectsOtherCreatures() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.addToBattlefield(player1, new Humility());
+
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Later Opalescence sets Humility to 4/4 but ordinary creatures remain 1/1")
+    void laterOpalescenceWinsOnlyForAnimatedEnchantments() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent humility = harness.addToBattlefieldAndReturn(player1, new Humility());
+        harness.addToBattlefield(player1, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, humility)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, humility)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, humility)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creature mana abilities are also removed")
+    void creatureManaAbilitiesAreStripped() {
+        addCreatureReady(player1, new SkyshroudElf());
+        resolveHumility();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Creatures entering under Humility do not trigger their enters abilities")
+    void enteringCreatureDoesNotTrigger() {
+        Permanent humility = resolveHumility();
+        harness.enterBattlefieldAndReturn(player1, new CloudchaserEagle());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingInteractions).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(humility);
+    }
+
+    @Test
+    @DisplayName("An ability already on the stack resolves after Humility removes it")
+    void abilityOnStackSurvivesAbilityRemoval() {
+        addCreatureReady(player1, new ProdigalSorcerer());
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.addToBattlefield(player2, new Humility());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Spell bonuses apply on top of Humility's 1/1 base")
+    void spellBonusAppliesOnTopOfBase() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        resolveHumility();
+        harness.setHand(player1, List.of(new ElvishFury()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, elemental.getId());
+
+        assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A later Aura can grant a creature flying under Humility")
+    void laterAbilityGrantApplies() {
+        Permanent sorcerer = harness.addToBattlefieldAndReturn(player1, new ProdigalSorcerer());
+        resolveHumility();
+        harness.setHand(player1, List.of(new Flight()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, sorcerer.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, sorcerer, Keyword.FLYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, sorcerer)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, sorcerer)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Humility removes flying granted by an earlier Aura")
+    void earlierAbilityGrantIsRemoved() {
+        Permanent sorcerer = harness.addToBattlefieldAndReturn(player1, new ProdigalSorcerer());
+        harness.setHand(player1, List.of(new Flight()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, sorcerer.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, sorcerer, Keyword.FLYING)).isTrue();
+
+        resolveHumility();
+
+        assertThat(gqs.hasKeyword(gd, sorcerer, Keyword.FLYING)).isFalse();
+    }
+
     /** Casts and resolves Humility for player1, returning the resulting battlefield permanent. */
     private Permanent resolveHumility() {
-        harness.setHand(player1, List.of(new Humility()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new Humility(), "{2}{W}{W}");
         harness.passBothPriorities();
 
         return findPermanent(player1, "Humility");
