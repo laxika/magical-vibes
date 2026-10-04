@@ -3,13 +3,12 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,10 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HazoretsMonument.class, HillGiant.class, GrizzlyBears.class, Spellbook.class, Forest.class})
 class HazoretsMonumentTest extends BaseCardTest {
-
-    // ===== Red creature cost reduction =====
-
     @Test
     @DisplayName("Red creature spells cost {1} less with Hazoret's Monument on the battlefield")
     void redCreatureCostsOneLess() {
@@ -59,16 +56,20 @@ class HazoretsMonumentTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Loot trigger on creature cast =====
 
     @Test
-    @DisplayName("Casting a creature spell triggers the may-loot prompt")
+    @DisplayName("Casting a creature puts the trigger on the stack; the optional choice waits for resolution")
     void creatureCastTriggersMayPrompt() {
         harness.addToBattlefield(player1, new HazoretsMonument());
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && e.getCard().getName().equals("Hazoret's Monument"));
+        harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -81,15 +82,15 @@ class HazoretsMonumentTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HazoretsMonument());
         HillGiant toDiscard = new HillGiant();
         harness.setHand(player1, List.of(new GrizzlyBears(), toDiscard));
-        setDeck(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         // Cast Grizzly Bears — hand becomes [Hill Giant]
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        // Triggered ability resolves, then prompts discard
-        harness.passBothPriorities();
+        // Accepting during resolution prompts discard immediately.
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
 
@@ -105,22 +106,25 @@ class HazoretsMonumentTest extends BaseCardTest {
     @DisplayName("Declining the loot draws and discards nothing")
     void declineDoesNothing() {
         harness.addToBattlefield(player1, new HazoretsMonument());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        setDeck(player1, List.of(new Forest()));
+        HillGiant retainedCard = new HillGiant();
+        harness.setHand(player1, List.of(new GrizzlyBears(), retainedCard));
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
         harness.castCreature(player1, 0);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getCard().getName().equals("Hazoret's Monument"));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retainedCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
-    // ===== Noncreature spells do not trigger =====
 
     @Test
     @DisplayName("Casting a noncreature spell does not trigger the loot")
@@ -134,10 +138,50 @@ class HazoretsMonumentTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("An empty hand cannot discard and therefore cannot draw")
+    void emptyHandDoesNotDraw() {
+        harness.addToBattlefield(player1, new HazoretsMonument());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        Forest topCard = new Forest();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.addMana(player1, ManaColor.GREEN, 2);
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's Monument neither reduces your creature cost nor triggers for your cast")
+    void opponentsMonumentDoesNotApply() {
+        harness.addToBattlefield(player2, new HazoretsMonument());
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                && e.getCard().getName().equals("Hazoret's Monument"));
+    }
+
+    @Test
+    @DisplayName("The reduction cannot pay the red mana requirement")
+    void reductionDoesNotRemoveColoredMana() {
+        harness.addToBattlefield(player1, new HazoretsMonument());
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
