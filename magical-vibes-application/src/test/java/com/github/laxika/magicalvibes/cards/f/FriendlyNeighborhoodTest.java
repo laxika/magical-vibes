@@ -29,8 +29,7 @@ class FriendlyNeighborhoodTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castEnchantment(player1, 0, land.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
@@ -89,6 +88,107 @@ class FriendlyNeighborhoodTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery speed");
         assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The granted ability counts the land controller's creatures, not the Aura controller's")
+    void opponentLandCountsItsControllersCreatures() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Plains());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FriendlyNeighborhood());
+        aura.setAttachedTo(land.getId());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The creature count is determined on resolution and the boost then stays fixed")
+    void countsCreaturesOnResolution() {
+        attachToLand();
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+
+        Permanent newcomer = addCreatureReady(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player1.getId()).remove(newcomer);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Removing the Aura does not stop an already activated land ability")
+    void activatedAbilitySurvivesAuraLeaving() {
+        attachToLand();
+        Permanent aura = findPermanent(player1, "Friendly Neighborhood");
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A land controller with no creatures gives an opposing creature no boost")
+    void zeroControlledCreaturesGivesNoBoost() {
+        attachToLand();
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The granted ability cannot be activated while another ability is on the stack")
+    void abilityRequiresEmptyStack() {
+        attachToLand();
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        Permanent secondLand = harness.addToBattlefieldAndReturn(player1, new Plains());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player1, new FriendlyNeighborhood());
+        secondAura.setAttachedTo(secondLand.getId());
+        int landIndex = gd.playerBattlefields.get(player1.getId()).indexOf(secondLand);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, landIndex, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(secondLand.isTapped()).isFalse();
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
     }
 
     private Permanent attachToLand() {

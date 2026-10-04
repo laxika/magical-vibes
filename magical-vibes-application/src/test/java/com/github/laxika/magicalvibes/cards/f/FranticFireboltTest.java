@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.Duress;
 import com.github.laxika.magicalvibes.cards.g.GarenbrigCarver;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TerritorialWitchstalker;
 import com.github.laxika.magicalvibes.cards.y.YavimayaWurm;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FranticFirebolt.class, Duress.class, FountainOfYouth.class, GarenbrigCarver.class,
-        LlanowarElves.class, Shock.class, YavimayaWurm.class})
+        LlanowarElves.class, Shock.class, TerritorialWitchstalker.class, YavimayaWurm.class})
 class FranticFireboltTest extends BaseCardTest {
 
     @Test
@@ -61,12 +62,55 @@ class FranticFireboltTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    void ignoresOpponentsGraveyardAndCardsOutsideGraveyard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TerritorialWitchstalker());
+        harness.setGraveyard(player2, List.of(new FranticFirebolt(), new FranticFirebolt()));
+        harness.setExile(player1, List.of(new FranticFirebolt()));
+        harness.setLibrary(player1, List.of(new FranticFirebolt()));
+
+        castFranticFirebolt(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Territorial Witchstalker");
+    }
+
+    @Test
+    void countsCardsAddedToGraveyardBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TerritorialWitchstalker());
+        harness.setHand(player1, List.of(new FranticFirebolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, target.getId());
+
+        harness.setGraveyard(player1, List.of(new FranticFirebolt()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Territorial Witchstalker");
+        harness.assertInGraveyard(player2, "Territorial Witchstalker");
+    }
+
+    @Test
+    void doesNotCountCardsRemovedFromGraveyardBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new TerritorialWitchstalker());
+        harness.setGraveyard(player1, List.of(new FranticFirebolt()));
+        harness.setHand(player1, List.of(new FranticFirebolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, target.getId());
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Territorial Witchstalker");
+    }
+
     private void castFranticFirebolt(Permanent target) {
         harness.setHand(player1, List.of(new FranticFirebolt()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }

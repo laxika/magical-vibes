@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DDP", collectorNumber = "27")
+@CardRegistration(set = "BFZ", collectorNumber = "221")
 public class VeteranWarleader extends Card {
 
     public VeteranWarleader() {

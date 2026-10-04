@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.g.Gelectrode;
 import com.github.laxika.magicalvibes.cards.g.GruulScrapper;
 import com.github.laxika.magicalvibes.cards.i.IzzetSignet;
+import com.github.laxika.magicalvibes.cards.s.ScabClanMauler;
 import com.github.laxika.magicalvibes.cards.t.TorchDrake;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Frazzle.class, GruulScrapper.class, TorchDrake.class, IzzetSignet.class})
+@CardUsed({Frazzle.class, GruulScrapper.class, TorchDrake.class, IzzetSignet.class, Gelectrode.class, ScabClanMauler.class})
 class FrazzleTest extends BaseCardTest {
 
     @Test
@@ -63,5 +65,37 @@ class FrazzleTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Izzet Signet");
         harness.assertNotOnBattlefield(player1, "Izzet Signet");
+    }
+
+    @Test
+    void cannotTargetMulticoloredSpellContainingBlue() {
+        Gelectrode gelectrode = new Gelectrode();
+        harness.castFromHand(player1, gelectrode, "{1}{U}{R}");
+
+        harness.setHand(player2, List.of(new Frazzle()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, gelectrode.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nonblue spell");
+    }
+
+    @Test
+    void countersMulticoloredSpellWithoutBlue() {
+        ScabClanMauler mauler = new ScabClanMauler();
+        harness.castFromHand(player1, mauler, "{R}{G}");
+
+        harness.setHand(player2, List.of(new Frazzle()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, mauler.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Scab-Clan Mauler");
+        harness.assertNotOnBattlefield(player1, "Scab-Clan Mauler");
+        harness.assertInGraveyard(player2, "Frazzle");
     }
 }

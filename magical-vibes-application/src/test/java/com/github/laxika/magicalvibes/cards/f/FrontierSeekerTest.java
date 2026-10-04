@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TrainedArynx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FrontierSeeker.class, GrizzlyBears.class, Plains.class, Shock.class})
+@CardUsed({FrontierSeeker.class, GrizzlyBears.class, Plains.class, Shock.class, TrainedArynx.class})
 class FrontierSeekerTest extends BaseCardTest {
 
     @Test
@@ -70,18 +71,102 @@ class FrontierSeekerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("A real Mount can be chosen while the untouched library stays above the bottomed cards")
+    void choosesRealMountAndPreservesUntouchedLibrary() {
+        TrainedArynx mount = new TrainedArynx();
+        Plains plains = new Plains();
+        FrontierSeeker first = new FrontierSeeker();
+        FrontierSeeker second = new FrontierSeeker();
+        FrontierSeeker third = new FrontierSeeker();
+        Plains untouchedFirst = new Plains();
+        TrainedArynx untouchedSecond = new TrainedArynx();
+        harness.setLibrary(player1, List.of(mount, plains, first, second, third,
+                untouchedFirst, untouchedSecond));
+        castFrontierSeeker();
+
+        PendingInteraction.LibraryRevealChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(mount.getId(), plains.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(mount.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(mount);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(0, 2))
+                .containsExactly(untouchedFirst, untouchedSecond);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(2, 6))
+                .containsExactlyInAnyOrder(plains, first, second, third);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("May choose Plains when the library contains fewer than five cards")
+    void choosesPlainsFromShortLibrary() {
+        Plains plains = new Plains();
+        FrontierSeeker nonmatching = new FrontierSeeker();
+        harness.setLibrary(player1, List.of(nonmatching, plains));
+        castFrontierSeeker();
+
+        harness.handleMultipleCardsChosen(player1, List.of(plains.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(plains);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonmatching);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("May decline even when the only card in the library is eligible")
+    void mayDeclineOnlyEligibleCard() {
+        TrainedArynx mount = new TrainedArynx();
+        harness.setLibrary(player1, List.of(mount));
+        castFrontierSeeker();
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(mount);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("No matching cards are bottomed without offering a choice or looking at the sixth card")
+    void noMatchesAmongTopFive() {
+        List<Card> topFive = List.of(new FrontierSeeker(), new FrontierSeeker(),
+                new FrontierSeeker(), new FrontierSeeker(), new FrontierSeeker());
+        Plains sixth = new Plains();
+        java.util.ArrayList<Card> library = new java.util.ArrayList<>(topFive);
+        library.add(sixth);
+        harness.setLibrary(player1, library);
+        castFrontierSeeker();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(sixth);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, 6))
+                .containsExactlyInAnyOrderElementsOf(topFive);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library resolves without a choice or a draw")
+    void emptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        castFrontierSeeker();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castFrontierSeeker() {
         harness.setHand(player1, List.of(new FrontierSeeker()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void setupTopFive(List<Card> cards) {
-        harness.getGameData().playerDecks.get(player1.getId()).clear();
-        harness.getGameData().playerDecks.get(player1.getId()).addAll(cards);
+        harness.setLibrary(player1, cards);
     }
 
     private GrizzlyBears mountCreature() {

@@ -89,9 +89,22 @@ class FruitionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.setLife(player1, 20);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Counts Forests when the spell resolves rather than when cast")
+    void countsForestsAtResolution() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new Fruition(), "{G}");
+
+        harness.addToBattlefield(player2, new Forest());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
     }
 }
