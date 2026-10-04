@@ -10,7 +10,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -62,13 +61,46 @@ class HeatRayTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new HeatRay()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        UUID forestId = harness.getPermanentId(player2, "Forest");
+        assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 1, List.of(forest.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
 
-        assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 1, List.of(forestId)))
+    @Test
+    @DisplayName("Can deal damage to a creature controlled by the caster")
+    void canTargetOwnCreature() {
+        Permanent goblins = harness.addToBattlefieldAndReturn(player1, new GoblinSpelunkers());
+        harness.setHand(player1, List.of(new HeatRay()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstantForX(player1, 0, 1, List.of(goblins.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Goblin Spelunkers");
+        assertThat(goblins.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Heat Ray");
+    }
+
+    @Test
+    @DisplayName("Cannot target a player")
+    void cannotTargetPlayer() {
+        harness.setHand(player1, List.of(new HeatRay()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 1, List.of(player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Requires a creature target even when X is zero")
+    void requiresTargetWhenXIsZero() {
+        harness.setHand(player1, List.of(new HeatRay()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 0, List.of()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
