@@ -116,13 +116,68 @@ class GenjuOfTheRealmTest extends BaseCardTest {
     @Test
     @DisplayName("Genju can enchant only a land")
     void cannotEnchantNonland() {
-        harness.addToBattlefield(player1, new GnarledMass());
-        Permanent creature = findPermanent(player1, "Gnarled Mass");
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GnarledMass());
         harness.setHand(player1, List.of(new GenjuOfTheRealm()));
         addGenjuMana(player1);
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An activation still animates the land when Genju leaves before resolution")
+    void activationUsesLastKnownAttachment() {
+        Permanent land = addEnchantedLand(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        activateGenju(player1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(
+                gd, findPermanent(player1, "Genju of the Realm")));
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.isLand(gd, land)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(12);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, land)).contains(CardSubtype.SPIRIT);
+        assertThat(gqs.hasKeyword(gd, land, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasEffectiveSupertype(gd, land, CardSupertype.LEGENDARY)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing Genju after resolution does not end the land's animation")
+    void animationSurvivesAuraRemoval() {
+        Permanent land = addEnchantedLand(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        activateGenju(player1);
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(
+                gd, findPermanent(player1, "Genju of the Realm")));
+
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(12);
+        assertThat(gqs.hasKeyword(gd, land, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasEffectiveSupertype(gd, land, CardSupertype.LEGENDARY)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Genju returns to its controller when an opponent's enchanted land goes to the graveyard")
+    void opponentsLandDeathReturnsAuraToOwner() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new TendoIceBridge());
+        harness.setHand(player1, List.of(new GenjuOfTheRealm()));
+        addGenjuMana(player1);
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, land));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Genju of the Realm");
+        harness.assertNotInHand(player2, "Genju of the Realm");
+        harness.assertInGraveyard(player2, "Tendo Ice Bridge");
     }
 
     private Permanent addEnchantedLand(Player controller) {

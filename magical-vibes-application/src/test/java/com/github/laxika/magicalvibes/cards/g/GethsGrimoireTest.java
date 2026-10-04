@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,7 +26,7 @@ class GethsGrimoireTest extends BaseCardTest {
     @DisplayName("Accepting the trigger draws a card when an opponent discards")
     void acceptingTriggerDrawsCard() {
         harness.addToBattlefield(player1, new GethsGrimoire());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.setLibrary(player1, List.of(new Swamp()));
 
         harness.setHand(player1, List.of(new Distress()));
@@ -47,7 +46,7 @@ class GethsGrimoireTest extends BaseCardTest {
     @DisplayName("Declining the trigger does not draw a card")
     void decliningTriggerDoesNotDrawCard() {
         harness.addToBattlefield(player1, new GethsGrimoire());
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
         harness.setLibrary(player1, List.of(new Swamp()));
 
         harness.setHand(player1, List.of(new Distress()));
@@ -91,15 +90,60 @@ class GethsGrimoireTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
-        gd.playerDecks.get(player1.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         harness.setHand(player1, List.of(new Sift()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleCardChosen(player1, 0);
 
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Each discard trigger has an independent optional draw choice")
+    void canDeclineOneTriggerAndAcceptTheNext() {
+        harness.addToBattlefield(player1, new GethsGrimoire());
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Swamp(), new Swamp()));
+        harness.setHand(player1, List.of(new HymnToTourach()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Swamp");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's voluntary discard draws for the Grimoire's controller")
+    void opponentControlledGrimoireDrawsFromVoluntaryDiscard() {
+        harness.addToBattlefield(player2, new GethsGrimoire());
+        harness.setLibrary(player2, List.of(new Swamp()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Sift()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Swamp");
+        assertThat(gd.stack).isEmpty();
     }
 }

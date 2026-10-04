@@ -71,8 +71,59 @@ class GhituSlingerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Ghitu Slinger");
 
         advanceToUpkeep(player1);
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Ghitu Slinger");
+    }
+
+    @Test
+    void echoStillAppliesWhenDamageTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GiantCockroach());
+        harness.setHand(player1, List.of(new GhituSlinger()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, target));
+        resolveAllTriggers();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertNotOnBattlefield(player1, "Ghitu Slinger");
+        harness.assertInGraveyard(player1, "Ghitu Slinger");
+    }
+
+    @Test
+    void damageStillResolvesWhenGhituSlingerLeavesBeforeItsTrigger() {
+        harness.setHand(player1, List.of(new GhituSlinger()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+
+        Permanent slinger = findPermanent(player1, "Ghitu Slinger");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, slinger));
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Ghitu Slinger");
+    }
+
+    @Test
+    void canDealDamageToItsController() {
+        castAndResolveGhituSlinger(player1.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
     private void castAndResolveGhituSlinger(java.util.UUID targetId) {
@@ -80,7 +131,6 @@ class GhituSlingerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castCreature(player1, 0, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

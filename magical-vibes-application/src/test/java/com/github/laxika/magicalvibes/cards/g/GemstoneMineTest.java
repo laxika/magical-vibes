@@ -9,13 +9,15 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GemstoneMine.class)
+@CardUsed({GemstoneMine.class})
 class GemstoneMineTest extends BaseCardTest {
 
     @Test
@@ -87,6 +89,46 @@ class GemstoneMineTest extends BaseCardTest {
         assertThat(mine.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.assertOnBattlefield(player1, "Gemstone Mine");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("Can produce each color immediately after entering the battlefield")
+    void producesEachColorImmediatelyAfterEntering(ManaColor color) {
+        Permanent mine = harness.enterBattlefieldAndReturn(player1, new GemstoneMine());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(mine.getCounterCount(CounterType.MINING)).isEqualTo(2);
+        assertThat(mine.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Gemstone Mine");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Three successive uses exhaust the counters and sacrifice the land")
+    void threeUsesExhaustCountersAndSacrificeLand() {
+        Permanent mine = harness.enterBattlefieldAndReturn(player1, new GemstoneMine());
+
+        for (int use = 1; use <= 3; use++) {
+            harness.activateAbility(player1, 0, null, null);
+            harness.handleListChoice(player1, "GREEN");
+
+            assertThat(mine.getCounterCount(CounterType.MINING)).isEqualTo(3 - use);
+            assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(use);
+            assertThat(gd.stack).isEmpty();
+            if (use < 3) {
+                harness.assertOnBattlefield(player1, "Gemstone Mine");
+                harness.assertNotInGraveyard(player1, "Gemstone Mine");
+                harness.performUntapStep(player1);
+            }
+        }
+
+        harness.assertNotOnBattlefield(player1, "Gemstone Mine");
+        harness.assertInGraveyard(player1, "Gemstone Mine");
     }
 
     private Permanent addReadyMine(Player player) {

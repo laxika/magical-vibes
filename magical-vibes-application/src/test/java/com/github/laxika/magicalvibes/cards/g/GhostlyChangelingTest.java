@@ -1,17 +1,19 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.cards.i.ImperiousPerfect;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GhostlyChangeling.class, ImperiousPerfect.class})
 class GhostlyChangelingTest extends BaseCardTest {
 
     @Test
@@ -24,7 +26,7 @@ class GhostlyChangelingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent changeling = findByName(gd, player1, "Ghostly Changeling");
+        Permanent changeling = findPermanent(player1, "Ghostly Changeling");
         assertThat(changeling.getPowerModifier()).isEqualTo(1);
         assertThat(changeling.getToughnessModifier()).isEqualTo(1);
     }
@@ -42,7 +44,7 @@ class GhostlyChangelingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent changeling = findByName(gd, player1, "Ghostly Changeling");
+        Permanent changeling = findPermanent(player1, "Ghostly Changeling");
         assertThat(changeling.getPowerModifier()).isEqualTo(2);
         assertThat(changeling.getToughnessModifier()).isEqualTo(2);
     }
@@ -67,7 +69,7 @@ class GhostlyChangelingTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent changeling = findByName(gd, player1, "Ghostly Changeling");
+        Permanent changeling = findPermanent(player1, "Ghostly Changeling");
         assertThat(changeling.getPowerModifier()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -78,17 +80,48 @@ class GhostlyChangelingTest extends BaseCardTest {
         assertThat(changeling.getToughnessModifier()).isEqualTo(0);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Changeling receives the bonus for other Elves you control")
+    void receivesElfTribalBonus() {
+        Permanent changeling = harness.addToBattlefieldAndReturn(player1, new GhostlyChangeling());
+        harness.addToBattlefield(player1, new ImperiousPerfect());
 
-    private Permanent addChangelingReady(Player player) {
-        GhostlyChangeling card = new GhostlyChangeling();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        assertThat(gqs.getEffectivePower(gd, changeling)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, changeling)).isEqualTo(3);
     }
 
-    private Permanent findByName(GameData gd, Player player, String name) {
-        return findPermanent(player, name);
+    @Test
+    @DisplayName("Ability can be activated while tapped and summoning sick")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent changeling = harness.addToBattlefieldAndReturn(player1, new GhostlyChangeling());
+        changeling.setSummoningSick(true);
+        changeling.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(changeling.getPowerModifier()).isZero();
+        assertThat(changeling.getToughnessModifier()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(changeling.getPowerModifier()).isEqualTo(1);
+        assertThat(changeling.getToughnessModifier()).isEqualTo(1);
+        assertThat(changeling.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two colorless mana cannot pay the black requirement")
+    void requiresBlackMana() {
+        addChangelingReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private Permanent addChangelingReady(Player player) {
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GhostlyChangeling());
+        perm.setSummoningSick(false);
+        return perm;
     }
 }

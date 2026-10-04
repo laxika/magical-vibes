@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.n.NessianCourser;
 import com.github.laxika.magicalvibes.cards.n.NewBenalia;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -99,8 +98,7 @@ class GiftOfGraniteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -113,5 +111,27 @@ class GiftOfGraniteTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Multiple Gifts of Granite stack and boost only their enchanted creature")
+    void multipleCopiesBoostOnlyEnchantedCreature() {
+        Permanent enchanted = addCreatureReady(player1, new NessianCourser());
+        Permanent other = addCreatureReady(player1, new NessianCourser());
+        Permanent opposing = addCreatureReady(player2, new NessianCourser());
+        harness.setHand(player1, List.of(new GiftOfGranite(), new GiftOfGranite()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(7);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(3);
     }
 }

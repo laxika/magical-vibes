@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.t.ThoseWhoServe;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GideonsResolve.class, GideonMartialParagon.class, ThoseWhoServe.class, Opalescence.class})
 class GideonsResolveTest extends BaseCardTest {
 
     @Test
@@ -48,8 +49,7 @@ class GideonsResolveTest extends BaseCardTest {
     @DisplayName("Accepting may searches library when not in graveyard")
     void acceptingMaySearchesLibrary() {
         Card gideon = createGideonMartialParagon();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(gideon);
+        harness.setLibrary(player1, List.of(gideon));
         setupAndCast();
 
         harness.passBothPriorities();
@@ -106,39 +106,94 @@ class GideonsResolveTest extends BaseCardTest {
     @DisplayName("Own creatures get +1/+1")
     void buffsOwnCreatures() {
         harness.addToBattlefield(player1, new GideonsResolve());
-        harness.addToBattlefield(player1, new EliteVanguard());
+        harness.addToBattlefield(player1, new ThoseWhoServe());
 
-        Permanent vanguard = findPermanent(player1, "Elite Vanguard");
+        Permanent vanguard = findPermanent(player1, "Those Who Serve");
 
-        // Elite Vanguard is 2/1, with +1/+1 should be 3/2
+        // Those Who Serve is 2/4, with +1/+1 should be 3/5
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(5);
     }
 
     @Test
     @DisplayName("Opponent's creatures do not get buffed")
     void doesNotBuffOpponentCreatures() {
         harness.addToBattlefield(player1, new GideonsResolve());
-        harness.addToBattlefield(player2, new EliteVanguard());
+        harness.addToBattlefield(player2, new ThoseWhoServe());
 
-        Permanent opponentVanguard = findPermanent(player2, "Elite Vanguard");
+        Permanent opponentVanguard = findPermanent(player2, "Those Who Serve");
 
         assertThat(gqs.getEffectivePower(gd, opponentVanguard)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, opponentVanguard)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentVanguard)).isEqualTo(4);
     }
 
     private void setupAndCast() {
-        harness.setHand(player1, List.of(new GideonsResolve()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new GideonsResolve(), "{4}{W}");
     }
 
     private Card createGideonMartialParagon() {
-        Card gideon = new Card();
-        gideon.setName("Gideon, Martial Paragon");
-        gideon.setType(CardType.PLANESWALKER);
-        gideon.setManaCost("{4}{W}");
-        return gideon;
+        return new GideonMartialParagon();
+    }
+
+    @Test
+    void librarySearchPutsChosenCardIntoHand() {
+        Card gideon = new GideonMartialParagon();
+        harness.setLibrary(player1, List.of(gideon));
+        setupAndCast();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(gideon);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void mayFailToFindInLibrary() {
+        Card gideon = new GideonMartialParagon();
+        harness.setLibrary(player1, List.of(gideon));
+        setupAndCast();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(gideon);
+    }
+
+    @Test
+    void acceptingSearchDoesNotAutomaticallyTakeGraveyardCopyWhenLibraryAlsoHasOne() {
+        Card graveyardGideon = new GideonMartialParagon();
+        Card libraryGideon = new GideonMartialParagon();
+        harness.setGraveyard(player1, List.of(graveyardGideon));
+        harness.setLibrary(player1, List.of(libraryGideon));
+        setupAndCast();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyardGideon);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    void multipleResolvesStackTheirBoosts() {
+        harness.addToBattlefield(player1, new GideonsResolve());
+        harness.addToBattlefield(player1, new GideonsResolve());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ThoseWhoServe());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+    }
+    @Test
+    void animatedResolveAlsoGetsItsOwnBoost() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent resolve = harness.addToBattlefieldAndReturn(player1, new GideonsResolve());
+
+        assertThat(gqs.getEffectivePower(gd, resolve)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, resolve)).isEqualTo(6);
     }
 }

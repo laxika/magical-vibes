@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -32,18 +31,19 @@ class GertAndOldLaceRunawaysTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
-        harness.passBothPriorities();
 
         PendingInteraction.LibrarySearch search =
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
         assertThat(search.params().cards())
                 .hasSize(2)
                 .allMatch(card -> card.hasType(CardType.LAND)
                         && card.getSupertypes().contains(CardSupertype.BASIC));
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.HAND);
+        assertThat(search.params().reveals()).isTrue();
+        assertThat(search.params().shuffleAfterSelection()).isTrue();
 
-        harness.getGameService().handleInteractionAnswer(
-                gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(card ->
@@ -66,6 +66,52 @@ class GertAndOldLaceRunawaysTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName())
                 .containsExactly("Forest");
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void cannotSearchWithoutACardToDiscard() {
+        harness.setHand(player1, List.of(new GertAndOldLaceRunaways()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        addCastingMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Forest");
+    }
+
+    @Test
+    void canDiscardALandAndFailToFindEvenWithABasicLandAvailable() {
+        harness.setHand(player1, List.of(new GertAndOldLaceRunaways(), new Island()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        addCastingMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().canFailToFind()).isTrue();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInGraveyard(player1, "Island");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addCastingMana() {
