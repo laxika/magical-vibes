@@ -29,8 +29,7 @@ class GazeOfTheGorgonTest extends BaseCardTest {
         Permanent blockerTwo = addCreatureReady(player2, new GlassGolem());
         Permanent bystander = addCreatureReady(player2, new GlassGolem());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
 
         castGaze(player1, target);
@@ -54,8 +53,7 @@ class GazeOfTheGorgonTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GoliathSpider());
         Permanent target = addCreatureReady(player2, new GlassGolem());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         castGaze(player1, target);
@@ -84,6 +82,51 @@ class GazeOfTheGorgonTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Includes creatures that block after the spell resolves")
+    void includesBlockersDeclaredAfterResolution() {
+        Permanent target = addCreatureReady(player1, new Watchwolf());
+        Permanent blocker = addCreatureReady(player2, new GoliathSpider());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            castGaze(player1, target);
+            resolveAllTriggers();
+        });
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+    }
+
+    @Test
+    @DisplayName("End-of-combat destruction waits for its delayed trigger to resolve")
+    void destructionUsesTheStackAtEndOfCombat() {
+        Permanent target = addCreatureReady(player1, new Watchwolf());
+        Permanent blocker = addCreatureReady(player2, new GoliathSpider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        castGaze(player1, target);
+        resolveAllTriggers();
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(gd.stack).isNotEmpty();
+
+        castGaze(player2, blocker);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(blocker.getRegenerationShield()).isZero();
+        assertThat(blocker.isTapped()).isTrue();
     }
 
     private void castGaze(Player caster, Permanent target) {
