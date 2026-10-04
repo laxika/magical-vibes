@@ -50,6 +50,37 @@ class HuntingPackTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Beast")).hasSize(3);
     }
 
+    @Test
+    @DisplayName("Spells cast in response do not increase an earlier storm count")
+    void laterSpellDoesNotIncreaseEarlierStormCount() {
+        castHuntingPack();
+        harness.castFromHand(player2, new HuntingPack(), "{5}{G}{G}");
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Beast")).hasSize(1);
+        assertThat(findPermanents(player2, "Beast")).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Storm copies are not casts and do not increase a later storm count")
+    void copiesDoNotIncreaseLaterStormCount() {
+        castHuntingPack();
+        resolveAllTriggers();
+        castHuntingPack();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Beast")).hasSize(3);
+
+        castHuntingPack();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Beast")).hasSize(6);
+        assertThat(findPermanents(player2, "Beast")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castHuntingPack() {
         harness.castFromHand(player1, new HuntingPack(), "{5}{G}{G}");
     }
