@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AngelsMercy;
+import com.github.laxika.magicalvibes.cards.a.AnnihilatingFire;
+import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,17 +18,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Guttersnipe.class, AngelsMercy.class, MindRot.class, GrizzlyBears.class,
+        AnnihilatingFire.class, Cancel.class})
 class GuttersnipeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting an instant triggers 2 damage to each opponent")
     void instantSpellDealsDamage() {
         harness.addToBattlefield(player1, new Guttersnipe());
-        harness.setHand(player1, List.of(new AngelsMercy()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new AngelsMercy(), "{2}{W}{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -45,8 +47,7 @@ class GuttersnipeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -56,10 +57,7 @@ class GuttersnipeTest extends BaseCardTest {
     @DisplayName("Casting a creature does not trigger")
     void creatureSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new Guttersnipe());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -75,11 +73,7 @@ class GuttersnipeTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new AngelsMercy()));
-        harness.addMana(player2, ManaColor.WHITE, 2);
-        harness.addMana(player2, ManaColor.COLORLESS, 2);
-
-        harness.castInstant(player2, 0);
+        harness.castFromHand(player2, new AngelsMercy(), "{2}{W}{W}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -103,5 +97,71 @@ class GuttersnipeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Each Guttersnipe triggers independently for one spell")
+    void multipleGuttersnipesEachDealDamage() {
+        harness.addToBattlefield(player1, new Guttersnipe());
+        harness.addToBattlefield(player1, new Guttersnipe());
+        harness.setHand(player1, List.of(new MindRot()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
+    }
+
+    @Test
+    @DisplayName("A queued trigger deals damage after Guttersnipe leaves the battlefield")
+    void triggerSurvivesSourceRemoval() {
+        Permanent guttersnipe = harness.addToBattlefieldAndReturn(player1, new Guttersnipe());
+        harness.setHand(player1, List.of(new MindRot()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        harness.setHand(player2, List.of(new AnnihilatingFire()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, guttersnipe.getId());
+
+        harness.assertNotOnBattlefield(player1, "Guttersnipe");
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Countering the triggering spell does not counter Guttersnipe's ability")
+    void triggerSurvivesCounteredSpell() {
+        harness.addToBattlefield(player1, new Guttersnipe());
+        MindRot spell = new MindRot();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, spell.getId());
+
+        harness.assertInGraveyard(player1, "Mind Rot");
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
     }
 }
