@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,26 +14,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({GrunnTheLonelyKing.class, BalothGorger.class})
 class GrunnTheLonelyKingTest extends BaseCardTest {
-
-    // ===== Card setup =====
-
-    @Test
-    @DisplayName("Has KickerEffect with cost {3}")
-    void hasKickerEffect() {
-        GrunnTheLonelyKing card = new GrunnTheLonelyKing();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{3}"));
-    }
-
-    
-
-    
-
-    // ===== Casting without kicker =====
 
     @Test
     @DisplayName("Cast without kicker — enters as 5/5 with no counters")
@@ -44,12 +28,10 @@ class GrunnTheLonelyKingTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent grunn = findGrunn(player1);
+        Permanent grunn = findPermanent(player1, "Grunn, the Lonely King");
         assertThat(grunn).isNotNull();
         assertThat(grunn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
-
-    // ===== Casting with kicker =====
 
     @Test
     @DisplayName("Cast with kicker — enters with five +1/+1 counters")
@@ -61,17 +43,15 @@ class GrunnTheLonelyKingTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
 
-        Permanent grunn = findGrunn(player1);
+        Permanent grunn = findPermanent(player1, "Grunn, the Lonely King");
         assertThat(grunn).isNotNull();
         assertThat(grunn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
     }
 
-    // ===== Attacks alone — trigger fires =====
-
     @Test
     @DisplayName("Attacking alone puts trigger on the stack")
     void attackingAlonePutsTriggerOnStack() {
-        Permanent grunn = addCreatureReady(player1, new GrunnTheLonelyKing());
+        addCreatureReady(player1, new GrunnTheLonelyKing());
 
         declareAttackers(player1, List.of(0));
 
@@ -109,13 +89,11 @@ class GrunnTheLonelyKingTest extends BaseCardTest {
         assertThat(toughness).isEqualTo(20);
     }
 
-    // ===== Not attacking alone — trigger does not fire =====
-
     @Test
     @DisplayName("Attacking with another creature — trigger does not fire")
     void attackingWithOtherCreatureNoTrigger() {
-        Permanent grunn = addCreatureReady(player1, new GrunnTheLonelyKing());
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrunnTheLonelyKing());
+        addCreatureReady(player1, new BalothGorger());
 
         declareAttackers(player1, List.of(0, 1));
 
@@ -127,7 +105,7 @@ class GrunnTheLonelyKingTest extends BaseCardTest {
     @DisplayName("Attacking with another creature — power/toughness remain base values")
     void attackingWithOtherCreatureNoPTChange() {
         Permanent grunn = addCreatureReady(player1, new GrunnTheLonelyKing());
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new BalothGorger());
 
         declareAttackers(player1, List.of(0, 1));
 
@@ -137,11 +115,78 @@ class GrunnTheLonelyKingTest extends BaseCardTest {
         assertThat(toughness).isEqualTo(5);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Kicker consumes three additional mana")
+    void kickerConsumesAdditionalMana() {
+        harness.setHand(player1, List.of(new GrunnTheLonelyKing()));
+        harness.addMana(player1, ManaColor.GREEN, 9);
 
-    private Permanent findGrunn(Player player) {
-        return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Grunn, the Lonely King"))
-                .findFirst().orElse(null);
+        harness.castKickedCreature(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Grunn, the Lonely King")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Nonattacking creatures do not prevent the attacks-alone trigger")
+    void otherCreatureStayingBackDoesNotPreventTrigger() {
+        Permanent grunn = addCreatureReady(player1, new GrunnTheLonelyKing());
+        addCreatureReady(player1, new BalothGorger());
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, grunn)).isEqualTo(10);
+        assertThat(gqs.getEffectiveToughness(gd, grunn)).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Doubling uses power and toughness at resolution and is a fixed bonus afterward")
+    void doublingUsesResolutionValues() {
+        Permanent grunn = addCreatureReady(player1, new GrunnTheLonelyKing());
+
+        declareAttackers(player1, List.of(0));
+        grunn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, grunn)).isEqualTo(14);
+        assertThat(gqs.getEffectiveToughness(gd, grunn)).isEqualTo(14);
+
+        grunn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        assertThat(gqs.getEffectivePower(gd, grunn)).isEqualTo(15);
+        assertThat(gqs.getEffectiveToughness(gd, grunn)).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("Doubling expires at end of turn while counters remain")
+    void doublingExpiresAtEndOfTurn() {
+        Permanent grunn = addCreatureReady(player1, new GrunnTheLonelyKing());
+        grunn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, grunn)).isEqualTo(14);
+        assertThat(gqs.getEffectiveToughness(gd, grunn)).isEqualTo(14);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, grunn)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, grunn)).isEqualTo(7);
+        assertThat(grunn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Doubling handles negative power independently of toughness")
+    void doublingNegativePower() {
+        Permanent grunn = addCreatureReady(player1, new GrunnTheLonelyKing());
+        grunn.setPowerModifier(-7);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, grunn)).isEqualTo(-4);
+        assertThat(gqs.getEffectiveToughness(gd, grunn)).isEqualTo(10);
     }
 }
