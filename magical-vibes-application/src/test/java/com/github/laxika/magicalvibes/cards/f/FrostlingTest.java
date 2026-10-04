@@ -76,4 +76,57 @@ class FrostlingTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
+
+    @Test
+    @DisplayName("Can target itself, but the ability has no legal target after sacrifice")
+    void canTargetItself() {
+        Permanent frostling = harness.addToBattlefieldAndReturn(player1, new Frostling());
+
+        harness.activateAbility(player1, 0, null, frostling.getId());
+
+        harness.assertInGraveyard(player1, "Frostling");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Frostling");
+    }
+
+    @Test
+    @DisplayName("A target sacrificed in response receives no damage and Frostling stays sacrificed")
+    void targetSacrificedInResponse() {
+        harness.addToBattlefield(player1, new Frostling());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BileUrchin());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertInGraveyard(player2, "Bile Urchin");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Frostling");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent frostling = harness.addToBattlefieldAndReturn(player1, new Frostling());
+        frostling.tap();
+        frostling.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GoblinCohort());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Frostling");
+        harness.assertOnBattlefield(player2, "Goblin Cohort");
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
 }

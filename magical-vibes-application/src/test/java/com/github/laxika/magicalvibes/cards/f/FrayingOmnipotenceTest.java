@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FrayingOmnipotence.class, GrizzlyBears.class, Peek.class, Forest.class})
 class FrayingOmnipotenceTest extends BaseCardTest {
 
     private List<UUID> creatureIds(Player player, int limit) {
@@ -35,8 +37,7 @@ class FrayingOmnipotenceTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // ceil(20/2) = 10 -> 10; ceil(9/2) = 5 -> 4
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
@@ -56,8 +57,7 @@ class FrayingOmnipotenceTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Peek(), new Forest())));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
@@ -89,8 +89,7 @@ class FrayingOmnipotenceTest extends BaseCardTest {
             harness.addToBattlefield(player1, new GrizzlyBears());
         }
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -115,8 +114,7 @@ class FrayingOmnipotenceTest extends BaseCardTest {
         // One creature -> ceil(1/2) = 1, so the whole board goes with no choice.
         harness.addToBattlefield(player1, new GrizzlyBears());
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(0);
@@ -136,8 +134,7 @@ class FrayingOmnipotenceTest extends BaseCardTest {
             harness.addToBattlefield(player1, new GrizzlyBears()); // ceil(3/2) = 2
         }
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
 
@@ -150,5 +147,65 @@ class FrayingOmnipotenceTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Discard choices remain hidden until every player has chosen")
+    void discardsOnlyAfterBothPlayersChoose() {
+        Forest firstDiscard = new Forest();
+        Forest secondDiscard = new Forest();
+        harness.setHand(player1, List.of(new FrayingOmnipotence(), firstDiscard, new Forest()));
+        harness.setHand(player2, List.of(secondDiscard, new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, 0);
+
+        boolean firstCardAlreadyInGraveyard = gd.playerGraveyards.get(player1.getId()).contains(firstDiscard);
+        PendingInteraction.DiscardChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
+        assertThat(opponentChoice).isNotNull();
+        assertThat(opponentChoice.playerId()).isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(firstCardAlreadyInGraveyard).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstDiscard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(secondDiscard);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Both players choose creatures before simultaneous sacrifice, ignoring lands")
+    void sacrificesBothPlayersCreaturesTogether() {
+        harness.setHand(player1, List.of(new FrayingOmnipotence()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new GrizzlyBears());
+        }
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player2, new GrizzlyBears());
+        }
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultiplePermanentsChosen(player1, creatureIds(player1, 2));
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.maxCount()).isEqualTo(2);
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(3);
+        assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(4);
+        harness.handleMultiplePermanentsChosen(player2, creatureIds(player2, 2));
+
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

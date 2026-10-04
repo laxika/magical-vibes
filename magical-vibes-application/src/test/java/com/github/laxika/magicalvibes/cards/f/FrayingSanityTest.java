@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.s.StripedRiverwinder;
+import com.github.laxika.magicalvibes.cards.w.WanderInDeath;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,9 +17,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FrayingSanity.class, StripedRiverwinder.class, WanderInDeath.class})
 class FrayingSanityTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Resolving Fraying Sanity attaches it to the target player")
@@ -33,8 +35,6 @@ class FrayingSanityTest extends BaseCardTest {
                         && p.isAttached()
                         && p.getAttachedTo().equals(player2.getId()));
     }
-
-    // ===== End step mill trigger =====
 
     @Test
     @DisplayName("Enchanted player mills a number of cards equal to cards put into their graveyard this turn")
@@ -98,12 +98,84 @@ class FrayingSanityTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Multiple Curses recalculate the graveyard count as each trigger resolves")
+    void multipleCursesCompoundMilling() {
+        attachFrayingSanityTo(player2);
+        attachFrayingSanityTo(player2);
+        seedCardsPutIntoGraveyardThisTurn(player2, 2);
+        int graveyardBefore = gd.playerGraveyards.get(player2.getId()).size();
+
+        advanceToEndStep(player2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(graveyardBefore + 6);
+    }
+
+    @Test
+    @DisplayName("A queued trigger still mills after its Aura leaves the battlefield")
+    void queuedTriggerSurvivesAuraRemoval() {
+        Permanent aura = attachFrayingSanityTo(player2);
+        seedCardsPutIntoGraveyardThisTurn(player2, 2);
+        int graveyardBefore = gd.playerGraveyards.get(player2.getId()).size();
+
+        advanceToEndStep(player2);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(graveyardBefore + 2);
+    }
+
+    @Test
+    @DisplayName("Milling more cards than remain in the library mills all remaining cards")
+    void millsOnlyAvailableCards() {
+        attachFrayingSanityTo(player2);
+        seedCardsPutIntoGraveyardThisTurn(player2, 3);
+        harness.setLibrary(player2, List.of(new FrayingSanity()));
+        int graveyardBefore = gd.playerGraveyards.get(player2.getId()).size();
+
+        advanceToEndStep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(graveyardBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Counts each graveyard entry when the same card is cycled twice in one turn")
+    void countsRepeatedGraveyardEntries() {
+        attachFrayingSanityTo(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        StripedRiverwinder riverwinder = new StripedRiverwinder();
+        harness.setHand(player1, List.of(riverwinder, new WanderInDeath()));
+        harness.setLibrary(player1, List.of(new FrayingSanity(), new FrayingSanity(),
+                new FrayingSanity(), new FrayingSanity(), new FrayingSanity(), new FrayingSanity()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.castSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(riverwinder.getId()));
+        harness.passBothPriorities();
+        int riverwinderIndex = gd.playerHands.get(player1.getId()).indexOf(riverwinder);
+        assertThat(riverwinderIndex).isNotNegative();
+        harness.activateHandAbility(player1, riverwinderIndex, null);
+        harness.passBothPriorities();
+        int graveyardBefore = gd.playerGraveyards.get(player1.getId()).size();
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        // Two cycling discards and the resolved return spell each entered the graveyard this turn.
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(graveyardBefore + 3);
+    }
 
     private Permanent attachFrayingSanityTo(Player enchantedPlayer) {
-        Permanent aura = new Permanent(new FrayingSanity());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FrayingSanity());
         aura.setAttachedTo(enchantedPlayer.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 
@@ -118,7 +190,6 @@ class FrayingSanityTest extends BaseCardTest {
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances to END_STEP, trigger queued
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }

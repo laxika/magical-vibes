@@ -64,10 +64,8 @@ class FreneticSliverTest extends BaseCardTest {
             assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(sliver.getCard());
             assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sliver);
 
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-            harness.clearPriorityPassed();
-            harness.passBothPriorities();
+            harness.passUntil(TurnStep.END_STEP);
+            resolveAllTriggers();
 
             assertThat(gd.playerBattlefields.get(player1.getId()))
                     .anyMatch(permanent -> permanent.getCard() instanceof FreneticSliver);
@@ -101,5 +99,48 @@ class FreneticSliverTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Frenetic Sliver does not grant abilities while its spell is on the stack")
+    void doesNotGrantAbilityFromStack() {
+        harness.addToBattlefield(player2, new SinewSliver());
+        harness.castFromHand(player1, new FreneticSliver(), "{1}{U}{R}");
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Multiple queued activations flip only once after the Sliver leaves")
+    void queuedActivationsFlipOnlyOnce() {
+        harness.addToBattlefield(player1, new FreneticSliver());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
+                .filter(log -> log.contains("coin flip for Frenetic Sliver")))
+                .hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Frenetic Sliver");
+    }
+
+    @Test
+    @DisplayName("A granted ability still resolves after Frenetic Sliver leaves the battlefield")
+    void grantedAbilitySurvivesGrantingSliverLeaving() {
+        Permanent freneticSliver = addCreatureReady(player1, new FreneticSliver());
+        harness.addToBattlefield(player1, new SinewSliver());
+        harness.setHand(player1, List.of(new Pongify()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.castAndResolveInstant(player1, 0, freneticSliver.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Frenetic Sliver");
+        harness.assertNotOnBattlefield(player1, "Sinew Sliver");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("coin flip for Sinew Sliver"));
     }
 }
