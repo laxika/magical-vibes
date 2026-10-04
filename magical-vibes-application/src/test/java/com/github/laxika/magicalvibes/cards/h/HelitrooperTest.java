@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.l.LionSash;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Helitrooper.class, GrizzlyBears.class, LeoninScimitar.class})
+@CardUsed({Helitrooper.class, GrizzlyBears.class, LeoninScimitar.class, LionSash.class})
 class HelitrooperTest extends BaseCardTest {
 
     @Test
@@ -58,7 +59,7 @@ class HelitrooperTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Equipment abilities targeting Helitrooper cost two less")
+    @DisplayName("Equip abilities targeting Helitrooper cost two less")
     void equipmentAbilitiesTargetingHelitrooperAreReduced() {
         Permanent trooper = addCreatureReady(player1, new Helitrooper());
         Permanent scimitar = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
@@ -85,5 +86,30 @@ class HelitrooperTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, attacker.getId());
         resolveAllTriggers();
+    }
+
+    @Test
+    void equipCostIsNotReducedForAnotherCreature() {
+        addCreatureReady(player1, new Helitrooper());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        Permanent scimitar = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(scimitar), null, other.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(scimitar.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void reconfigureCostIsNotReduced() {
+        Permanent trooper = addCreatureReady(player1, new Helitrooper());
+        Permanent sash = harness.addToBattlefieldAndReturn(player1, new LionSash());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(sash), 1, null, trooper.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(sash.getAttachedTo()).isNull();
     }
 }
