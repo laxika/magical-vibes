@@ -48,10 +48,7 @@ class HumanTorchTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         advanceToBeginningOfCombat();
@@ -86,10 +83,76 @@ class HumanTorchTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 
+    @Test
+    @DisplayName("Casting a noncreature spell after combat begins does not create the combat-start trigger")
+    void noncreatureSpellAfterCombatBeginsIsTooLate() {
+        Permanent torch = addCreatureReady(player1, new HumanTorch());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+
+        advanceToBeginningOfCombat();
+        assertThat(gd.stack).isEmpty();
+        harness.setHand(player1, List.of(new BurstOfStrength()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, torch, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, torch, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, torch, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The combat-start keywords expire at the end of the turn")
+    void combatKeywordsExpireAtEndOfTurn() {
+        Permanent torch = addCreatureReady(player1, new HumanTorch());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new BurstOfStrength()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        advanceToBeginningOfCombat();
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, torch, Keyword.DOUBLE_STRIKE)).isTrue();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, torch, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, torch, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, torch, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Declining the attack payment preserves mana and still deals ordinary combat damage")
+    void decliningAttackPaymentPreservesMana() {
+        addCreatureReady(player1, new HumanTorch());
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, false));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+
+        resolveCombat();
+        resolveAllTriggers();
+        harness.assertLife(player2, 17);
+    }
+
     private void advanceToBeginningOfCombat() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
