@@ -21,6 +21,24 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class HivespineWolverineTest extends BaseCardTest {
 
     @Test
+    @CardUsed({HivespineWolverine.class})
+    @DisplayName("Mode and target are chosen after entry, allowing Wolverine to target itself")
+    void choosesCounterModeAfterEnteringAndCanTargetItself() {
+        harness.setHand(player1, List.of(new HivespineWolverine()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent wolverine = findPermanent(player1, "Hivespine Wolverine");
+        harness.handleListChoice(player1, "Put a +1/+1 counter on target creature you control");
+        harness.handlePermanentChosen(player1, wolverine.getId());
+        resolveAllTriggers();
+
+        assertThat(wolverine.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("ETB mode puts a +1/+1 counter on a creature you control")
     void counterMode() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -42,6 +60,46 @@ class HivespineWolverineTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         Permanent wolverine = findPermanent(player1, "Hivespine Wolverine");
         assertThat(wolverine.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Fight mode can target a creature token you control")
+    void fightModeCanTargetOwnToken() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, token(new GrizzlyBears()));
+
+        castHivespine(1, target.getId());
+        resolveCreatureAndEtb();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Hivespine Wolverine").getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Neither creature deals fight damage if Wolverine leaves before resolution")
+    void noFightWhenWolverineLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, token(new GrizzlyBears()));
+
+        castHivespine(1, target.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Hivespine Wolverine"));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Counter mode does nothing if the target changes to the opponent's control")
+    void counterModeRechecksTargetController() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castHivespine(0, target.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -70,30 +128,41 @@ class HivespineWolverineTest extends BaseCardTest {
     @DisplayName("Counter mode rejects a creature an opponent controls")
     void counterModeRejectsOpponentCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        beginTriggeredMode("Put a +1/+1 counter on target creature you control");
 
-        assertThatThrownBy(() -> castHivespine(0, target.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("creature you control");
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Fight mode rejects a nontoken creature")
     void fightModeRejectsNontokenCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, token(new GrizzlyBears()));
+        beginTriggeredMode("This creature fights target creature token");
 
-        assertThatThrownBy(() -> castHivespine(1, target.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("creature token");
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Destroy mode rejects a creature target")
     void destroyModeRejectsCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Ornithopter());
+        beginTriggeredMode("Destroy target artifact or enchantment");
 
-        assertThatThrownBy(() -> castHivespine(2, target.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("artifact or enchantment");
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void beginTriggeredMode(String mode) {
+        harness.setHand(player1, List.of(new HivespineWolverine()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, mode);
     }
 
     private void castHivespine(int mode, UUID targetId) {
@@ -104,8 +173,7 @@ class HivespineWolverineTest extends BaseCardTest {
     }
 
     private void resolveCreatureAndEtb() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private com.github.laxika.magicalvibes.model.Card token(com.github.laxika.magicalvibes.model.Card card) {
