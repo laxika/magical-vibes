@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "219")
+@CardRegistration(set = "WOE", collectorNumber = "365")
 public class YennaRedtoothRegent extends Card {
 
     public YennaRedtoothRegent() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "197")
+@CardRegistration(set = "WOE", collectorNumber = "284")
 public class VirtueOfStrength extends Card {
 
     public VirtueOfStrength() {

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "49")
+@CardRegistration(set = "WOE", collectorNumber = "332")
 public class FarsightRitual extends Card {
 
     public FarsightRitual() {

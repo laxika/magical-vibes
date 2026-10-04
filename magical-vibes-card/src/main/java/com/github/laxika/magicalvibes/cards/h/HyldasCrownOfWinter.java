@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "247")
+@CardRegistration(set = "WOE", collectorNumber = "367")
 public class HyldasCrownOfWinter extends Card {
 
     public HyldasCrownOfWinter() {

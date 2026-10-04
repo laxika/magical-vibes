@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "172")
+@CardRegistration(set = "WOE", collectorNumber = "357")
 public class GruffTriplets extends Card {
 
     public GruffTriplets() {

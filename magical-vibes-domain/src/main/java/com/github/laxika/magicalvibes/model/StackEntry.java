@@ -1535,6 +1535,12 @@ public class StackEntry {
         }
     }
 
+    public void rememberRemovedPermanentController(UUID permanentId, UUID controllerId) {
+        if (permanentId != null && controllerId != null) {
+            removedPermanentControllers.put(permanentId, controllerId);
+        }
+    }
+
     public Card lastKnownPermanentCard(UUID permanentId) {
         return lastKnownPermanentCards.get(permanentId);
     }

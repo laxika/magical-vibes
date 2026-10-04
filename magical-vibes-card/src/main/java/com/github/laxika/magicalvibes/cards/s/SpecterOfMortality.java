@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import static com.github.laxika.magicalvibes.model.CardType.CREATURE;
 
 @CardRegistration(set = "WOE", collectorNumber = "107")
+@CardRegistration(set = "WOE", collectorNumber = "342")
 public class SpecterOfMortality extends Card {
 
     public SpecterOfMortality() {
