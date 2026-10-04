@@ -7,12 +7,16 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IkiralOutrider.class})
 class IkiralOutriderTest extends BaseCardTest {
 
     @Test
@@ -63,6 +67,102 @@ class IkiralOutriderTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player, ManaColor.COLORLESS, 16);
+    }
+
+    @Test
+    void intermediateLevelsKeepFirstLevelStatsAndHigherLevelsKeepFinalStats() {
+        Permanent outrider = addCreatureReady(player1, new IkiralOutrider());
+        prepareForLeveling(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        for (int level = 1; level <= 5; level++) {
+            levelUp(player1);
+            assertThat(outrider.getCounterCount(CounterType.LEVEL)).isEqualTo(level);
+            assertThat(gqs.getEffectivePower(gd, outrider)).isEqualTo(level < 4 ? 2 : 3);
+            assertThat(gqs.getEffectiveToughness(gd, outrider)).isEqualTo(level < 4 ? 6 : 10);
+            assertThat(gqs.hasKeyword(gd, outrider, Keyword.VIGILANCE)).isTrue();
+        }
+    }
+
+    @Test
+    void levelCounterIsAddedOnlyWhenAbilityResolves() {
+        Permanent outrider = addCreatureReady(player1, new IkiralOutrider());
+        prepareForLeveling(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(outrider.getCounterCount(CounterType.LEVEL)).isZero();
+        assertThat(gqs.hasKeyword(gd, outrider, Keyword.VIGILANCE)).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+
+        harness.passBothPriorities();
+        assertThat(outrider.getCounterCount(CounterType.LEVEL)).isEqualTo(1);
+    }
+
+    @Test
+    void levelUpCannotBeActivatedDuringOpponentsMainPhase() {
+        Permanent outrider = addCreatureReady(player1, new IkiralOutrider());
+        prepareForLeveling(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        assertThat(outrider.getCounterCount(CounterType.LEVEL)).isZero();
+    }
+
+    @Test
+    void levelUpRequiresFourMana() {
+        Permanent outrider = addCreatureReady(player1, new IkiralOutrider());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(outrider.getCounterCount(CounterType.LEVEL)).isZero();
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        levelUp(player1);
+        assertThat(outrider.getCounterCount(CounterType.LEVEL)).isEqualTo(1);
+    }
+
+    @Test
+    void levelUpWorksWhileTappedAndSummoningSick() {
+        Permanent outrider = addCreatureReady(player1, new IkiralOutrider());
+        outrider.setSummoningSick(true);
+        outrider.setTapped(true);
+        prepareForLeveling(player1);
+
+        levelUp(player1);
+
+        assertThat(outrider.getCounterCount(CounterType.LEVEL)).isEqualTo(1);
+        assertThat(outrider.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, outrider, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    void leveledOutriderDoesNotTapToAttack() {
+        Permanent outrider = addCreatureReady(player1, new IkiralOutrider());
+        prepareForLeveling(player1);
+        levelUp(player1);
+
+        declareAttackers(List.of(0));
+
+        assertThat(outrider.isTapped()).isFalse();
+    }
+
+    @Test
+    void unleveledOutriderTapsToAttack() {
+        Permanent outrider = addCreatureReady(player1, new IkiralOutrider());
+
+        declareAttackers(List.of(0));
+
+        assertThat(outrider.isTapped()).isTrue();
     }
 
     private void levelUp(Player player) {
