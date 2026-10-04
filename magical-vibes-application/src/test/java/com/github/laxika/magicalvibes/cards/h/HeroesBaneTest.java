@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.c.ColossalHeroics;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HeroesBane.class, ColossalHeroics.class})
 class HeroesBaneTest extends BaseCardTest {
 
     @Test
@@ -37,6 +40,37 @@ class HeroesBaneTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         assertThat(getBane().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(16);
+    }
+
+    @Test
+    void stackedActivationsEachUsePowerAtResolution() {
+        castHeroesBane();
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(getBane().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(8);
+        harness.passBothPriorities();
+        assertThat(getBane().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(16);
+    }
+
+    @Test
+    void includesTemporaryPowerBoostAppliedInResponse() {
+        castHeroesBane();
+        Permanent bane = getBane();
+        harness.setHand(player1, List.of(new ColossalHeroics()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.castAndResolveInstant(player1, 0, List.of(bane.getId()));
+        assertThat(bane.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, bane)).isEqualTo(6);
+
+        harness.passBothPriorities();
+
+        assertThat(bane.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(10);
+        assertThat(gqs.getEffectivePower(gd, bane)).isEqualTo(12);
     }
 
     private void castHeroesBane() {
