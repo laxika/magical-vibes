@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.p.PygmyRazorback;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +12,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HollowWarrior.class, PygmyRazorback.class})
+@CardUsed({HollowWarrior.class, PygmyRazorback.class, Humility.class})
 class HollowWarriorTest extends BaseCardTest {
 
     @Test
@@ -32,12 +31,7 @@ class HollowWarriorTest extends BaseCardTest {
         addCreatureReady(player1, new HollowWarrior());
         addCreatureReady(player1, new PygmyRazorback());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0, 1)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0, 1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough untapped creatures to attack");
     }
@@ -117,6 +111,47 @@ class HollowWarriorTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid blocker index");
+    }
+
+    @Test
+    void canTapASummoningSickCreatureToAttack() {
+        Permanent warrior = addCreatureReady(player1, new HollowWarrior());
+        Permanent support = harness.addToBattlefieldAndReturn(player1, new PygmyRazorback());
+        support.setSummoningSick(true);
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(warrior.isTapped()).isTrue();
+        assertThat(support.isTapped()).isTrue();
+    }
+
+    @Test
+    void twoWarriorsNeedSeparateCreaturesToPayTheirAttackCosts() {
+        addCreatureReady(player1, new HollowWarrior());
+        addCreatureReady(player1, new HollowWarrior());
+        addCreatureReady(player1, new PygmyRazorback());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough untapped creatures to attack");
+    }
+
+    @Test
+    void cannotTapACreaturePreviouslyDeclaredAsAnAttackerThisCombatToBlock() {
+        Permanent attacker = addCreatureReady(player1, new PygmyRazorback());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new HollowWarrior());
+        Permanent support = addCreatureReady(player2, new PygmyRazorback());
+        support.setAttacking(true);
+        gd.declaredAttackerIdsThisCombat.add(support.getId());
+        support.setAttacking(false);
+        support.untap();
+
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(support.isTapped()).isFalse();
     }
 
     @Test
