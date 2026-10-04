@@ -94,9 +94,7 @@ class HigureTheStillWindTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new NinjaOfTheDeepHours(), new GnarledMass()));
 
         resolveCombat();
-        if (!gd.interaction.isAwaitingInput()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
@@ -113,9 +111,7 @@ class HigureTheStillWindTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(ninja, new GnarledMass()));
 
         resolveCombat();
-        if (!gd.interaction.isAwaitingInput()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.LibrarySearch search =
@@ -140,9 +136,7 @@ class HigureTheStillWindTest extends BaseCardTest {
         int handSize = gd.playerHands.get(player1.getId()).size();
 
         resolveCombat();
-        if (!gd.interaction.isAwaitingInput()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
@@ -164,8 +158,7 @@ class HigureTheStillWindTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, higure.getId());
         harness.passBothPriorities();
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
@@ -184,8 +177,85 @@ class HigureTheStillWindTest extends BaseCardTest {
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
 
-        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
                 List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("The Ninja search may fail to find even with a Ninja in the library")
+    void searchMayFailToFindAnAvailableNinja() {
+        Permanent higure = addCreatureReady(player1, new HigureTheStillWind());
+        higure.setAttacking(true);
+        Card ninja = new NinjaOfTheDeepHours();
+        Card nonNinja = new GnarledMass();
+        harness.setLibrary(player1, List.of(ninja, nonNinja));
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(ninja, nonNinja);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Accepting the search with no Ninja available still shuffles")
+    void searchWithoutNinjasCompletesAndShuffles() {
+        Permanent higure = addCreatureReady(player1, new HigureTheStillWind());
+        higure.setAttacking(true);
+        Card nonNinja = new GnarledMass();
+        harness.setLibrary(player1, List.of(nonNinja));
+        int handSize = gd.playerHands.get(player1.getId()).size();
+
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonNinja);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("shuffled")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Combat damage to a blocking creature does not trigger the Ninja search")
+    void combatDamageToCreatureDoesNotSearch() {
+        addCreatureReady(player1, new HigureTheStillWind());
+        addCreatureReady(player2, new GnarledMass());
+        harness.setLibrary(player1, List.of(new NinjaOfTheDeepHours()));
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Gnarled Mass");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An unaffordable ninjutsu activation does not return the attacker")
+    void insufficientNinjutsuManaLeavesAttackerOnBattlefield() {
+        Permanent attacker = addCreatureReady(player1, new GnarledMass());
+        addCreatureReady(player2, new GnarledMass());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.setHand(player1, List.of(new HigureTheStillWind()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class);
+
+        assertThat(findPermanent(player1, "Gnarled Mass")).isSameAs(attacker);
+        harness.assertInHand(player1, "Higure, the Still Wind");
+        assertThat(gd.stack).isEmpty();
     }
 }
