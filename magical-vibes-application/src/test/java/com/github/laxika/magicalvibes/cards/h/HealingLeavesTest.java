@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Sunlance;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -21,6 +22,7 @@ class HealingLeavesTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 0: Target player gains 3 life")
+    @CardUsed({HealingLeaves.class, GrizzlyBears.class})
     class GainLifeMode {
 
         @Test
@@ -50,6 +52,7 @@ class HealingLeavesTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Mode 1: Prevent the next 3 damage to any target")
+    @CardUsed({HealingLeaves.class, GrizzlyBears.class})
     class PreventDamageMode {
 
         @Test
@@ -88,8 +91,8 @@ class HealingLeavesTest extends BaseCardTest {
             harness.castInstant(player1, 0, 1, blocker.getId());
             harness.passBothPriorities();
 
-            declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-            prepareDeclareBlockers(player1);
+            declareAttackersAndPrepareBlockers(player1,
+                    List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
             gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                     gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                     gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
@@ -119,6 +122,31 @@ class HealingLeavesTest extends BaseCardTest {
 
             harness.assertLife(player2, 19);
             assertThat(gd.playerDamagePreventionShields.getOrDefault(player2.getId(), 0)).isZero();
+        }
+
+        @Test
+        @CardUsed({HealingLeaves.class, GrizzlyBears.class, Sunlance.class})
+        @DisplayName("Prevents noncombat damage but does not protect against a later spell after exhaustion")
+        void preventsNoncombatDamageOnlyUntilShieldIsExhausted() {
+            Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+            harness.setHand(player1, List.of(new HealingLeaves(), new Sunlance(), new Sunlance()));
+            harness.addMana(player1, ManaColor.GREEN, 1);
+            harness.addMana(player1, ManaColor.WHITE, 2);
+
+            harness.castInstant(player1, 0, 1, bears.getId());
+            harness.passBothPriorities();
+            harness.castSorcery(player1, 0, bears.getId());
+            harness.passBothPriorities();
+
+            assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+            assertThat(bears.getMarkedDamage()).isZero();
+            assertThat(bears.getDamagePreventionShield()).isZero();
+
+            harness.castSorcery(player1, 0, bears.getId());
+            harness.passBothPriorities();
+
+            harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+            harness.assertInGraveyard(player2, "Grizzly Bears");
         }
 
         @Test
