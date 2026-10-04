@@ -19,6 +19,75 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HaldirLRienLieutenantTest extends BaseCardTest {
 
     @Test
+    void zeroXEntersWithoutCountersAndDies() {
+        harness.setHand(player1, List.of(new HaldirLRienLieutenant()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Haldir, Lórien Lieutenant");
+        harness.assertInGraveyard(player1, "Haldir, Lórien Lieutenant");
+    }
+
+    @Test
+    void boostUsesCountersAtResolutionAndThenRemainsFixed() {
+        Permanent haldir = addCreatureReady(player1, new HaldirLRienLieutenant());
+        haldir.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent elf = addCreatureReady(player1, new LlanowarElves());
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        haldir.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(5);
+        haldir.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(5);
+
+        Permanent lateElf = addCreatureReady(player1, new LlanowarElves());
+        assertThat(gqs.getEffectivePower(gd, lateElf)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, lateElf, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void abilityUsesLastKnownCountersWhenHaldirLeavesBeforeResolution() {
+        Permanent haldir = addCreatureReady(player1, new HaldirLRienLieutenant());
+        haldir.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent elf = addCreatureReady(player1, new LlanowarElves());
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        haldir.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, haldir);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    void repeatedActivationsStackTheirBonuses() {
+        Permanent haldir = addCreatureReady(player1, new HaldirLRienLieutenant());
+        haldir.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent elf = addCreatureReady(player1, new LlanowarElves());
+        harness.addMana(player1, ManaColor.GREEN, 12);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, haldir)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
     void entersWithXPlusOnePlusOneCounters() {
         harness.setHand(player1, List.of(new HaldirLRienLieutenant()));
         harness.addMana(player1, ManaColor.GREEN, 4);
