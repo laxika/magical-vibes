@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "HOU", collectorNumber = "151")
 @CardRegistration(set = "AKR", collectorNumber = "265")
 @CardRegistration(set = "MOC", collectorNumber = "339")
+@CardRegistration(set = "ZNC", collectorNumber = "102")
 public class StruggleSurvive extends Card {
 
     public StruggleSurvive() {

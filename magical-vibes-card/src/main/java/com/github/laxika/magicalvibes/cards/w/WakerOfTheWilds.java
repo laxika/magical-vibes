@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "XLN", collectorNumber = "215")
+@CardRegistration(set = "ZNC", collectorNumber = "86")
 public class WakerOfTheWilds extends Card {
 
     public WakerOfTheWilds() {

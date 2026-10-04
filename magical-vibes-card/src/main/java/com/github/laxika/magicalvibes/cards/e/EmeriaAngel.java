@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "TDC", collectorNumber = "114")
 @CardRegistration(set = "ONC", collectorNumber = "65")
 @CardRegistration(set = "SCD", collectorNumber = "21")
+@CardRegistration(set = "ZNC", collectorNumber = "15")
 public class EmeriaAngel extends Card {
 
     public EmeriaAngel() {

@@ -7020,4 +7020,6 @@ Spell-cast triggers that refer to the spell that triggered them carry its identi
 
 `CombatOpponentConditionalEffect` takes a `PermanentPredicate` and a wrapped `CardEffect` for an attached Aura/Equipment combat trigger. `CombatTriggerService` evaluates the predicate at trigger time against the relevant combat opponent(s) and unwraps the effect only on a match. Register it normally in `ON_BECOMES_BLOCKED` for "one or more" wording so multiple blockers still produce one trigger; Hedron Blade wraps the existing equipped-creature temporary keyword effect this way.
 
+`AllowCastMatchingCardsFromDamagedPlayerGraveyardThisTurnEffect(CardPredicate, boolean)` grants one normal-cost cast from the graveyard of the player dealt combat damage. The card is chosen when cast, the permission lasts through the turn, and the boolean enables any-color mana for that cast.
+
 - `DrawCardThenMayPutPermanentWithManaValueAtMostLandsEffect.drawCompleted` is internal continuation state; count lands only after the draw and all replacement choices have completed.

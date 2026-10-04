@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "MOR", collectorNumber = "39")
 @CardRegistration(set = "MMA", collectorNumber = "50")
+@CardRegistration(set = "ZNC", collectorNumber = "28")
 public class LatchkeyFaerie extends Card {
 
     public LatchkeyFaerie() {

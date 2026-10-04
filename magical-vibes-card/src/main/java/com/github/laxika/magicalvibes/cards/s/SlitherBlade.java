@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "AKH", collectorNumber = "71")
 @CardRegistration(set = "AKR", collectorNumber = "79")
 @CardRegistration(set = "OTC", collectorNumber = "114")
+@CardRegistration(set = "ZNC", collectorNumber = "36")
 public class SlitherBlade extends Card {
 
     public SlitherBlade() {

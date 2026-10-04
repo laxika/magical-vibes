@@ -21,6 +21,7 @@ import java.util.Set;
 @CardRegistration(set = "AFC", collectorNumber = "104")
 @CardRegistration(set = "OTC", collectorNumber = "145")
 @CardRegistration(set = "BLC", collectorNumber = "186")
+@CardRegistration(set = "ZNC", collectorNumber = "50")
 public class OgreSlumlord extends Card {
 
     public OgreSlumlord() {

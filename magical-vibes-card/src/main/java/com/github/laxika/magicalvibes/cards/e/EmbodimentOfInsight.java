@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "131")
+@CardRegistration(set = "ZNC", collectorNumber = "64")
 public class EmbodimentOfInsight extends Card {
 
     public EmbodimentOfInsight() {

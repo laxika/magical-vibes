@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "BFZ", collectorNumber = "180")
 @CardRegistration(set = "C21", collectorNumber = "201")
+@CardRegistration(set = "ZNC", collectorNumber = "76")
 public class NissasRenewal extends Card {
 
     public NissasRenewal() {

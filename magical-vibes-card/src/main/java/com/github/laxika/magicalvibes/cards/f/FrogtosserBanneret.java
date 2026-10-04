@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "64")
+@CardRegistration(set = "ZNC", collectorNumber = "43")
 public class FrogtosserBanneret extends Card {
 
     public FrogtosserBanneret() {

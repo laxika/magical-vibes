@@ -6446,4 +6446,6 @@ Use `StateTriggerEffect` with a counter predicate and `PlaneswalkEffect` for a s
 - Conflicting tapped and untapped entry replacements suspend placement with `TappedEntryStateChoice`; the entering controller chooses the final state before entry counters and triggers apply.
 - `CountersOnGrantingPermanent` uses the granting permanent's current counters, or its last known counters when it left before the granted ability resolves.
 
+- `AllowCastMatchingCardsFromDamagedPlayerGraveyardThisTurnEffect(CardPredicate, boolean)` — combat-damage trigger permission for one matching spell from the damaged player's graveyard until end of turn; the card is selected when cast, and `true` allows any mana type to pay its normal cost
+
 - `SourceMatchesPermanentPredicate(PermanentPredicate)` ? a condition evaluated against the current source permanent, with its source snapshot as fallback after it leaves. Reuse existing permanent predicates for name and other characteristic checks.

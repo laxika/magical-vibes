@@ -132,6 +132,7 @@ public enum CardSet {
     SET_EXP("EXP"),
     SET_OGW("OGW"),
     SET_ZNR("ZNR"),
+    SET_ZNC("ZNC"),
     SET_ZNE("ZNE"),
     SET_RTR("RTR"),
     SET_RVR("RVR"),

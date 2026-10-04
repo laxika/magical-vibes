@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOR", collectorNumber = "45")
+@CardRegistration(set = "ZNC", collectorNumber = "33")
 public class NotoriousThrong extends Card {
 
     public NotoriousThrong() {

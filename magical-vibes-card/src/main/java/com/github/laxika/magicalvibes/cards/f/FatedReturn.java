@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "BNG", collectorNumber = "69")
+@CardRegistration(set = "ZNC", collectorNumber = "42")
 public class FatedReturn extends Card {
 
     public FatedReturn() {

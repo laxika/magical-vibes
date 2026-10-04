@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "44")
+@CardRegistration(set = "ZNC", collectorNumber = "20")
 public class RetreatToEmeria extends Card {
 
     public RetreatToEmeria() {

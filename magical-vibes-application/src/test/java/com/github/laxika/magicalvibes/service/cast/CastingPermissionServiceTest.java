@@ -1082,6 +1082,34 @@ class CastingPermissionServiceTest {
 
             assertThat(svc.hasGraveyardPlayPermission(gd, card, player1Id)).isTrue();
         }
+
+        @Test
+        @DisplayName("A damaged-player grant is limited to that player's graveyard and allows any mana")
+        void damagedPlayerGrantUsesItsRememberedGraveyard() {
+            Card card = zombieCard();
+            CardPredicate filter = new CardSubtypePredicate(CardSubtype.ZOMBIE);
+            gd.graveyardCastFilterPermissionsThisTurn.add(
+                    new GameData.GraveyardCastFilterPermission(player1Id, filter, true, player2Id, true));
+            when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(player2Id);
+            when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(card);
+            when(predicateEvaluationService.matchesCardPredicate(card, filter, null)).thenReturn(true);
+
+            assertThat(svc.hasGraveyardPlayPermission(gd, card, player1Id)).isTrue();
+            assertThat(svc.hasAnyManaTypePermission(gd, player1Id, card.getId())).isTrue();
+        }
+
+        @Test
+        @DisplayName("A damaged-player grant rejects a card from another graveyard")
+        void damagedPlayerGrantRejectsAnotherGraveyard() {
+            Card card = zombieCard();
+            CardPredicate filter = new CardSubtypePredicate(CardSubtype.ZOMBIE);
+            gd.graveyardCastFilterPermissionsThisTurn.add(
+                    new GameData.GraveyardCastFilterPermission(player1Id, filter, true, player2Id, true));
+            when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(player1Id);
+            when(predicateEvaluationService.matchesCardPredicate(card, filter, null)).thenReturn(true);
+
+            assertThat(svc.hasGraveyardPlayPermission(gd, card, player1Id)).isFalse();
+        }
     }
 
     @Nested

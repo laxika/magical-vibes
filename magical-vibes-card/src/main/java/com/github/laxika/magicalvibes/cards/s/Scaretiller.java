@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "OTC", collectorNumber = "266")
 @CardRegistration(set = "C19", collectorNumber = "57")
+@CardRegistration(set = "ZNC", collectorNumber = "117")
 public class Scaretiller extends Card {
 
     public Scaretiller() {

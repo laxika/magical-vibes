@@ -21,6 +21,7 @@ import java.util.Set;
 @CardRegistration(set = "MM3", collectorNumber = "185")
 @CardRegistration(set = "MB1", collectorNumber = "185")
 @CardRegistration(set = "C13", collectorNumber = "215")
+@CardRegistration(set = "ZNC", collectorNumber = "100")
 public class SoulManipulation extends Card {
 
     public SoulManipulation() {

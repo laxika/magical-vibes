@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "GTC", collectorNumber = "174")
 @CardRegistration(set = "GK1", collectorNumber = "16")
+@CardRegistration(set = "ZNC", collectorNumber = "92")
 public class LazavDimirMastermind extends Card {
 
     public LazavDimirMastermind() {

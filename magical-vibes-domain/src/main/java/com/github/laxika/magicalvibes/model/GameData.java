@@ -1901,22 +1901,42 @@ public class GameData {
                                                 boolean exileInsteadOfGraveyard,
                                                 ForageOrPayManaCost additionalCost,
                                                 CounterType enterWithCounter,
-                                                int enterWithCounterCount) {
+                                                int enterWithCounterCount,
+                                                UUID graveyardOwnerId,
+                                                boolean anyManaType) {
         public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter) {
-            this(playerId, filter, false, null, null, false, false, null, null, 0);
+            this(playerId, filter, false, null, null, false, false, null, null, 0, null, false);
         }
 
         public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter,
                                              boolean singleUse, CounterType entryCounterType,
                                              CardSubtype grantedSubtype) {
             this(playerId, filter, singleUse, entryCounterType, grantedSubtype,
-                    false, false, null, null, 0);
+                    false, false, null, null, 0, null, false);
         }
 
         public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter,
                                              boolean anyGraveyard, boolean exileInsteadOfGraveyard) {
             this(playerId, filter, false, null, null, anyGraveyard,
-                    exileInsteadOfGraveyard, null, null, 0);
+                    exileInsteadOfGraveyard, null, null, 0, null, false);
+        }
+
+        public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter,
+                                             boolean singleUse, CounterType entryCounterType,
+                                             CardSubtype grantedSubtype, boolean anyGraveyard,
+                                             boolean exileInsteadOfGraveyard,
+                                             ForageOrPayManaCost additionalCost,
+                                             CounterType enterWithCounter,
+                                             int enterWithCounterCount) {
+            this(playerId, filter, singleUse, entryCounterType, grantedSubtype, anyGraveyard,
+                    exileInsteadOfGraveyard, additionalCost, enterWithCounter,
+                    enterWithCounterCount, null, false);
+        }
+
+        public GraveyardCastFilterPermission(UUID playerId, CardPredicate filter, boolean singleUse,
+                                             UUID graveyardOwnerId, boolean anyManaType) {
+            this(playerId, filter, singleUse, null, null, false, false, null, null, 0,
+                    graveyardOwnerId, anyManaType);
         }
     }
 

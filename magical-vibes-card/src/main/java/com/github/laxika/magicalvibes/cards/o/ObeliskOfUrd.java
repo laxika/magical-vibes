@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtype
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 
 @CardRegistration(set = "M15", collectorNumber = "222")
+@CardRegistration(set = "ZNC", collectorNumber = "115")
 public class ObeliskOfUrd extends Card {
 
     public ObeliskOfUrd() {

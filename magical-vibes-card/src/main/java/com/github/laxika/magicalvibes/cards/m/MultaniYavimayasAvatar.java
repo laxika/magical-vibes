@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "DSC", collectorNumber = "190")
 @CardRegistration(set = "TDC", collectorNumber = "263")
 @CardRegistration(set = "EOC", collectorNumber = "100")
+@CardRegistration(set = "ZNC", collectorNumber = "75")
 public class MultaniYavimayasAvatar extends Card {
 
     public MultaniYavimayasAvatar() {

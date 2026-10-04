@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 @CardRegistration(set = "NCC", collectorNumber = "287")
 @CardRegistration(set = "LCC", collectorNumber = "240")
 @CardRegistration(set = "ONC", collectorNumber = "108")
+@CardRegistration(set = "ZNC", collectorNumber = "65")
 public class EvolutionSage extends Card {
 
     public EvolutionSage() {

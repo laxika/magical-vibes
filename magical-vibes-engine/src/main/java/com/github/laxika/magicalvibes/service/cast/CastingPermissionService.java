@@ -1971,8 +1971,10 @@ public class CastingPermissionService {
         if (!isCastableSpellCard(card)) {
             return Optional.empty();
         }
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         return gameData.graveyardCastFilterPermissionsThisTurn.stream()
                 .filter(permission -> permission.playerId().equals(playerId)
+                        && graveyardCastFilterPermissionAppliesToCard(permission, graveyardOwnerId)
                         && predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null))
                 .sorted((first, second) -> Boolean.compare(first.singleUse(), second.singleUse()))
                 .findFirst();
@@ -1986,10 +1988,23 @@ public class CastingPermissionService {
     }
 
     public boolean graveyardCastFilterPermissionExiles(GameData gameData, Card card, UUID playerId) {
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
         return gameData.graveyardCastFilterPermissionsThisTurn.stream()
                 .anyMatch(permission -> permission.playerId().equals(playerId)
+                        && graveyardCastFilterPermissionAppliesToCard(permission, graveyardOwnerId)
                         && permission.exileInsteadOfGraveyard()
                         && predicateEvaluationService.matchesCardPredicate(card, permission.filter(), null));
+    }
+
+    private boolean graveyardCastFilterPermissionAppliesToCard(
+            GameData.GraveyardCastFilterPermission permission, UUID graveyardOwnerId) {
+        if (permission.anyGraveyard()) {
+            return true;
+        }
+        if (permission.graveyardOwnerId() != null) {
+            return permission.graveyardOwnerId().equals(graveyardOwnerId);
+        }
+        return true;
     }
 
     public boolean isGraveyardCastAvailable(GameData gameData, UUID playerId, GraveyardCast graveyardCast) {
@@ -3098,6 +3113,12 @@ public class CastingPermissionService {
                 gameData.graveyardCardCastPermissionsUntilEndOfTurn.get(cardId);
         if (graveyardPermission != null && graveyardPermission.anyManaType()
                 && playerId.equals(graveyardPermission.castingPlayerId())) {
+            return true;
+        }
+        Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+        if (card != null && findGraveyardCastFilterPermission(gameData, card, playerId)
+                .map(GameData.GraveyardCastFilterPermission::anyManaType)
+                .orElse(false)) {
             return true;
         }
         if (hasStashCounterPermission(gameData, playerId, cardId, true)) return true;
