@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({IcatianPhalanx.class, IcatianJavelineers.class, Orgg.class})
 class IcatianPhalanxTest extends BaseCardTest {
@@ -58,8 +59,7 @@ class IcatianPhalanxTest extends BaseCardTest {
         addCreatureReady(player2, new IcatianPhalanx());
         Permanent javelineers = addCreatureReady(player2, new IcatianJavelineers());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -77,5 +77,56 @@ class IcatianPhalanxTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
         harness.assertOnBattlefield(player2, "Icatian Phalanx");
         harness.assertInGraveyard(player2, "Icatian Javelineers");
+    }
+
+    @Test
+    @DisplayName("An attacking band cannot contain two creatures without banding")
+    void rejectsTwoNonBandingMembers() {
+        addCreatureReady(player1, new IcatianPhalanx());
+        addCreatureReady(player1, new IcatianJavelineers());
+        addCreatureReady(player1, new IcatianJavelineers());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareAttackers(gd, player1,
+                List.of(0, 1, 2), null, List.of(List.of(0, 1, 2))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("at most one creature without banding");
+    }
+
+    @Test
+    @DisplayName("Blocking the nonbanding member blocks every member of a larger band")
+    void blockingNonBandingMemberBlocksWholeBand() {
+        Permanent first = addCreatureReady(player1, new IcatianPhalanx());
+        Permanent second = addCreatureReady(player1, new IcatianPhalanx());
+        Permanent javelineers = addCreatureReady(player1, new IcatianJavelineers());
+        Permanent orgg = addCreatureReady(player2, new Orgg());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0, 1, 2), null, List.of(List.of(0, 1, 2)));
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 2)));
+
+        assertThat(orgg.getBlockingTargetIds())
+                .containsExactlyInAnyOrder(first.getId(), second.getId(), javelineers.getId());
+
+        harness.passBothPriorities();
+        PendingInteraction.CombatDamageAssignment prompt =
+                gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
+        assertThat(prompt).isNotNull();
+        assertThat(prompt.playerId()).isEqualTo(player1.getId());
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(javelineers.getId(), 6));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first, second);
+        harness.assertInGraveyard(player1, "Icatian Javelineers");
+        harness.assertOnBattlefield(player2, "Orgg");
+        harness.assertLife(player2, 20);
     }
 }
