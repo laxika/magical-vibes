@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HauntedOne.class, WalkingCorpse.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed({HauntedOne.class, WalkingCorpse.class, GrizzlyBears.class, LightningBolt.class, Humility.class, ControlMagic.class})
 class HauntedOneTest extends BaseCardTest {
 
     @Test
@@ -79,7 +80,8 @@ class HauntedOneTest extends BaseCardTest {
 
         tapAndResolve(commander);
         harness.castInstant(player1, 0, otherZombie.getId());
-        resolveUntilStackEmpty();
+        resolveAllTriggers();
+        assertThat(gd.stack).isEmpty();
 
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getName().equals("Walking Corpse"))
@@ -96,10 +98,86 @@ class HauntedOneTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
     }
 
-    private void resolveUntilStackEmpty() {
-        for (int i = 0; i < 12 && !gd.stack.isEmpty(); i++) {
-            harness.passBothPriorities();
-        }
+    @Test
+    @DisplayName("An owned commander controlled by an opponent grants the bonus to that opponent's creatures")
+    void opponentControllingOwnedCommanderControlsGrantedTrigger() {
+        harness.addToBattlefield(player1, new HauntedOne());
+        Permanent commander = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        gd.makeCommander(player1.getId(), commander.getOriginalCard());
+        Permanent allyZombie = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        Permanent opponentZombie = harness.addToBattlefieldAndReturn(player2, new WalkingCorpse());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new ControlMagic()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castEnchantment(player2, 0, commander.getId());
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(commander);
+        int allyPower = gqs.getEffectivePower(gd, allyZombie);
+        int opponentPower = gqs.getEffectivePower(gd, opponentZombie);
+
+        commander.tap();
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, commander));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, opponentZombie)).isEqualTo(opponentPower + 2);
+        assertThat(gqs.hasKeyword(gd, opponentZombie, Keyword.UNDYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, commander, Keyword.UNDYING)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, allyZombie)).isEqualTo(allyPower);
+        assertThat(gqs.hasKeyword(gd, allyZombie, Keyword.UNDYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A commander leaving before resolution still boosts creatures sharing its last known type")
+    void usesLastKnownCreatureTypesAfterCommanderLeaves() {
+        harness.addToBattlefield(player1, new HauntedOne());
+        Permanent commander = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        gd.makeCommander(player1.getId(), commander.getOriginalCard());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        int powerBefore = gqs.getEffectivePower(gd, zombie);
+
+        commander.tap();
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, commander));
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToCommandZone(gd, commander));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(powerBefore + 2);
+        assertThat(gqs.hasKeyword(gd, zombie, Keyword.UNDYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Humility entering after Haunted One removes the commander's granted tap ability")
+    void laterHumilityRemovesGrantedAbility() {
+        harness.addToBattlefield(player1, new HauntedOne());
+        Permanent commander = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        gd.makeCommander(player1.getId(), commander.getOriginalCard());
+        harness.setHand(player1, List.of(new Humility()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        commander.tap();
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, commander));
+
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tapping a noncommander does not grant any bonus")
+    void noncommanderDoesNotTrigger() {
+        harness.addToBattlefield(player1, new HauntedOne());
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new WalkingCorpse());
+        int powerBefore = gqs.getEffectivePower(gd, zombie);
+
+        zombie.tap();
+        harness.inMutationScope(
+                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, zombie));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(powerBefore);
+        assertThat(gqs.hasKeyword(gd, zombie, Keyword.UNDYING)).isFalse();
     }
 }
