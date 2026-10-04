@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.MightOfOaks;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Flusterstorm.class, GrizzlyBears.class, MightOfOaks.class, CounselOfTheSoratami.class})
+@CardUsed({Flusterstorm.class, GrizzlyBears.class, MightOfOaks.class, CounselOfTheSoratami.class, Island.class})
 class FlusterstormTest extends BaseCardTest {
 
     @Test
@@ -135,6 +136,77 @@ class FlusterstormTest extends BaseCardTest {
 
         GameData gameData = harness.getGameData();
         assertThat(gameData.stack).filteredOn(StackEntry::isCopy).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Paying for the storm copy does not pay for the original")
+    void onePaymentDoesNotProtectAgainstBothCounterEffects() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        MightOfOaks might = new MightOfOaks();
+        harness.setHand(player1, List.of(might));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.setHand(player2, List.of(new Flusterstorm()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, bear.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, might.getId());
+        resolveFlusterstorm(true);
+
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Might of Oaks");
+        harness.assertInGraveyard(player2, "Flusterstorm");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A storm copy can target the original Flusterstorm")
+    void stormCopyCanCounterOriginalSpell() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        MightOfOaks might = new MightOfOaks();
+        Flusterstorm flusterstorm = new Flusterstorm();
+        harness.setHand(player1, List.of(might));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.setHand(player2, List.of(flusterstorm));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, bear.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, might.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, flusterstorm.getId());
+        resolveFlusterstorm(false);
+
+        assertThat(bear.getEffectivePower()).isEqualTo(9);
+        harness.assertInGraveyard(player2, "Flusterstorm");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The spell controller can activate mana abilities to pay during resolution")
+    void offersPaymentWithAnEmptyManaPoolAndUntappedIsland() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        MightOfOaks might = new MightOfOaks();
+        harness.setHand(player1, List.of(might));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.setHand(player2, List.of(new Flusterstorm()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, bear.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, might.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+
+        assertThat(island.isTapped()).isFalse();
+        harness.assertNotInGraveyard(player1, "Might of Oaks");
+        PendingInteraction.MayAbilityChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
     }
 
     private void resolveFlusterstorm(boolean pay) {
