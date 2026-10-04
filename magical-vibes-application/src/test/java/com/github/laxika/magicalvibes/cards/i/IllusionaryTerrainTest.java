@@ -15,11 +15,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IllusionaryTerrain.class, Mountain.class, Plains.class, SnowCoveredMountain.class})
+@CardUsed({IllusionaryTerrain.class, Mountain.class, Plains.class, SnowCoveredMountain.class, VolcanicIsland.class})
 class IllusionaryTerrainTest extends BaseCardTest {
 
     private Permanent terrainWithTypes(CardSubtype from, CardSubtype to) {
@@ -32,10 +30,7 @@ class IllusionaryTerrainTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Illusionary Terrain awaits two basic land type choices")
     void resolvingTriggersTwoBasicLandTypeChoices() {
-        harness.setHand(player1, List.of(new IllusionaryTerrain()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new IllusionaryTerrain(), "{U}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
@@ -52,10 +47,7 @@ class IllusionaryTerrainTest extends BaseCardTest {
     @Test
     @DisplayName("The two chosen basic land types may be the same")
     void mayChooseSameTypeTwice() {
-        harness.setHand(player1, List.of(new IllusionaryTerrain()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new IllusionaryTerrain(), "{U}{U}");
         harness.passBothPriorities();
         harness.handleListChoice(player1, "MOUNTAIN");
 
@@ -101,7 +93,6 @@ class IllusionaryTerrainTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(VolcanicIsland.class)
     @DisplayName("A nonbasic dual land with the chosen type is unaffected")
     void nonbasicUnaffected() {
         Permanent volcanicIsland = harness.addToBattlefieldAndReturn(player1, new VolcanicIsland());
@@ -211,5 +202,65 @@ class IllusionaryTerrainTest extends BaseCardTest {
 
         assertThat(terrain.getCounterCount(CounterType.AGE)).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The types chosen while resolving the spell immediately change basic land mana")
+    void resolvedChoicesChangeBasicLandMana() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        harness.castFromHand(player1, new IllusionaryTerrain(), "{U}{U}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "MOUNTAIN");
+        harness.handleListChoice(player1, "ISLAND");
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.ISLAND);
+        harness.tapPermanent(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Dependent Terrain conversions apply in dependency order rather than timestamp order")
+    void dependentConversionsChainRegardlessOfTimestamp() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        terrainWithTypes(CardSubtype.ISLAND, CardSubtype.PLAINS);
+        terrainWithTypes(CardSubtype.MOUNTAIN, CardSubtype.ISLAND);
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.PLAINS);
+        harness.tapPermanent(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep charges for existing age counters as well as the newly added counter")
+    void upkeepIncludesExistingAgeCounters() {
+        Permanent terrain = terrainWithTypes(CardSubtype.MOUNTAIN, CardSubtype.ISLAND);
+        terrain.setCounterCount(CounterType.AGE, 2);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(terrain.getCounterCount(CounterType.AGE)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(terrain);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Declining cumulative upkeep restores the original basic land mana ability")
+    void unpaidUpkeepEndsLandConversion() {
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        terrainWithTypes(CardSubtype.MOUNTAIN, CardSubtype.ISLAND);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Illusionary Terrain");
+        assertThat(gqs.effectiveBasicLandTypes(gd, mountain)).containsExactly(CardSubtype.MOUNTAIN);
+        harness.tapPermanent(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 }
