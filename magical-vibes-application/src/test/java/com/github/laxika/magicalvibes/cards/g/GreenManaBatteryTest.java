@@ -15,8 +15,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({GreenManaBattery.class})
 class GreenManaBatteryTest extends BaseCardTest {
 
-    // ===== Ability 0: {2}, {T}: Put a charge counter =====
-
     @Test
     @DisplayName("Paying {2} and tapping puts a charge counter on the battery")
     void firstAbilityAddsChargeCounter() {
@@ -54,8 +52,6 @@ class GreenManaBatteryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Ability 1: {T}, Remove any number of charge counters: Add {G} + one per removed =====
 
     @Test
     @DisplayName("Removing all charge counters adds the base {G} plus one per counter removed")
@@ -122,8 +118,56 @@ class GreenManaBatteryTest extends BaseCardTest {
         assertThat(greenMana()).isZero();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Charging uses the stack and pays its mana cost before resolution")
+    void chargingUsesStackAndPaysManaBeforeResolution() {
+        Permanent battery = addReadyBattery(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(battery.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(battery.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(battery.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The mana ability resolves without using the stack and leaves other counters alone")
+    void manaAbilityDoesNotUseStackOrRemoveOtherCounters() {
+        Permanent battery = addReadyBattery(player1);
+        battery.setCounterCount(CounterType.CHARGE, 2);
+        battery.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "2");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(greenMana()).isEqualTo(3);
+        assertThat(battery.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(battery.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Mana goes to the battery's controller when that player is the opponent")
+    void opponentControlledBatteryAddsManaToOpponent() {
+        Permanent battery = addReadyBattery(player2);
+        battery.setCounterCount(CounterType.CHARGE, 2);
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.handleListChoice(player2, "2");
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(greenMana()).isZero();
+        assertThat(battery.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(battery.isTapped()).isTrue();
+    }
     private Permanent addReadyBattery(Player player) {
         return harness.addToBattlefieldAndReturn(player, new GreenManaBattery());
     }
