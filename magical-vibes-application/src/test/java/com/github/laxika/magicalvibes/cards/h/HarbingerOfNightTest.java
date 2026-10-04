@@ -57,4 +57,39 @@ class HarbingerOfNightTest extends BaseCardTest {
 
         assertThat(enemyElephant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
+
+    @Test
+    @DisplayName("Each Harbinger triggers independently during its controller's upkeep")
+    void multipleHarbingersEachPutCountersOnEveryCreature() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new HarbingerOfNight());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new HarbingerOfNight());
+        Permanent elephant = harness.addToBattlefieldAndReturn(player2, new IronTuskElephant());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(elephant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Harbinger of Night");
+        harness.assertOnBattlefield(player2, "Iron Tusk Elephant");
+    }
+
+    @Test
+    @DisplayName("Lethal counters kill the source and other creatures after all counters are placed")
+    void lethalCountersKillSourceAndOpposingCreature() {
+        Permanent harbinger = harness.addToBattlefieldAndReturn(player1, new HarbingerOfNight());
+        Permanent elephant = harness.addToBattlefieldAndReturn(player2, new IronTuskElephant());
+        harbinger.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+        elephant.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Harbinger of Night");
+        harness.assertInGraveyard(player1, "Harbinger of Night");
+        harness.assertNotOnBattlefield(player2, "Iron Tusk Elephant");
+        harness.assertInGraveyard(player2, "Iron Tusk Elephant");
+    }
 }
