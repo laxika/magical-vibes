@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.s.ShizoDeathsStorehouse;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -10,8 +12,53 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HeartbeatOfSpring.class, Forest.class, ShizoDeathsStorehouse.class})
+@CardUsed({HeartbeatOfSpring.class, Forest.class, ShizoDeathsStorehouse.class,
+        HallOfTheBanditLord.class, IsamaruHoundOfKonda.class})
 class HeartbeatOfSpringTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Multiple copies each add one mana immediately without using the stack")
+    void multipleCopiesAddManaImmediately() {
+        harness.addToBattlefield(player1, new HeartbeatOfSpring());
+        harness.addToBattlefield(player2, new HeartbeatOfSpring());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Colorless mana is a mana type and the additional mana costs no extra life")
+    void addsExtraColorlessMana() {
+        harness.addToBattlefield(player1, new HeartbeatOfSpring());
+        harness.addToBattlefield(player1, new HallOfTheBanditLord());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        harness.assertLife(player1, 17);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tapping a land for its non-mana ability does not add mana")
+    void nonManaLandAbilityDoesNotAddMana() {
+        harness.addToBattlefield(player1, new HeartbeatOfSpring());
+        harness.addToBattlefield(player1, new ShizoDeathsStorehouse());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new IsamaruHoundOfKonda());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 1, 1, null, creature.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
 
     @Test
     @DisplayName("Tapping a land for mana adds one additional mana of the type it produced")
