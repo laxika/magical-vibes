@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.a.AnabaShaman;
 import com.github.laxika.magicalvibes.cards.a.AysenCrusader;
 import com.github.laxika.magicalvibes.cards.d.DeathSpeakers;
+import com.github.laxika.magicalvibes.cards.d.DaughterOfAutumn;
 import com.github.laxika.magicalvibes.cards.g.GreaterWerewolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({HazduhrTheAbbot.class, AnabaShaman.class, AysenCrusader.class, DeathSpeakers.class,
-        GreaterWerewolf.class})
+        GreaterWerewolf.class, DaughterOfAutumn.class})
 class HazduhrTheAbbotTest extends BaseCardTest {
 
     private Permanent addHazduhrReady() {
@@ -105,8 +106,7 @@ class HazduhrTheAbbotTest extends BaseCardTest {
 
         activateHazduhr(hazduhr, 1, target);
 
-        declareAttackers(player2, List.of(battlefieldIndex(player2, attacker)));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(battlefieldIndex(player2, attacker)));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 battlefieldIndex(player1, target), battlefieldIndex(player2, attacker))));
         resolveCombat(player2);
@@ -157,5 +157,86 @@ class HazduhrTheAbbotTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, battlefieldIndex(player1, hazduhr), 2, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("X zero taps Hazduhr but does not redirect damage")
+    void zeroXDoesNotRedirectDamage() {
+        Permanent hazduhr = addHazduhrReady();
+        Permanent target = addCreatureReady(player1, new AysenCrusader());
+        Permanent shaman = addShamanReady();
+
+        activateHazduhr(hazduhr, 0, target);
+        assertThat(hazduhr.isTapped()).isTrue();
+        ping(shaman, target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(hazduhr.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The remaining X is available across separate damage events")
+    void redirectsAcrossSeparateDamageEvents() {
+        Permanent hazduhr = addHazduhrReady();
+        Permanent target = addCreatureReady(player1, new AysenCrusader());
+        Permanent firstShaman = addShamanReady();
+        Permanent secondShaman = addShamanReady();
+        Permanent thirdShaman = addShamanReady();
+
+        activateHazduhr(hazduhr, 2, target);
+        ping(firstShaman, target);
+        ping(secondShaman, target);
+        ping(thirdShaman, target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(hazduhr.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Hazduhr can target itself without preventing its own damage")
+    void canTargetItself() {
+        Permanent hazduhr = addHazduhrReady();
+        Permanent shaman = addShamanReady();
+
+        activateHazduhr(hazduhr, 2, hazduhr);
+        ping(shaman, hazduhr);
+
+        assertThat(hazduhr.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Damage redirected to Hazduhr can be redirected again by Daughter of Autumn")
+    void redirectedDamageAppliesDestinationRedirection() {
+        Permanent hazduhr = addHazduhrReady();
+        Permanent target = addCreatureReady(player1, new AysenCrusader());
+        Permanent daughter = addCreatureReady(player1, new DaughterOfAutumn());
+        Permanent shaman = addShamanReady();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, battlefieldIndex(player1, daughter), null, hazduhr.getId());
+        harness.passBothPriorities();
+        activateHazduhr(hazduhr, 1, target);
+        ping(shaman, target);
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(hazduhr.getMarkedDamage()).isZero();
+        assertThat(daughter.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A damage event larger than X is split between Hazduhr and the target")
+    void splitsDamageEventLargerThanX() {
+        Permanent hazduhr = addHazduhrReady();
+        Permanent target = addCreatureReady(player1, new AysenCrusader());
+        Permanent attacker = addCreatureReady(player2, new AnabaShaman());
+
+        activateHazduhr(hazduhr, 1, target);
+        declareAttackersAndPrepareBlockers(player2, List.of(battlefieldIndex(player2, attacker)));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                battlefieldIndex(player1, target), battlefieldIndex(player2, attacker))));
+        resolveCombat(player2);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(hazduhr.getMarkedDamage()).isEqualTo(1);
     }
 }
