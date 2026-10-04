@@ -131,11 +131,70 @@ class EtherealChampionTest extends BaseCardTest {
 
         assertThat(champion.getDamagePreventionShield()).isEqualTo(1);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(champion.getDamagePreventionShield()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Life is paid immediately but prevention starts only when the ability resolves")
+    void damageInResponseIsNotPrevented() {
+        Permanent champion = addCreatureReady(player1, new EtherealChampion());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, indexOf(player1, champion), null, null);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, champion.getId());
+        harness.passBothPriorities();
+
+        assertThat(champion.getMarkedDamage()).isEqualTo(2);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, champion.getId());
+
+        assertThat(champion.getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Ethereal Champion");
+    }
+
+    @Test
+    @DisplayName("A spent shield does not prevent a later damage event")
+    void shieldIsConsumedByFirstDamageEvent() {
+        Permanent champion = addCreatureReady(player1, new EtherealChampion());
+        harness.activateAbility(player1, indexOf(player1, champion), null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, champion.getId());
+        assertThat(champion.getMarkedDamage()).isEqualTo(1);
+
+        harness.castAndResolveInstant(player2, 0, champion.getId());
+        assertThat(champion.getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Ethereal Champion");
+    }
+
+    @Test
+    @DisplayName("The life-only ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent champion = harness.addToBattlefieldAndReturn(player1, new EtherealChampion());
+        champion.setTapped(true);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, indexOf(player1, champion), null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, champion.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
+        assertThat(champion.isTapped()).isTrue();
+        assertThat(champion.getMarkedDamage()).isEqualTo(1);
     }
 
     private int indexOf(Player player, Permanent perm) {
