@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -49,6 +50,32 @@ class HighcliffFelidarTest extends BaseCardTest {
     }
 
     @Test
+    void usesCurrentPowerIncludingCounters() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addToBattlefield(player2, new SerraAngel());
+
+        castHighcliffFelidar();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Serra Angel");
+    }
+
+    @Test
+    void doesNotDestroyItsControllersCreatures() {
+        harness.addToBattlefield(player1, new SerraAngel());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castHighcliffFelidar();
+
+        harness.assertOnBattlefield(player1, "Serra Angel");
+        harness.assertOnBattlefield(player1, "Highcliff Felidar");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
     void doesNothingWhenAnOpponentControlsNoCreatures() {
         castHighcliffFelidar();
 
@@ -61,7 +88,6 @@ class HighcliffFelidarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
