@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,11 +19,8 @@ class IllTimedExplosionTest extends BaseCardTest {
     @DisplayName("Draws two, optionally discards two, and damages each creature by the greatest discarded mana value")
     void damagesByGreatestDiscardedManaValue() {
         harness.addToBattlefield(player2, new HillGiant());
-        harness.setHand(player1, List.of(new IllTimedExplosion()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new WindDrake()));
-        addMana();
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new IllTimedExplosion(), "{2}{U}{R}");
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -36,6 +32,7 @@ class IllTimedExplosionTest extends BaseCardTest {
                         .findFirst().orElseThrow());
         harness.handleCardChosen(player1, windDrakeIndex);
         harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
@@ -44,11 +41,8 @@ class IllTimedExplosionTest extends BaseCardTest {
     @DisplayName("Declining the discard still keeps the drawn cards and deals no damage")
     void decliningDiscardDealsNoDamage() {
         harness.addToBattlefield(player2, new HillGiant());
-        harness.setHand(player1, List.of(new IllTimedExplosion()));
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new WindDrake()));
-        addMana();
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new IllTimedExplosion(), "{2}{U}{R}");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -56,9 +50,45 @@ class IllTimedExplosionTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
     }
 
-    private void addMana() {
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    @Test
+    @DisplayName("Discarding creates a separate damage trigger that waits for priority passes")
+    void damageWaitsForReflexiveTriggerResolution() {
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new WindDrake()));
+        harness.castFromHand(player1, new IllTimedExplosion(), "{2}{U}{R}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player1, "Ill-Timed Explosion");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("The greatest discarded value is used, rather than the sum, and both players' creatures are damaged")
+    void damagesBothBattlefieldsWithoutAddingManaValues() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.castFromHand(player1, new IllTimedExplosion(), "{2}{U}{R}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
