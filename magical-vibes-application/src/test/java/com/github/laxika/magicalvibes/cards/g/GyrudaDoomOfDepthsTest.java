@@ -84,6 +84,71 @@ class GyrudaDoomOfDepthsTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getCard() == opponentBears);
     }
 
+    @Test
+    @DisplayName("mills all remaining cards when a library has fewer than four")
+    void millsShortLibrariesAndReturnsCreature() {
+        Card bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bears, new Forest()));
+        harness.setLibrary(player2, List.of());
+
+        castGyruda();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(bears.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1).doesNotContain(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == bears);
+    }
+
+    @Test
+    @DisplayName("cannot return creatures already in a graveyard or below the four milled cards")
+    void excludesCardsNotMilledByThisAbility() {
+        Card oldBears = new GrizzlyBears();
+        Card fifthCard = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(oldBears));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(), fifthCard));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+
+        castGyruda();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fifthCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(5).contains(oldBears);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == oldBears || permanent.getCard() == fifthCard);
+    }
+
+    @Test
+    @DisplayName("returns only one creature when both players mill eligible creatures")
+    void choosesExactlyOneCreatureAcrossBothPlayers() {
+        Card ownBears = new GrizzlyBears();
+        Card opponentBears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(ownBears, new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(opponentBears, new Forest(), new Forest(), new Forest()));
+
+        castGyruda();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(ownBears.getId(), opponentBears.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(ownBears.getId()));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(ownBears);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentBears);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == ownBears)
+                .noneMatch(permanent -> permanent.getCard() == opponentBears);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
     private void castGyruda() {
         harness.setHand(player1, List.of(new GyrudaDoomOfDepths()));
         harness.addMana(player1, ManaColor.BLUE, 2);
