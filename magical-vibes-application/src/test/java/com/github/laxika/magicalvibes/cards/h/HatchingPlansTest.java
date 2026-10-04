@@ -55,4 +55,60 @@ class HatchingPlansTest extends BaseCardTest {
                 .contains(fodder.getCard(), hatchingPlans);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(rusalka);
     }
+
+    @Test
+    @DisplayName("Draws for its last controller rather than its owner")
+    void drawsForControllerWhenOwnedByOpponent() {
+        HatchingPlans card = new HatchingPlans();
+        card.setOwnerId(player1.getId());
+        Permanent hatchingPlans = harness.addToBattlefieldAndReturn(player2, card);
+        DrownedRusalka firstDrawn = new DrownedRusalka();
+        DrownedRusalka secondDrawn = new DrownedRusalka();
+        DrownedRusalka thirdDrawn = new DrownedRusalka();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new DrownedRusalka(), new DrownedRusalka(), new DrownedRusalka()));
+        harness.setLibrary(player2, List.of(firstDrawn, secondDrawn, thirdDrawn));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, hatchingPlans));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(firstDrawn, secondDrawn, thirdDrawn);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Hatching Plans");
+        harness.assertNotInGraveyard(player2, "Hatching Plans");
+    }
+
+    @Test
+    @DisplayName("Does not trigger when exiled from the battlefield")
+    void doesNotTriggerWhenExiled() {
+        Permanent hatchingPlans = harness.addToBattlefieldAndReturn(player1, new HatchingPlans());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new DrownedRusalka(), new DrownedRusalka(), new DrownedRusalka()));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, hatchingPlans));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.findExiledCard(hatchingPlans.getCard().getId())).isNotNull();
+        harness.assertNotInGraveyard(player1, "Hatching Plans");
+    }
+
+    @Test
+    @DisplayName("Does not trigger when returned to hand from the battlefield")
+    void doesNotTriggerWhenReturnedToHand() {
+        HatchingPlans card = new HatchingPlans();
+        Permanent hatchingPlans = harness.addToBattlefieldAndReturn(player1, card);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new DrownedRusalka(), new DrownedRusalka(), new DrownedRusalka()));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, hatchingPlans));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        harness.assertNotInGraveyard(player1, "Hatching Plans");
+    }
 }
