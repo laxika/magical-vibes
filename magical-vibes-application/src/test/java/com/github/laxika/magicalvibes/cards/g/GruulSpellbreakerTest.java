@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GruulSpellbreaker.class, Shock.class})
 class GruulSpellbreakerTest extends BaseCardTest {
 
     @Test
@@ -93,6 +95,44 @@ class GruulSpellbreakerTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Hexproof allows self-targeting and ends immediately when Spellbreaker dies")
+    void selfTargetingAndSourceRemoval() {
+        Permanent spellbreaker = harness.addToBattlefieldAndReturn(player1, new GruulSpellbreaker());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.assertLife(player1, 18);
+        harness.castAndResolveInstant(player1, 0, spellbreaker.getId());
+        harness.assertOnBattlefield(player1, "Gruul Spellbreaker");
+        assertThat(gqs.playerHasHexproof(gd, player1.getId())).isTrue();
+        harness.castAndResolveInstant(player1, 0, spellbreaker.getId());
+
+        harness.assertInGraveyard(player1, "Gruul Spellbreaker");
+        assertThat(gqs.playerHasHexproof(gd, player1.getId())).isFalse();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @DisplayName("Riot haste persists through cleanup while turn-dependent hexproof expires")
+    void riotHastePersistsAcrossTurnBoundary() {
+        Permanent spellbreaker = castSpellbreaker(false);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, spellbreaker, Keyword.HASTE)).isTrue();
+        assertThat(spellbreaker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, spellbreaker, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.playerHasHexproof(gd, player1.getId())).isFalse();
+    }
+
     private Permanent castSpellbreaker(boolean chooseCounter) {
         harness.setHand(player1, List.of(new GruulSpellbreaker()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -107,9 +147,6 @@ class GruulSpellbreakerTest extends BaseCardTest {
         if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
             harness.handleMayAbilityChosen(player1, chooseCounter);
         }
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof GruulSpellbreaker)
-                .findFirst()
-                .orElseThrow();
+        return gqs.findPermanentById(gd, harness.getPermanentId(player1, "Gruul Spellbreaker"));
     }
 }
