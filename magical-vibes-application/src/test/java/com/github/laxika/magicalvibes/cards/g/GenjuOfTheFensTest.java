@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.w.WearAway;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GenjuOfTheFens.class, Swamp.class, Forest.class, StoneRain.class})
+@CardUsed({GenjuOfTheFens.class, Swamp.class, Forest.class, StoneRain.class, WearAway.class})
 class GenjuOfTheFensTest extends BaseCardTest {
 
     @Test
@@ -150,6 +151,89 @@ class GenjuOfTheFensTest extends BaseCardTest {
         return swamp;
     }
 
+    @Test
+    @DisplayName("Reanimating an already pumped Swamp preserves its +1/+1 bonus")
+    void reanimationPreservesPump() {
+        Permanent swamp = addSwampWithGenju();
+        activateGenju();
+        pumpAnimatedSwamp();
+
+        activateGenju();
+
+        assertThat(gqs.getEffectivePower(gd, swamp)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, swamp)).isEqualTo(3);
+        pumpAnimatedSwamp();
+        assertThat(gqs.getEffectivePower(gd, swamp)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, swamp)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Destroying Genju in response does not stop its animation and ability grant")
+    void activationResolvesAfterAuraIsDestroyed() {
+        Permanent swamp = addSwampWithGenju();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int genjuIndex = gd.playerBattlefields.get(player1.getId())
+                .indexOf(findPermanent(player1, "Genju of the Fens"));
+        harness.activateAbility(player1, genjuIndex, null, null);
+
+        destroyGenju();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, swamp)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, swamp)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, swamp)).isEqualTo(2);
+        pumpAnimatedSwamp();
+        assertThat(gqs.getEffectivePower(gd, swamp)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, swamp)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Destroying Genju after animation leaves the Swamp animated and able to pump")
+    void resolvedAnimationSurvivesAuraDestruction() {
+        Permanent swamp = addSwampWithGenju();
+        activateGenju();
+
+        destroyGenju();
+
+        assertThat(gqs.isCreature(gd, swamp)).isTrue();
+        pumpAnimatedSwamp();
+        assertThat(gqs.getEffectivePower(gd, swamp)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, swamp)).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Genju of the Fens");
+        harness.assertNotInHand(player1, "Genju of the Fens");
+    }
+
+    @Test
+    @DisplayName("An opponent's enchanted Swamp can be animated and pumped by its controller")
+    void opponentControlsGrantedPumpAbility() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        harness.setHand(player1, List.of(new GenjuOfTheFens()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castEnchantment(player1, 0, swamp.getId());
+        harness.passBothPriorities();
+        activateGenju();
+
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        int swampIndex = gd.playerBattlefields.get(player2.getId()).indexOf(swamp);
+        harness.activateAbility(player2, swampIndex, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, swamp)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, swamp)).isEqualTo(3);
+        destroySwamp(swamp);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertInHand(player1, "Genju of the Fens");
+        harness.assertNotInHand(player2, "Genju of the Fens");
+    }
+
+    private void destroyGenju() {
+        UUID genjuId = harness.getPermanentId(player1, "Genju of the Fens");
+        harness.setHand(player2, List.of(new WearAway()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player2, 0, genjuId);
+    }
+
     private void activateGenju() {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int genjuIndex = gd.playerBattlefields.get(player1.getId()).indexOf(
@@ -171,7 +255,6 @@ class GenjuOfTheFensTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new StoneRain()));
         harness.addMana(player2, ManaColor.RED, 3);
-        harness.castSorcery(player2, 0, swamp.getId());
-        harness.passBothPriorities(); // resolve Stone Rain
+        harness.castAndResolveSorcery(player2, 0, swamp.getId());
     }
 }
