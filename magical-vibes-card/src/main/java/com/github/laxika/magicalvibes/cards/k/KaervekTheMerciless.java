@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaVal
 @CardRegistration(set = "2X2", collectorNumber = "236")
 @CardRegistration(set = "TSR", collectorNumber = "257")
 @CardRegistration(set = "DSC", collectorNumber = "222")
+@CardRegistration(set = "SCD", collectorNumber = "233")
 public class KaervekTheMerciless extends Card {
 
     public KaervekTheMerciless() {

@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "111")
+@CardRegistration(set = "SCD", collectorNumber = "119")
 public class VizierOfTheScorpion extends Card {
 
     public VizierOfTheScorpion() {

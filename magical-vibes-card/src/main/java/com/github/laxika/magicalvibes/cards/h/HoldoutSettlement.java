@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "172")
+@CardRegistration(set = "SCD", collectorNumber = "305")
 public class HoldoutSettlement extends Card {
 
     public HoldoutSettlement() {

@@ -26,6 +26,7 @@ import java.util.List;
 @CardRegistration(set = "C19", collectorNumber = "180")
 @CardRegistration(set = "NEC", collectorNumber = "129")
 @CardRegistration(set = "C16", collectorNumber = "167")
+@CardRegistration(set = "SCD", collectorNumber = "211")
 public class ShamanicRevelation extends Card {
 
     public ShamanicRevelation() {

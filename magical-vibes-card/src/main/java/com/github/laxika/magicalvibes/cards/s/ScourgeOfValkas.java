@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "1490")
 @CardRegistration(set = "PIO", collectorNumber = "155")
 @CardRegistration(set = "AFC", collectorNumber = "137")
+@CardRegistration(set = "SCD", collectorNumber = "157")
 public class ScourgeOfValkas extends Card {
 
     public ScourgeOfValkas() {

@@ -111,6 +111,7 @@ import com.github.laxika.magicalvibes.model.condition.ColorMostCommonAmongAllPer
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
+import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellFromGraveyardOrActivatedGraveyardAbilityThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerAndEnchantedPlayerAttackEachOther;
 import com.github.laxika.magicalvibes.model.condition.ControllerCastFourOrMoreSpellsThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerCycledCardNamedAtLeastThisGame;
@@ -1415,6 +1416,11 @@ public class ConditionEvaluationService {
             case ControllerCastAnotherSpellThisTurn c ->
                     ctx.controllerId() != null && gameQueryService.hasControllerCastAnotherSpellThisTurn(
                             gameData, ctx.controllerId(), ctx.sourceCard(), c.filter());
+            case ControllerCastSpellFromGraveyardOrActivatedGraveyardAbilityThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && (gameData.getSpellsCastThisTurnCount(ctx.controllerId(), Zone.GRAVEYARD) > 0
+                            || gameData.playersWhoActivatedAbilityOfGraveyardCardThisTurn
+                            .contains(ctx.controllerId()));
             case ControllerCastFourOrMoreSpellsThisTurn c ->
                     ctx.controllerId() != null && gameQueryService.hasControllerCastFourOrMoreSpellsThisTurn(
                             gameData, ctx.controllerId(), c.filter());

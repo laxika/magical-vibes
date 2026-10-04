@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "709")
 @CardRegistration(set = "TDC", collectorNumber = "317")
 @CardRegistration(set = "AFC", collectorNumber = "204")
+@CardRegistration(set = "SCD", collectorNumber = "264")
 public class DragonsHoard extends Card {
 
     public DragonsHoard() {

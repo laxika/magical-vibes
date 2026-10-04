@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "DOM", collectorNumber = "149")
 @CardRegistration(set = "TDC", collectorNumber = "243")
+@CardRegistration(set = "SCD", collectorNumber = "168")
 public class VerixBladewing extends Card {
 
     public VerixBladewing() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "203")
 @CardRegistration(set = "DSC", collectorNumber = "234")
+@CardRegistration(set = "SCD", collectorNumber = "247")
 public class StormfistCrusader extends Card {
 
     public StormfistCrusader() {

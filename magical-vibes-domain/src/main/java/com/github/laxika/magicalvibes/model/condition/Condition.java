@@ -117,6 +117,7 @@ public sealed interface Condition permits
         ControllerCycledCardNamedAtLeastThisGame,
         ControllerCycledAtLeastCardsThisTurn,
         ControllerCastAnotherSpellThisTurn,
+        ControllerCastSpellFromGraveyardOrActivatedGraveyardAbilityThisTurn,
         ControllerCastSpellThisTurn,
         ControllerHasNotCastSpellThisGame,
         ControllerCastTwoOrMoreSpellsThisTurn,

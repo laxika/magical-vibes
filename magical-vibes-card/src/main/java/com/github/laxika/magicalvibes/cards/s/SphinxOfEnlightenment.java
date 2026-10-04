@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "GN2", collectorNumber = "2")
 @CardRegistration(set = "BLC", collectorNumber = "175")
+@CardRegistration(set = "SCD", collectorNumber = "61")
 public class SphinxOfEnlightenment extends Card {
 
     public SphinxOfEnlightenment() {

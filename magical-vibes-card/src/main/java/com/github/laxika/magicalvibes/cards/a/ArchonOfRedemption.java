@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "WWK", collectorNumber = "3")
+@CardRegistration(set = "SCD", collectorNumber = "7")
 public class ArchonOfRedemption extends Card {
 
     public ArchonOfRedemption() {

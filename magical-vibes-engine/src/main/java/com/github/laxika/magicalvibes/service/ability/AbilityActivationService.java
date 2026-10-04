@@ -2115,6 +2115,7 @@ public class AbilityActivationService {
         stackEntry.setSourceZone(Zone.GRAVEYARD);
         stackEntry.setTargetFilter(ability.getTargetFilter());
         gameData.stack.add(stackEntry);
+        gameData.recordActivatedAbilityOfGraveyardCard(playerId);
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
         flushActivatedAbilityCostTriggers(gameData);
 
