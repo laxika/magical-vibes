@@ -86,4 +86,57 @@ class HammerMageTest extends BaseCardTest {
                 .containsExactly("Fresh Volunteers");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent hammerMage = harness.addToBattlefieldAndReturn(player1, new HammerMage());
+        harness.setHand(player1, List.of(new FreshVolunteers()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(hammerMage.isTapped()).isFalse();
+        harness.assertInHand(player1, "Fresh Volunteers");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent hammerMage = addCreatureReady(player1, new HammerMage());
+        hammerMage.setTapped(true);
+        harness.setHand(player1, List.of(new FreshVolunteers()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        harness.assertInHand(player1, "Fresh Volunteers");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void destroysArtifactsEnteringBeforeResolutionAndAcceptsArtifactDiscard() {
+        addCreatureReady(player1, new HammerMage());
+        harness.setHand(player1, List.of(new CreditVoucher(), new FreshVolunteers()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.activateAbility(player1, 0, 5, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Credit Voucher");
+        harness.assertInHand(player1, "Fresh Volunteers");
+        harness.addToBattlefield(player2, new BargainingTable());
+        harness.assertOnBattlefield(player2, "Bargaining Table");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Bargaining Table");
+        harness.assertInGraveyard(player2, "Bargaining Table");
+        harness.assertOnBattlefield(player1, "Hammer Mage");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }
