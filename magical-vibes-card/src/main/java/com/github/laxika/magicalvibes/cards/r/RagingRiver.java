@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RagingRiverEffect;
 
 @CardRegistration(set = "2ED", collectorNumber = "169")
 @CardRegistration(set = "LEA", collectorNumber = "168")
+@CardRegistration(set = "LEB", collectorNumber = "169")
 public class RagingRiver extends Card {
 
     public RagingRiver() {

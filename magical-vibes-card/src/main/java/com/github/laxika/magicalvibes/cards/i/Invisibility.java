@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "M15", collectorNumber = "61")
 @CardRegistration(set = "2ED", collectorNumber = "60")
 @CardRegistration(set = "LEA", collectorNumber = "59")
+@CardRegistration(set = "LEB", collectorNumber = "60")
 public class Invisibility extends Card {
 
     public Invisibility() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "LEA", collectorNumber = "219")
 @CardRegistration(set = "3ED", collectorNumber = "219")
 @CardRegistration(set = "2ED", collectorNumber = "220")
+@CardRegistration(set = "LEB", collectorNumber = "220")
 public class TimberWolves extends Card {
 
     public TimberWolves() {

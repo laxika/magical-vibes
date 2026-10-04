@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "ME4", collectorNumber = "40")
 @CardRegistration(set = "2ED", collectorNumber = "51")
 @CardRegistration(set = "LEA", collectorNumber = "50")
+@CardRegistration(set = "LEB", collectorNumber = "51")
 public class Braingeyser extends Card {
 
     public Braingeyser() {

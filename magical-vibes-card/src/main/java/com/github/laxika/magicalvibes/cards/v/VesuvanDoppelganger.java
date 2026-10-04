@@ -16,6 +16,7 @@ import java.util.Set;
 @CardRegistration(set = "3ED", collectorNumber = "88")
 @CardRegistration(set = "2ED", collectorNumber = "88")
 @CardRegistration(set = "LEA", collectorNumber = "87")
+@CardRegistration(set = "LEB", collectorNumber = "88")
 public class VesuvanDoppelganger extends Card {
 
     public VesuvanDoppelganger() {

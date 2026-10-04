@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "BTD", collectorNumber = "70")
 @CardRegistration(set = "SUM", collectorNumber = "240")
 @CardRegistration(set = "ME1", collectorNumber = "153")
+@CardRegistration(set = "LEB", collectorNumber = "237")
 public class ClockworkBeast extends Card {
 
     public ClockworkBeast() {

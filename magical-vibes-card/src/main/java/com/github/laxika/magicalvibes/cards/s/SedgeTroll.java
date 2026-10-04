@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "ME4", collectorNumber = "135")
 @CardRegistration(set = "2ED", collectorNumber = "173")
 @CardRegistration(set = "LEA", collectorNumber = "172")
+@CardRegistration(set = "LEB", collectorNumber = "173")
 public class SedgeTroll extends Card {
 
     public SedgeTroll() {

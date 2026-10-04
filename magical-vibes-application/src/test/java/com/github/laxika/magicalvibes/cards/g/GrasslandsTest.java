@@ -109,6 +109,55 @@ class GrasslandsTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Grasslands is sacrificed as a cost before the search resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        activateSearch();
+
+        harness.assertNotOnBattlefield(player1, "Grasslands");
+        harness.assertInGraveyard(player1, "Grasslands");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+    }
+
+    @Test
+    @DisplayName("Chosen Plains enters untapped under the searching player's control")
+    void canChoosePlains() {
+        activateSearch();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertNotOnBattlefield(player2, "Plains");
+        assertThat(findPermanent(player1, "Plains").isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .hasSize(4)
+                .noneMatch(card -> card.getName().equals("Plains"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Searching an empty library completes without a choice")
+    void searchEmptyLibrary() {
+        harness.addToBattlefield(player1, new Grasslands());
+        harness.setLibrary(player1, List.of());
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grasslands");
+        harness.assertInGraveyard(player1, "Grasslands");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void activateSearch() {
         harness.addToBattlefield(player1, new Grasslands());
         setupLibrary();

@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "2ED", collectorNumber = "24")
 @CardRegistration(set = "SUM", collectorNumber = "23")
 @CardRegistration(set = "LEA", collectorNumber = "23")
+@CardRegistration(set = "LEB", collectorNumber = "24")
 public class HolyArmor extends Card {
 
     public HolyArmor() {

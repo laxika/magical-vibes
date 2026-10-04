@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SUM", collectorNumber = "205")
+@CardRegistration(set = "LEB", collectorNumber = "205")
 @CardRegistration(set = "3ED", collectorNumber = "205")
 @CardRegistration(set = "ME4", collectorNumber = "159")
 @CardRegistration(set = "2ED", collectorNumber = "205")

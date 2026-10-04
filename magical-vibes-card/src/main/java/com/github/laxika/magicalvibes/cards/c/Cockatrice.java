@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 @CardRegistration(set = "SUM", collectorNumber = "189")
 @CardRegistration(set = "TSB", collectorNumber = "75")
 @CardRegistration(set = "LEA", collectorNumber = "189")
+@CardRegistration(set = "LEB", collectorNumber = "190")
 public class Cockatrice extends Card {
 
     public Cockatrice() {

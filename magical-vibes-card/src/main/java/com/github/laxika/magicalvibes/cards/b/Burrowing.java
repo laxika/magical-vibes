@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SUM", collectorNumber = "140")
 @CardRegistration(set = "3ED", collectorNumber = "140")
 @CardRegistration(set = "2ED", collectorNumber = "139")
+@CardRegistration(set = "LEB", collectorNumber = "139")
 public class Burrowing extends Card {
 
     public Burrowing() {

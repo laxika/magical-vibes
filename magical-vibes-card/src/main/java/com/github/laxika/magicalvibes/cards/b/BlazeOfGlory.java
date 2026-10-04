@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "2ED", collectorNumber = "6")
 @CardRegistration(set = "ME4", collectorNumber = "7")
 @CardRegistration(set = "LEA", collectorNumber = "6")
+@CardRegistration(set = "LEB", collectorNumber = "6")
 public class BlazeOfGlory extends Card {
 
     public BlazeOfGlory() {

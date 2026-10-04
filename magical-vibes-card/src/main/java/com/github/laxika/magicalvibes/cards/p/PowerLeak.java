@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "3ED", collectorNumber = "73")
 @CardRegistration(set = "2ED", collectorNumber = "72")
 @CardRegistration(set = "LEA", collectorNumber = "71")
+@CardRegistration(set = "LEB", collectorNumber = "72")
 public class PowerLeak extends Card {
 
     public PowerLeak() {

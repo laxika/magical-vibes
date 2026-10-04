@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "DDI", collectorNumber = "55")
 @CardRegistration(set = "2ED", collectorNumber = "177")
 @CardRegistration(set = "LEA", collectorNumber = "176")
+@CardRegistration(set = "LEB", collectorNumber = "177")
 public class StoneGiant extends Card {
 
     public StoneGiant() {

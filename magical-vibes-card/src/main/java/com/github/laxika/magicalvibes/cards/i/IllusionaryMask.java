@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "ME3", collectorNumber = "197")
 @CardRegistration(set = "2ED", collectorNumber = "250")
 @CardRegistration(set = "LEA", collectorNumber = "249")
+@CardRegistration(set = "LEB", collectorNumber = "250")
 public class IllusionaryMask extends Card {
 
     public IllusionaryMask() {

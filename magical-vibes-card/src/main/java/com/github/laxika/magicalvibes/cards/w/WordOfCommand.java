@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "2ED", collectorNumber = "137")
 @CardRegistration(set = "ME4", collectorNumber = "103")
 @CardRegistration(set = "LEA", collectorNumber = "136")
+@CardRegistration(set = "LEB", collectorNumber = "137")
 public class WordOfCommand extends Card {
 
     public WordOfCommand() {

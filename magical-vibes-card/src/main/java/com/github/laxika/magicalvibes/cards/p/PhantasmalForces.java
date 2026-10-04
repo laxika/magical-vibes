@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "ME4", collectorNumber = "55")
 @CardRegistration(set = "2ED", collectorNumber = "68")
 @CardRegistration(set = "LEA", collectorNumber = "67")
+@CardRegistration(set = "LEB", collectorNumber = "68")
 public class PhantasmalForces extends Card {
 
     public PhantasmalForces() {

@@ -26,6 +26,7 @@ import java.util.List;
 @CardRegistration(set = "ME4", collectorNumber = "14")
 @CardRegistration(set = "2ED", collectorNumber = "23")
 @CardRegistration(set = "LEA", collectorNumber = "22")
+@CardRegistration(set = "LEB", collectorNumber = "23")
 public class HealingSalve extends Card {
 
     public HealingSalve() {

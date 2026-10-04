@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "3ED", collectorNumber = "121")
 @CardRegistration(set = "VMA", collectorNumber = "132")
 @CardRegistration(set = "2ED", collectorNumber = "120")
+@CardRegistration(set = "LEB", collectorNumber = "120")
 public class Paralyze extends Card {
 
     public Paralyze() {

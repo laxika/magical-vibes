@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "DVD", collectorNumber = "47")
 @CardRegistration(set = "2ED", collectorNumber = "132")
 @CardRegistration(set = "LEA", collectorNumber = "131")
+@CardRegistration(set = "LEB", collectorNumber = "132")
 public class UnholyStrength extends Card {
 
     public UnholyStrength() {

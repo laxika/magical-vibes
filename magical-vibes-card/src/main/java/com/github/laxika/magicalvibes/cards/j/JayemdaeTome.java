@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "LEA", collectorNumber = "254")
 @CardRegistration(set = "3ED", collectorNumber = "258")
 @CardRegistration(set = "2ED", collectorNumber = "255")
+@CardRegistration(set = "LEB", collectorNumber = "255")
 public class JayemdaeTome extends Card {
 
     public JayemdaeTome() {

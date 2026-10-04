@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 @CardRegistration(set = "2ED", collectorNumber = "125")
 @CardRegistration(set = "SPG", collectorNumber = "69")
 @CardRegistration(set = "LEA", collectorNumber = "124")
+@CardRegistration(set = "LEB", collectorNumber = "125")
 public class Sacrifice extends Card {
 
     public Sacrifice() {

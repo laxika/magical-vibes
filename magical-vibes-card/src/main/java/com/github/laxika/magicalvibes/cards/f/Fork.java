@@ -16,6 +16,7 @@ import java.util.Set;
 @CardRegistration(set = "ME4", collectorNumber = "116")
 @CardRegistration(set = "2ED", collectorNumber = "153")
 @CardRegistration(set = "LEA", collectorNumber = "152")
+@CardRegistration(set = "LEB", collectorNumber = "153")
 public class Fork extends Card {
 
     public Fork() {

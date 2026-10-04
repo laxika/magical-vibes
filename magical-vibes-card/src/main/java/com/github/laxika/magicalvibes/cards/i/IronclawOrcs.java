@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockCreaturesWithPowerAt
 @CardRegistration(set = "4ED", collectorNumber = "206")
 @CardRegistration(set = "2ED", collectorNumber = "160")
 @CardRegistration(set = "LEA", collectorNumber = "159")
+@CardRegistration(set = "LEB", collectorNumber = "160")
 @CardRegistration(set = "ITP", collectorNumber = "34")
 @CardRegistration(set = "RQS", collectorNumber = "33")
 @CardRegistration(set = "ME2", collectorNumber = "132")

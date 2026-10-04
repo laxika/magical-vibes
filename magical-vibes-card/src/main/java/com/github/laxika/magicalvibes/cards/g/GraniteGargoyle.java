@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "3ED", collectorNumber = "156")
 @CardRegistration(set = "2ED", collectorNumber = "156")
 @CardRegistration(set = "LEA", collectorNumber = "155")
+@CardRegistration(set = "LEB", collectorNumber = "156")
 public class GraniteGargoyle extends Card {
 
     public GraniteGargoyle() {

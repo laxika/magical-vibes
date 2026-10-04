@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "SUM", collectorNumber = "245")
 @CardRegistration(set = "3ED", collectorNumber = "245")
 @CardRegistration(set = "LEA", collectorNumber = "242")
+@CardRegistration(set = "LEB", collectorNumber = "243")
 public class DisruptingScepter extends Card {
 
     public DisruptingScepter() {

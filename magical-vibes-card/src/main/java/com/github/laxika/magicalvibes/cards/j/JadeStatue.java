@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "9ED", collectorNumber = "300")
 @CardRegistration(set = "2ED", collectorNumber = "254")
 @CardRegistration(set = "LEA", collectorNumber = "253")
+@CardRegistration(set = "LEB", collectorNumber = "254")
 public class JadeStatue extends Card {
 
     public JadeStatue() {

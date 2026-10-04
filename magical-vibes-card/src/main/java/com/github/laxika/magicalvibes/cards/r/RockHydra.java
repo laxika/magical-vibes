@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "ME4", collectorNumber = "133")
 @CardRegistration(set = "2ED", collectorNumber = "172")
 @CardRegistration(set = "LEA", collectorNumber = "171")
+@CardRegistration(set = "LEB", collectorNumber = "172")
 public class RockHydra extends Card {
 
     public RockHydra() {

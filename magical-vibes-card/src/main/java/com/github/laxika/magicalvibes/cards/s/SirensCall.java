@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SirensCallEffect;
 @CardRegistration(set = "3ED", collectorNumber = "80")
 @CardRegistration(set = "2ED", collectorNumber = "78")
 @CardRegistration(set = "LEA", collectorNumber = "77")
+@CardRegistration(set = "LEB", collectorNumber = "78")
 public class SirensCall extends Card {
 
     public SirensCall() {

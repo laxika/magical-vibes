@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "6ED", collectorNumber = "292")
 @CardRegistration(set = "SUM", collectorNumber = "253")
 @CardRegistration(set = "LEA", collectorNumber = "251")
+@CardRegistration(set = "LEB", collectorNumber = "252")
 public class IvoryCup extends Card {
 
     public IvoryCup() {

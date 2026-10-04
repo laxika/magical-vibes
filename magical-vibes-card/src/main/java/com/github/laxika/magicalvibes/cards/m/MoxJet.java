@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 @CardRegistration(set = "VMA", collectorNumber = "6")
 @CardRegistration(set = "2ED", collectorNumber = "263")
 @CardRegistration(set = "LEA", collectorNumber = "262")
+@CardRegistration(set = "LEB", collectorNumber = "263")
 public class MoxJet extends Card {
 
     public MoxJet() {

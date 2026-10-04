@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "SUM", collectorNumber = "29")
 @CardRegistration(set = "SLD", collectorNumber = "1855")
 @CardRegistration(set = "LEA", collectorNumber = "29")
+@CardRegistration(set = "LEB", collectorNumber = "30")
 public class NorthernPaladin extends Card {
 
     public NorthernPaladin() {

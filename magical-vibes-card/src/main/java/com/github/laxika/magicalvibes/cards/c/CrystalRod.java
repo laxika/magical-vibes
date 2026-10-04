@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "3ED", collectorNumber = "242")
 @CardRegistration(set = "2ED", collectorNumber = "240")
 @CardRegistration(set = "LEA", collectorNumber = "239")
+@CardRegistration(set = "LEB", collectorNumber = "240")
 public class CrystalRod extends Card {
 
     public CrystalRod() {

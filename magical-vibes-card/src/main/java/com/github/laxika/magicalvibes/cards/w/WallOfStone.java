@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "3ED", collectorNumber = "184")
 @CardRegistration(set = "2ED", collectorNumber = "183")
 @CardRegistration(set = "LEA", collectorNumber = "182")
+@CardRegistration(set = "LEB", collectorNumber = "183")
 public class WallOfStone extends Card {
 
     public WallOfStone() {

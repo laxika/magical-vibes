@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CamouflageEffect;
 
 @CardRegistration(set = "2ED", collectorNumber = "188")
 @CardRegistration(set = "LEA", collectorNumber = "187")
+@CardRegistration(set = "LEB", collectorNumber = "188")
 public class Camouflage extends Card {
 
     public Camouflage() {

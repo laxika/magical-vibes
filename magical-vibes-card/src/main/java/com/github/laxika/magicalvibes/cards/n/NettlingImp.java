@@ -23,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "3ED", collectorNumber = "119")
 @CardRegistration(set = "2ED", collectorNumber = "118")
 @CardRegistration(set = "LEA", collectorNumber = "117")
+@CardRegistration(set = "LEB", collectorNumber = "118")
 public class NettlingImp extends Card {
 
     public NettlingImp() {

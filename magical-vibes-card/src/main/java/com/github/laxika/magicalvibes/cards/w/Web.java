@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "4ED", collectorNumber = "287")
 @CardRegistration(set = "3ED", collectorNumber = "229")
 @CardRegistration(set = "LEA", collectorNumber = "228")
+@CardRegistration(set = "LEB", collectorNumber = "229")
 @CardRegistration(set = "SUM", collectorNumber = "229")
 @CardRegistration(set = "2ED", collectorNumber = "229")
 public class Web extends Card {

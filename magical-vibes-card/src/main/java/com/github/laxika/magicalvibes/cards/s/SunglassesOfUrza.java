@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "3ED", collectorNumber = "276")
 @CardRegistration(set = "2ED", collectorNumber = "272")
 @CardRegistration(set = "LEA", collectorNumber = "271")
+@CardRegistration(set = "LEB", collectorNumber = "272")
 public class SunglassesOfUrza extends Card {
 
     public SunglassesOfUrza() {

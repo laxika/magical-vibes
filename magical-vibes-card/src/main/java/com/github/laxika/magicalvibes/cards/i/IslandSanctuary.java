@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.IslandSanctuaryEffect;
 @CardRegistration(set = "ME4", collectorNumber = "15")
 @CardRegistration(set = "2ED", collectorNumber = "26")
 @CardRegistration(set = "LEA", collectorNumber = "25")
+@CardRegistration(set = "LEB", collectorNumber = "26")
 public class IslandSanctuary extends Card {
 
     public IslandSanctuary() {

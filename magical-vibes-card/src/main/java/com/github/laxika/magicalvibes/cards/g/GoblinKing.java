@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "2ED", collectorNumber = "155")
 @CardRegistration(set = "MB2", collectorNumber = "191")
 @CardRegistration(set = "LEA", collectorNumber = "154")
+@CardRegistration(set = "LEB", collectorNumber = "155")
 public class GoblinKing extends Card {
 
     public GoblinKing() {

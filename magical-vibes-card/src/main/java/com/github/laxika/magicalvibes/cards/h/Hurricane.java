@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 @CardRegistration(set = "SUM", collectorNumber = "202")
 @CardRegistration(set = "DKM", collectorNumber = "28")
 @CardRegistration(set = "LEA", collectorNumber = "200")
+@CardRegistration(set = "LEB", collectorNumber = "201")
 public class Hurricane extends Card {
 
     public Hurricane() {

@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "2ED", collectorNumber = "236")
 @CardRegistration(set = "LEA", collectorNumber = "235")
+@CardRegistration(set = "LEB", collectorNumber = "236")
 public class ChaosOrb extends Card {
 
     public ChaosOrb() {

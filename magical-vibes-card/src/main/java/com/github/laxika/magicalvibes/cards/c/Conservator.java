@@ -12,6 +12,7 @@ import java.util.List;
 @CardRegistration(set = "LEA", collectorNumber = "237")
 @CardRegistration(set = "3ED", collectorNumber = "241")
 @CardRegistration(set = "2ED", collectorNumber = "238")
+@CardRegistration(set = "LEB", collectorNumber = "238")
 public class Conservator extends Card {
 
     public Conservator() {

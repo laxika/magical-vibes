@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 @CardRegistration(set = "TSB", collectorNumber = "30")
 @CardRegistration(set = "2ED", collectorNumber = "75")
 @CardRegistration(set = "LEA", collectorNumber = "74")
+@CardRegistration(set = "LEB", collectorNumber = "75")
 public class PsionicBlast extends Card {
 
     public PsionicBlast() {
