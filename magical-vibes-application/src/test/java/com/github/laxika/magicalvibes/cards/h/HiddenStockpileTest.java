@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RenegadeMap;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HiddenStockpile.class, GrizzlyBears.class, Forest.class, RenegadeMap.class})
 class HiddenStockpileTest extends BaseCardTest {
 
     @Test
@@ -64,6 +67,118 @@ class HiddenStockpileTest extends BaseCardTest {
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
     }
 
+    @Test
+    void sacrificeDuringEndStepDoesNotRetroactivelyTriggerRevolt() {
+        Permanent stockpile = harness.addToBattlefieldAndReturn(player1, new HiddenStockpile());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).isEmpty();
+        sacrificeCreatureWithStockpile(stockpile, bears);
+        resolveScryKeepingTopCard();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(countServoTokens(player1)).isZero();
+    }
+
+    @Test
+    void revoltDoesNotTriggerDuringOpponentsEndStep() {
+        Permanent stockpile = harness.addToBattlefieldAndReturn(player1, new HiddenStockpile());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+
+        sacrificeCreatureWithStockpile(stockpile, bears);
+        resolveScryKeepingTopCard();
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(countServoTokens(player1)).isZero();
+    }
+
+    @Test
+    void multipleSacrificesCreateOnlyOneServo() {
+        Permanent stockpile = harness.addToBattlefieldAndReturn(player1, new HiddenStockpile());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        sacrificeCreatureWithStockpile(stockpile, first);
+        resolveScryKeepingTopCard();
+        sacrificeCreatureWithStockpile(stockpile, second);
+        resolveScryKeepingTopCard();
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(countServoTokens(player1)).isEqualTo(1);
+    }
+
+    @Test
+    void scryCanPutTheTopCardOnTheBottom() {
+        Permanent stockpile = harness.addToBattlefieldAndReturn(player1, new HiddenStockpile());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card top = new Forest();
+        Card next = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(top, next));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        sacrificeCreatureWithStockpile(stockpile, bears);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(next, top);
+    }
+
+    @Test
+    void sacrificeWithEmptyLibraryStillEnablesRevolt() {
+        Permanent stockpile = harness.addToBattlefieldAndReturn(player1, new HiddenStockpile());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        sacrificeCreatureWithStockpile(stockpile, bears);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(countServoTokens(player1)).isEqualTo(1);
+    }
+
+    @Test
+    void sacrificingANoncreaturePermanentEnablesRevolt() {
+        harness.addToBattlefield(player1, new HiddenStockpile());
+        harness.addToBattlefield(player1, new RenegadeMap());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(countServoTokens(player1)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsPermanentLeavingDoesNotEnableYourRevolt() {
+        harness.addToBattlefield(player1, new HiddenStockpile());
+        harness.addToBattlefield(player2, new RenegadeMap());
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(countServoTokens(player1)).isZero();
+    }
+
     private void resolveScryKeepingTopCard() {
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(0), List.of()));
@@ -81,8 +196,7 @@ class HiddenStockpileTest extends BaseCardTest {
     private void advanceToEndStep(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
     }
 
     private long countServoTokens(Player player) {
