@@ -23,15 +23,13 @@ class HealTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Heal adds a 1-damage prevention shield to the target creature")
     void addsPreventionShieldToCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Heal()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
+        harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(bears.getDamagePreventionShield()).isEqualTo(1);
     }
 
@@ -121,12 +119,8 @@ class HealTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
         harness.ensurePriority(player2);
-        advanceToUpkeep(player2);
         assertThat(findPermanent(player2, "Grizzly Bears").getDamagePreventionShield()).isZero();
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -137,12 +131,11 @@ class HealTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Heal schedules a draw at the next upkeep, not immediately")
     void schedulesDrawAtNextUpkeep() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Heal()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
+        harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
         // No immediate draw; a delayed draw is queued for the caster.
@@ -156,12 +149,11 @@ class HealTest extends BaseCardTest {
     @Test
     @DisplayName("The scheduled draw resolves at the next upkeep")
     void drawResolvesAtNextUpkeep() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Heal()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, targetId);
+        harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -173,5 +165,51 @@ class HealTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Heal does not schedule a draw when its only target dies before resolution")
+    void illegalTargetPreventsDelayedDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Heal(), new Incinerate()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Heal cast during upkeep waits until the next turn's upkeep to draw")
+    void castDuringUpkeepDrawsOnlyNextTurn() {
+        advanceToUpkeep(player1);
+        harness.setHand(player1, List.of(new Heal()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        advanceToUpkeep(player2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }
