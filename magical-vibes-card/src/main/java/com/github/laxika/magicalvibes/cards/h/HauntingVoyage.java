@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesOfChosenTypeFr
 
 @CardRegistration(set = "KHM", collectorNumber = "98")
 @CardRegistration(set = "ECC", collectorNumber = "75")
+@CardRegistration(set = "KHM", collectorNumber = "296")
 public class HauntingVoyage extends Card {
 
     public HauntingVoyage() {

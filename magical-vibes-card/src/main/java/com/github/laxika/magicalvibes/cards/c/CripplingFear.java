@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesExceptChosenTypeEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "82")
+@CardRegistration(set = "KHM", collectorNumber = "350")
 public class CripplingFear extends Card {
 
     public CripplingFear() {

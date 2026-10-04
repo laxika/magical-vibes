@@ -1878,19 +1878,26 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Choose the creature whose sacrifice creates the reflexive trigger. */
     record SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard,
-                                                   List<CardEffect> reflexiveFollowUps, PermanentPredicate targetPredicate)
+                                                   List<CardEffect> reflexiveFollowUps, PermanentPredicate targetPredicate,
+                                                   boolean doubleDamageIfGiant)
             implements PermanentChoiceContext {
         public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard,
                                                    List<CardEffect> reflexiveFollowUps) {
-            this(controllerId, sourceCard, reflexiveFollowUps, null);
+            this(controllerId, sourceCard, reflexiveFollowUps, null, false);
+        }
+
+        public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard,
+                                                   List<CardEffect> reflexiveFollowUps,
+                                                   boolean doubleDamageIfGiant) {
+            this(controllerId, sourceCard, reflexiveFollowUps, null, doubleDamageIfGiant);
         }
 
         public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard, PermanentPredicate targetPredicate) {
-            this(controllerId, sourceCard, List.of(), targetPredicate);
+            this(controllerId, sourceCard, List.of(), targetPredicate, false);
         }
 
         public SacrificeAnotherCreatureDealPowerDamage(UUID controllerId, Card sourceCard) {
-            this(controllerId, sourceCard, List.of(), null);
+            this(controllerId, sourceCard, List.of(), null, false);
         }
 
         public SacrificeAnotherCreatureDealPowerDamage {

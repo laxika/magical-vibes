@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "79")
+@CardRegistration(set = "KHM", collectorNumber = "348")
 public class BloodOnTheSnow extends Card {
 
     public BloodOnTheSnow() {

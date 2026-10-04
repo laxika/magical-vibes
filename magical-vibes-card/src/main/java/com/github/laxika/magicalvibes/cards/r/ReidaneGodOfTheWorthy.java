@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "21")
+@CardRegistration(set = "KHM", collectorNumber = "300")
 public class ReidaneGodOfTheWorthy extends Card {
 
     public ReidaneGodOfTheWorthy() {

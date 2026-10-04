@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "223")
+@CardRegistration(set = "KHM", collectorNumber = "328")
 public class MoritteOfTheFrost extends Card {
 
     public MoritteOfTheFrost() {

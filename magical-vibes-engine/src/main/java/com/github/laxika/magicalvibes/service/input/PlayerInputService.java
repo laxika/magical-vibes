@@ -1923,11 +1923,19 @@ public class PlayerInputService {
     public void beginRemoveChosenCountersChoice(GameData gameData, UUID playerId, UUID targetId,
                                                  String sourceCardName, int remainingSelections,
                                                  List<CounterType> counterTypes) {
+        beginRemoveChosenCountersChoice(gameData, playerId, targetId, sourceCardName,
+                remainingSelections, counterTypes, false);
+    }
+
+    public void beginRemoveChosenCountersChoice(GameData gameData, UUID playerId, UUID targetId,
+                                                String sourceCardName, int remainingSelections,
+                                                List<CounterType> counterTypes, boolean exactAmount) {
         ChoiceContext.RemoveChosenCountersChoice context = new ChoiceContext.RemoveChosenCountersChoice(
-                targetId, playerId, sourceCardName, remainingSelections, counterTypes);
+                targetId, playerId, sourceCardName, remainingSelections, counterTypes, exactAmount);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 playerId, null, null, context, context.options(),
-                sourceCardName + " — Choose up to " + remainingSelections + " counters to remove."));
+                sourceCardName + (exactAmount ? " — Choose " : " — Choose up to ")
+                        + remainingSelections + " counters to remove."));
         log.info("Game {} - Awaiting {} to choose a counter to remove from {}", gameData.id, playerId, targetId);
     }
 

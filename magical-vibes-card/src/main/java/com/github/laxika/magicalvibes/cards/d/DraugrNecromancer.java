@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithI
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentCreaturesInsteadOfDyingEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "86")
+@CardRegistration(set = "KHM", collectorNumber = "351")
 public class DraugrNecromancer extends Card {
 
     public DraugrNecromancer() {

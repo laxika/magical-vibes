@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "27")
+@CardRegistration(set = "KHM", collectorNumber = "340")
 public class SearchForGlory extends Card {
 
     public SearchForGlory() {

@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "63")
+@CardRegistration(set = "KHM", collectorNumber = "345")
 public class IcebreakerKraken extends Card {
 
     private static final PermanentPredicate SNOW_LAND = new PermanentAllOfPredicate(List.of(

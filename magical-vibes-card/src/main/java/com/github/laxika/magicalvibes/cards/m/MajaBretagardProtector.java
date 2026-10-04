@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "222")
+@CardRegistration(set = "KHM", collectorNumber = "327")
 public class MajaBretagardProtector extends Card {
 
     public MajaBretagardProtector() {

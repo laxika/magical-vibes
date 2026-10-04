@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOfChosenTypeToH
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "40")
+@CardRegistration(set = "KHM", collectorNumber = "302")
 public class AlrundGodOfTheCosmos extends Card {
 
     public AlrundGodOfTheCosmos() {

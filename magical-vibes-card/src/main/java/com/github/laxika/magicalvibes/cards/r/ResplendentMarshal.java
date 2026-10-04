@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "KHM", collectorNumber = "22")
+@CardRegistration(set = "KHM", collectorNumber = "337")
 public class ResplendentMarshal extends Card {
 
     public ResplendentMarshal() {

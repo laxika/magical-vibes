@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChosenCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -19,6 +21,7 @@ import java.util.List;
 public class RemoveChosenCountersFromTargetPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -33,16 +36,23 @@ public class RemoveChosenCountersFromTargetPermanentEffectHandler implements Nor
             return;
         }
 
-        int amount = ((RemoveChosenCountersFromTargetPermanentEffect) effect).amount();
+        var removeEffect = (RemoveChosenCountersFromTargetPermanentEffect) effect;
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        int amount = Math.max(0, amountEvaluationService.evaluate(gameData, removeEffect.amount(),
+                AmountContext.forStackEntry(entry, source)));
         if (amount == 0) {
             return;
         }
 
         List<CounterType> counterTypes = counterTypesOn(target);
         if (!counterTypes.isEmpty()) {
+            int available = counterTypes.stream().mapToInt(target::getCounterCount).sum();
             playerInputService.beginRemoveChosenCountersChoice(gameData, entry.getControllerId(),
                     target.getId(), entry.getCard().getName(),
-                    amount, counterTypes);
+                    Math.min(amount, available), counterTypes, removeEffect.exactAmount());
         }
     }
 
