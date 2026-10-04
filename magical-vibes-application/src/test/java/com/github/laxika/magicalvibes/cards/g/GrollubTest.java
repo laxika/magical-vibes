@@ -24,8 +24,7 @@ class GrollubTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID grollubId = harness.getPermanentId(player1, "Grollub");
-        harness.castInstant(player2, 0, grollubId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, grollubId);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 22);
@@ -41,8 +40,7 @@ class GrollubTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         UUID grollubId = harness.getPermanentId(player1, "Grollub");
-        harness.castInstant(player2, 0, grollubId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, grollubId);
         harness.passBothPriorities();
 
         harness.assertLife(player2, 24);
@@ -64,5 +62,68 @@ class GrollubTest extends BaseCardTest {
 
         harness.assertLife(player1, 21);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Damage from Grollub's controller still benefits only its opponent, after the trigger resolves")
+    void controllerDealtDamageTriggersLifeGainOnTheStack() {
+        harness.addToBattlefield(player1, new Grollub());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        UUID grollubId = harness.getPermanentId(player1, "Grollub");
+        harness.castAndResolveInstant(player1, 0, grollubId);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 22);
+        harness.assertOnBattlefield(player1, "Grollub");
+    }
+
+    @Test
+    @DisplayName("Separate damage events each grant life, even when the second event is lethal")
+    void repeatedDamageUsesEachEventAmount() {
+        harness.addToBattlefield(player1, new Grollub());
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        UUID grollubId = harness.getPermanentId(player1, "Grollub");
+        harness.castAndResolveInstant(player2, 0, grollubId);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 22);
+        harness.assertOnBattlefield(player1, "Grollub");
+
+        harness.castAndResolveInstant(player2, 0, grollubId);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 24);
+        harness.assertInGraveyard(player1, "Grollub");
+        harness.assertNotOnBattlefield(player1, "Grollub");
+    }
+
+    @Test
+    @DisplayName("Both Grollubs trigger when they deal lethal combat damage to each other")
+    void lethalCombatDamageTriggersForBothControllers() {
+        addCreatureReady(player1, new Grollub());
+        addCreatureReady(player2, new Grollub());
+
+        declareAttackers(player1, List.of(0));
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 23);
+        harness.assertNotOnBattlefield(player1, "Grollub");
+        harness.assertNotOnBattlefield(player2, "Grollub");
+        harness.assertInGraveyard(player1, "Grollub");
+        harness.assertInGraveyard(player2, "Grollub");
     }
 }
