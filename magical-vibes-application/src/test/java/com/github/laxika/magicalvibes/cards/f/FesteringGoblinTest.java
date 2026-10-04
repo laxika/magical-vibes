@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -12,11 +14,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FesteringGoblin.class, GrizzlyBears.class, WrathOfGod.class, MindStone.class})
+@CardUsed({FesteringGoblin.class, GrizzlyBears.class, WrathOfGod.class, MindStone.class, Shock.class})
 class FesteringGoblinTest extends BaseCardTest {
 
     /** Sets up and resolves combat where Festering Goblin attacks into a 3/3 blocker. */
@@ -54,9 +57,7 @@ class FesteringGoblinTest extends BaseCardTest {
     @DisplayName("Death trigger gives -1/-1 to chosen creature after resolution")
     void deathTriggerTargetsOpponentCreature() {
         harness.addToBattlefield(player1, new FesteringGoblin());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
 
         resolveCombatWhereGoblinDies();
 
@@ -87,9 +88,7 @@ class FesteringGoblinTest extends BaseCardTest {
     @DisplayName("Death trigger can target own creature")
     void deathTriggerCanTargetOwnCreature() {
         harness.addToBattlefield(player1, new FesteringGoblin());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        UUID ownBearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID ownBearsId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
 
         resolveCombatWhereGoblinDies();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -115,9 +114,7 @@ class FesteringGoblinTest extends BaseCardTest {
         GrizzlyBears weakBear = new GrizzlyBears();
         weakBear.setPower(1);
         weakBear.setToughness(1);
-        harness.addToBattlefield(player2, weakBear);
-
-        UUID weakBearId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID weakBearId = harness.addToBattlefieldAndReturn(player2, weakBear).getId();
 
         resolveCombatWhereGoblinDies();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -138,9 +135,7 @@ class FesteringGoblinTest extends BaseCardTest {
     @DisplayName("Death trigger debuff wears off at end of turn")
     void debuffWearsOffAtEndOfTurn() {
         harness.addToBattlefield(player1, new FesteringGoblin());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
 
         resolveCombatWhereGoblinDies();
 
@@ -189,9 +184,7 @@ class FesteringGoblinTest extends BaseCardTest {
     @DisplayName("Death trigger only offers creature permanents as targets")
     void deathTriggerCannotTargetNonCreaturePermanent() {
         harness.addToBattlefield(player1, new FesteringGoblin());
-        harness.addToBattlefield(player2, new MindStone());
-
-        UUID mindStoneId = harness.getPermanentId(player2, "Mind Stone");
+        UUID mindStoneId = harness.addToBattlefieldAndReturn(player2, new MindStone()).getId();
 
         resolveCombatWhereGoblinDies();
 
@@ -211,9 +204,7 @@ class FesteringGoblinTest extends BaseCardTest {
     @DisplayName("Ability fizzles when target creature is removed before resolution")
     void abilityFizzlesWhenTargetRemoved() {
         harness.addToBattlefield(player1, new FesteringGoblin());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
 
         resolveCombatWhereGoblinDies();
 
@@ -235,10 +226,7 @@ class FesteringGoblinTest extends BaseCardTest {
     @DisplayName("Death trigger is put on the stack when another creature survives")
     void deathTriggerIsPutOnStackWhenAnotherCreatureSurvives() {
         harness.addToBattlefield(player1, new FesteringGoblin());
-        GrizzlyBears survivor = new GrizzlyBears();
-        harness.addToBattlefield(player2, survivor);
-
-        UUID survivorId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID survivorId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
 
         resolveCombatWhereGoblinDies();
 
@@ -254,5 +242,47 @@ class FesteringGoblinTest extends BaseCardTest {
                 && e.getCard() instanceof FesteringGoblin
                 && e.getTargetId().equals(survivorId));
     }
-}
 
+    @Test
+    @DisplayName("Noncombat death requires targeting your own creature when it is the only survivor")
+    void noncombatDeathMustTargetOnlySurvivingOwnCreature() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new FesteringGoblin());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, goblin.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Festering Goblin");
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validPermanentIds()).containsExactly(bears.getId());
+
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getEffectivePower()).isEqualTo(1);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Another creature dying does not trigger Festering Goblin")
+    void anotherCreatureDyingDoesNotTriggerAbility() {
+        harness.addToBattlefield(player1, new FesteringGoblin());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Festering Goblin");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+}
