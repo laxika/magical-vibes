@@ -48,8 +48,7 @@ class IhsansShadeTest extends BaseCardTest {
     void greenCreatureCanBlock() {
         Permanent attacker = addCreatureReady(player1, new IhsansShade());
         Permanent blocker = addCreatureReady(player2, new RysorianBadger());
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -63,8 +62,7 @@ class IhsansShadeTest extends BaseCardTest {
     void takesNoDamageFromWhite() {
         Permanent attacker = addCreatureReady(player1, new BeastWalkers());
         Permanent blocker = addCreatureReady(player2, new IhsansShade());
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
@@ -72,6 +70,35 @@ class IhsansShadeTest extends BaseCardTest {
 
         assertThat(blocker.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Ihsan's Shade");
+    }
+
+    @Test
+    @DisplayName("Takes combat damage from a green creature")
+    void takesDamageFromGreen() {
+        Permanent attacker = addCreatureReady(player1, new RysorianBadger());
+        Permanent blocker = addCreatureReady(player2, new IhsansShade());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
+        resolveCombat();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Ihsan's Shade");
+        harness.assertInGraveyard(player1, "Rysorian Badger");
+    }
+
+    @Test
+    @DisplayName("Its controller's white ability cannot target Ihsan's Shade")
+    void cannotBeTargetedByOwnWhiteAbility() {
+        Permanent paladin = addCreatureReady(player1, new SerraPaladin());
+        Permanent shade = addCreatureReady(player1, new IhsansShade());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(paladin), null, shade.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from white");
+        assertThat(paladin.isTapped()).isFalse();
     }
 
     @Test
