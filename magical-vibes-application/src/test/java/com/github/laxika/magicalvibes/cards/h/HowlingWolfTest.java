@@ -22,8 +22,7 @@ class HowlingWolfTest extends BaseCardTest {
     void resolvingCreatesMayPrompt() {
         setupAndCast();
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveToMayPrompt();
 
         harness.assertOnBattlefield(player1, "Howling Wolf");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -133,6 +132,48 @@ class HowlingWolfTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(entry -> entry.contains("finds no cards named Howling Wolf"));
+    }
+
+    @Test
+    @DisplayName("Accepting the search may choose zero cards and still shuffle")
+    void canChooseZeroCardsAndShuffle() {
+        setupAndCast();
+        setupLibraryWithWolves(3);
+        List<Card> libraryBefore = new ArrayList<>(gd.playerDecks.get(player1.getId()));
+        List<Card> handBefore = new ArrayList<>(gd.playerHands.get(player1.getId()));
+
+        resolveToMayPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(libraryBefore);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("chooses not to take a card. Library is shuffled."));
+    }
+
+    @Test
+    @DisplayName("Finding fewer than three wolves searches only the controller's library")
+    void fewerThanThreeWolvesAreMovedFromControllersLibrary() {
+        setupAndCast();
+        setupLibraryWithWolves(2);
+        HowlingWolf opponentsWolf = new HowlingWolf();
+        harness.setLibrary(player2, List.of(opponentsWolf));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        resolveToMayPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
+        assertThat(gd.playerHands.get(player1.getId()).stream()
+                .filter(card -> card.getName().equals("Howling Wolf"))).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Howling Wolf"));
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsWolf);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void setupAndCast() {
