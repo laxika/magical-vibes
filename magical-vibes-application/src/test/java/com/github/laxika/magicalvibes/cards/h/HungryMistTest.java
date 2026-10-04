@@ -73,6 +73,38 @@ class HungryMistTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Payment can be declined even when enough green mana is available")
+    void declineWithEnoughManaSacrificesWithoutSpendingMana() {
+        harness.addToBattlefield(player1, new HungryMist());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Hungry Mist");
+        harness.assertInGraveyard(player1, "Hungry Mist");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Other colors cannot replace the second green mana in the upkeep payment")
+    void wrongColorManaCannotPay() {
+        harness.addToBattlefield(player1, new HungryMist());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Hungry Mist");
+        harness.assertInGraveyard(player1, "Hungry Mist");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Triggers during the controller's upkeep")
     void triggersDuringControllerUpkeep() {
         harness.addToBattlefield(player2, new HungryMist());
