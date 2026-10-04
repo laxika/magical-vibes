@@ -3673,6 +3673,8 @@ public class CombatDamageService {
                         shufflePermanent |= gameQueryService
                                 .shufflesTargetIntoOwnersLibraryAfterCombatDamagePrevention(
                                         gameData, damageSource, perm);
+                    }
+                    if (damageSource != null) {
                         sourceDamage = damagePreventionService.applyPerSourceCreatureDamagePreventionShield(
                                 gameData, perm, damageSource, sourceDamage, true);
                     }
@@ -4731,6 +4733,8 @@ public class CombatDamageService {
                 queueDralnuReplacement(state, target, damage);
                 return;
             }
+            damagePreventionService.applyCombatDamageToSelfAndAddPlusOneCounter(
+                    gameData, target, source, damage);
             damageTakenMap.merge(targetIdx, damage, Integer::sum);
             unpreventableDamageTakenMap.merge(targetIdx, damage, Integer::sum);
             damageTakenBySourceMap

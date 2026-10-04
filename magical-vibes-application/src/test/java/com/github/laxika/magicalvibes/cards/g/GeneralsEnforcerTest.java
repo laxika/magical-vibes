@@ -96,6 +96,85 @@ class GeneralsEnforcerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can exile a creature from your own graveyard")
+    void canExileCreatureFromOwnGraveyard() {
+        harness.addToBattlefield(player1, new GeneralsEnforcer());
+        Card target = new GeneralsEnforcer();
+        harness.setGraveyard(player1, List.of(target));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "General's Enforcer");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two activations targeting the same creature create only one token")
+    void missingGraveyardTargetDoesNotCreateAnotherToken() {
+        harness.addToBattlefield(player1, new GeneralsEnforcer());
+        Card target = new GeneralsEnforcer();
+        harness.setGraveyard(player2, List.of(target));
+        addActivationMana();
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(target);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Legendary Humans survive lethal damage while the Enforcer remains")
+    void legendaryHumanSurvivesLethalDamage() {
+        harness.addToBattlefield(player1, new GeneralsEnforcer());
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new JirinaDauntlessGeneral());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, human.getId());
+
+        harness.assertOnBattlefield(player1, "Jirina, Dauntless General");
+        harness.assertNotInGraveyard(player1, "Jirina, Dauntless General");
+    }
+
+    @Test
+    @DisplayName("Activated ability survives its source and static protection ends when it leaves")
+    void abilityResolvesAfterSourceDiesAndProtectionEnds() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GeneralsEnforcer());
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new JirinaDauntlessGeneral());
+        Card target = new GeneralsEnforcer();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, source.getId());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId(), Zone.GRAVEYARD);
+        harness.castInstant(player1, 0, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "General's Enforcer");
+        harness.assertInGraveyard(player1, "General's Enforcer");
+        assertThat(gqs.hasKeyword(gd, human, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.WHITE, 1);

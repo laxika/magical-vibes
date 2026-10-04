@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "213")
+@CardRegistration(set = "MOM", collectorNumber = "301")
+@CardRegistration(set = "MOM", collectorNumber = "342")
 public class VorinclexTheGrandEvolution extends Card {
 
     public VorinclexTheGrandEvolution() {

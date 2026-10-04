@@ -37,8 +37,7 @@ class FurnaceSpiritTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
@@ -91,5 +90,41 @@ class FurnaceSpiritTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new FurnaceSpirit());
+        spirit.setSummoningSick(true);
+        spirit.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(1);
+
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, spirit)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, spirit)).isEqualTo(1);
+        assertThat(spirit.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Boost affects only the source among multiple Furnace Spirits")
+    void boostAffectsOnlySource() {
+        Permanent other = addCreatureReady(player1, new FurnaceSpirit());
+        Permanent source = addCreatureReady(player1, new FurnaceSpirit());
+        Permanent opposing = addCreatureReady(player2, new FurnaceSpirit());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(1);
     }
 }

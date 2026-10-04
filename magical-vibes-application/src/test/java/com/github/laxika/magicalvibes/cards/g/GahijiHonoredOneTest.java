@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.e.ElvishSkysweeper;
+import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +16,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GahijiHonoredOne.class, GrizzlyBears.class})
+@CardUsed({GahijiHonoredOne.class, GrizzlyBears.class, ElvishSkysweeper.class, JaceBeleren.class})
 class GahijiHonoredOneTest extends BaseCardTest {
 
     @Test
@@ -58,13 +58,86 @@ class GahijiHonoredOneTest extends BaseCardTest {
         assertThat(attacker.getPowerModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("Gahiji gets its own bonus when it attacks an opponent")
+    void boostsItselfWhenAttacking() {
+        Permanent gahiji = addCreatureReady(player1, new GahijiHonoredOne());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gahiji.getPowerModifier()).isEqualTo(2);
+        assertThat(gahiji.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each attacking creature gets one bonus and nonattackers get none")
+    void boostsEachAttackerSeparately() {
+        harness.addToBattlefield(player1, new GahijiHonoredOne());
+        Permanent first = addCreatureReady(player1, new ElvishSkysweeper());
+        Permanent second = addCreatureReady(player1, new ElvishSkysweeper());
+        Permanent nonattacker = addCreatureReady(player1, new ElvishSkysweeper());
+
+        declareAttackers(List.of(1, 2));
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(2);
+        assertThat(second.getPowerModifier()).isEqualTo(2);
+        assertThat(first.getToughnessModifier()).isZero();
+        assertThat(second.getToughnessModifier()).isZero();
+        assertThat(nonattacker.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Attacking Gahiji's controller directly does not grant a bonus")
+    void doesNotBoostAttackAgainstControllerDirectly() {
+        harness.addToBattlefield(player1, new GahijiHonoredOne());
+        Permanent attacker = addCreatureReady(player2, new ElvishSkysweeper());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The bonus wears off at end of turn")
+    void bonusExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player1, new GahijiHonoredOne());
+        Permanent attacker = addCreatureReady(player1, new ElvishSkysweeper());
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.CLEANUP);
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("An attack trigger resolves after Gahiji leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        Permanent gahiji = harness.addToBattlefieldAndReturn(player1, new GahijiHonoredOne());
+        Permanent attacker = addCreatureReady(player1, new ElvishSkysweeper());
+
+        declareAttackers(List.of(1));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(gahiji);
+        gd.playerGraveyards.get(player1.getId()).add(gahiji.getCard());
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
     private Permanent addPlaneswalker(Player player) {
-        Card card = new Card();
-        card.setName("Test Planeswalker");
-        card.setType(CardType.PLANESWALKER);
-        Permanent planeswalker = new Permanent(card);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player, new JaceBeleren());
         planeswalker.setCounterCount(CounterType.LOYALTY, 3);
-        gd.playerBattlefields.get(player.getId()).add(planeswalker);
         return planeswalker;
     }
 

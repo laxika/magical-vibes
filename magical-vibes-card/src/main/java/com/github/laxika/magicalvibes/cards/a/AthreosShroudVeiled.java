@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DSC", collectorNumber = "212")
+@CardRegistration(set = "THB", collectorNumber = "269")
 public class AthreosShroudVeiled extends Card {
 
     public AthreosShroudVeiled() {

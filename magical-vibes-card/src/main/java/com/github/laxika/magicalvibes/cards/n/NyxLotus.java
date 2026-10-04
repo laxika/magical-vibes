@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "235")
+@CardRegistration(set = "THB", collectorNumber = "344")
 public class NyxLotus extends Card {
 
     public NyxLotus() {

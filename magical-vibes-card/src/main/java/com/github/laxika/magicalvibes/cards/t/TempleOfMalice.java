@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "BNG", collectorNumber = "164")
 @CardRegistration(set = "THB", collectorNumber = "247")
+@CardRegistration(set = "THB", collectorNumber = "350")
 @CardRegistration(set = "WHO", collectorNumber = "317")
 @CardRegistration(set = "WHO", collectorNumber = "527")
 @CardRegistration(set = "WHO", collectorNumber = "908")
@@ -22,6 +23,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "835")
 @CardRegistration(set = "PIP", collectorNumber = "1049")
 @CardRegistration(set = "DSC", collectorNumber = "310")
+@CardRegistration(set = "SCD", collectorNumber = "326")
 @CardRegistration(set = "VOC", collectorNumber = "186")
 @CardRegistration(set = "BRC", collectorNumber = "208")
 public class TempleOfMalice extends Card {

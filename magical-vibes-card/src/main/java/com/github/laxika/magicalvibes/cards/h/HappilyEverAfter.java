@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "16")
+@CardRegistration(set = "ELD", collectorNumber = "337")
 @CardRegistration(set = "SLD", collectorNumber = "1828")
 public class HappilyEverAfter extends Card {
 

@@ -21,6 +21,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FungusaurTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Only the Fungusaur dealt damage gets a counter")
+    void damageTriggerOnlyAddsCounterToItsSource() {
+        Permanent undamaged = addCreatureReady(player2, new Fungusaur());
+        Permanent damaged = addCreatureReady(player2, new Fungusaur());
+        Permanent opposing = addCreatureReady(player1, new Fungusaur());
+        harness.setHand(player1, List.of(new GiantGrowth(), new Shock()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, damaged.getId());
+        harness.castAndResolveInstant(player1, 0, damaged.getId());
+        resolveAllTriggers();
+
+        assertThat(damaged.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(undamaged.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opposing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
     @DisplayName("When Fungusaur takes non-lethal combat damage, it gets a +1/+1 counter and survives")
     void nonLethalCombatDamageAddsCounter() {
         addCreatureReady(player2, new Fungusaur());

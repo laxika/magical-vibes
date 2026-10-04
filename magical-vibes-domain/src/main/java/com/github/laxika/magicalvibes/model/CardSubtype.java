@@ -110,6 +110,7 @@ public enum CardSubtype {
     KOBOLD("Kobold"),
     WIZARD("Wizard"),
     SORCERER("Sorcerer"),
+    ELSPETH("Elspeth"),
     MUTANT("Mutant"),
     WEREWOLF("Werewolf"),
     WOLF("Wolf"),
@@ -166,6 +167,7 @@ public enum CardSubtype {
     ILLUSION("Illusion"),
     DRAKE("Drake"),
     DRONE("Drone"),
+    DOVIN("Dovin"),
     SPAWN("Spawn"),
     SCION("Scion"),
     SCULPTURE("Sculpture"),
@@ -257,11 +259,13 @@ public enum CardSubtype {
     BLINKMOTH("Blinkmoth"),
     HOMUNCULUS("Homunculus"),
     PRAETOR("Praetor"),
+    ASHIOK("Ashiok"),
     KARN("Karn"),
     GIDEON("Gideon"),
     LILIANA("Liliana"),
     JACE("Jace"),
     NISSA("Nissa"),
+    OKO("Oko"),
     SARKHAN("Sarkhan"),
     CURSE("Curse"),
     CARTOUCHE("Cartouche"),
@@ -269,6 +273,7 @@ public enum CardSubtype {
     CHIMERA("Chimera"),
     HELLION("Hellion"),
     BOLAS("Bolas"),
+    DOMRI("Domri"),
     DEVIL("Devil"),
     SAGA("Saga"),
     UNICORN("Unicorn"),
@@ -326,6 +331,7 @@ public enum CardSubtype {
     NINJA("Ninja"),
     SHRINE("Shrine"),
     SAMUT("Samut"),
+    ROWAN("Rowan"),
     ARCANE("Arcane"),
     GATE("Gate"),
     SOLTARI("Soltari"),
@@ -359,8 +365,8 @@ SYNTH("Synth"),
             URZAS, ULAMOGS, MINE, POWER_PLANT, TOWER, SPHERE, OMEN);
 
     private static final List<CardSubtype> PLANESWALKER_TYPES = List.of(
-            AJANI, BASRI, GARRUK, KOTH, HUATLI, KARN, GIDEON, LILIANA, JACE, NISSA,
-            SARKHAN, CHANDRA, BOLAS, TEZZERET, VIVIEN, TEFERI, TYVAR, UGIN, SAMUT, YANGGU, YANLING, WRENN);
+            AJANI, BASRI, GARRUK, KOTH, HUATLI, ASHIOK, KARN, GIDEON, LILIANA, JACE, NISSA,
+            OKO, SARKHAN, CHANDRA, BOLAS, DOMRI, DOVIN, TEZZERET, VIVIEN, TEFERI, TYVAR, UGIN, SAMUT, ROWAN, YANGGU, YANLING, WRENN, ELSPETH);
 
     public static List<CardSubtype> basicLandTypes() {
         return BASIC_LAND_TYPES;

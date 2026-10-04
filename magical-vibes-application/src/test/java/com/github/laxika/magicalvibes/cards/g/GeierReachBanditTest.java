@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.t.TormentedPariah;
+import com.github.laxika.magicalvibes.cards.w.WhispersilkCloak;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,13 +15,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GeierReachBandit.class, TormentedPariah.class, AirElemental.class, WhispersilkCloak.class})
 class GeierReachBanditTest extends BaseCardTest {
 
     @Test
     @DisplayName("Transforms to Vildin-Pack Alpha when no spells were cast last turn")
     void transformsWhenNoSpellsCastLastTurn() {
-        harness.addToBattlefield(player1, new GeierReachBandit());
-        Permanent bandit = findPermanent(player1, "Geier Reach Bandit");
+        Permanent bandit = harness.addToBattlefieldAndReturn(player1, new GeierReachBandit());
 
         gd.spellsCastLastTurn.clear();
 
@@ -38,8 +40,7 @@ class GeierReachBanditTest extends BaseCardTest {
     @Test
     @DisplayName("Does not transform when a spell was cast last turn")
     void doesNotTransformWhenSpellCastLastTurn() {
-        harness.addToBattlefield(player1, new GeierReachBandit());
-        Permanent bandit = findPermanent(player1, "Geier Reach Bandit");
+        Permanent bandit = harness.addToBattlefieldAndReturn(player1, new GeierReachBandit());
 
         gd.spellsCastLastTurn.put(player1.getId(), 1);
 
@@ -55,8 +56,7 @@ class GeierReachBanditTest extends BaseCardTest {
     @Test
     @DisplayName("Vildin-Pack Alpha transforms back when a player cast two or more spells last turn")
     void alphaTransformsBackWhenTwoSpellsCast() {
-        harness.addToBattlefield(player1, new GeierReachBandit());
-        Permanent bandit = findPermanent(player1, "Geier Reach Bandit");
+        Permanent bandit = harness.addToBattlefieldAndReturn(player1, new GeierReachBandit());
 
         gd.spellsCastLastTurn.clear();
         harness.forceActivePlayer(player1);
@@ -82,8 +82,7 @@ class GeierReachBanditTest extends BaseCardTest {
     @Test
     @DisplayName("Alpha may transform an entering Werewolf you control")
     void alphaMayTransformEnteringWerewolf() {
-        harness.addToBattlefield(player1, new GeierReachBandit());
-        Permanent bandit = findPermanent(player1, "Geier Reach Bandit");
+        Permanent bandit = harness.addToBattlefieldAndReturn(player1, new GeierReachBandit());
 
         gd.spellsCastLastTurn.clear();
         harness.forceActivePlayer(player1);
@@ -110,7 +109,6 @@ class GeierReachBanditTest extends BaseCardTest {
     @DisplayName("Declining Alpha's trigger leaves the entering Werewolf untransformed")
     void decliningAlphaLeaveWerewolfUntransformed() {
         harness.addToBattlefield(player1, new GeierReachBandit());
-        Permanent bandit = findPermanent(player1, "Geier Reach Bandit");
 
         gd.spellsCastLastTurn.clear();
         harness.forceActivePlayer(player1);
@@ -136,7 +134,6 @@ class GeierReachBanditTest extends BaseCardTest {
     @DisplayName("Alpha does not trigger for a non-Werewolf entering")
     void alphaDoesNotTriggerForNonWerewolf() {
         harness.addToBattlefield(player1, new GeierReachBandit());
-        Permanent bandit = findPermanent(player1, "Geier Reach Bandit");
 
         gd.spellsCastLastTurn.clear();
         harness.forceActivePlayer(player1);
@@ -152,5 +149,84 @@ class GeierReachBanditTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(findPermanent(player1, "Air Elemental").isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Transforms during an opponent's upkeep when neither player cast spells")
+    void transformsDuringOpponentsUpkeep() {
+        Permanent bandit = harness.addToBattlefieldAndReturn(player1, new GeierReachBandit());
+        gd.spellsCastLastTurn.clear();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(bandit.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("One spell from each player does not transform Alpha back")
+    void separatePlayersSpellsAreNotCombined() {
+        Permanent bandit = createAlpha();
+        gd.spellsCastLastTurn.put(player1.getId(), 1);
+        gd.spellsCastLastTurn.put(player2.getId(), 1);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(bandit.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Alpha does not trigger for an opponent's Werewolf")
+    void ignoresOpponentsEnteringWerewolf() {
+        createAlpha();
+        Permanent entering = harness.enterBattlefieldAndReturn(player2, new GeierReachBandit());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(entering.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Alpha can transform an entering Werewolf that gains shroud")
+    void transformsEnteringWerewolfDespiteShroud() {
+        createAlpha();
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new GeierReachBandit());
+        Permanent cloak = harness.addToBattlefieldAndReturn(player1, new WhispersilkCloak());
+        cloak.setAttachedTo(entering.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(entering.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An entering Alpha triggers its own optional transform ability")
+    void alphaTriggersForItsOwnEntry() {
+        harness.enterBattlefieldAndReturn(player1, new GeierReachBandit().getBackFaceCard());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private Permanent createAlpha() {
+        Permanent bandit = harness.addToBattlefieldAndReturn(player1, new GeierReachBandit());
+        gd.spellsCastLastTurn.clear();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(bandit.isTransformed()).isTrue();
+        return bandit;
     }
 }

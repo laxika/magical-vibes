@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOne
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToOtherCreaturesAndAddPlusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToSelfAndAddPlusOneCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToControllerPerClericEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceToControllerEffect;
@@ -420,6 +421,11 @@ public class DamagePreventionService {
             }
             return 0;
         }
+        if (damage > 0 && isCombatDamage
+                && hasActiveCombatDamageToSelfAndAddPlusOneCounterEffect(
+                gameData, permanent, damageSource)) {
+            return applyCombatDamageToSelfAndAddPlusOneCounter(gameData, permanent, damageSource, damage);
+        }
         boolean damageUnpreventable = permanent.isDamageCantBePreventedOrRedirectedThisTurn()
                 || !gameQueryService.isDamagePreventable(gameData)
                 || (damageSource != null
@@ -779,8 +785,16 @@ public class DamagePreventionService {
     public int applyPerSourceCreatureDamagePreventionShield(GameData gameData, Permanent permanent,
                                                              Permanent damageSource, int damage,
                                                              boolean isCombatDamage) {
-        if (damage <= 0 || damageSource == null || !gameQueryService.isDamagePreventable(gameData, isCombatDamage)
-                || !gameQueryService.isCreature(gameData, damageSource)) {
+        if (damage <= 0 || damageSource == null || !gameQueryService.isCreature(gameData, damageSource)) {
+            return damage;
+        }
+
+        if (isCombatDamage && hasActiveCombatDamageToSelfAndAddPlusOneCounterEffect(
+                gameData, permanent, damageSource)) {
+            return applyCombatDamageToSelfAndAddPlusOneCounter(gameData, permanent, damageSource, damage);
+        }
+
+        if (!gameQueryService.isDamagePreventable(gameData, isCombatDamage)) {
             return damage;
         }
 
@@ -807,6 +821,41 @@ public class DamagePreventionService {
                     gameData, controllerId, damage, isCombatDamage, damageSource, permanent);
         }
         return damage - Math.min(damage, prevented);
+    }
+
+    /** Applies Ironscale Hydra's one-counter-per-creature combat damage replacement. */
+    public int applyCombatDamageToSelfAndAddPlusOneCounter(GameData gameData, Permanent permanent,
+                                                            Permanent damageSource, int damage) {
+        if (damage <= 0 || !hasActiveCombatDamageToSelfAndAddPlusOneCounterEffect(
+                gameData, permanent, damageSource)) {
+            return damage;
+        }
+
+        if (!gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)) {
+            int counters = gameQueryService.doublePlusOnePlusOneCounters(gameData, permanent, 1);
+            if (counters > 0) {
+                permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                        permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
+                recordPlusOnePlusOneCounterPlacedOnControlledPermanent(gameData, permanent, counters);
+            }
+        }
+
+        if (gameQueryService.isDamagePreventable(gameData, true)
+                && !permanent.isDamageCantBePreventedOrRedirectedThisTurn()
+                && !gameQueryService.damageCantBePreventedFromSource(gameData, damageSource, true)) {
+            return 0;
+        }
+        return damage;
+    }
+
+    private boolean hasActiveCombatDamageToSelfAndAddPlusOneCounterEffect(
+            GameData gameData, Permanent permanent, Permanent damageSource) {
+        return permanent != null
+                && damageSource != null
+                && gameQueryService.isCreature(gameData, permanent)
+                && gameQueryService.isCreature(gameData, damageSource)
+                && gameQueryService.hasActiveStaticEffectIncludingGranted(
+                gameData, permanent, PreventCombatDamageToSelfAndAddPlusOneCounterEffect.class);
     }
 
     public int applyPermanentDamagePreventionShield(GameData gameData, Permanent permanent, int damage) {

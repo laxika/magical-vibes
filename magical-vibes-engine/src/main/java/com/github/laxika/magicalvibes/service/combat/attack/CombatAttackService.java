@@ -1237,6 +1237,7 @@ public class CombatAttackService {
                                 || otherEffects.getFirst() instanceof ChooseModeNotChosenDuringLastCombatEffect);
                         boolean isCounterMove = otherEffects.stream().anyMatch(e -> e instanceof AttackCounterMoveEffect);
                         boolean needsGraveyardTarget = otherEffects.stream()
+                                .filter(e -> !(e instanceof MayPayManaEffect mayPay && mayPay.targetAfterPayment()))
                                 .anyMatch(e -> e instanceof GraveyardCardChoosingEffect choosingEffect
                                         && choosingEffect.choosesGraveyardCards()
                                         || e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));

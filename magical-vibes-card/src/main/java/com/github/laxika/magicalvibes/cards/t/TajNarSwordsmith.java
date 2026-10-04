@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "MRD", collectorNumber = "27")
 @CardRegistration(set = "MM2", collectorNumber = "36")
+@CardRegistration(set = "C17", collectorNumber = "77")
 public class TajNarSwordsmith extends Card {
 
     public TajNarSwordsmith() {

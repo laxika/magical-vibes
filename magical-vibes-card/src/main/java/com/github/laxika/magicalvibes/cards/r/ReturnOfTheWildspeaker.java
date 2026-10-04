@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "172")
+@CardRegistration(set = "ELD", collectorNumber = "373")
 @CardRegistration(set = "ECC", collectorNumber = "115")
 @CardRegistration(set = "TLE", collectorNumber = "44")
 @CardRegistration(set = "M3C", collectorNumber = "242")

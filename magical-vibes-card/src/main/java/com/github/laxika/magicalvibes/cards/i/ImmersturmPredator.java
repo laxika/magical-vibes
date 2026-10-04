@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "214")
+@CardRegistration(set = "KHM", collectorNumber = "367")
 public class ImmersturmPredator extends Card {
 
     public ImmersturmPredator() {

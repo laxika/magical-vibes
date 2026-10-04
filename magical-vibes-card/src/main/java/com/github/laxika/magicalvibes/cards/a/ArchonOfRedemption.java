@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "3")
+@CardRegistration(set = "SCD", collectorNumber = "7")
 public class ArchonOfRedemption extends Card {
 
     public ArchonOfRedemption() {

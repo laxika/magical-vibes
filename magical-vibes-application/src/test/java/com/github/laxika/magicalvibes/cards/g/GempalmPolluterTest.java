@@ -74,6 +74,30 @@ class GempalmPolluterTest extends BaseCardTest {
         harness.assertInHand(player1, "Withered Wretch");
     }
 
+    @Test
+    @DisplayName("Cycling counts Zombies at resolution and resolves life loss before drawing")
+    void cyclingCountsZombiesAtResolutionBeforeDrawing() {
+        harness.addToBattlefield(player1, new WitheredWretch());
+        harness.setLife(player2, 20);
+        prepareCycle();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.assertInGraveyard(player1, "Gempalm Polluter");
+        harness.assertNotInHand(player1, "Withered Wretch");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.addToBattlefield(player2, new WitheredWretch());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 18);
+        harness.assertNotInHand(player1, "Withered Wretch");
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Withered Wretch");
+    }
+
     private void prepareCycle() {
         harness.setHand(player1, List.of(new GempalmPolluter()));
         harness.setLibrary(player1, List.of(new WitheredWretch()));

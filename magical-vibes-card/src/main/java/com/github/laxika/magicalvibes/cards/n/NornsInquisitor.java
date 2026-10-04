@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "29")
+@CardRegistration(set = "MOM", collectorNumber = "381")
 public class NornsInquisitor extends Card {
 
     public NornsInquisitor() {

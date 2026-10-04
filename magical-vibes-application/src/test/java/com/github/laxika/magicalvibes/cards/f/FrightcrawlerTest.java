@@ -112,6 +112,44 @@ class FrightcrawlerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, crawler)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Regains the ability to block when the graveyard drops from seven cards to six")
+    void canBlockAgainAfterLosingThreshold() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent crawler = addCreatureReady(player1, new Frightcrawler());
+        assertThat(bls.canBlock(gd, crawler)).isFalse();
+
+        gd.playerGraveyards.get(player1.getId()).removeFirst();
+
+        assertThat(bls.canBlock(gd, crawler)).isTrue();
+        Permanent attacker = addCreatureReady(player2, new WoodlandDruid());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player2);
+
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
+                indexOf(player1, crawler), indexOf(player2, attacker))));
+
+        assertThat(crawler.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Gains threshold immediately when a seventh card enters the graveyard")
+    void gainsThresholdWhenSeventhCardEntersGraveyard() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        gd.playerGraveyards.get(player1.getId()).removeFirst();
+        Permanent crawler = addCreatureReady(player1, new Frightcrawler());
+
+        assertThat(gqs.getEffectivePower(gd, crawler)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, crawler)).isEqualTo(1);
+        assertThat(bls.canBlock(gd, crawler)).isTrue();
+
+        gd.playerGraveyards.get(player1.getId()).add(new WoodlandDruid());
+
+        assertThat(gqs.getEffectivePower(gd, crawler)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, crawler)).isEqualTo(3);
+        assertThat(bls.canBlock(gd, crawler)).isFalse();
+    }
+
     private int indexOf(com.github.laxika.magicalvibes.model.Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }

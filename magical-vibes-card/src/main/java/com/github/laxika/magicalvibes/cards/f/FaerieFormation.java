@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WOC", collectorNumber = "91")
+@CardRegistration(set = "ELD", collectorNumber = "316")
+@CardRegistration(set = "SCD", collectorNumber = "51")
 public class FaerieFormation extends Card {
 
     public FaerieFormation() {

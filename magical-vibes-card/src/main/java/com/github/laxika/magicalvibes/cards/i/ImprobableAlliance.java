@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "193")
+@CardRegistration(set = "ELD", collectorNumber = "396")
 @CardRegistration(set = "MOC", collectorNumber = "329")
 public class ImprobableAlliance extends Card {
 

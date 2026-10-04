@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "TSP", collectorNumber = "277")
 @CardRegistration(set = "TSR", collectorNumber = "283")
 @CardRegistration(set = "C13", collectorNumber = "316")
+@CardRegistration(set = "C17", collectorNumber = "273")
 public class SaltcrustedSteppe extends Card {
 
     public SaltcrustedSteppe() {

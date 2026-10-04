@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.ThrunTheLastTroll;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,9 +20,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({FuelForTheCause.class, GrizzlyBears.class, ThrunTheLastTroll.class})
 class FuelForTheCauseTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts it on the stack targeting a spell")
@@ -42,11 +43,9 @@ class FuelForTheCauseTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         StackEntry fuelEntry = gd.stack.getLast();
         assertThat(fuelEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(fuelEntry.getCard().getName()).isEqualTo("Fuel for the Cause");
+        assertThat(fuelEntry.getCard()).isInstanceOf(FuelForTheCause.class);
         assertThat(fuelEntry.getTargetId()).isEqualTo(bearsCardId);
     }
-
-    // ===== Resolving: counter =====
 
     @Test
     @DisplayName("Resolving counters target spell and puts it in owner's graveyard")
@@ -60,8 +59,7 @@ class FuelForTheCauseTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         // Counter resolves first; proliferate may await input
         GameData gd = harness.getGameData();
@@ -83,22 +81,18 @@ class FuelForTheCauseTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player2, "Fuel for the Cause");
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Resolving: proliferate =====
-
     @Test
     @DisplayName("After countering, proliferate adds -1/-1 counter to chosen creature")
     void proliferateAddsMinusCountersAfterCounter() {
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
         GrizzlyBears targetSpell = new GrizzlyBears();
         harness.setHand(player1, List.of(targetSpell));
@@ -109,8 +103,7 @@ class FuelForTheCauseTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, targetSpell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetSpell.getId());
 
         // Choose the bears with existing counter for proliferate
         harness.handleMultiplePermanentsChosen(player2, List.of(bears.getId()));
@@ -121,9 +114,8 @@ class FuelForTheCauseTest extends BaseCardTest {
     @Test
     @DisplayName("After countering, proliferate adds +1/+1 counter to chosen creature")
     void proliferateAddsPlusCountersAfterCounter() {
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        gd.playerBattlefields.get(player2.getId()).add(bears);
 
         GrizzlyBears targetSpell = new GrizzlyBears();
         harness.setHand(player1, List.of(targetSpell));
@@ -134,8 +126,7 @@ class FuelForTheCauseTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, targetSpell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetSpell.getId());
 
         harness.handleMultiplePermanentsChosen(player2, List.of(bears.getId()));
 
@@ -145,9 +136,8 @@ class FuelForTheCauseTest extends BaseCardTest {
     @Test
     @DisplayName("Proliferate can choose none after countering")
     void proliferateCanChooseNoneAfterCounter() {
-        Permanent bears = new Permanent(new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
 
         GrizzlyBears targetSpell = new GrizzlyBears();
         harness.setHand(player1, List.of(targetSpell));
@@ -158,8 +148,7 @@ class FuelForTheCauseTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, targetSpell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetSpell.getId());
 
         harness.handleMultiplePermanentsChosen(player2, List.of());
 
@@ -180,8 +169,7 @@ class FuelForTheCauseTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, targetSpell.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetSpell.getId());
 
         // Spell countered, no proliferate needed — no eligible permanents
         GameData gd = harness.getGameData();
@@ -189,11 +177,10 @@ class FuelForTheCauseTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Fizzles entirely if target spell is no longer on the stack")
     void fizzlesIfTargetSpellRemoved() {
+        gd.playerPoisonCounters.put(player1.getId(), 2);
         GrizzlyBears bears = new GrizzlyBears();
         harness.setHand(player1, List.of(bears));
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -214,5 +201,77 @@ class FuelForTheCauseTest extends BaseCardTest {
         // Entire spell fizzles — no counter, no proliferate
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         harness.assertInGraveyard(player2, "Fuel for the Cause");
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void proliferatesPermanentsAndPlayersAddingEveryExistingCounterKind() {
+        Permanent chosen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        chosen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        chosen.setCounterCount(CounterType.CHARGE, 3);
+        Permanent unchosen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        unchosen.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        gd.playerPoisonCounters.put(player1.getId(), 2);
+        gd.playerEnergyCounters.put(player1.getId(), 3);
+        gd.playerPoisonCounters.put(player2.getId(), 1);
+
+        GrizzlyBears targetSpell = new GrizzlyBears();
+        harness.setHand(player1, List.of(targetSpell));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new FuelForTheCause()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, targetSpell.getId());
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId(), player1.getId()));
+
+        assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(chosen.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
+        assertThat(unchosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(3);
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(4);
+        assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Fuel for the Cause");
+    }
+
+    @Test
+    void proliferatesWhenOnlyPlayersHaveCounters() {
+        gd.playerPoisonCounters.put(player1.getId(), 2);
+        GrizzlyBears targetSpell = new GrizzlyBears();
+        harness.setHand(player1, List.of(targetSpell));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player2, List.of(new FuelForTheCause()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, targetSpell.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(player1.getId()));
+
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(3);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Fuel for the Cause");
+    }
+
+    @Test
+    void stillProliferatesWhenTargetSpellCannotBeCountered() {
+        gd.playerPoisonCounters.put(player1.getId(), 2);
+        ThrunTheLastTroll targetSpell = new ThrunTheLastTroll();
+        harness.setHand(player1, List.of(targetSpell));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.setHand(player2, List.of(new FuelForTheCause()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, targetSpell.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(player1.getId()));
+
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(3);
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == targetSpell);
+        harness.assertNotInGraveyard(player1, "Thrun, the Last Troll");
+        harness.assertInGraveyard(player2, "Fuel for the Cause");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Thrun, the Last Troll");
     }
 }

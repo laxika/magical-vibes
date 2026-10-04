@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "FRF", collectorNumber = "151")
 @CardRegistration(set = "CP3", collectorNumber = "4")
+@CardRegistration(set = "C17", collectorNumber = "170")
 public class DromokaTheEternal extends Card {
 
     public DromokaTheEternal() {

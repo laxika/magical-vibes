@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.j.JaceWielderOfMysteries;
+import com.github.laxika.magicalvibes.cards.s.Solemnity;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GatewatchBeacon.class, JaceWielderOfMysteries.class})
+@CardUsed({GatewatchBeacon.class, JaceWielderOfMysteries.class, GideonBlackblade.class, Solemnity.class})
 class GatewatchBeaconTest extends BaseCardTest {
 
     @Test
@@ -66,5 +67,68 @@ class GatewatchBeaconTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Declining the transfer leaves both permanents' counters unchanged")
+    void mayDeclineCounterTransfer() {
+        Permanent beacon = harness.enterBattlefieldAndReturn(player1, new GatewatchBeacon());
+        Permanent jace = harness.enterBattlefieldAndReturn(player1, new JaceWielderOfMysteries());
+        int originalLoyalty = jace.getCounterCount(CounterType.LOYALTY);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(beacon.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(originalLoyalty);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Losing all loyalty counters before resolution prevents the transfer and choice")
+    void checksCounterConditionAgainAtResolution() {
+        Permanent beacon = harness.enterBattlefieldAndReturn(player1, new GatewatchBeacon());
+        Permanent jace = harness.enterBattlefieldAndReturn(player1, new JaceWielderOfMysteries());
+        int originalLoyalty = jace.getCounterCount(CounterType.LOYALTY);
+        beacon.setCounterCount(CounterType.LOYALTY, 0);
+
+        harness.passBothPriorities();
+
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(originalLoyalty);
+        assertThat(beacon.getCounterCount(CounterType.LOYALTY)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A planeswalker that has left the battlefield cannot receive the counter")
+    void doesNotRemoveCounterWhenPlaneswalkerHasLeft() {
+        Permanent beacon = harness.enterBattlefieldAndReturn(player1, new GatewatchBeacon());
+        Permanent jace = harness.enterBattlefieldAndReturn(player1, new JaceWielderOfMysteries());
+        gd.playerBattlefields.get(player1.getId()).remove(jace);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(beacon.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A prohibited counter placement also prevents removal from the Beacon")
+    void doesNotRemoveCounterWhenPlaneswalkerCannotReceiveCounters() {
+        harness.forceActivePlayer(player1);
+        Permanent beacon = harness.enterBattlefieldAndReturn(player1, new GatewatchBeacon());
+        Permanent gideon = harness.enterBattlefieldAndReturn(player1, new GideonBlackblade());
+        int originalLoyalty = gideon.getCounterCount(CounterType.LOYALTY);
+        harness.addToBattlefield(player2, new Solemnity());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gideon.getCounterCount(CounterType.LOYALTY)).isEqualTo(originalLoyalty);
+        assertThat(beacon.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 }

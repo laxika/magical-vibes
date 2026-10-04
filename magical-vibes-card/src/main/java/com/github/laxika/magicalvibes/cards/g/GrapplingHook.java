@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "203")
+@CardRegistration(set = "C17", collectorNumber = "212")
 public class GrapplingHook extends Card {
 
     public GrapplingHook() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "KHM", collectorNumber = "103")
+@CardRegistration(set = "KHM", collectorNumber = "403")
 public class PoisonTheCup extends Card {
 
     public PoisonTheCup() {

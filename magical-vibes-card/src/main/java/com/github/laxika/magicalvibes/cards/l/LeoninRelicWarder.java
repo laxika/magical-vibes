@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MBS", collectorNumber = "10")
+@CardRegistration(set = "C17", collectorNumber = "65")
 public class LeoninRelicWarder extends Card {
 
     public LeoninRelicWarder() {

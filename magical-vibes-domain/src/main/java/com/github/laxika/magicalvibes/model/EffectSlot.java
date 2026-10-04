@@ -127,6 +127,8 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_DEATH,
     ON_HAUNTED_CREATURE_DIES,
     ON_ALLY_CREATURE_DIES,
+    /** Triggers once when one or more artifacts and/or creatures controlled by the source controller are put into a graveyard from the battlefield as one event. */
+    ON_ALLY_ARTIFACT_OR_CREATURE_DIES,
     /**
      * A permanent that was a creature on the battlefield is put into this permanent's
      * controller's graveyard. This is keyed to the graveyard owner rather than the creature's

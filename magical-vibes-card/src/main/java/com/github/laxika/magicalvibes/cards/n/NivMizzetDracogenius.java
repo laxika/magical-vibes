@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "183")
 @CardRegistration(set = "MM3", collectorNumber = "175")
+@CardRegistration(set = "C17", collectorNumber = "184")
 public class NivMizzetDracogenius extends Card {
 
     public NivMizzetDracogenius() {

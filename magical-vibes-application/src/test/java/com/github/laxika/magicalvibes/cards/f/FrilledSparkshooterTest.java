@@ -58,6 +58,65 @@ class FrilledSparkshooterTest extends BaseCardTest {
         assertThat(shooter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Checks opponent life loss when entering, even if it happened after casting")
+    void lifeLossWhileSpellIsOnStackQualifies() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new FrilledSparkshooter()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castCreature(player1, 0);
+
+        harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "Test life loss");
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Frilled Sparkshooter")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Life gain does not undo an opponent's earlier life loss")
+    void lifeGainAfterLifeLossStillQualifies() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 2, "Test life loss");
+        harness.getLifeSupport().applyGainLife(gd, player2.getId(), 5);
+
+        castSparkshooter();
+
+        assertThat(findPermanent(player1, "Frilled Sparkshooter")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Enters with only one counter regardless of how much life the opponent lost")
+    void largerLifeLossStillGivesOneCounter() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 5, "Test life loss");
+
+        castSparkshooter();
+
+        assertThat(findPermanent(player1, "Frilled Sparkshooter")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent life loss after entry does not add a counter retroactively")
+    void lifeLossAfterEntryDoesNotAddCounter() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        castSparkshooter();
+
+        harness.getLifeSupport().applyLifeLoss(gd, player2.getId(), 1, "Test life loss");
+
+        assertThat(findPermanent(player1, "Frilled Sparkshooter")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castSparkshooter() {
         harness.setHand(player1, List.of(new FrilledSparkshooter()));
         harness.addMana(player1, ManaColor.RED, 1);

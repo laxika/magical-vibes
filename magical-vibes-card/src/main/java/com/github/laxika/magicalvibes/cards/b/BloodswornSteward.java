@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate
 import java.util.Set;
 
 @CardRegistration(set = "VOC", collectorNumber = "144")
+@CardRegistration(set = "C17", collectorNumber = "22")
 public class BloodswornSteward extends Card {
 
     public BloodswornSteward() {

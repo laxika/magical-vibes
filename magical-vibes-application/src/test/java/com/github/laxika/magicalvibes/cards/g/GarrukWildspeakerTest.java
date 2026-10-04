@@ -2,15 +2,18 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.s.SarkhanTheMasterless;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,26 +21,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({GarrukWildspeaker.class, Forest.class, Mountain.class, RuneclawBear.class})
 class GarrukWildspeakerTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three loyalty abilities")
-    void hasThreeAbilities() {
-        GarrukWildspeaker card = new GarrukWildspeaker();
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-    }
-
-    
-
-    
-
-    
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Resolving puts planeswalker on battlefield with 3 loyalty")
@@ -48,14 +34,10 @@ class GarrukWildspeakerTest extends BaseCardTest {
         harness.castPlaneswalker(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Garruk Wildspeaker"));
-        Permanent garruk = bf.stream().filter(p -> p.getCard().getName().equals("Garruk Wildspeaker")).findFirst().orElseThrow();
+        harness.assertOnBattlefield(player1, "Garruk Wildspeaker");
+        Permanent garruk = findPermanent(player1, "Garruk Wildspeaker");
         assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
-
-    // ===== +1 ability: Untap two target lands =====
 
     @Test
     @DisplayName("+1 untaps two target tapped lands")
@@ -122,8 +104,6 @@ class GarrukWildspeakerTest extends BaseCardTest {
         assertThat(mountain.isTapped()).isFalse();
     }
 
-    // ===== -1 ability: Create a 3/3 green Beast creature token =====
-
     @Test
     @DisplayName("-1 creates a 3/3 green Beast token")
     void minusOneCreatesBeastToken() {
@@ -132,12 +112,8 @@ class GarrukWildspeakerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
-        List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        Permanent token = bf.stream()
-                .filter(p -> p.getCard().getName().equals("Beast"))
-                .findFirst().orElseThrow();
+        Permanent token = findPermanent(player1, "Beast");
         assertThat(token.getCard().getPower()).isEqualTo(3);
         assertThat(token.getCard().getToughness()).isEqualTo(3);
         assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
@@ -156,9 +132,8 @@ class GarrukWildspeakerTest extends BaseCardTest {
 
         assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
 
-        // Reset for next turn
-        garruk.setLoyaltyActivationsThisTurn(0);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         // Second activation
         harness.activateAbility(player1, 0, 1, null, null);
@@ -169,28 +144,22 @@ class GarrukWildspeakerTest extends BaseCardTest {
         assertThat(tokenCount).isEqualTo(2);
     }
 
-    // ===== -4 ability: Creatures you control get +3/+3 and gain trample =====
-
     @Test
     @DisplayName("-4 gives +3/+3 and trample to controlled creatures until end of turn")
     void minusFourBoostsAndGrantsTrample() {
         Permanent garruk = addReadyGarruk(player1);
         garruk.setCounterCount(CounterType.LOYALTY, 7);
 
-        // Add a creature
-        com.github.laxika.magicalvibes.cards.g.GarruksCompanion companion = new com.github.laxika.magicalvibes.cards.g.GarruksCompanion();
-        Permanent creaturePerm = new Permanent(companion);
-        creaturePerm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(creaturePerm);
+        Permanent creaturePerm = addCreatureReady(player1, new RuneclawBear());
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
         assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
-        // Garruk's Companion is a 3/2, so +3/+3 = 6/5
-        assertThat(creaturePerm.getEffectivePower()).isEqualTo(6);
-        assertThat(creaturePerm.getEffectiveToughness()).isEqualTo(5);
-        assertThat(creaturePerm.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        // Runeclaw Bear is a 2/2 without trample.
+        assertThat(gqs.getEffectivePower(gd, creaturePerm)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creaturePerm)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, creaturePerm, Keyword.TRAMPLE)).isTrue();
     }
 
     @Test
@@ -199,15 +168,12 @@ class GarrukWildspeakerTest extends BaseCardTest {
         Permanent garruk = addReadyGarruk(player1);
         garruk.setCounterCount(CounterType.LOYALTY, 7);
 
-        // Add opponent creature (use GrizzlyBears - 2/2 vanilla, no trample)
-        com.github.laxika.magicalvibes.cards.g.GrizzlyBears oppCreature = new com.github.laxika.magicalvibes.cards.g.GrizzlyBears();
-        Permanent oppPerm = new Permanent(oppCreature);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(oppPerm);
+        Permanent oppPerm = addCreatureReady(player2, new RuneclawBear());
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
-        // GrizzlyBears is 2/2, should be unaffected
+        // The opponent's Runeclaw Bear is unaffected.
         assertThat(oppPerm.getEffectivePower()).isEqualTo(2);
         assertThat(oppPerm.getEffectiveToughness()).isEqualTo(2);
         assertThat(oppPerm.hasKeyword(Keyword.TRAMPLE)).isFalse();
@@ -235,30 +201,163 @@ class GarrukWildspeakerTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Garruk Wildspeaker");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("+1 requires two distinct lands and does not pay loyalty for invalid targets")
+    void plusOneRequiresTwoDistinctLands() {
+        Permanent garruk = addReadyGarruk(player1);
+        Permanent forest = addForest(player1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(forest.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(forest.getId(), forest.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("+1 cannot target a nonland creature")
+    void plusOneRejectsNonland() {
+        Permanent garruk = addReadyGarruk(player1);
+        Permanent forest = addForest(player1);
+        Permanent bear = addCreatureReady(player1, new RuneclawBear());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(forest.getId(), bear.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("+1 still untaps the remaining land when one target leaves")
+    void plusOneResolvesWithOneRemainingTarget() {
+        Permanent garruk = addReadyGarruk(player1);
+        Permanent first = addForest(player1);
+        Permanent second = addForest(player1);
+        first.tap();
+        second.tap();
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(second.isTapped()).isFalse();
+        assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only one loyalty ability may be activated per turn")
+    void cannotActivateAnotherLoyaltyAbilityInSameTurn() {
+        Permanent garruk = addReadyGarruk(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Only one loyalty ability");
+
+        assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        assertThat(countPermanents(player1, "Beast")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("-1 creates its Beast even when paying the cost kills Garruk")
+    void minusOneWithOneLoyaltyStillCreatesToken() {
+        Permanent garruk = addReadyGarruk(player1);
+        garruk.setCounterCount(CounterType.LOYALTY, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Garruk Wildspeaker");
+        harness.assertInGraveyard(player1, "Garruk Wildspeaker");
+        assertThat(countPermanents(player1, "Beast")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("-4 expires at end of turn and does not affect creatures entering later")
+    void ultimateExpiresAndDoesNotAffectLaterCreatures() {
+        Permanent garruk = addReadyGarruk(player1);
+        garruk.setCounterCount(CounterType.LOYALTY, 7);
+        Permanent original = addCreatureReady(player1, new RuneclawBear());
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, original, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, later)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, later)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, later, Keyword.TRAMPLE)).isFalse();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, original, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @CardUsed({SarkhanTheMasterless.class})
+    @DisplayName("-4 grants trample to Garruk himself when he is a creature")
+    void ultimateIncludesAnimatedGarruk() {
+        Permanent garruk = addReadyGarruk(player1);
+        garruk.setCounterCount(CounterType.LOYALTY, 7);
+        Permanent sarkhan = harness.addToBattlefieldAndReturn(player1, new SarkhanTheMasterless());
+        sarkhan.setCounterCount(CounterType.LOYALTY, 5);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, garruk)).isTrue();
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, garruk)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, garruk)).isEqualTo(7);
+        assertThat(gqs.hasKeyword(gd, sarkhan, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, garruk, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("-4 still boosts creatures when its loyalty cost puts Garruk in the graveyard")
+    void ultimateResolvesAfterGarrukDiesToItsCost() {
+        Permanent garruk = addReadyGarruk(player1);
+        garruk.setCounterCount(CounterType.LOYALTY, 4);
+        Permanent bear = addCreatureReady(player1, new RuneclawBear());
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Garruk Wildspeaker");
+        harness.assertInGraveyard(player1, "Garruk Wildspeaker");
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
+    }
 
     private Permanent addReadyGarruk(Player player) {
-        GarrukWildspeaker card = new GarrukWildspeaker();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GarrukWildspeaker());
         perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
     }
 
     private Permanent addForest(Player player) {
-        Forest forest = new Forest();
-        Permanent perm = new Permanent(forest);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 
     private Permanent addMountain(Player player) {
-        Mountain mountain = new Mountain();
-        Permanent perm = new Permanent(mountain);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Mountain());
     }
 }

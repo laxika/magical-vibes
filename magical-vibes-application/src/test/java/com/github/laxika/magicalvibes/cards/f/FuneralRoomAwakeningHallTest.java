@@ -27,7 +27,7 @@ class FuneralRoomAwakeningHallTest extends BaseCardTest {
         harness.setHand(player2, List.of(new WrathOfGod()));
         harness.addMana(player2, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
-        harness.castSorcery(player2, 0, 0);
+        harness.castAndResolveSorcery(player2, 0, 0);
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeBefore + 1);
@@ -59,5 +59,58 @@ class FuneralRoomAwakeningHallTest extends BaseCardTest {
         harness.castModalSorcery(player1, 0, doorIndex, List.of());
         harness.passBothPriorities();
         return gd.playerBattlefields.get(player1.getId()).getFirst();
+    }
+
+    @Test
+    void lockedFuneralRoomDoesNotDrainWhenACreatureDies() {
+        castRoom(1);
+        resolveAllTriggers();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        destroyAllCreatures();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void castingAwakeningHallReturnsOnlyYourCreatureCardsUntapped() {
+        GrizzlyBears ownCreature = new GrizzlyBears();
+        GrizzlyBears opposingCreature = new GrizzlyBears();
+        WrathOfGod noncreature = new WrathOfGod();
+        harness.setGraveyard(player1, List.of(ownCreature, noncreature));
+        harness.setGraveyard(player2, List.of(opposingCreature));
+        castRoom(1);
+        resolveAllTriggers();
+        assertThat(findPermanent(player1, "Grizzly Bears").isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(noncreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCreature);
+        assertThat(findPermanents(player2, "Grizzly Bears")).isEmpty();
+    }
+
+    @Test
+    void funeralRoomDoesNotTriggerForOpposingCreatureDeaths() {
+        castRoom(0);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        destroyAllCreatures();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void funeralRoomTriggersForEachCreatureInASimultaneousDeath() {
+        castRoom(0);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        destroyAllCreatures();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(22);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    private void destroyAllCreatures() {
+        harness.setHand(player2, List.of(new WrathOfGod()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+        harness.forceActivePlayer(player2);
+        harness.castAndResolveSorcery(player2, 0, 0);
+        resolveAllTriggers();
     }
 }

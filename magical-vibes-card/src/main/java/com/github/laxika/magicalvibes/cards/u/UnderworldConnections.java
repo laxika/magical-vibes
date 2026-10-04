@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "DDM", collectorNumber = "73")
 @CardRegistration(set = "C15", collectorNumber = "138")
 @CardRegistration(set = "VOC", collectorNumber = "138")
+@CardRegistration(set = "C17", collectorNumber = "128")
 public class UnderworldConnections extends Card {
 
     public UnderworldConnections() {

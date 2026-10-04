@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LCC", collectorNumber = "202")
+@CardRegistration(set = "C17", collectorNumber = "19")
 public class NewBlood extends Card {
 
     public NewBlood() {

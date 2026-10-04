@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEndStepPlayerEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 
 @CardRegistration(set = "VOC", collectorNumber = "145")
+@CardRegistration(set = "C17", collectorNumber = "23")
 public class CrimsonHonorGuard extends Card {
 
     public CrimsonHonorGuard() {

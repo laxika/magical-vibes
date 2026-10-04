@@ -1879,7 +1879,8 @@ public sealed interface ChoiceContext {
     }
 
     record RemoveChosenCountersChoice(UUID targetId, UUID controllerId, String sourceCardName,
-                                      int remainingSelections, List<CounterType> counterTypes)
+                                      int remainingSelections, List<CounterType> counterTypes,
+                                      boolean exactAmount)
             implements ChoiceContext {
 
         public static final String DONE = "Done";

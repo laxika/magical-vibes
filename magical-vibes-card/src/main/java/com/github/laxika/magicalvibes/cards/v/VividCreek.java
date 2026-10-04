@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "PCA", collectorNumber = "131")
 @CardRegistration(set = "C13", collectorNumber = "334")
 @CardRegistration(set = "C15", collectorNumber = "317")
+@CardRegistration(set = "C17", collectorNumber = "290")
 @CardRegistration(set = "CMD", collectorNumber = "294")
 public class VividCreek extends Card {
 

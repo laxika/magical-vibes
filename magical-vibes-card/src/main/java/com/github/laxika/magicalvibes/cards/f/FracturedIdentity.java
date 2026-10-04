@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "WHO", collectorNumber = "477")
 @CardRegistration(set = "WHO", collectorNumber = "827")
 @CardRegistration(set = "WHO", collectorNumber = "1068")
+@CardRegistration(set = "C17", collectorNumber = "37")
 public class FracturedIdentity extends Card {
 
     public FracturedIdentity() {

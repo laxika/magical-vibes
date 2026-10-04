@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import java.util.List;
 
 @CardRegistration(set = "C16", collectorNumber = "20")
+@CardRegistration(set = "SCD", collectorNumber = "155")
 public class RunehornHellkite extends Card {
 
     public RunehornHellkite() {

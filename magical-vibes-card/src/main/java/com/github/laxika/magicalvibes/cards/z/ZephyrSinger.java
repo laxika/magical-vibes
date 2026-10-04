@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnConvokeCreaturesEffect;
 
 @CardRegistration(set = "MOM", collectorNumber = "86")
+@CardRegistration(set = "MOM", collectorNumber = "355")
 public class ZephyrSinger extends Card {
 
     public ZephyrSinger() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesCreatureDest
 @CardRegistration(set = "ISD", collectorNumber = "10")
 @CardRegistration(set = "SIS", collectorNumber = "4")
 @CardRegistration(set = "C19", collectorNumber = "62")
+@CardRegistration(set = "C17", collectorNumber = "59")
 public class DivineReckoning extends Card {
 
     public DivineReckoning() {

@@ -20,9 +20,11 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "249")
+@CardRegistration(set = "C17", collectorNumber = "255")
 @CardRegistration(set = "PIO", collectorNumber = "265")
 @CardRegistration(set = "TDC", collectorNumber = "370")
 @CardRegistration(set = "AFC", collectorNumber = "245")
+@CardRegistration(set = "SCD", collectorNumber = "304")
 public class HavenOfTheSpiritDragon extends Card {
 
     public HavenOfTheSpiritDragon() {

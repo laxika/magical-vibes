@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "96")
+@CardRegistration(set = "WOE", collectorNumber = "338")
+@CardRegistration(set = "WOE", collectorNumber = "380")
 public class LichKnightsConquest extends Card {
 
     public LichKnightsConquest() {

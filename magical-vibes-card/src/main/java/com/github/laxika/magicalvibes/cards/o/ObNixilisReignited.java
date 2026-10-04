@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "C21", collectorNumber = "149")
 @CardRegistration(set = "DSC", collectorNumber = "152")
 @CardRegistration(set = "C19", collectorNumber = "124")
+@CardRegistration(set = "SCD", collectorNumber = "96")
 public class ObNixilisReignited extends Card {
 
     private static final String EMBLEM_TEXT = "Whenever a player draws a card, you lose 2 life.";

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 @CardRegistration(set = "MID", collectorNumber = "91")
 @CardRegistration(set = "SLD", collectorNumber = "837")
 @CardRegistration(set = "DBL", collectorNumber = "91")
+@CardRegistration(set = "SCD", collectorNumber = "71")
 public class ChampionOfThePerished extends Card {
 
     public ChampionOfThePerished() {

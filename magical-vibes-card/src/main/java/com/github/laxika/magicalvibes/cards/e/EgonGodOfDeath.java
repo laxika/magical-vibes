@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "92")
+@CardRegistration(set = "KHM", collectorNumber = "306")
 public class EgonGodOfDeath extends Card {
 
     public EgonGodOfDeath() {

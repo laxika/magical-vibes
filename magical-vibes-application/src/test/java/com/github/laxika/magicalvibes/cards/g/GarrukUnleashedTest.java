@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GarrukUnleashed.class, GrizzlyBears.class, GarruksCompanion.class})
 class GarrukUnleashedTest extends BaseCardTest {
 
     @Test
@@ -84,8 +85,7 @@ class GarrukUnleashedTest extends BaseCardTest {
     void minusSevenEmblemMaySearchAtEndStep() {
         Permanent garruk = addReadyGarruk(player1, 7);
         Card creature = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(creature);
+        harness.setLibrary(player1, List.of(creature));
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -100,7 +100,7 @@ class GarrukUnleashedTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).containsExactly(creature);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
@@ -119,11 +119,100 @@ class GarrukUnleashedTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("+1 can boost an opponent's creature and wears off after the turn")
+    void plusOneOnOpponentCreatureExpires() {
+        addReadyGarruk(player1, 4);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("-2 still creates the Beast when paying loyalty removes Garruk")
+    void minusTwoWithExactlyTwoLoyaltyStillCreatesToken() {
+        addReadyGarruk(player1, 2);
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GarruksCompanion());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Garruk, Unleashed")).isEmpty();
+        harness.assertInGraveyard(player1, "Garruk, Unleashed");
+        assertThat(findPermanents(player1, "Beast")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The emblem's search may be declined without moving library cards")
+    void emblemSearchMayBeDeclined() {
+        addReadyGarruk(player1, 7);
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(creature));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        advanceIntoEndStep(player1);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The emblem allows a creature search to find no card")
+    void emblemSearchMayFailToFind() {
+        addReadyGarruk(player1, 7);
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(creature));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        advanceIntoEndStep(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(findPermanents(player1, "Grizzly Bears")).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("-2 does not put a counter on Garruk after he leaves and returns")
+    void minusTwoDoesNotAddLoyaltyToReturnedGarruk() {
+        Permanent original = addReadyGarruk(player1, 4);
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GarruksCompanion());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        harness.setExile(player1, List.of(original.getCard()));
+        harness.setExile(player1, List.of());
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, original.getCard());
+        returned.setCounterCount(CounterType.LOYALTY, 4);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Beast")).hasSize(1);
+        assertThat(returned.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
     private Permanent addReadyGarruk(Player player, int loyalty) {
-        Permanent perm = new Permanent(new GarrukUnleashed());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GarrukUnleashed());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
@@ -133,7 +222,7 @@ class GarrukUnleashedTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }

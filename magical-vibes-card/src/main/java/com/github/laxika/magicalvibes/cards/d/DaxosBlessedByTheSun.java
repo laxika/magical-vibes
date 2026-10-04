@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 
 @CardRegistration(set = "THB", collectorNumber = "9")
+@CardRegistration(set = "THB", collectorNumber = "258")
 @CardRegistration(set = "MUL", collectorNumber = "2")
 @CardRegistration(set = "MUL", collectorNumber = "67")
 @CardRegistration(set = "MUL", collectorNumber = "132")

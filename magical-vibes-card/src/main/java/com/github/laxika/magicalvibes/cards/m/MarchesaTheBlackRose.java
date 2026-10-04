@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 @CardRegistration(set = "SLD", collectorNumber = "1452")
 @CardRegistration(set = "SLD", collectorNumber = "2009")
 @CardRegistration(set = "2X2", collectorNumber = "248")
+@CardRegistration(set = "C17", collectorNumber = "177")
 public class MarchesaTheBlackRose extends Card {
 
     public MarchesaTheBlackRose() {

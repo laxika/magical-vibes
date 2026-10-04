@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "94")
+@CardRegistration(set = "THB", collectorNumber = "313")
 public class ErebossIntervention extends Card {
 
     public ErebossIntervention() {

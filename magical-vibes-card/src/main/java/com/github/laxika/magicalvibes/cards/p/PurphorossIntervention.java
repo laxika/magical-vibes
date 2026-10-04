@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "151")
+@CardRegistration(set = "THB", collectorNumber = "320")
 public class PurphorossIntervention extends Card {
 
     public PurphorossIntervention() {

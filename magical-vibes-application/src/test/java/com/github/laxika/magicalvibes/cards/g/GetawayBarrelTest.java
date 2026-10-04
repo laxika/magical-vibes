@@ -61,6 +61,43 @@ class GetawayBarrelTest extends BaseCardTest {
                 .allMatch(card -> card instanceof Forest);
     }
 
+    @Test
+    @DisplayName("Death trigger reveals the entire library when fewer than thirteen cards remain")
+    void deathTriggerHandlesShortLibrary() {
+        Forest forest = new Forest();
+        GrizzlyBears creature = new GrizzlyBears();
+        setUpAndDestroyBarrel(List.of(forest, creature));
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Death trigger with an empty library resolves without putting a creature onto the battlefield")
+    void deathTriggerHandlesEmptyLibrary() {
+        setUpAndDestroyBarrel(List.of());
+
+        harness.assertInGraveyard(player1, "Getaway Barrel");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Death trigger puts exactly one eligible creature onto the battlefield and bottoms the other")
+    void deathTriggerSelectsOnlyOneOfMultipleCreatures() {
+        GrizzlyBears bears = new GrizzlyBears();
+        HillGiant giant = new HillGiant();
+        Forest forest = new Forest();
+        setUpAndDestroyBarrel(List.of(bears, forest, giant));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        Card chosen = gd.playerBattlefields.get(player1.getId()).getFirst().getCard();
+        assertThat(chosen).isIn(bears, giant);
+        Card unchosen = chosen == bears ? giant : bears;
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, unchosen);
+    }
     private void setUpAndDestroyBarrel(List<Card> library) {
         harness.setLibrary(player1, library);
         harness.setHand(player1, List.of(new GetawayBarrel()));
@@ -73,8 +110,7 @@ class GetawayBarrelTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shatter()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, barrel.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, barrel.getId());
         harness.passBothPriorities();
     }
 }

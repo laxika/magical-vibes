@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffec
 
 @CardRegistration(set = "5DN", collectorNumber = "123")
 @CardRegistration(set = "LCC", collectorNumber = "113")
+@CardRegistration(set = "C17", collectorNumber = "211")
 public class FistOfSuns extends Card {
 
     public FistOfSuns() {

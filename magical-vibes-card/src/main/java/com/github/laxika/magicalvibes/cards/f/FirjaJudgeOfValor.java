@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.NthSpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "209")
+@CardRegistration(set = "KHM", collectorNumber = "322")
 @CardRegistration(set = "MUL", collectorNumber = "40")
 @CardRegistration(set = "MUL", collectorNumber = "105")
 @CardRegistration(set = "MUL", collectorNumber = "170")

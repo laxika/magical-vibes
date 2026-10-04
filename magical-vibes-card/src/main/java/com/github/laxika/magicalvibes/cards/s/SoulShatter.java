@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "127")
+@CardRegistration(set = "SCD", collectorNumber = "108")
 public class SoulShatter extends Card {
 
     public SoulShatter() {

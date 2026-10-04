@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrTou
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "215")
+@CardRegistration(set = "WOE", collectorNumber = "301")
 public class TalionTheKindlyLord extends Card {
 
     public TalionTheKindlyLord() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardBoostSelfByDiscardedManaValueEffect;
 
 @CardRegistration(set = "ARB", collectorNumber = "90")
+@CardRegistration(set = "C17", collectorNumber = "196")
 public class SpellboundDragon extends Card {
 
     public SpellboundDragon() {

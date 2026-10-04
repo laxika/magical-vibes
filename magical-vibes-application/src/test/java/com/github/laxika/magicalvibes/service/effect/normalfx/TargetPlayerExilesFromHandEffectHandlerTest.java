@@ -33,6 +33,24 @@ class TargetPlayerExilesFromHandEffectHandlerTest extends AbstractPlayerInteract
             }
 
             @Test
+            @DisplayName("Preserves face-down exile on the hand choice")
+            void beginsFaceDownExileChoice() {
+                Card card = createCard("Kheru Mind-Eater");
+                TargetPlayerExilesFromHandEffect effect = TargetPlayerExilesFromHandEffect.faceDown(1);
+                StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
+                gd.playerHands.get(player2Id).add(createCard("Lightning Bolt"));
+
+                Permanent sourcePermanent = new Permanent(card);
+                gd.playerBattlefields.get(player1Id).add(sourcePermanent);
+
+                resolveEffect(gd, entry, effect);
+
+                verify(playerInputService).beginExileFromHandChoice(
+                        eq(gd), eq(player2Id), eq(sourcePermanent.getId()), isNull(), eq(1),
+                        eq(List.of()), eq(0), eq(true), eq(false));
+            }
+
+            @Test
             @DisplayName("Logs and does nothing when target hand is empty")
             void emptyTargetHand() {
                 Card card = createCard("Sin Collector");

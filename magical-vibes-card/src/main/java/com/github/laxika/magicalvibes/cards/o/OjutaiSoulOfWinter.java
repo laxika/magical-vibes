@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "FRF", collectorNumber = "156")
+@CardRegistration(set = "C17", collectorNumber = "187")
 public class OjutaiSoulOfWinter extends Card {
 
     public OjutaiSoulOfWinter() {

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "199")
+@CardRegistration(set = "WOE", collectorNumber = "360")
 public class AgathaOfTheVileCauldron extends Card {
 
     public AgathaOfTheVileCauldron() {

@@ -57,4 +57,57 @@ class GavonyTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isFalse();
     }
+
+    @Test
+    void chaosAffectsCreaturesPresentAtResolutionButNotLaterArrivals() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+        Permanent beforeResolution = addCreatureReady(player1, new GrizzlyBears());
+
+        resolveAllTriggers();
+        Permanent afterResolution = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    void chaosUsesThePlanarControllersCreatures() {
+        harness.forceActivePlayer(player2);
+        gd.planechase.controllerId = player2.getId();
+        Permanent firstPlayersCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondPlayersCreature = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, firstPlayersCreature, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, secondPlayersCreature, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    void leavingGavonyRemovesVigilanceButDoesNotEndResolvedChaosEffect() {
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+
+        gd.planechase.faceUp.clear();
+
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingCreature, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    void chaosStillResolvesAfterGavonyLeaves() {
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        harness.inMutationScope(() -> planar.chaos(gd));
+        gd.planechase.faceUp.clear();
+
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.VIGILANCE)).isFalse();
+    }
 }

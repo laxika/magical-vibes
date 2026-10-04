@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "CMD", collectorNumber = "317")
+@CardRegistration(set = "KHM", collectorNumber = "398")
 @CardRegistration(set = "CMD", collectorNumber = "318")
 @CardRegistration(set = "PIP", collectorNumber = "325")
 @CardRegistration(set = "PIP", collectorNumber = "326")
@@ -21,11 +22,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "C18", collectorNumber = "305")
 @CardRegistration(set = "C18", collectorNumber = "306")
 @CardRegistration(set = "C18", collectorNumber = "307")
+@CardRegistration(set = "C17", collectorNumber = "307")
+@CardRegistration(set = "C17", collectorNumber = "308")
+@CardRegistration(set = "C17", collectorNumber = "309")
 @CardRegistration(set = "C19", collectorNumber = "300")
 @CardRegistration(set = "C19", collectorNumber = "301")
 @CardRegistration(set = "2ED", collectorNumber = "301")
 @CardRegistration(set = "2ED", collectorNumber = "302")
 @CardRegistration(set = "NEO", collectorNumber = "292")
+@CardRegistration(set = "THB", collectorNumber = "287")
 @CardRegistration(set = "SLD", collectorNumber = "50")
 @CardRegistration(set = "SLD", collectorNumber = "67")
 @CardRegistration(set = "SLD", collectorNumber = "476")
@@ -433,6 +438,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "WOE", collectorNumber = "275")
 @CardRegistration(set = "WOE", collectorNumber = "276")
 @CardRegistration(set = "THB", collectorNumber = "254")
+@CardRegistration(set = "THB", collectorNumber = "286")
 @CardRegistration(set = "IKO", collectorNumber = "272")
 @CardRegistration(set = "IKO", collectorNumber = "273")
 @CardRegistration(set = "IKO", collectorNumber = "274")
@@ -551,6 +557,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "WHO", collectorNumber = "205")
 @CardRegistration(set = "WHO", collectorNumber = "1164")
 @CardRegistration(set = "WHO", collectorNumber = "1165")
+@CardRegistration(set = "SCD", collectorNumber = "349")
+@CardRegistration(set = "SCD", collectorNumber = "350")
+@CardRegistration(set = "SCD", collectorNumber = "351")
+@CardRegistration(set = "SCD", collectorNumber = "352")
+@CardRegistration(set = "RNA", collectorNumber = "264")
 public class Forest extends Card {
 
     public Forest() {

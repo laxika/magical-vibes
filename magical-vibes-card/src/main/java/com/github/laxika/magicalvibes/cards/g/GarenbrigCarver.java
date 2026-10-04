@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ELD", collectorNumber = "156")
+@CardRegistration(set = "ELD", collectorNumber = "298")
 public class GarenbrigCarver extends Card {
 
     public GarenbrigCarver() {

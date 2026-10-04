@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "MB2", collectorNumber = "138")
 @CardRegistration(set = "DMC", collectorNumber = "164")
+@CardRegistration(set = "C17", collectorNumber = "45")
 public class OKagachiVengefulKami extends Card {
 
     public OKagachiVengefulKami() {

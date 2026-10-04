@@ -159,6 +159,95 @@ class GarzasAssassinTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Garza's Assassin");
     }
 
+    @Test
+    @DisplayName("Can sacrifice itself while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent assassin = harness.addToBattlefieldAndReturn(player1, new GarzasAssassin());
+        assassin.setTapped(true);
+        assassin.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BorealDruid());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Garza's Assassin");
+        harness.assertInGraveyard(player2, "Boreal Druid");
+    }
+
+    @Test
+    @DisplayName("Recover triggers when its activated ability destroys its owner's creature")
+    void recoversAfterDestroyingOwnCreature() {
+        addReadyAssassin();
+        Card assassin = gd.playerBattlefields.get(player1.getId()).getFirst().getCard();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 10);
+        assertThat(gd.playerHands.get(player1.getId())).contains(assassin);
+        harness.assertInGraveyard(player1, "Boreal Druid");
+        harness.assertNotInGraveyard(player1, "Garza's Assassin");
+    }
+
+    @Test
+    @DisplayName("Recover uses the life total at resolution rather than at triggering")
+    void recoverUsesLifeAtResolution() {
+        Card assassin = new GarzasAssassin();
+        harness.setGraveyard(player1, List.of(assassin));
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, druid));
+        harness.setLife(player1, 13);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 6);
+        assertThat(gd.playerHands.get(player1.getId())).contains(assassin);
+    }
+
+    @Test
+    @DisplayName("Recover does not trigger when it dies simultaneously with another creature")
+    void recoverDoesNotTriggerForSimultaneousDeath() {
+        Permanent assassin = harness.addToBattlefieldAndReturn(player1, new GarzasAssassin());
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+        assassin.setMarkedDamage(2);
+        druid.setMarkedDamage(1);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Garza's Assassin");
+        harness.assertInGraveyard(player1, "Boreal Druid");
+    }
+
+    @Test
+    @DisplayName("An old recover trigger cannot exile the Assassin after it leaves and reenters the graveyard")
+    void oldRecoverTriggerCannotExileNewGraveyardObject() {
+        Card assassin = new GarzasAssassin();
+        harness.setGraveyard(player1, List.of(assassin));
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new BorealDruid());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, druid));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removeCardFromGraveyardById(gd, assassin.getId()));
+        Permanent returnedAssassin = harness.addToBattlefieldAndReturn(player1, assassin);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, returnedAssassin));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(assassin);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(assassin);
+        harness.assertLife(player1, 20);
+    }
+
     private void addReadyAssassin() {
         Permanent assassin = harness.addToBattlefieldAndReturn(player1, new GarzasAssassin());
         assassin.setSummoningSick(false);

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "72")
+@CardRegistration(set = "THB", collectorNumber = "307")
 public class ThassasIntervention extends Card {
 
     public ThassasIntervention() {

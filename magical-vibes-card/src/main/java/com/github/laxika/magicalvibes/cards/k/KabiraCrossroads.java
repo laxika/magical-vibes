@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "ZEN", collectorNumber = "216")
 @CardRegistration(set = "DDF", collectorNumber = "33")
+@CardRegistration(set = "C17", collectorNumber = "259")
 public class KabiraCrossroads extends Card {
 
     public KabiraCrossroads() {

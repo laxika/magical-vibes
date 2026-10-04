@@ -49,4 +49,30 @@ class FyndhornElvesTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
         assertThat(perm.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Fyndhorn Elves mana ability resolves immediately without using the stack")
+    void manaAbilityDoesNotUseStack() {
+        addCreatureReady(player1, new FyndhornElves());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Fyndhorn Elves can produce mana for its controller during an opponent's turn")
+    void producesManaDuringOpponentsTurn() {
+        Permanent perm = addCreatureReady(player2, new FyndhornElves());
+        harness.forceActivePlayer(player1);
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(perm.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }

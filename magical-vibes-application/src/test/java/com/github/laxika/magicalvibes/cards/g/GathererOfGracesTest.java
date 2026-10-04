@@ -85,4 +85,52 @@ class GathererOfGracesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Opponent-controlled Auras attached to Gatherer also grant its bonus")
+    void opponentControlledAuraGrantsBonus() {
+        Permanent gatherer = harness.addToBattlefieldAndReturn(player1, new GathererOfGraces());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new SinstrikersWill());
+        aura.setAttachedTo(gatherer.getId());
+
+        assertThat(gqs.getEffectivePower(gd, gatherer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, gatherer)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An opponent-controlled Aura cannot pay the cost even when attached to Gatherer")
+    void cannotSacrificeOpponentControlledAura() {
+        Permanent gatherer = harness.addToBattlefieldAndReturn(player1, new GathererOfGraces());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new SinstrikersWill());
+        aura.setAttachedTo(gatherer.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Sinstriker's Will");
+        assertThat(gatherer.getRegenerationShield()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An Aura attached elsewhere is sacrificed as a cost before Gatherer regenerates")
+    void sacrificesAuraAttachedElsewhereBeforeResolution() {
+        Permanent gatherer = harness.addToBattlefieldAndReturn(player1, new GathererOfGraces());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new SilhanaLedgewalker());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SinstrikersWill());
+        aura.setAttachedTo(otherCreature.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Sinstriker's Will");
+        harness.assertNotOnBattlefield(player1, "Sinstriker's Will");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gatherer.getRegenerationShield()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gatherer.getRegenerationShield()).isEqualTo(1);
+        assertThat(otherCreature.getRegenerationShield()).isZero();
+        assertThat(gatherer.isTapped()).isFalse();
+    }
 }

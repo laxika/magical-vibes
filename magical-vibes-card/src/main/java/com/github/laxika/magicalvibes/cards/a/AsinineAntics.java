@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "42")
+@CardRegistration(set = "WOE", collectorNumber = "330")
 public class AsinineAntics extends Card {
 
     public AsinineAntics() {

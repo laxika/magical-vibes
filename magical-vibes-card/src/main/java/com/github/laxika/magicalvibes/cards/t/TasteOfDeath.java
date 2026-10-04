@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "C21", collectorNumber = "156")
+@CardRegistration(set = "ELD", collectorNumber = "320")
 public class TasteOfDeath extends Card {
 
     public TasteOfDeath() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WWK", collectorNumber = "50")
+@CardRegistration(set = "C17", collectorNumber = "101")
 public class BloodhuskRitualist extends Card {
 
     public BloodhuskRitualist() {

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,9 +42,7 @@ class GatheringPlaceTest extends BaseCardTest {
     @Test
     @DisplayName("A Gathering Place that entered this turn can produce green or white mana")
     void newlyEnteredGatheringPlaceProducesChosenMana() {
-        Permanent land = harness.addToBattlefieldAndReturn(player1, new GatheringPlace());
-        gd.permanentsEnteredBattlefieldThisTurn.put(
-                player1.getId(), new ArrayList<>(List.of(land.getCard())));
+        Permanent land = harness.enterBattlefieldAndReturn(player1, new GatheringPlace());
 
         harness.activateAbility(player1, 0, 1, null, null);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
@@ -70,10 +67,67 @@ class GatheringPlaceTest extends BaseCardTest {
         assertThat(land.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("An opponent's basic land does not enable colored mana")
+    void opponentsBasicLandDoesNotEnableColoredMana() {
+        Permanent land = addReadyGatheringPlace();
+        harness.addToBattlefield(player2, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("entered this turn or if you control a basic land");
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Another Gathering Place entering does not enable an older copy")
+    void anotherCopyEnteringDoesNotEnableColoredMana() {
+        Permanent land = addReadyGatheringPlace();
+        harness.enterBattlefieldAndReturn(player1, new GatheringPlace());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("entered this turn or if you control a basic land");
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A land played from hand can immediately produce white mana without a basic land")
+    void playedLandImmediatelyProducesWhiteMana() {
+        harness.setHand(player1, List.of(new GatheringPlace()));
+        harness.playLand(player1, 0);
+        Permanent land = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped basic land still enables green mana")
+    void tappedBasicLandEnablesGreenMana() {
+        Permanent land = addReadyGatheringPlace();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setTapped(true);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(land.isTapped()).isTrue();
+    }
+
     private Permanent addReadyGatheringPlace() {
-        Permanent land = new Permanent(new GatheringPlace());
-        land.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(land);
-        return land;
+        return addCreatureReady(player1, new GatheringPlace());
     }
 }

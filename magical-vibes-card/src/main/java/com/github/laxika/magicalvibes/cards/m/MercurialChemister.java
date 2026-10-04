@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "RTR", collectorNumber = "180")
 @CardRegistration(set = "C20", collectorNumber = "221")
+@CardRegistration(set = "C17", collectorNumber = "180")
 public class MercurialChemister extends Card {
 
     public MercurialChemister() {

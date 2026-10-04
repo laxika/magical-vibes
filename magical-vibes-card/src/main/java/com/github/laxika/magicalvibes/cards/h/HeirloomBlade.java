@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 @CardRegistration(set = "AFC", collectorNumber = "208")
 @CardRegistration(set = "LCC", collectorNumber = "303")
 @CardRegistration(set = "C20", collectorNumber = "242")
+@CardRegistration(set = "C17", collectorNumber = "52")
 public class HeirloomBlade extends Card {
 
     public HeirloomBlade() {

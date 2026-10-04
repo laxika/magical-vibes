@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
+import com.github.laxika.magicalvibes.cards.w.WearAway;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -20,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GenjuOfTheFields.class, Plains.class, Forest.class, StoneRain.class})
+@CardUsed({GenjuOfTheFields.class, Plains.class, Forest.class, StoneRain.class, WearAway.class})
 class GenjuOfTheFieldsTest extends BaseCardTest {
 
     @Test
@@ -152,6 +153,55 @@ class GenjuOfTheFieldsTest extends BaseCardTest {
         return findPermanent(player1, "Plains");
     }
 
+    @Test
+    @DisplayName("An activation still animates the Plains and grants life gain after the Aura is destroyed")
+    void activationResolvesAfterAuraIsDestroyed() {
+        Permanent plains = addPlainsWithGenju();
+        Permanent genju = findPermanent(player1, "Genju of the Fields");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(genju), null, null);
+
+        harness.setHand(player2, List.of(new WearAway()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player2, 0, genju.getId());
+        harness.assertInGraveyard(player1, "Genju of the Fields");
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, plains)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, plains)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, plains)).isEqualTo(5);
+        plains.setSummoningSick(false);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(plains)));
+        resolveAllTriggers();
+        harness.assertLife(player1, lifeBefore + 2);
+    }
+
+    @Test
+    @DisplayName("An opponent's enchanted Plains gains life for its controller rather than the Aura controller")
+    void opposingPlainsControllerGainsLife() {
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        harness.setHand(player1, List.of(new GenjuOfTheFields()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castEnchantment(player1, 0, plains.getId());
+        harness.passBothPriorities();
+        activateGenju();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        plains.setSummoningSick(false);
+        int auraControllerLife = gd.playerLifeTotals.get(player1.getId());
+        int landControllerLife = gd.playerLifeTotals.get(player2.getId());
+        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(plains)));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, auraControllerLife - 2);
+        harness.assertLife(player2, landControllerLife + 2);
+    }
+
     private void activateGenju() {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int genjuIndex = gd.playerBattlefields.get(player1.getId()).indexOf(
@@ -166,7 +216,6 @@ class GenjuOfTheFieldsTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new StoneRain()));
         harness.addMana(player2, ManaColor.RED, 3);
-        harness.castSorcery(player2, 0, plains.getId());
-        harness.passBothPriorities(); // resolve Stone Rain
+        harness.castAndResolveSorcery(player2, 0, plains.getId());
     }
 }

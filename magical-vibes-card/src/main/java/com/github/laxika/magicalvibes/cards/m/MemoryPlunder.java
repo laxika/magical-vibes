@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 
 @CardRegistration(set = "SHM", collectorNumber = "169")
+@CardRegistration(set = "C17", collectorNumber = "178")
 public class MemoryPlunder extends Card {
 
     public MemoryPlunder() {

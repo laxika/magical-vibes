@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MOR", collectorNumber = "12")
 @CardRegistration(set = "THB", collectorNumber = "24")
+@CardRegistration(set = "THB", collectorNumber = "301")
 @CardRegistration(set = "SLD", collectorNumber = "1020")
 @CardRegistration(set = "SLD", collectorNumber = "1636")
 @CardRegistration(set = "SPG", collectorNumber = "129")

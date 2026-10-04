@@ -22,6 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "MUL", collectorNumber = "60")
 @CardRegistration(set = "MUL", collectorNumber = "125")
 @CardRegistration(set = "MUL", collectorNumber = "190")
+@CardRegistration(set = "C17", collectorNumber = "46")
 public class TaigamOjutaiMaster extends Card {
 
     public TaigamOjutaiMaster() {

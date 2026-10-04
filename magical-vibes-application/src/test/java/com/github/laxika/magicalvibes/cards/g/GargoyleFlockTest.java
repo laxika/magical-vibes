@@ -49,11 +49,74 @@ class GargoyleFlockTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Tyranid Gargoyle")).isZero();
     }
 
+    @Test
+    void countsItsOwnEntryThisTurn() {
+        harness.enterBattlefieldAndReturn(player1, new GargoyleFlock());
+
+        resolveControllerEndStep();
+
+        assertThat(countPermanents(player1, "Tyranid Gargoyle")).isEqualTo(1);
+    }
+
+    @Test
+    void createsOnlyOneTokenEvenWhenMultipleCreaturesEntered() {
+        harness.addToBattlefield(player1, new GargoyleFlock());
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        resolveControllerEndStep();
+
+        assertThat(countPermanents(player1, "Tyranid Gargoyle")).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsEndStep() {
+        harness.enterBattlefieldAndReturn(player1, new GargoyleFlock());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Tyranid Gargoyle")).isZero();
+        assertThat(countPermanents(player2, "Tyranid Gargoyle")).isZero();
+    }
+
+    @Test
+    void creatureEnteringAfterEndStepBeginsDoesNotCauseTrigger() {
+        harness.addToBattlefield(player1, new GargoyleFlock());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Tyranid Gargoyle")).isZero();
+    }
+
+    @Test
+    void countsCreatureThatEnteredEvenIfItDiedBeforeEndStep() {
+        harness.addToBattlefield(player1, new GargoyleFlock());
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        assertThat(countPermanents(player1, "Grizzly Bears")).isZero();
+
+        resolveControllerEndStep();
+
+        assertThat(countPermanents(player1, "Tyranid Gargoyle")).isEqualTo(1);
+    }
+
     private void resolveControllerEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }

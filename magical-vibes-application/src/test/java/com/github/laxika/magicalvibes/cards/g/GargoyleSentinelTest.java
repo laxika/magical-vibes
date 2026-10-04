@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -8,7 +7,9 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GargoyleSentinel.class})
 class GargoyleSentinelTest extends BaseCardTest {
-
-    // ===== Ability resolution =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack")
@@ -32,7 +32,7 @@ class GargoyleSentinelTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Gargoyle Sentinel");
+        assertThat(entry.getSourcePermanentId()).isEqualTo(sentinel.getId());
     }
 
     @Test
@@ -69,20 +69,13 @@ class GargoyleSentinelTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, sentinel, Keyword.FLYING)).isFalse();
     }
 
-    // ===== Combat interaction =====
-
     @Test
     @DisplayName("Cannot attack without activating ability (has defender)")
     void cannotAttackWithDefender() {
         addSentinelReady(player1);
         harness.addToBattlefield(player2, new GargoyleSentinel());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
     }
@@ -97,18 +90,11 @@ class GargoyleSentinelTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
-
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
-                () -> gs.declareAttackers(gd, player1, List.of(0)));
+                () -> declareAttackers(player1, List.of(0)));
 
         assertThat(sentinel.isAttacking()).isTrue();
     }
-
-    // ===== Activation constraints =====
 
     @Test
     @DisplayName("Activating ability does NOT tap Gargoyle Sentinel")
@@ -131,29 +117,89 @@ class GargoyleSentinelTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
-    // ===== Fizzle =====
-
     @Test
-    @DisplayName("Ability fizzles if Gargoyle Sentinel is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Ability resolves without affecting a replacement after its source leaves")
+    void abilityDoesNotAffectReplacementAfterSourceRemoved() {
         addSentinelReady(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
         gd.playerBattlefields.get(player1.getId()).clear();
+        Permanent replacement = addSentinelReady(player1);
 
         harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.FLYING)).isFalse();
 
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new GargoyleSentinel());
+        sentinel.setSummoningSick(true);
+        sentinel.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(sentinel.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, sentinel, Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, sentinel, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability affects only its source, including after repeated activation")
+    void repeatedActivationAffectsOnlySource() {
+        Permanent sentinel = addSentinelReady(player1);
+        Permanent other = addSentinelReady(player1);
+        Permanent opposing = addSentinelReady(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, sentinel, Keyword.DEFENDER)).isFalse();
+        assertThat(gqs.hasKeyword(gd, sentinel, Keyword.FLYING)).isTrue();
+        for (Permanent unaffected : List.of(other, opposing)) {
+            assertThat(gqs.hasKeyword(gd, unaffected, Keyword.DEFENDER)).isTrue();
+            assertThat(gqs.hasKeyword(gd, unaffected, Keyword.FLYING)).isFalse();
+        }
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, sentinel, Keyword.DEFENDER)).isTrue();
+        assertThat(gqs.hasKeyword(gd, sentinel, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Granted flying prevents a ground creature from blocking")
+    void grantedFlyingPreventsGroundBlocker() {
+        addSentinelReady(player1);
+        Permanent blocker = addSentinelReady(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(blocker.isBlocking()).isFalse();
+    }
 
     private Permanent addSentinelReady(Player player) {
-        Permanent perm = new Permanent(new GargoyleSentinel());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GargoyleSentinel());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

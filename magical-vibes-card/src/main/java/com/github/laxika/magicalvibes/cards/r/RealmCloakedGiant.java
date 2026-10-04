@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ELD", collectorNumber = "26")
+@CardRegistration(set = "ELD", collectorNumber = "277")
 @CardRegistration(set = "AFC", collectorNumber = "70")
 @CardRegistration(set = "BLC", collectorNumber = "149")
 @CardRegistration(set = "WOC", collectorNumber = "71")

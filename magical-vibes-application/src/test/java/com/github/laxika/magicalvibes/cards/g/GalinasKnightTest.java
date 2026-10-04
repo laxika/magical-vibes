@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AncientKavu;
+import com.github.laxika.magicalvibes.cards.b.BreathOfDarigaaz;
 import com.github.laxika.magicalvibes.cards.l.LightningDart;
 import com.github.laxika.magicalvibes.cards.m.ManiacalRage;
 import com.github.laxika.magicalvibes.cards.r.Repulse;
@@ -17,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GalinasKnight.class, AncientKavu.class, LightningDart.class, ManiacalRage.class, Repulse.class})
+@CardUsed({GalinasKnight.class, AncientKavu.class, BreathOfDarigaaz.class,
+        LightningDart.class, ManiacalRage.class, Repulse.class})
 class GalinasKnightTest extends BaseCardTest {
 
     @Test
@@ -86,5 +88,59 @@ class GalinasKnightTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, knight.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from red");
+    }
+
+    @Test
+    @DisplayName("Protection also prevents the controller's red spell from targeting the Knight")
+    void ownRedSpellCannotTargetKnight() {
+        Permanent knight = addCreatureReady(player1, new GalinasKnight());
+        harness.setHand(player1, List.of(new LightningDart()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, knight.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection from red");
+    }
+
+    @Test
+    @DisplayName("Protection prevents untargeted red damage for either controller")
+    void preventsUntargetedRedDamage() {
+        Permanent ownKnight = addCreatureReady(player1, new GalinasKnight());
+        Permanent opposingKnight = addCreatureReady(player2, new GalinasKnight());
+        Permanent kavu = addCreatureReady(player2, new AncientKavu());
+        harness.setHand(player1, List.of(new BreathOfDarigaaz()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castKickedSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(ownKnight.getMarkedDamage()).isZero();
+        assertThat(opposingKnight.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownKnight);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingKnight).doesNotContain(kavu);
+        harness.assertInGraveyard(player2, "Ancient Kavu");
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("A Kavu that becomes colorless can block and damage Galina's Knight")
+    void colorlessKavuCanBlockAndDealDamage() {
+        Permanent knight = addCreatureReady(player1, new GalinasKnight());
+        Permanent kavu = addCreatureReady(player2, new AncientKavu());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(knight);
+        harness.assertInGraveyard(player1, "Galina's Knight");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(kavu);
+        assertThat(kavu.getMarkedDamage()).isEqualTo(2);
     }
 }

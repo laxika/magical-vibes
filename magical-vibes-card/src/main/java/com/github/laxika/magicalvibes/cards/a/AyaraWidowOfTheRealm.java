@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "90")
+@CardRegistration(set = "MOM", collectorNumber = "296")
 public class AyaraWidowOfTheRealm extends Card {
 
     public AyaraWidowOfTheRealm() {

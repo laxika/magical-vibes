@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "INV", collectorNumber = "327")
 @CardRegistration(set = "HOP", collectorNumber = "137")
 @CardRegistration(set = "DDE", collectorNumber = "65")
+@CardRegistration(set = "SCD", collectorNumber = "318")
 public class ShivanOasis extends Card {
 
     public ShivanOasis() {

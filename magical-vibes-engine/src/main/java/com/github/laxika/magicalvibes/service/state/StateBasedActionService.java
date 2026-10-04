@@ -264,6 +264,7 @@ public class StateBasedActionService {
             gameData.exiledCardsWithIntelCounters.remove(cardId);
             gameData.exiledCardsWithKickCounters.remove(cardId);
             gameData.exiledCardsWithBrainCounters.remove(cardId);
+            gameData.exiledCardsWithCageCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
             gameData.exilePlayForLifeEqualToManaValue.remove(cardId);
             gameData.exilePlayPermissionSourcePermanents.remove(cardId);
@@ -472,6 +473,7 @@ public class StateBasedActionService {
                     }
                 }
             }
+            triggerCollectionService.checkBatchedAllyArtifactOrCreatureDeathTriggers(gameData);
             triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
             gameData.simultaneousDyingCreatures.clear();

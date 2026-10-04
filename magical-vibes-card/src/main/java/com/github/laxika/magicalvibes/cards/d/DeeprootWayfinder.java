@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MOM", collectorNumber = "184")
+@CardRegistration(set = "MOM", collectorNumber = "369")
 public class DeeprootWayfinder extends Card {
 
     public DeeprootWayfinder() {

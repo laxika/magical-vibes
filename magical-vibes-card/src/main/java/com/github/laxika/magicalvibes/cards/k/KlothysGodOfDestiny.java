@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "220")
+@CardRegistration(set = "THB", collectorNumber = "268")
 public class KlothysGodOfDestiny extends Card {
 
     public KlothysGodOfDestiny() {

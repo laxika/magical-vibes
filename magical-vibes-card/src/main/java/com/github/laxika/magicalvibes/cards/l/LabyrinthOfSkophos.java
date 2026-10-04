@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "243")
 @CardRegistration(set = "MKC", collectorNumber = "272")
+@CardRegistration(set = "THB", collectorNumber = "346")
 public class LabyrinthOfSkophos extends Card {
 
     public LabyrinthOfSkophos() {

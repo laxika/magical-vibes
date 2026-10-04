@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "125")
+@CardRegistration(set = "MOM", collectorNumber = "297")
+@CardRegistration(set = "MOM", collectorNumber = "340")
 public class Sheoldred extends Card {
 
     public Sheoldred() {

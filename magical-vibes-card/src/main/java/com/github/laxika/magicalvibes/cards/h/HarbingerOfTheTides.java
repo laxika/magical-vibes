@@ -18,6 +18,7 @@ import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "58")
 @CardRegistration(set = "DDT", collectorNumber = "7")
+@CardRegistration(set = "C17", collectorNumber = "85")
 public class HarbingerOfTheTides extends Card {
 
     public HarbingerOfTheTides() {

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "233")
+@CardRegistration(set = "KHM", collectorNumber = "332")
 public class VegaTheWatcher extends Card {
 
     public VegaTheWatcher() {

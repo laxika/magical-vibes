@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "225")
+@CardRegistration(set = "KHM", collectorNumber = "289")
 public class NikoAris extends Card {
 
     public NikoAris() {

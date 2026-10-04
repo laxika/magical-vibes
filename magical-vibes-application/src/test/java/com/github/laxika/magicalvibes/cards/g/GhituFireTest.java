@@ -85,4 +85,82 @@ class GhituFireTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
+
+    @Test
+    @DisplayName("X can be zero at the normal mana cost")
+    void zeroXDealsNoDamage() {
+        harness.setHand(player1, List.of(new GhituFire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0, player2.getId());
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Ghitu Fire");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Can target its own controller")
+    void canDamageItsController() {
+        harness.setHand(player1, List.of(new GhituFire()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 3, player1.getId());
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Nonlethal damage is marked without destroying the creature")
+    void nonlethalDamageLeavesCreatureAlive() {
+        Permanent target = addCreatureReady(player2, new ArdentSoldier());
+        harness.setHand(player1, List.of(new GhituFire()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 1, target.getId());
+
+        harness.assertOnBattlefield(player2, "Ardent Soldier");
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Flash casting requires enough mana for X plus the surcharge")
+    void flashCastRejectsInsufficientMana() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new GhituFire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> gs.playCardWithAlternateCost(
+                gd, player1, 0, 2, player2.getId(), null, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Can cast in response on its controller's turn by paying the surcharge")
+    void flashCastWhileAnotherSpellIsOnStack() {
+        harness.setHand(player1, List.of(new GhituFire(), new GhituFire()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, 1, player2.getId());
+        harness.castWithAlternateCost(player1, 0, player2.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "200")
+@CardRegistration(set = "KHM", collectorNumber = "321")
 @CardRegistration(set = "MUL", collectorNumber = "31")
 @CardRegistration(set = "MUL", collectorNumber = "96")
 @CardRegistration(set = "MUL", collectorNumber = "161")

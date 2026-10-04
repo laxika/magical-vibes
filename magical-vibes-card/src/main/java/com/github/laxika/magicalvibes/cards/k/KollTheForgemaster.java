@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "220")
+@CardRegistration(set = "KHM", collectorNumber = "325")
 public class KollTheForgemaster extends Card {
 
     public KollTheForgemaster() {

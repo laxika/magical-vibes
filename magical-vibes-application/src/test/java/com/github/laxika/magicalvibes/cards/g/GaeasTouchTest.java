@@ -149,6 +149,90 @@ class GaeasTouchTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Gaea's Touch");
     }
 
+    @Test
+    @DisplayName("The Forest ability cannot be activated outside a main phase")
+    void forestAbilityCannotBeActivatedDuringUpkeep() {
+        addTouch();
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    @DisplayName("Another copy cannot activate its Forest ability while the stack is occupied")
+    void forestAbilityRequiresEmptyStack() {
+        addTouch();
+        addTouch();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+    }
+
+    @Test
+    @DisplayName("Each copy has its own once-per-turn limit")
+    void separateCopiesHaveIndependentActivationLimits() {
+        addTouch();
+        addTouch();
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Forest ability resolves after its source is sacrificed for mana")
+    void forestAbilityResolvesAfterSourceIsSacrificed() {
+        addTouch();
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(1);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Gaea's Touch");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Gaea's Touch");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Putting a Forest onto the battlefield does not use the normal land play")
+    void forestAbilityDoesNotConsumeLandPlay() {
+        addTouch();
+        harness.setHand(player1, List.of(new Forest(), new Island()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.playLand(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Island");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
     private Permanent addTouch() {
         return harness.addToBattlefieldAndReturn(player1, new GaeasTouch());
     }

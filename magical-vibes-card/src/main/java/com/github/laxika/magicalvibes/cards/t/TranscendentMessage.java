@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "MOM", collectorNumber = "83")
+@CardRegistration(set = "MOM", collectorNumber = "354")
 public class TranscendentMessage extends Card {
 
     public TranscendentMessage() {

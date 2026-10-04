@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "C15", collectorNumber = "6")
 @CardRegistration(set = "C21", collectorNumber = "98")
+@CardRegistration(set = "C17", collectorNumber = "68")
 public class OreskosExplorer extends Card {
 
     public OreskosExplorer() {

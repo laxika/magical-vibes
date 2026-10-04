@@ -13,6 +13,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ALA", collectorNumber = "160")
 @CardRegistration(set = "MM3", collectorNumber = "153")
+@CardRegistration(set = "C17", collectorNumber = "165")
 public class BroodmateDragon extends Card {
 
     public BroodmateDragon() {

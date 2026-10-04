@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.s.SnowCoveredIsland;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredSwamp;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GangrenousZombies.class, BalduvianBears.class, Swamp.class, SnowCoveredSwamp.class})
+@CardUsed({GangrenousZombies.class, BalduvianBears.class, Swamp.class, SnowCoveredSwamp.class,
+        SnowCoveredIsland.class})
 class GangrenousZombiesTest extends BaseCardTest {
 
     @Test
@@ -103,6 +105,73 @@ class GangrenousZombiesTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately, before damage resolves")
+    void sacrificesAsActivationCost() {
+        addCreatureReady(player1, new GangrenousZombies());
+        harness.addToBattlefield(player2, new BalduvianBears());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Gangrenous Zombies");
+        harness.assertInGraveyard(player1, "Gangrenous Zombies");
+        assertThat(findPermanent(player2, "Balduvian Bears").getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Balduvian Bears").getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("A snow Swamp gained before resolution upgrades damage")
+    void snowSwampEnteringBeforeResolutionUpgradesDamage() {
+        addCreatureReady(player1, new GangrenousZombies());
+        harness.addToBattlefield(player2, new BalduvianBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        addSnowSwamp(player1);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A snow Island and a nonsnow Swamp do not count as a snow Swamp")
+    void snowAndSwampMustBeOnTheSamePermanent() {
+        addCreatureReady(player1, new GangrenousZombies());
+        harness.addToBattlefield(player1, new SnowCoveredIsland());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player2, new BalduvianBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Balduvian Bears").getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Multiple snow Swamps still deal only 2 damage")
+    void multipleSnowSwampsDoNotIncreaseDamageFurther() {
+        addCreatureReady(player1, new GangrenousZombies());
+        addSnowSwamp(player1);
+        addSnowSwamp(player1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Snow-Covered Swamp");
     }
 
     private Permanent addSnowSwamp(Player player) {

@@ -75,16 +75,72 @@ class FuriousForebearTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.addToBattlefield(player1, forebear);
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.setHand(player1, List.of(new WrathOfGod()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(forebear);
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Insufficient mana cannot return Furious Forebear")
+    void insufficientManaLeavesItInGraveyard() {
+        FuriousForebear forebear = putForebearInGraveyard();
+        destroyCreature(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(forebear);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forebear);
+    }
+
+    @Test
+    @DisplayName("Each Forebear in the graveyard triggers independently")
+    void multipleForebearsTriggerIndependently() {
+        FuriousForebear first = new FuriousForebear();
+        FuriousForebear second = new FuriousForebear();
+        harness.setGraveyard(player1, List.of(first, second));
+        destroyCreature(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(first, second);
+    }
+
+    @Test
+    @DisplayName("An old trigger cannot return Forebear after it leaves the graveyard and dies again")
+    void oldTriggerDoesNotReturnNewGraveyardObject() {
+        FuriousForebear forebear = putForebearInGraveyard();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.passBothPriorities();
+
+        harness.setGraveyard(player1, List.of());
+        harness.addToBattlefield(player1, forebear);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Furious Forebear"));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(forebear);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forebear);
     }
 
     private FuriousForebear putForebearInGraveyard() {

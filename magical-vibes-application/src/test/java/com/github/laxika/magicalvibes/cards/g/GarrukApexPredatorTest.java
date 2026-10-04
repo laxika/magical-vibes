@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.l.LilianaOfTheVeil;
+import com.github.laxika.magicalvibes.cards.l.LilianaVess;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,20 +20,21 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GarrukApexPredator.class, LilianaVess.class, RuneclawBear.class, PlatinumEmperion.class})
 class GarrukApexPredatorTest extends BaseCardTest {
 
     @Test
     @DisplayName("+1 destroys another planeswalker")
     void plusOneDestroysPlaneswalker() {
         Permanent garruk = addReadyGarruk(player1, 5);
-        harness.addToBattlefield(player2, new LilianaOfTheVeil());
-        Permanent liliana = findPermanent(player2, "Liliana of the Veil");
-        liliana.setCounterCount(CounterType.LOYALTY, 3);
+        harness.addToBattlefield(player2, new LilianaVess());
+        Permanent liliana = findPermanent(player2, "Liliana Vess");
+        liliana.setCounterCount(CounterType.LOYALTY, 5);
 
         harness.activateAbility(player1, 0, 0, null, liliana.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Liliana of the Veil");
+        harness.assertNotOnBattlefield(player2, "Liliana Vess");
         assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
     }
 
@@ -47,8 +51,8 @@ class GarrukApexPredatorTest extends BaseCardTest {
     @DisplayName("+1 cannot target a creature")
     void plusOneCannotTargetCreature() {
         addReadyGarruk(player1, 5);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new RuneclawBear());
+        Permanent bears = findPermanent(player2, "Runeclaw Bear");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -75,13 +79,13 @@ class GarrukApexPredatorTest extends BaseCardTest {
     @DisplayName("-3 destroys a creature and gains life equal to its toughness")
     void minusThreeDestroysAndGainsLife() {
         Permanent garruk = addReadyGarruk(player1, 5);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        harness.addToBattlefield(player2, new RuneclawBear());
+        Permanent bears = findPermanent(player2, "Runeclaw Bear");
 
         harness.activateAbility(player1, 0, 2, null, bears.getId());
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Runeclaw Bear");
         harness.assertLife(player1, 22);
         assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
@@ -134,9 +138,9 @@ class GarrukApexPredatorTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 3, null, player2.getId());
         harness.passBothPriorities();
 
-        harness.addToBattlefield(player2, new LilianaOfTheVeil());
-        Permanent liliana = findPermanent(player2, "Liliana of the Veil");
-        liliana.setCounterCount(CounterType.LOYALTY, 3);
+        harness.addToBattlefield(player2, new LilianaVess());
+        Permanent liliana = findPermanent(player2, "Liliana Vess");
+        liliana.setCounterCount(CounterType.LOYALTY, 5);
 
         Permanent bears = addReadyAttacker(player1);
         declareAttack(player1, bears, liliana.getId());
@@ -160,27 +164,63 @@ class GarrukApexPredatorTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("-3 destroys Platinum Emperion before gaining life")
+    void minusThreeGainsLifeAfterRemovingLifeTotalRestriction() {
+        addReadyGarruk(player1, 5);
+        Permanent emperion = harness.addToBattlefieldAndReturn(player1, new PlatinumEmperion());
+
+        harness.activateAbility(player1, 0, 2, null, emperion.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Platinum Emperion");
+        harness.assertLife(player1, 28);
+    }
+
+    @Test
+    @DisplayName("-8 cannot give Garruk's controller an emblem")
+    void minusEightCannotTargetController() {
+        addReadyGarruk(player1, 9);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("-3 uses the creature's effective toughness including counters")
+    void minusThreeUsesEffectiveToughness() {
+        addReadyGarruk(player1, 5);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
+        bear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        harness.activateAbility(player1, 0, 2, null, bear.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Runeclaw Bear");
+        harness.assertLife(player1, 25);
+    }
+
     private void declareAttack(Player attackingPlayer, Permanent attacker, java.util.UUID defenderId) {
+        int index = gd.playerBattlefields.get(attackingPlayer.getId()).indexOf(attacker);
+        if (gd.playerIds.contains(defenderId)) {
+            declareAttackers(attackingPlayer, List.of(index));
+            return;
+        }
         harness.forceActivePlayer(attackingPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         harness.beginAttackerDeclarationInput();
-        int index = gd.playerBattlefields.get(attackingPlayer.getId()).indexOf(attacker);
         gs.declareAttackers(gd, attackingPlayer, List.of(index), Map.of(index, defenderId));
     }
 
     private Permanent addReadyAttacker(Player player) {
-        harness.addToBattlefield(player, new GrizzlyBears());
-        Permanent bears = findPermanent(player, "Grizzly Bears");
-        bears.setSummoningSick(false);
-        return bears;
+        return addCreatureReady(player, new RuneclawBear());
     }
 
     private Permanent addReadyGarruk(Player player, int loyalty) {
-        Permanent perm = new Permanent(new GarrukApexPredator());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GarrukApexPredator());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;

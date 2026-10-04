@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import java.util.Set;
 
 @CardRegistration(set = "THB", collectorNumber = "217")
+@CardRegistration(set = "THB", collectorNumber = "338")
 public class GalliaOfTheEndlessDance extends Card {
 
     public GalliaOfTheEndlessDance() {

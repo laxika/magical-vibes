@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 @CardRegistration(set = "CMD", collectorNumber = "245")
 @CardRegistration(set = "C15", collectorNumber = "251")
 @CardRegistration(set = "C16", collectorNumber = "250")
+@CardRegistration(set = "C17", collectorNumber = "207")
 @CardRegistration(set = "CMM", collectorNumber = "378")
 @CardRegistration(set = "OTC", collectorNumber = "256")
 public class DarksteelIngot extends Card {

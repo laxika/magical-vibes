@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "AVR", collectorNumber = "92")
 @CardRegistration(set = "VOC", collectorNumber = "127")
+@CardRegistration(set = "C17", collectorNumber = "109")
 public class DarkImpostor extends Card {
 
     public DarkImpostor() {

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "184")
+@CardRegistration(set = "WOE", collectorNumber = "358")
 public class SentinelOfLostLore extends Card {
 
     public SentinelOfLostLore() {

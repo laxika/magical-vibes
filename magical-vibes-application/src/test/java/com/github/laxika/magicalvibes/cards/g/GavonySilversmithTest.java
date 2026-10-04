@@ -14,39 +14,36 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GavonySilversmith.class, GrizzlyBears.class, Plains.class})
+@CardUsed({GavonySilversmith.class, GavonyTrapper.class, Plains.class})
 class GavonySilversmithTest extends BaseCardTest {
 
     @Test
     void putsCounterOnOneTargetCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GavonyTrapper());
         harness.setHand(player1, List.of(new GavonySilversmith()));
         addMana();
 
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = target.getId();
         harness.castCreature(player1, 0, List.of(targetId));
-        resolveCreatureAndEtb();
+        resolveAllTriggers();
 
-        assertThat(findPermanentById(targetId).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 .isEqualTo(1);
     }
 
     @Test
     void putsCounterOnEachOfTwoTargetCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GavonyTrapper());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GavonyTrapper());
         harness.setHand(player1, List.of(new GavonySilversmith()));
         addMana();
 
-        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        UUID firstId = battlefield.get(0).getId();
-        UUID secondId = battlefield.get(1).getId();
-        harness.castCreature(player1, 0, List.of(firstId, secondId));
-        resolveCreatureAndEtb();
+        harness.castCreature(player1, 0, List.of(first.getId(), second.getId()));
+        resolveAllTriggers();
 
-        assertThat(findPermanentById(firstId).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 .isEqualTo(1);
-        assertThat(findPermanentById(secondId).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
                 .isEqualTo(1);
     }
 
@@ -58,7 +55,12 @@ class GavonySilversmithTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
         harness.assertOnBattlefield(player1, "Gavony Silversmith");
+        assertThat(findPermanent(player1, "Gavony Silversmith")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -74,20 +76,79 @@ class GavonySilversmithTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+
+    @Test
+    void canTargetItselfAndAnOpponentsCreatureAfterEntering() {
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GavonyTrapper());
+        harness.setHand(player1, List.of(new GavonySilversmith()));
+        addMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent silversmith = findPermanent(player1, "Gavony Silversmith");
+        harness.handlePermanentChosen(player1, silversmith.getId());
+        harness.handlePermanentChosen(player1, opponent.getId());
+        resolveAllTriggers();
+
+        assertThat(silversmith.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void stillPutsCounterOnRemainingTargetWhenOneTargetLeaves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GavonyTrapper());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GavonyTrapper());
+        harness.setHand(player1, List.of(new GavonySilversmith()));
+        addMana();
+
+        harness.castCreature(player1, 0, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, first));
+        resolveAllTriggers();
+
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void abilityResolvesAfterSilversmithLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GavonyTrapper());
+        harness.setHand(player1, List.of(new GavonySilversmith()));
+        addMana();
+
+        harness.castCreature(player1, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+        Permanent silversmith = findPermanent(player1, "Gavony Silversmith");
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, silversmith));
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Gavony Silversmith");
+    }
+
+    @Test
+    void cannotChooseSameCreatureTwiceForTheTrigger() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GavonyTrapper());
+        harness.setHand(player1, List.of(new GavonySilversmith()));
+        addMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
     }
 
-    private void resolveCreatureAndEtb() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-    }
-
-    private Permanent findPermanentById(UUID id) {
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getId().equals(id))
-                .findFirst()
-                .orElseThrow();
-    }
 }

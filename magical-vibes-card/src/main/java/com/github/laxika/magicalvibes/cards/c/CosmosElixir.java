@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "237")
+@CardRegistration(set = "KHM", collectorNumber = "368")
 public class CosmosElixir extends Card {
 
     public CosmosElixir() {

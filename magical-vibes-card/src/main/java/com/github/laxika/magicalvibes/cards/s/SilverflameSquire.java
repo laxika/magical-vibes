@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ELD", collectorNumber = "31")
+@CardRegistration(set = "ELD", collectorNumber = "279")
 public class SilverflameSquire extends Card {
 
     public SilverflameSquire() {

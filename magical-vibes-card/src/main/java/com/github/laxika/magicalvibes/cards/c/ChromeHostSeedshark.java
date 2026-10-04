@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "51")
+@CardRegistration(set = "MOM", collectorNumber = "350")
 @CardRegistration(set = "EOC", collectorNumber = "68")
 public class ChromeHostSeedshark extends Card {
 

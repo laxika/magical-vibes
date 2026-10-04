@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "80")
+@CardRegistration(set = "THB", collectorNumber = "310")
 public class WavebreakHippocamp extends Card {
 
     public WavebreakHippocamp() {

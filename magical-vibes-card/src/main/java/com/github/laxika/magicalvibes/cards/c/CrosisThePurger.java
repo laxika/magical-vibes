@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 
 @CardRegistration(set = "INV", collectorNumber = "242")
 @CardRegistration(set = "PD3", collectorNumber = "5")
+@CardRegistration(set = "C17", collectorNumber = "168")
 public class CrosisThePurger extends Card {
 
     public CrosisThePurger() {

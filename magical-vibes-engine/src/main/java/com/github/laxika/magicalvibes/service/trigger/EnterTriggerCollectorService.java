@@ -2134,6 +2134,8 @@ public class EnterTriggerCollectorService {
             slot = EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     @CollectsTrigger(value = PutCountersOnEnteringCreatureEffect.class,
             slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
+    @CollectsTrigger(value = PutCountersOnEnteringCreatureEffect.class,
+            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyPutCountersOnEntering(TriggerMatchContext match,
             PutCountersOnEnteringCreatureEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -2149,9 +2151,14 @@ public class EnterTriggerCollectorService {
                     new TargetPermanentMatches(new PermanentHasCountersPredicate(effect.requiredCounterType())),
                     counters);
         }
+        List<CardEffect> resolvedEffects = new ArrayList<>(List.of(counters));
+        resolvedEffects.addAll(effect.followUpEffects());
         String counterDescription = effect.counterType().name().toLowerCase(Locale.ROOT).replace('_', ' ');
         if (effect.optional()) {
-            var may = new MayEffect(counters,
+            CardEffect resolution = resolvedEffects.size() == 1 ? counters
+                    : com.github.laxika.magicalvibes.model.effect.SequenceEffect.of(
+                            resolvedEffects.toArray(CardEffect[]::new));
+            var may = new MayEffect(resolution,
                     "Put " + effect.amount() + " " + counterDescription + " counter(s) on "
                             + pe.enteringCard().getName() + "?");
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
@@ -2160,14 +2167,16 @@ public class EnterTriggerCollectorService {
             }
         } else {
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-                match.gameData().stack.add(new StackEntry(
+                StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         sourceCard,
                         match.controllerId(),
                         sourceCard.getName() + "'s ability",
-                        new ArrayList<>(List.of(counters)),
+                        new ArrayList<>(resolvedEffects),
                         enteringPermanentId,
-                        match.permanent().getId()));
+                        match.permanent().getId());
+                entry.setNonTargeting(true);
+                match.gameData().stack.add(entry);
             }
         }
         logTriggered(match);

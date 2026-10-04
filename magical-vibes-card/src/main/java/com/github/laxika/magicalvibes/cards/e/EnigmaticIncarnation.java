@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "THB", collectorNumber = "215")
+@CardRegistration(set = "THB", collectorNumber = "337")
 public class EnigmaticIncarnation extends Card {
 
     public EnigmaticIncarnation() {

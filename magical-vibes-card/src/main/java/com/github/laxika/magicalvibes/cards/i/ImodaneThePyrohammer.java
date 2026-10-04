@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentWhenSingleTargetCreatureSpellDealsDamageEffect;
 
 @CardRegistration(set = "WOE", collectorNumber = "137")
+@CardRegistration(set = "WOE", collectorNumber = "348")
 public class ImodaneThePyrohammer extends Card {
 
     public ImodaneThePyrohammer() {

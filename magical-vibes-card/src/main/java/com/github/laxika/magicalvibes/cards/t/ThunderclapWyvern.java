@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 @CardRegistration(set = "EMA", collectorNumber = "208")
 @CardRegistration(set = "PIO", collectorNumber = "248")
 @CardRegistration(set = "KHC", collectorNumber = "94")
+@CardRegistration(set = "SCD", collectorNumber = "251")
 public class ThunderclapWyvern extends Card {
 
     public ThunderclapWyvern() {

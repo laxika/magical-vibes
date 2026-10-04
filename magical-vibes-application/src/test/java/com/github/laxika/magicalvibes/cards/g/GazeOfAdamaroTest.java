@@ -41,8 +41,7 @@ class GazeOfAdamaroTest extends BaseCardTest {
                 new ArabaMothrider(), new ArabaMothrider(), new ArabaMothrider()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -70,10 +69,41 @@ class GazeOfAdamaroTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Gaze of Adamaro can target its controller and excludes itself from hand size")
+    void canTargetItsControllerAndDoesNotCountItselfInHand() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new GazeOfAdamaro(), new ArabaMothrider()));
+        harness.setHand(player2, List.of(new ArabaMothrider(), new ArabaMothrider(), new ArabaMothrider()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Gaze of Adamaro");
+    }
+
+    @Test
+    @DisplayName("An emptied hand before resolution causes no damage")
+    void usesEmptyHandAtResolution() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new GazeOfAdamaro()));
+        harness.setHand(player2, List.of(new ArabaMothrider(), new ArabaMothrider()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.setHand(player2, List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Gaze of Adamaro");
     }
 
     @Test

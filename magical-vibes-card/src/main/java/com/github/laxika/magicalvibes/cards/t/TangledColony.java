@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "113")
+@CardRegistration(set = "WOE", collectorNumber = "344")
 public class TangledColony extends Card {
 
     public TangledColony() {

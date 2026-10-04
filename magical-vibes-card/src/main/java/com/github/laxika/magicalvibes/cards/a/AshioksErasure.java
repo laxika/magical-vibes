@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTruePredicate;
 
 @CardRegistration(set = "THB", collectorNumber = "43")
+@CardRegistration(set = "THB", collectorNumber = "304")
 public class AshioksErasure extends Card {
 
     public AshioksErasure() {

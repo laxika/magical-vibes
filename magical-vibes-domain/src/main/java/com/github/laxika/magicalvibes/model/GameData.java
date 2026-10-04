@@ -731,6 +731,8 @@ public class GameData {
     public final Set<UUID> exiledCardsWithTakeoverCounters = ConcurrentHashMap.newKeySet();
     /** Tracks exiled card UUIDs that have brain counters (Rex, Cyber-Hound). */
     public final Set<UUID> exiledCardsWithBrainCounters = ConcurrentHashMap.newKeySet();
+    /** Tracks exiled card UUIDs that have cage counters (Mairsil, the Pretender). */
+    public final Set<UUID> exiledCardsWithCageCounters = ConcurrentHashMap.newKeySet();
     /** Maps creature cards exiled by Lukka's first ability to the player who may cast them. */
     public final Map<UUID, UUID> lukkaExileCastPermissions = new ConcurrentHashMap<>();
     /** Spells exiled with delay counters and waiting to go back onto the stack (Ertai's Meddling). */
@@ -1084,6 +1086,8 @@ public class GameData {
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
     /** Players who have begun activating an exhaust ability this turn. */
     public final Set<UUID> playersWhoActivatedExhaustAbilityThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who activated an ability of a card in a graveyard this turn. */
+    public final Set<UUID> playersWhoActivatedAbilityOfGraveyardCardThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who have activated an equip ability this turn. */
     public final Set<UUID> playersWhoActivatedEquipAbilityThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who have activated a Power-up ability this turn. */
@@ -4270,6 +4274,11 @@ public class GameData {
                 .merge(sourceZone, 1, Integer::sum);
     }
 
+    /** Records that a player activated an ability of a card in a graveyard this turn. */
+    public void recordActivatedAbilityOfGraveyardCard(UUID playerId) {
+        if (playerId != null) playersWhoActivatedAbilityOfGraveyardCardThisTurn.add(playerId);
+    }
+
     public int getSpellsCastThisTurnCount(UUID playerId, Zone sourceZone) {
         if (playerId == null || sourceZone == null) return 0;
         return spellCastCountsByZoneThisTurn.getOrDefault(playerId, Map.of())
@@ -5933,6 +5942,7 @@ public class GameData {
             exiledCardsWithMemoryCounters.remove(cardId);
             exiledCardsWithTakeoverCounters.remove(cardId);
             exiledCardsWithBrainCounters.remove(cardId);
+            exiledCardsWithCageCounters.remove(cardId);
             exiledCardRefineCounters.remove(cardId);
             exilePlayAnyManaTypeWhileExiled.remove(cardId);
             plottedCardIds.remove(cardId);
@@ -6139,6 +6149,7 @@ public class GameData {
         removedIds.forEach(exiledCardsWithTakeoverCounters::remove);
         removedIds.forEach(exiledCardsWithFetchCounters::remove);
         removedIds.forEach(exiledCardsWithBrainCounters::remove);
+        removedIds.forEach(exiledCardsWithCageCounters::remove);
         removedIds.forEach(lukkaExileCastPermissions::remove);
         removedIds.forEach(antedCardIds::remove);
         removedIds.forEach(cardId -> {
@@ -6945,6 +6956,8 @@ public class GameData {
         copy.playersDealtCombatDamageSinceTheirLastTurn.addAll(this.playersDealtCombatDamageSinceTheirLastTurn);
         copy.playersDealtCombatDamageLastTurn.addAll(this.playersDealtCombatDamageLastTurn);
         copy.playersWhoActivatedExhaustAbilityThisTurn.addAll(this.playersWhoActivatedExhaustAbilityThisTurn);
+        copy.playersWhoActivatedAbilityOfGraveyardCardThisTurn
+                .addAll(this.playersWhoActivatedAbilityOfGraveyardCardThisTurn);
         copy.playersWhoActivatedEquipAbilityThisTurn.addAll(this.playersWhoActivatedEquipAbilityThisTurn);
         copy.playersWhoActivatedPowerUpAbilityThisTurn.addAll(this.playersWhoActivatedPowerUpAbilityThisTurn);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);
@@ -7045,6 +7058,7 @@ public class GameData {
         copy.exiledCardsWithMemoryCounters.addAll(this.exiledCardsWithMemoryCounters);
         copy.exiledCardsWithTakeoverCounters.addAll(this.exiledCardsWithTakeoverCounters);
         copy.exiledCardsWithBrainCounters.addAll(this.exiledCardsWithBrainCounters);
+        copy.exiledCardsWithCageCounters.addAll(this.exiledCardsWithCageCounters);
 
         // --- List<UUID> (synchronized) ---
         copy.orderedPlayerIds.addAll(this.orderedPlayerIds);
@@ -7468,6 +7482,7 @@ public class GameData {
         copy.exiledCardsWithMemoryCounters.addAll(this.exiledCardsWithMemoryCounters);
         copy.exiledCardsWithTakeoverCounters.addAll(this.exiledCardsWithTakeoverCounters);
         copy.exiledCardsWithBrainCounters.addAll(this.exiledCardsWithBrainCounters);
+        copy.exiledCardsWithCageCounters.addAll(this.exiledCardsWithCageCounters);
         copy.lukkaExileCastPermissions.putAll(this.lukkaExileCastPermissions);
         copy.delayedSpellExiles.addAll(this.delayedSpellExiles);
         copy.suspendedSpellExiles.addAll(this.suspendedSpellExiles);

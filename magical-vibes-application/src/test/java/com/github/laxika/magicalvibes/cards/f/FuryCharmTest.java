@@ -47,8 +47,7 @@ class FuryCharmTest extends BaseCardTest {
 
     @Test
     void boostsCreatureAndGrantsTrampleUntilEndOfTurn() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         cast(1, bears.getId());
 
         assertThat(bears.getPowerModifier()).isEqualTo(1);
@@ -86,6 +85,66 @@ class FuryCharmTest extends BaseCardTest {
     void cannotTargetExiledCardThatIsNotSuspended() {
         AncestralVision target = new AncestralVision();
         harness.setExile(player2, List.of(target));
+
+        assertThatThrownBy(() -> cast(2, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void counterRemovalCanTargetPermanentWithoutTimeCounters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Millstone());
+        target.setCounterCount(CounterType.CHARGE, 3);
+
+        cast(2, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(target.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Millstone");
+    }
+
+    @Test
+    void removesOnlyAvailableTimeCounterFromPermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setCounterCount(CounterType.TIME, 1);
+
+        cast(2, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.TIME)).isZero();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void removingLastSuspendCounterQueuesOneCastingTrigger() {
+        AncestralVision target = suspendedCard(1);
+
+        cast(2, target.getId());
+
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void removingBothSuspendCountersQueuesOneCastingTrigger() {
+        AncestralVision target = suspendedCard(2);
+
+        cast(2, target.getId());
+
+        assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void exiledCardWithNonSuspendTimeCountersIsNotLegalTarget() {
+        AncestralVision target = suspendedCard(3);
+        gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
 
         assertThatThrownBy(() -> cast(2, target.getId()))
                 .isInstanceOf(IllegalStateException.class);

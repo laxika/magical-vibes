@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GavelOfTheRighteous.class, GrizzlyBears.class})
 class GavelOfTheRighteousTest extends BaseCardTest {
@@ -76,6 +77,109 @@ class GavelOfTheRighteousTest extends BaseCardTest {
         assertThat(gavel.getAttachedTo()).isEqualTo(bear.getId());
     }
 
+    @Test
+    void doesNotChargeDuringOpponentsCombat() {
+        Permanent gavel = addGavelReady();
+
+        advanceToBeginningOfCombat(player2);
+        harness.passBothPriorities();
+
+        assertThat(gavel.getTotalCounterCount()).isZero();
+    }
+
+    @Test
+    void countsMixedCounterTypesForBothStaticAbilities() {
+        Permanent gavel = addGavelReady();
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        gavel.setAttachedTo(bear.getId());
+        gavel.setCounterCount(CounterType.CHARGE, 2);
+        gavel.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    void removingCounterImmediatelyReducesBonusBeforeEquipResolves() {
+        Permanent gavel = addGavelReady();
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherBear = addCreatureReady(player1, new GrizzlyBears());
+        gavel.setAttachedTo(bear.getId());
+        gavel.setCounterCount(CounterType.CHARGE, 4);
+
+        harness.activateAbility(player1, 0, 1, null, otherBear.getId());
+
+        assertThat(gavel.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        assertThat(gavel.getAttachedTo()).isEqualTo(bear.getId());
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DOUBLE_STRIKE)).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gavel.getAttachedTo()).isEqualTo(otherBear.getId());
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherBear)).isEqualTo(5);
+    }
+
+    @Test
+    void cannotEquipByRemovingCounterWhenThereAreNone() {
+        addGavelReady();
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, bear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void neitherEquipPaymentCanTargetOpponentsCreature() {
+        Permanent gavel = addGavelReady();
+        Permanent bear = addCreatureReady(player2, new GrizzlyBears());
+        gavel.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 3);
+
+        for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, bear.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+        assertThat(gavel.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gavel.getAttachedTo()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    void bothEquipPaymentsRequireSorceryTiming() {
+        Permanent gavel = addGavelReady();
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        gavel.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 3);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, bear.getId()))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+        assertThat(gavel.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void mixedCounterCostRequiresPlayersChoiceInsteadOfAutomaticRemoval() {
+        Permanent gavel = addGavelReady();
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        gavel.setCounterCount(CounterType.CHARGE, 1);
+        gavel.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, bear.getId());
+
+        assertThat(gavel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gavel.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
     private Permanent addGavelReady() {
         Permanent gavel = harness.addToBattlefieldAndReturn(player1, new GavelOfTheRighteous());
         gavel.setSummoningSick(false);
@@ -86,6 +190,6 @@ class GavelOfTheRighteousTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }

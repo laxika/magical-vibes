@@ -41,6 +41,8 @@ import java.util.List;
 @CardRegistration(set = "NEC", collectorNumber = "166")
 @CardRegistration(set = "FIC", collectorNumber = "380")
 @CardRegistration(set = "EOC", collectorNumber = "154")
+@CardRegistration(set = "SCD", collectorNumber = "295")
+@CardRegistration(set = "BFZ", collectorNumber = "235")
 public class CinderGlade extends Card {
 
     public CinderGlade() {

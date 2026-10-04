@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
+import com.github.laxika.magicalvibes.cards.p.PrismaticWard;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,15 +18,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BalduvianBears.class, GazeOfPain.class, GiantGrowth.class})
+@CardUsed({BalduvianBears.class, GazeOfPain.class, GiantGrowth.class,
+        DarkBanishing.class, PrismaticWard.class})
 class GazeOfPainTest extends BaseCardTest {
 
     private void castGaze() {
         harness.setHand(player1, List.of(new GazeOfPain()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 
     private Permanent addAttacker() {
@@ -88,8 +91,7 @@ class GazeOfPainTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, victim.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, victim.getId());
 
         advanceToUnblockedMay();
         harness.handleMayAbilityChosen(player1, true);
@@ -110,8 +112,10 @@ class GazeOfPainTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         Permanent victim = addDefenderCreature();
 
-        advanceToUnblockedMay();
-        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        destroyAttacker(attacker);
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, victim.getId());
 
@@ -130,10 +134,9 @@ class GazeOfPainTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
 
-        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        destroyAttacker(attacker);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, victim.getId());
@@ -162,10 +165,7 @@ class GazeOfPainTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         Permanent blocker = addDefenderCreature();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -208,6 +208,88 @@ class GazeOfPainTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
+    }
+
+    private void destroyAttacker(Permanent attacker) {
+        harness.setHand(player1, List.of(new DarkBanishing()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+    }
+
+    @Test
+    @DisplayName("The delayed trigger chooses its target before either player can respond")
+    void choosesTargetWhenTriggerGoesOnStack() {
+        castGaze();
+        addAttacker();
+        Permanent victim = addDefenderCreature();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, victim.getId());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(victim.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(victim.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Prismatic Ward prevents the green attacker's damage even though Gaze of Pain is black")
+    void preventionUsesAttackerColor() {
+        castGaze();
+        Permanent attacker = addAttacker();
+        Permanent victim = addDefenderCreature();
+        Permanent ward = new Permanent(new PrismaticWard());
+        ward.setAttachedTo(victim.getId());
+        ward.setChosenColor(CardColor.GREEN);
+        gd.playerBattlefields.get(player2.getId()).add(ward);
+
+        advanceToUnblockedMay();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, victim.getId());
+
+        assertThat(victim.getMarkedDamage()).isZero();
+        assertThat(gd.creaturesPreventedFromDealingCombatDamage).contains(attacker.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Declining lets the unblocked attacker deal normal combat damage")
+    void decliningAllowsCombatDamage() {
+        castGaze();
+        addAttacker();
+        addDefenderCreature();
+        harness.setLife(player2, 20);
+
+        advanceToUnblockedMay();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("The delayed unblocked-attacker trigger expires at end of turn")
+    void delayedTriggerExpiresAtEndOfTurn() {
+        castGaze();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        addAttacker();
+        addDefenderCreature();
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.creaturesPreventedFromDealingCombatDamage).isEmpty();
     }
 }

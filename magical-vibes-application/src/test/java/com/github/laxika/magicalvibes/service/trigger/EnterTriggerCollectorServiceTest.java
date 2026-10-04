@@ -167,6 +167,8 @@ class EnterTriggerCollectorServiceTest {
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
         gd.orderedPlayerIds.add(player1Id);
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
+        lenient().when(gameQueryService.isCreature(eq(gd), any(Permanent.class)))
+                .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard().hasType(CardType.CREATURE));
         lenient().when(gameQueryService.getEffectivePower(eq(gd), any(Permanent.class)))
                 .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard().getPower());
         lenient().when(gameQueryService.getEffectiveGraveyardEffects(
@@ -475,6 +477,37 @@ class EnterTriggerCollectorServiceTest {
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enteringPermanent.getId());
         assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst())
                 .isInstanceOf(PutCounterOnTargetPermanentEffect.class);
+    }
+
+    @Test
+    void nontokenCreatureCounterAndKeywordGrantShareOneNonTargetingAbility() {
+        addAllyCreatureTrigger(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
+                new PutCountersOnEnteringCreatureEffect(1, false, List.of(
+                        new GrantKeywordEffect(Keyword.HASTE,
+                                com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET))));
+        Card entering = enteringCreature(2, 2);
+        Permanent enteringPermanent = new Permanent(entering);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
+
+        service.checkAllyNontokenCreatureEntersTriggers(gd, player1Id, entering);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enteringPermanent.getId());
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).hasSize(2);
+    }
+
+    @Test
+    void nontokenCreatureCounterTriggerExcludesTokens() {
+        addAllyCreatureTrigger(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
+                new PutCountersOnEnteringCreatureEffect(1, false));
+        Card entering = enteringCreature(2, 2);
+        entering.setToken(true);
+        gd.playerBattlefields.get(player1Id).add(new Permanent(entering));
+
+        service.checkAllyNontokenCreatureEntersTriggers(gd, player1Id, entering);
+
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

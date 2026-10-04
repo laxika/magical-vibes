@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "LCC", collectorNumber = "142")
 @CardRegistration(set = "40K", collectorNumber = "191")
 @CardRegistration(set = "BLC", collectorNumber = "161")
+@CardRegistration(set = "SCD", collectorNumber = "42")
 public class Aetherize extends Card {
 
     public Aetherize() {

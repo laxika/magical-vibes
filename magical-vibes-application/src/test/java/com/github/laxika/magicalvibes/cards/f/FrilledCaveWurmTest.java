@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.a.AncestralReminiscence;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FrilledCaveWurm.class, GrizzlyBears.class, Shock.class})
+@CardUsed({FrilledCaveWurm.class, AncestralReminiscence.class})
 class FrilledCaveWurmTest extends BaseCardTest {
 
     @Test
@@ -36,10 +35,10 @@ class FrilledCaveWurmTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Instant and sorcery cards do not count toward descend")
+    @DisplayName("Sorcery cards do not count toward descend")
     void nonPermanentCardsDoNotCount() {
         List<Card> graveyard = permanentCards(3);
-        graveyard.add(new Shock());
+        graveyard.add(new AncestralReminiscence());
         harness.setGraveyard(player1, graveyard);
         harness.addToBattlefield(player1, new FrilledCaveWurm());
 
@@ -66,10 +65,43 @@ class FrilledCaveWurmTest extends BaseCardTest {
         assertStats(2, 5);
     }
 
+    @Test
+    @DisplayName("Gains the bonus immediately when the fourth permanent card enters its controller's graveyard")
+    void gainsBoostWhenGraveyardGrows() {
+        harness.setGraveyard(player1, permanentCards(3));
+        harness.addToBattlefield(player1, new FrilledCaveWurm());
+        assertStats(2, 5);
+
+        harness.setGraveyard(player1, permanentCards(4));
+        assertStats(4, 5);
+    }
+
+    @Test
+    @DisplayName("More than four permanent cards still grant only +2/+0")
+    void boostDoesNotScaleWithGraveyardSize() {
+        harness.setGraveyard(player1, permanentCards(7));
+        harness.addToBattlefield(player1, new FrilledCaveWurm());
+
+        assertStats(4, 5);
+    }
+
+    @Test
+    @DisplayName("Each Wurm uses its own controller's graveyard")
+    void opposingWurmsUseSeparateGraveyards() {
+        harness.setGraveyard(player1, permanentCards(4));
+        harness.setGraveyard(player2, permanentCards(3));
+        harness.addToBattlefield(player1, new FrilledCaveWurm());
+        Permanent opposingWurm = harness.addToBattlefieldAndReturn(player2, new FrilledCaveWurm());
+
+        assertStats(4, 5);
+        assertThat(gqs.getEffectivePower(gd, opposingWurm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingWurm)).isEqualTo(5);
+    }
+
     private List<Card> permanentCards(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new GrizzlyBears());
+            cards.add(new FrilledCaveWurm());
         }
         return cards;
     }

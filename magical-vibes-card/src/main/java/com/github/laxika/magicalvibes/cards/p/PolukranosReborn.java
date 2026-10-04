@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "200")
+@CardRegistration(set = "MOM", collectorNumber = "300")
 public class PolukranosReborn extends Card {
 
     public PolukranosReborn() {
