@@ -72,6 +72,35 @@ class IcatianScoutTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("First strike remains during the end step")
+    void firstStrikeRemainsDuringEndStep() {
+        addCreatureReady(player1, new IcatianScout());
+        Permanent target = addCreatureReady(player1, new IcatianScout());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves after its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent scout = addCreatureReady(player1, new IcatianScout());
+        Permanent target = addCreatureReady(player1, new IcatianScout());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(scout);
+        gd.playerGraveyards.get(player1.getId()).add(scout.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
     @DisplayName("{1}, {T} ability targeting a non-creature is rejected")
     void illegalTargetRejected() {
         addCreatureReady(player1, new IcatianScout());
