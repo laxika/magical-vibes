@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(FrozenShade.class)
+@CardUsed({FrozenShade.class})
 class FrozenShadeTest extends BaseCardTest {
 
     @Test
@@ -56,7 +56,6 @@ class FrozenShadeTest extends BaseCardTest {
         assertThat(shade.getEffectivePower()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(shade.getPowerModifier()).isEqualTo(0);
@@ -96,5 +95,43 @@ class FrozenShadeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("A tapped Frozen Shade can activate its ability")
+    void canActivateWhileTapped() {
+        Permanent shade = addCreatureReady(player1, new FrozenShade());
+        shade.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(shade.getEffectivePower()).isEqualTo(1);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(shade.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The boost waits for resolution and affects only the activating Shade")
+    void boostAppliesOnlyToSourceOnResolution() {
+        Permanent first = addCreatureReady(player1, new FrozenShade());
+        Permanent source = addCreatureReady(player1, new FrozenShade());
+        Permanent opposing = addCreatureReady(player2, new FrozenShade());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(source.getEffectivePower()).isZero();
+        assertThat(source.getEffectiveToughness()).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(source.getEffectivePower()).isEqualTo(1);
+        assertThat(source.getEffectiveToughness()).isEqualTo(2);
+        assertThat(first.getEffectivePower()).isZero();
+        assertThat(first.getEffectiveToughness()).isEqualTo(1);
+        assertThat(opposing.getEffectivePower()).isZero();
+        assertThat(opposing.getEffectiveToughness()).isEqualTo(1);
     }
 }
