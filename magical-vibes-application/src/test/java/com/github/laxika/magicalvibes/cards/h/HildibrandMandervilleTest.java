@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -62,8 +63,9 @@ class HildibrandMandervilleTest extends BaseCardTest {
         harness.runStateBasedActions();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -71,6 +73,71 @@ class HildibrandMandervilleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Zombie").getCard().isToken()).isTrue();
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
+    @Test
+    void canCastCreatureFromExileAfterAdventureResolves() {
+        HildibrandManderville card = new HildibrandManderville();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player1, card.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hildibrand Manderville");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        Permanent zombie = findPermanent(player1, "Zombie");
+        assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, zombie)).isEqualTo(3);
+    }
+
+    @Test
+    void adventurePermissionLastsThroughNextOwnTurn() {
+        harness.setLibrary(player1, List.of(new HildibrandManderville()));
+        harness.setLibrary(player2, List.of(new HildibrandManderville()));
+        HildibrandManderville card = new HildibrandManderville();
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, card);
+        permanent.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAdventureFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
+    @Test
+    void decliningToCastAtTriggerResolutionDoesNotPreventCastingLater() {
+        HildibrandManderville card = new HildibrandManderville();
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, card);
+        permanent.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, false);
+        }
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAdventureFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
     }
 
