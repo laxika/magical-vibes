@@ -35,7 +35,6 @@ class HedronBladeTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(attacker.getId());
-        attacker.setAttacking(true);
         addCreatureReady(player2, new Ornithopter());
 
         declareBlockers();
@@ -49,7 +48,6 @@ class HedronBladeTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(attacker.getId());
-        attacker.setAttacking(true);
         addCreatureReady(player2, new GrizzlyBears());
 
         declareBlockers();
@@ -63,7 +61,6 @@ class HedronBladeTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         Permanent blade = addBladeReady(player1);
         blade.setAttachedTo(attacker.getId());
-        attacker.setAttacking(true);
         addCreatureReady(player2, new Ornithopter());
 
         declareBlockers();
@@ -77,7 +74,7 @@ class HedronBladeTest extends BaseCardTest {
     }
 
     private void declareBlockers() {
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
     }

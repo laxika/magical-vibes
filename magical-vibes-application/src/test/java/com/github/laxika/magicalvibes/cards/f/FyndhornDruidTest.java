@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.a.AgentOfStromgald;
 import com.github.laxika.magicalvibes.cards.g.GorillaChieftain;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -21,8 +22,7 @@ class FyndhornDruidTest extends BaseCardTest {
         addCreatureReady(player1, new FyndhornDruid());
         harness.addToBattlefield(player2, new GorillaChieftain()); // 3/3 kills the 2/2 Druid
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat();
@@ -39,8 +39,7 @@ class FyndhornDruidTest extends BaseCardTest {
         Permanent druid = addCreatureReady(player1, new FyndhornDruid());
         addCreatureReady(player2, new AgentOfStromgald());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat();
@@ -75,8 +74,7 @@ class FyndhornDruidTest extends BaseCardTest {
         addCreatureReady(player1, new GorillaChieftain());
         addCreatureReady(player2, new FyndhornDruid());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         resolveCombat();
@@ -84,5 +82,46 @@ class FyndhornDruidTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Fyndhorn Druid");
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Being blocked on a previous turn does not grant life on death")
+    void diesOnNextTurnGainsNoLife() {
+        harness.setLife(player1, 20);
+        Permanent druid = addCreatureReady(player1, new FyndhornDruid());
+        harness.addToBattlefield(player2, new AgentOfStromgald());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        druid.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Fyndhorn Druid");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A different Druid being blocked does not qualify this Druid's death")
+    void otherDruidBeingBlockedDoesNotGrantLife() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new FyndhornDruid());
+        Permanent unblockedDruid = harness.addToBattlefieldAndReturn(player1, new FyndhornDruid());
+        harness.addToBattlefield(player2, new AgentOfStromgald());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        unblockedDruid.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Fyndhorn Druid");
+        harness.assertOnBattlefield(player1, "Fyndhorn Druid");
+        harness.assertLife(player1, 20);
     }
 }
