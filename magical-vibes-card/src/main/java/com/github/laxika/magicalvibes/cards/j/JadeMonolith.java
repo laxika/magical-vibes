@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "SUM", collectorNumber = "255")
 @CardRegistration(set = "3ED", collectorNumber = "255")
 @CardRegistration(set = "2ED", collectorNumber = "253")
+@CardRegistration(set = "LEA", collectorNumber = "252")
 public class JadeMonolith extends Card {
 
     public JadeMonolith() {

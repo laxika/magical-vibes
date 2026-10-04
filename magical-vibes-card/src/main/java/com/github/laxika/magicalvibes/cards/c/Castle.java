@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SUM", collectorNumber = "8")
 @CardRegistration(set = "3ED", collectorNumber = "8")
 @CardRegistration(set = "2ED", collectorNumber = "9")
+@CardRegistration(set = "LEA", collectorNumber = "9")
 public class Castle extends Card {
 
     public Castle() {

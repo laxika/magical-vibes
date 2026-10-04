@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffec
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 
 @CardRegistration(set = "2ED", collectorNumber = "213")
+@CardRegistration(set = "LEA", collectorNumber = "212")
 public class NaturalSelection extends Card {
 
     public NaturalSelection() {

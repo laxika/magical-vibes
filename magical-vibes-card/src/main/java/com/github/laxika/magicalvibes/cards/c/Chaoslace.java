@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 @CardRegistration(set = "SUM", collectorNumber = "141")
 @CardRegistration(set = "3ED", collectorNumber = "141")
 @CardRegistration(set = "2ED", collectorNumber = "140")
+@CardRegistration(set = "LEA", collectorNumber = "139")
 public class Chaoslace extends Card {
 
     public Chaoslace() {

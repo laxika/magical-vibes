@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "7ED", collectorNumber = "107")
 @CardRegistration(set = "ITP", collectorNumber = "13")
 @CardRegistration(set = "RQS", collectorNumber = "12")
+@CardRegistration(set = "LEA", collectorNumber = "85")
 public class Twiddle extends Card {
 
     public Twiddle() {

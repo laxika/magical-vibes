@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "ME1", collectorNumber = "8")
 @CardRegistration(set = "3ED", collectorNumber = "16")
 @CardRegistration(set = "2ED", collectorNumber = "18")
+@CardRegistration(set = "LEA", collectorNumber = "17")
 public class DeathWard extends Card {
 
     public DeathWard() {

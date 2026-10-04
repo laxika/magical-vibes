@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "2ED", collectorNumber = "236")
+@CardRegistration(set = "LEA", collectorNumber = "235")
 public class ChaosOrb extends Card {
 
     public ChaosOrb() {

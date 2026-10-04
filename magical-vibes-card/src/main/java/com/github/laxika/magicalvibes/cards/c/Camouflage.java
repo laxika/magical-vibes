@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.CamouflageEffect;
 
 @CardRegistration(set = "2ED", collectorNumber = "188")
+@CardRegistration(set = "LEA", collectorNumber = "187")
 public class Camouflage extends Card {
 
     public Camouflage() {

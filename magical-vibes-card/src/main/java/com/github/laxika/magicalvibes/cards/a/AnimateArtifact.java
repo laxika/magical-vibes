@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "3ED", collectorNumber = "48")
 @CardRegistration(set = "ME4", collectorNumber = "38")
 @CardRegistration(set = "2ED", collectorNumber = "49")
+@CardRegistration(set = "LEA", collectorNumber = "48")
 public class AnimateArtifact extends Card {
 
     public AnimateArtifact() {

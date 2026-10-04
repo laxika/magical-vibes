@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 
 @CardRegistration(set = "SUM", collectorNumber = "42")
+@CardRegistration(set = "LEA", collectorNumber = "41")
 @CardRegistration(set = "3ED", collectorNumber = "42")
 @CardRegistration(set = "ME4", collectorNumber = "32")
 @CardRegistration(set = "2ED", collectorNumber = "42")

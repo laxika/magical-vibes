@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.AllLandsAreCreaturesEffect;
 @CardRegistration(set = "SUM", collectorNumber = "210")
 @CardRegistration(set = "3ED", collectorNumber = "210")
 @CardRegistration(set = "ME4", collectorNumber = "161")
+@CardRegistration(set = "LEA", collectorNumber = "209")
 public class LivingLands extends Card {
 
     public LivingLands() {

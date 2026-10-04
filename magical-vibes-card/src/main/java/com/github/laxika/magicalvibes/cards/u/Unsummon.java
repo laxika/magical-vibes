@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "DPA", collectorNumber = "17")
 @CardRegistration(set = "E02", collectorNumber = "13")
 @CardRegistration(set = "ANB", collectorNumber = "36")
+@CardRegistration(set = "LEA", collectorNumber = "86")
 public class Unsummon extends Card {
 
     public Unsummon() {

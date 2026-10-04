@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SUM", collectorNumber = "19")
 @CardRegistration(set = "3ED", collectorNumber = "19")
 @CardRegistration(set = "2ED", collectorNumber = "20")
+@CardRegistration(set = "LEA", collectorNumber = "19")
 public class Farmstead extends Card {
 
     public Farmstead() {

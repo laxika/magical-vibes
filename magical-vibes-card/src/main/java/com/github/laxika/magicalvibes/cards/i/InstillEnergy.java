@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "3ED", collectorNumber = "203")
 @CardRegistration(set = "ME4", collectorNumber = "157")
 @CardRegistration(set = "2ED", collectorNumber = "203")
+@CardRegistration(set = "LEA", collectorNumber = "202")
 public class InstillEnergy extends Card {
 
     public InstillEnergy() {

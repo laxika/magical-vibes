@@ -10,5 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "2ED", collectorNumber = "159")
 @CardRegistration(set = "ME3", collectorNumber = "102")
 @CardRegistration(set = "ANB", collectorNumber = "74")
+@CardRegistration(set = "LEA", collectorNumber = "158")
 public class HurloonMinotaur extends Card {
 }

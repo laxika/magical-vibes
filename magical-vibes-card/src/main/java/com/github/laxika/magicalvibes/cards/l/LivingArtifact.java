@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SUM", collectorNumber = "209")
 @CardRegistration(set = "3ED", collectorNumber = "209")
 @CardRegistration(set = "2ED", collectorNumber = "209")
+@CardRegistration(set = "LEA", collectorNumber = "208")
 public class LivingArtifact extends Card {
 
     public LivingArtifact() {

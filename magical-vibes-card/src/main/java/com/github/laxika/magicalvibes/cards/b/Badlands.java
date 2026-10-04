@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 
 @CardRegistration(set = "SUM", collectorNumber = "282")
+@CardRegistration(set = "LEA", collectorNumber = "277")
 @CardRegistration(set = "3ED", collectorNumber = "282")
 @CardRegistration(set = "2ED", collectorNumber = "278")
 @CardRegistration(set = "ME2", collectorNumber = "225")

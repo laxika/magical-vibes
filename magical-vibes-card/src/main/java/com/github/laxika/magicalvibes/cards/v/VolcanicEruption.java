@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 @CardRegistration(set = "SUM", collectorNumber = "89")
 @CardRegistration(set = "3ED", collectorNumber = "89")
 @CardRegistration(set = "2ED", collectorNumber = "89")
+@CardRegistration(set = "LEA", collectorNumber = "88")
 public class VolcanicEruption extends Card {
 
     public VolcanicEruption() {

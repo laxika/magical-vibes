@@ -13,6 +13,7 @@ import java.util.Set;
 @CardRegistration(set = "3ED", collectorNumber = "53")
 @CardRegistration(set = "ME4", collectorNumber = "44")
 @CardRegistration(set = "2ED", collectorNumber = "54")
+@CardRegistration(set = "LEA", collectorNumber = "53")
 public class CopyArtifact extends Card {
 
     public CopyArtifact() {

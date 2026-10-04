@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
  * Vanilla creature, no special abilities.
  */
 @CardRegistration(set = "5ED", collectorNumber = "305")
+@CardRegistration(set = "LEA", collectorNumber = "203")
 @CardRegistration(set = "4ED", collectorNumber = "253")
 @CardRegistration(set = "SUM", collectorNumber = "204")
 @CardRegistration(set = "3ED", collectorNumber = "204")

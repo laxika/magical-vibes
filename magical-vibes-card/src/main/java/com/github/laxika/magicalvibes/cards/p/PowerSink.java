@@ -30,6 +30,7 @@ import java.util.List;
 @CardRegistration(set = "SLZ", collectorNumber = "149")
 @CardRegistration(set = "SLZ", collectorNumber = "270")
 @CardRegistration(set = "2ED", collectorNumber = "73")
+@CardRegistration(set = "LEA", collectorNumber = "72")
 public class PowerSink extends Card {
 
     public PowerSink() {

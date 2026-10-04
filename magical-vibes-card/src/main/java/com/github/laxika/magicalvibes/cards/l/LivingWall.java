@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "3ED", collectorNumber = "262")
 @CardRegistration(set = "ME4", collectorNumber = "212")
 @CardRegistration(set = "2ED", collectorNumber = "259")
+@CardRegistration(set = "LEA", collectorNumber = "258")
 public class LivingWall extends Card {
 
     public LivingWall() {

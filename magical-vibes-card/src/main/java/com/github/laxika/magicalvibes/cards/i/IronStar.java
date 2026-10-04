@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "7ED", collectorNumber = "301")
 @CardRegistration(set = "6ED", collectorNumber = "291")
 @CardRegistration(set = "SUM", collectorNumber = "252")
+@CardRegistration(set = "LEA", collectorNumber = "250")
 public class IronStar extends Card {
 
     public IronStar() {

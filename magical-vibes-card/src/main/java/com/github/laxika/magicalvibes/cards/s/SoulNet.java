@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 @CardRegistration(set = "4ED", collectorNumber = "346")
 @CardRegistration(set = "3ED", collectorNumber = "275")
 @CardRegistration(set = "SUM", collectorNumber = "275")
+@CardRegistration(set = "LEA", collectorNumber = "270")
 public class SoulNet extends Card {
 
     public SoulNet() {
