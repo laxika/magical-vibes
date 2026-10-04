@@ -5,35 +5,27 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.cards.f.Fleshtaker;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.s.SpireMonitor;
+import com.github.laxika.magicalvibes.cards.n.NumbingDose;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ImpalerShrike.class, Fleshtaker.class, NumbingDose.class, SpireMonitor.class})
 class ImpalerShrikeTest extends BaseCardTest {
-
-    private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        GameData gd = harness.getGameData();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
-
-    
 
     @Test
     @DisplayName("Combat damage trigger presents may ability choice")
     void combatDamageTriggerPresentsMayChoice() {
-        Permanent shrike = addReadyCreature(player1, new ImpalerShrike());
+        Permanent shrike = addCreatureReady(player1, new ImpalerShrike());
         shrike.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -42,10 +34,11 @@ class ImpalerShrikeTest extends BaseCardTest {
     @Test
     @DisplayName("Accepting may sacrifices Impaler Shrike and draws 3 cards")
     void sacrificeSelfAndDrawCards() {
-        Permanent shrike = addReadyCreature(player1, new ImpalerShrike());
+        Permanent shrike = addCreatureReady(player1, new ImpalerShrike());
         shrike.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -66,55 +59,53 @@ class ImpalerShrikeTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing Impaler Shrike fires ally-sacrifice triggers")
     void sacrificeFiresAllySacrificeTriggers() {
-        Permanent shrike = addReadyCreature(player1, new ImpalerShrike());
+        Permanent shrike = addCreatureReady(player1, new ImpalerShrike());
         shrike.setAttacking(true);
-        addReadyCreature(player1, new Fleshtaker());
+        addCreatureReady(player1, new Fleshtaker());
 
         resolveCombat();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         int lifeBefore = gd.getLife(player1.getId());
 
-        // Resolve the combat-damage trigger so the "you may sacrifice it" choice opens.
-        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Impaler Shrike");
 
         // Fleshtaker's "whenever you sacrifice another creature, you gain 1 life and scry 1".
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
     }
 
     @Test
     @DisplayName("Auras attached to Impaler Shrike go to the graveyard when it is sacrificed")
     void sacrificeCleansUpOrphanedAuras() {
-        Permanent shrike = addReadyCreature(player1, new ImpalerShrike());
+        Permanent shrike = addCreatureReady(player1, new ImpalerShrike());
         shrike.setAttacking(true);
 
-        GameData gd = harness.getGameData();
-        Permanent aura = new Permanent(new HolyStrength());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new NumbingDose());
         aura.setAttachedTo(shrike.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         resolveCombat();
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Impaler Shrike");
-        harness.assertNotOnBattlefield(player1, "Holy Strength");
-        harness.assertInGraveyard(player1, "Holy Strength");
+        harness.assertNotOnBattlefield(player1, "Numbing Dose");
+        harness.assertInGraveyard(player1, "Numbing Dose");
     }
 
     @Test
     @DisplayName("Declining the may ability keeps Impaler Shrike alive and draws no cards")
     void declineSacrifice() {
-        Permanent shrike = addReadyCreature(player1, new ImpalerShrike());
+        Permanent shrike = addCreatureReady(player1, new ImpalerShrike());
         shrike.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -133,7 +124,7 @@ class ImpalerShrikeTest extends BaseCardTest {
     @Test
     @DisplayName("\"If you do\" gate — Shrike killed in response means no sacrifice and no draw")
     void noDrawWhenShrikeLeavesBeforeResolution() {
-        Permanent shrike = addReadyCreature(player1, new ImpalerShrike());
+        Permanent shrike = addCreatureReady(player1, new ImpalerShrike());
         shrike.setAttacking(true);
 
         resolveCombat();
@@ -141,10 +132,11 @@ class ImpalerShrikeTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        // The Shrike is removed while the trigger is still waiting on the may choice — it can no
+        // The Shrike is removed while the trigger is still on the stack — it can no
         // longer be sacrificed, so the contingent draw must not happen either.
         gd.playerBattlefields.get(player1.getId()).remove(shrike);
 
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
@@ -154,15 +146,35 @@ class ImpalerShrikeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A former controller cannot sacrifice Shrike after losing control")
+    void noDrawWhenShrikeChangesControllerBeforeResolution() {
+        Permanent shrike = addCreatureReady(player1, new ImpalerShrike());
+        shrike.setAttacking(true);
+        resolveCombat();
+
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        gd.playerBattlefields.get(player1.getId()).remove(shrike);
+        gd.playerBattlefields.get(player2.getId()).add(shrike);
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player2, "Impaler Shrike");
+        harness.assertNotInGraveyard(player1, "Impaler Shrike");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
+
+    @Test
     @DisplayName("No trigger when Impaler Shrike is blocked and deals no damage to player")
     void noTriggerWhenBlocked() {
-        Permanent shrike = addReadyCreature(player1, new ImpalerShrike());
+        Permanent shrike = addCreatureReady(player1, new ImpalerShrike());
         shrike.setAttacking(true);
-        Permanent blocker = addReadyCreature(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new SpireMonitor());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
         resolveCombat();
+        resolveAllTriggers();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
@@ -172,15 +184,15 @@ class ImpalerShrikeTest extends BaseCardTest {
     @DisplayName("Defender takes combat damage regardless of sacrifice choice")
     void defenderTakesCombatDamage() {
         harness.setLife(player2, 20);
-        Permanent shrike = addReadyCreature(player1, new ImpalerShrike());
+        Permanent shrike = addCreatureReady(player1, new ImpalerShrike());
         shrike.setAttacking(true);
 
         resolveCombat();
+        resolveAllTriggers();
 
-        GameData gd = harness.getGameData();
         harness.handleMayAbilityChosen(player1, false);
 
         // Impaler Shrike is 3/1, should deal 3 damage
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
     }
 }
