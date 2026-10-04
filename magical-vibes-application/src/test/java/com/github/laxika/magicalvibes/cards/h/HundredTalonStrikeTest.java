@@ -31,8 +31,7 @@ class HundredTalonStrikeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HundredTalonStrike()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, mass.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, mass.getId());
 
         assertThat(mass.getPowerModifier()).isEqualTo(1);
         assertThat(mass.getToughnessModifier()).isZero();
@@ -46,8 +45,7 @@ class HundredTalonStrikeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HundredTalonStrike()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castInstant(player1, 0, mass.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, mass.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -144,6 +142,48 @@ class HundredTalonStrikeTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castWithSplice(player1, 0, target.getId(), List.of(1),
                 List.of(whiteCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick white creature can pay the splice cost and be the target")
+    void canTapSummoningSickTargetForSplice() {
+        Permanent samurai = harness.addToBattlefieldAndReturn(player1, new IndebtedSamurai());
+        samurai.setSummoningSick(true);
+        harness.setHand(player1, List.of(new FirstVolley(), new HundredTalonStrike()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castWithSplice(player1, 0, samurai.getId(), List.of(1), List.of(samurai.getId()));
+
+        assertThat(samurai.isTapped()).isTrue();
+        assertThat(samurai.getPowerModifier()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(samurai.getPowerModifier()).isEqualTo(1);
+        assertThat(samurai.getToughnessModifier()).isZero();
+        assertThat(samurai.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(samurai.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        harness.assertInHand(player1, "Hundred-Talon Strike");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(samurai.getPowerModifier()).isZero();
+        assertThat(samurai.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Splice requires a creature to be selected for its tap cost")
+    void cannotSpliceWithoutTapPayment() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GnarledMass());
+        harness.setHand(player1, List.of(new FirstVolley(), new HundredTalonStrike()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castWithSplice(player1, 0, target.getId(), List.of(1), List.of()))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
