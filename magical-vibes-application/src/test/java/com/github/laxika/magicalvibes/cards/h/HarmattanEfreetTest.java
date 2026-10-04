@@ -114,6 +114,38 @@ class HarmattanEfreetTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    void canActivateWhileTappedAndActivateAgainForAnotherCreature() {
+        Permanent efreet = addCreatureReady(player1, new HarmattanEfreet());
+        Permanent firstTarget = addCreatureReady(player1, new RagingGoblin());
+        Permanent secondTarget = addCreatureReady(player2, new RagingGoblin());
+        efreet.setTapped(true);
+        addAbilityMana(player1);
+        addAbilityMana(player1);
+
+        harness.activateAbility(player1, 0, null, firstTarget.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, secondTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(firstTarget.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(secondTarget.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(efreet.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotSubstituteColorlessManaForSecondBlueMana() {
+        addCreatureReady(player1, new HarmattanEfreet());
+        Permanent target = addCreatureReady(player1, new RagingGoblin());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(target.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
     private void addAbilityMana(Player player) {
         harness.addMana(player, ManaColor.BLUE, 2);
         harness.addMana(player, ManaColor.COLORLESS, 1);
