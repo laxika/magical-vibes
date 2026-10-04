@@ -114,4 +114,100 @@ class GrangerGuildmageTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Targeting yourself with the red ability deals 2 damage to you")
+    void burnsControllerTwiceWhenTargetingSelf() {
+        addCreatureReady(player1, new GrangerGuildmage());
+        harness.addMana(player1, ManaColor.RED, 1);
+        int life = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, life - 2);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The red ability can target the Guildmage itself")
+    void burnsSourceAndController() {
+        Permanent guildmage = addCreatureReady(player1, new GrangerGuildmage());
+        harness.addMana(player1, ManaColor.RED, 1);
+        int life = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, 0, null, guildmage.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Granger Guildmage");
+        harness.assertNotOnBattlefield(player1, "Granger Guildmage");
+        harness.assertLife(player1, life - 1);
+    }
+
+    @Test
+    @DisplayName("An illegal red target prevents all damage, including damage to you")
+    void redAbilityDoesNotResolveWhenTargetLeaves() {
+        Permanent guildmage = addCreatureReady(player1, new GrangerGuildmage());
+        Permanent falcon = addCreatureReady(player2, new BayFalcon());
+        harness.addMana(player1, ManaColor.RED, 1);
+        int life = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, 0, null, falcon.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, falcon));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, life);
+        assertThat(guildmage.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The red ability still resolves after the Guildmage leaves")
+    void redAbilityResolvesWithoutSource() {
+        Permanent guildmage = addCreatureReady(player1, new GrangerGuildmage());
+        harness.addMana(player1, ManaColor.RED, 1);
+        int life = gd.playerLifeTotals.get(player1.getId());
+        int opponentLife = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, guildmage));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, life - 1);
+        harness.assertLife(player2, opponentLife - 1);
+    }
+
+    @Test
+    @DisplayName("First strike resolves and persists after the Guildmage leaves")
+    void whiteAbilityResolvesWithoutSource() {
+        Permanent guildmage = addCreatureReady(player1, new GrangerGuildmage());
+        Permanent falcon = addCreatureReady(player2, new BayFalcon());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, falcon.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, guildmage));
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, falcon, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activating either ability taps the Guildmage and prevents activating the other")
+    void abilitiesShareTapCost() {
+        Permanent guildmage = addCreatureReady(player1, new GrangerGuildmage());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, guildmage.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, guildmage, Keyword.FIRST_STRIKE)).isFalse();
+    }
 }
