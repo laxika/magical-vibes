@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -88,6 +90,54 @@ class HystrodonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(hystrodon.isFaceDown()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Trample damage to a player triggers one optional draw")
+    void trampleDamageToPlayerMayDraw() {
+        Permanent hystrodon = addCreatureReady(player1, new Hystrodon());
+        hystrodon.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new Hystrodon());
+        blocker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Hystrodon(), new Hystrodon()));
+
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0,
+                Map.of(blocker.getId(), 2, player2.getId(), 1));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Face-down combat damage does not trigger the printed draw ability")
+    void faceDownCombatDamageDoesNotDraw() {
+        Permanent hystrodon = addCreatureReady(player1, new Hystrodon());
+        hystrodon.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        hystrodon.setAttacking(true);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Hystrodon()));
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
 }
