@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HuntersAmbush.class, HillGiant.class, GrizzlyBears.class, Ornithopter.class})
 class HuntersAmbushTest extends BaseCardTest {
 
     private void castAmbush() {
@@ -19,8 +22,7 @@ class HuntersAmbushTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     @Test
@@ -74,5 +76,48 @@ class HuntersAmbushTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Hunter's Ambush");
+    }
+
+    @Test
+    @DisplayName("Only green unblocked attackers deal combat damage")
+    void onlyGreenAttackersDealDamage() {
+        addCreatureReady(player1, new HillGiant());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player2, 20);
+        castAmbush();
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Prevention applies to nongreen creatures entering after resolution on either side")
+    void laterCreaturesAreAlsoAffected() {
+        castAmbush();
+        Permanent ownGiant = harness.enterBattlefieldAndReturn(player1, new HillGiant());
+        Permanent opposingGiant = harness.enterBattlefieldAndReturn(player2, new HillGiant());
+        Permanent opposingBears = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gqs.isPreventedFromDealingDamage(gd, ownGiant, true)).isTrue();
+        assertThat(gqs.isPreventedFromDealingDamage(gd, opposingGiant, true)).isTrue();
+        assertThat(gqs.isPreventedFromDealingDamage(gd, opposingBears, true)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Nongreen creatures can deal combat damage again after turn cleanup")
+    void preventionExpiresAtEndOfTurn() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        castAmbush();
+        assertThat(gqs.isPreventedFromDealingDamage(gd, giant, true)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isPreventedFromDealingDamage(gd, giant, true)).isFalse();
     }
 }
