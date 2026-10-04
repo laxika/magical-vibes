@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,14 +13,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HedgeMaze.class, GrizzlyBears.class})
+@CardUsed({HedgeMaze.class})
 class HedgeMazeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enters tapped and surveils 1")
     void entersTappedAndSurveilsOne() {
-        Card topCard = new GrizzlyBears();
-        harness.setLibrary(player1, List.of(topCard));
+        Card topCard = new HedgeMaze();
+        Card nextCard = new HedgeMaze();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
         harness.setHand(player1, List.of(new HedgeMaze()));
 
         harness.playLand(player1, 0);
@@ -34,6 +34,39 @@ class HedgeMazeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+    }
+
+    @Test
+    @DisplayName("Surveil may leave the top card in the library")
+    void mayKeepTopCard() {
+        Card topCard = new HedgeMaze();
+        Card nextCard = new HedgeMaze();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setHand(player1, List.of(new HedgeMaze()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Surveil with an empty library completes without a choice")
+    void surveilsEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new HedgeMaze()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
     @Test
@@ -58,9 +91,8 @@ class HedgeMazeTest extends BaseCardTest {
     }
 
     private Permanent addReadyMaze() {
-        Permanent maze = new Permanent(new HedgeMaze());
+        Permanent maze = harness.addToBattlefieldAndReturn(player1, new HedgeMaze());
         maze.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(maze);
         return maze;
     }
 }
