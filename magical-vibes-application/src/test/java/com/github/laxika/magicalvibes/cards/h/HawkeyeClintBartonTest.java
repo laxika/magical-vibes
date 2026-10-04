@@ -22,4 +22,17 @@ class HawkeyeClintBartonTest extends BaseCardTest {
 
         assertThat(hawkeye.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("An untapped attacking Hawkeye still deals combat damage")
+    void vigilanceDoesNotPreventCombatDamage() {
+        Permanent hawkeye = addCreatureReady(player1, new HawkeyeClintBarton());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+        assertThat(hawkeye.isTapped()).isFalse();
+    }
 }
