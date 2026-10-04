@@ -19,8 +19,7 @@ class HowToKeepAnIzzetMageBusyTest extends BaseCardTest {
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(spell);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(spell);
@@ -42,5 +41,21 @@ class HowToKeepAnIzzetMageBusyTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(spell);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+    }
+
+    @Test
+    void canBeCastAgainAfterReturningToHand() {
+        HowToKeepAnIzzetMageBusy spell = new HowToKeepAnIzzetMageBusy();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spell);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(spell);
+        assertThat(gd.stack).isEmpty();
     }
 }
