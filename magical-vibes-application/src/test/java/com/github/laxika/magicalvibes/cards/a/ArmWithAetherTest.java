@@ -39,8 +39,17 @@ class ArmWithAetherTest extends BaseCardTest {
 
         castAndResolveArmWithAether();
 
-        assertThat(bears.isHasDamageToOpponentCreatureBounce()).isTrue();
-        assertThat(elves.isHasDamageToOpponentCreatureBounce()).isTrue();
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        bears.setAttacking(true);
+        elves.setAttacking(true);
+        resolveCombat();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
     @Test
@@ -51,14 +60,17 @@ class ArmWithAetherTest extends BaseCardTest {
 
         castAndResolveArmWithAether();
 
-        assertThat(opponentBears.isHasDamageToOpponentCreatureBounce()).isFalse();
+        opponentBears.setAttacking(true);
+        resolveCombat(player2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
     @DisplayName("Creature with granted ability triggers bounce on combat damage to player")
     void triggersBounceOnCombatDamage() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setHasDamageToOpponentCreatureBounce(true);
+        castAndResolveArmWithAether();
         attacker.setAttacking(true);
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
@@ -75,7 +87,7 @@ class ArmWithAetherTest extends BaseCardTest {
     @DisplayName("Selecting a creature to bounce returns it to owner's hand")
     void bouncesSelectedCreature() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setHasDamageToOpponentCreatureBounce(true);
+        castAndResolveArmWithAether();
         attacker.setAttacking(true);
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
@@ -94,7 +106,7 @@ class ArmWithAetherTest extends BaseCardTest {
     @DisplayName("The targeted bounce may be declined when the ability resolves")
     void mayDeclineBounce() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setHasDamageToOpponentCreatureBounce(true);
+        castAndResolveArmWithAether();
         attacker.setAttacking(true);
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
@@ -111,7 +123,7 @@ class ArmWithAetherTest extends BaseCardTest {
     @DisplayName("Bounce only targets creatures, not non-creature permanents")
     void onlyTargetsCreatures() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setHasDamageToOpponentCreatureBounce(true);
+        castAndResolveArmWithAether();
         attacker.setAttacking(true);
         harness.addToBattlefield(player2, new Forest());
 
@@ -125,7 +137,7 @@ class ArmWithAetherTest extends BaseCardTest {
     @DisplayName("No trigger when attacker is blocked and deals no damage to player")
     void noTriggerWhenBlocked() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setHasDamageToOpponentCreatureBounce(true);
+        castAndResolveArmWithAether();
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
@@ -156,8 +168,6 @@ class ArmWithAetherTest extends BaseCardTest {
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         castAndResolveArmWithAether();
-
-        assertThat(attacker.isHasDamageToOpponentCreatureBounce()).isTrue();
 
         // Now attack
         attacker.setAttacking(true);

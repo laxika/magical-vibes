@@ -6069,6 +6069,10 @@ public class AbilityActivationService {
         }
         if (gameQueryService.isCreature(gameData, permanent)) {
             for (StackEntry stackEntry : gameData.stack) {
+                if (stackEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                        || stackEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+                    continue;
+                }
                 for (CardEffect effect : stackEntry.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof GrantActivatedAbilityEffect grant
                             && (grant.scope() == GrantScope.ALL_CREATURES

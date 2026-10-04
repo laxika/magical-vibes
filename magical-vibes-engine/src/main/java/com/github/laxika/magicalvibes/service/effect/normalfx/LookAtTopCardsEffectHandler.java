@@ -224,6 +224,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         .destination(e.chosenDestination())
                         .grantHaste(e.grantHaste())
                         .returnToHandAtEndStep(e.returnToHandAtEndStep())
+                        .returnToHandAtControllerEndStepId(e.returnToHandAtEndStep() ? controllerId : null)
                         .enterWithCounters(e.battlefieldEntryReplacement())
                         .build(),
                         prompt,
@@ -241,6 +242,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     .prompt("You may put one of these cards onto the battlefield.")
                     .grantHaste(e.grantHaste())
                     .returnToHandAtEndStep(e.returnToHandAtEndStep())
+                    .returnToHandAtControllerEndStepId(e.returnToHandAtEndStep() ? controllerId : null)
                     .enterWithCounters(e.battlefieldEntryReplacement())
                     .destination(e.chosenDestination())
                     .build(),
@@ -638,6 +640,13 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = result.controllerId();
         List<Card> topCards = result.topCards();
         String playerName = result.playerName();
+
+        if (chooseCount == 0) {
+            for (Card card : topCards) {
+                gameData.addToExile(controllerId, card);
+            }
+            return;
+        }
 
         // Not enough cards to choose from: they simply go to hand, nothing exiled.
         if (topCards.size() <= chooseCount) {

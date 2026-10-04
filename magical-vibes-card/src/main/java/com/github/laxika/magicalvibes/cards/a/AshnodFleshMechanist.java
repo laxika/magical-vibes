@@ -30,7 +30,7 @@ public class AshnodFleshMechanist extends Card {
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                         )),
                         CreateTokenEffect.ofPowerstoneToken(new Fixed(1)),
-                        "another creature"),
+                        "another creature", false, false),
                 "Sacrifice another creature?"));
 
         addActivatedAbility(new ActivatedAbility(

@@ -17,6 +17,7 @@ public class AuriokSurvivors extends Card {
                 ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                         .filter(new CardSubtypePredicate(CardSubtype.EQUIPMENT))
+                        .targetGraveyard(true)
                         .attachToSource(true)
                         .build(),
                 "Return an Equipment card from your graveyard to the battlefield and attach it to this creature?"

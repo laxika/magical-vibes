@@ -48,6 +48,7 @@ class AuspiciousAncestorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castFromHand(player2, new FemerefScouts(), "{2}{W}");
 
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
 
@@ -66,6 +67,7 @@ class AuspiciousAncestorTest extends BaseCardTest {
         int startingLife = gd.playerLifeTotals.get(player1.getId());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castFromHand(player2, new FemerefScouts(), "{2}{W}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife);
@@ -89,6 +91,7 @@ class AuspiciousAncestorTest extends BaseCardTest {
         int startingLife = gd.playerLifeTotals.get(player1.getId());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castFromHand(player1, new FemerefScouts(), "{2}{W}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -103,6 +106,7 @@ class AuspiciousAncestorTest extends BaseCardTest {
         int startingLife = gd.playerLifeTotals.get(player1.getId());
         harness.castFromHand(player2, new FemerefScouts(), "{2}{W}");
 
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife);

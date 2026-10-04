@@ -3299,9 +3299,10 @@ public class AmountEvaluationService {
 
     private int totalManaValueOfCardsOwnedInExile(GameData gameData, AmountContext ctx) {
         if (ctx.controllerId() == null) return 0;
-        return gameData.getPlayerExiledCards(ctx.controllerId()).stream()
-                .filter(card -> !card.isToken())
-                .mapToInt(Card::getManaValue)
+        return gameData.exiledCards.stream()
+                .filter(entry -> ctx.controllerId().equals(entry.ownerId()))
+                .filter(entry -> !entry.faceDown() && !entry.card().isToken())
+                .mapToInt(entry -> entry.card().getManaValue())
                 .sum();
     }
 

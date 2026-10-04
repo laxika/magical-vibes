@@ -96,6 +96,8 @@ class AtsushiTheBlazingSkyTest extends BaseCardTest {
 
     @Test
     void playPermissionLastsThroughNextTurnAndThenExpires() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Card forest = new Forest();
         harness.setLibrary(player1, List.of(forest, new Forest(), new Forest(), new Forest(), new Forest()));
         harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));

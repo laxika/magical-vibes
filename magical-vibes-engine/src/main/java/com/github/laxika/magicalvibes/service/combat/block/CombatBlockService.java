@@ -1329,9 +1329,9 @@ public class CombatBlockService {
         Map<Integer, List<Integer>> mustBlockReqs = new LinkedHashMap<>();
         for (int blockerIdx : blockable) {
             Permanent blocker = defenderBattlefield.get(blockerIdx);
-            if (blocker.getMustBlockIds().isEmpty()) continue;
+            if (blocker.getRequiredBlockSourceIds().isEmpty()) continue;
             List<Integer> requiredAttackerIndices = new ArrayList<>();
-            for (UUID mustBlockId : blocker.getMustBlockIds()) {
+            for (UUID mustBlockId : blocker.getRequiredBlockSourceIds()) {
                 for (int atkIdx : attackerIndices) {
                     Permanent attacker = attackerBattlefield.get(atkIdx);
                     if (attacker.getId().equals(mustBlockId)
@@ -2620,12 +2620,12 @@ public class CombatBlockService {
                                                            List<BlockerAssignment> blockerAssignments) {
         for (int blockerIdx : blockable) {
             Permanent blocker = defenderBattlefield.get(blockerIdx);
-            if (blocker.getMustBlockIds().isEmpty()) {
+            if (blocker.getRequiredBlockSourceIds().isEmpty()) {
                 continue;
             }
 
             Set<Integer> requiredAttackerIndices = new HashSet<>();
-            for (UUID mustBlockId : blocker.getMustBlockIds()) {
+            for (UUID mustBlockId : blocker.getRequiredBlockSourceIds()) {
                 for (int i = 0; i < attackerBattlefield.size(); i++) {
                     Permanent attacker = attackerBattlefield.get(i);
                     if (attacker.isAttacking() && attacker.getId().equals(mustBlockId)

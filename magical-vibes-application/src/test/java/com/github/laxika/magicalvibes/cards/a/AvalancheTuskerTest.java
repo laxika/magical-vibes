@@ -36,7 +36,7 @@ class AvalancheTuskerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, defendingCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(defendingCreature.getMustBlockIds()).containsExactly(tusker.getId());
+        assertThat(defendingCreature.getRequiredBlockSourceIds()).containsExactly(tusker.getId());
     }
 
     @Test

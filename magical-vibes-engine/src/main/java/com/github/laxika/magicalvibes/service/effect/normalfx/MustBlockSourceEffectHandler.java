@@ -41,10 +41,15 @@ public class MustBlockSourceEffectHandler implements NormalEffectHandlerBean {
         Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
         String sourceName = source != null ? source.getCard().getName() : entry.getCard().getName();
 
-        target.getMustBlockIds().add(sourceId);
+        if (e.untilEndOfCombat()) {
+            target.getMustBlockIdsUntilEndOfCombat().add(sourceId);
+        } else {
+            target.getMustBlockIds().add(sourceId);
+        }
 
         
-        gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" must block " + sourceName + " this turn if able.").build());
+        String duration = e.untilEndOfCombat() ? "this combat" : "this turn";
+        gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" must block " + sourceName + " " + duration + " if able.").build());
 
         log.info("Game {} - {} must block {} this turn if able", gameData.id, target.getCard().getName(), sourceName);
     }

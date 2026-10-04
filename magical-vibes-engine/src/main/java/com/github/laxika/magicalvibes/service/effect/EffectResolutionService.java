@@ -9,7 +9,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -168,8 +172,7 @@ public class EffectResolutionService {
                 boolean attackEventAlreadyMatched = entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && conditional.condition() instanceof AttacksAlone;
                 if (!evaluatedWhenEtbTriggered && !attackEventAlreadyMatched
-                        && !conditionEvaluationService.isMet(gameData, conditional.condition(), conditionContext,
-                        entry.getEventValue())) {
+                        && !isConditionMet(gameData, entry, conditional.condition(), conditionContext)) {
                     gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                             "'s " + conditional.conditionName() + " ability does nothing ("
                                     + conditional.conditionNotMetReason() + ")."));
@@ -450,5 +453,26 @@ public class EffectResolutionService {
         }
         return gameData.resolvedMayAccepted == null
                 && gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());
+    }
+
+    /** Uses departure controller information for a creature referenced by a nontargeting trigger. */
+    private boolean isConditionMet(GameData gameData, StackEntry entry, Condition condition,
+                                   ConditionContext context) {
+        if (condition instanceof NotCondition not) {
+            return !isConditionMet(gameData, entry, not.inner(), context);
+        }
+        if (entry.isNonTargeting()
+                && condition instanceof TargetPermanentMatches matches
+                && matches.filter() instanceof PermanentControlledBySourceControllerPredicate
+                && context.targetId() != null
+                && context.targetId().equals(entry.getTriggeringPermanentId())
+                && gameQueryService.findPermanentById(gameData, context.targetId()) == null) {
+            UUID lastController = entry.getRemovedPermanentControllers().get(context.targetId());
+            if (lastController == null) {
+                lastController = entry.getTriggeringPermanentControllerId();
+            }
+            return lastController != null && lastController.equals(context.controllerId());
+        }
+        return conditionEvaluationService.isMet(gameData, condition, context, entry.getEventValue());
     }
 }

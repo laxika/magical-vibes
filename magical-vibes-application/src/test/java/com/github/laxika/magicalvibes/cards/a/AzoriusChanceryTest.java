@@ -4,12 +4,17 @@ import com.github.laxika.magicalvibes.cards.s.SimicGrowthChamber;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -78,6 +83,10 @@ class AzoriusChanceryTest extends BaseCardTest {
     void returnsLandToOpponentOwner() {
         Permanent growthChamber = harness.addToBattlefieldAndReturn(player1, new SimicGrowthChamber());
         gd.stolenCreatures.put(growthChamber.getId(), player2.getId());
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                "Control change", null, player1.getId(),
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT), growthChamber.getId(),
+                null, null, EffectDuration.PERMANENT, 0));
         harness.setHand(player1, List.of(new AzoriusChancery()));
 
         harness.playLand(player1, 0);

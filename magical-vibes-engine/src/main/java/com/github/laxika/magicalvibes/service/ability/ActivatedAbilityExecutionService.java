@@ -1051,8 +1051,9 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof SourcePermanentControllerLosesLifeEffect lifeLoss) {
                 snapshotEffects.add(new SourcePermanentControllerLosesLifeEffect(
                         lifeLoss.amount(), activatedPermanentControllerId));
-            } else if (effect instanceof MustBlockSourceEffect) {
-                snapshotEffects.add(new MustBlockSourceEffect(permanent.getId()));
+            } else if (effect instanceof MustBlockSourceEffect mustBlock) {
+                snapshotEffects.add(new MustBlockSourceEffect(permanent.getId(),
+                        mustBlock.targetRestriction(), mustBlock.untilEndOfCombat()));
             } else if (effect instanceof PreventNextColorDamageToControllerEffect && permanent.getChosenColor() != null) {
                 snapshotEffects.add(new PreventNextColorDamageToControllerEffect(permanent.getChosenColor()));
             } else if (effect instanceof AwardChosenColorManaEffect chosen && permanent.getChosenColor() != null) {
@@ -2400,4 +2401,3 @@ public class ActivatedAbilityExecutionService {
     }
 
 }
-

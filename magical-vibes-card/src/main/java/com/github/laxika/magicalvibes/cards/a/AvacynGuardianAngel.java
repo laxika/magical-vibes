@@ -23,7 +23,7 @@ public class AvacynGuardianAngel extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{W}",
-                List.of(new PreventAllDamageToTargetFromChosenColorEffect()),
+                List.of(new PreventAllDamageToTargetFromChosenColorEffect(true)),
                 "{1}{W}: Prevent all damage that would be dealt to another target creature this turn by sources of the color of your choice.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

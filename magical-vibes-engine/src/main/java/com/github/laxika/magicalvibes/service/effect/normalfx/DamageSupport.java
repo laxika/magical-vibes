@@ -1995,6 +1995,9 @@ public class DamageSupport {
                     boolean artifactSource = sourcePermanent != null
                             && gameQueryService.isArtifact(gameData, sourcePermanent);
                     gameData.recordDamageToPlayer(targetId, redirectEffective, artifactSource ? redirectEffective : 0);
+                    if (entry != null) {
+                        entry.recordPlayerDealtDamage(targetId);
+                    }
                     gameData.recordDamageDealtBySourceToPlayer(
                             redirect.damageSourceId(), targetId, redirectEffective);
                     gameData.recordDamageDealtBySource(redirect.damageSourceId(), redirectEffective);

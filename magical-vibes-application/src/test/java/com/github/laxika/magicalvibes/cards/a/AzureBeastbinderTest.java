@@ -44,6 +44,8 @@ class AzureBeastbinderTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking makes an opposing creature lose abilities and become 2/2 until your next turn")
     void attackTriggerLastsUntilNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         addCreatureReady(player1, new AzureBeastbinder());
         Permanent elemental = addCreatureReady(player2, new AirElemental());
 
@@ -70,6 +72,8 @@ class AzureBeastbinderTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, elemental)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, elemental)).isEqualTo(2);
 
+        harness.passUntil(player2, TurnStep.DECLARE_ATTACKERS);
+        gs.declareAttackers(gd, player2, List.of());
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.hasKeyword(gd, elemental, Keyword.FLYING)).isTrue();

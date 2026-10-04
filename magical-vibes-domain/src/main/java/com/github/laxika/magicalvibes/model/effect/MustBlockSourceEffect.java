@@ -8,16 +8,22 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * When resolved, the targeted creature must block the source permanent this turn if able.
+ * When resolved, the targeted creature must block the source permanent this turn if able,
+ * or only this combat when {@code untilEndOfCombat} is true.
  * The sourcePermanentId is null in the card definition and gets snapshot at activation time
  * (activated abilities) or when the attacking creature triggers a granted "must block" ability
  * (see {@code CombatAttackService}).
  */
-public record MustBlockSourceEffect(UUID sourcePermanentId, PermanentPredicate targetRestriction)
+public record MustBlockSourceEffect(UUID sourcePermanentId, PermanentPredicate targetRestriction,
+                                    boolean untilEndOfCombat)
         implements CardEffect {
 
     public MustBlockSourceEffect(UUID sourcePermanentId) {
-        this(sourcePermanentId, null);
+        this(sourcePermanentId, null, false);
+    }
+
+    public MustBlockSourceEffect(UUID sourcePermanentId, PermanentPredicate targetRestriction) {
+        this(sourcePermanentId, targetRestriction, false);
     }
 
     /**

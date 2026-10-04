@@ -86,7 +86,14 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             }
             for (UUID targetId : targetIds) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-                if (target == null) {
+                if (target == null || (e.filter() != null
+                        && !predicateEvaluationService.matchesPermanentPredicate(target, e.filter(),
+                                FilterContext.of(gameData)
+                                        .withSourceCardId(entry.getCard().getId())
+                                        .withSourceControllerId(entry.getControllerId())
+                                        .withSourcePermanentId(entry.getSourcePermanentId())
+                                        .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
+                                        .withXValue(entry.getXValue())))) {
                     continue;
                 }
                 applyEffect(gameData, entry, e, target);

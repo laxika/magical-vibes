@@ -33,6 +33,9 @@ public class TargetPlayerGainsControlOfEnchantedPermanentEffectHandler implement
         }
 
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (aura == null) {
+            aura = entry.getSourcePermanentSnapshot();
+        }
         if (aura == null || aura.getAttachedTo() == null) {
             return;
         }

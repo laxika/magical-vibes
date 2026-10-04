@@ -293,6 +293,9 @@ public class DiscardTriggerCollectorService {
                 && !gameQueryService.isDamageFromMatchingSourcePreventedForPlayer(
                 gameData, discardingPlayerId, match.permanent())
                 && !gameData.isPreventedFromDealingDamage(match.permanent().getId())
+                && !damagePreventionService.isColorDamagePreventedForTarget(
+                        gameData, discardingPlayerId,
+                        gameQueryService.getEffectiveColors(gameData, match.permanent()))
                 && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, discardingPlayerId, sourceColor)) {
             damage = damagePreventionService.applyChannelHarmPrevention(
                     gameData, discardingPlayerId,

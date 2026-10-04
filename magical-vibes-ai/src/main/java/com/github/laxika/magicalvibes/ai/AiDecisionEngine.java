@@ -2027,7 +2027,7 @@ public abstract class AiDecisionEngine {
         List<Integer> promptedRequirements = pending.mustBlockRequirements().getOrDefault(
                 blockerIdx, List.of());
         required.addAll(promptedRequirements);
-        for (UUID mustBlockId : blocker.getMustBlockIds()) {
+            for (UUID mustBlockId : blocker.getRequiredBlockSourceIds()) {
             for (int attackerIdx : attackerIndices) {
                 if (isIndexInRange(attackerIdx, attackerBattlefield)
                         && attackerBattlefield.get(attackerIdx).getId().equals(mustBlockId)

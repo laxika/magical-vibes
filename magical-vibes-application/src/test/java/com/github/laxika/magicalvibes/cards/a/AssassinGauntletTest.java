@@ -42,6 +42,7 @@ class AssassinGauntletTest extends BaseCardTest {
         castGauntlet(null, player2.getId());
 
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         Permanent gauntlet = findPermanent(player1, "Assassin Gauntlet");
@@ -89,8 +90,8 @@ class AssassinGauntletTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         List<java.util.UUID> targetIds = creatureTarget == null
-                ? List.of(opponentTarget)
-                : List.of(opponentTarget, creatureTarget);
+                ? List.of()
+                : List.of(creatureTarget, opponentTarget);
         gs.playCard(gd, player1, 0, 0, null, null, targetIds, List.of());
     }
 

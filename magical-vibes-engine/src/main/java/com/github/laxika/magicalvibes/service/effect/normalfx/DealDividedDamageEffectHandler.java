@@ -209,25 +209,29 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
 
             if (targetIsPlayer) {
                 damageSupport.dealDamageToPlayer(gameData, entry, targetId, rawDamage);
-                if (e.damagedPlayersCantCastNoncreatureSpells() && rawDamage > 0) {
-                    gameData.playersCantCastNoncreatureSpellsThisTurn.add(targetId);
-                    gameLogService.append(gameData, GameLog.text(
-                            gameData.playerIdToName.get(targetId) + " can't cast noncreature spells this turn."));
-                }
             } else if (gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.hasProtectionFromDamageSource(
                     gameData, targetPermanent, entry.getCard(), entry.getControllerId())) {
                 gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", targetPermanent.getCard(), " is prevented."));
             } else {
-                damageSupport.dealCreatureDamage(gameData, entry, targetPermanent, rawDamage);
-                if (e.damagedCreaturesCantBlock() && rawDamage > 0) {
+                int damageDealt = damageSupport.dealCreatureDamage(gameData, entry, targetPermanent, rawDamage);
+                boolean creatureWasDamaged = damageDealt > 0 && gameQueryService.isCreature(gameData, targetPermanent);
+                if (e.damagedCreaturesCantBlock() && creatureWasDamaged) {
                     targetPermanent.setCantBlockThisTurn(true);
                     gameLogService.append(gameData, GameLog.cardThen(targetPermanent.getCard(), " can't block this turn."));
                 }
-                if (e.tapDamagedCreatures() && rawDamage > 0) {
+                if (e.tapDamagedCreatures() && creatureWasDamaged) {
                     targetPermanent.tap();
                     gameLogService.append(gameData, GameLog.cardThen(targetPermanent.getCard(), " becomes tapped."));
                 }
+            }
+        }
+
+        if (e.damagedPlayersCantCastNoncreatureSpells()) {
+            for (UUID playerId : entry.getPlayersDealtDamageThisResolution()) {
+                gameData.playersCantCastNoncreatureSpellsThisTurn.add(playerId);
+                gameLogService.append(gameData, GameLog.text(
+                        gameData.playerIdToName.get(playerId) + " can't cast noncreature spells this turn."));
             }
         }
 

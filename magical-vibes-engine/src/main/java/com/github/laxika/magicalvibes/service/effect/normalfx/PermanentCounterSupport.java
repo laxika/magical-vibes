@@ -1147,6 +1147,7 @@ public class PermanentCounterSupport {
                             source.getId());
                     triggerEntry.setTriggeringPermanentId(creature.getId());
                     triggerEntry.setTriggeringPermanentControllerId(creatureControllerId);
+                    triggerEntry.setNonTargeting(true);
                     gameData.stack.add(triggerEntry);
                     gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
                     log.info("Game {} - {} once-per-placement global -1/-1-counter watcher fires",

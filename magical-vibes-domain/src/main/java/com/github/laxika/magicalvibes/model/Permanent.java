@@ -503,6 +503,8 @@ public class Permanent {
     private final Set<UUID> shroudIgnoredByPlayersUntilEndOfTurn = new HashSet<>();
     private final Set<UUID> cantBlockIds = new HashSet<>();
     private final Set<UUID> mustBlockIds = new HashSet<>();
+    /** Source identities this creature must block only during the current combat. */
+    private final Set<UUID> mustBlockIdsUntilEndOfCombat = new HashSet<>();
     /** If true, this permanent is exiled instead of going to any other zone when it leaves the battlefield (CR 614.6). */
     @Setter private boolean exileIfLeavesBattlefield;
     /** If true, this permanent is exiled instead of being put into a graveyard from the battlefield. */
@@ -975,6 +977,7 @@ public class Permanent {
         this.shroudIgnoredByPlayersUntilEndOfTurn.addAll(source.shroudIgnoredByPlayersUntilEndOfTurn);
         this.cantBlockIds.addAll(source.cantBlockIds);
         this.mustBlockIds.addAll(source.mustBlockIds);
+        this.mustBlockIdsUntilEndOfCombat.addAll(source.mustBlockIdsUntilEndOfCombat);
         this.untapPreventedByPermanentIds.addAll(source.untapPreventedByPermanentIds);
         this.untapPreventedWhileSourceOnBattlefieldIds.addAll(source.untapPreventedWhileSourceOnBattlefieldIds);
         this.landTypesUntilSourceLeaves.putAll(source.landTypesUntilSourceLeaves);
@@ -1315,10 +1318,18 @@ public class Permanent {
         this.blockingTargets.clear();
         this.blockingTargetIds.clear();
         this.combatTriggeredEffects.clear();
+        this.mustBlockIdsUntilEndOfCombat.clear();
         this.bandId = null;
         this.cantBlockThisCombat = false;
         this.mustAttackThisCombat = false;
         clearUntilEndOfCombatAnimation();
+    }
+
+    /** Sources this creature must block under either turn-long or combat-long requirements. */
+    public Set<UUID> getRequiredBlockSourceIds() {
+        Set<UUID> sources = new HashSet<>(mustBlockIds);
+        sources.addAll(mustBlockIdsUntilEndOfCombat);
+        return sources;
     }
 
     /** Finalizes the set of players or permanents this creature attacked during the combat. */
@@ -1875,6 +1886,7 @@ public class Permanent {
         this.shroudIgnoredByPlayersUntilEndOfTurn.clear();
         this.cantBlockIds.clear();
         this.mustBlockIds.clear();
+        this.mustBlockIdsUntilEndOfCombat.clear();
         this.losesAllAbilitiesUntilEndOfTurn = false;
         this.suppressedStaticEffectsUntilEndOfTurn.clear();
         this.losesAllCreatureTypesUntilEndOfTurn = false;

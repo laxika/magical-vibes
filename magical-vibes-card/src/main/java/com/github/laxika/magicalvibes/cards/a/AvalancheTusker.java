@@ -21,6 +21,6 @@ public class AvalancheTusker extends Card {
                         new PermanentControlledByDefendingPlayerPredicate()
                 )),
                 "Target must be a creature defending player controls"
-        )).addEffect(EffectSlot.ON_ATTACK, new MustBlockSourceEffect(null));
+        )).addEffect(EffectSlot.ON_ATTACK, new MustBlockSourceEffect(null, null, true));
     }
 }

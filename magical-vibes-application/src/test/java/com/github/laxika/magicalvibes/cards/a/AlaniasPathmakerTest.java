@@ -24,8 +24,8 @@ class AlaniasPathmakerTest extends BaseCardTest {
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
         assertThat(gd.exilePlayPermissions).containsEntry(topCard.getId(), player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd)
-                .containsEntry(topCard.getId(), gd.turnNumber + 2);
+        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer)
+                .containsEntry(topCard.getId(), player1.getId());
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(topCard);
     }
 

@@ -28,12 +28,7 @@ public class ArmorSliver extends Card {
 
         addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
                 armorAbility,
-                GrantScope.ALL_CREATURES,
-                sliver
-        ));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
-                armorAbility,
-                GrantScope.SELF,
+                GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 sliver
         ));
     }

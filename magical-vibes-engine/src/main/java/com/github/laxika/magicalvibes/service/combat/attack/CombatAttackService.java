@@ -1012,8 +1012,9 @@ public class CombatAttackService {
                 // Temporarily granted ON_ATTACK abilities (e.g. Tower Above's "target creature blocks
                 // it this turn if able"). MustBlockSourceEffect's source is snapshotted to the attacker.
                 for (CardEffect temp : temporaryAttackEffects) {
-                    if (temp instanceof MustBlockSourceEffect) {
-                        allEffects.add(new MustBlockSourceEffect(attacker.getId()));
+                    if (temp instanceof MustBlockSourceEffect mustBlock) {
+                        allEffects.add(new MustBlockSourceEffect(attacker.getId(),
+                                mustBlock.targetRestriction(), mustBlock.untilEndOfCombat()));
                     } else {
                         allEffects.add(temp);
                     }
@@ -2824,7 +2825,8 @@ public class CombatAttackService {
                 .filter(permanent -> !usedSupporterIds.contains(permanent.getId()))
                 .filter(permanent -> !permanent.isTapped() && !permanent.isAttacking())
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
-                .filter(permanent -> !gameQueryService.isSummoningSickForTapCost(gameData, permanent, playerId))
+                .filter(permanent -> !permanent.isSummoningSick()
+                        || gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE))
                 .map(Permanent::getId)
                 .toList();
     }

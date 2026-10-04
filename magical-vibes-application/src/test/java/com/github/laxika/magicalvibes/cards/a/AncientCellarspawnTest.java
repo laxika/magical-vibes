@@ -144,6 +144,10 @@ class AncientCellarspawnTest extends BaseCardTest {
         harness.castSorcery(player1, 0);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
+        PendingInteraction.ColorChoice order =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        harness.handleListChoice(player1, order.options().getFirst());
         harness.passBothPriorities();
         harness.passBothPriorities();
 

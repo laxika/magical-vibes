@@ -83,7 +83,7 @@ class AvenFateshaperTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        if (size > 1) {
+        if (size > 0) {
             PendingInteraction.LibraryReorder reorder =
                     gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
             assertThat(reorder).isNotNull();

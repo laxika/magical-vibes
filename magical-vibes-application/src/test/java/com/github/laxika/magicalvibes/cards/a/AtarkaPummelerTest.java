@@ -60,6 +60,8 @@ class AtarkaPummelerTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.hasKeyword(gd, pummeler, Keyword.MENACE)).isTrue();
 
+        harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
+        declareAttackers(player1, java.util.List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, pummeler, Keyword.MENACE)).isFalse();

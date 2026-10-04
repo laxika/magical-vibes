@@ -119,8 +119,9 @@ import lombok.Builder;
  *                             on the pre-targeted path
  * @param attachToSource       {@code true} to attach the returned card to the source permanent. On the
  *                             search-and-choose path the controller gets a second "you may" prompt and the
- *                             equipment enters the battlefield first (e.g. Auriok Survivors). On the
- *                             pre-targeted battlefield path the attachment is mandatory and prompt-free —
+ *                             equipment enters the battlefield first. Targeted Equipment returns also
+ *                             offer this optional attachment after entering (e.g. Auriok Survivors). On the
+ *                             pre-targeted Aura battlefield path attachment is mandatory and prompt-free —
  *                             the Aura enters already attached to the source, and the ability fizzles when
  *                             the source is gone or the Aura can't legally enchant it (Hakim, Loreweaver)
  * @param grantHaste           {@code true} to grant haste to the permanent when it enters the battlefield

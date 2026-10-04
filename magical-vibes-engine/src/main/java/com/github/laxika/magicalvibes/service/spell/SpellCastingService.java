@@ -11954,7 +11954,8 @@ public class SpellCastingService {
             cost = cost.withBlackManaAsPhyrexian();
         }
 
-        if (card.isRequiresBasicLandMana()) {
+        boolean hasPayableManaCost = card.getManaCost() != null || hasExileManaCostOverride;
+        if (hasPayableManaCost && card.isRequiresBasicLandMana()) {
             if (!cost.canPayBasicLandOnly(pool, effectiveXValue, additionalCost)) {
                 throw new IllegalStateException("Can only spend mana produced by basic lands to cast this spell");
             }
@@ -11971,7 +11972,7 @@ public class SpellCastingService {
         boolean cardAnyManaType = castingPermissionService.canSpendAnyManaTypeFromCard(card);
         boolean usesPendingAnyManaType = pendingAnyManaType && !anyManaType && !battlefieldAnyManaType
                 && !baseMana.isEmpty();
-        if ((convokeContributions == null || convokeContributions.isEmpty())
+        if (hasPayableManaCost && (convokeContributions == null || convokeContributions.isEmpty())
                 && (anyManaType || cardAnyManaType || battlefieldAnyManaType || usesPendingAnyManaType)
                 && !(blackManaLifePaymentPermission && cost.hasPhyrexianMana())) {
             if (usesPendingAnyManaType && !additionalCostsMana.isEmpty()) {
@@ -11995,7 +11996,9 @@ public class SpellCastingService {
         // Check if we should use a non-zero alternative cost from the battlefield (e.g. Jodah)
         // Use the alternative cost if the normal cost can't be paid but the alternative can
         boolean normallyPayable;
-        if (convokeContributions != null && !convokeContributions.isEmpty()) {
+        if (!hasPayableManaCost) {
+            normallyPayable = false;
+        } else if (convokeContributions != null && !convokeContributions.isEmpty()) {
             normallyPayable = cost.canPayWithConvoke(
                     pool, additionalCost + (cost.hasX() ? effectiveXValue : 0), convokeContributions);
         } else if (cost.hasX()) {

@@ -171,7 +171,9 @@ class AvacynGuardianAngelTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleListChoice(player1, "RED");
 
-        harness.passUntil(player2, com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
         harness.setHand(player2, List.of(new LightningStrike()));
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);

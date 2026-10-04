@@ -9,13 +9,16 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.amount.TotalManaValueOfCardsOwnedInExile;
 import com.github.laxika.magicalvibes.model.condition.CardPutIntoExileThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CardsInLibraryAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromLibraryInsteadOfLifePaymentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsOfTargetPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -33,7 +36,9 @@ public class AshiokWickedManipulator extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(LookAtTopCardsEffect.chooseOneToHandRestToExile(new Fixed(2))),
+                List.of(new LookAtTopCardsEffect(new Fixed(2),
+                        new FixedIfCondition(new CardsInLibraryAtLeast(2), 1, 0), null,
+                        LookDestination.EXILE, false)),
                 "+1: Look at the top two cards of your library. Exile one of them and put the other into your hand."
         ));
 

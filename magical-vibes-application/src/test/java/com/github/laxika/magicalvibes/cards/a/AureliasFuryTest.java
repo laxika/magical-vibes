@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.s.ShieldedPassage;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -116,6 +117,22 @@ class AureliasFuryTest extends BaseCardTest {
 
         harness.assertLife(player2, 20);
         assertThat(player2Playable()).contains(0, 1);
+    }
+
+    @Test
+    void redirectedPlayerDamageRestrictsThePlayerActuallyDamaged() {
+        AureliasFury fury = new AureliasFury();
+        gd.sourceDamageRedirectShields.add(new SourceDamageRedirectShield(
+                player1.getId(), fury.getId(), 2, player2.getId()));
+        harness.setHand(player1, List.of(fury));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castInstantForX(player1, 0, 2, Map.of(player1.getId(), 2));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        assertThat(player2Playable()).doesNotContain(0).contains(1);
     }
 
     @Test

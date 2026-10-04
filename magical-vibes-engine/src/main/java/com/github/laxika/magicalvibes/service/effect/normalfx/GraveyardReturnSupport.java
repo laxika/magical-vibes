@@ -214,8 +214,23 @@ public class GraveyardReturnSupport {
             Permanent sourcePermanent = entry.getSourcePermanentId() == null ? null
                     : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             boolean isEquipment = targetCard.getSubtypes().contains(CardSubtype.EQUIPMENT);
+            if (isEquipment) {
+                permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+                Permanent equipment = putCardOntoBattlefield(gameData, controllerId, targetCard,
+                        null, null, effect.enterTapped(), false, null, false);
+                if (sourcePermanent != null
+                        && equipSupport.canAttachEquipment(gameData, equipment, sourcePermanent)) {
+                    gameData.interaction.setPendingEquipmentAttach(equipment.getId(), sourcePermanent.getId());
+                    gameData.pendingMayAbilities.add(new PendingMayAbility(
+                            entry.getCard(), controllerId, List.of(),
+                            entry.getCard().getName() + " — Attach " + targetCard.getName()
+                                    + " to " + sourcePermanent.getCard().getName() + "?"));
+                    playerInputService.processNextMayAbility(gameData);
+                }
+                return;
+            }
             if (sourcePermanent == null
-                    || !isEquipment && !canEnchant(gameData, targetCard, controllerId, sourcePermanent)) {
+                    || !canEnchant(gameData, targetCard, controllerId, sourcePermanent)) {
                 gameLogService.append(gameData, GameLog.textCardText(entry.getDescription()
                         + " fizzles (", targetCard, " can't be attached)."));
                 return;

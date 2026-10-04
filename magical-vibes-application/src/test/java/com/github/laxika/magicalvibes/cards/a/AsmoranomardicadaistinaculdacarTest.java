@@ -149,12 +149,11 @@ class AsmoranomardicadaistinaculdacarTest extends BaseCardTest {
     void canTargetItsOwnControllerCreature() {
         harness.addToBattlefield(player1, new Asmoranomardicadaistinaculdacar());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new OrnithopterOfParadise());
-        Permanent firstFood = harness.addToBattlefieldAndReturn(player1, foodToken());
-        Permanent secondFood = harness.addToBattlefieldAndReturn(player1, foodToken());
+        harness.addToBattlefield(player1, foodToken());
+        harness.addToBattlefield(player1, foodToken());
 
         harness.activateAbility(player1, 0, null, target.getId());
-        harness.handlePermanentChosen(player1, firstFood.getId());
-        harness.handlePermanentChosen(player1, secondFood.getId());
+        assertThat(countPermanents(player1, "Food")).isZero();
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Ornithopter of Paradise");
@@ -166,12 +165,11 @@ class AsmoranomardicadaistinaculdacarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Asmoranomardicadaistinaculdacar());
         harness.addToBattlefield(player1, new FieryEmancipation());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new OrnithopterOfParadise());
-        Permanent firstFood = harness.addToBattlefieldAndReturn(player1, foodToken());
-        Permanent secondFood = harness.addToBattlefieldAndReturn(player1, foodToken());
+        harness.addToBattlefield(player1, foodToken());
+        harness.addToBattlefield(player1, foodToken());
 
         harness.activateAbility(player1, 0, null, target.getId());
-        harness.handlePermanentChosen(player1, firstFood.getId());
-        harness.handlePermanentChosen(player1, secondFood.getId());
+        assertThat(countPermanents(player1, "Food")).isZero();
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(6);
@@ -182,12 +180,11 @@ class AsmoranomardicadaistinaculdacarTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Asmoranomardicadaistinaculdacar());
         harness.addToBattlefield(player2, new FieryEmancipation());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new OrnithopterOfParadise());
-        Permanent firstFood = harness.addToBattlefieldAndReturn(player1, foodToken());
-        Permanent secondFood = harness.addToBattlefieldAndReturn(player1, foodToken());
+        harness.addToBattlefield(player1, foodToken());
+        harness.addToBattlefield(player1, foodToken());
 
         harness.activateAbility(player1, 0, null, target.getId());
-        harness.handlePermanentChosen(player1, firstFood.getId());
-        harness.handlePermanentChosen(player1, secondFood.getId());
+        assertThat(countPermanents(player1, "Food")).isZero();
         harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(18);
@@ -199,12 +196,11 @@ class AsmoranomardicadaistinaculdacarTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addToBattlefield(player1, new Asmoranomardicadaistinaculdacar());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new HealersFlock());
-        Permanent firstFood = harness.addToBattlefieldAndReturn(player1, foodToken());
-        Permanent secondFood = harness.addToBattlefieldAndReturn(player1, foodToken());
+        harness.addToBattlefield(player1, foodToken());
+        harness.addToBattlefield(player1, foodToken());
 
         harness.activateAbility(player1, 0, null, target.getId());
-        harness.handlePermanentChosen(player1, firstFood.getId());
-        harness.handlePermanentChosen(player1, secondFood.getId());
+        assertThat(countPermanents(player1, "Food")).isZero();
         harness.passBothPriorities();
 
         harness.assertLife(player2, 26);

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPlayFromGraveyardThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 import java.util.List;
 
@@ -18,8 +19,8 @@ public class ArkOfHunger extends Card {
     public ArkOfHunger() {
         // Whenever one or more cards leave your graveyard, this artifact deals 1 damage
         // to each opponent and you gain 1 life.
-        addEffect(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
-        addEffect(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, new GainLifeEffect(1));
+        addEffect(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, SequenceEffect.of(
+                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT), new GainLifeEffect(1)));
 
         // {T}: Mill a card. You may play that card this turn.
         addActivatedAbility(new ActivatedAbility(

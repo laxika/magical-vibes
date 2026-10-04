@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
@@ -19,12 +19,8 @@ public class AuspiciousAncestor extends Card {
         addEffect(EffectSlot.ON_DEATH, new GainLifeEffect(3));
 
         // Whenever a player casts a white spell, you may pay {1}. If you do, you gain 1 life.
-        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new MayEffect(
-                new SpellCastTriggerEffect(
-                        new CardColorPredicate(CardColor.WHITE),
-                        List.of(new GainLifeEffect(1)),
-                        "{1}"),
-                "Pay {1} to gain 1 life?"
-        ));
+        addEffect(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, new SpellCastTriggerEffect(
+                new CardColorPredicate(CardColor.WHITE),
+                List.of(new MayPayManaEffect("{1}", new GainLifeEffect(1), "Pay {1} to gain 1 life?"))));
     }
 }

@@ -176,6 +176,7 @@ class AethermagesTouchTest extends BaseCardTest {
         setLibrary(creature);
         castAndResolve();
         harness.handleCardChosen(player1, 0);
+        setLibrary(new AzoriusSignet(), new AzoriusSignet());
 
         advanceToEndStep(player1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -186,7 +187,7 @@ class AethermagesTouchTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Voidslime()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, trigger.getCard().getId());
+        harness.castInstant(player1, 0, trigger.getTargetableId());
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard().getId().equals(creature.getId()));

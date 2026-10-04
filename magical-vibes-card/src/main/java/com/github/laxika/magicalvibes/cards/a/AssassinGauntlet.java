@@ -24,6 +24,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class AssassinGauntlet extends Card {
 
     public AssassinGauntlet() {
+        target(TargetFilters.creatureYouControl(), 0, 1)
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                        new AttachSourceEquipmentToTargetCreatureEffect());
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
@@ -31,9 +34,6 @@ public class AssassinGauntlet extends Card {
                         new TapPermanentsEffect(
                                 TapUntapScope.TARGET_PLAYERS_PERMANENTS,
                                 new PermanentIsCreaturePredicate()));
-        target(TargetFilters.creatureYouControl(), 0, 1)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new AttachSourceEquipmentToTargetCreatureEffect());
 
         addEffect(EffectSlot.STATIC,
                 new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));

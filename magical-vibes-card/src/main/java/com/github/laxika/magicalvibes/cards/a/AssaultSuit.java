@@ -33,7 +33,7 @@ public class AssaultSuit extends Card {
                 new CantBeSacrificedEffect(), GrantScope.EQUIPPED_CREATURE));
         addEffect(EffectSlot.OPPONENT_UPKEEP_TRIGGERED, new MayEffect(
                 SequenceEffect.of(
-                        new TargetPlayerGainsControlOfEnchantedPermanentEffect(ControlDuration.END_OF_TURN),
+                        new TargetPlayerGainsControlOfEnchantedPermanentEffect(ControlDuration.END_OF_TURN, false),
                         new UntapPermanentsEffect(TapUntapScope.ENCHANTED)),
                 "Have that player gain control of equipped creature until end of turn?"));
         addActivatedAbility(new EquipActivatedAbility("{3}"));

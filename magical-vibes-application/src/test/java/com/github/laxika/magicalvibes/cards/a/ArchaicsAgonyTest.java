@@ -11,10 +11,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -93,8 +92,8 @@ class ArchaicsAgonyTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getId().equals(topCard.getId()));
         assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd.get(topCard.getId()))
-                .isEqualTo(gd.turnNumber + 2);
+        assertThat(gd.exilePlayPermissionsAwaitNextTurnOfPlayer)
+                .containsEntry(topCard.getId(), player1.getId());
     }
 
     @Test
@@ -120,6 +119,7 @@ class ArchaicsAgonyTest extends BaseCardTest {
     @Test
     @DisplayName("Exile play permission expires at end of controller's next turn")
     void playPermissionExpiresAtCorrectTurn() {
+        harness.setHand(player2, List.of());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new RagingGoblin());
 
         Card topCard = new Shock();
@@ -133,18 +133,13 @@ class ArchaicsAgonyTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, target.getId());
         UUID exiledId = topCard.getId();
-        int expireTurn = gd.exilePlayPermissionsExpireAtTurnEnd.get(exiledId);
-        assertThat(expireTurn).isGreaterThan(gd.turnNumber);
-
-        gd.turnNumber = expireTurn - 1;
-        harness.inMutationScope(() ->
-                GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).containsKey(exiledId);
-
-        gd.turnNumber = expireTurn;
-        harness.inMutationScope(() ->
-                GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd));
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.exilePlayPermissions).containsKey(exiledId);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(exiledId);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
     }
 
     @Test
