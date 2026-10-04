@@ -86,6 +86,80 @@ class HannaShipsNavigatorTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Card artifact = new ChromaticSphere();
+        Permanent hanna = harness.addToBattlefieldAndReturn(player1, new HannaShipsNavigator());
+        hanna.setSummoningSick(true);
+        harness.setGraveyard(player1, List.of(artifact));
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(hanna.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Card artifact = new ChromaticSphere();
+        Permanent hanna = addCreatureReady(player1, new HannaShipsNavigator());
+        hanna.setTapped(true);
+        harness.setGraveyard(player1, List.of(artifact));
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact);
+    }
+
+    @Test
+    @DisplayName("Does not return a different card when the target leaves the graveyard")
+    void targetLeavingGraveyardDoesNotReturnAnotherCard() {
+        Card artifact = new ChromaticSphere();
+        Card enchantment = new CollectiveRestraint();
+        Permanent hanna = addCreatureReady(player1, new HannaShipsNavigator());
+        harness.setGraveyard(player1, List.of(artifact, enchantment));
+        harness.setHand(player1, List.of());
+        addActivationMana();
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(artifact.getId()));
+        harness.setGraveyard(player1, List.of(enchantment));
+        harness.setExile(player1, List.of(artifact));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(enchantment);
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(artifact.getId()));
+        assertThat(hanna.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability still resolves after Hanna leaves the battlefield")
+    void resolvesAfterHannaLeavesBattlefield() {
+        Card artifact = new ChromaticSphere();
+        Permanent hanna = addCreatureReady(player1, new HannaShipsNavigator());
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.setHand(player1, List.of());
+        addActivationMana();
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(artifact.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(hanna);
+        harness.setGraveyard(player1, List.of(artifact, hanna.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(hanna.getCard());
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
