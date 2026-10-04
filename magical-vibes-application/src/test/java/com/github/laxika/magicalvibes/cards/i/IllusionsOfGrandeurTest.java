@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(IllusionsOfGrandeur.class)
+@CardUsed({IllusionsOfGrandeur.class, Disenchant.class})
 class IllusionsOfGrandeurTest extends BaseCardTest {
 
     @Test
@@ -25,8 +26,7 @@ class IllusionsOfGrandeurTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castEnchantment(player1, 0);
-        harness.passBothPriorities(); // enchantment resolves, ETB trigger goes on stack
-        harness.passBothPriorities(); // ETB trigger resolves
+        resolveAllTriggers();
 
         harness.assertLife(player1, 40);
     }
@@ -34,10 +34,8 @@ class IllusionsOfGrandeurTest extends BaseCardTest {
     @Test
     @DisplayName("Leaving the battlefield loses 20 life")
     void leavingLosesTwentyLife() {
-        harness.addToBattlefield(player1, new IllusionsOfGrandeur());
+        Permanent illusions = harness.addToBattlefieldAndReturn(player1, new IllusionsOfGrandeur());
         harness.setLife(player1, 40);
-
-        Permanent illusions = findPermanent(player1, "Illusions of Grandeur");
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, illusions));
 
@@ -112,5 +110,64 @@ class IllusionsOfGrandeurTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Returning to hand loses life and recasting gains life again")
+    void returningToHandAndRecasting() {
+        harness.setHand(player1, List.of());
+        harness.setLife(player1, 40);
+        Permanent illusions = harness.addToBattlefieldAndReturn(player1, new IllusionsOfGrandeur());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, illusions));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertInHand(player1, "Illusions of Grandeur");
+        harness.assertNotOnBattlefield(player1, "Illusions of Grandeur");
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 40);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Destroying the enchantment in response to upkeep does not ask for payment")
+    void destroyedBeforeUpkeepResolves() {
+        harness.setLife(player1, 40);
+        Permanent illusions = harness.addToBattlefieldAndReturn(player1, new IllusionsOfGrandeur());
+        harness.setHand(player2, List.of(new Disenchant()));
+
+        advanceToUpkeep(player1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, illusions.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Illusions of Grandeur");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Opponent upkeep does not trigger cumulative upkeep")
+    void opponentUpkeepDoesNotTrigger() {
+        Permanent illusions = harness.addToBattlefieldAndReturn(player1, new IllusionsOfGrandeur());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(illusions.getCounterCount(CounterType.AGE)).isZero();
+        harness.assertOnBattlefield(player1, "Illusions of Grandeur");
     }
 }
