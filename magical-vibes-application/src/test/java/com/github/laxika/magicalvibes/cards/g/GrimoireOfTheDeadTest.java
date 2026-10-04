@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.d.DarkthicketWolf;
+import com.github.laxika.magicalvibes.cards.m.MentorOfTheMeek;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -19,16 +22,15 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GrimoireOfTheDead.class, DarkthicketWolf.class, MentorOfTheMeek.class, GrafdiggersCage.class})
 class GrimoireOfTheDeadTest extends BaseCardTest {
-
-    // ===== Ability 1: Put study counter =====
 
     @Test
     @DisplayName("Activating ability 1 starts discard-cost choice for any card")
     void ability1StartsDiscardChoice() {
-        Permanent grimoire = addReadyGrimoire();
+        addReadyGrimoire();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DarkthicketWolf()));
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -43,7 +45,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
     void ability1AddsStudyCounterOnResolution() {
         Permanent grimoire = addReadyGrimoire();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DarkthicketWolf()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -55,7 +57,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
 
         // Discard was paid
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Darkthicket Wolf");
 
         // Resolve the ability
         harness.passBothPriorities();
@@ -68,7 +70,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
     void ability1AccumulatesCounters() {
         Permanent grimoire = addReadyGrimoire();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DarkthicketWolf()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -78,7 +80,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
         // Untap for next activation
         grimoire.untap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DarkthicketWolf()));
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
@@ -102,32 +104,30 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
     @DisplayName("Cannot activate ability 1 without enough mana")
     void ability1RequiresMana() {
         addReadyGrimoire();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new DarkthicketWolf()));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Ability 2: Sacrifice and return all creatures =====
 
     @Test
     @DisplayName("Ability 2 returns all creature cards from all graveyards to battlefield")
     void ability2ReturnsAllCreaturesFromAllGraveyards() {
         Permanent grimoire = addReadyGrimoire();
         grimoire.setCounterCount(CounterType.STUDY, 3);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
-        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new DarkthicketWolf()));
+        harness.setGraveyard(player2, List.of(new DarkthicketWolf()));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         // Both creatures should be on player1's battlefield
-        long creatureCount = countPermanents(player1, "Grizzly Bears");
+        long creatureCount = countPermanents(player1, "Darkthicket Wolf");
         assertThat(creatureCount).isEqualTo(2);
 
         // Graveyards should be empty of creatures
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
-        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Darkthicket Wolf");
+        harness.assertNotInGraveyard(player2, "Darkthicket Wolf");
     }
 
     @Test
@@ -135,7 +135,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
     void ability2SacrificesGrimoire() {
         Permanent grimoire = addReadyGrimoire();
         grimoire.setCounterCount(CounterType.STUDY, 3);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new DarkthicketWolf()));
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -148,16 +148,16 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
     void returnedCreaturesGainZombieSubtype() {
         Permanent grimoire = addReadyGrimoire();
         grimoire.setCounterCount(CounterType.STUDY, 3);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new DarkthicketWolf()));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = findPermanent(player1, "Darkthicket Wolf");
 
-        assertThat(bears.getGrantedSubtypes()).contains(CardSubtype.ZOMBIE);
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.ZOMBIE)).isTrue();
         // Original subtypes preserved
-        assertThat(bears.getCard().getSubtypes()).contains(CardSubtype.BEAR);
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.WOLF)).isTrue();
     }
 
     @Test
@@ -165,16 +165,14 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
     void returnedCreaturesGainBlackColor() {
         Permanent grimoire = addReadyGrimoire();
         grimoire.setCounterCount(CounterType.STUDY, 3);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new DarkthicketWolf()));
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = findPermanent(player1, "Darkthicket Wolf");
 
-        assertThat(bears.getGrantedColors()).contains(CardColor.BLACK);
-        // Original color preserved on card
-        assertThat(bears.getCard().getColor()).isEqualTo(CardColor.GREEN);
+        assertThat(gqs.getEffectiveColors(gd, bears)).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
     }
 
     @Test
@@ -193,7 +191,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
     void ability2RemovesStudyCounters() {
         Permanent grimoire = addReadyGrimoire();
         grimoire.setCounterCount(CounterType.STUDY, 3);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new DarkthicketWolf()));
 
         // After activation the permanent is sacrificed, so counters are gone with it
         // But we can verify the ability goes on stack (meaning cost was paid)
@@ -204,13 +202,113 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
     }
 
-    // ===== Helper =====
+    @Test
+    @DisplayName("Grafdigger's Cage leaves blocked creatures in their original graveyards")
+    void blockedOpponentCreatureStaysInOpponentsGraveyard() {
+        Permanent grimoire = addReadyGrimoire();
+        grimoire.setCounterCount(CounterType.STUDY, 3);
+        harness.addToBattlefield(player2, new GrafdiggersCage());
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new DarkthicketWolf()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Darkthicket Wolf");
+        harness.assertNotOnBattlefield(player2, "Darkthicket Wolf");
+        harness.assertInGraveyard(player2, "Darkthicket Wolf");
+        harness.assertNotInGraveyard(player1, "Darkthicket Wolf");
+    }
+
+    @Test
+    @DisplayName("A noncreature card can be discarded to pay for a study counter")
+    void ability1AcceptsNoncreatureDiscard() {
+        Permanent grimoire = addReadyGrimoire();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new GrimoireOfTheDead()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(grimoire.isTapped()).isTrue();
+        assertThat(grimoire.getCounterCount(CounterType.STUDY)).isZero();
+        harness.assertInGraveyard(player1, "Grimoire of the Dead");
+        harness.passBothPriorities();
+        assertThat(grimoire.getCounterCount(CounterType.STUDY)).isEqualTo(1);
+    }
+
+
+    @Test
+    @DisplayName("Creatures entering together see each other's entry regardless of graveyard order")
+    void returnedMentorSeesCreatureReturnedBeforeIt() {
+        Permanent grimoire = addReadyGrimoire();
+        grimoire.setCounterCount(CounterType.STUDY, 3);
+        harness.setGraveyard(player1, List.of(new DarkthicketWolf(), new MentorOfTheMeek()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Darkthicket Wolf");
+        harness.assertOnBattlefield(player1, "Mentor of the Meek");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Noncreature cards stay in their graveyards")
+    void ability2LeavesNoncreatureCardsInGraveyards() {
+        Permanent grimoire = addReadyGrimoire();
+        grimoire.setCounterCount(CounterType.STUDY, 3);
+        harness.setGraveyard(player2, List.of(new DarkthicketWolf(), new GrimoireOfTheDead()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Darkthicket Wolf");
+        harness.assertNotOnBattlefield(player2, "Darkthicket Wolf");
+        harness.assertInGraveyard(player2, "Grimoire of the Dead");
+        harness.assertInGraveyard(player1, "Grimoire of the Dead");
+    }
+
+    @Test
+    @DisplayName("Ability 2 can resolve with no creature cards in any graveyard")
+    void ability2ResolvesWithEmptyGraveyards() {
+        Permanent grimoire = addReadyGrimoire();
+        grimoire.setCounterCount(CounterType.STUDY, 3);
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grimoire of the Dead");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Both abilities require an untapped Grimoire")
+    void tappedGrimoireCannotActivateEitherAbility() {
+        Permanent grimoire = addReadyGrimoire();
+        grimoire.setCounterCount(CounterType.STUDY, 3);
+        grimoire.tap();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new DarkthicketWolf()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Grimoire of the Dead");
+        assertThat(grimoire.getCounterCount(CounterType.STUDY)).isEqualTo(3);
+    }
 
     private Permanent addReadyGrimoire() {
-        GrimoireOfTheDead card = new GrimoireOfTheDead();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, new GrimoireOfTheDead());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(perm);
         return perm;
     }
 }
