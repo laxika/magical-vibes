@@ -16,7 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HelmOfObedience.class, Pillage.class, DeadlyInsect.class})
+@CardUsed({HelmOfObedience.class, Pillage.class, DeadlyInsect.class,
+        LeylineOfTheVoid.class, TheWaterCrystal.class})
 class HelmOfObedienceTest extends BaseCardTest {
 
     @Test
@@ -54,8 +55,7 @@ class HelmOfObedienceTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(creature);
         assertThat(findPermanent(player1, "Helm of Obedience")).isNotNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Deadly Insect"));
+        harness.assertNotOnBattlefield(player1, "Deadly Insect");
     }
 
     @Test
@@ -114,8 +114,7 @@ class HelmOfObedienceTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(first, creature, last);
         assertThat(findPermanent(player1, "Helm of Obedience")).isNotNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Deadly Insect"));
+        harness.assertNotOnBattlefield(player1, "Deadly Insect");
     }
 
     @Test
@@ -137,5 +136,60 @@ class HelmOfObedienceTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Deadly Insect")).isNotNull();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getName).contains("Helm of Obedience");
+    }
+
+    @Test
+    @DisplayName("Multiple creatures milled together require the ability controller to choose one")
+    void multipleMilledCreaturesOfferChoice() {
+        harness.addToBattlefield(player1, new HelmOfObedience());
+        harness.addToBattlefield(player1, new TheWaterCrystal());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Card first = new DeadlyInsect();
+        Card second = new DeadlyInsect();
+        harness.setLibrary(player2, List.of(first, second, new Pillage(), new Pillage(), new Pillage()));
+
+        harness.activateAbility(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Deadly Insect");
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(first, second);
+    }
+
+    @Test
+    @DisplayName("Reanimates the creature even when the Helm has left the battlefield")
+    void reanimatesAfterSourceLeavesBattlefield() {
+        var helm = harness.addToBattlefieldAndReturn(player1, new HelmOfObedience());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Card creature = new DeadlyInsect();
+        harness.setLibrary(player2, List.of(creature, new Pillage()));
+
+        harness.activateAbility(player1, 0, 1, player2.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .destroyPermanentToGraveyard(gd, helm));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Deadly Insect");
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(creature);
+        harness.assertInGraveyard(player1, "Helm of Obedience");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A creature on the Xth card is still reanimated")
+    void creatureAtLimitIsReanimated() {
+        harness.addToBattlefield(player1, new HelmOfObedience());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        Card creature = new DeadlyInsect();
+        Card remaining = new Pillage();
+        harness.setLibrary(player2, List.of(new Pillage(), creature, remaining));
+
+        harness.activateAbility(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Deadly Insect");
+        harness.assertInGraveyard(player1, "Helm of Obedience");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1).doesNotContain(creature);
     }
 }
