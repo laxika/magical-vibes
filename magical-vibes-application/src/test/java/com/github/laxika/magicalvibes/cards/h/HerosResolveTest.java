@@ -142,6 +142,25 @@ class HerosResolveTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two copies of Hero's Resolve add their bonuses to the same creature")
+    void multipleCopiesStackTheirBonuses() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HerosResolve(), new HerosResolve()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Hero's Resolve"))
+                .hasSize(2)
+                .allMatch(aura -> bears.getId().equals(aura.getAttachedTo()));
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(12);
+    }
+
+    @Test
     @DisplayName("Cannot target a noncreature permanent with Hero's Resolve")
     void cannotTargetNonCreature() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new CursedScroll());
