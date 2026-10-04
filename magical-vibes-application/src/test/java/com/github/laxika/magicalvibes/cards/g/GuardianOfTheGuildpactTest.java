@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
 import com.github.laxika.magicalvibes.cards.b.BlessingOfTheNephilim;
 import com.github.laxika.magicalvibes.cards.c.CacklingFlames;
 import com.github.laxika.magicalvibes.cards.d.Drekavac;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.s.SealOfFire;
 import com.github.laxika.magicalvibes.cards.w.WreckingBall;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -22,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GuardianOfTheGuildpact.class, AzoriusFirstWing.class, AzoriusSignet.class,
         BlessingOfTheNephilim.class, CacklingFlames.class, Drekavac.class, SealOfFire.class,
-        WreckingBall.class})
+        WreckingBall.class, Humility.class})
 class GuardianOfTheGuildpactTest extends BaseCardTest {
 
     @Test
@@ -69,8 +71,7 @@ class GuardianOfTheGuildpactTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, guardian.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, guardian.getId());
 
         harness.assertInGraveyard(player2, "Guardian of the Guildpact");
     }
@@ -78,7 +79,7 @@ class GuardianOfTheGuildpactTest extends BaseCardTest {
     @Test
     @DisplayName("A monocolored creature cannot block Guardian of the Guildpact")
     void monocoloredCreatureCannotBlock() {
-        Permanent guardian = addCreatureReady(player1, new GuardianOfTheGuildpact());
+        addCreatureReady(player1, new GuardianOfTheGuildpact());
         addCreatureReady(player2, new Drekavac());
 
         declareAttackersAndPrepareBlockers(player1, List.of(0));
@@ -112,5 +113,65 @@ class GuardianOfTheGuildpactTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, guardian.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A multicolored creature can block Guardian and deal combat damage to it")
+    void multicoloredCreatureCanBlockAndDealDamage() {
+        Permanent guardian = addCreatureReady(player1, new GuardianOfTheGuildpact());
+        addCreatureReady(player2, new AzoriusFirstWing());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            harness.passUntil(player1, TurnStep.COMBAT_DAMAGE);
+        });
+
+        assertThat(guardian.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Azorius First-Wing");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(guardian);
+    }
+
+    @Test
+    @DisplayName("An illegally attached monocolored Aura is put into its owner's graveyard")
+    void monocoloredAuraIsRemovedByStateBasedActions() {
+        Permanent guardian = addCreatureReady(player1, new GuardianOfTheGuildpact());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new BlessingOfTheNephilim());
+        aura.setAttachedTo(guardian.getId());
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Blessing of the Nephilim");
+        harness.assertNotOnBattlefield(player1, "Blessing of the Nephilim");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(guardian);
+    }
+
+    @Test
+    @DisplayName("Losing all abilities allows monocolored spells to target Guardian")
+    void losingAllAbilitiesAllowsMonocoloredTargeting() {
+        Permanent guardian = addCreatureReady(player2, new GuardianOfTheGuildpact());
+        harness.addToBattlefield(player1, new Humility());
+        harness.setHand(player1, List.of(new CacklingFlames()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, guardian.getId());
+
+        harness.assertInGraveyard(player2, "Guardian of the Guildpact");
+    }
+
+    @Test
+    @DisplayName("Losing all abilities allows monocolored creatures to deal damage to Guardian")
+    void losingAllAbilitiesAllowsMonocoloredCombatDamage() {
+        addCreatureReady(player1, new Drekavac());
+        addCreatureReady(player2, new GuardianOfTheGuildpact());
+        harness.addToBattlefield(player1, new Humility());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Drekavac");
+        harness.assertInGraveyard(player2, "Guardian of the Guildpact");
     }
 }
