@@ -21,8 +21,7 @@ class GustcloakHarrierTest extends BaseCardTest {
         Permanent harrier = addHarrier();
         Permanent blocker = addCreatureReady(player2);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -40,8 +39,7 @@ class GustcloakHarrierTest extends BaseCardTest {
         Permanent harrier = addHarrier();
         Permanent blocker = addCreatureReady(player2);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -60,8 +58,7 @@ class GustcloakHarrierTest extends BaseCardTest {
         Permanent secondBlocker = addCreatureReady(player2);
         int startingLife = gd.getLife(player2.getId());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -80,6 +77,47 @@ class GustcloakHarrierTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
         assertThat(firstBlocker.getMarkedDamage()).isZero();
         assertThat(secondBlocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("An unblocked Harrier deals combat damage without offering its optional ability")
+    void unblockedHarrierDealsCombatDamage() {
+        Permanent harrier = addHarrier();
+        addCreatureReady(player2);
+        int startingLife = gd.getLife(player2.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 2);
+        assertThat(harrier.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing a blocked Harrier leaves another attacker in combat")
+    void removingBlockedHarrierDoesNotRemoveOtherAttacker() {
+        Permanent blockedHarrier = addHarrier();
+        Permanent unblockedHarrier = addHarrier();
+        Permanent blocker = addCreatureReady(player2);
+        int startingLife = gd.getLife(player2.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(blockedHarrier.isTapped()).isFalse();
+        assertThat(blockedHarrier.isAttacking()).isFalse();
+        assertThat(unblockedHarrier.isTapped()).isTrue();
+
+        resolveCombat();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 2);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(blockedHarrier, unblockedHarrier);
     }
 
     private Permanent addHarrier() {
