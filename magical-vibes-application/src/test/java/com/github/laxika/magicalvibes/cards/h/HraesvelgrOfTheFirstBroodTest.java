@@ -82,8 +82,7 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.isCantBeBlocked()).isFalse();
@@ -101,5 +100,87 @@ class HraesvelgrOfTheFirstBroodTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, island.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void enterTriggerCanTargetHraesvelgrItself() {
+        Permanent hraesvelgr = harness.enterBattlefieldAndReturn(player1, new HraesvelgrOfTheFirstBrood());
+
+        harness.handlePermanentChosen(player1, hraesvelgr.getId());
+        harness.passBothPriorities();
+
+        assertThat(hraesvelgr.getPowerModifier()).isEqualTo(1);
+        assertThat(hraesvelgr.getToughnessModifier()).isZero();
+        assertThat(hraesvelgr.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    void canTargetItselfWithoutPayingItsOwnWard() {
+        Permanent hraesvelgr = harness.addToBattlefieldAndReturn(player1, new HraesvelgrOfTheFirstBrood());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, hraesvelgr.getId());
+        harness.passBothPriorities();
+
+        assertThat(hraesvelgr.getPowerModifier()).isEqualTo(1);
+        assertThat(hraesvelgr.getToughnessModifier()).isZero();
+        assertThat(hraesvelgr.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    void eachNoncreatureSpellAddsAnotherBoost() {
+        harness.addToBattlefield(player1, new HraesvelgrOfTheFirstBrood());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    void opponentsNoncreatureSpellDoesNotTriggerAbility() {
+        Permanent hraesvelgr = harness.addToBattlefieldAndReturn(player1, new HraesvelgrOfTheFirstBrood());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(hraesvelgr.getPowerModifier()).isZero();
+        assertThat(hraesvelgr.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    void abilityDoesNotAffectAnotherCreatureWhenItsTargetDies() {
+        Permanent hraesvelgr = harness.addToBattlefieldAndReturn(player1, new HraesvelgrOfTheFirstBrood());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        harness.passBothPriorities();
+
+        assertThat(hraesvelgr.getPowerModifier()).isZero();
+        assertThat(hraesvelgr.isCantBeBlocked()).isFalse();
     }
 }
