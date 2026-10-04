@@ -30,8 +30,7 @@ class HomaridSpawningBedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Homarid");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .filteredOn(p -> p.getCard().getName().equals("Camarid"))
+        assertThat(findPermanents(player1, "Camarid"))
                 .hasSize(3)
                 .allSatisfy(camarid -> {
                     assertThat(camarid.getCard().getColor()).isEqualTo(CardColor.BLUE);
@@ -81,6 +80,63 @@ class HomaridSpawningBedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Homarid Warrior");
+        assertThat(countPermanents(player1, "Camarid")).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A Camarid token can be sacrificed but creates no new tokens")
+    void sacrificingCamaridCreatesNoTokens() {
+        harness.addToBattlefield(player1, new HomaridSpawningBed());
+        addCreatureReady(player1, new HomaridWarrior());
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertInGraveyard(player1, "Homarid Warrior");
+        assertThat(countPermanents(player1, "Camarid")).isZero();
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Camarid")).isEqualTo(5);
+
+        Permanent camarid = findPermanent(player1, "Camarid");
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, camarid.getId());
+        assertThat(countPermanents(player1, "Camarid")).isEqualTo(4);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Camarid")).isEqualTo(4);
+        assertThat(countPermanents(player2, "Camarid")).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's blue creature cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsCreature() {
+        harness.addToBattlefield(player1, new HomaridSpawningBed());
+        addCreatureReady(player2, new HomaridWarrior());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Homarid Warrior");
+    }
+
+    @Test
+    @DisplayName("A tapped blue creature with shroud can be sacrificed")
+    void canSacrificeTappedCreatureWithShroud() {
+        harness.addToBattlefield(player1, new HomaridSpawningBed());
+        addCreatureReady(player1, new HomaridWarrior());
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(findPermanent(player1, "Homarid Warrior").isTapped()).isTrue();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertInGraveyard(player1, "Homarid Warrior");
+        harness.passBothPriorities();
+
         assertThat(countPermanents(player1, "Camarid")).isEqualTo(5);
     }
 }
