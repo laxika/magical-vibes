@@ -22,7 +22,7 @@ class HighRiseSawjackTest extends BaseCardTest {
     @Test
     @DisplayName("Blocking a creature with flying triggers +2/+0")
     void blockingFlyingCreatureTriggersBoost() {
-        Permanent sawjack = addReadyCreature(player2, new HighRiseSawjack());
+        Permanent sawjack = addCreatureReady(player2, new HighRiseSawjack());
         addReadyAttacker(player1, new SuntailHawk());
 
         prepareDeclareBlockers();
@@ -36,7 +36,7 @@ class HighRiseSawjackTest extends BaseCardTest {
     @Test
     @DisplayName("Blocking a creature without flying does not trigger the boost")
     void blockingNonFlyingCreatureDoesNotTriggerBoost() {
-        Permanent sawjack = addReadyCreature(player2, new HighRiseSawjack());
+        Permanent sawjack = addCreatureReady(player2, new HighRiseSawjack());
         addReadyAttacker(player1, new GrizzlyBears());
 
         prepareDeclareBlockers();
@@ -50,7 +50,7 @@ class HighRiseSawjackTest extends BaseCardTest {
     @Test
     @DisplayName("The boost wears off at the end of the turn")
     void boostWearsOffAtEndOfTurn() {
-        Permanent sawjack = addReadyCreature(player2, new HighRiseSawjack());
+        Permanent sawjack = addCreatureReady(player2, new HighRiseSawjack());
         addReadyAttacker(player1, new SuntailHawk());
 
         prepareDeclareBlockers();
@@ -65,15 +65,29 @@ class HighRiseSawjackTest extends BaseCardTest {
         assertThat(sawjack.getPowerModifier()).isZero();
     }
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("The block trigger resolves after the flying attacker leaves the battlefield")
+    void boostResolvesAfterAttackerLeaves() {
+        Permanent sawjack = addCreatureReady(player2, new HighRiseSawjack());
+        Permanent otherSawjack = addCreatureReady(player2, new HighRiseSawjack());
+        Permanent attacker = addReadyAttacker(player1, new SuntailHawk());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(sawjack.getPowerModifier()).isZero();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, attacker));
+        harness.passBothPriorities();
+
+        assertThat(sawjack.getPowerModifier()).isEqualTo(2);
+        assertThat(sawjack.getToughnessModifier()).isZero();
+        assertThat(otherSawjack.getPowerModifier()).isZero();
     }
 
     private Permanent addReadyAttacker(Player player, Card card) {
-        Permanent permanent = addReadyCreature(player, card);
+        Permanent permanent = addCreatureReady(player, card);
         permanent.setAttacking(true);
         return permanent;
     }
