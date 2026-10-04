@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.d.DawnhartDisciple;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.y.YasminKhan;
+import com.github.laxika.magicalvibes.cards.z.ZygonInfiltrator;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FrostFairLureFish.class, DawnhartDisciple.class, GrizzlyBears.class})
+@CardUsed({FrostFairLureFish.class, YasminKhan.class, ZygonInfiltrator.class})
 class FrostFairLureFishTest extends BaseCardTest {
 
     @Test
@@ -30,8 +30,7 @@ class FrostFairLureFishTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> fish = findPermanents(player1, "Fish");
         List<Permanent> treasures = findPermanents(player1, "Treasure");
@@ -54,8 +53,8 @@ class FrostFairLureFishTest extends BaseCardTest {
     void fishCannotBeBlockedByHumans() {
         Permanent fish = addCreatureReady(player1, new FrostFairLureFish());
         fish.setAttacking(true);
-        Permanent human = addCreatureReady(player2, new DawnhartDisciple());
-        Permanent nonHuman = addCreatureReady(player2, new GrizzlyBears());
+        Permanent human = addCreatureReady(player2, new YasminKhan());
+        Permanent nonHuman = addCreatureReady(player2, new ZygonInfiltrator());
         var blockContext = bls.createBlockLegalityContext(gd, gd.playerBattlefields.get(player2.getId()));
 
         assertThat(bls.canBlockAttacker(blockContext, human, fish)).isFalse();
@@ -76,5 +75,57 @@ class FrostFairLureFishTest extends BaseCardTest {
         ExiledCardEntry entry = gd.findExiledCard(card.getId());
         assertThat(entry).isNotNull();
         assertThat(entry.faceDown()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void castsForForetellCostOnALaterTurnAndCreatesTokens() {
+        FrostFairLureFish card = new FrostFairLureFish();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.foretell(player1, 0);
+
+        gd.turnNumber++;
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromExile(player1, card.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(countPermanents(player1, "Frost Fair Lure Fish")).isEqualTo(1);
+        assertThat(countPermanents(player1, "Fish")).isEqualTo(2);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(2)
+                .allSatisfy(treasure -> assertThat(treasure.isTapped()).isTrue());
+    }
+
+    @Test
+    void fishTokensLoseBonusesWhenSourceLeavesAndNonFishNeverGainThem() {
+        harness.setHand(player1, List.of(new FrostFairLureFish()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent token = findPermanent(player1, "Fish");
+        Permanent nonFish = addCreatureReady(player1, new ZygonInfiltrator());
+        Permanent human = addCreatureReady(player2, new YasminKhan());
+        token.setAttacking(true);
+        nonFish.setAttacking(true);
+        var context = bls.createBlockLegalityContext(gd, gd.playerBattlefields.get(player2.getId()));
+
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
+        assertThat(bls.canBlockAttacker(context, human, token)).isFalse();
+        assertThat(gqs.hasKeyword(gd, nonFish, Keyword.HASTE)).isFalse();
+        assertThat(bls.canBlockAttacker(context, human, nonFish)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Frost Fair Lure Fish"));
+        context = bls.createBlockLegalityContext(gd, gd.playerBattlefields.get(player2.getId()));
+
+        assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isFalse();
+        assertThat(bls.canBlockAttacker(context, human, token)).isTrue();
+        assertThat(countPermanents(player1, "Fish")).isEqualTo(2);
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(2);
     }
 }
