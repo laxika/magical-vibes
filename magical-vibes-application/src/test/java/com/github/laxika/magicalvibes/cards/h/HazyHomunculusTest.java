@@ -78,6 +78,41 @@ class HazyHomunculusTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
+    @Test
+    @DisplayName("One untapped land prevents blocking even when the defender's other lands are tapped")
+    void cannotBeBlockedWhenDefenderControlsMixedTappedAndUntappedLands() {
+        Permanent tappedLand = harness.addToBattlefieldAndReturn(player2, new RhysticCave());
+        tappedLand.tap();
+        harness.addToBattlefield(player2, new RhysticCave());
+        Permanent blocker = addCreatureReady(player2, new PygmyRazorback());
+        Permanent homunculus = addAttackingHomunculus();
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(
+                        gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                        gd.playerBattlefields.get(player1.getId()).indexOf(homunculus)))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Tapping the defender's last untapped land after attackers are declared permits blocking")
+    void canBeBlockedWhenLastUntappedLandIsTappedAfterAttackersAreDeclared() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new RhysticCave());
+        Permanent blocker = addCreatureReady(player2, new PygmyRazorback());
+        Permanent homunculus = addCreatureReady(player1, new HazyHomunculus());
+        declareAttackersAndPrepareBlockers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(homunculus)));
+        land.tap();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
+                gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                gd.playerBattlefields.get(player1.getId()).indexOf(homunculus))));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
     private Permanent addAttackingHomunculus() {
         Permanent homunculus = addCreatureReady(player1, new HazyHomunculus());
         homunculus.setAttacking(true);
