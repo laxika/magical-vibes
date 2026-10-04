@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MortalCombat;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HeraldOfEternalDawn.class, GrizzlyBears.class, MortalCombat.class, Shock.class, Terror.class})
 class HeraldOfEternalDawnTest extends BaseCardTest {
 
     @Test
@@ -52,6 +55,110 @@ class HeraldOfEternalDawnTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void controllerSurvivesNegativeLifeAndLethalPoison() {
+        harness.addToBattlefield(player1, new HeraldOfEternalDawn());
+        harness.setLife(player1, -3);
+        gd.playerPoisonCounters.put(player1.getId(), 10);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        harness.assertLife(player1, -3);
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(10);
+    }
+
+    @Test
+    void opponentCanStillLoseFromZeroLife() {
+        harness.addToBattlefield(player1, new HeraldOfEternalDawn());
+        harness.setLife(player2, 0);
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void controllerCanStillWinWithMortalCombat() {
+        harness.addToBattlefield(player1, new HeraldOfEternalDawn());
+        harness.addToBattlefield(player1, new MortalCombat());
+        List<Card> graveyard = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            graveyard.add(new GrizzlyBears());
+        }
+        harness.setGraveyard(player1, graveyard);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    void controllerLosesAtZeroLifeAfterHeraldIsDestroyed() {
+        harness.addToBattlefield(player1, new HeraldOfEternalDawn());
+        harness.setLife(player1, 0);
+        harness.runStateBasedActions();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        harness.setHand(player2, List.of(new Terror()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.ensurePriority(player2);
+
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Herald of Eternal Dawn"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Herald of Eternal Dawn");
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    void preventedEmptyLibraryLossDoesNotPersistAfterHeraldLeaves() {
+        harness.addToBattlefield(player1, new HeraldOfEternalDawn());
+        harness.setLibrary(player1, List.of());
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.runStateBasedActions();
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+
+        harness.setHand(player2, List.of(new Terror()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.ensurePriority(player2);
+        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Herald of Eternal Dawn"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Herald of Eternal Dawn");
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.runStateBasedActions();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    void flashCanProtectControllerInResponseToLethalDamage() {
+        harness.setLife(player1, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+
+        harness.castFromHand(player1, new HeraldOfEternalDawn(), "{4}{W}{W}{W}");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Herald of Eternal Dawn");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 0);
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 }
