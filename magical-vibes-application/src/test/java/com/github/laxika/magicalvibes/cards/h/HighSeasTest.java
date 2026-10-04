@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.c.CloudSprite;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.r.RockBadger;
 import com.github.laxika.magicalvibes.cards.r.RushwoodDryad;
 import com.github.laxika.magicalvibes.cards.s.Sizzle;
@@ -10,10 +11,13 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HighSeas.class, RockBadger.class, RushwoodDryad.class, CloudSprite.class, Sizzle.class})
+@CardUsed({HighSeas.class, RockBadger.class, RushwoodDryad.class, CloudSprite.class, Sizzle.class,
+        Disenchant.class})
 class HighSeasTest extends BaseCardTest {
 
     @Test
@@ -87,8 +91,6 @@ class HighSeasTest extends BaseCardTest {
     void costIncreaseAppliesToOpponents() {
         harness.addToBattlefield(player1, new HighSeas());
         harness.forceActivePlayer(player2);
-        harness.forceStep(gd.currentStep);
-        harness.clearPriorityPassed();
 
         assertThatThrownBy(() -> harness.castFromHand(player2, new RockBadger(), "{4}{R}"))
                 .isInstanceOf(IllegalStateException.class)
@@ -101,6 +103,46 @@ class HighSeasTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HighSeas());
         harness.addToBattlefield(player1, new HighSeas());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFromHand(player1, new RockBadger(), "{4}{R}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two High Seas require two additional mana, even across controllers")
+    void multipleHighSeasRequireBothIncreases() {
+        harness.addToBattlefield(player1, new HighSeas());
+        harness.addToBattlefield(player2, new HighSeas());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new RushwoodDryad(), "{1}{G}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("High Seas stops increasing costs when destroyed")
+    void costIncreaseEndsWhenDestroyed() {
+        var highSeas = harness.addToBattlefieldAndReturn(player1, new HighSeas());
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, highSeas.getId());
+
+        harness.assertInGraveyard(player1, "High Seas");
+        harness.castFromHand(player1, new RushwoodDryad(), "{1}{G}");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("High Seas in the graveyard does not increase costs")
+    void highSeasInGraveyardDoesNotIncreaseCosts() {
+        harness.setGraveyard(player1, List.of(new HighSeas()));
 
         harness.castFromHand(player1, new RockBadger(), "{4}{R}");
 
