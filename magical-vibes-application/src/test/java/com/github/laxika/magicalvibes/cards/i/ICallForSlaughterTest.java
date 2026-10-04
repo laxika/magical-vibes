@@ -50,14 +50,10 @@ class ICallForSlaughterTest extends BaseCardTest {
 
     @Test
     void damageBonusAlsoAppliesToCombatAndExpires() {
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
         setUpScheme();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -72,6 +68,79 @@ class ICallForSlaughterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+    }
+
+    @Test
+    void eachDevilCanAttackImmediatelyAndDealsTwoDamage() {
+        setUpScheme();
+
+        declareAttackers(List.of(0, 1, 2));
+
+        harness.assertLife(player2, 14);
+    }
+
+    @Test
+    void opponentsSourcesDoNotReceiveTheDamageBonus() {
+        setUpScheme();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void devilDeathDamageReceivesTheBonusEvenWhenTargetingItsController() {
+        setUpScheme();
+        Permanent devil = findPermanents(player1, "Devil").getFirst();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, devil.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Devil")).hasSize(2);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void devilDeathDamageCanKillACreature() {
+        setUpScheme();
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent devil = findPermanents(player1, "Devil").getFirst();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, devil.getId());
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void devilRetainsItsDeathAbilityAfterTheTurnEnds() {
+        setUpScheme();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent devil = findPermanents(player1, "Devil").getFirst();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, devil.getId());
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
     }
 
     private void setUpScheme() {
