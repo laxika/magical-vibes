@@ -43,7 +43,6 @@ class HeavensGateTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, creature)).containsExactly(CardColor.WHITE);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectiveColors(gd, creature)).containsExactly(CardColor.GREEN);
@@ -58,6 +57,59 @@ class HeavensGateTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(pendelhaven.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Requires at least one target creature")
+    void cannotChooseZeroTargets() {
+        harness.setHand(player1, List.of(new HeavensGate()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.<java.util.UUID>of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void cannotRepeatTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
+        harness.setHand(player1, List.of(new HeavensGate()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Still changes the remaining creature when another target leaves")
+    void resolvesForRemainingTarget() {
+        Permanent departed = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new BarbaryApes());
+        harness.setHand(player1, List.of(new HeavensGate()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, List.of(departed.getId(), remaining.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(departed);
+        gd.playerGraveyards.get(player2.getId()).add(departed.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, remaining)).containsExactly(CardColor.WHITE);
+    }
+
+    @Test
+    @DisplayName("Can make more than ninety-nine target creatures white")
+    void canTargetOneHundredCreatures() {
+        List<Permanent> creatures = new java.util.ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            creatures.add(harness.addToBattlefieldAndReturn(player2, new BarbaryApes()));
+        }
+
+        cast(creatures.stream().map(Permanent::getId).toList());
+
+        for (Permanent creature : creatures) {
+            assertThat(gqs.getEffectiveColors(gd, creature)).containsExactly(CardColor.WHITE);
+        }
     }
 
     private void cast(List<java.util.UUID> targetIds) {
