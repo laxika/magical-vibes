@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.e.EnemyOfTheGuildpact;
+import com.github.laxika.magicalvibes.cards.t.Tatterkite;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HeliumSquirter.class, EnemyOfTheGuildpact.class})
+@CardUsed({HeliumSquirter.class, EnemyOfTheGuildpact.class, Tatterkite.class})
 class HeliumSquirterTest extends BaseCardTest {
 
     @Test
@@ -134,6 +135,66 @@ class HeliumSquirterTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(squirter), null, enemy.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Graft onto an opponent's creature is chosen by Helium Squirter's controller")
+    void graftCanMoveCounterOntoOpponentCreature() {
+        Permanent squirter = castSquirter();
+        Permanent enemy = castEnemyOfTheGuildpact(player2);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(squirter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(enemy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({HeliumSquirter.class, Tatterkite.class})
+    @DisplayName("Graft cannot remove a counter when the entering creature cannot receive counters")
+    void graftKeepsCounterWhenEnteringCreatureCannotReceiveIt() {
+        Permanent squirter = castSquirter();
+        harness.castFromHand(player1, new Tatterkite(), "{3}");
+        harness.passBothPriorities();
+        Permanent tatterkite = findPermanent(player1, "Tatterkite");
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(squirter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(tatterkite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Helium Squirter can give itself flying while summoning sick")
+    void canGiveItselfFlyingWhileSummoningSick() {
+        Permanent squirter = castSquirter();
+        assertThat(squirter.isSummoningSick()).isTrue();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(squirter),
+                null, squirter.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, squirter, Keyword.FLYING)).isTrue();
+        assertThat(squirter.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flying remains if the target loses its counter after the ability resolves")
+    void flyingRemainsAfterCounterIsRemoved() {
+        Permanent enemy = addCreatureReady(player1, new EnemyOfTheGuildpact());
+        enemy.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent squirter = castSquirter();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(squirter),
+                null, enemy.getId());
+        harness.passBothPriorities();
+
+        enemy.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        assertThat(gqs.hasKeyword(gd, enemy, Keyword.FLYING)).isTrue();
     }
 
     private Permanent castEnemyOfTheGuildpact(Player player) {
