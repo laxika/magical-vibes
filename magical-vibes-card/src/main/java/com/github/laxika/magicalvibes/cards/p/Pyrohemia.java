@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "PLC", collectorNumber = "119")
 @CardRegistration(set = "SLD", collectorNumber = "2211")
 @CardRegistration(set = "CMD", collectorNumber = "132")
+@CardRegistration(set = "CMA", collectorNumber = "86")
 public class Pyrohemia extends Card {
 
     public Pyrohemia() {

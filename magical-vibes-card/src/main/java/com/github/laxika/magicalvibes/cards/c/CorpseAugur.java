@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "MIC", collectorNumber = "109")
 @CardRegistration(set = "DRC", collectorNumber = "40")
 @CardRegistration(set = "C17", collectorNumber = "106")
+@CardRegistration(set = "CMA", collectorNumber = "52")
 public class CorpseAugur extends Card {
 
     public CorpseAugur() {

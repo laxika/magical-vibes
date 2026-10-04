@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseActivationCostEffect;
 import java.util.List;
 
 @CardRegistration(set = "C14", collectorNumber = "56")
+@CardRegistration(set = "CMA", collectorNumber = "221")
 public class LoreseekersStone extends Card {
 
     public LoreseekersStone() {

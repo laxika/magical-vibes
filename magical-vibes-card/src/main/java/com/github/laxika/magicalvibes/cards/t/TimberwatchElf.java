@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "780")
 @CardRegistration(set = "C14", collectorNumber = "220")
 @CardRegistration(set = "KHC", collectorNumber = "76")
+@CardRegistration(set = "CMA", collectorNumber = "156")
 public class TimberwatchElf extends Card {
 
     public TimberwatchElf() {

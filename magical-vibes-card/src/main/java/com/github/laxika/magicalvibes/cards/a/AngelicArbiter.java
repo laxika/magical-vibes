@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAtta
 
 @CardRegistration(set = "M11", collectorNumber = "4")
 @CardRegistration(set = "CMD", collectorNumber = "5")
+@CardRegistration(set = "CMA", collectorNumber = "4")
 public class AngelicArbiter extends Card {
 
     public AngelicArbiter() {

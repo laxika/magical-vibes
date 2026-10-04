@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "SPG", collectorNumber = "148")
 @CardRegistration(set = "C13", collectorNumber = "266")
 @CardRegistration(set = "C21", collectorNumber = "271")
+@CardRegistration(set = "CMA", collectorNumber = "236")
 public class ThousandYearElixir extends Card {
 
     public ThousandYearElixir() {

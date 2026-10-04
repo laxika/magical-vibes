@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "SOM", collectorNumber = "119")
 @CardRegistration(set = "DDU", collectorNumber = "1")
 @CardRegistration(set = "C14", collectorNumber = "195")
+@CardRegistration(set = "CMA", collectorNumber = "108")
 public class EzuriRenegadeLeader extends Card {
 
     public EzuriRenegadeLeader() {

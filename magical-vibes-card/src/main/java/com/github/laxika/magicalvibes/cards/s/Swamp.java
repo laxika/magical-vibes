@@ -13,6 +13,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "BRC", collectorNumber = "33")
 @CardRegistration(set = "BRC", collectorNumber = "34")
 @CardRegistration(set = "C19", collectorNumber = "296")
+@CardRegistration(set = "CMA", collectorNumber = "297")
+@CardRegistration(set = "CMA", collectorNumber = "298")
+@CardRegistration(set = "CMA", collectorNumber = "299")
+@CardRegistration(set = "CMA", collectorNumber = "300")
+@CardRegistration(set = "CMA", collectorNumber = "301")
+@CardRegistration(set = "CMA", collectorNumber = "302")
 @CardRegistration(set = "C18", collectorNumber = "299")
 @CardRegistration(set = "C18", collectorNumber = "300")
 @CardRegistration(set = "C18", collectorNumber = "301")
@@ -589,6 +595,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "KHM", collectorNumber = "396")
 @CardRegistration(set = "SCD", collectorNumber = "341")
 @CardRegistration(set = "SCD", collectorNumber = "342")
+@CardRegistration(set = "CMA", collectorNumber = "303")
+@CardRegistration(set = "CMA", collectorNumber = "304")
 public class Swamp extends Card {
 
     public Swamp() {

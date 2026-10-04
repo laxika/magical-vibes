@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 @CardRegistration(set = "NPH", collectorNumber = "23")
 @CardRegistration(set = "CMD", collectorNumber = "31")
 @CardRegistration(set = "MOC", collectorNumber = "206")
+@CardRegistration(set = "CMA", collectorNumber = "23")
 public class ShatteredAngel extends Card {
 
     public ShatteredAngel() {

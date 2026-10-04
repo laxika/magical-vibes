@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "C13", collectorNumber = "324")
 @CardRegistration(set = "C14", collectorNumber = "311")
 @CardRegistration(set = "C15", collectorNumber = "307")
+@CardRegistration(set = "CMA", collectorNumber = "275")
 public class SlipperyKarst extends Card {
 
     public SlipperyKarst() {

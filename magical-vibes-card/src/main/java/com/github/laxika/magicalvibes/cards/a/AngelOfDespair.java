@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "GK2", collectorNumber = "37")
 @CardRegistration(set = "UMA", collectorNumber = "196")
 @CardRegistration(set = "CMD", collectorNumber = "180")
+@CardRegistration(set = "CMA", collectorNumber = "173")
 public class AngelOfDespair extends Card {
 
     public AngelOfDespair() {

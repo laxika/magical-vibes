@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "C15", collectorNumber = "33")
 @CardRegistration(set = "CMM", collectorNumber = "276")
 @CardRegistration(set = "CMM", collectorNumber = "555")
+@CardRegistration(set = "CMA", collectorNumber = "93")
 public class BloodsporeThrinax extends Card {
 
     public BloodsporeThrinax() {

@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "LEG", collectorNumber = "256")
 @CardRegistration(set = "ME3", collectorNumber = "173")
 @CardRegistration(set = "C13", collectorNumber = "207")
+@CardRegistration(set = "CMA", collectorNumber = "191")
 public class RubiniaSoulsinger extends Card {
 
     public RubiniaSoulsinger() {

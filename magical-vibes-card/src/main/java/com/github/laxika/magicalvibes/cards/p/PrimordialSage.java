@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "177")
 @CardRegistration(set = "C14", collectorNumber = "211")
+@CardRegistration(set = "CMA", collectorNumber = "138")
 public class PrimordialSage extends Card {
 
     public PrimordialSage() {

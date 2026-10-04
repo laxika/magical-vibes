@@ -327,6 +327,7 @@ public enum CardSet {
     SET_EMA("EMA"),
     SET_MB1("MB1"),
     SET_CMM("CMM"),
+    SET_CMA("CMA"),
     SET_DMC("DMC"),
     SET_C13("C13"),
     SET_C14("C14"),

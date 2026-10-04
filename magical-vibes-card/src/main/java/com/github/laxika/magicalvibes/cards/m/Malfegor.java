@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenEachOpponen
 @CardRegistration(set = "CON", collectorNumber = "117")
 @CardRegistration(set = "IMA", collectorNumber = "205")
 @CardRegistration(set = "CMD", collectorNumber = "208")
+@CardRegistration(set = "CMA", collectorNumber = "184")
 public class Malfegor extends Card {
 
     public Malfegor() {

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "C13", collectorNumber = "41")
+@CardRegistration(set = "CMA", collectorNumber = "38")
 public class DjinnOfInfiniteDeceits extends Card {
 
     private static final PermanentPredicate NONLEGENDARY_CREATURE = new PermanentAllOfPredicate(List.of(

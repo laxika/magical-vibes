@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaThenBoostSourceEffect;
 
 @CardRegistration(set = "CMD", collectorNumber = "129")
+@CardRegistration(set = "CMA", collectorNumber = "84")
 public class ManaChargedDragon extends Card {
 
     public ManaChargedDragon() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "C13", collectorNumber = "167")
+@CardRegistration(set = "CMA", collectorNumber = "141")
 public class Restore extends Card {
 
     public Restore() {

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "C20", collectorNumber = "174")
 @CardRegistration(set = "C18", collectorNumber = "150")
 @CardRegistration(set = "EOC", collectorNumber = "98")
+@CardRegistration(set = "CMA", collectorNumber = "115")
 public class Harrow extends Card {
 
     public Harrow() {

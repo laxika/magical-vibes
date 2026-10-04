@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 
 @CardRegistration(set = "C15", collectorNumber = "34")
+@CardRegistration(set = "CMA", collectorNumber = "94")
 public class CallerOfThePack extends Card {
 
     public CallerOfThePack() {

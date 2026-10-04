@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 @CardRegistration(set = "TSP", collectorNumber = "180")
 @CardRegistration(set = "CMD", collectorNumber = "137")
 @CardRegistration(set = "CMM", collectorNumber = "262")
+@CardRegistration(set = "CMA", collectorNumber = "88")
 public class SulfurousBlast extends Card {
 
     public SulfurousBlast() {

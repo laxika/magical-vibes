@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "LRW", collectorNumber = "202")
 @CardRegistration(set = "DDR", collectorNumber = "6")
 @CardRegistration(set = "C15", collectorNumber = "179")
+@CardRegistration(set = "CMA", collectorNumber = "96")
 public class Cloudthresher extends Card {
 
     public Cloudthresher() {

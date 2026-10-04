@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCreaturesOfChosenTypeFromGraveyardToHandEffect;
 
 @CardRegistration(set = "C14", collectorNumber = "44")
+@CardRegistration(set = "CMA", collectorNumber = "112")
 public class GraveSifter extends Card {
 
     public GraveSifter() {

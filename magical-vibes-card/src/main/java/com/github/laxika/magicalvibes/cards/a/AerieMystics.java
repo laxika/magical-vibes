@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "1")
 @CardRegistration(set = "C13", collectorNumber = "2")
+@CardRegistration(set = "CMA", collectorNumber = "1")
 public class AerieMystics extends Card {
 
     public AerieMystics() {

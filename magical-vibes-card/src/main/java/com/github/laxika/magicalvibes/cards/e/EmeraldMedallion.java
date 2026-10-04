@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 @CardRegistration(set = "C14", collectorNumber = "237")
 @CardRegistration(set = "CMM", collectorNumber = "379")
 @CardRegistration(set = "CMM", collectorNumber = "603")
+@CardRegistration(set = "CMA", collectorNumber = "217")
 public class EmeraldMedallion extends Card {
 
     public EmeraldMedallion() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 @CardRegistration(set = "5DN", collectorNumber = "97")
 @CardRegistration(set = "HOP", collectorNumber = "79")
 @CardRegistration(set = "C14", collectorNumber = "222")
+@CardRegistration(set = "CMA", collectorNumber = "159")
 public class TornadoElemental extends Card {
 
     public TornadoElemental() {

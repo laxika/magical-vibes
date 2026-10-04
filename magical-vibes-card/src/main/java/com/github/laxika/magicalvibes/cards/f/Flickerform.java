@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "18")
 @CardRegistration(set = "C13", collectorNumber = "12")
+@CardRegistration(set = "CMA", collectorNumber = "11")
 public class Flickerform extends Card {
 
     public Flickerform() {

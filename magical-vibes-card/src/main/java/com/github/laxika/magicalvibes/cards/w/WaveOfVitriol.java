@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.WaveOfVitriolEffect;
 
 @CardRegistration(set = "C14", collectorNumber = "51")
+@CardRegistration(set = "CMA", collectorNumber = "165")
 public class WaveOfVitriol extends Card {
 
     public WaveOfVitriol() {

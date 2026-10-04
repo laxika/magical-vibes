@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "WWK", collectorNumber = "106")
 @CardRegistration(set = "C14", collectorNumber = "203")
+@CardRegistration(set = "CMA", collectorNumber = "120")
 public class JoragaWarcaller extends Card {
 
     public JoragaWarcaller() {

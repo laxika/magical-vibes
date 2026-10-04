@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "2X2", collectorNumber = "256")
 @CardRegistration(set = "C13", collectorNumber = "230")
 @CardRegistration(set = "KHC", collectorNumber = "88")
+@CardRegistration(set = "CMA", collectorNumber = "203")
 public class MistmeadowWitch extends Card {
 
     public MistmeadowWitch() {

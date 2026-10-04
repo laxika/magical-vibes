@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RAV", collectorNumber = "2")
 @CardRegistration(set = "CMD", collectorNumber = "9")
+@CardRegistration(set = "CMA", collectorNumber = "6")
 public class BatheInLight extends Card {
 
     public BatheInLight() {

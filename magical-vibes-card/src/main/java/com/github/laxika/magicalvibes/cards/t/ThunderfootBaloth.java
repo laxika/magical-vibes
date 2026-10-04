@@ -16,6 +16,7 @@ import java.util.Set;
 @CardRegistration(set = "NCC", collectorNumber = "317")
 @CardRegistration(set = "DSC", collectorNumber = "201")
 @CardRegistration(set = "SCD", collectorNumber = "213")
+@CardRegistration(set = "CMA", collectorNumber = "155")
 public class ThunderfootBaloth extends Card {
 
     public ThunderfootBaloth() {

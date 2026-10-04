@@ -21,6 +21,7 @@ import java.util.Set;
 @CardRegistration(set = "DDC", collectorNumber = "43")
 @CardRegistration(set = "DVD", collectorNumber = "43")
 @CardRegistration(set = "CMD", collectorNumber = "95")
+@CardRegistration(set = "CMA", collectorNumber = "64")
 public class ReiverDemon extends Card {
 
     public ReiverDemon() {

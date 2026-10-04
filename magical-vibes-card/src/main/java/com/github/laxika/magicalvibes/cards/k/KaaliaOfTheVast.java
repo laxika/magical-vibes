@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1563")
+@CardRegistration(set = "CMA", collectorNumber = "180")
 @CardRegistration(set = "2X2", collectorNumber = "235")
 @CardRegistration(set = "2XM", collectorNumber = "204")
 @CardRegistration(set = "CMD", collectorNumber = "206")

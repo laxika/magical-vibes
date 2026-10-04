@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "C14", collectorNumber = "42")
+@CardRegistration(set = "CMA", collectorNumber = "98")
 public class Creeperhulk extends Card {
 
     public Creeperhulk() {

@@ -8,6 +8,7 @@ import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "125")
 @CardRegistration(set = "C13", collectorNumber = "214")
+@CardRegistration(set = "CMA", collectorNumber = "193")
 public class SkywardEyeProphets extends Card {
 
     public SkywardEyeProphets() {

@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SIR", collectorNumber = "131")
 @CardRegistration(set = "CMD", collectorNumber = "96")
 @CardRegistration(set = "C15", collectorNumber = "134")
+@CardRegistration(set = "CMA", collectorNumber = "65")
 public class RiseFromTheGrave extends Card {
 
     public RiseFromTheGrave() {

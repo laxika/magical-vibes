@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "GN3", collectorNumber = "95")
 @CardRegistration(set = "C13", collectorNumber = "143")
 @CardRegistration(set = "C14", collectorNumber = "192")
+@CardRegistration(set = "CMA", collectorNumber = "104")
 public class ElvishSkysweeper extends Card {
 
     public ElvishSkysweeper() {

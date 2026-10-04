@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "SLZ", collectorNumber = "6")
 @CardRegistration(set = "SLZ", collectorNumber = "127")
 @CardRegistration(set = "SLZ", collectorNumber = "248")
+@CardRegistration(set = "CMA", collectorNumber = "17")
 public class MotherOfRunes extends Card {
 
     public MotherOfRunes() {

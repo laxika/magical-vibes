@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "C13", collectorNumber = "257")
 @CardRegistration(set = "CMD", collectorNumber = "258")
 @CardRegistration(set = "TDC", collectorNumber = "324")
+@CardRegistration(set = "CMA", collectorNumber = "228")
 public class SelesnyaSignet extends Card {
 
     public SelesnyaSignet() {

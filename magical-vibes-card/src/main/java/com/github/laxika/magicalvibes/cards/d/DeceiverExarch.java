@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "NPH", collectorNumber = "33")
 @CardRegistration(set = "C13", collectorNumber = "37")
+@CardRegistration(set = "CMA", collectorNumber = "36")
 public class DeceiverExarch extends Card {
 
     public DeceiverExarch() {

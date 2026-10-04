@@ -10,6 +10,7 @@ import java.util.Set;
 
 @CardRegistration(set = "USG", collectorNumber = "277")
 @CardRegistration(set = "C14", collectorNumber = "221")
+@CardRegistration(set = "CMA", collectorNumber = "158")
 public class TitaniasChosen extends Card {
 
     public TitaniasChosen() {

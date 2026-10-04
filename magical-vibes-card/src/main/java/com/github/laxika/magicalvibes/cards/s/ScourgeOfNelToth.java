@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "C15", collectorNumber = "21")
 @CardRegistration(set = "SCD", collectorNumber = "104")
+@CardRegistration(set = "CMA", collectorNumber = "66")
 public class ScourgeOfNelToth extends Card {
 
     public ScourgeOfNelToth() {

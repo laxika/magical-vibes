@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 @CardRegistration(set = "SLD", collectorNumber = "779")
 @CardRegistration(set = "C14", collectorNumber = "216")
 @CardRegistration(set = "WOC", collectorNumber = "134")
+@CardRegistration(set = "CMA", collectorNumber = "151")
 public class SylvanRanger extends Card {
 
     public SylvanRanger() {
