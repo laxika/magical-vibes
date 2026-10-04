@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NishobaBrawler;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.t.TangledIslet;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -19,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HerdMigration.class, Forest.class, Plains.class, Swamp.class, GrizzlyBears.class})
+@CardUsed({HerdMigration.class, Forest.class, Plains.class, Swamp.class, NishobaBrawler.class, TangledIslet.class})
 class HerdMigrationTest extends BaseCardTest {
 
     @Test
@@ -50,7 +51,7 @@ class HerdMigrationTest extends BaseCardTest {
         Forest forest = new Forest();
         Plains plains = new Plains();
         harness.setHand(player1, List.of(migration));
-        harness.setLibrary(player1, List.of(forest, plains, new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(forest, plains, new NishobaBrawler()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
@@ -79,10 +80,88 @@ class HerdMigrationTest extends BaseCardTest {
                 .contains("Herd Migration");
     }
 
-    private void castHerdMigration() {
+    @Test
+    @DisplayName("Domain counts both types of a nonbasic land and ignores opponents' lands")
+    void countsNonbasicLandTypesOnlyForController() {
+        harness.addToBattlefield(player1, new TangledIslet());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player2, new Swamp());
+
+        castHerdMigration();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("Domain is evaluated when the spell resolves")
+    void countsLandTypesAtResolution() {
+        harness.addToBattlefield(player1, new Forest());
         harness.setHand(player1, List.of(new HerdMigration()));
         harness.addMana(player1, ManaColor.GREEN, 7);
         harness.castSorcery(player1, 0, 0);
+        harness.addToBattlefield(player1, new Plains());
+
         harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The hand ability can fail to find and still gains life")
+    void gainsLifeWhenDecliningSearch() {
+        HerdMigration migration = new HerdMigration();
+        Forest forest = new Forest();
+        TangledIslet islet = new TangledIslet();
+        harness.setHand(player1, List.of(migration));
+        harness.setLibrary(player1, List.of(forest, islet));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(migration);
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(forest);
+        harness.assertLife(player1, 20);
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertLife(player1, 23);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, islet);
+    }
+
+    @Test
+    @DisplayName("The hand ability gains life even with an empty library")
+    void gainsLifeWithEmptyLibrary() {
+        harness.setHand(player1, List.of(new HerdMigration()));
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 23);
+        harness.assertInGraveyard(player1, "Herd Migration");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    private void castHerdMigration() {
+        harness.setHand(player1, List.of(new HerdMigration()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }
