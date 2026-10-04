@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GuffRewritesHistory.class, Forest.class, GrizzlyBears.class, OblivionRing.class})
 class GuffRewritesHistoryTest extends BaseCardTest {
@@ -67,11 +68,95 @@ class GuffRewritesHistoryTest extends BaseCardTest {
         assertThat(gd.findExiledCard(opponentCreature.getCard().getId())).isNotNull();
     }
 
+    @Test
+    @DisplayName("The caster must target their own eligible permanent as well as the opponent's")
+    void cannotOmitCastersEligiblePermanent() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareGuff();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(opponentCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An opponent with an eligible permanent cannot be omitted")
+    void cannotOmitOpponentsEligiblePermanent() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        prepareGuff();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, List.of(ownCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A player with only lands and enchantments is skipped")
+    void skipsPlayerWithoutEligiblePermanent() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent opponentEnchantment = harness.addToBattlefieldAndReturn(player2, new OblivionRing());
+        harness.setLibrary(player1, List.of());
+        GrizzlyBears untouchedCard = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(untouchedCard));
+
+        castGuff(List.of(ownCreature.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentLand, opponentEnchantment);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(untouchedCard);
+        assertThat(gd.findExiledCard(ownCreature.getCard().getId())).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("A shuffled token still lets its controller exile a nonland and returns exiled lands")
+    void tokenTargetStillOffersFreeCastAndReturnsLands() {
+        GrizzlyBears token = new GrizzlyBears();
+        token.setToken(true);
+        Permanent ownToken = harness.addToBattlefieldAndReturn(player1, token);
+        Forest firstLand = new Forest();
+        Forest secondLand = new Forest();
+        GrizzlyBears nonland = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(firstLand, secondLand, nonland));
+
+        castGuff(List.of(ownToken.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ownToken);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(firstLand, secondLand);
+        assertThat(gd.findExiledCard(firstLand.getId())).isNull();
+        assertThat(gd.findExiledCard(secondLand.getId())).isNull();
+        assertThat(gd.findExiledCard(nonland.getId())).isNotNull();
+        assertThat(gd.findExiledCard(token.getId())).isNull();
+        harness.handleMayAbilityChosen(player1, false);
+    }
+
+    @Test
+    @DisplayName("If an affected library contains only lands, they all return and no cast is offered")
+    void allLandLibraryReturnsWithoutCastOffer() {
+        GrizzlyBears token = new GrizzlyBears();
+        token.setToken(true);
+        Permanent ownToken = harness.addToBattlefieldAndReturn(player1, token);
+        Forest firstLand = new Forest();
+        Forest secondLand = new Forest();
+        harness.setLibrary(player1, List.of(firstLand, secondLand));
+
+        castGuff(List.of(ownToken.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(firstLand, secondLand);
+        assertThat(gd.findExiledCard(firstLand.getId())).isNull();
+        assertThat(gd.findExiledCard(secondLand.getId())).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
     private void castGuff(List<java.util.UUID> targetIds) {
+        prepareGuff();
+        harness.castAndResolveInstant(player1, 0, targetIds);
+    }
+
+    private void prepareGuff() {
         harness.setHand(player1, List.of(new GuffRewritesHistory()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, targetIds);
-        harness.passBothPriorities();
     }
 }
