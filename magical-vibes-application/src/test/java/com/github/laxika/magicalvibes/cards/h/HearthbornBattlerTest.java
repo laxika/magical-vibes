@@ -66,6 +66,79 @@ class HearthbornBattlerTest extends BaseCardTest {
                 .hasMessageContaining("Invalid permanent");
     }
 
+    @Test
+    @CardUsed(HearthbornBattler.class)
+    void countsItsOwnCastAndOnlyTheBattlerAlreadyOnBattlefieldTriggers() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new HearthbornBattler(), new HearthbornBattler()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.assertLife(player2, 20);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(countPermanents(player1, "Hearthborn Battler")).isEqualTo(1);
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Hearthborn Battler")).isEqualTo(2);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void enteringAsSecondSpellDoesNotTriggerRetroactivelyOrOnThirdSpell() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new GrizzlyBears(), new HearthbornBattler(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.assertLife(player2, 20);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+        assertThat(countPermanents(player1, "Grizzly Bears")).isEqualTo(2);
+    }
+
+    @Test
+    void secondSpellCountResetsOnANewTurn() {
+        harness.addToBattlefield(player1, new HearthbornBattler());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+        harness.assertLife(player2, 18);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.assertLife(player2, 18);
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+    }
+
     private void prepareOpponentTurn() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
