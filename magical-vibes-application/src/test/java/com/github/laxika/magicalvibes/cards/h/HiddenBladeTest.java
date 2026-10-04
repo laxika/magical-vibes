@@ -90,4 +90,56 @@ class HiddenBladeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castArtifact(player1, 0, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void canBeCastAtInstantSpeedWithoutAnyCreatures() {
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new HiddenBlade()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent blade = findPermanent(player1, "Hidden Blade");
+        assertThat(blade.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void equippingAnAssassinDoesNotGrantDeathtouch() {
+        Permanent blade = harness.addToBattlefieldAndReturn(player1, new HiddenBlade());
+        Permanent assassin = harness.addToBattlefieldAndReturn(player1, new AssassinInitiate());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, assassin.getId());
+        harness.passBothPriorities();
+
+        assertThat(blade.getAttachedTo()).isEqualTo(assassin.getId());
+        assertThat(gqs.getEffectivePower(gd, assassin)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, assassin, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, assassin, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    void movingTheBladeTransfersBonusesButLeavesTemporaryDeathtouchOnOriginalAssassin() {
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new AssassinInitiate());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new AssassinInitiate());
+        harness.setHand(player1, List.of(new HiddenBlade()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castArtifact(player1, 0, original.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 2, null, other.getId());
+        harness.passBothPriorities();
+
+        Permanent blade = findPermanent(player1, "Hidden Blade");
+        assertThat(blade.getAttachedTo()).isEqualTo(other.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, original, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, original, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.DEATHTOUCH)).isFalse();
+    }
 }
