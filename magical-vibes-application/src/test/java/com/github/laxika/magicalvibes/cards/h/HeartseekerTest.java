@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.DarksteelCitadel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -97,6 +98,114 @@ class HeartseekerTest extends BaseCardTest {
         assertThat(heartseeker.getAttachedTo()).isNull();
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Tapping and unattaching are paid before the target is destroyed")
+    void paysCostsBeforeResolution() {
+        Permanent creature = addCreatureReady(player1, new CrazedGoblin());
+        Permanent heartseeker = addHeartseekerReady(player1);
+        heartseeker.setAttachedTo(creature.getId());
+        heartseeker.tap();
+        Permanent target = addCreatureReady(player2, new CrazedGoblin());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(heartseeker.getAttachedTo()).isNull();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player2, "Crazed Goblin");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(heartseeker);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick creature cannot pay the granted tap cost")
+    void summoningSicknessPreventsActivation() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CrazedGoblin());
+        creature.setSummoningSick(true);
+        Permanent heartseeker = addHeartseekerReady(player1);
+        heartseeker.setAttachedTo(creature.getId());
+        Permanent target = addCreatureReady(player2, new CrazedGoblin());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(heartseeker.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Equip requires all five mana")
+    void insufficientManaPreventsEquip() {
+        Permanent heartseeker = addHeartseekerReady(player1);
+        Permanent creature = addCreatureReady(player1, new CrazedGoblin());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(heartseeker.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated during combat")
+    void equipRequiresSorceryTiming() {
+        Permanent heartseeker = addHeartseekerReady(player1);
+        Permanent creature = addCreatureReady(player1, new CrazedGoblin());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(heartseeker.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("With two Heartseekers only the one granting the activated ability is unattached")
+    void unattachesOnlyTheChosenHeartseeker() {
+        Permanent creature = addCreatureReady(player1, new CrazedGoblin());
+        Permanent first = addHeartseekerReady(player1);
+        Permanent second = addHeartseekerReady(player1);
+        first.setAttachedTo(creature.getId());
+        second.setAttachedTo(creature.getId());
+        Permanent target = addCreatureReady(player2, new CrazedGoblin());
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+
+        assertThat(first.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(second.getAttachedTo()).isNull();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("The equipped creature can target itself")
+    void canDestroyItself() {
+        Permanent creature = addCreatureReady(player1, new CrazedGoblin());
+        Permanent heartseeker = addHeartseekerReady(player1);
+        heartseeker.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature).contains(heartseeker);
+        harness.assertInGraveyard(player1, "Crazed Goblin");
+        assertThat(heartseeker.getAttachedTo()).isNull();
     }
 
     private Permanent addHeartseekerReady(Player player) {
