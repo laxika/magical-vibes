@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.b.BondedHerdbeast;
+import com.github.laxika.magicalvibes.cards.i.InvasionOfAlara;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,13 +19,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FurnaceReins.class, GrizzlyBears.class, Pacifism.class})
+@CardUsed({FurnaceReins.class, BondedHerdbeast.class, InvasionOfAlara.class})
 class FurnaceReinsTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Furnace Reins gains control, untaps, and grants haste")
     void resolvesControlUntapAndHaste() {
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new BondedHerdbeast());
         target.tap();
         castFurnaceReins(target);
 
@@ -37,7 +38,7 @@ class FurnaceReinsTest extends BaseCardTest {
     @Test
     @DisplayName("The stolen creature creates a Treasure when it deals combat damage to a player")
     void createsTreasureOnCombatDamageToPlayer() {
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new BondedHerdbeast());
         castFurnaceReins(target);
         target.setAttacking(true);
 
@@ -50,24 +51,27 @@ class FurnaceReinsTest extends BaseCardTest {
     @Test
     @DisplayName("The granted Treasure ability expires at end of turn")
     void treasureAbilityExpiresAtEndOfTurn() {
-        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player1, new BondedHerdbeast());
         castFurnaceReins(target);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         target.setAttacking(true);
+        target.setAttackTarget(player2.getId());
         resolveCombat();
         harness.passBothPriorities();
 
+        harness.assertLife(player2, 16);
         assertThat(treasuresFor(player1)).isEmpty();
     }
 
     @Test
     @DisplayName("Furnace Reins cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new InvasionOfAlara());
         harness.setHand(player1, List.of(new FurnaceReins()));
         addMana();
 
@@ -76,11 +80,79 @@ class FurnaceReinsTest extends BaseCardTest {
                 .hasMessageContaining("creature");
     }
 
+    @Test
+    @DisplayName("Combat damage to a battle creates one Treasure regardless of damage amount")
+    void createsTreasureOnCombatDamageToBattle() {
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfAlara());
+        battle.setProtectorPlayerId(player2.getId());
+        battle.setCounterCount(CounterType.DEFENSE, 7);
+        Permanent target = addCreatureReady(player2, new BondedHerdbeast());
+        castFurnaceReins(target);
+        target.setAttacking(true);
+        target.setAttackTarget(battle.getId());
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
+        assertThat(treasuresFor(player1)).hasSize(1);
+        assertThat(treasuresFor(player2)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Control and haste last through the end step and expire during cleanup")
+    void controlAndHasteExpireDuringCleanup() {
+        Permanent target = addCreatureReady(player2, new BondedHerdbeast());
+        castFurnaceReins(target);
+
+        harness.forceStep(TurnStep.END_STEP);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(target.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Two resolutions grant two independent Treasure abilities")
+    void repeatedResolutionsCreateTwoTreasures() {
+        Permanent target = addCreatureReady(player2, new BondedHerdbeast());
+        castFurnaceReins(target);
+        castFurnaceReins(target);
+        target.setAttacking(true);
+        target.setAttackTarget(player2.getId());
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+        assertThat(treasuresFor(player1)).hasSize(2);
+        assertThat(treasuresFor(player2)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The stolen creature can attack immediately despite the control change")
+    void stolenCreatureCanAttackImmediately() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BondedHerdbeast());
+        target.tap();
+        castFurnaceReins(target);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+        assertThat(treasuresFor(player1)).hasSize(1);
+        assertThat(treasuresFor(player1).getFirst().isTapped()).isFalse();
+    }
+
     private void castFurnaceReins(Permanent target) {
         harness.setHand(player1, List.of(new FurnaceReins()));
         addMana();
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
     private void addMana() {

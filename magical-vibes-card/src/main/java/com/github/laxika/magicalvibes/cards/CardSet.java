@@ -194,6 +194,7 @@ public enum CardSet {
     SET_SS3("SS3"),
     SET_SLU("SLU"),
     SET_SLC("SLC"),
+    SET_SCD("SCD"),
     SET_SLD("SLD"),
     SET_MSC("MSC"),
     SET_SLX("SLX"),

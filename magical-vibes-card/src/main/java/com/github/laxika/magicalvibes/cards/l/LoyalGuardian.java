@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "CMM", collectorNumber = "304")
 @CardRegistration(set = "NEC", collectorNumber = "121")
 @CardRegistration(set = "C18", collectorNumber = "31")
+@CardRegistration(set = "SCD", collectorNumber = "198")
 public class LoyalGuardian extends Card {
 
     public LoyalGuardian() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "82")
+@CardRegistration(set = "WOE", collectorNumber = "336")
 public class BeseechTheMirror extends Card {
 
     public BeseechTheMirror() {

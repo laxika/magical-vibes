@@ -23,6 +23,7 @@ import java.util.Set;
 @CardRegistration(set = "C19", collectorNumber = "55")
 @CardRegistration(set = "BRC", collectorNumber = "144")
 @CardRegistration(set = "ONC", collectorNumber = "134")
+@CardRegistration(set = "SCD", collectorNumber = "268")
 public class IdolOfOblivion extends Card {
 
     public IdolOfOblivion() {

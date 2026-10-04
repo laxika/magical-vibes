@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WOE", collectorNumber = "93")
+@CardRegistration(set = "WOE", collectorNumber = "280")
 public class GumdropPoisoner extends Card {
 
     public GumdropPoisoner() {

@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "C17", collectorNumber = "76")
 @CardRegistration(set = "VOC", collectorNumber = "99")
 @CardRegistration(set = "DRC", collectorNumber = "37")
+@CardRegistration(set = "SCD", collectorNumber = "37")
 public class SwordsToPlowshares extends Card {
 
     public SwordsToPlowshares() {

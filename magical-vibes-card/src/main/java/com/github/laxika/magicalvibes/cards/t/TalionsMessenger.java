@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "73")
+@CardRegistration(set = "WOE", collectorNumber = "335")
 public class TalionsMessenger extends Card {
 
     public TalionsMessenger() {

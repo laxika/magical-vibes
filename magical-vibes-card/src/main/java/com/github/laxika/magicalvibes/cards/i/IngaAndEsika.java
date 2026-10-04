@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "229")
+@CardRegistration(set = "MOM", collectorNumber = "310")
 public class IngaAndEsika extends Card {
 
     public IngaAndEsika() {

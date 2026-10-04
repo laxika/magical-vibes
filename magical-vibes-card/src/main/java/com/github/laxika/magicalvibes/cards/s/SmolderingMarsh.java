@@ -37,6 +37,7 @@ import java.util.List;
 @CardRegistration(set = "EOC", collectorNumber = "182")
 @CardRegistration(set = "VOC", collectorNumber = "183")
 @CardRegistration(set = "BRC", collectorNumber = "202")
+@CardRegistration(set = "SCD", collectorNumber = "319")
 @CardRegistration(set = "BFZ", collectorNumber = "247")
 public class SmolderingMarsh extends Card {
 

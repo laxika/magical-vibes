@@ -3504,13 +3504,20 @@ public class ChoiceHandlerService {
             throw new IllegalArgumentException("Invalid counter choice: " + choice);
         }
 
-        gameData.interaction.clearAwaitingInput();
         Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
         if (ChoiceContext.RemoveChosenCountersChoice.DONE.equals(choice) || target == null) {
+            if (ChoiceContext.RemoveChosenCountersChoice.DONE.equals(choice)
+                    && ctx.exactAmount()
+                    && target != null
+                    && target.getTotalCounterCount() >= ctx.remainingSelections()) {
+                throw new IllegalArgumentException("Must remove the required number of counters");
+            }
+            gameData.interaction.clearAwaitingInput();
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
+        gameData.interaction.clearAwaitingInput();
         CounterType counterType = ctx.counterTypes().stream()
                 .filter(type -> ChoiceContext.RemoveChosenCountersChoice.counterLabel(type).equals(choice))
                 .findFirst()
@@ -3523,7 +3530,7 @@ public class ChoiceHandlerService {
                         .counterTypesOn(target);
         if (remainingSelections > 0 && !remainingTypes.isEmpty()) {
             playerInputService.beginRemoveChosenCountersChoice(gameData, ctx.controllerId(), ctx.targetId(),
-                    ctx.sourceCardName(), remainingSelections, remainingTypes);
+                    ctx.sourceCardName(), remainingSelections, remainingTypes, ctx.exactAmount());
             inputCompletionService.publishStateAfterInput(gameData);
             return;
         }

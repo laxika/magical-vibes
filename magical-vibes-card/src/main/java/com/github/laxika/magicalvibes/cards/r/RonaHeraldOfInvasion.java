@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "75")
+@CardRegistration(set = "MOM", collectorNumber = "295")
 public class RonaHeraldOfInvasion extends Card {
 
     public RonaHeraldOfInvasion() {

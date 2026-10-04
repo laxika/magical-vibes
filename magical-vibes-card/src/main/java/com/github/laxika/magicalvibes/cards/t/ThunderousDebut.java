@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "190")
+@CardRegistration(set = "WOE", collectorNumber = "359")
 public class ThunderousDebut extends Card {
 
     public ThunderousDebut() {

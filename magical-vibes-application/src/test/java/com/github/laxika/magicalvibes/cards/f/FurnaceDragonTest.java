@@ -92,8 +92,7 @@ class FurnaceDragonTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BeaconOfUnrest()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0, target.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player1, "Furnace Dragon");
@@ -103,5 +102,43 @@ class FurnaceDragonTest extends BaseCardTest {
                 .noneMatch(card -> card.getName().equals("Darksteel Citadel"));
         assertThat(harness.getGameData().getPlayerExiledCards(player2.getId()))
                 .noneMatch(card -> card.getName().equals("Darksteel Citadel"));
+    }
+
+    @Test
+    @DisplayName("Affinity cannot reduce the three red mana requirement")
+    void affinityDoesNotReduceColoredCost() {
+        for (int i = 0; i < 9; i++) {
+            harness.addToBattlefield(player1, new DarksteelCitadel());
+        }
+        harness.setHand(player1, List.of(new FurnaceDragon()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Artifacts are exiled when the trigger resolves, including artifacts entering afterward")
+    void exileUsesArtifactsPresentAtResolution() {
+        harness.addToBattlefield(player1, new DarksteelCitadel());
+        harness.setHand(player1, List.of(new FurnaceDragon()));
+        harness.addMana(player1, ManaColor.RED, 9);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Darksteel Citadel");
+        harness.addToBattlefield(player2, new DarksteelCitadel());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Darksteel Citadel");
+        harness.assertNotOnBattlefield(player2, "Darksteel Citadel");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Darksteel Citadel"));
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Darksteel Citadel"));
     }
 }

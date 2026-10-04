@@ -18,27 +18,38 @@ import java.util.List;
  * any follow-up effects.
  *
  * @param reflexiveFollowUps effects to add after the damage on the reflexive ability
+ * @param targetPredicate optional restriction for the reflexive damage target
+ * @param doubleDamageIfGiant whether to double the captured power for a sacrificed Giant
  */
 public record SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect(
         List<CardEffect> reflexiveFollowUps
-, PermanentPredicate targetPredicate) implements CardEffect {
+        , PermanentPredicate targetPredicate
+        , boolean doubleDamageIfGiant) implements CardEffect {
         public SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect(
         List<CardEffect> reflexiveFollowUps
 ) {
-            this(reflexiveFollowUps, null);
+            this(reflexiveFollowUps, null, false);
         }
 
+    public SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect(
+            List<CardEffect> reflexiveFollowUps, PermanentPredicate targetPredicate) {
+        this(reflexiveFollowUps, targetPredicate, false);
+    }
 
     public SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect(PermanentPredicate targetPredicate) {
-        this(List.of(), targetPredicate);
+        this(List.of(), targetPredicate, false);
     }
 
     public SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect() {
-        this(List.of(), null);
+        this(List.of(), null, false);
     }
 
     public SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect(CardEffect... reflexiveFollowUps) {
-        this(List.of(reflexiveFollowUps), null);
+        this(List.of(reflexiveFollowUps), null, false);
+    }
+
+    public SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect(boolean doubleDamageIfGiant) {
+        this(List.of(), null, doubleDamageIfGiant);
     }
 
     public SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect {

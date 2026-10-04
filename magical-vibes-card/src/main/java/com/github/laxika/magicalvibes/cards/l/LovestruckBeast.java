@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredi
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "165")
+@CardRegistration(set = "ELD", collectorNumber = "299")
 public class LovestruckBeast extends Card {
 
     public LovestruckBeast() {

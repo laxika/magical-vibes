@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "272")
+@CardRegistration(set = "KHM", collectorNumber = "372")
 public class TyriteSanctum extends Card {
 
     public TyriteSanctum() {

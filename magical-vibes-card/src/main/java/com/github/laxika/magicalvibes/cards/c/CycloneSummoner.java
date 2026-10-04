@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "52")
+@CardRegistration(set = "KHM", collectorNumber = "343")
 public class CycloneSummoner extends Card {
 
     public CycloneSummoner() {

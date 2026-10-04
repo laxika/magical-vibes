@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "163")
+@CardRegistration(set = "WOE", collectorNumber = "354")
 public class BlossomingTortoise extends Card {
 
     public BlossomingTortoise() {

@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "32")
+@CardRegistration(set = "MOM", collectorNumber = "348")
 public class ProgenitorExarch extends Card {
 
     public ProgenitorExarch() {

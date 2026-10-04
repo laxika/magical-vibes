@@ -93,14 +93,50 @@ class GallowbraidTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Successive upkeeps accumulate age counters and increase the life payment")
+    void successiveUpkeepsIncreaseLifePayment() {
+        Permanent gallowbraid = harness.addToBattlefieldAndReturn(player1, new Gallowbraid());
+        harness.setLife(player1, 20);
+
+        for (int upkeep = 1; upkeep <= 3; upkeep++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+
+            assertThat(gallowbraid.getCounterCount(CounterType.AGE)).isEqualTo(upkeep);
+            harness.assertLife(player1, 20 - upkeep * (upkeep + 1) / 2);
+            harness.assertOnBattlefield(player1, "Gallowbraid");
+        }
+    }
+
+    @Test
+    @DisplayName("Declining an accumulated upkeep costs no life and still adds an age counter")
+    void decliningAccumulatedUpkeepCostsNoLife() {
+        Permanent gallowbraid = harness.addToBattlefieldAndReturn(player2, new Gallowbraid());
+        gallowbraid.setCounterCount(CounterType.AGE, 2);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gallowbraid.getCounterCount(CounterType.AGE)).isEqualTo(3);
+
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertNotOnBattlefield(player2, "Gallowbraid");
+        harness.assertInGraveyard(player2, "Gallowbraid");
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     @DisplayName("Trample assigns excess combat damage to the defending player")
     void trampleAssignsExcessCombatDamageToDefendingPlayer() {
         harness.setLife(player2, 20);
         addCreatureReady(player1, new Gallowbraid());
         Permanent blocker = addCreatureReady(player2, new GoblinGrenadiers());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 

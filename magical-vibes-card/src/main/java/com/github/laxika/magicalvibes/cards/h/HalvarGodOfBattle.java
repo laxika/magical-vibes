@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "15")
+@CardRegistration(set = "KHM", collectorNumber = "299")
 public class HalvarGodOfBattle extends Card {
 
     public HalvarGodOfBattle() {

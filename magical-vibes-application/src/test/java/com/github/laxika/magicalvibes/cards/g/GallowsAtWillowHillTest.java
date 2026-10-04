@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.a.AlchemistsApprentice;
+import com.github.laxika.magicalvibes.cards.a.AngelicArmaments;
+import com.github.laxika.magicalvibes.cards.v.Vorstclaw;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,21 +19,22 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GallowsAtWillowHill.class, AlchemistsApprentice.class, AngelicArmaments.class, Vorstclaw.class})
 class GallowsAtWillowHillTest extends BaseCardTest {
 
     @Test
     @DisplayName("Destroys the targeted creature and gives its controller a 1/1 white flying Spirit")
     void destroysTargetAndGivesSpirit() {
-        Permanent gallows = addPermanent(player1, new GallowsAtWillowHill());
+        Permanent gallows = harness.addToBattlefieldAndReturn(player1, new GallowsAtWillowHill());
         addHumans(player1, 4);
-        Permanent bears = addPermanent(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Vorstclaw());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.activateAbility(player1, 0, 0, null, target.getId());
         tapHumans(player1, 3);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(gallows.isTapped()).isTrue();
         assertThat(tappedHumanCount(player1)).isEqualTo(3);
 
@@ -42,6 +46,7 @@ class GallowsAtWillowHillTest extends BaseCardTest {
         assertThat(spirit.getCard().getPower()).isEqualTo(1);
         assertThat(spirit.getCard().getToughness()).isEqualTo(1);
         assertThat(spirit.getCard().getKeywords()).contains(Keyword.FLYING);
+        assertThat(spirit.getCard().getColor()).isEqualTo(CardColor.WHITE);
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(
                 p -> p.getCard().getSubtypes().contains(CardSubtype.SPIRIT));
     }
@@ -49,9 +54,9 @@ class GallowsAtWillowHillTest extends BaseCardTest {
     @Test
     @DisplayName("A non-creature permanent cannot be targeted")
     void cannotTargetNonCreature() {
-        addPermanent(player1, new GallowsAtWillowHill());
+        harness.addToBattlefieldAndReturn(player1, new GallowsAtWillowHill());
         addHumans(player1, 4);
-        Permanent artifact = addPermanent(player2, createCard("Test Artifact", CardType.ARTIFACT));
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AngelicArmaments());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, artifact.getId()))
@@ -61,50 +66,106 @@ class GallowsAtWillowHillTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate with fewer than three untapped Humans")
     void cannotActivateWithoutThreeHumans() {
-        addPermanent(player1, new GallowsAtWillowHill());
+        harness.addToBattlefieldAndReturn(player1, new GallowsAtWillowHill());
         addHumans(player1, 2);
-        Permanent bears = addPermanent(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Vorstclaw());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Non-Human creatures cannot pay the tap cost")
     void nonHumansCannotPayCost() {
-        addPermanent(player1, new GallowsAtWillowHill());
+        harness.addToBattlefieldAndReturn(player1, new GallowsAtWillowHill());
         addHumans(player1, 2);
-        addPermanent(player1, new GrizzlyBears());
-        Permanent bears = addPermanent(player2, new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player1, new Vorstclaw());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Vorstclaw());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bears.getId()))
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addPermanent(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Summoning-sick Humans can pay the cost, including the targeted Human")
+    void canTapSummoningSickTargetHuman() {
+        harness.addToBattlefield(player1, new GallowsAtWillowHill());
+        addHumans(player1, 3);
+        List<Permanent> humans = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof AlchemistsApprentice).toList();
+        humans.forEach(p -> p.setSummoningSick(true));
+        Permanent target = humans.getFirst();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        tapHumans(player1, 3);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(tappedHumanCount(player1)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getSubtypes().contains(CardSubtype.SPIRIT)).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Already tapped Humans do not count toward the activation cost")
+    void tappedHumansCannotPayCost() {
+        harness.addToBattlefield(player1, new GallowsAtWillowHill());
+        addHumans(player1, 3);
+        gd.playerBattlefields.get(player1.getId()).get(1).tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Vorstclaw());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Regenerating the target does not prevent its controller from creating a Spirit")
+    void regeneratingTargetStillGivesSpirit() {
+        harness.addToBattlefield(player1, new GallowsAtWillowHill());
+        addHumans(player1, 3);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Vorstclaw());
+        target.setRegenerationShield(1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        tapHumans(player1, 3);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(p -> p.getCard().getSubtypes().contains(CardSubtype.SPIRIT)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("No Spirit is created when the only target leaves before resolution")
+    void missingTargetDoesNotGiveSpirit() {
+        harness.addToBattlefield(player1, new GallowsAtWillowHill());
+        addHumans(player1, 3);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlchemistsApprentice());
+        harness.setLibrary(player2, List.of(new Vorstclaw()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        tapHumans(player1, 3);
+        harness.activateAbility(player2, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(tappedHumanCount(player1)).isEqualTo(3);
     }
 
     private void addHumans(Player player, int count) {
         for (int i = 0; i < count; i++) {
-            Card card = createCard("Test Human " + i, CardType.CREATURE);
-            card.setSubtypes(List.of(CardSubtype.HUMAN));
-            card.setPower(1);
-            card.setToughness(1);
-            addPermanent(player, card);
+            harness.addToBattlefield(player, new AlchemistsApprentice());
         }
-    }
-
-    private Card createCard(String name, CardType type) {
-        Card card = new Card() {};
-        card.setName(name);
-        card.setType(type);
-        return card;
     }
 
     private void tapHumans(Player player, int count) {
@@ -120,7 +181,7 @@ class GallowsAtWillowHillTest extends BaseCardTest {
 
     private long tappedHumanCount(Player player) {
         return gd.playerBattlefields.get(player.getId()).stream()
-                .filter(p -> p.getCard().getName().startsWith("Test Human"))
+                .filter(p -> p.getCard().getSubtypes().contains(CardSubtype.HUMAN))
                 .filter(Permanent::isTapped)
                 .count();
     }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
 
 @CardRegistration(set = "JOU", collectorNumber = "93")
+@CardRegistration(set = "SCD", collectorNumber = "131")
 public class DictateOfTheTwinGods extends Card {
 
     public DictateOfTheTwinGods() {

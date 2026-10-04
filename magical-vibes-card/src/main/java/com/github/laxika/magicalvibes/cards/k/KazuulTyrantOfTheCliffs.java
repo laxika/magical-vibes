@@ -21,6 +21,7 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "2403")
 @CardRegistration(set = "MKC", collectorNumber = "157")
 @CardRegistration(set = "C16", collectorNumber = "130")
+@CardRegistration(set = "SCD", collectorNumber = "148")
 public class KazuulTyrantOfTheCliffs extends Card {
 
     public KazuulTyrantOfTheCliffs() {

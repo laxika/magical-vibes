@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ELD", collectorNumber = "180")
+@CardRegistration(set = "ELD", collectorNumber = "301")
 public class TuinvaleTreefolk extends Card {
 
     public TuinvaleTreefolk() {

@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "GRN", collectorNumber = "208")
+@CardRegistration(set = "SCD", collectorNumber = "253")
 public class TrostaniDiscordant extends Card {
 
     public TrostaniDiscordant() {

@@ -128,4 +128,63 @@ class FumaroleTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Snow-Covered Forest");
         harness.assertLife(player1, 17);
     }
+
+    @Test
+    @DisplayName("Destroys the creature when the land leaves before resolution")
+    void destroysCreatureWhenLandLeaves() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new SnowCoveredForest());
+        harness.setHand(player1, List.of(new Fumarole()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, List.of(bear.getId(), forest.getId()));
+        harness.assertLife(player1, 17);
+        gd.playerBattlefields.get(player2.getId()).remove(forest);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Fumarole");
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Life paid as a casting cost is not refunded when both targets leave")
+    void lifeCostRemainsPaidWhenBothTargetsLeave() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new SnowCoveredForest());
+        harness.setHand(player1, List.of(new Fumarole()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, List.of(bear.getId(), forest.getId()));
+        harness.assertLife(player1, 17);
+        gd.playerBattlefields.get(player2.getId()).remove(bear);
+        gd.playerBattlefields.get(player2.getId()).remove(forest);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fumarole");
+        harness.assertNotInGraveyard(player2, "Balduvian Bears");
+        harness.assertNotInGraveyard(player2, "Snow-Covered Forest");
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Cannot be cast with only one of the two required targets")
+    void requiresBothTargets() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new Fumarole()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(bear.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Fumarole");
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
+        harness.assertLife(player1, 20);
+    }
 }

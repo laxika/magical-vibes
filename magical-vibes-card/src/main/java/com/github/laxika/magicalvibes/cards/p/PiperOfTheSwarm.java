@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "100")
+@CardRegistration(set = "ELD", collectorNumber = "355")
+@CardRegistration(set = "ELD", collectorNumber = "392")
 @CardRegistration(set = "AFC", collectorNumber = "106")
 public class PiperOfTheSwarm extends Card {
 

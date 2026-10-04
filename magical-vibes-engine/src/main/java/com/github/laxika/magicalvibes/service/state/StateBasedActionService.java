@@ -473,6 +473,7 @@ public class StateBasedActionService {
                     }
                 }
             }
+            triggerCollectionService.checkBatchedAllyArtifactOrCreatureDeathTriggers(gameData);
             triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
             gameData.simultaneousDyingCreatures.clear();

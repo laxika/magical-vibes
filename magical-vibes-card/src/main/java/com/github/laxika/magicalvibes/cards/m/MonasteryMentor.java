@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "28")
+@CardRegistration(set = "MOM", collectorNumber = "347")
 @CardRegistration(set = "FRF", collectorNumber = "20")
 @CardRegistration(set = "2X2", collectorNumber = "21")
 @CardRegistration(set = "TDC", collectorNumber = "125")

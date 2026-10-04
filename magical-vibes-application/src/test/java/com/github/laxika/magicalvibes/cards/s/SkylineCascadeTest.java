@@ -22,7 +22,8 @@ class SkylineCascadeTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new SkylineCascade()));
 
-        gs.playCard(gd, player1, 0, 0, target.getId(), null);
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
 
         Permanent cascade = findPermanent(player1, "Skyline Cascade");
         assertThat(cascade.isTapped()).isTrue();

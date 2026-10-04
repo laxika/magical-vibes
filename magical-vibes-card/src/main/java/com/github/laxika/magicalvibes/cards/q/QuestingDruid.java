@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "234")
+@CardRegistration(set = "WOE", collectorNumber = "294")
 public class QuestingDruid extends Card {
 
     public QuestingDruid() {

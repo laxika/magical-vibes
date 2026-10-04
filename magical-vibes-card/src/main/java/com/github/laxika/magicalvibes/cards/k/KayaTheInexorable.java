@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "KHM", collectorNumber = "218")
+@CardRegistration(set = "KHM", collectorNumber = "288")
 public class KayaTheInexorable extends Card {
 
     private static final String EMBLEM_TEXT =

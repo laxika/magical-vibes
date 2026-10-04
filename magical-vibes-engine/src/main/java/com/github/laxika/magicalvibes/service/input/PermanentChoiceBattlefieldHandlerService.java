@@ -2476,9 +2476,12 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen creature no longer exists");
         }
 
-        // Capture effective power before removing from battlefield (static bonuses still apply;
-        // CR 510.1a clamps negative power to 0).
+        // Capture effective power before removing from battlefield so static bonuses still apply.
         int power = Math.max(0, gameQueryService.getEffectivePower(gameData, toSacrifice));
+        if (ctx.doubleDamageIfGiant()
+                && gameQueryService.hasEffectiveSubtype(gameData, toSacrifice, CardSubtype.GIANT)) {
+            power *= 2;
+        }
 
         UUID sourcePermanentId = gameData.playerBattlefields.get(ctx.controllerId()).stream()
                 .filter(permanent -> permanent.getOriginalCard().getId().equals(ctx.sourceCard().getId()))

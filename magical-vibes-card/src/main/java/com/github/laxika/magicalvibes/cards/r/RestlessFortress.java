@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "259")
+@CardRegistration(set = "WOE", collectorNumber = "305")
 public class RestlessFortress extends Card {
 
     public RestlessFortress() {

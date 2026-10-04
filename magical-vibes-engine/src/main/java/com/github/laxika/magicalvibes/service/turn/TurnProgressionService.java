@@ -1035,6 +1035,7 @@ public class TurnProgressionService {
         gameData.playersWhoControlledPermanentThatExploredThisTurn.clear();
         gameData.playersWhoFlippedCoinsThisTurn.clear();
         gameData.permanentTypesCastFromGraveyardThisTurn.clear();
+        gameData.playersWhoActivatedAbilityOfGraveyardCardThisTurn.clear();
         gameData.oncePerTurnGraveyardCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnGraveyardLandPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnGraveyardSpellPermissionsUsedThisTurn.clear();

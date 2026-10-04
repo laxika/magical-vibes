@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEf
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "WOE", collectorNumber = "157")
+@CardRegistration(set = "WOE", collectorNumber = "282")
 public class VirtueOfCourage extends Card {
 
     public VirtueOfCourage() {

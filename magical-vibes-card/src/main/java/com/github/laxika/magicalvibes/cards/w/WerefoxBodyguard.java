@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "39")
+@CardRegistration(set = "WOE", collectorNumber = "329")
 public class WerefoxBodyguard extends Card {
 
     public WerefoxBodyguard() {

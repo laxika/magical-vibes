@@ -2,27 +2,21 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AmbushViper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FynnTheFangbearer.class, AmbushViper.class, GrizzlyBears.class})
 class FynnTheFangbearerTest extends BaseCardTest {
-
-    private Permanent addReady(Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
-        return permanent;
-    }
 
     @Test
     @DisplayName("A deathtouch creature dealing combat damage gives two poison counters")
     void deathtouchCreatureGivesTwoPoisonCounters() {
-        addReady(new FynnTheFangbearer()).setAttacking(true);
+        addCreatureReady(player1, new FynnTheFangbearer()).setAttacking(true);
 
         resolveCombat();
         resolveAllTriggers();
@@ -33,8 +27,8 @@ class FynnTheFangbearerTest extends BaseCardTest {
     @Test
     @DisplayName("Each deathtouch creature dealing combat damage triggers separately")
     void eachDeathtouchCreatureTriggersSeparately() {
-        addReady(new FynnTheFangbearer()).setAttacking(true);
-        addReady(new AmbushViper()).setAttacking(true);
+        addCreatureReady(player1, new FynnTheFangbearer()).setAttacking(true);
+        addCreatureReady(player1, new AmbushViper()).setAttacking(true);
 
         resolveCombat();
         resolveAllTriggers();
@@ -46,7 +40,7 @@ class FynnTheFangbearerTest extends BaseCardTest {
     @DisplayName("Poison applies to the damaged player without targeting through shroud")
     void damagedPlayerWithShroudStillGetsPoison() {
         gd.playersWithShroudThisTurn.add(player2.getId());
-        addReady(new FynnTheFangbearer()).setAttacking(true);
+        addCreatureReady(player1, new FynnTheFangbearer()).setAttacking(true);
 
         resolveCombat();
 
@@ -58,8 +52,8 @@ class FynnTheFangbearerTest extends BaseCardTest {
     @Test
     @DisplayName("A creature without deathtouch does not trigger Fynn")
     void nonDeathtouchCreatureDoesNotTrigger() {
-        addReady(new FynnTheFangbearer());
-        addReady(new GrizzlyBears()).setAttacking(true);
+        addCreatureReady(player1, new FynnTheFangbearer());
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
 
         resolveCombat();
 
@@ -69,16 +63,54 @@ class FynnTheFangbearerTest extends BaseCardTest {
     @Test
     @DisplayName("A blocked deathtouch creature does not trigger Fynn")
     void blockedDeathtouchCreatureDoesNotTrigger() {
-        Permanent fynn = addReady(new FynnTheFangbearer());
+        Permanent fynn = addCreatureReady(player1, new FynnTheFangbearer());
         fynn.setAttacking(true);
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
         resolveCombat();
 
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's deathtouch creature does not trigger Fynn")
+    void opposingDeathtouchCreatureDoesNotTrigger() {
+        addCreatureReady(player1, new FynnTheFangbearer());
+        addCreatureReady(player2, new AmbushViper()).setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Prevented combat damage does not trigger Fynn")
+    void preventedCombatDamageDoesNotTrigger() {
+        addCreatureReady(player1, new FynnTheFangbearer()).setAttacking(true);
+        gd.preventAllCombatDamage = true;
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Poison trigger resolves after Fynn leaves the battlefield")
+    void triggerResolvesWithoutFynn() {
+        Permanent fynn = addCreatureReady(player1, new FynnTheFangbearer());
+        fynn.setAttacking(true);
+
+        resolveCombat();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(fynn);
+        gd.playerGraveyards.get(player1.getId()).add(fynn.getCard());
+        resolveAllTriggers();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
     }
 }

@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "124")
+@CardRegistration(set = "WOE", collectorNumber = "345")
 public class CharmingScoundrel extends Card {
 
     public CharmingScoundrel() {

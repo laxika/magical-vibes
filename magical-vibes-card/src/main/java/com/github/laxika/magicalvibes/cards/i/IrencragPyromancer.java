@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "128")
+@CardRegistration(set = "ELD", collectorNumber = "363")
 public class IrencragPyromancer extends Card {
 
     public IrencragPyromancer() {

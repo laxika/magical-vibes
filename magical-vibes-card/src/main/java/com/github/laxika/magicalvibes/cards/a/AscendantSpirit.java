@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
 import java.util.List;
 
 @CardRegistration(set = "KHM", collectorNumber = "43")
+@CardRegistration(set = "KHM", collectorNumber = "341")
 public class AscendantSpirit extends Card {
 
     public AscendantSpirit() {

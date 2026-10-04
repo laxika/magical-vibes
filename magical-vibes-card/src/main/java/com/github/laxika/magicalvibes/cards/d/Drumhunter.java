@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "129")
 @CardRegistration(set = "C13", collectorNumber = "142")
+@CardRegistration(set = "SCD", collectorNumber = "179")
 public class Drumhunter extends Card {
 
     public Drumhunter() {

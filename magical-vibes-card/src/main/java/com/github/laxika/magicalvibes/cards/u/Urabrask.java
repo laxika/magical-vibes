@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "169")
+@CardRegistration(set = "MOM", collectorNumber = "299")
+@CardRegistration(set = "MOM", collectorNumber = "341")
 public class Urabrask extends Card {
 
     public Urabrask() {

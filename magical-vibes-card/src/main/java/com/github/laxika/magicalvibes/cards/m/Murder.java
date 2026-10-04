@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 @CardRegistration(set = "ANB", collectorNumber = "53")
 @CardRegistration(set = "OTP", collectorNumber = "16")
 @CardRegistration(set = "ACR", collectorNumber = "92")
+@CardRegistration(set = "SCD", collectorNumber = "93")
 public class Murder extends Card {
 
     public Murder() {

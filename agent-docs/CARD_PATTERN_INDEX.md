@@ -1,4 +1,5 @@
 # CARD_PATTERN_INDEX
+| end-step draw after casting a spell from a graveyard or activating an ability of a graveyard card | `l/LaboratoryDrudge.java` + `ConditionalEffect(ControllerCastSpellFromGraveyardOrActivatedGraveyardAbilityThisTurn, DrawCardEffect)` |
 | sorcery that looks at six, may put one land tapped onto the battlefield and one Elf into hand, then random-bottoms the rest | `b/BountyOfSkemfar.java` + `LookAtTopCardsRevealTwoTypesToHandThenRestEffect.landAndSubtypeToBattlefieldAndHandRestOnBottomRandom(...)` |
 | hand-cast instant or sorcery during an opponent's turn exiled with three time counters after resolution | `g/GandalfOfTheSecretFire.java` + `SpellCastTriggerEffect(INSTANT_OR_SORCERY, ExileTriggeringSpellWithSuspendCountersOnResolutionEffect(3), StackEntryCastFromZonePredicate(HAND), onlyDuringOpponentTurn)` |
 | target opponent mills nine, then the controller may free-cast any instant or sorcery from that opponent's graveyard with exile replacement | `s/SorcerousSquall.java` + `MillTargetPlayerAndMayCastSpellFromGraveyardEffect` |
@@ -124,6 +125,7 @@
 | spell costs less for each distinct graveyard mana value and discard trigger casts the exact discarded card | `o/OskarRubbishReclaimer.java` + `ReduceOwnCastCostEffect(new DistinctManaValuesAmongCardsInGraveyard())` + `CastDiscardedCardFromGraveyardEffect` |
 | sacrifice-turn card-type cost reduction plus combat-damage graveyard permanent-type counters and draw | `k/KorvoldGleefulGlutton.java` + `CardTypesAmongPermanentsSacrificedThisTurn` + `PermanentTypesAmongCardsInGraveyard` |
 | ETB registers an end-of-turn ally nontoken-death trigger that creates one token per dying creature power | `i/InfestedThrinax.java` + `RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(ON_ALLY_NONTOKEN_CREATURE_DIES, CreateTokenEffect(new EventValue(), ...))` |
+| one-or-more controlled artifacts and/or creatures die in one event, then surveil | `s/SeerOfStolenSight.java` + `ON_ALLY_ARTIFACT_OR_CREATURE_DIES` + `OneOrMoreArtifactOrCreatureDeathTriggerEffect(SurveilEffect(1))` |
 | one-or-more ally creatures with base P/T 1/1 enter; attack boosts other base 1/1 creatures by source counters | `b/BessSoulNourisher.java` + `ON_ALLY_CREATURES_ENTERS_BATTLEFIELD TriggeringPermanentConditionalEffect` + filtered `BoostAllOwnCreaturesEffect` |
 | dynamic power from greatest creature-card power in all graveyards + attack mill + one land/one spell from cards milled this turn | `c/CoramTheUndertaker.java` + `DynamicStaticBoostEffect(GreatestPowerAmongCardsInGraveyard)` + `ON_ATTACK MillEffect` + `PlayLandAndCastSpellFromCardsPutIntoGraveyardsFromLibrariesThisTurnEffect` |
 | combat-damage mill that many with an optional any-number milled-land battlefield return + +10/+10 per recorded game loss | `r/RampantFrogantua.java` + `DynamicStaticBoostEffect(Scaled(PlayersWhoLostGame, 10))` + `MayEffect(MillControllerAndMayPutMilledLandsOntoBattlefieldEffect(EventValue))` |
@@ -475,6 +477,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | first spell each turn, random opponent damage | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | first spell during each opponent's turn, face-down top-card exile with indefinite play permission | `b/BlightwingBandit.java` + `SpellCastTriggerEffect` + `ExileTopCardMayPlayWhileExiledEffect(true, true)` |
 | secret council vote, draw for one vote and damage a random opponent for the other | `t/TruthOrConsequences.java` + `TruthOrConsequencesEffect` |
+| controller draw, per-opponent may-draw choices, and one random-target damage trigger per card drawn | `e/ExplosionOfRiches.java` + `ExplosionOfRichesEffect` |
 | exact-1-damage source trigger reflected to each matching permanent or player | `g/GhyrsonStarnKelermorph.java` + `GhyrsonStarnKelermorphEffect` |
 | beginning-of-combat random opponent attack requirement | `r/RuhanOfTheFomori.java` |
 | attack-triggered left/right pile evasion | `r/RagingRiver.java` + `RagingRiverEffectHandler` |

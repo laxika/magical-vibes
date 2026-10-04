@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 @CardRegistration(set = "MBS", collectorNumber = "53")
+@CardRegistration(set = "SCD", collectorNumber = "103")
 @CardRegistration(set = "C21", collectorNumber = "152")
 @CardRegistration(set = "C16", collectorNumber = "116")
 @CardRegistration(set = "C17", collectorNumber = "123")

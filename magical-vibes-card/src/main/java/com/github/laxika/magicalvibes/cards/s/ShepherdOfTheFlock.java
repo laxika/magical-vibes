@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ELD", collectorNumber = "28")
+@CardRegistration(set = "ELD", collectorNumber = "278")
 public class ShepherdOfTheFlock extends Card {
 
     public ShepherdOfTheFlock() {

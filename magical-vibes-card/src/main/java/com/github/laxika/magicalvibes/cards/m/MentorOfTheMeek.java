@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 @CardRegistration(set = "HOC", collectorNumber = "170")
 @CardRegistration(set = "C16", collectorNumber = "69")
 @CardRegistration(set = "VOC", collectorNumber = "93")
+@CardRegistration(set = "SCD", collectorNumber = "28")
 public class MentorOfTheMeek extends Card {
 
     public MentorOfTheMeek() {

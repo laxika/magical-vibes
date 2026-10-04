@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayCastPermanentFromHandWithManaValueEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "177")
+@CardRegistration(set = "KHM", collectorNumber = "364")
 public class InSearchOfGreatness extends Card {
 
     public InSearchOfGreatness() {

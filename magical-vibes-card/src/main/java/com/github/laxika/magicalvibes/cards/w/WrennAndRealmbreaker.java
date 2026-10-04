@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "217")
+@CardRegistration(set = "MOM", collectorNumber = "322")
 public class WrennAndRealmbreaker extends Card {
 
     private static final String EMBLEM_TEXT =

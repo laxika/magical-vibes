@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FyndhornPollen.class, BalduvianBears.class})
+@CardUsed({FyndhornPollen.class, BalduvianBears.class, Opalescence.class})
 class FyndhornPollenTest extends BaseCardTest {
 
     @Test
@@ -122,5 +123,84 @@ class FyndhornPollenTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(pollen);
         harness.assertInGraveyard(player1, "Fyndhorn Pollen");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Fyndhorn Pollen's static debuff includes itself when it becomes a creature")
+    void staticDebuffIncludesAnimatedPollen() {
+        Permanent pollen = harness.addToBattlefieldAndReturn(player1, new FyndhornPollen());
+        harness.addToBattlefield(player2, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, pollen)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, pollen)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pollen)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Activated debuff affects creatures present at resolution but not later arrivals")
+    void activatedDebuffLocksInCreaturesAtResolution() {
+        harness.addToBattlefield(player1, new FyndhornPollen());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+
+        assertThat(gqs.getEffectivePower(gd, beforeResolution)).isZero();
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, beforeResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A resolved activated debuff persists after Fyndhorn Pollen is sacrificed")
+    void activatedDebuffPersistsWithoutSource() {
+        harness.addToBattlefield(player1, new FyndhornPollen());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        advanceToUpkeep(player1);
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, creature)).isZero();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Fyndhorn Pollen");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Repeated activations stack and can reduce power below zero")
+    void repeatedActivationsStack() {
+        harness.addToBattlefield(player1, new FyndhornPollen());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep does not trigger during an opponent's upkeep")
+    void noUpkeepCostOnOpponentsTurn() {
+        Permanent pollen = harness.addToBattlefieldAndReturn(player1, new FyndhornPollen());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(pollen.getCounterCount(CounterType.AGE)).isZero();
+        harness.assertOnBattlefield(player1, "Fyndhorn Pollen");
     }
 }

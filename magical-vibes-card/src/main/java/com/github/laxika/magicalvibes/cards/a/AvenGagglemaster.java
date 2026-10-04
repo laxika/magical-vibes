@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "M21", collectorNumber = "5")
+@CardRegistration(set = "SCD", collectorNumber = "8")
 public class AvenGagglemaster extends Card {
 
     public AvenGagglemaster() {

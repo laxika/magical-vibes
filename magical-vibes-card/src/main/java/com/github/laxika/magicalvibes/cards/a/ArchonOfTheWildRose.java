@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedBySourceControllerAuraPredicate;
 
 @CardRegistration(set = "WOE", collectorNumber = "1")
+@CardRegistration(set = "WOE", collectorNumber = "323")
 public class ArchonOfTheWildRose extends Card {
 
     public ArchonOfTheWildRose() {

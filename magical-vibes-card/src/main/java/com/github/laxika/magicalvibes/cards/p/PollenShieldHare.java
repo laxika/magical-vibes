@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 @CardRegistration(set = "WOE", collectorNumber = "233")
+@CardRegistration(set = "WOE", collectorNumber = "293")
 public class PollenShieldHare extends Card {
 
     public PollenShieldHare() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "MOM", collectorNumber = "220")
+@CardRegistration(set = "MOM", collectorNumber = "384")
 public class BotanicalBrawler extends Card {
 
     public BotanicalBrawler() {

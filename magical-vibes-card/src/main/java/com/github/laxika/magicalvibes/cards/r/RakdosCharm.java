@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "C16", collectorNumber = "218")
 @CardRegistration(set = "VOC", collectorNumber = "156")
 @CardRegistration(set = "C17", collectorNumber = "190")
+@CardRegistration(set = "SCD", collectorNumber = "239")
 public class RakdosCharm extends Card {
 
     public RakdosCharm() {

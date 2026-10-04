@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseDwarfAndAttachAnyNumber
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "NEC", collectorNumber = "80")
+@CardRegistration(set = "KHM", collectorNumber = "379")
 public class ArmedAndArmored extends Card {
 
     public ArmedAndArmored() {

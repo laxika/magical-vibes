@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "225")
+@CardRegistration(set = "MOM", collectorNumber = "307")
+@CardRegistration(set = "MOM", collectorNumber = "386")
 public class GhaltaAndMavren extends Card {
 
     private static final String DINOSAUR_MODE =

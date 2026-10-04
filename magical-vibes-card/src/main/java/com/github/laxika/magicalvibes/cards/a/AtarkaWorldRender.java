@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 @CardRegistration(set = "TDC", collectorNumber = "281")
 @CardRegistration(set = "AFC", collectorNumber = "176")
 @CardRegistration(set = "C17", collectorNumber = "161")
+@CardRegistration(set = "SCD", collectorNumber = "1")
 public class AtarkaWorldRender extends Card {
 
     public AtarkaWorldRender() {

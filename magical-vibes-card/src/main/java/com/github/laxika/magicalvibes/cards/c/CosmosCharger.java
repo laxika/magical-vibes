@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.effect.ForetellCostReductionEffect;
 
 @CardRegistration(set = "KHM", collectorNumber = "51")
+@CardRegistration(set = "KHM", collectorNumber = "342")
 public class CosmosCharger extends Card {
 
     public CosmosCharger() {

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "C17", collectorNumber = "30")
+@CardRegistration(set = "SCD", collectorNumber = "178")
 public class CurseOfBounty extends Card {
 
     public CurseOfBounty() {

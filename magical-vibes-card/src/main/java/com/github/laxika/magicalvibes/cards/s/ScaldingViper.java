@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredica
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "235")
+@CardRegistration(set = "WOE", collectorNumber = "295")
 public class ScaldingViper extends Card {
 
     public ScaldingViper() {

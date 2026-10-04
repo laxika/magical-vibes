@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 
 @CardRegistration(set = "WOE", collectorNumber = "188")
+@CardRegistration(set = "WOE", collectorNumber = "379")
 public class TanglespanLookout extends Card {
 
     public TanglespanLookout() {

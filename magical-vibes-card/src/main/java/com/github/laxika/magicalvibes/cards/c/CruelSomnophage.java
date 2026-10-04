@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "WOE", collectorNumber = "222")
+@CardRegistration(set = "WOE", collectorNumber = "286")
 public class CruelSomnophage extends Card {
 
     public CruelSomnophage() {

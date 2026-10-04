@@ -23,7 +23,12 @@ public record ExileTopCardsMayPlayUntilNextTurnEffect(
         DynamicAmount count,
         boolean useTriggeringPermanentController,
         boolean freeCastIfCastFromGraveyard
-) implements CardEffect {
+) implements CardEffect, CombatDamageAmountAwareEffect {
+
+    @Override
+    public DynamicAmount combatDamageAmount() {
+        return count;
+    }
 
     public ExileTopCardsMayPlayUntilNextTurnEffect(DynamicAmount count) {
         this(count, false, false);

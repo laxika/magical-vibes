@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "66")
+@CardRegistration(set = "WOE", collectorNumber = "334")
 public class SleepCursedFaerie extends Card {
 
     public SleepCursedFaerie() {

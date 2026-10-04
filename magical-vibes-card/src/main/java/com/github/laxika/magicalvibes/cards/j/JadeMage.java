@@ -14,6 +14,7 @@ import java.util.Set;
 @CardRegistration(set = "DDH", collectorNumber = "7")
 @CardRegistration(set = "C13", collectorNumber = "151")
 @CardRegistration(set = "CMM", collectorNumber = "298")
+@CardRegistration(set = "SCD", collectorNumber = "193")
 public class JadeMage extends Card {
 
     public JadeMage() {

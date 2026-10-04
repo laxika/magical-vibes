@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 
 @CardRegistration(set = "ELD", collectorNumber = "138")
+@CardRegistration(set = "ELD", collectorNumber = "365")
 public class RobberOfTheRich extends Card {
 
     public RobberOfTheRich() {

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "BFZ", collectorNumber = "228")
 public class AllyEncampment extends Card {
@@ -31,7 +32,7 @@ public class AllyEncampment extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.SUBTYPE_SPELL, CardSubtype.ALLY)),
+                List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.SUBTYPE_SPELL, Set.of(CardSubtype.ALLY))),
                 "{T}: Add one mana of any color. Spend this mana only to cast an Ally spell."
         ));
 
