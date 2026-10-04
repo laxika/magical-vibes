@@ -115,6 +115,65 @@ class GurzigostTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Gurzigost is sacrificed with an empty graveyard without moving any cards")
+    void emptyGraveyardCannotPayUpkeep() {
+        Permanent gurzigost = addCreatureReady(player1, new Gurzigost());
+        Card libraryCard = new Gurzigost();
+        harness.setGraveyard(player1, List.of());
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(gurzigost);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(gurzigost.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+    }
+
+    @Test
+    @DisplayName("Gurzigost does not demand payment during an opponent's upkeep")
+    void doesNotTriggerOnOpponentsUpkeep() {
+        Permanent gurzigost = addCreatureReady(player1, new Gurzigost());
+        harness.setGraveyard(player1, List.of());
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(gurzigost);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Accepting Gurzigost's ability still permits normal assignment to its blocker")
+    void acceptedAbilityCanStillAssignAllDamageToBlocker() {
+        Permanent gurzigost = addCreatureReady(player1, new Gurzigost());
+        harness.setHand(player1, List.of(new Gurzigost()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent blocker = addCreatureReady(player2, new Gurzigost());
+        gurzigost.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 6));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(blocker.getMarkedDamage()).isEqualTo(6);
+        assertThat(gurzigost.getMarkedDamage()).isEqualTo(6);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(gurzigost);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+    }
+
+    @Test
     @DisplayName("Gurzigost assigns combat damage to its blocker when the option is declined")
     void declinedCombatDamageAssignmentUsesNormalBlocking() {
         Permanent gurzigost = addCreatureReady(player1, new Gurzigost());
