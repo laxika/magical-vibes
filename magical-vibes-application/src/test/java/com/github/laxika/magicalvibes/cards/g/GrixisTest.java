@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -22,7 +24,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Grixis.class, GoblinPiker.class, GrizzlyBears.class, Shock.class})
+@CardUsed({Grixis.class, GoblinPiker.class, GrizzlyBears.class, Shock.class,
+        FugitiveWizard.class, ScatheZombies.class})
 class GrixisTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -50,13 +53,122 @@ class GrixisTest extends BaseCardTest {
         harness.activateGraveyardAbility(player1, 0);
         harness.passBothPriorities();
 
-        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(target.getId()))
-                .findFirst()
-                .orElseThrow();
+        Permanent returned = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Goblin Piker"));
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(target.getId()));
+    }
+
+    @Test
+    void grantsUnearthToBlueCreatures() {
+        harness.setGraveyard(player1, List.of(new FugitiveWizard()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Fugitive Wizard");
+        harness.assertNotInGraveyard(player1, "Fugitive Wizard");
+    }
+
+    @Test
+    void grantsUnearthToBlackCreatures() {
+        harness.setGraveyard(player1, List.of(new ScatheZombies()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Scathe Zombies");
+        harness.assertNotInGraveyard(player1, "Scathe Zombies");
+    }
+
+    @Test
+    void unearthRequiresTheColoredManaInTheCardsCost() {
+        harness.setGraveyard(player1, List.of(new GoblinPiker()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Goblin Piker");
+        harness.assertNotOnBattlefield(player1, "Goblin Piker");
+    }
+
+    @Test
+    void unearthCannotBeActivatedOutsideAMainPhase() {
+        harness.setGraveyard(player1, List.of(new GoblinPiker()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Goblin Piker");
+    }
+
+    @Test
+    void leavingGrixisRemovesTheGrantedUnearthAbility() {
+        harness.setGraveyard(player1, List.of(new GoblinPiker()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        gd.planechase.faceUp.clear();
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void unearthedCreatureIsExiledAtTheNextEndStepEvenAfterLeavingGrixis() {
+        GoblinPiker target = new GoblinPiker();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        gd.planechase.faceUp.clear();
+
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Goblin Piker");
+        harness.assertNotInGraveyard(player1, "Goblin Piker");
+        assertThat(gd.playerExiledCards.get(player1.getId())).contains(target);
+    }
+
+    @Test
+    void lethalDamageExilesAnUnearthedCreatureInsteadOfPuttingItInTheGraveyard() {
+        GoblinPiker target = new GoblinPiker();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Goblin Piker"));
+
+        harness.assertNotOnBattlefield(player1, "Goblin Piker");
+        harness.assertNotInGraveyard(player1, "Goblin Piker");
+        assertThat(gd.playerExiledCards.get(player1.getId())).contains(target);
+    }
+
+    @Test
+    void chaosDoesNotReturnACreatureThatLeftTheGraveyardBeforeResolution() {
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextSpellGraveyardTargetTrigger(gd));
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.setExile(player2, List.of(target));
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerExiledCards.get(player2.getId())).contains(target);
     }
 
     @Test
