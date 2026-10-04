@@ -2,18 +2,21 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
+import com.github.laxika.magicalvibes.cards.k.KodamaOfTheNorthTree;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HerosBlade.class, GrizzlyBears.class, IsamaruHoundOfKonda.class, KodamaOfTheNorthTree.class})
 class HerosBladeTest extends BaseCardTest {
 
     @Test
@@ -46,8 +49,7 @@ class HerosBladeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castCreature(player1, 0);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -67,8 +69,7 @@ class HerosBladeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castCreature(player1, 0);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(blade.getAttachedTo()).isNull();
@@ -106,11 +107,57 @@ class HerosBladeTest extends BaseCardTest {
         assertThat(blade.getAttachedTo()).isNull();
     }
 
+    @Test
+    void triggeredAttachmentCanAttachToCreatureWithShroud() {
+        Permanent blade = addBladeReady(player1);
+        harness.setHand(player1, List.of(new KodamaOfTheNorthTree()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent kodama = findPermanent(player1, "Kodama of the North Tree");
+        assertThat(blade.getAttachedTo()).isEqualTo(kodama.getId());
+        assertThat(gqs.getEffectivePower(gd, kodama)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, kodama)).isEqualTo(6);
+    }
+
+    @Test
+    void acceptingMayMovesBladeFromPreviouslyEquippedCreature() {
+        Permanent previous = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blade = addBladeReady(player1);
+        blade.setAttachedTo(previous.getId());
+        harness.setHand(player1, List.of(new IsamaruHoundOfKonda()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(blade.getAttachedTo()).isEqualTo(findPermanent(player1, "Isamaru, Hound of Konda").getId());
+        assertThat(gqs.getEffectivePower(gd, previous)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, previous)).isEqualTo(2);
+    }
+
+    @Test
+    void decliningMayKeepsBladeOnPreviouslyEquippedCreature() {
+        Permanent previous = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blade = addBladeReady(player1);
+        blade.setAttachedTo(previous.getId());
+        harness.setHand(player1, List.of(new IsamaruHoundOfKonda()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(blade.getAttachedTo()).isEqualTo(previous.getId());
+        assertThat(gqs.getEffectivePower(gd, previous)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, previous)).isEqualTo(4);
+    }
     private Permanent addBladeReady(Player player) {
-        Permanent permanent = new Permanent(new HerosBlade());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new HerosBlade());
     }
 
 }
