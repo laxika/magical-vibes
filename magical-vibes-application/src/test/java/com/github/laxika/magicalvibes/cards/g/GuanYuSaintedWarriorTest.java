@@ -17,10 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GuanYuSaintedWarrior.class)
+@CardUsed({GuanYuSaintedWarrior.class, HuaTuoHonoredPhysician.class, WuInfantry.class})
 class GuanYuSaintedWarriorTest extends BaseCardTest {
-
-    // ===== Death trigger =====
 
     @Test
     @DisplayName("Accepting the death trigger shuffles Guan Yu from the graveyard into its owner's library")
@@ -100,7 +98,40 @@ class GuanYuSaintedWarriorTest extends BaseCardTest {
         assertThat(gd.pendingMayAbilities).isEmpty();
     }
 
-    // ===== Horsemanship =====
+    @Test
+    @DisplayName("Only Guan Yu is shuffled, leaving other creature cards in the graveyard")
+    void leavesOtherGraveyardCardsInPlace() {
+        harness.setLibrary(player1, List.of());
+        WuInfantry infantry = new WuInfantry();
+        harness.setGraveyard(player1, List.of(infantry));
+        Permanent guanYu = harness.addToBattlefieldAndReturn(player1, new GuanYuSaintedWarrior());
+        guanYu.setMarkedDamage(5);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(infantry);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(guanYu.getCard());
+    }
+
+    @Test
+    @DisplayName("An opponent's own Guan Yu shuffles into that opponent's library")
+    void opponentOwnedAndControlledGuanYuShufflesIntoOpponentLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        Permanent guanYu = harness.addToBattlefieldAndReturn(player2, new GuanYuSaintedWarrior());
+        guanYu.setMarkedDamage(5);
+
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player2, "Guan Yu, Sainted Warrior");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertNotInGraveyard(player2, "Guan Yu, Sainted Warrior");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(guanYu.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
 
     @Test
     @CardUsed(WuInfantry.class)
