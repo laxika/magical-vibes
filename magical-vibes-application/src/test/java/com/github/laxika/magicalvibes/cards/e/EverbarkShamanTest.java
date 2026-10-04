@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -87,14 +86,13 @@ class EverbarkShamanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         int before = gd.playerBattlefields.get(player1.getId()).size();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(before + 2);
-        long tappedForests = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest") && p.isTapped())
-                .count();
-        assertThat(tappedForests).isEqualTo(2);
+        assertThat(findPermanents(player1, "Forest"))
+                .hasSize(2)
+                .allMatch(Permanent::isTapped);
     }
 
     @Test
@@ -105,5 +103,137 @@ class EverbarkShamanTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(shaman), null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Treefolk");
+    }
+
+    @Test
+    @DisplayName("The Treefolk is exiled and the Shaman tapped before the ability resolves")
+    void paysCostsBeforeResolution() {
+        RowanTreefolk treefolk = new RowanTreefolk();
+        Permanent shaman = setup(List.of(treefolk));
+        setupLibrary();
+
+        harness.activateAbility(player1, idxOf(shaman), null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(shaman.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(treefolk);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanents(player1, "Forest")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("May find zero Forests even when Forests are available")
+    void mayFindZeroForests() {
+        Permanent shaman = setup(List.of(new RowanTreefolk()));
+        setupLibrary();
+        List<Card> originalLibrary = List.copyOf(gd.playerDecks.get(player1.getId()));
+
+        harness.activateAbility(player1, idxOf(shaman), null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(findPermanents(player1, "Forest")).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(originalLibrary);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("May stop after finding one Forest when more are available")
+    void mayFindOnlyOneForest() {
+        Permanent shaman = setup(List.of(new RowanTreefolk()));
+        setupLibrary();
+
+        harness.activateAbility(player1, idxOf(shaman), null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(findPermanents(player1, "Forest")).hasSize(1).allMatch(Permanent::isTapped);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Finding the only Forest completes the search")
+    void onlyOneForestAvailable() {
+        Permanent shaman = setup(List.of(new RowanTreefolk()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island()));
+
+        harness.activateAbility(player1, idxOf(shaman), null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(findPermanents(player1, "Forest")).hasSize(1).allMatch(Permanent::isTapped);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A search with no Forests completes without moving other cards")
+    void noForestsAvailable() {
+        Permanent shaman = setup(List.of(new RowanTreefolk()));
+        Island island = new Island();
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(island, bears));
+
+        harness.activateAbility(player1, idxOf(shaman), null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(island, bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(shaman);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot use a Treefolk in the opponent's graveyard to pay the cost")
+    void cannotExileOpponentsTreefolk() {
+        Permanent shaman = setup(List.of());
+        RowanTreefolk treefolk = new RowanTreefolk();
+        harness.setGraveyard(player2, List.of(treefolk));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(shaman), null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(shaman.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(treefolk);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Shaman cannot activate the ability")
+    void cannotActivateWhileTapped() {
+        Permanent shaman = setup(List.of(new RowanTreefolk()));
+        shaman.tap();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(shaman), null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Shaman cannot activate the tap ability")
+    void cannotActivateWithSummoningSickness() {
+        Permanent shaman = setup(List.of(new RowanTreefolk()));
+        shaman.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(shaman), null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(shaman.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
