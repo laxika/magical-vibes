@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AdvanceScout;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.m.MoggConscripts;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Havoc.class, AdvanceScout.class, MoggConscripts.class, Counterspell.class})
+@CardUsed({Havoc.class, AdvanceScout.class, MoggConscripts.class, Counterspell.class, Disenchant.class})
 class HavocTest extends BaseCardTest {
 
     /** Player1 controls Havoc; it is player2's (the opponent's) turn. */
@@ -95,5 +96,45 @@ class HavocTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore - 2);
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getCard() == whiteSpell);
+    }
+
+    @Test
+    @DisplayName("Each Havoc triggers independently for the same white spell")
+    void multipleHavocsEachCauseLifeLoss() {
+        setUpOpponentTurn();
+        harness.addToBattlefield(player1, new Havoc());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int controllerLifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.castFromHand(player2, new AdvanceScout(), "{1}{W}");
+        assertThat(gd.stack).hasSize(3);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, opponentLifeBefore - 4);
+        harness.assertLife(player1, controllerLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Havoc's trigger resolves after its source is destroyed")
+    void triggerSurvivesSourceRemoval() {
+        setUpOpponentTurn();
+        harness.castFromHand(player2, new AdvanceScout(), "{1}{W}");
+        harness.passPriority(player2);
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+        int controllerLifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Havoc"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Havoc");
+        harness.assertLife(player2, opponentLifeBefore);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, opponentLifeBefore - 2);
+        harness.assertLife(player1, controllerLifeBefore);
+        harness.assertOnBattlefield(player2, "Advance Scout");
     }
 }
