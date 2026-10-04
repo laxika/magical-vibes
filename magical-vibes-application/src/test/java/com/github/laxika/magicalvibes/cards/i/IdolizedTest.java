@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.y.YoungDeathclaws;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,14 +15,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Idolized.class, GrizzlyBears.class, Forest.class})
+@CardUsed({Idolized.class, YoungDeathclaws.class, Forest.class})
 class IdolizedTest extends BaseCardTest {
 
     @Test
     @DisplayName("Enchanted creature gets +X/+X when it attacks alone")
     void attacksAloneBoostsByNonlandPermanents() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new YoungDeathclaws());
+        addCreatureReady(player1, new YoungDeathclaws());
         harness.addToBattlefield(player1, new Forest());
         attachIdolized(creature);
 
@@ -36,8 +36,8 @@ class IdolizedTest extends BaseCardTest {
     @Test
     @DisplayName("Idolized does not trigger when another creature attacks")
     void doesNotTriggerWhenNotAttackingAlone() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new YoungDeathclaws());
+        Permanent other = addCreatureReady(player1, new YoungDeathclaws());
         attachIdolized(creature);
 
         declareAttackers(player1, List.of(0, 1));
@@ -51,7 +51,7 @@ class IdolizedTest extends BaseCardTest {
     @Test
     @DisplayName("The attack boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new YoungDeathclaws());
         attachIdolized(creature);
 
         declareAttackers(player1, List.of(0));
@@ -78,9 +78,70 @@ class IdolizedTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
-    private void attachIdolized(Permanent creature) {
-        Permanent aura = new Permanent(new Idolized());
+    @Test
+    @DisplayName("A different creature attacking alone does not trigger the enchanted creature's ability")
+    void otherCreatureAttackingAloneDoesNotTrigger() {
+        Permanent creature = addCreatureReady(player1, new YoungDeathclaws());
+        Permanent other = addCreatureReady(player1, new YoungDeathclaws());
+        attachIdolized(creature);
+
+        declareAttackers(player1, List.of(1));
+
+        assertThat(gd.stack).isEmpty();
+        harness.passBothPriorities();
+        assertThat(creature.getPowerModifier()).isZero();
+        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(other.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The bonus counts nonland permanents when the ability resolves")
+    void countsPermanentsAtResolution() {
+        Permanent creature = addCreatureReady(player1, new YoungDeathclaws());
+        attachIdolized(creature);
+
+        declareAttackers(player1, List.of(0));
+        harness.addToBattlefield(player1, new YoungDeathclaws());
+        harness.addToBattlefield(player2, new YoungDeathclaws());
+        harness.passBothPriorities();
+
+        assertThat(creature.getPowerModifier()).isEqualTo(3);
+        assertThat(creature.getToughnessModifier()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An opponent's enchanted creature counts its controller's permanents")
+    void opponentCreatureUsesItsOwnController() {
+        Permanent creature = addCreatureReady(player2, new YoungDeathclaws());
+        attachIdolized(creature);
+        harness.addToBattlefield(player1, new YoungDeathclaws());
+        harness.addToBattlefield(player1, new YoungDeathclaws());
+        harness.addToBattlefield(player2, new Forest());
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Removing Idolized after triggering does not remove the pending ability")
+    void pendingAbilitySurvivesAuraRemoval() {
+        Permanent creature = addCreatureReady(player1, new YoungDeathclaws());
+        Permanent aura = attachIdolized(creature);
+
+        declareAttackers(player1, List.of(0));
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(creature.getToughnessModifier()).isEqualTo(1);
+    }
+
+    private Permanent attachIdolized(Permanent creature) {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Idolized());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
+        return aura;
     }
 }
