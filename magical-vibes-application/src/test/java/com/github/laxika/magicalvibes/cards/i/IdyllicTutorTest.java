@@ -68,6 +68,40 @@ class IdyllicTutorTest extends BaseCardTest {
         assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
 
+    @Test
+    @DisplayName("May fail to find even when an enchantment is available, then shuffles")
+    void mayFailToFindWithEnchantmentAvailable() {
+        setupAndCast();
+        Bitterblossom enchantment = new Bitterblossom();
+        ElvishWarrior creature = new ElvishWarrior();
+        harness.setLibrary(player1, List.of(enchantment, creature));
+        harness.passBothPriorities();
+
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(enchantment, creature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("reveals")).isFalse();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("An empty library finishes the search and is shuffled")
+    void emptyLibraryFinishesSearch() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
     private void setupAndCast() {
         harness.castFromHand(player1, new IdyllicTutor(), "{2}{W}");
     }
