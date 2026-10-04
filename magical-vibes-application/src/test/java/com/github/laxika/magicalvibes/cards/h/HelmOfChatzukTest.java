@@ -32,8 +32,7 @@ class HelmOfChatzukTest extends BaseCardTest {
 
         // The grant wears off at end of turn.
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.BANDING)).isFalse();
     }
@@ -100,5 +99,57 @@ class HelmOfChatzukTest extends BaseCardTest {
 
         assertThat(bandedCreature.getBandId()).isNotNull();
         assertThat(bandedCreature.getBandId()).isEqualTo(nonBandedCreature.getBandId());
+    }
+
+    @Test
+    @DisplayName("Activation requires one mana and leaves the Helm untapped when payment fails")
+    void cannotActivateWithoutMana() {
+        Permanent helm = harness.addToBattlefieldAndReturn(player1, new HelmOfChatzuk());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(helm.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.BANDING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The activation pays its costs immediately and grants banding only on resolution")
+    void bandingIsGrantedOnlyOnResolution() {
+        Permanent helm = harness.addToBattlefieldAndReturn(player1, new HelmOfChatzuk());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(helm.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.BANDING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.BANDING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability resolves and its grant persists after the Helm leaves the battlefield")
+    void abilityResolvesWithoutHelmOnBattlefield() {
+        Permanent helm = harness.addToBattlefieldAndReturn(player1, new HelmOfChatzuk());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(helm);
+        gd.playerGraveyards.get(player1.getId()).add(helm.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.BANDING)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.BANDING)).isFalse();
     }
 }
