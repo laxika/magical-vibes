@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.i.IgneousGolem;
 import com.github.laxika.magicalvibes.cards.m.MuckRats;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.w.WildGriffin;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -73,8 +74,7 @@ class HandOfDeathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HandOfDeath()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, griffin.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, griffin.getId());
 
         harness.assertNotOnBattlefield(player2, "Wild Griffin");
         harness.assertInGraveyard(player2, "Wild Griffin");
@@ -89,8 +89,7 @@ class HandOfDeathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HandOfDeath()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, griffin.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, griffin.getId());
 
         harness.assertOnBattlefield(player2, "Wild Griffin");
         harness.assertNotInGraveyard(player2, "Wild Griffin");
@@ -120,8 +119,7 @@ class HandOfDeathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HandOfDeath()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, griffin.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, griffin.getId());
 
         harness.assertNotOnBattlefield(player1, "Wild Griffin");
         harness.assertInGraveyard(player1, "Wild Griffin");
@@ -135,10 +133,39 @@ class HandOfDeathTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HandOfDeath()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, golem.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, golem.getId());
 
         harness.assertNotOnBattlefield(player2, "Igneous Golem");
         harness.assertInGraveyard(player2, "Igneous Golem");
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature that is black in addition to another color")
+    void cannotTargetMulticoloredBlackCreature() {
+        Permanent griffin = harness.addToBattlefieldAndReturn(player2, new WildGriffin());
+        griffin.getGrantedColors().add(CardColor.BLACK);
+        harness.setHand(player1, List.of(new HandOfDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, griffin.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nonblack creature");
+    }
+
+    @Test
+    @DisplayName("A target that becomes black before resolution is not destroyed")
+    void targetBecomingBlackIsIllegalOnResolution() {
+        Permanent griffin = harness.addToBattlefieldAndReturn(player2, new WildGriffin());
+        harness.setHand(player1, List.of(new HandOfDeath()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, griffin.getId());
+        griffin.getGrantedColors().add(CardColor.BLACK);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Wild Griffin");
+        harness.assertNotInGraveyard(player2, "Wild Griffin");
+        harness.assertInGraveyard(player1, "Hand of Death");
+        assertThat(harness.getGameData().stack).isEmpty();
     }
 }
