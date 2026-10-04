@@ -35,4 +35,17 @@ class HulkingCyclopsTest extends BaseCardTest {
 
         assertThatCode(() -> declareAttackers(List.of(0))).doesNotThrowAnyException();
     }
+
+    @Test
+    @DisplayName("Defending Hulking Cyclops does not prevent unblocked combat damage")
+    void dealsCombatDamagePastDefendingCyclops() {
+        addCreatureReady(player1, new HulkingCyclops());
+        addCreatureReady(player2, new HulkingCyclops());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 15);
+    }
 }
