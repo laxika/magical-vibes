@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "SUM", collectorNumber = "183")
 @CardRegistration(set = "3ED", collectorNumber = "183")
 @CardRegistration(set = "2ED", collectorNumber = "182")
+@CardRegistration(set = "LEB", collectorNumber = "182")
 public class WallOfFire extends Card {
 
     public WallOfFire() {

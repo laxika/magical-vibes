@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "8ED", collectorNumber = "184")
 @CardRegistration(set = "2ED", collectorNumber = "143")
+@CardRegistration(set = "LEB", collectorNumber = "143")
 public class DwarvenDemolitionTeam extends Card {
 
     public DwarvenDemolitionTeam() {
