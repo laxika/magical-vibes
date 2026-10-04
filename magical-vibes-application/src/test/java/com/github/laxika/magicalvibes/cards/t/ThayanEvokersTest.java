@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,12 +14,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThayanEvokers.class, LightningBolt.class, GrizzlyBears.class})
+@CardUsed({ThayanEvokers.class, LightningBolt.class})
 class ThayanEvokersTest extends BaseCardTest {
 
     @Test
     void entersConjuresLightningBoltThenDiscardsAndGrows() {
-        GrizzlyBears discarded = new GrizzlyBears();
+        ThayanEvokers discarded = new ThayanEvokers();
         harness.setHand(player1, List.of(discarded));
 
         Permanent evokers = harness.enterBattlefieldAndReturn(player1, new ThayanEvokers());
@@ -48,5 +47,56 @@ class ThayanEvokersTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(copy.getKeywords()).doesNotContain(com.github.laxika.magicalvibes.model.Keyword.DOUBLE_TEAM);
+    }
+
+    @Test
+    void emptyHandStillDiscardsTheConjuredBoltAndGrows() {
+        harness.setHand(player1, List.of());
+
+        Permanent evokers = harness.enterBattlefieldAndReturn(player1, new ThayanEvokers());
+        resolveAllTriggers();
+        assertThat(evokers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).singleElement().isInstanceOf(LightningBolt.class);
+        assertThat(evokers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void canDiscardTheConjuredBoltInsteadOfAnExistingCard() {
+        ThayanEvokers retained = new ThayanEvokers();
+        harness.setHand(player1, List.of(retained));
+
+        Permanent evokers = harness.enterBattlefieldAndReturn(player1, new ThayanEvokers());
+        resolveAllTriggers();
+
+        int boltIndex = gd.playerHands.get(player1.getId()).stream()
+                .filter(LightningBolt.class::isInstance)
+                .mapToInt(card -> gd.playerHands.get(player1.getId()).indexOf(card))
+                .findFirst().orElseThrow();
+        harness.handleCardChosen(player1, boltIndex);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
+        assertThat(gd.playerGraveyards.get(player1.getId())).singleElement().isInstanceOf(LightningBolt.class);
+        assertThat(evokers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void eachControlledEvokerGrowsButOpponentsEvokerDoesNot() {
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new ThayanEvokers());
+        harness.setHand(player1, List.of());
+
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new ThayanEvokers());
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(existing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opposing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }
