@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.a.AvenTrooper;
 import com.github.laxika.magicalvibes.cards.c.CarrionRats;
+import com.github.laxika.magicalvibes.cards.c.ChainersEdict;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Ichorid.class, CarrionRats.class, AvenTrooper.class})
+@CardUsed({Ichorid.class, CarrionRats.class, AvenTrooper.class, ChainersEdict.class})
 class IchoridTest extends BaseCardTest {
 
     @Test
@@ -23,7 +24,8 @@ class IchoridTest extends BaseCardTest {
         Ichorid ichorid = new Ichorid();
         CarrionRats fodder = new CarrionRats();
         AvenTrooper nonblackCreature = new AvenTrooper();
-        harness.setGraveyard(player1, List.of(ichorid, fodder, nonblackCreature));
+        ChainersEdict blackNoncreature = new ChainersEdict();
+        harness.setGraveyard(player1, List.of(ichorid, fodder, nonblackCreature, blackNoncreature));
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
@@ -80,6 +82,75 @@ class IchoridTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Returns during the upkeep ability's resolution without a second response window")
+    void returnsDuringSameResolutionAsExile() {
+        Ichorid ichorid = new Ichorid();
+        CarrionRats fodder = new CarrionRats();
+        harness.setGraveyard(player1, List.of(ichorid, fodder));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(fodder.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(card -> card.getId()).contains(fodder.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(ichorid.getId()));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not trigger during the opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Ichorid ichorid = new Ichorid();
+        CarrionRats fodder = new CarrionRats();
+        harness.setGraveyard(player1, List.of(ichorid, fodder));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(card -> card.getId()).containsExactly(ichorid.getId(), fodder.getId());
+    }
+
+    @Test
+    @DisplayName("Cannot exile a black creature from the opponent's graveyard")
+    void cannotUseOpponentsGraveyard() {
+        Ichorid ichorid = new Ichorid();
+        CarrionRats fodder = new CarrionRats();
+        harness.setGraveyard(player1, List.of(ichorid));
+        harness.setGraveyard(player2, List.of(fodder));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(card -> card.getId()).containsExactly(ichorid.getId());
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(card -> card.getId()).containsExactly(fodder.getId());
+    }
+
+    @Test
+    @DisplayName("Sacrifices itself during the opponent's end step")
+    void sacrificesItselfAtOpponentsEndStep() {
+        Permanent ichorid = harness.addToBattlefieldAndReturn(player1, new Ichorid());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(ichorid.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(ichorid.getCard().getId()));
+    }
+
+    @Test
     @DisplayName("Sacrifices itself at the end step")
     void sacrificesItselfAtEndStep() {
         Permanent ichorid = harness.addToBattlefieldAndReturn(player1, new Ichorid());
@@ -87,8 +158,8 @@ class IchoridTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(ichorid.getId()));
