@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeopardSpottedJiao;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HardenedScaleArmor.class, GrizzlyBears.class, Forest.class})
+@CardUsed({HardenedScaleArmor.class, GrizzlyBears.class, Forest.class, LeopardSpottedJiao.class})
 class HardenedScaleArmorTest extends BaseCardTest {
 
     @Test
@@ -95,5 +96,45 @@ class HardenedScaleArmorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Armor can enchant an opponent's creature and boosts only that creature")
+    void enchantsOpponentsCreatureOnly() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new LeopardSpottedJiao());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LeopardSpottedJiao());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new LeopardSpottedJiao());
+        harness.setHand(player1, List.of(new HardenedScaleArmor()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Hardened-Scale Armor").getAttachedTo()).isEqualTo(target.getId());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple copies of Armor give cumulative bonuses")
+    void multipleArmorsStack() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LeopardSpottedJiao());
+        harness.setHand(player1, List.of(new HardenedScaleArmor(), new HardenedScaleArmor()));
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Hardened-Scale Armor"))
+                .hasSize(2)
+                .allMatch(armor -> target.getId().equals(armor.getAttachedTo()));
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
     }
 }
