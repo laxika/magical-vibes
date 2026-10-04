@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -45,11 +44,20 @@ class ImaginaryFriendsTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Spirit")).isEmpty();
     }
 
+    @Test
+    @DisplayName("An opponent's Glorious Anthem does not keep the Spirit tokens alive")
+    void opponentsAnthemDoesNotBoostTokens() {
+        harness.addToBattlefield(player2, new GloriousAnthem());
+
+        castImaginaryFriends();
+
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        assertThat(findPermanents(player2, "Spirit")).isEmpty();
+        harness.assertInGraveyard(player1, "Imaginary Friends");
+    }
+
     private void castImaginaryFriends() {
-        harness.setHand(player1, List.of(new ImaginaryFriends()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new ImaginaryFriends(), "{1}{W}");
         harness.passBothPriorities();
     }
 }
