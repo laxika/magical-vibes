@@ -75,13 +75,54 @@ class HoverguardSweepersTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can return creatures controlled by both players")
+    void returnsCreaturesControlledByBothPlayers() {
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new DrossCrocodile());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
+        castHoverguardSweepers(List.of(own.getId(), opposing.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Dross Crocodile");
+        harness.assertNotOnBattlefield(player2, "Dross Crocodile");
+        harness.assertInHand(player1, "Dross Crocodile");
+        harness.assertInHand(player2, "Dross Crocodile");
+        harness.assertOnBattlefield(player1, "Hoverguard Sweepers");
+    }
+
+    @Test
+    @DisplayName("Returns a stolen creature to its owner rather than its controller")
+    void returnsStolenCreatureToOwner() {
+        Permanent stolen = harness.addToBattlefieldAndReturn(player1, new DrossCrocodile());
+        gd.stolenCreatures.put(stolen.getId(), player2.getId());
+        castHoverguardSweepers(List.of(stolen.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Dross Crocodile");
+        harness.assertInHand(player2, "Dross Crocodile");
+        harness.assertNotInHand(player1, "Dross Crocodile");
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than two creatures")
+    void cannotTargetThreeCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new DrossCrocodile());
+        harness.setHand(player1, List.of(new HoverguardSweepers()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void castHoverguardSweepers(List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new HoverguardSweepers()));
         addMana();
 
         harness.castCreature(player1, 0, targetIds);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void addMana() {
