@@ -135,7 +135,7 @@ class GearseekerSerpentTest extends BaseCardTest {
     void tappedSummoningSickSerpentCanActivate() {
         Permanent serpent = harness.addToBattlefieldAndReturn(player1, new GearseekerSerpent());
         serpent.setSummoningSick(true);
-        serpent.setTapped(true);
+        serpent.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

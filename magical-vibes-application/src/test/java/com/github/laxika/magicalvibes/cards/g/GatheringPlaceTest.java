@@ -117,7 +117,7 @@ class GatheringPlaceTest extends BaseCardTest {
     void tappedBasicLandEnablesGreenMana() {
         Permanent land = addReadyGatheringPlace();
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
-        forest.setTapped(true);
+        forest.tap();
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "GREEN");

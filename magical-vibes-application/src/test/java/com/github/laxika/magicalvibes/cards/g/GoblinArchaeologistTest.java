@@ -103,7 +103,7 @@ class GoblinArchaeologistTest extends BaseCardTest {
     @DisplayName("Cannot activate while already tapped")
     void requiresUntappedSource() {
         Permanent archaeologist = addCreatureReady(player1, new GoblinArchaeologist());
-        archaeologist.setTapped(true);
+        archaeologist.tap();
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new DragonsClaw());
         harness.addMana(player1, ManaColor.RED, 1);
 

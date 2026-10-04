@@ -132,7 +132,7 @@ class FrostwalkBastionTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent attacker = addReady(player1, new GiantSpider());
         attacker.setAttacking(true);
-        attacker.setTapped(true);
+        attacker.tap();
         bastion.setBlocking(true);
         bastion.addBlockingTarget(indexOf(player1, attacker));
         bastion.addBlockingTargetId(attacker.getId());

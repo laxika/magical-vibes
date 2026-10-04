@@ -153,7 +153,7 @@ class GlimpseTheSunGodTest extends BaseCardTest {
     @Test
     void canTargetOwnAlreadyTappedCreatureWithEmptyLibrary() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new SatyrWayfinder());
-        target.setTapped(true);
+        target.tap();
         harness.setLibrary(player1, List.of());
         harness.setHand(player1, List.of(new GlimpseTheSunGod()));
         harness.addMana(player1, ManaColor.WHITE, 2);

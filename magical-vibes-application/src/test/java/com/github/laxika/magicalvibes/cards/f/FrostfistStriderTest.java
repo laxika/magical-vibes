@@ -98,7 +98,7 @@ class FrostfistStriderTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureStillGetsAnAdditionalStunCounter() {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        opponentCreature.setTapped(true);
+        opponentCreature.tap();
         opponentCreature.setCounterCount(CounterType.STUN, 1);
         harness.setHand(player1, List.of(new FrostfistStrider()));
         harness.addMana(player1, ManaColor.BLUE, 5);

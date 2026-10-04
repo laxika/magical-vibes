@@ -53,7 +53,7 @@ class FurnaceWhelpTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent whelp = harness.addToBattlefieldAndReturn(player1, new FurnaceWhelp());
         whelp.setSummoningSick(true);
-        whelp.setTapped(true);
+        whelp.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

@@ -173,7 +173,7 @@ class GemstoneCavernsTest extends BaseCardTest {
         gemstone.setCounterCount(CounterType.LUCK, 1);
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "GREEN");
-        gemstone.setTapped(false);
+        gemstone.untap();
         gemstone.setCounterCount(CounterType.LUCK, 0);
 
         harness.activateAbility(player1, 0, 0, null, null);

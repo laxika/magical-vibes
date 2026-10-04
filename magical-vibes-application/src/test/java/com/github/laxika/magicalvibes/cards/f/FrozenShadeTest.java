@@ -101,7 +101,7 @@ class FrozenShadeTest extends BaseCardTest {
     @DisplayName("A tapped Frozen Shade can activate its ability")
     void canActivateWhileTapped() {
         Permanent shade = addCreatureReady(player1, new FrozenShade());
-        shade.setTapped(true);
+        shade.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);

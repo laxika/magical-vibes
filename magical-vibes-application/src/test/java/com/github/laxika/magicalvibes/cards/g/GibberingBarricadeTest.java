@@ -82,7 +82,7 @@ class GibberingBarricadeTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Barricade can activate repeatedly")
     void activatesRepeatedlyWhileTapped() {
         Permanent barricade = harness.addToBattlefieldAndReturn(player1, new GibberingBarricade());
-        barricade.setTapped(true);
+        barricade.tap();
         barricade.setSummoningSick(true);
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GibberingBarricade());
         harness.setHand(player1, List.of());

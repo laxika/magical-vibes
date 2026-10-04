@@ -82,7 +82,7 @@ class GnollHuntingPartyTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
-        attacker.setTapped(false);
+        attacker.untap();
         attacker.setAttacking(false);
         gd.declaredAttackerIdsThisCombat.clear();
         declareAttackers(List.of(0));
@@ -143,7 +143,7 @@ class GnollHuntingPartyTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
 
-        attacker.setTapped(false);
+        attacker.untap();
         attacker.setAttacking(false);
         gd.declaredAttackerIdsThisCombat.clear();
         declareAttackers(List.of(0));

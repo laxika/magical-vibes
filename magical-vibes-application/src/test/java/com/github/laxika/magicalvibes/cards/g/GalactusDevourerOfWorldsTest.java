@@ -85,7 +85,7 @@ class GalactusDevourerOfWorldsTest extends BaseCardTest {
     @Test
     void tappedGalactusIsNotRequiredToAttack() {
         Permanent galactus = addCreatureReady(player1, new GalactusDevourerOfWorlds());
-        galactus.setTapped(true);
+        galactus.tap();
 
         declareAttackers(List.of());
 

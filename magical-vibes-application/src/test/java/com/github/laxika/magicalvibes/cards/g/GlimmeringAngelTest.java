@@ -131,7 +131,7 @@ class GlimmeringAngelTest extends BaseCardTest {
     void canActivateWhileTappedSummoningSickAndShrouded() {
         Permanent angel = harness.addToBattlefieldAndReturn(player1, new GlimmeringAngel());
         angel.setSummoningSick(true);
-        angel.setTapped(true);
+        angel.tap();
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, null, null);

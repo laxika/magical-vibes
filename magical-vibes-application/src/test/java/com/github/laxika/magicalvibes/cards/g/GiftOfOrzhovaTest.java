@@ -10,7 +10,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -104,7 +103,7 @@ class GiftOfOrzhovaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
-        gs.declareBlockers(gd, player1, Map.of());
+        gs.declareBlockers(gd, player1, List.of());
         resolveCombat(player2);
 
         harness.assertLife(player1, 17);
@@ -123,7 +122,7 @@ class GiftOfOrzhovaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         declareAttackersAndPrepareBlockers(List.of(0));
-        gs.declareBlockers(gd, player2, Map.of());
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
 
         harness.assertLife(player1, 24);

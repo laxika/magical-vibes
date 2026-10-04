@@ -94,7 +94,7 @@ class GoblinBombardmentTest extends BaseCardTest {
     void sacrificesBeforeResolution() {
         harness.addToBattlefield(player1, new GoblinBombardment());
         Permanent fanatic = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
-        fanatic.setTapped(true);
+        fanatic.tap();
         harness.setLife(player2, 20);
 
         harness.activateAbility(player1, 0, null, player2.getId());

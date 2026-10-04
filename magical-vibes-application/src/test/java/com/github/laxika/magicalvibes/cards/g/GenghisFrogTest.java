@@ -164,7 +164,7 @@ class GenghisFrogTest extends BaseCardTest {
     @Test
     void tappedMutagenCannotBeActivated() {
         createMutagen();
-        findPermanent(player1, "Mutagen").setTapped(true);
+        findPermanent(player1, "Mutagen").tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null,

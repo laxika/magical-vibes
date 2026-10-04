@@ -200,7 +200,7 @@ class GhaveGuruOfSporesTest extends BaseCardTest {
     void abilitiesDoNotRequireTappingOrHaste() {
         Permanent ghave = addReadyGhave();
         ghave.setSummoningSick(true);
-        ghave.setTapped(true);
+        ghave.tap();
         prepareMainPhase(player1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

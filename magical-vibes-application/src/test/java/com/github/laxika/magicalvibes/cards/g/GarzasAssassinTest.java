@@ -163,7 +163,7 @@ class GarzasAssassinTest extends BaseCardTest {
     @DisplayName("Can sacrifice itself while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent assassin = harness.addToBattlefieldAndReturn(player1, new GarzasAssassin());
-        assassin.setTapped(true);
+        assassin.tap();
         assassin.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BorealDruid());
 

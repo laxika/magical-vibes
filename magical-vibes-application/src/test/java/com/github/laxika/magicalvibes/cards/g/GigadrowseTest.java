@@ -92,7 +92,7 @@ class GigadrowseTest extends BaseCardTest {
     @DisplayName("An already tapped permanent remains a legal target")
     void canTargetTappedPermanent() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GhostWarden());
-        target.setTapped(true);
+        target.tap();
         castGigadrowse(target, List.of());
 
         resolveAllTriggers();

@@ -88,7 +88,7 @@ class GeistwaveTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Candlegrove Witch");
         harness.assertInHand(player1, "Candlegrove Witch");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     @Test
@@ -105,7 +105,7 @@ class GeistwaveTest extends BaseCardTest {
 
         harness.assertInHand(player1, "Candlegrove Witch");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Geistwave");
     }
 
@@ -140,7 +140,7 @@ class GeistwaveTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Candlegrove Witch");
         harness.assertInHand(player1, "Candlegrove Witch");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
     private void castAt(UUID targetId) {

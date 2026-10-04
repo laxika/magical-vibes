@@ -137,7 +137,7 @@ class GeneratorServantTest extends BaseCardTest {
     @DisplayName("Tapped Generator Servant cannot activate its tap ability")
     void tappedServantCannotActivate() {
         Permanent servant = addCreatureReady(player1, new GeneratorServant());
-        servant.setTapped(true);
+        servant.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

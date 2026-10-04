@@ -121,9 +121,9 @@ class GerrardsBattleCryTest extends BaseCardTest {
     @DisplayName("A tapped Battle Cry can activate and boost tapped creatures")
     void tappedPermanentsDoNotPreventActivationOrBoost() {
         Permanent battleCry = addBattleCry();
-        battleCry.setTapped(true);
+        battleCry.tap();
         Permanent soldier = harness.addToBattlefieldAndReturn(player1, new SoltariFootSoldier());
-        soldier.setTapped(true);
+        soldier.tap();
         harness.addMana(player1, ManaColor.WHITE, 3);
 
         activateAndResolve();

@@ -121,7 +121,7 @@ class GiantAmbushBeetleTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        target.setTapped(true);
+        target.tap();
         beetle.setAttacking(true);
         prepareDeclareBlockers();
 

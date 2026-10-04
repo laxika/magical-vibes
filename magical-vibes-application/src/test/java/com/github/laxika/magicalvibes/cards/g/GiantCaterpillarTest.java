@@ -114,7 +114,7 @@ class GiantCaterpillarTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent caterpillar = harness.addToBattlefieldAndReturn(player1, new GiantCaterpillar());
         caterpillar.setSummoningSick(true);
-        caterpillar.setTapped(true);
+        caterpillar.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.forceActivePlayer(player1);
 

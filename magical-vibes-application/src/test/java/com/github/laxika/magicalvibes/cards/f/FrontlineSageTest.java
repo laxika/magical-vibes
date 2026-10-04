@@ -170,7 +170,7 @@ class FrontlineSageTest extends BaseCardTest {
     @DisplayName("A tapped Sage cannot pay the tap cost")
     void lootCannotActivateWhileTapped() {
         Permanent sage = addCreatureReady(player1, new FrontlineSage());
-        sage.setTapped(true);
+        sage.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

@@ -76,7 +76,7 @@ class FrostLynxTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureStillSkipsNextUntap() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
-        bear.setTapped(true);
+        bear.tap();
         castFrostLynx(player2, "Runeclaw Bear");
         resolveAllTriggers();
 

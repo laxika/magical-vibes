@@ -78,7 +78,7 @@ class GlassblowersPuzzleknotTest extends BaseCardTest {
     void activatedAbilityPaysSacrificeBeforeResolvingWithEmptyLibrary() {
         harness.setLibrary(player1, List.of());
         Permanent puzzleknot = harness.addToBattlefieldAndReturn(player1, new GlassblowersPuzzleknot());
-        puzzleknot.setTapped(true);
+        puzzleknot.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

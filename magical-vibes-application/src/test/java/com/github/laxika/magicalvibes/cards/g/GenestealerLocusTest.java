@@ -134,7 +134,7 @@ class GenestealerLocusTest extends BaseCardTest {
     @DisplayName("Opposing Locus abilities both apply and expire at cleanup")
     void bothModifiersExpireAtEndOfTurn() {
         Permanent attacker = addCreatureReady(player1, new GenestealerLocus());
-        addCreatureReady(player2, new GenestealerLocus()).setTapped(true);
+        addCreatureReady(player2, new GenestealerLocus()).tap();
 
         declareAttackers(player1, List.of(0));
         resolveAllTriggers();

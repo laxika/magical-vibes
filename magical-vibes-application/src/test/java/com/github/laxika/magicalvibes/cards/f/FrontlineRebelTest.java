@@ -42,7 +42,7 @@ class FrontlineRebelTest extends BaseCardTest {
     @DisplayName("A tapped Frontline Rebel is not required to attack")
     void tappedRebelDoesNotHaveToAttack() {
         Permanent rebel = addCreatureReady(player1, new FrontlineRebel());
-        rebel.setTapped(true);
+        rebel.tap();
 
         assertThatCode(() -> declareAttackers(List.of())).doesNotThrowAnyException();
         assertThat(rebel.isAttacking()).isFalse();
@@ -63,7 +63,7 @@ class FrontlineRebelTest extends BaseCardTest {
     void mustAttackAgainInAnotherCombat() {
         Permanent rebel = addCreatureReady(player1, new FrontlineRebel());
         declareAttackers(List.of(0));
-        rebel.setTapped(false);
+        rebel.untap();
         rebel.setAttacking(false);
 
         assertThatThrownBy(() -> declareAttackers(List.of()))

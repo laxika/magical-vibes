@@ -143,7 +143,7 @@ class FromTheRubbleTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(bear);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bear);
     }
 
     @Test
@@ -179,7 +179,7 @@ class FromTheRubbleTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(target);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
@@ -212,7 +212,7 @@ class FromTheRubbleTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(gd.playerExiledCards.get(player1.getId())).doesNotContain(bear);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(bear);
     }
 
     private void castRubbleChoosingBear() {

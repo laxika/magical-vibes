@@ -86,7 +86,7 @@ class GingerbruteTest extends BaseCardTest {
     void evasionCanBeActivatedWhileTapped() {
         Permanent gingerbrute = addReadyGingerbrute();
         Permanent blocker = addCreatureReady(player2, new WildwoodTracker());
-        gingerbrute.setTapped(true);
+        gingerbrute.tap();
 
         activateEvasionAbility(gingerbrute);
         gingerbrute.setAttacking(true);
@@ -141,7 +141,7 @@ class GingerbruteTest extends BaseCardTest {
     @Test
     void sacrificeCannotBeActivatedWhileTapped() {
         Permanent gingerbrute = addReadyGingerbrute();
-        gingerbrute.setTapped(true);
+        gingerbrute.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))

@@ -95,7 +95,7 @@ class GlimmerBairnTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GlimmerBairn());
         Permanent bairn = findPermanent(player1, "Glimmer Bairn");
         bairn.setSummoningSick(true);
-        bairn.setTapped(true);
+        bairn.tap();
         harness.addToBattlefield(player1, createToken());
 
         harness.activateAbility(player1, 0, null, null);

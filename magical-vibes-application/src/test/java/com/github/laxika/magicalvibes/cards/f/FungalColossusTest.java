@@ -77,8 +77,8 @@ class FungalColossusTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped lands still reduce the cost")
     void tappedLandsReduceCost() {
-        harness.addToBattlefieldAndReturn(player1, new Forest()).setTapped(true);
-        harness.addToBattlefieldAndReturn(player1, new Island()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Forest()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Island()).tap();
         harness.setHand(player1, List.of(new FungalColossus()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 

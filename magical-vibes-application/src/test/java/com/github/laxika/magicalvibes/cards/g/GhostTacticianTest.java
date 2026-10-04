@@ -114,7 +114,7 @@ class GhostTacticianTest extends BaseCardTest {
     @DisplayName("A tapped Ghost Tactician cannot activate its ability")
     void cannotActivateWhileTapped() {
         Permanent tactician = addCreatureReady(player1, new GhostTactician());
-        tactician.setTapped(true);
+        tactician.tap();
         harness.setHand(player1, List.of(new SerraSphinx()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 

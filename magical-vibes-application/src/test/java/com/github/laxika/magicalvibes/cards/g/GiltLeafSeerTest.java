@@ -150,7 +150,7 @@ class GiltLeafSeerTest extends BaseCardTest {
     @DisplayName("Cannot activate an already tapped Seer")
     void cannotActivateWhenTapped() {
         Permanent seer = addCreatureReady(player1, new GiltLeafSeer());
-        seer.setTapped(true);
+        seer.tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

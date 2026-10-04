@@ -96,9 +96,9 @@ class GobblingOozeTest extends BaseCardTest {
         Permanent ooze = harness.addToBattlefieldAndReturn(player1, new GobblingOoze());
         Permanent beetle = harness.addToBattlefieldAndReturn(player1, new DrudgeBeetle());
         ooze.setSummoningSick(true);
-        ooze.setTapped(true);
+        ooze.tap();
         beetle.setSummoningSick(true);
-        beetle.setTapped(true);
+        beetle.tap();
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);

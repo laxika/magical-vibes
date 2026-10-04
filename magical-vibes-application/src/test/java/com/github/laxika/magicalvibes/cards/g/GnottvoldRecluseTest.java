@@ -44,7 +44,7 @@ class GnottvoldRecluseTest extends BaseCardTest {
         Permanent recluse = addCreatureReady(player2, new GnottvoldRecluse());
 
         declareAttackersAndPrepareBlockers(List.of(0));
-        recluse.setTapped(true);
+        recluse.tap();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

@@ -95,7 +95,7 @@ class GhostlyChangelingTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent changeling = harness.addToBattlefieldAndReturn(player1, new GhostlyChangeling());
         changeling.setSummoningSick(true);
-        changeling.setTapped(true);
+        changeling.tap();
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);

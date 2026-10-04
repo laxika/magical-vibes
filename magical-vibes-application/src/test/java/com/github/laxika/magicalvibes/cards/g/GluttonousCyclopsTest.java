@@ -67,7 +67,7 @@ class GluttonousCyclopsTest extends BaseCardTest {
     void monstrosityDoesNotRequireTappingOrHaste() {
         Permanent cyclops = harness.addToBattlefieldAndReturn(player1, new GluttonousCyclops());
         cyclops.setSummoningSick(true);
-        cyclops.setTapped(true);
+        cyclops.tap();
         addMonstrosityMana();
 
         harness.activateAbility(player1, 0, null, null);

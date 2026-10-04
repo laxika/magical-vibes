@@ -77,7 +77,7 @@ class GlintwingInvokerTest extends BaseCardTest {
     @DisplayName("A tapped Invoker can activate without becoming untapped")
     void canActivateWhileTapped() {
         Permanent invoker = harness.addToBattlefieldAndReturn(player1, new GlintwingInvoker());
-        invoker.setTapped(true);
+        invoker.tap();
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, null);

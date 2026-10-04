@@ -95,7 +95,7 @@ class GavonyTrapperTest extends BaseCardTest {
     @DisplayName("Cannot activate while already tapped")
     void cannotActivateWhileTapped() {
         Permanent trapper = addCreatureReady(player1, new GavonyTrapper());
-        trapper.setTapped(true);
+        trapper.tap();
         Permanent target = addCreatureReady(player2, new GavonyTrapper());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -141,7 +141,7 @@ class GavonyTrapperTest extends BaseCardTest {
     void canTargetAlreadyTappedCreature() {
         Permanent trapper = addCreatureReady(player1, new GavonyTrapper());
         Permanent target = addCreatureReady(player2, new GavonyTrapper());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());

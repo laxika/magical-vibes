@@ -133,7 +133,7 @@ class GiftOfTheDeityTest extends BaseCardTest {
         attacker.setAttacking(true);
         Permanent able = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent tapped = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        tapped.setTapped(true);
+        tapped.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();

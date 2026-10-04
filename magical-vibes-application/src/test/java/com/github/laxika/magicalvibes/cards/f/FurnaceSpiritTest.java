@@ -97,7 +97,7 @@ class FurnaceSpiritTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent spirit = harness.addToBattlefieldAndReturn(player1, new FurnaceSpirit());
         spirit.setSummoningSick(true);
-        spirit.setTapped(true);
+        spirit.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

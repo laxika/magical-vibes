@@ -132,7 +132,7 @@ class GlistenerSeerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent seer = addReadySeer(player1, 3);
-        seer.setTapped(true);
+        seer.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)

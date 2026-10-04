@@ -94,7 +94,7 @@ class GitaxianRaptorTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent raptor = addReadyRaptor(player1);
         raptor.setSummoningSick(true);
-        raptor.setTapped(true);
+        raptor.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

@@ -54,7 +54,7 @@ class GiantSpiderTest extends BaseCardTest {
         Permanent spider = addCreatureReady(player2, new GiantSpider());
 
         declareAttackersAndPrepareBlockers(List.of(0));
-        spider.setTapped(true);
+        spider.tap();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))

@@ -98,7 +98,7 @@ class FurnaceStriderTest extends BaseCardTest {
     void canGrantItselfHasteWithLastCounter() {
         Permanent strider = harness.enterBattlefieldAndReturn(player1, new FurnaceStrider());
         strider.setCounterCount(CounterType.OIL, 1);
-        strider.setTapped(true);
+        strider.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 

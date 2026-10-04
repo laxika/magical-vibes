@@ -175,7 +175,7 @@ class GethLordOfTheVaultTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent stolenBears = findPermanent(player1, "Carapace Forger");
-        stolenBears.setDamage(2);
+        stolenBears.setMarkedDamage(2);
         harness.runStateBasedActions();
 
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(bears);

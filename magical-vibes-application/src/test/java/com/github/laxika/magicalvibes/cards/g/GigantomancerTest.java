@@ -68,7 +68,7 @@ class GigantomancerTest extends BaseCardTest {
     void canTargetSelfWithoutTappingOrSummoningRestriction() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new Gigantomancer());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, source.getId());

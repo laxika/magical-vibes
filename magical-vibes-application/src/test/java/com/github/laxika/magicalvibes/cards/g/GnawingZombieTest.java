@@ -97,7 +97,7 @@ class GnawingZombieTest extends BaseCardTest {
     @DisplayName("Sacrifice is paid before resolution and a tapped Zombie can activate repeatedly")
     void tappedZombieCanActivateRepeatedly() {
         Permanent zombie = addCreatureReady(player1, new GnawingZombie());
-        zombie.setTapped(true);
+        zombie.tap();
         Permanent minotaur = harness.addToBattlefieldAndReturn(player1, new UndeadMinotaur());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.BLACK, 2);

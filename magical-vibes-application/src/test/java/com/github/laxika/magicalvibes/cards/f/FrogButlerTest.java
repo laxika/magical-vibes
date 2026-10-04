@@ -79,7 +79,7 @@ class FrogButlerTest extends BaseCardTest {
     void reachAbilityWorksWhileTappedAndSummoningSickAndOnlyAffectsSource() {
         Permanent frog = harness.addToBattlefieldAndReturn(player1, new FrogButler());
         frog.setSummoningSick(true);
-        frog.setTapped(true);
+        frog.tap();
         Permanent otherFrog = addCreatureReady(player1, new FrogButler());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

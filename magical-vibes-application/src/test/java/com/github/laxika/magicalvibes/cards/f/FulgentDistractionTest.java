@@ -158,7 +158,7 @@ class FulgentDistractionTest extends BaseCardTest {
     void unattachesAllEquipmentFromAlreadyTappedCreatureAcrossControllers() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent spider = harness.addToBattlefieldAndReturn(player2, new GiantSpider());
-        bears.setTapped(true);
+        bears.tap();
         Permanent firstEquipment = harness.addToBattlefieldAndReturn(player1, new LoxodonWarhammer());
         Permanent secondEquipment = harness.addToBattlefieldAndReturn(player2, new LoxodonWarhammer());
         firstEquipment.setAttachedTo(bears.getId());

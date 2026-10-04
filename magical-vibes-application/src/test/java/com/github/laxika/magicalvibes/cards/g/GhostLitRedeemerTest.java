@@ -86,7 +86,7 @@ class GhostLitRedeemerTest extends BaseCardTest {
     @Test
     void tappedRedeemerCannotActivateAgain() {
         Permanent redeemer = addCreatureReady(player1, new GhostLitRedeemer());
-        redeemer.setTapped(true);
+        redeemer.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

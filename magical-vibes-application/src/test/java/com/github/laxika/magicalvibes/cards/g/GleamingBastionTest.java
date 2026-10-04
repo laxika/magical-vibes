@@ -78,7 +78,7 @@ class GleamingBastionTest extends BaseCardTest {
     void producesWhiteManaWithATappedBasicLand() {
         Permanent bastion = addReadyBastion();
         Permanent plains = harness.addToBattlefieldAndReturn(player1, new Plains());
-        plains.setTapped(true);
+        plains.tap();
 
         harness.activateAbility(player1, 0, 0, null, null);
 

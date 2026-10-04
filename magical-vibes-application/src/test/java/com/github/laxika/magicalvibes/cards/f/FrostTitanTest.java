@@ -254,7 +254,7 @@ class FrostTitanTest extends BaseCardTest {
     @Test
     void alreadyTappedTargetSkipsOnlyItsNextUntapStep() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
-        bear.setTapped(true);
+        bear.tap();
 
         castFrostTitan(bear.getId());
         harness.passBothPriorities();

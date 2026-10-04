@@ -112,7 +112,7 @@ class FrilledSandwallaTest extends BaseCardTest {
     void canActivateOnOpponentTurnWhileTappedAndSummoningSick() {
         Permanent sandwalla = harness.addToBattlefieldAndReturn(player1, new FrilledSandwalla());
         sandwalla.setSummoningSick(true);
-        sandwalla.setTapped(true);
+        sandwalla.tap();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 2);

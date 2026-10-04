@@ -141,7 +141,7 @@ class GargoyleSentinelTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent sentinel = harness.addToBattlefieldAndReturn(player1, new GargoyleSentinel());
         sentinel.setSummoningSick(true);
-        sentinel.setTapped(true);
+        sentinel.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 0, null, null);

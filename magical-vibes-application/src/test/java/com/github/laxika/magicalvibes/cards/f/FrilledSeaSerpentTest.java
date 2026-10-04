@@ -84,7 +84,7 @@ class FrilledSeaSerpentTest extends BaseCardTest {
     @DisplayName("Ability can be activated while tapped and summoning sick")
     void activatesWhileTappedAndSummoningSick() {
         Permanent serpent = addSerpent(player1);
-        serpent.setTapped(true);
+        serpent.tap();
         serpent.setSummoningSick(true);
         addAbilityMana(player1);
 

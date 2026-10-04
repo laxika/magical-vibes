@@ -86,7 +86,7 @@ class FrostbridgeGuardTest extends BaseCardTest {
     @Test
     void cannotActivateWhileAlreadyTapped() {
         Permanent guard = addCreatureReady(player1, new FrostbridgeGuard());
-        guard.setTapped(true);
+        guard.tap();
         Permanent target = addCreatureReady(player2, new FrostbridgeGuard());
         addAbilityMana();
 
@@ -100,7 +100,7 @@ class FrostbridgeGuardTest extends BaseCardTest {
     void canTargetAnAlreadyTappedCreature() {
         Permanent guard = addCreatureReady(player1, new FrostbridgeGuard());
         Permanent target = addCreatureReady(player2, new FrostbridgeGuard());
-        target.setTapped(true);
+        target.tap();
         addAbilityMana();
 
         harness.activateAbility(player1, 0, null, target.getId());

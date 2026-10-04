@@ -161,8 +161,8 @@ class GateToPhyrexiaTest extends BaseCardTest {
         Permanent firstArtifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         Permanent secondArtifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         prepareControllerUpkeep();
-        firstFodder.setTapped(true);
-        secondFodder.setTapped(true);
+        firstFodder.tap();
+        secondFodder.tap();
 
         harness.activateAbility(player1, battlefieldIndex(firstGate), null, firstArtifact.getId());
         harness.handlePermanentChosen(player1, firstFodder.getId());

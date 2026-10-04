@@ -118,7 +118,7 @@ class GadwickTheWizenedTest extends BaseCardTest {
     void alreadyTappedPermanentIsLegalTarget() {
         harness.addToBattlefield(player1, new GadwickTheWizened());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GadwickTheWizened());
-        target.setTapped(true);
+        target.tap();
 
         harness.castFromHand(player1, new Opt(), "{U}");
         harness.handlePermanentChosen(player1, target.getId());

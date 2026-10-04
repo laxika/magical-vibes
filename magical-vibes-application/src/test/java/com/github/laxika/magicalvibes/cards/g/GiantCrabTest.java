@@ -124,7 +124,7 @@ class GiantCrabTest extends BaseCardTest {
     void tappedSummoningSickCrabCanActivate() {
         Permanent crab = harness.addToBattlefieldAndReturn(player1, new GiantCrab());
         crab.setSummoningSick(true);
-        crab.setTapped(true);
+        crab.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);

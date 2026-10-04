@@ -115,7 +115,7 @@ class GlenElendraGuardianTest extends BaseCardTest {
     void canSpendPlusCounterWithoutTapping() {
         Permanent guardian = harness.addToBattlefieldAndReturn(player1, new GlenElendraGuardian());
         guardian.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        guardian.setTapped(true);
+        guardian.tap();
         guardian.setSummoningSick(true);
         Shock shock = new Shock();
         harness.setHand(player2, List.of(shock));

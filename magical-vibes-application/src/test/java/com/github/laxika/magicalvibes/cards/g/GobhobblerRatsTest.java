@@ -88,7 +88,7 @@ class GobhobblerRatsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.setHand(player1, List.of());
-        rats.setTapped(true);
+        rats.tap();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 

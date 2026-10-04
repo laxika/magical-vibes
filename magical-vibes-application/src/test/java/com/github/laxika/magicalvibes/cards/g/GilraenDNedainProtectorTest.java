@@ -175,7 +175,7 @@ class GilraenDNedainProtectorTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent gilraen = addCreatureReady(player1, new GilraenDNedainProtector());
-        gilraen.setTapped(true);
+        gilraen.tap();
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

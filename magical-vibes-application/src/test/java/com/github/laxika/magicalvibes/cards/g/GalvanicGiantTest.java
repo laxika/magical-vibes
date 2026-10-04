@@ -97,7 +97,7 @@ class GalvanicGiantTest extends BaseCardTest {
     void alreadyTappedCreatureStillReceivesAStunCounter() {
         harness.addToBattlefield(player1, new GalvanicGiant());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GalvanicGiant());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new GalvanicGiant()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.BLUE, 2);

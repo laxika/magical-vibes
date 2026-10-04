@@ -63,7 +63,7 @@ class GlenElendraArchmageTest extends BaseCardTest {
     void counterOnArchmagePreventsPersistButNotActivation() {
         Permanent archmage = addCreatureReady(player1, new GlenElendraArchmage());
         archmage.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
-        archmage.setTapped(true);
+        archmage.tap();
         archmage.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLUE, 1);
 

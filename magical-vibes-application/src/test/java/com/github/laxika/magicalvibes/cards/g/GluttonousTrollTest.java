@@ -79,7 +79,7 @@ class GluttonousTrollTest extends BaseCardTest {
     @DisplayName("Tapped Food cannot pay its tap activation cost")
     void tappedFoodCannotGainLife() {
         castTroll();
-        findPermanent(player1, "Food").setTapped(true);
+        findPermanent(player1, "Food").tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
@@ -93,7 +93,7 @@ class GluttonousTrollTest extends BaseCardTest {
     void sacrificesTappedFoodToBoost() {
         castTroll();
         Permanent troll = findPermanent(player1, "Gluttonous Troll");
-        findPermanent(player1, "Food").setTapped(true);
+        findPermanent(player1, "Food").tap();
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

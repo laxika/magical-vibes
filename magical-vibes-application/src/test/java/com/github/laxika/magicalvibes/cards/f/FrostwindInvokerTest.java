@@ -71,7 +71,7 @@ class FrostwindInvokerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent invoker = harness.addToBattlefieldAndReturn(player1, new FrostwindInvoker());
         invoker.setSummoningSick(true);
-        invoker.setTapped(true);
+        invoker.tap();
         Permanent creature = addCreatureReady(player1, new NestInvader());
 
         harness.addMana(player1, ManaColor.COLORLESS, 8);

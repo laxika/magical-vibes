@@ -119,7 +119,7 @@ class GildedGooseTest extends BaseCardTest {
         castGoose();
         Permanent goose = findPermanent(player1, "Gilded Goose");
         goose.setSummoningSick(false);
-        findPermanent(player1, "Food").setTapped(true);
+        findPermanent(player1, "Food").tap();
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, ManaColor.RED.name());

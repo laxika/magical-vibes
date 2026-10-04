@@ -144,7 +144,7 @@ class GhorClanBloodscaleTest extends BaseCardTest {
     @DisplayName("The ability can be activated while tapped and summoning sick on an opponent's turn")
     void canActivateWhileTappedAndSummoningSickOnOpponentsTurn() {
         Permanent bloodscale = addReadyBloodscale(player1);
-        bloodscale.setTapped(true);
+        bloodscale.tap();
         bloodscale.setSummoningSick(true);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

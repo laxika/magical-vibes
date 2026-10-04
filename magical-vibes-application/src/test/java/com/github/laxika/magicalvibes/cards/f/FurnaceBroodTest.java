@@ -42,7 +42,7 @@ class FurnaceBroodTest extends BaseCardTest {
     @DisplayName("A tapped newly entered Brood can activate repeatedly and target its own creatures")
     void activatesWhileTappedAndSummoningSick() {
         Permanent brood = harness.addToBattlefieldAndReturn(player1, new FurnaceBrood());
-        brood.setTapped(true);
+        brood.tap();
         Permanent troll = addCreatureReady(player1, new PygmyTroll());
         harness.addMana(player1, ManaColor.RED, 2);
 

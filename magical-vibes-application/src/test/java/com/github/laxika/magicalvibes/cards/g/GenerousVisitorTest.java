@@ -109,7 +109,7 @@ class GenerousVisitorTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.handlePermanentChosen(player1, target.getId());
-        gd.battlefield.get(player1.getId()).remove(visitor);
+        gd.playerBattlefields.get(player1.getId()).remove(visitor);
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -124,7 +124,7 @@ class GenerousVisitorTest extends BaseCardTest {
 
         harness.castEnchantment(player1, 0);
         harness.handlePermanentChosen(player1, target.getId());
-        gd.battlefield.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).remove(target);
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

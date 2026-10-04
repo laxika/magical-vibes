@@ -79,7 +79,7 @@ class FrostburnWeirdTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent weird = harness.addToBattlefieldAndReturn(player1, new FrostburnWeird());
         weird.setSummoningSick(true);
-        weird.setTapped(true);
+        weird.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

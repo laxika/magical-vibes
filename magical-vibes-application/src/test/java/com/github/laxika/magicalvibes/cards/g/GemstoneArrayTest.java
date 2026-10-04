@@ -109,7 +109,7 @@ class GemstoneArrayTest extends BaseCardTest {
     @DisplayName("A tapped Gemstone Array can use both abilities")
     void tappedArrayCanUseBothAbilities() {
         Permanent array = harness.addToBattlefieldAndReturn(player1, new GemstoneArray());
-        array.setTapped(true);
+        array.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);

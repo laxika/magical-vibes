@@ -162,7 +162,7 @@ class FugitiveOfTheJudoonTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(human);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
-        assertThat(gd.playerLibraries.get(player1.getId())).containsExactly(doctor);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(doctor);
         assertThat(gd.exiledCards).isEmpty();
     }
 
@@ -182,7 +182,7 @@ class FugitiveOfTheJudoonTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(human, artifact);
         assertThat(gd.exiledCards).extracting(exiled -> exiled.card().getId())
                 .contains(human.getCard().getId(), artifact.getCard().getId());
-        assertThat(gd.playerLibraries.get(player1.getId())).containsExactly(nonDoctor);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonDoctor);
     }
 
     @Test

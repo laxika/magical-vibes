@@ -48,7 +48,7 @@ class FrostTricksterTest extends BaseCardTest {
     void restrictionExpiresAfterOneControllerUntapStep() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent otherBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        otherBear.setTapped(true);
+        otherBear.tap();
 
         castFrostTrickster(player2, "Grizzly Bears");
         harness.passBothPriorities();
@@ -67,7 +67,7 @@ class FrostTricksterTest extends BaseCardTest {
     @DisplayName("Already tapped creatures still receive the untap restriction")
     void alreadyTappedTargetStillSkipsUntap() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setTapped(true);
+        bears.tap();
 
         castFrostTrickster(player2, "Grizzly Bears");
         harness.passBothPriorities();

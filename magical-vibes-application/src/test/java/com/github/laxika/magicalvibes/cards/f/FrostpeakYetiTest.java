@@ -87,7 +87,7 @@ class FrostpeakYetiTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent yeti = addYeti();
         yeti.setSummoningSick(true);
-        yeti.setTapped(true);
+        yeti.tap();
         addAbilityMana();
 
         harness.activateAbility(player1, 0, 0, null, null);

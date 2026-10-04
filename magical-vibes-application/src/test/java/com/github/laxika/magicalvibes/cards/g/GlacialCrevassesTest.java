@@ -136,7 +136,7 @@ class GlacialCrevassesTest extends BaseCardTest {
     void canSacrificeTappedSnowMountain() {
         addCrevasses(player1);
         Permanent snowMountain = addSnowMountain(player1);
-        snowMountain.setTapped(true);
+        snowMountain.tap();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

@@ -91,7 +91,7 @@ class GoblinBangchuckersTest extends BaseCardTest {
     @DisplayName("Cannot activate when already tapped")
     void cannotActivateWhenTapped() {
         Permanent source = addCreatureReady(player1, new GoblinBangchuckers());
-        source.setTapped(true);
+        source.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);

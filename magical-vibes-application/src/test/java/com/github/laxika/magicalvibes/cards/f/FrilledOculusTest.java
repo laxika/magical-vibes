@@ -114,7 +114,7 @@ class FrilledOculusTest extends BaseCardTest {
     void activationDoesNotRequireTapOrHaste() {
         Permanent oculus = harness.addToBattlefieldAndReturn(player1, new FrilledOculus());
         oculus.setSummoningSick(true);
-        oculus.setTapped(true);
+        oculus.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, null);

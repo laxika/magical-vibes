@@ -23,7 +23,7 @@ class DovinsDismissalTest extends BaseCardTest {
     @DisplayName("Puts a tapped creature on top of its owner's library and searches the graveyard")
     void putsTappedCreatureOnTopAndSearchesGraveyard() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         Card libraryCard = new Forest();
         Card dovin = new DovinArchitectOfLaw();
         harness.setLibrary(player2, List.of(libraryCard));
@@ -80,7 +80,7 @@ class DovinsDismissalTest extends BaseCardTest {
         Card dovin = new DovinArchitectOfLaw();
         harness.setLibrary(player1, List.of(dovin));
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
 
         cast(target.getId());
         harness.passBothPriorities();

@@ -113,7 +113,7 @@ class GhaltaPrimalHungerTest extends BaseCardTest {
     void countsModifiedPowerOfTappedCreatures() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new BearCub());
         creature.setPowerModifier(3);
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new GhaltaPrimalHunger()));
         harness.addMana(player1, ManaColor.GREEN, 7);
 

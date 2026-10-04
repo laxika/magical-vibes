@@ -152,7 +152,7 @@ class GixianPuppeteerTest extends BaseCardTest {
     @CardUsed({PhantasmalImage.class})
     void lowManaValueCopyCannotReturnItself() {
         Permanent original = harness.addToBattlefieldAndReturn(player2, new GixianPuppeteer());
-        harness.castFromHand(player1, new PhantasmalImage());
+        harness.castFromHand(player1, new PhantasmalImage(), "{1}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

@@ -67,7 +67,7 @@ class GloomlakeVergeTest extends BaseCardTest {
     @Test
     void tappedIslandStillEnablesBlackMana() {
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
-        island.setTapped(true);
+        island.tap();
         harness.addToBattlefield(player1, new GloomlakeVerge());
 
         harness.activateAbility(player1, 1, 1, null, null);
@@ -83,7 +83,7 @@ class GloomlakeVergeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
 
-        verge.setTapped(false);
+        verge.untap();
         gd.playerBattlefields.get(player1.getId()).remove(island);
         gd.playerGraveyards.get(player1.getId()).add(island.getCard());
 

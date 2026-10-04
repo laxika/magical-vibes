@@ -78,7 +78,7 @@ class FrostwallaTest extends BaseCardTest {
     void tappedSummoningSickCreatureCanPump() {
         Permanent frostwalla = addCreatureReady(player1, new Frostwalla());
         frostwalla.setSummoningSick(true);
-        frostwalla.setTapped(true);
+        frostwalla.tap();
         gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, null, null);

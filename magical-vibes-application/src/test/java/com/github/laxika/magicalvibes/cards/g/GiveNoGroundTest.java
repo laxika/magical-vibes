@@ -118,7 +118,7 @@ class GiveNoGroundTest extends BaseCardTest {
         Permanent blocker = addCreature(player2);
         addAttacker();
         castGiveNoGround(blocker);
-        blocker.setTapped(true);
+        blocker.tap();
 
         prepareDeclareBlockers();
 

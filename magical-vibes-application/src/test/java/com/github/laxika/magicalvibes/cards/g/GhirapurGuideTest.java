@@ -78,7 +78,7 @@ class GhirapurGuideTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent guide = harness.addToBattlefieldAndReturn(player1, new GhirapurGuide());
         guide.setSummoningSick(true);
-        guide.setTapped(true);
+        guide.tap();
         Permanent target = addCreatureReady(player1, new GhirapurGuide());
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 

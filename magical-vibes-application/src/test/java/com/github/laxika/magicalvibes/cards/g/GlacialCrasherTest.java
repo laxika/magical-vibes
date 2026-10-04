@@ -43,7 +43,7 @@ class GlacialCrasherTest extends BaseCardTest {
     @Test
     void canAttackWithOwnTappedMountain() {
         addCreatureReady(player1, new GlacialCrasher());
-        harness.addToBattlefieldAndReturn(player1, new Mountain()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new Mountain()).tap();
 
         declareAttackers(player1, List.of(0));
 

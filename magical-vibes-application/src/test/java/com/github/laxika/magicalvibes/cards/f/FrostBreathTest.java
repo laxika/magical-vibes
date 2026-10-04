@@ -74,7 +74,7 @@ class FrostBreathTest extends BaseCardTest {
     @Test
     void alreadyTappedCreatureStillSkipsExactlyOneUntap() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
-        bear.setTapped(true);
+        bear.tap();
         harness.setHand(player1, List.of(new FrostBreath()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 

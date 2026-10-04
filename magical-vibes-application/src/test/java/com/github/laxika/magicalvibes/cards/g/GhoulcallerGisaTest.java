@@ -140,7 +140,7 @@ class GhoulcallerGisaTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent gisa = addCreatureReady(player1, new GhoulcallerGisa());
-        gisa.setTapped(true);
+        gisa.tap();
         addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLACK, 1);
 

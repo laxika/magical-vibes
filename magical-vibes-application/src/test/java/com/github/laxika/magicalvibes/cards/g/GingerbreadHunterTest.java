@@ -169,7 +169,7 @@ class GingerbreadHunterTest extends BaseCardTest {
         assertThat(food.isTapped()).isFalse();
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        food.setTapped(true);
+        food.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);

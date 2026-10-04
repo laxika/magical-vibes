@@ -59,7 +59,7 @@ class GenasiRabbleRouserTest extends BaseCardTest {
     void repeatedActivationsStackWithoutTappingOrSummoningSicknessRestrictions() {
         Permanent rabbleRouser = addCreatureReady(player1, new GenasiRabbleRouser());
         rabbleRouser.setSummoningSick(true);
-        rabbleRouser.setTapped(true);
+        rabbleRouser.tap();
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.activateAbility(player1, 0, null, null);

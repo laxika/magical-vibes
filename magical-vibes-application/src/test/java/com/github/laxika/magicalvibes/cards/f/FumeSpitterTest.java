@@ -89,7 +89,7 @@ class FumeSpitterTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick, targeting own creature")
     void activatesWhileTappedAndSummoningSick() {
         Permanent spitter = harness.addToBattlefieldAndReturn(player1, new FumeSpitter());
-        spitter.setTapped(true);
+        spitter.tap();
         spitter.setSummoningSick(true);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new AuriokEdgewright());
 

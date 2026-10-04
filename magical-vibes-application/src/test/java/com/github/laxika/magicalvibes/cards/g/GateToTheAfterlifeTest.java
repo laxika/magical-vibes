@@ -299,7 +299,7 @@ class GateToTheAfterlifeTest extends BaseCardTest {
 
         @Test
         void cannotActivateWhenGateIsTapped() {
-            harness.addToBattlefieldAndReturn(player1, new GateToTheAfterlife()).setTapped(true);
+            harness.addToBattlefieldAndReturn(player1, new GateToTheAfterlife()).tap();
             harness.setGraveyard(player1, creatureCards(6));
             harness.addMana(player1, ManaColor.COLORLESS, 2);
 

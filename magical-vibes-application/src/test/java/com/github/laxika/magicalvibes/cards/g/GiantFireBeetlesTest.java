@@ -68,7 +68,7 @@ class GiantFireBeetlesTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         Card duplicate = gd.playerHands.get(player1.getId()).removeFirst();
         addCreatureReady(player1, duplicate);
-        original.setTapped(false);
+        original.untap();
 
         declareAttackers(List.of(0, 1));
         resolveAllTriggers();

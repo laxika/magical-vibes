@@ -165,7 +165,7 @@ class Mh1GiverOfRunesTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent giver = addCreatureReady(player1, new GiverOfRunes());
         Permanent target = addCreatureReady(player1, new GiverOfRunes());
-        giver.setTapped(true);
+        giver.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);

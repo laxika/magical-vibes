@@ -99,7 +99,7 @@ class GoblinArtisansTest extends BaseCardTest {
         harness.setHand(player1, List.of(ornithopter));
         harness.castCreature(player1, 0);
         harness.activateAbility(player1, 0, null, ornithopter.getId());
-        artisan.setTapped(false);
+        artisan.untap();
 
         harness.activateAbility(player1, 0, null, ornithopter.getId());
 

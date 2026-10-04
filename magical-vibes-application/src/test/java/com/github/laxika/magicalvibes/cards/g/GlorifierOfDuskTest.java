@@ -151,7 +151,7 @@ class GlorifierOfDuskTest extends BaseCardTest {
     void tappedSummoningSickCreatureCanActivateBothAbilities() {
         Permanent glorifier = harness.addToBattlefieldAndReturn(player1, new GlorifierOfDusk());
         glorifier.setSummoningSick(true);
-        glorifier.setTapped(true);
+        glorifier.tap();
         harness.setLife(player1, 20);
 
         harness.activateAbility(player1, 0, 0, null, null);
