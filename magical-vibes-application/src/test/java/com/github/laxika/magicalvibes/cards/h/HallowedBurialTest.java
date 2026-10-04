@@ -47,9 +47,7 @@ class HallowedBurialTest extends BaseCardTest {
     @Test
     @DisplayName("Indestructible does not save a creature from Hallowed Burial")
     void indestructibleDoesNotSave() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bears.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
 
         harness.castFromHand(player1, new HallowedBurial(), "{3}{W}{W}");
@@ -93,6 +91,37 @@ class HallowedBurialTest extends BaseCardTest {
                 .containsExactly(player1LibraryCard);
         assertThat(gd.playerDecks.get(player2.getId()))
                 .containsExactly(player2LibraryCard, opponentOwnedBears);
+    }
+
+    @Test
+    @DisplayName("The owner chooses the order when multiple creatures go to their library")
+    void ownerChoosesBottomOrder() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.castFromHand(player1, new HallowedBurial(), "{3}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput())
+                .as("The owner must be offered a choice of the two creatures' bottom order")
+                .isTrue();
+    }
+
+    @Test
+    @DisplayName("Shroud does not protect a creature from this untargeted spell")
+    void shroudDoesNotSave() {
+        GrizzlyBears card = new GrizzlyBears();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, card);
+        bears.getGrantedKeywords().add(Keyword.SHROUD);
+        Forest libraryCard = new Forest();
+        harness.setLibrary(player2, List.of(libraryCard));
+
+        harness.castFromHand(player1, new HallowedBurial(), "{3}{W}{W}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard, card);
     }
 
     @Test
