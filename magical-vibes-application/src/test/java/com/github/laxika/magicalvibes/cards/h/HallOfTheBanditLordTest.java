@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({HallOfTheBanditLord.class, HumbleBudoka.class, CounselOfTheSoratami.class})
 class HallOfTheBanditLordTest extends BaseCardTest {
@@ -91,8 +92,8 @@ class HallOfTheBanditLordTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Haste granted by Hall lasts until end of turn")
-    void hasteExpiresAtEndOfTurn() {
+    @DisplayName("Haste granted by Hall persists after the turn ends")
+    void hastePersistsAfterEndOfTurn() {
         Permanent hall = harness.addToBattlefieldAndReturn(player1, new HallOfTheBanditLord());
         hall.untap();
         harness.activateAbility(player1, 0, null, null);
@@ -104,10 +105,37 @@ class HallOfTheBanditLordTest extends BaseCardTest {
         Permanent budoka = findPermanent(player1, "Humble Budoka");
         assertThat(budoka.hasKeyword(Keyword.HASTE)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(budoka.hasKeyword(Keyword.HASTE)).isFalse();
+        assertThat(budoka.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Hall cannot activate without enough life to pay its cost")
+    void cannotActivateWithInsufficientLife() {
+        Permanent hall = harness.addToBattlefieldAndReturn(player1, new HallOfTheBanditLord());
+        harness.setLife(player1, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough life");
+
+        harness.assertLife(player1, 2);
+        assertThat(hall.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Hall cannot activate while tapped after entering the battlefield")
+    void cannotActivateWhileTapped() {
+        harness.setHand(player1, List.of(new HallOfTheBanditLord()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(findPermanent(player1, "Hall of the Bandit Lord").isTapped()).isTrue();
     }
 }
