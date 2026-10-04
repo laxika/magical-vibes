@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -12,10 +13,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import java.util.List;
 
 @CardUsed({HorrorOfHorrors.class, DrudgeSkeletons.class, GlorySeeker.class, Swamp.class, Shock.class, Forest.class})
 class HorrorOfHorrorsTest extends BaseCardTest {
@@ -116,5 +117,86 @@ class HorrorOfHorrorsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("black creature");
         harness.assertNotInGraveyard(player1, "Swamp");
+    }
+
+    @Test
+    void cannotSacrificeForestInsteadOfSwamp() {
+        harness.addToBattlefield(player1, new HorrorOfHorrors());
+        Permanent skeleton = addCreatureReady(player1, new DrudgeSkeletons());
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, skeleton.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotSacrificeOpponentsSwamp() {
+        harness.addToBattlefield(player1, new HorrorOfHorrors());
+        Permanent skeleton = addCreatureReady(player1, new DrudgeSkeletons());
+        harness.addToBattlefield(player2, new Swamp());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, skeleton.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Swamp");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canSacrificeTappedSwampWithoutMana() {
+        harness.addToBattlefield(player1, new HorrorOfHorrors());
+        Permanent skeleton = addCreatureReady(player1, new DrudgeSkeletons());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        swamp.tap();
+
+        harness.activateAbility(player1, 0, null, skeleton.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Swamp");
+        assertThat(skeleton.getRegenerationShield()).isEqualTo(1);
+        assertThat(skeleton.isTapped()).isFalse();
+    }
+
+    @Test
+    void regenerationHealsDamageAndOnlyPreventsOneDestruction() {
+        harness.addToBattlefield(player1, new HorrorOfHorrors());
+        Permanent skeleton = addCreatureReady(player1, new DrudgeSkeletons());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.activateAbility(player1, 0, null, skeleton.getId());
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, skeleton.getId());
+
+        harness.assertOnBattlefield(player1, "Drudge Skeletons");
+        assertThat(skeleton.getMarkedDamage()).isZero();
+        assertThat(skeleton.getRegenerationShield()).isZero();
+
+        harness.castAndResolveInstant(player2, 0, skeleton.getId());
+
+        harness.assertNotOnBattlefield(player1, "Drudge Skeletons");
+        harness.assertInGraveyard(player1, "Drudge Skeletons");
+    }
+
+    @Test
+    void creatureDestroyedInResponseCannotBeRegeneratedRetroactively() {
+        harness.addToBattlefield(player1, new HorrorOfHorrors());
+        Permanent skeleton = addCreatureReady(player1, new DrudgeSkeletons());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.activateAbility(player1, 0, null, skeleton.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, skeleton.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Drudge Skeletons");
+        harness.assertInGraveyard(player1, "Drudge Skeletons");
+        harness.assertInGraveyard(player1, "Swamp");
+        assertThat(gd.stack).isEmpty();
     }
 }
