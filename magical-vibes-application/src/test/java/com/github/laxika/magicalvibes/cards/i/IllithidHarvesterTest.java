@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.d.DelverOfSecrets;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PlantTadpoles;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IllithidHarvester.class, PlantTadpoles.class, GrizzlyBears.class})
+@CardUsed({IllithidHarvester.class, PlantTadpoles.class, GrizzlyBears.class, DelverOfSecrets.class})
 class IllithidHarvesterTest extends BaseCardTest {
 
     @Test
@@ -28,8 +29,7 @@ class IllithidHarvesterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.castCreature(player1, 0, List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(first.isFaceDown()).isTrue();
         assertThat(second.isFaceDown()).isTrue();
@@ -87,10 +87,58 @@ class IllithidHarvesterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castFromExile(player1, card.getId(), target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Illithid Harvester");
         assertThat(gd.findExiledCard(card.getId())).isNull();
+    }
+
+    @Test
+    void ceremorphosisCannotTurnDoubleFacedCreaturesFaceDown() {
+        Permanent target = addCreatureReady(player2, new DelverOfSecrets());
+        target.tap();
+        harness.setHand(player1, List.of(new IllithidHarvester()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0, List.of(target.getId()));
+        resolveAllTriggers();
+
+        assertThat(target.isFaceDown()).isFalse();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void ceremorphosisLeavesTargetThatUntapsBeforeResolutionFaceUp() {
+        Permanent first = addCreatureReady(player2, new GrizzlyBears());
+        Permanent second = addCreatureReady(player2, new GrizzlyBears());
+        first.tap();
+        second.tap();
+        harness.setHand(player1, List.of(new IllithidHarvester()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+        first.untap();
+        resolveAllTriggers();
+
+        assertThat(first.isFaceDown()).isFalse();
+        assertThat(second.isFaceDown()).isTrue();
+    }
+
+    @Test
+    void ceremorphosisCanChooseNoTargetsEvenWhenTappedCreaturesExist() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.tap();
+        harness.setHand(player1, List.of(new IllithidHarvester()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0, List.of());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Illithid Harvester");
+        assertThat(target.isFaceDown()).isFalse();
     }
 }
