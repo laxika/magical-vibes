@@ -48,8 +48,7 @@ class GumdropPoisonerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castFromExile(player1, card.getId(), target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
@@ -81,5 +80,61 @@ class GumdropPoisonerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void lifeGainedInResponseToEnterTriggerCounts() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GumdropPoisoner());
+        GumdropPoisoner card = new GumdropPoisoner();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+        harness.castFromExile(player1, card.getId(), target.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+        harness.assertInGraveyard(player2, "Gumdrop Poisoner");
+        harness.assertNotOnBattlefield(player2, "Gumdrop Poisoner");
+    }
+
+    @Test
+    void cumulativeLifeGainedCountsWithoutSubtractingLifeLost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 1);
+        harness.getLifeSupport().applyLifeLoss(gd, player1.getId(), 3, "test setup");
+        harness.getLifeSupport().applyGainLife(gd, player1.getId(), 2);
+        harness.setHand(player1, List.of(new GumdropPoisoner()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    void opponentsLifeGainDoesNotIncreaseTheReduction() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GumdropPoisoner());
+        harness.getLifeSupport().applyGainLife(gd, player2.getId(), 3);
+        harness.setHand(player1, List.of(new GumdropPoisoner()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Gumdrop Poisoner");
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
     }
 }
