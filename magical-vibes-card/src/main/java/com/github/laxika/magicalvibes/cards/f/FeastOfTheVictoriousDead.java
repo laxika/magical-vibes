@@ -13,6 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "MAT", collectorNumber = "30")
+@CardRegistration(set = "MAT", collectorNumber = "80")
+@CardRegistration(set = "MAT", collectorNumber = "130")
+@CardRegistration(set = "MAT", collectorNumber = "210")
 public class FeastOfTheVictoriousDead extends Card {
 
     public FeastOfTheVictoriousDead() {

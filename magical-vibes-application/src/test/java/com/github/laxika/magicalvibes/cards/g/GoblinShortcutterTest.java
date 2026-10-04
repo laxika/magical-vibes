@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.g;
+package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.model.ManaColor;

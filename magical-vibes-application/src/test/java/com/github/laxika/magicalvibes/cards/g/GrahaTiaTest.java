@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TreetopVillage;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +16,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GrahaTia.class, AngelsFeather.class, Forest.class, GrizzlyBears.class})
+@CardUsed({GrahaTia.class, AngelsFeather.class, Forest.class, GrizzlyBears.class, WrathOfGod.class,
+        TreetopVillage.class})
 class GrahaTiaTest extends BaseCardTest {
 
     @Test
@@ -112,7 +113,6 @@ class GrahaTiaTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(WrathOfGod.class)
     @DisplayName("Triggers when it dies alongside another qualifying creature")
     void triggersWhenItDiesAlongsideAnotherCreature() {
         harness.addToBattlefield(player1, new GrahaTia());
@@ -123,7 +123,7 @@ class GrahaTiaTest extends BaseCardTest {
         harness.setHand(player2, List.of(new WrathOfGod()));
         harness.addMana(player2, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
-        harness.getGameService().playCard(gd, player2, 0, 0, null, null);
+        harness.castSorcery(player2, 0);
         harness.passBothPriorities();
 
         assertThat(gd.stack).hasSize(1);
@@ -144,16 +144,67 @@ class GrahaTiaTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore);
     }
 
+    @Test
+    @DisplayName("An irrelevant death does not consume the once-per-turn trigger")
+    void irrelevantDeathsDoNotPreventLaterDraw() {
+        harness.addToBattlefield(player1, new GrahaTia());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        seedLibrary(1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        putIntoGraveyard(opponentCreature);
+        putIntoGraveyard(land);
+        putIntoGraveyard(ownCreature);
+
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("A second death before the first trigger resolves does not trigger again")
+    void triggersOnlyOnceBeforeResolution() {
+        harness.addToBattlefield(player1, new GrahaTia());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AngelsFeather());
+        seedLibrary(2);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+        assertThat(gd.stack).hasSize(1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, artifact));
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Draws when an animated land you control dies")
+    void drawsWhenAnimatedLandDies() {
+        Permanent village = harness.addToBattlefieldAndReturn(player1, new TreetopVillage());
+        harness.addToBattlefield(player1, new GrahaTia());
+        seedLibrary(1);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        putIntoGraveyard(village);
+
+        assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore + 1);
+    }
+
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
         harness.passBothPriorities();
     }
 
     private void seedLibrary(int count) {
-        gd.playerDecks.get(player1.getId()).clear();
-        for (int i = 0; i < count; i++) {
-            gd.playerDecks.get(player1.getId()).add(new Forest());
-        }
+        harness.setLibrary(player1, java.util.stream.IntStream.range(0, count)
+                .mapToObj(i -> new Forest()).toList());
     }
 
     private void putIntoGraveyard(Permanent permanent) {

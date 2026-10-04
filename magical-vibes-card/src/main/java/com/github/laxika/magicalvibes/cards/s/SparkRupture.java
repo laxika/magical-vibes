@@ -7,6 +7,10 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkersWithLoyaltyBecomeCreaturesEffect;
 
 @CardRegistration(set = "MAT", collectorNumber = "5")
+@CardRegistration(set = "MAT", collectorNumber = "55")
+@CardRegistration(set = "MAT", collectorNumber = "105")
+@CardRegistration(set = "MAT", collectorNumber = "153")
+@CardRegistration(set = "MAT", collectorNumber = "229")
 public class SparkRupture extends Card {
 
     public SparkRupture() {

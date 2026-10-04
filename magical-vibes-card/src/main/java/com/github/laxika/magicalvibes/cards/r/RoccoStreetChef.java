@@ -23,6 +23,10 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "44")
+@CardRegistration(set = "MAT", collectorNumber = "94")
+@CardRegistration(set = "MAT", collectorNumber = "144")
+@CardRegistration(set = "MAT", collectorNumber = "179")
+@CardRegistration(set = "MAT", collectorNumber = "223")
 public class RoccoStreetChef extends Card {
 
     public RoccoStreetChef() {

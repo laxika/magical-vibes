@@ -53,6 +53,52 @@ class GraniteWitnessTest extends BaseCardTest {
         assertThat(bears.isTapped()).isFalse();
     }
 
+    @Test
+    void canPayDisguiseWithBlueManaAndTargetItself() {
+        castFaceDown();
+        Permanent witness = findPermanent(player1, "Granite Witness");
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(witness));
+        harness.handlePermanentChosen(player1, witness.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(witness.isFaceDown()).isFalse();
+        assertThat(witness.isTapped()).isTrue();
+    }
+
+    @Test
+    void canPayDisguiseWithMixedManaAndUntapItself() {
+        castFaceDown();
+        Permanent witness = findPermanent(player1, "Granite Witness");
+        witness.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(witness));
+        harness.handlePermanentChosen(player1, witness.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(witness.isFaceDown()).isFalse();
+        assertThat(witness.isTapped()).isFalse();
+    }
+
+    @Test
+    void mayLeaveTappedCreatureTapped() {
+        castFaceDown();
+        Permanent witness = findPermanent(player1, "Granite Witness");
+        witness.tap();
+
+        turnFaceUp();
+        harness.handlePermanentChosen(player1, witness.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(witness.isTapped()).isTrue();
+    }
+
     private void castFaceDown() {
         harness.setHand(player1, List.of(new GraniteWitness()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

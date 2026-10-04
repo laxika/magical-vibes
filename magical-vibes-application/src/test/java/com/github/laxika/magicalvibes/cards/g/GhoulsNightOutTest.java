@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.a.AvacynsPilgrim;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfLambholt;
 import com.github.laxika.magicalvibes.cards.m.MortuaryMire;
-import com.github.laxika.magicalvibes.model.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Card;

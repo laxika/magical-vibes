@@ -20,6 +20,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MAT", collectorNumber = "32")
+@CardRegistration(set = "MAT", collectorNumber = "82")
+@CardRegistration(set = "MAT", collectorNumber = "132")
+@CardRegistration(set = "MAT", collectorNumber = "167")
+@CardRegistration(set = "MAT", collectorNumber = "212")
 public class JirinaDauntlessGeneral extends Card {
 
     public JirinaDauntlessGeneral() {

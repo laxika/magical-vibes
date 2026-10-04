@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "6ED", collectorNumber = "256")
+@CardRegistration(set = "LEB", collectorNumber = "219")
 @CardRegistration(set = "5ED", collectorNumber = "331")
 @CardRegistration(set = "4ED", collectorNumber = "274")
 @CardRegistration(set = "2ED", collectorNumber = "219")

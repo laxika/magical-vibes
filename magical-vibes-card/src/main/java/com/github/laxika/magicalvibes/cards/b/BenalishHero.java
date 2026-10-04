@@ -9,5 +9,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "2ED", collectorNumber = "4")
 @CardRegistration(set = "SUM", collectorNumber = "4")
 @CardRegistration(set = "ME1", collectorNumber = "5")
+@CardRegistration(set = "LEB", collectorNumber = "4")
 public class BenalishHero extends Card {
 }

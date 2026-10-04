@@ -1,4 +1,4 @@
-﻿package com.github.laxika.magicalvibes.cards.g;
+package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.l.LightningStrike;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
@@ -193,7 +193,7 @@ class GoblinRabblemasterTest extends BaseCardTest {
     void unableGoblinsAreNotForcedOrCounted() {
         Permanent rabblemaster = addRabblemaster(player1);
         Permanent tappedGoblin = addGoblin(player1);
-        tappedGoblin.setTapped(true);
+        tappedGoblin.tap();
         Permanent sickGoblin = harness.addToBattlefieldAndReturn(player1, new GoblinRoughrider());
         sickGoblin.setSummoningSick(true);
 

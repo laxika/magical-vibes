@@ -30,8 +30,7 @@ class GrapeshotTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 1 damage to target creature")
     void dealsDamageToCreature() {
-        harness.addToBattlefield(player2, new AshcoatBear());
-        UUID targetId = harness.getPermanentId(player2, "Ashcoat Bear");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new AshcoatBear()).getId();
         castGrapeshot(targetId);
 
         resolveAllTriggers();
@@ -86,6 +85,39 @@ class GrapeshotTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Storm ignores spells cast after Grapeshot")
+    void stormCountIsFixedWhenGrapeshotIsCast() {
+        gd.recordSpellCast(player1.getId(), new AshcoatBear());
+        castGrapeshot(player2.getId());
+        gd.recordSpellCast(player2.getId(), new AshcoatBear());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A Storm copy may target a creature independently of the original spell")
+    void stormCopyMayChooseNewTargetCreature() {
+        UUID creatureId = harness.addToBattlefieldAndReturn(player2, new AshcoatBear()).getId();
+        gd.recordSpellCast(player1.getId(), new AshcoatBear());
+        castGrapeshot(player2.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, creatureId);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player2, "Ashcoat Bear").getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player2, 19);
+        assertThat(gd.getTotalSpellsCastThisTurnCount()).isEqualTo(2);
     }
 
     private void castGrapeshot(UUID targetId) {

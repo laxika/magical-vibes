@@ -54,6 +54,49 @@ class GrandCrescendoTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, ownBear, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Zero X creates no tokens but still protects existing creatures")
+    void zeroXStillProtectsExistingCreatures() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(player1, 0);
+
+        assertThat(findPermanents(player1, "Citizen")).isEmpty();
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @CardUsed({GrandCrescendo.class})
+    @DisplayName("Can resolve with zero X and no creatures")
+    void zeroXWithEmptyBattlefield() {
+        cast(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not gain indestructible")
+    void laterCreaturesDoNotGainIndestructible() {
+        cast(player1, 1);
+        Permanent laterBear = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Citizen"), Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, laterBear, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @CardUsed({GrandCrescendo.class})
+    @DisplayName("Created Citizens are untapped 1/1 creatures")
+    void createsUntappedOneOneCreatures() {
+        cast(player1, 1);
+
+        Permanent citizen = findPermanent(player1, "Citizen");
+        assertThat(gqs.isCreature(gd, citizen)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, citizen)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, citizen)).isEqualTo(1);
+        assertThat(citizen.isTapped()).isFalse();
+    }
     private void cast(Player player, int xValue) {
         harness.setHand(player, List.of(new GrandCrescendo()));
         harness.addMana(player, ManaColor.WHITE, 2);

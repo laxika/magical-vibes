@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MAT", collectorNumber = "19")
+@CardRegistration(set = "MAT", collectorNumber = "69")
+@CardRegistration(set = "MAT", collectorNumber = "119")
+@CardRegistration(set = "MAT", collectorNumber = "203")
 public class RecklessHandling extends Card {
 
     public RecklessHandling() {

@@ -12,6 +12,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "45")
+@CardRegistration(set = "MAT", collectorNumber = "95")
+@CardRegistration(set = "MAT", collectorNumber = "145")
+@CardRegistration(set = "MAT", collectorNumber = "180")
+@CardRegistration(set = "MAT", collectorNumber = "224")
 public class SamutVizierOfNaktamun extends Card {
 
     public SamutVizierOfNaktamun() {

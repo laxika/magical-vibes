@@ -9,6 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "MAT", collectorNumber = "16")
+@CardRegistration(set = "MAT", collectorNumber = "66")
+@CardRegistration(set = "MAT", collectorNumber = "116")
+@CardRegistration(set = "MAT", collectorNumber = "159")
+@CardRegistration(set = "MAT", collectorNumber = "200")
 public class ArniMetalbrow extends Card {
 
     public ArniMetalbrow() {
