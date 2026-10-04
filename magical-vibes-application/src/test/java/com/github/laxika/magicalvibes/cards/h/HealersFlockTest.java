@@ -36,14 +36,29 @@ class HealersFlockTest extends BaseCardTest {
         harness.setLife(player2, 20);
         addCreatureReady(player1, new HealersFlock());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(0));
+        declareAttackers(List.of(0));
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Flying Flocks can block each other and both gain life despite lethal damage")
+    void flyingBlockerAndLethalCombatDamageStillGrantLifelink() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new HealersFlock());
+        addCreatureReady(player2, new HealersFlock());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 23);
+        harness.assertNotOnBattlefield(player1, "Healer's Flock");
+        harness.assertNotOnBattlefield(player2, "Healer's Flock");
+        harness.assertInGraveyard(player1, "Healer's Flock");
+        harness.assertInGraveyard(player2, "Healer's Flock");
     }
 }
