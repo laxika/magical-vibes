@@ -104,4 +104,67 @@ class FeldonsCaneTest extends BaseCardTest {
         return card;
     }
 
+    @Test
+    @DisplayName("An empty graveyard does not prevent activation or resolution")
+    void resolvesWithEmptyGraveyard() {
+        harness.addToBattlefield(player1, new FeldonsCane());
+        harness.setGraveyard(player1, List.of());
+        Squire libraryCard = new Squire();
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card instanceof FeldonsCane);
+    }
+
+    @Test
+    @DisplayName("Cards entering the graveyard after activation are shuffled on resolution")
+    void usesGraveyardAtResolution() {
+        harness.addToBattlefield(player1, new FeldonsCane());
+        Squire originalCard = new Squire();
+        TormodsCrypt laterCard = new TormodsCrypt();
+        Squire libraryCard = new Squire();
+        harness.setGraveyard(player1, List.of(originalCard));
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(originalCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        harness.setGraveyard(player1, List.of(originalCard, laterCard));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(libraryCard, originalCard, laterCard);
+    }
+
+    @Test
+    @DisplayName("Exiling the graveyard in response leaves the Cane exiled and resolves its ability")
+    void graveyardExiledInResponse() {
+        harness.addToBattlefield(player1, new FeldonsCane());
+        harness.addToBattlefield(player2, new TormodsCrypt());
+        Squire graveyardCard = new Squire();
+        Squire libraryCard = new Squire();
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.setLibrary(player1, List.of(libraryCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(graveyardCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card instanceof FeldonsCane);
+        harness.assertInGraveyard(player2, "Tormod's Crypt");
+    }
+
 }
