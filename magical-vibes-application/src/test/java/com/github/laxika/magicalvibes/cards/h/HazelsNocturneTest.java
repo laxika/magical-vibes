@@ -64,10 +64,88 @@ class HazelsNocturneTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         harness.assertInGraveyard(player1, "Leonin Scimitar");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void canChooseZeroTargetsWithCreaturesAvailable() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new HazelsNocturne()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void canReturnOneOfTwoAvailableCreatures() {
+        Card selected = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(selected, new LlanowarElves()));
+        harness.setHand(player1, List.of(new HazelsNocturne()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void doesNotDrainWhenAllTargetsLeaveTheGraveyard() {
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new HazelsNocturne()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Hazel's Nocturne");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void returnsLegalTargetAndDrainsWhenOneTargetLeaves() {
+        Card creature1 = new GrizzlyBears();
+        Card creature2 = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(creature1, creature2));
+        harness.setHand(player1, List.of(new HazelsNocturne()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(creature1.getId(), creature2.getId()));
+        harness.setGraveyard(player1, List.of(creature2));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Llanowar Elves");
+        harness.assertNotInGraveyard(player1, "Llanowar Elves");
         harness.assertLife(player1, 22);
         harness.assertLife(player2, 18);
     }
