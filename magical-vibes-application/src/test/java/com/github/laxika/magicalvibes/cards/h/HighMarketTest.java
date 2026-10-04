@@ -21,6 +21,7 @@ class HighMarketTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
@@ -70,5 +71,64 @@ class HighMarketTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("already tapped");
+    }
+
+    @Test
+    @DisplayName("The creature is sacrificed as a cost before life is gained")
+    void sacrificeIsPaidBeforeResolution() {
+        harness.addToBattlefield(player1, new HighMarket());
+        harness.addToBattlefield(player1, new FreshVolunteers());
+        int lifeBefore = gd.getLife(player1.getId());
+        int opponentLifeBefore = gd.getLife(player2.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Fresh Volunteers");
+        harness.assertInGraveyard(player1, "Fresh Volunteers");
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 1);
+        harness.assertLife(player2, opponentLifeBefore);
+    }
+
+    @Test
+    @DisplayName("The controller chooses which creature to sacrifice, including a tapped creature")
+    void choosesTappedCreatureAmongMultipleCreatures() {
+        harness.addToBattlefield(player1, new HighMarket());
+        harness.addToBattlefield(player1, new FreshVolunteers());
+        harness.addToBattlefield(player1, new FreshVolunteers());
+        var survivor = gd.playerBattlefields.get(player1.getId()).get(1);
+        var sacrificed = gd.playerBattlefields.get(player1.getId()).get(2);
+        sacrificed.setTapped(true);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handlePermanentChosen(player1, sacrificed.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(survivor).doesNotContain(sacrificed);
+        harness.assertInGraveyard(player1, "Fresh Volunteers");
+        harness.assertLife(player1, lifeBefore);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves even after High Market leaves the battlefield")
+    void resolvesWithoutSourceOnBattlefield() {
+        harness.addToBattlefield(player1, new HighMarket());
+        harness.addToBattlefield(player1, new FreshVolunteers());
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        var market = gd.playerBattlefields.get(player1.getId()).removeFirst();
+        gd.playerGraveyards.get(player1.getId()).add(market.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 1);
     }
 }
