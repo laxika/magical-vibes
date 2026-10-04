@@ -78,6 +78,73 @@ class GuardianOfGhirapurTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("May choose no target even when another creature is available")
+    void mayDeclineAvailableTarget() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GuardianOfGhirapur()));
+        addGuardianMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Grizzly Bears").getId()).isEqualTo(bears.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Stolen creature returns to its owner even after Guardian leaves")
+    void returnsToOwnerAfterSourceLeaves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(bears.getId(), player2.getId());
+        castGuardian(bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(
+                gd, findPermanent(player1, "Guardian of Ghirapur")));
+        advanceToEndStep();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(findPermanent(player2, "Grizzly Bears").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Target that changes controllers before resolution is not exiled")
+    void targetMustStillBeControlledOnResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castGuardian(bears.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+        gd.stolenCreatures.put(bears.getId(), player1.getId());
+        harness.passBothPriorities();
+        advanceToEndStep();
+
+        assertThat(findPermanent(player2, "Grizzly Bears").getId()).isEqualTo(bears.getId());
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Return waits for its delayed trigger to resolve")
+    void returnUsesTheStack() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ChromaticStar());
+        castGuardian(artifact.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertNotOnBattlefield(player1, "Chromatic Star");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Chromatic Star");
+    }
+
     private void castGuardian(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new GuardianOfGhirapur()));
         addGuardianMana();
@@ -90,9 +157,7 @@ class GuardianOfGhirapurTest extends BaseCardTest {
     }
 
     private void advanceToEndStep() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
     }
 }
