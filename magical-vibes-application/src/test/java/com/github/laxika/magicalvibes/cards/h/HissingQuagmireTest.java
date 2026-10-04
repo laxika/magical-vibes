@@ -15,8 +15,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(HissingQuagmire.class)
+@CardUsed({HissingQuagmire.class})
 class HissingQuagmireTest extends BaseCardTest {
 
     @Test
@@ -55,6 +56,10 @@ class HissingQuagmireTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
         assertThat(quagmire.getTransientSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, quagmire, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(quagmire.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
     @Test
@@ -68,19 +73,72 @@ class HissingQuagmireTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, quagmire)).isFalse();
         assertThat(gqs.isLand(gd, quagmire)).isTrue();
         assertThat(quagmire.getTransientSubtypes()).doesNotContain(CardSubtype.ELEMENTAL);
         assertThat(gqs.hasKeyword(gd, quagmire, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.getEffectiveColors(gd, quagmire)).isEmpty();
+    }
+
+    @Test
+    void animatedLandRetainsBlackManaAbility() {
+        Permanent quagmire = addReadyQuagmire(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(quagmire.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.isCreature(gd, quagmire)).isTrue();
+    }
+
+    @Test
+    void tappedNewLandCanAnimateWithoutUntapping() {
+        harness.setHand(player1, List.of(new HissingQuagmire()));
+        harness.playLand(player1, 0);
+        Permanent quagmire = findPermanent(player1, "Hissing Quagmire");
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(gqs.isCreature(gd, quagmire)).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, quagmire)).isTrue();
+        assertThat(quagmire.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, quagmire, Keyword.DEATHTOUCH)).isTrue();
+    }
+
+    @Test
+    void newlyControlledAnimatedLandCannotTapForMana() {
+        Permanent quagmire = harness.addToBattlefieldAndReturn(player1, new HissingQuagmire());
+        quagmire.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(quagmire.isTapped()).isFalse();
     }
 
     private Permanent addReadyQuagmire(Player player) {
-        Permanent permanent = new Permanent(new HissingQuagmire());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new HissingQuagmire());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
