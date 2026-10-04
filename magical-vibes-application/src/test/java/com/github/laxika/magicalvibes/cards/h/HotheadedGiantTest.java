@@ -47,17 +47,50 @@ class HotheadedGiantTest extends BaseCardTest {
     @Test
     @DisplayName("A prior non-red spell does not prevent the counters")
     void entersWithCountersAfterNonRedSpell() {
-        harness.setHand(player1, List.of(new NettleSentinel(), new HotheadedGiant()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.RED, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NettleSentinel(), "{G}");
         harness.passBothPriorities();
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HotheadedGiant(), "{3}{R}");
         harness.passBothPriorities();
 
         Permanent giant = findPermanent(player1, "Hotheaded Giant");
+        assertThat(giant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void anotherGiantCountsAsAnotherRedSpell() {
+        harness.castFromHand(player1, new HotheadedGiant(), "{3}{R}");
+        harness.passBothPriorities();
+        Permanent first = findPermanent(player1, "Hotheaded Giant");
+
+        harness.castFromHand(player1, new HotheadedGiant(), "{3}{R}");
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> !p.getId().equals(first.getId()))
+                .singleElement()
+                .satisfies(p -> assertThat(p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero());
+    }
+
+    @Test
+    void redInstantCastInResponsePreventsCounters() {
+        Permanent sentinel = addCreatureReady(player1, new NettleSentinel());
+        harness.castFromHand(player1, new HotheadedGiant(), "{3}{R}");
+        harness.setHand(player1, List.of(new DoubleCleave()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, sentinel.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Hotheaded Giant")
+                .getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
+    void enteringWithoutBeingCastStillAppliesCounters() {
+        Permanent giant = harness.enterBattlefieldAndReturn(player1, new HotheadedGiant());
+
         assertThat(giant.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
