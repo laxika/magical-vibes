@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BrokersVeteran;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -15,21 +15,21 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HypnoticGrifter.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({HypnoticGrifter.class, BrokersVeteran.class, Mountain.class})
 class HypnoticGrifterTest extends BaseCardTest {
 
     @Test
     void activatedAbilityConnivesAndAddsCounterForNonlandDiscard() {
         Permanent grifter = addReadyGrifter();
         harness.setHand(player1, List.of(new Mountain()));
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new BrokersVeteran()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
-        discardByName("Grizzly Bears");
+        discardByName("Brokers Veteran");
 
         assertThat(grifter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Mountain");
@@ -38,7 +38,7 @@ class HypnoticGrifterTest extends BaseCardTest {
     @Test
     void activatedAbilityDoesNotAddCounterForLandDiscard() {
         Permanent grifter = addReadyGrifter();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new BrokersVeteran()));
         harness.setLibrary(player1, List.of(new Mountain()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -49,13 +49,73 @@ class HypnoticGrifterTest extends BaseCardTest {
         discardByName("Mountain");
 
         assertThat(grifter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Brokers Veteran");
+    }
+
+    @Test
+    void conniveUsesCurrentControllerAfterControlChanges() {
+        Permanent grifter = addReadyGrifter();
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(new BrokersVeteran()));
+        harness.setHand(player2, List.of(new Mountain()));
+        harness.setLibrary(player2, List.of(new BrokersVeteran()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(grifter);
+        gd.playerBattlefields.get(player2.getId()).add(grifter);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Mountain");
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
+                .containsExactly("Mountain", "Brokers Veteran");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        PendingInteraction.DiscardChoice choice = (PendingInteraction.DiscardChoice) gd.interaction.activeInteraction();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 1);
+        assertThat(grifter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void conniveStillDrawsAndDiscardsWhenSourceHasLeftBattlefield() {
+        Permanent grifter = addReadyGrifter();
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(new BrokersVeteran()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(grifter);
+        gd.playerGraveyards.get(player1.getId()).add(grifter.getCard());
+        harness.passBothPriorities();
+        discardByName("Brokers Veteran");
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Mountain");
+        assertThat(grifter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Hypnotic Grifter", "Brokers Veteran");
+    }
+
+    @Test
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent grifter = harness.addToBattlefieldAndReturn(player1, new HypnoticGrifter());
+        grifter.setSummoningSick(true);
+        grifter.setTapped(true);
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(new BrokersVeteran()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        discardByName("Brokers Veteran");
+
+        assertThat(grifter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(grifter.isTapped()).isTrue();
     }
 
     private Permanent addReadyGrifter() {
-        Permanent grifter = new Permanent(new HypnoticGrifter());
+        Permanent grifter = harness.addToBattlefieldAndReturn(player1, new HypnoticGrifter());
         grifter.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(grifter);
         return grifter;
     }
 
