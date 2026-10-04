@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.a.AvenTrooper;
 import com.github.laxika.magicalvibes.cards.c.CabalTorturer;
 import com.github.laxika.magicalvibes.cards.f.FieryTemper;
+import com.github.laxika.magicalvibes.cards.v.ViolentEruption;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,11 +12,80 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HydromorphGuardian.class, AvenTrooper.class, FieryTemper.class, CabalTorturer.class})
+@CardUsed({HydromorphGuardian.class, AvenTrooper.class, FieryTemper.class, CabalTorturer.class, ViolentEruption.class})
 class HydromorphGuardianTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Counters an entire spell with both friendly and opposing creature targets")
+    void countersSpellWithMixedTargets() {
+        Permanent friendly = harness.addToBattlefieldAndReturn(player1, new AvenTrooper());
+        Permanent guardian = harness.addToBattlefieldAndReturn(player1, new HydromorphGuardian());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new AvenTrooper());
+        ViolentEruption eruption = new ViolentEruption();
+        harness.setHand(player2, List.of(eruption));
+        harness.addMana(player2, ManaColor.RED, 4);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, Map.of(
+                friendly.getId(), 1, guardian.getId(), 2, opposing.getId(), 1));
+        harness.passPriority(player2);
+
+        harness.activateAbility(player1, 1, null, eruption.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Hydromorph Guardian");
+        harness.assertInGraveyard(player2, "Violent Eruption");
+        harness.assertOnBattlefield(player1, "Aven Trooper");
+        harness.assertOnBattlefield(player2, "Aven Trooper");
+    }
+
+    @Test
+    @DisplayName("Can counter your own spell while Guardian is tapped")
+    void countersOwnSpellWhileTapped() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AvenTrooper());
+        Permanent guardian = harness.addToBattlefieldAndReturn(player1, new HydromorphGuardian());
+        guardian.setTapped(true);
+        FieryTemper fieryTemper = new FieryTemper();
+        harness.setHand(player1, List.of(fieryTemper));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.activateAbility(player1, 1, null, fieryTemper.getId());
+
+        harness.assertInGraveyard(player1, "Hydromorph Guardian");
+        harness.assertNotOnBattlefield(player1, "Hydromorph Guardian");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Fiery Temper");
+        harness.assertOnBattlefield(player1, "Aven Trooper");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without blue mana and does not sacrifice Guardian")
+    void cannotActivateWithoutBlueMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AvenTrooper());
+        harness.addToBattlefield(player1, new HydromorphGuardian());
+        FieryTemper fieryTemper = new FieryTemper();
+        harness.setHand(player2, List.of(fieryTemper));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.castInstant(player2, 0, target.getId());
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, fieryTemper.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Hydromorph Guardian");
+        harness.assertNotInGraveyard(player1, "Hydromorph Guardian");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Aven Trooper");
+        harness.assertInGraveyard(player2, "Fiery Temper");
+    }
 
     @Test
     @DisplayName("Counters a spell targeting a creature you control")
