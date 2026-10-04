@@ -33,8 +33,7 @@ class HauntingFigmentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DarkRitual()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gqs.hasCantBeBlocked(gd, figment)).isTrue();
     }
@@ -69,5 +68,78 @@ class HauntingFigmentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasCantBeBlocked(gd, figment)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Casting an instant enables unblockability before the spell resolves")
+    void instantOnStackEnablesUnblockability() {
+        Permanent figment = addCreatureReady(player1, new HauntingFigment());
+        harness.setHand(player1, List.of(new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasCantBeBlocked(gd, figment)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's instant does not enable unblockability")
+    void opponentsInstantDoesNotEnableUnblockability() {
+        Permanent figment = addCreatureReady(player1, new HauntingFigment());
+        harness.setHand(player2, List.of(new DarkRitual()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.ensurePriority(player2);
+
+        harness.castAndResolveInstant(player2, 0);
+
+        assertThat(gqs.hasCantBeBlocked(gd, figment)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An instant cast before Figment enters still enables unblockability")
+    void instantCastBeforeEnteringEnablesUnblockability() {
+        harness.setHand(player1, List.of(new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        Permanent figment = harness.enterBattlefieldAndReturn(player1, new HauntingFigment());
+
+        assertThat(gqs.hasCantBeBlocked(gd, figment)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Unblockability expires when the turn changes")
+    void unblockabilityExpiresOnNextTurn() {
+        Permanent figment = addCreatureReady(player1, new HauntingFigment());
+        harness.setHand(player1, List.of(new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0);
+        assertThat(gqs.hasCantBeBlocked(gd, figment)).isTrue();
+        harness.setLibrary(player2, List.of(new HauntingFigment()));
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasCantBeBlocked(gd, figment)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only Figment becomes unblockable and vigilance leaves it untapped when attacking")
+    void unblockabilityIsSelfOnlyAndAttackDoesNotTap() {
+        Permanent figment = addCreatureReady(player1, new HauntingFigment());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        assertThat(bls.canBlockAttacker(gd, blocker, figment,
+                gd.playerBattlefields.get(player2.getId()))).isTrue();
+        harness.setHand(player1, List.of(new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(figment.isTapped()).isFalse();
+        assertThat(gqs.hasCantBeBlocked(gd, otherCreature)).isFalse();
+        assertThat(bls.canBlockAttacker(gd, blocker, figment,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 }
