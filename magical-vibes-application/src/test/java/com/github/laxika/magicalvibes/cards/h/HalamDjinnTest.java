@@ -5,11 +5,14 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.ShorelineRaider;
 import com.github.laxika.magicalvibes.cards.t.TectonicInstability;
 import com.github.laxika.magicalvibes.cards.t.TidalVisionary;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,6 +22,54 @@ class HalamDjinnTest extends BaseCardTest {
 
     private Permanent addHalamDjinn() {
         return harness.addToBattlefieldAndReturn(player1, new HalamDjinn());
+    }
+
+    @Test
+    @DisplayName("Can attack on the turn it is cast and deals its reduced power in damage")
+    void canAttackImmediately() {
+        harness.setHand(player1, List.of(new HalamDjinn()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        declareAttackers(List.of(0));
+
+        assertThat(findPermanent(player1, "Halam Djinn").isTapped()).isTrue();
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Re-evaluates as colored permanents enter either battlefield")
+    void reevaluatesWhenPermanentsEnter() {
+        Permanent halam = addHalamDjinn();
+        assertThat(gqs.getEffectivePower(gd, halam)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, halam)).isEqualTo(3);
+
+        harness.enterBattlefieldAndReturn(player2, new ShorelineRaider());
+        harness.enterBattlefieldAndReturn(player1, new ShorelineRaider());
+        assertThat(gqs.getEffectivePower(gd, halam)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, halam)).isEqualTo(5);
+
+        harness.enterBattlefieldAndReturn(player2, new TectonicInstability());
+        assertThat(gqs.getEffectivePower(gd, halam)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, halam)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Stops shrinking when its own color changes and red is no longer most common")
+    void reevaluatesWhenItsOwnColorChanges() {
+        Permanent halam = addHalamDjinn();
+        addCreatureReady(player1, new TidalVisionary());
+        assertThat(gqs.getEffectivePower(gd, halam)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, halam)).isEqualTo(3);
+
+        harness.activateAbility(player1, 1, 0, null, halam.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gqs.getEffectivePower(gd, halam)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, halam)).isEqualTo(5);
     }
 
     @Test
