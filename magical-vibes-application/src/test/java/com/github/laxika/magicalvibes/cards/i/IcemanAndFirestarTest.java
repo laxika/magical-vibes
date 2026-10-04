@@ -33,8 +33,7 @@ class IcemanAndFirestarTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(icemanAndFirestar.getId(), target.getId());
         harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -54,8 +53,7 @@ class IcemanAndFirestarTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, player1.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(target.isTapped()).isFalse();
     }
@@ -73,10 +71,10 @@ class IcemanAndFirestarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell, discarded);
@@ -95,17 +93,85 @@ class IcemanAndFirestarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, target.getId());
-        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
     }
 
+    @Test
+    @DisplayName("The discard decision waits until the red trigger resolves")
+    void discardDecisionWaitsUntilResolution() {
+        harness.addToBattlefield(player1, new IcemanAndFirestar());
+        harness.setHand(player1, List.of(new Shock(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("An empty hand cannot discard and therefore cannot draw")
+    void emptyHandDoesNotDraw() {
+        harness.addToBattlefield(player1, new IcemanAndFirestar());
+        Card drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Green spells do not trigger either ability")
+    void greenSpellDoesNotTrigger() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new IcemanAndFirestar());
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(source.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's red spell does not trigger the discard ability")
+    void opponentRedSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new IcemanAndFirestar());
+        Card kept = new Forest();
+        harness.setHand(player1, List.of(kept));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
     private void castDivination() {
-        harness.setHand(player1, List.of(new Divination()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castSorcery(player1, 0);
+        harness.castFromHand(player1, new Divination(), "{2}{U}");
     }
 }
