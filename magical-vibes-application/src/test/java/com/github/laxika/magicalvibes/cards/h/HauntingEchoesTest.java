@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.c.CabalPit;
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
+import com.github.laxika.magicalvibes.cards.m.MindlockOrb;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,8 +17,82 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HauntingEchoes.class, DuskImp.class, Plains.class, CabalPit.class})
+@CardUsed({HauntingEchoes.class, DuskImp.class, Plains.class, CabalPit.class, MindlockOrb.class})
 class HauntingEchoesTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Search prohibition prevents library exile but not graveyard exile or shuffle")
+    void searchProhibitionLeavesLibraryCardsAlone() {
+        Card graveyardImp = new DuskImp();
+        Card libraryImp = new DuskImp();
+        harness.addToBattlefield(player2, new MindlockOrb());
+        harness.setGraveyard(player2, List.of(graveyardImp));
+        harness.setLibrary(player2, List.of(libraryImp));
+        harness.setHand(player1, List.of(new HauntingEchoes()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(graveyardImp);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryImp);
+        assertThat(gameLogContains("shuffles their library")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Caster chooses which matching library cards to exile")
+    void matchingLibraryCardsRequireCasterChoice() {
+        Card graveyardImp = new DuskImp();
+        Card firstLibraryImp = new DuskImp();
+        Card secondLibraryImp = new DuskImp();
+        harness.setGraveyard(player2, List.of(graveyardImp));
+        harness.setLibrary(player2, List.of(firstLibraryImp, secondLibraryImp));
+        harness.setHand(player1, List.of(new HauntingEchoes()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(graveyardImp);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .contains(firstLibraryImp, secondLibraryImp);
+    }
+
+    @Test
+    @DisplayName("Basic land names do not cause library copies to be exiled")
+    void basicLandNameIsExcludedFromLibrarySearch() {
+        Card graveyardPlains = new Plains();
+        Card libraryPlains = new Plains();
+        harness.setGraveyard(player2, List.of(new DuskImp(), graveyardPlains));
+        harness.setLibrary(player2, List.of(libraryPlains));
+        harness.setHand(player1, List.of(new HauntingEchoes()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(graveyardPlains);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryPlains);
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .noneMatch(card -> card.getName().equals("Plains"));
+    }
+
+    @Test
+    @DisplayName("Self-targeting does not count the resolving spell as a graveyard card")
+    void resolvingSpellDoesNotExileItselfOrLibraryCopies() {
+        Card spell = new HauntingEchoes();
+        Card libraryCopy = new HauntingEchoes();
+        harness.setGraveyard(player1, List.of(new DuskImp()));
+        harness.setLibrary(player1, List.of(libraryCopy));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCopy);
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Haunting Echoes"));
+    }
 
     // ===== Casting =====
 
@@ -47,8 +122,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HauntingEchoes()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.assertNotInGraveyard(player2, "Dusk Imp");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -66,8 +140,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HauntingEchoes()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Dusk Imp exiled
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -92,8 +165,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HauntingEchoes()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Both should be exiled
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -117,8 +189,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HauntingEchoes()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Plains should remain in library
         assertThat(gd.playerDecks.get(player2.getId()))
@@ -136,8 +207,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HauntingEchoes()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // No cards exiled
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
@@ -159,8 +229,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HauntingEchoes()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Both Plains remain in graveyard
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -189,8 +258,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HauntingEchoes()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Both names are exiled from the graveyard and library.
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -217,8 +285,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HauntingEchoes()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .filteredOn(c -> c.getName().equals("Cabal Pit"))
@@ -239,8 +306,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HauntingEchoes()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gameLogContains("shuffles their library")).isTrue();
     }
@@ -256,8 +322,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HauntingEchoes()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Dusk Imp"));
@@ -273,8 +338,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HauntingEchoes()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Haunting Echoes");
@@ -293,8 +357,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HauntingEchoes()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Should log exile counts from graveyard and library
         assertThat(gameLogContains("exiles 1 card from")).isTrue();
