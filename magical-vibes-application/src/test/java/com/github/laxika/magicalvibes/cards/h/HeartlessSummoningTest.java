@@ -4,12 +4,14 @@ import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.Juggernaut;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.s.SoldeviAdnate;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HeartlessSummoning.class, AngelsFeather.class, EliteVanguard.class, GrizzlyBears.class,
+        HillGiant.class, Juggernaut.class, SoldeviAdnate.class, Opalescence.class})
 class HeartlessSummoningTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -55,9 +59,7 @@ class HeartlessSummoningTest extends BaseCardTest {
     @DisplayName("Own creatures get -1/-1")
     void debuffsOwnCreatures() {
         harness.addToBattlefield(player1, new HeartlessSummoning());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         // Grizzly Bears is 2/2, with -1/-1 should be 1/1
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
@@ -68,9 +70,7 @@ class HeartlessSummoningTest extends BaseCardTest {
     @DisplayName("Opponent's creatures do not get -1/-1")
     void doesNotDebuffOpponentCreatures() {
         harness.addToBattlefield(player1, new HeartlessSummoning());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         // Opponent's Grizzly Bears should remain 2/2
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -208,9 +208,7 @@ class HeartlessSummoningTest extends BaseCardTest {
     @DisplayName("Debuff is removed when Heartless Summoning leaves the battlefield")
     void debuffRemovedWhenSourceLeaves() {
         harness.addToBattlefield(player1, new HeartlessSummoning());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
@@ -220,5 +218,67 @@ class HeartlessSummoningTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Heartless Summoning gets its own -1/-1 when Opalescence makes it a creature")
+    void animatedHeartlessSummoningDebuffsItself() {
+        Permanent summoning = harness.addToBattlefieldAndReturn(player1, new HeartlessSummoning());
+        harness.addToBattlefield(player1, new Opalescence());
+
+        assertThat(gqs.isCreature(gd, summoning)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, summoning)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, summoning)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's Heartless Summoning does not reduce your creature spell costs")
+    void opponentSummoningDoesNotReduceCost() {
+        harness.addToBattlefield(player2, new HeartlessSummoning());
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Excess generic cost reduction cannot pay a creature spell's colored mana cost")
+    void reductionCannotPayColoredMana() {
+        harness.addToBattlefield(player1, new HeartlessSummoning());
+        harness.setHand(player1, List.of(new SoldeviAdnate()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A one-toughness creature dies immediately after its spell resolves")
+    void newlyResolvedCreatureDiesFromDebuff() {
+        harness.addToBattlefield(player1, new HeartlessSummoning());
+        harness.setHand(player1, List.of(new EliteVanguard()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Elite Vanguard");
+        harness.assertInGraveyard(player1, "Elite Vanguard");
+    }
+
+    @Test
+    @DisplayName("Cost reduction ends when Heartless Summoning leaves the battlefield")
+    void costReductionEndsWhenSourceLeaves() {
+        Permanent summoning = harness.addToBattlefieldAndReturn(player1, new HeartlessSummoning());
+        gd.playerBattlefields.get(player1.getId()).remove(summoning);
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
