@@ -82,6 +82,54 @@ class FreyaCrescentTest extends BaseCardTest {
         assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
     }
 
+    @Test
+    @DisplayName("Mana ability resolves immediately and works during an opponent's turn")
+    void manaAbilityWorksImmediatelyDuringOpponentTurn() {
+        Permanent freya = addCreatureReady(player1, new FreyaCrescent());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, battlefieldIndex(freya), 0, null, null);
+
+        assertThat(freya.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents the tap mana ability")
+    void summoningSicknessPreventsManaAbility() {
+        Permanent freya = harness.addToBattlefieldAndReturn(player1, new FreyaCrescent());
+        freya.setSummoningSick(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(freya), 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(freya.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Restricted red mana cannot pay a red cost for a non-Equipment creature")
+    void restrictedManaCannotCastNonEquipmentCreature() {
+        Permanent freya = addCreatureReady(player1, new FreyaCrescent());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new FreyaCrescent()));
+        harness.activateAbility(player1, battlefieldIndex(freya), 0, null, null);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+    }
+
     private int battlefieldIndex(Permanent permanent) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(permanent);
     }

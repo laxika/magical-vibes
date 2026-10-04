@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HermeticStudy;
 import com.github.laxika.magicalvibes.cards.d.DaringBuccaneer;
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -86,19 +85,12 @@ class FranciscoFowlMarauderTest extends BaseCardTest {
     @Test
     @DisplayName("Francisco cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
-        Permanent francisco = new Permanent(new FranciscoFowlMarauder());
-        francisco.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(francisco);
+        harness.addToBattlefield(player2, new FranciscoFowlMarauder());
 
-        Permanent attacker = new Permanent(new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0))))
@@ -114,10 +106,68 @@ class FranciscoFowlMarauderTest extends BaseCardTest {
     }
 
     private void resolveDamageAndTriggers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveCombat();
         resolveAllTriggers();
+    }
+
+    @Test
+    void nonlandCanBePutIntoGraveyard() {
+        Permanent francisco = harness.addToBattlefieldAndReturn(player1, new FranciscoFowlMarauder());
+        addAttacker(new DaringBuccaneer());
+        Card nonland = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(nonland));
+
+        resolveDamageAndTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(francisco.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(nonland);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void emptyLibraryStillGivesCounter() {
+        Permanent francisco = harness.addToBattlefieldAndReturn(player1, new FranciscoFowlMarauder());
+        addAttacker(new DaringBuccaneer());
+        harness.setLibrary(player1, List.of());
+
+        resolveDamageAndTriggers();
+
+        assertThat(francisco.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    void damageToControllerAlsoTriggersExplore() {
+        Permanent pirate = harness.addToBattlefieldAndReturn(player1, new DaringBuccaneer());
+        pirate.setSummoningSick(false);
+        harness.addToBattlefield(player1, new FranciscoFowlMarauder());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HermeticStudy());
+        aura.setAttachedTo(pirate.getId());
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(land);
+    }
+
+    @Test
+    void franciscoStillExploresAfterLeavingBattlefield() {
+        Permanent francisco = harness.addToBattlefieldAndReturn(player1, new FranciscoFowlMarauder());
+        addAttacker(new DaringBuccaneer());
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        gd.playerBattlefields.get(player1.getId()).remove(francisco);
+        gd.playerGraveyards.get(player1.getId()).add(francisco.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(land);
+        assertThat(francisco.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

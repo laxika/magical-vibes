@@ -122,4 +122,75 @@ class FrankensteinsMonsterTest extends BaseCardTest {
         assertThat(monster.getCounters()).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(imp);
     }
+
+    @Test
+    @DisplayName("Exiles only X of the available creatures and may repeat a counter choice")
+    void leavesSurplusCreaturesAndRepeatsCounterChoice() {
+        BogImp firstImp = new BogImp();
+        BogImp secondImp = new BogImp();
+        BogImp remainingImp = new BogImp();
+        harness.setGraveyard(player1, List.of(firstImp, secondImp, remainingImp));
+        harness.setHand(player1, List.of(new FrankensteinsMonster()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0, 2);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.minCount()).isEqualTo(2);
+        assertThat(choice.maxCount()).isEqualTo(2);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(
+                firstImp.getId(), secondImp.getId(), remainingImp.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(firstImp.getId(), secondImp.getId()));
+        harness.handleListChoice(player1, "+2/+0");
+        harness.handleListChoice(player1, "+2/+0");
+
+        Permanent monster = findPermanent(player1, "Frankenstein's Monster");
+        assertThat(monster.getCounterCount(CounterType.PLUS_TWO_PLUS_ZERO)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, monster)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, monster)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(remainingImp);
+        assertThat(gd.getCardsExiledByPermanent(monster.getId())).extracting(card -> card.getId())
+                .containsExactlyInAnyOrder(firstImp.getId(), secondImp.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Creatures in the opponent's graveyard cannot satisfy the entry requirement")
+    void cannotUseOpponentsGraveyard() {
+        BogImp ownImp = new BogImp();
+        BogImp opposingImp = new BogImp();
+        harness.setGraveyard(player1, List.of(ownImp));
+        harness.setGraveyard(player2, List.of(opposingImp));
+        FrankensteinsMonster monster = new FrankensteinsMonster();
+        harness.setHand(player1, List.of(monster));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0, 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownImp, monster);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingImp);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("X=0 can enter with an empty graveyard")
+    void entersWithEmptyGraveyardAtXZero() {
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(new FrankensteinsMonster()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent monster = findPermanent(player1, "Frankenstein's Monster");
+        assertThat(monster.getCounters()).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }

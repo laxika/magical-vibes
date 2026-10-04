@@ -39,8 +39,7 @@ class FrenziedTillingTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Mountain(), new CoastalTower(), new QuirionSentinel()));
         giveFrenziedTilling();
 
-        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Island"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Island"));
 
         assertThat(countPermanents(player2, "Island")).isZero();
 
@@ -64,8 +63,7 @@ class FrenziedTillingTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Mountain()));
         giveFrenziedTilling();
 
-        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Island"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Island"));
 
         harness.handleCardChosen(player1, -1);
 
@@ -80,8 +78,7 @@ class FrenziedTillingTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new QuirionSentinel()));
         giveFrenziedTilling();
 
-        harness.castSorcery(player1, 0, harness.getPermanentId(player2, "Island"));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Island"));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player2, "Island")).isZero();
@@ -96,5 +93,61 @@ class FrenziedTillingTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0,
                 harness.getPermanentId(player2, "Quirion Sentinel")))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can destroy your own nonbasic land and search only your library")
+    void destroysOwnNonbasicLand() {
+        harness.addToBattlefield(player1, new CoastalTower());
+        harness.setLibrary(player1, List.of(new Mountain()));
+        harness.setLibrary(player2, List.of(new Island()));
+        giveFrenziedTilling();
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player1, "Coastal Tower"));
+        harness.assertInGraveyard(player1, "Coastal Tower");
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(findPermanent(player1, "Mountain").isTapped()).isTrue();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        harness.assertNotOnBattlefield(player2, "Island");
+        harness.assertInGraveyard(player1, "Frenzied Tilling");
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent destroying the target land")
+    void emptyLibraryStillDestroysLand() {
+        harness.addToBattlefield(player2, new Island());
+        harness.setLibrary(player1, List.of());
+        giveFrenziedTilling();
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Island"));
+
+        harness.assertNotOnBattlefield(player2, "Island");
+        harness.assertInGraveyard(player2, "Island");
+        harness.assertInGraveyard(player1, "Frenzied Tilling");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not search when its only target leaves before resolution")
+    void missingTargetPreventsSearch() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Island());
+        Mountain mountain = new Mountain();
+        harness.setLibrary(player1, List.of(mountain));
+        giveFrenziedTilling();
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(mountain);
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertInHand(player2, "Island");
+        harness.assertInGraveyard(player1, "Frenzied Tilling");
+        assertThat(gd.stack).isEmpty();
     }
 }

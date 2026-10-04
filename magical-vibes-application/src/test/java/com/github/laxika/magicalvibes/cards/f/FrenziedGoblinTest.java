@@ -125,4 +125,50 @@ class FrenziedGoblinTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(recruit.isCantBlockThisTurn()).isFalse();
     }
+
+    @Test
+    @DisplayName("The attack trigger resolves even if Frenzied Goblin leaves the battlefield")
+    void sourceLeavingDoesNotPreventResolution() {
+        Permanent goblin = addCreatureReady(player1, new FrenziedGoblin());
+        Permanent recruit = addCreatureReady(player2, new BorosRecruit());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, recruit.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, goblin));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(recruit.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @CardUsed(FrenziedGoblin.class)
+    @DisplayName("Frenzied Goblin can target itself with its attack trigger")
+    void canTargetItself() {
+        Permanent goblin = addCreatureReady(player1, new FrenziedGoblin());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, goblin.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(goblin.isCantBlockThisTurn()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Mana of another color cannot pay the red payment")
+    void wrongColorManaCannotPay() {
+        addCreatureReady(player1, new FrenziedGoblin());
+        Permanent recruit = addCreatureReady(player2, new BorosRecruit());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, recruit.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(recruit.isCantBlockThisTurn()).isFalse();
+    }
 }

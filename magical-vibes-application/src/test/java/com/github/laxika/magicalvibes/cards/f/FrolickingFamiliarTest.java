@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SleightOfHand;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FrolickingFamiliar.class, BlowOffSteam.class, FountainOfYouth.class, GrizzlyBears.class, Shock.class})
+@CardUsed({FrolickingFamiliar.class, BlowOffSteam.class, FountainOfYouth.class, GrizzlyBears.class, Shock.class, SleightOfHand.class})
 class FrolickingFamiliarTest extends BaseCardTest {
 
     @Test
@@ -68,8 +69,7 @@ class FrolickingFamiliarTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(familiar.getEffectivePower()).isEqualTo(3);
         assertThat(familiar.getEffectiveToughness()).isEqualTo(3);
@@ -94,8 +94,7 @@ class FrolickingFamiliarTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(familiar.getEffectivePower()).isEqualTo(3);
         harness.passBothPriorities();
 
@@ -105,5 +104,68 @@ class FrolickingFamiliarTest extends BaseCardTest {
 
         assertThat(familiar.getEffectivePower()).isEqualTo(2);
         assertThat(familiar.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    void castingASorceryBoostsFrolickingFamiliarBeforeTheSpellResolves() {
+        Permanent familiar = harness.addToBattlefieldAndReturn(player1, new FrolickingFamiliar());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new SleightOfHand()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(familiar.getEffectivePower()).isEqualTo(3);
+        assertThat(familiar.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void opponentsInstantDoesNotBoostFrolickingFamiliar() {
+        Permanent familiar = harness.addToBattlefieldAndReturn(player1, new FrolickingFamiliar());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(familiar.getEffectivePower()).isEqualTo(2);
+        assertThat(familiar.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    void castingAnotherFamiliarsAdventureTriggersTheBoost() {
+        Permanent familiar = harness.addToBattlefieldAndReturn(player1, new FrolickingFamiliar());
+        FrolickingFamiliar adventureCard = new FrolickingFamiliar();
+        harness.setHand(player1, List.of(adventureCard));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAdventure(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(familiar.getEffectivePower()).isEqualTo(3);
+        assertThat(familiar.getEffectiveToughness()).isEqualTo(3);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        assertThat(gd.findExiledCard(adventureCard.getId())).isNotNull();
+    }
+
+    @Test
+    void adventureWithAnIllegalTargetGoesToGraveyardWithoutExilePermission() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        FrolickingFamiliar card = new FrolickingFamiliar();
+        harness.setHand(player1, List.of(card));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAdventure(player1, 0, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Frolicking Familiar");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(card.getId());
     }
 }

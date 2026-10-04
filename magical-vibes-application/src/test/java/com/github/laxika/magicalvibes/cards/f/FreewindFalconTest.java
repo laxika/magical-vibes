@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.b.BullElephant;
 import com.github.laxika.magicalvibes.cards.v.ViashivanDragon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,18 +15,17 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FreewindFalcon.class, ViashivanDragon.class, Fireblast.class, FuneralCharm.class})
+@CardUsed({FreewindFalcon.class, ViashivanDragon.class, Fireblast.class, FuneralCharm.class,
+        FireWhip.class, BullElephant.class})
 class FreewindFalconTest extends BaseCardTest {
 
     @Test
     @DisplayName("Red flyer cannot block Freewind Falcon")
     void redCreatureCannotBlock() {
-        Permanent attacker = addCreatureReady(player1, new FreewindFalcon());
-        attacker.setAttacking(true);
-
+        addCreatureReady(player1, new FreewindFalcon());
         addCreatureReady(player2, new ViashivanDragon());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -64,10 +64,9 @@ class FreewindFalconTest extends BaseCardTest {
     @DisplayName("Red combat damage to Freewind Falcon is prevented")
     void redCombatDamageIsPrevented() {
         Permanent dragon = addCreatureReady(player1, new ViashivanDragon());
-        dragon.setAttacking(true);
         Permanent falcon = addCreatureReady(player2, new FreewindFalcon());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -78,7 +77,6 @@ class FreewindFalconTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(FireWhip.class)
     @DisplayName("Cannot be enchanted by red Aura")
     void cannotBeEnchantedByRedAura() {
         Permanent falcon = addCreatureReady(player1, new FreewindFalcon());
@@ -90,5 +88,34 @@ class FreewindFalconTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, falcon.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection from red");
+    }
+
+    @Test
+    @DisplayName("A nonred creature without flying or reach cannot block Freewind Falcon")
+    void groundCreatureCannotBlock() {
+        addCreatureReady(player1, new FreewindFalcon());
+        addCreatureReady(player2, new BullElephant());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
+    }
+
+    @Test
+    @DisplayName("Nonred flyers can block and deal lethal damage to Freewind Falcon")
+    void nonredFlyingCombatDamageIsNotPrevented() {
+        addCreatureReady(player1, new FreewindFalcon());
+        addCreatureReady(player2, new FreewindFalcon());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player1);
+
+        harness.assertNotOnBattlefield(player1, "Freewind Falcon");
+        harness.assertNotOnBattlefield(player2, "Freewind Falcon");
+        harness.assertInGraveyard(player1, "Freewind Falcon");
+        harness.assertInGraveyard(player2, "Freewind Falcon");
     }
 }
