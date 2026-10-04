@@ -3,10 +3,13 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,17 +17,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({IchorExplosion.class, AirElemental.class, GrizzlyBears.class, LlanowarElves.class})
 class IchorExplosionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Sacrificing a 2-power creature gives all creatures -2/-2")
     void sacrificeTwoPowerCreatureGivesMinusTwoMinusTwo() {
-        Permanent sacrifice = new Permanent(new GrizzlyBears()); // 2/2
-        Permanent survivor = new Permanent(new AirElemental()); // 4/4
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
-        gd.playerBattlefields.get(player2.getId()).add(survivor);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()); // 2/2
+        Permanent survivor = harness.addToBattlefieldAndReturn(player2, new AirElemental()); // 4/4
 
         harness.setHand(player1, List.of(new IchorExplosion()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -45,12 +46,9 @@ class IchorExplosionTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificing a 1-power creature gives all creatures -1/-1")
     void sacrificeOnePowerCreatureGivesMinusOneMinusOne() {
-        Permanent sacrifice = new Permanent(new LlanowarElves()); // 1/1
-        Permanent target1 = new Permanent(new GrizzlyBears()); // 2/2
-        Permanent target2 = new Permanent(new AirElemental()); // 4/4
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
-        gd.playerBattlefields.get(player1.getId()).add(target1);
-        gd.playerBattlefields.get(player2.getId()).add(target2);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new LlanowarElves()); // 1/1
+        Permanent target1 = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()); // 2/2
+        Permanent target2 = harness.addToBattlefieldAndReturn(player2, new AirElemental()); // 4/4
 
         harness.setHand(player1, List.of(new IchorExplosion()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -69,11 +67,9 @@ class IchorExplosionTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrificed creature's power includes +1/+1 counters")
     void sacrificedCreaturePowerIncludesCounters() {
-        Permanent sacrifice = new Permanent(new GrizzlyBears()); // 2/2
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()); // 2/2
         sacrifice.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3); // becomes 5/5
-        Permanent survivor = new Permanent(new AirElemental()); // 4/4
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
-        gd.playerBattlefields.get(player2.getId()).add(survivor);
+        Permanent survivor = harness.addToBattlefieldAndReturn(player2, new AirElemental()); // 4/4
 
         harness.setHand(player1, List.of(new IchorExplosion()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -90,8 +86,7 @@ class IchorExplosionTest extends BaseCardTest {
     @Test
     @DisplayName("Casting puts spell on stack with correct xValue")
     void castingPutsSpellOnStackWithCorrectXValue() {
-        Permanent sacrifice = new Permanent(new GrizzlyBears()); // 2/2
-        gd.playerBattlefields.get(player1.getId()).add(sacrifice);
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()); // 2/2
 
         harness.setHand(player1, List.of(new IchorExplosion()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -109,7 +104,7 @@ class IchorExplosionTest extends BaseCardTest {
     void cannotCastWithoutCreatureToSacrifice() {
         // Add a creature to opponent's battlefield so spell is considered playable by ValidTargetService,
         // but player1 still has no creature to sacrifice
-        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new GrizzlyBears()));
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new IchorExplosion()));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
@@ -122,8 +117,7 @@ class IchorExplosionTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot sacrifice an opponent's creature")
     void cannotSacrificeOpponentsCreature() {
-        Permanent opponentCreature = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(opponentCreature);
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new IchorExplosion()));
         harness.addMana(player1, ManaColor.BLACK, 2);
@@ -132,5 +126,82 @@ class IchorExplosionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorceryWithSacrifice(player1, 0, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("you control");
+    }
+
+    @Test
+    @DisplayName("Zero-power sacrifice still pays the cost but does not weaken creatures")
+    void zeroPowerSacrificeDoesNotWeakenCreatures() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        sacrifice.setPowerModifier(-2);
+        Permanent survivor = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new IchorExplosion()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+
+        harness.castSorceryWithSacrifice(player1, 0, sacrifice.getId());
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        assertThat(survivor.getPowerModifier()).isZero();
+        assertThat(survivor.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Negative-power sacrifice does not give creatures a positive boost")
+    void negativePowerSacrificeDoesNotBoostCreatures() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        sacrifice.setPowerModifier(-3);
+        Permanent survivor = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new IchorExplosion()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+
+        harness.castSorceryWithSacrifice(player1, 0, sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(survivor.getPowerModifier()).isZero();
+        assertThat(survivor.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Creatures with zero toughness die on both sides")
+    void creaturesWithZeroToughnessDieOnBothSides() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new IchorExplosion()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+
+        harness.castSorceryWithSacrifice(player1, 0, sacrifice.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The effect expires at cleanup and does not affect later creatures")
+    void effectExpiresAndDoesNotAffectLaterCreatures() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent survivor = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new IchorExplosion()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+
+        harness.castSorceryWithSacrifice(player1, 0, sacrifice.getId());
+        harness.passBothPriorities();
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(survivor.getPowerModifier()).isEqualTo(-2);
+        assertThat(survivor.getToughnessModifier()).isEqualTo(-2);
+        assertThat(newcomer.getPowerModifier()).isZero();
+        assertThat(newcomer.getToughnessModifier()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(survivor.getPowerModifier()).isZero();
+        assertThat(survivor.getToughnessModifier()).isZero();
     }
 }
