@@ -1,12 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.d.DawntreaderElk;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,11 +13,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HinterlandHermit.class, HinterlandScourge.class, DawntreaderElk.class})
 class HinterlandHermitTest extends BaseCardTest {
-
-    
-
-    
 
     @Test
     @DisplayName("Transforms to Hinterland Scourge when no spells were cast last turn")
@@ -28,7 +23,8 @@ class HinterlandHermitTest extends BaseCardTest {
         Permanent hermit = findPermanent(player1, "Hinterland Hermit");
 
         gd.spellsCastLastTurn.clear();
-        advanceFromUntapToResolveUpkeepTrigger(player1);
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
 
         assertThat(hermit.isTransformed()).isTrue();
         assertThat(hermit.getCard().getName()).isEqualTo("Hinterland Scourge");
@@ -44,10 +40,8 @@ class HinterlandHermitTest extends BaseCardTest {
 
         gd.spellsCastLastTurn.put(player1.getId(), 1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
 
         assertThat(hermit.isTransformed()).isFalse();
         assertThat(hermit.getCard().getName()).isEqualTo("Hinterland Hermit");
@@ -60,13 +54,15 @@ class HinterlandHermitTest extends BaseCardTest {
         Permanent hermit = findPermanent(player1, "Hinterland Hermit");
 
         gd.spellsCastLastTurn.clear();
-        advanceFromUntapToResolveUpkeepTrigger(player1);
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
         assertThat(hermit.isTransformed()).isTrue();
 
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player2.getId(), 2);
 
-        advanceFromUntapToResolveUpkeepTrigger(player2);
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
 
         assertThat(hermit.isTransformed()).isFalse();
         assertThat(hermit.getCard().getName()).isEqualTo("Hinterland Hermit");
@@ -81,17 +77,16 @@ class HinterlandHermitTest extends BaseCardTest {
         Permanent hermit = findPermanent(player1, "Hinterland Hermit");
 
         gd.spellsCastLastTurn.clear();
-        advanceFromUntapToResolveUpkeepTrigger(player1);
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
         assertThat(hermit.isTransformed()).isTrue();
 
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player1.getId(), 1);
         gd.spellsCastLastTurn.put(player2.getId(), 1);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).isEmpty();
 
         assertThat(hermit.isTransformed()).isTrue();
         assertThat(hermit.getCard().getName()).isEqualTo("Hinterland Scourge");
@@ -100,9 +95,9 @@ class HinterlandHermitTest extends BaseCardTest {
     @Test
     @DisplayName("Hinterland Scourge must be blocked if able")
     void hinterlandScourgeMustBeBlockedIfAble() {
-        Permanent scourge = attackingCreature(new HinterlandScourge());
-        gd.playerBattlefields.get(player1.getId()).add(scourge);
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
+        Permanent scourge = addCreatureReady(player1, new HinterlandScourge());
+        scourge.setAttacking(true);
+        addCreatureReady(player2, new DawntreaderElk());
 
         prepareDeclareBlockers();
 
@@ -114,10 +109,10 @@ class HinterlandHermitTest extends BaseCardTest {
     @Test
     @DisplayName("One blocker satisfies Hinterland Scourge's blocking requirement")
     void oneBlockerSatisfiesHinterlandScourgeRequirement() {
-        Permanent scourge = attackingCreature(new HinterlandScourge());
-        gd.playerBattlefields.get(player1.getId()).add(scourge);
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
-        gd.playerBattlefields.get(player2.getId()).add(readyCreature(new GrizzlyBears()));
+        Permanent scourge = addCreatureReady(player1, new HinterlandScourge());
+        scourge.setAttacking(true);
+        addCreatureReady(player2, new DawntreaderElk());
+        addCreatureReady(player2, new DawntreaderElk());
 
         prepareDeclareBlockers();
 
@@ -130,35 +125,143 @@ class HinterlandHermitTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped creatures are not forced to block Hinterland Scourge")
     void tappedCreaturesAreNotForcedToBlockHinterlandScourge() {
-        Permanent scourge = attackingCreature(new HinterlandScourge());
-        gd.playerBattlefields.get(player1.getId()).add(scourge);
-        Permanent tapped = readyCreature(new GrizzlyBears());
+        Permanent scourge = addCreatureReady(player1, new HinterlandScourge());
+        scourge.setAttacking(true);
+        Permanent tapped = addCreatureReady(player2, new DawntreaderElk());
         tapped.tap();
-        gd.playerBattlefields.get(player2.getId()).add(tapped);
 
         prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of());
     }
 
-    private void advanceFromUntapToResolveUpkeepTrigger(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+    @Test
+    @DisplayName("Hermit transforms during the opponent's upkeep after a spell-free turn")
+    void transformsOnOpponentsUpkeep() {
+        Permanent hermit = harness.addToBattlefieldAndReturn(player1, new HinterlandHermit());
+        gd.spellsCastLastTurn.clear();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(hermit.isTransformed()).isTrue();
+        harness.assertOnBattlefield(player1, "Hinterland Scourge");
     }
 
-    private Permanent attackingCreature(Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        permanent.setAttacking(true);
-        return permanent;
+    @Test
+    @DisplayName("An opponent's spell also prevents the Hermit upkeep trigger")
+    void opponentsSpellPreventsTransformation() {
+        Permanent hermit = harness.addToBattlefieldAndReturn(player1, new HinterlandHermit());
+        gd.spellsCastLastTurn.put(player2.getId(), 1);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(hermit.isTransformed()).isFalse();
     }
 
-    private Permanent readyCreature(Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        return permanent;
+    @Test
+    @DisplayName("Scourge transforms back when its controller cast more than two spells")
+    void controllersThreeSpellsTransformScourgeBack() {
+        Permanent hermit = harness.addToBattlefieldAndReturn(player1, new HinterlandHermit());
+        gd.spellsCastLastTurn.clear();
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(hermit.isTransformed()).isTrue();
+
+        gd.spellsCastLastTurn.put(player1.getId(), 3);
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(hermit.isTransformed()).isFalse();
+        harness.assertOnBattlefield(player1, "Hinterland Hermit");
+    }
+
+    @Test
+    @DisplayName("A spell-free turn leaves Scourge transformed without an upkeep trigger")
+    void scourgeStaysTransformedAfterSpellFreeTurn() {
+        Permanent hermit = harness.addToBattlefieldAndReturn(player1, new HinterlandHermit());
+        gd.spellsCastLastTurn.clear();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(hermit.isTransformed()).isTrue();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(hermit.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Hermit's front face has no blocking requirement")
+    void frontFaceMayBeLeftUnblocked() {
+        Permanent hermit = addCreatureReady(player1, new HinterlandHermit());
+        hermit.setAttacking(true);
+        addCreatureReady(player2, new DawntreaderElk());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of());
+    }
+
+    @Test
+    @DisplayName("Scourge can attack unblocked when there are no defending creatures")
+    void noCreaturesMeansScourgeCannotBeBlocked() {
+        Permanent scourge = addCreatureReady(player1, new HinterlandScourge());
+        scourge.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of());
+    }
+
+    @Test
+    @DisplayName("An available blocker cannot block another attacker instead of Scourge")
+    void blockingAnotherAttackerDoesNotSatisfyScourgeRequirement() {
+        Permanent scourge = addCreatureReady(player1, new HinterlandScourge());
+        scourge.setAttacking(true);
+        Permanent elk = addCreatureReady(player1, new DawntreaderElk());
+        elk.setAttacking(true);
+        addCreatureReady(player2, new DawntreaderElk());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must be blocked if able");
+    }
+
+    @Test
+    @DisplayName("Transforming Hermit grants the Scourge blocking requirement")
+    void transformationGrantsBlockingRequirement() {
+        Permanent hermit = addCreatureReady(player1, new HinterlandHermit());
+        addCreatureReady(player2, new DawntreaderElk());
+        gd.spellsCastLastTurn.clear();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(hermit.isTransformed()).isTrue();
+        hermit.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must be blocked if able");
+    }
+
+    @Test
+    @DisplayName("Transforming back removes the Scourge blocking requirement")
+    void transformingBackRemovesBlockingRequirement() {
+        Permanent hermit = addCreatureReady(player1, new HinterlandHermit());
+        addCreatureReady(player2, new DawntreaderElk());
+        gd.spellsCastLastTurn.clear();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(hermit.isTransformed()).isTrue();
+
+        gd.spellsCastLastTurn.put(player2.getId(), 2);
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(hermit.isTransformed()).isFalse();
+        hermit.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of());
     }
 }
