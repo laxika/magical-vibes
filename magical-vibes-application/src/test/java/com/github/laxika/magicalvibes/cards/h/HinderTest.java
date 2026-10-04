@@ -1,20 +1,27 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
+import com.github.laxika.magicalvibes.cards.b.BoseijuWhoSheltersAll;
+import com.github.laxika.magicalvibes.cards.d.DutifulKnowledgeSeeker;
 import com.github.laxika.magicalvibes.cards.p.PerplexingChimera;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Hinder.class, DevotedRetainer.class})
+@CardUsed({Hinder.class, DevotedRetainer.class, PerplexingChimera.class,
+        BoseijuWhoSheltersAll.class, DutifulKnowledgeSeeker.class})
 class HinderTest extends BaseCardTest {
 
     private DevotedRetainer prepareRetainerAndHinder() {
@@ -82,7 +89,6 @@ class HinderTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(PerplexingChimera.class)
     @DisplayName("Choosing bottom uses the spell owner's library when control of the spell changed")
     void chooseBottomUsesSpellOwnersLibraryWhenSpellControllerDiffers() {
         DevotedRetainer retainer = new DevotedRetainer();
@@ -99,8 +105,7 @@ class HinderTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         harness.passBothPriorities();
 
-        harness.castInstant(player1, 0, retainer.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, retainer.getId());
         harness.handleListChoice(player1, "Bottom");
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
@@ -108,6 +113,74 @@ class HinderTest extends BaseCardTest {
         assertThat(deck.getFirst().getId()).isNotEqualTo(retainer.getId());
         harness.assertNotInGraveyard(player1, "Devoted Retainer");
         harness.assertInGraveyard(player1, "Hinder");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"Top", "Bottom"})
+    void counteredSpellCanGoIntoAnEmptyLibrary(String destination) {
+        DevotedRetainer retainer = prepareRetainerAndHinder();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, destination);
+
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(retainer.getId());
+        harness.assertNotInGraveyard(player1, "Devoted Retainer");
+        harness.assertNotOnBattlefield(player1, "Devoted Retainer");
+        harness.assertInGraveyard(player2, "Hinder");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"Top", "Bottom"})
+    void puttingCounteredSpellIntoLibraryTriggersKnowledgeSeeker(String destination) {
+        Permanent seeker = harness.addToBattlefieldAndReturn(player2, new DutifulKnowledgeSeeker());
+        DevotedRetainer retainer = castRetainerAndHinder();
+
+        harness.handleListChoice(player2, destination);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(seeker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .contains(retainer.getId());
+        harness.assertNotInGraveyard(player1, "Devoted Retainer");
+        harness.assertInGraveyard(player2, "Hinder");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void uncounterableSpellStaysOnStackAndDoesNotOfferLibraryChoice() {
+        DevotedRetainer retainer = new DevotedRetainer();
+        Hinder uncounterableHinder = new Hinder();
+        harness.setLibrary(player1, List.of(new DevotedRetainer()));
+        harness.setHand(player1, List.of(retainer, new Hinder()));
+        harness.setHand(player2, List.of(uncounterableHinder));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addToBattlefield(player2, new BoseijuWhoSheltersAll());
+        harness.activateAbility(player2, 0, null, null);
+
+        harness.castCreature(player1, 0);
+        harness.castInstant(player2, 0, retainer.getId());
+        harness.castAndResolveInstant(player1, 0, uncounterableHinder.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getId)
+                .doesNotContain(uncounterableHinder.getId());
+        harness.assertInGraveyard(player1, "Hinder");
+        harness.assertNotInGraveyard(player2, "Hinder");
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, "Top");
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst().getId()).isEqualTo(retainer.getId());
+        harness.assertInGraveyard(player2, "Hinder");
         assertThat(gd.stack).isEmpty();
     }
 }
