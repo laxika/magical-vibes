@@ -18,7 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GameOfChaos.class)
+@CardUsed({GameOfChaos.class, ChanceEncounter.class})
 class GameOfChaosTest extends BaseCardTest {
 
     @Test
@@ -136,7 +136,6 @@ class GameOfChaosTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ChanceEncounter.class)
     @DisplayName("A controller win triggers that controller's coin-flip abilities")
     void controllerWinTriggersChanceEncounter() {
         Permanent chanceEncounter = harness.addToBattlefieldAndReturn(player1, new ChanceEncounter());
@@ -152,6 +151,51 @@ class GameOfChaosTest extends BaseCardTest {
 
         assertThat(chanceEncounter.getCounterCount(CounterType.LUCK))
                 .isEqualTo(controllerWon ? 1 : 0);
+    }
+
+    @Test
+    @DisplayName("Flipping again at zero life keeps resolving until the winner declines")
+    void canContinueAtZeroLife() {
+        harness.setLife(player1, 1);
+        harness.setLife(player2, 1);
+        harness.setHand(player1, List.of(new GameOfChaos()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.handleMayAbilityChosen(deciderPlayer(), true);
+
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(Math.min(gd.playerLifeTotals.get(player1.getId()),
+                gd.playerLifeTotals.get(player2.getId()))).isLessThanOrEqualTo(0);
+
+        harness.handleMayAbilityChosen(deciderPlayer(), false);
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Coin-flip triggers wait until all repeated flips finish resolving")
+    void coinFlipTriggersWaitForResolution() {
+        Permanent chanceEncounter = harness.addToBattlefieldAndReturn(player1, new ChanceEncounter());
+        int initialLife = gd.playerLifeTotals.get(player1.getId());
+        harness.setHand(player1, List.of(new GameOfChaos()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        int wins = gd.playerLifeTotals.get(player1.getId()) > initialLife ? 1 : 0;
+        int lifeAfterFirstFlip = gd.playerLifeTotals.get(player1.getId());
+
+        assertThat(chanceEncounter.getCounterCount(CounterType.LUCK)).isZero();
+        harness.handleMayAbilityChosen(deciderPlayer(), true);
+        if (gd.playerLifeTotals.get(player1.getId()) > lifeAfterFirstFlip) {
+            wins++;
+        }
+        assertThat(chanceEncounter.getCounterCount(CounterType.LUCK)).isZero();
+
+        harness.handleMayAbilityChosen(deciderPlayer(), false);
+        resolveAllTriggers();
+
+        assertThat(chanceEncounter.getCounterCount(CounterType.LUCK)).isEqualTo(wins);
     }
 
     @Test
