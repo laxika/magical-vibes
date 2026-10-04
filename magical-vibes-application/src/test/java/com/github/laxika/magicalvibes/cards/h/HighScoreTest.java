@@ -77,7 +77,93 @@ class HighScoreTest extends BaseCardTest {
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+    }
+
+    @Test
+    void doesNotAddCountersToAnOpponentsCreature() {
+        harness.addToBattlefield(player1, new HighScore());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DragonscaleBoon()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void multipleCopiesEachAddOneCounter() {
+        harness.addToBattlefield(player1, new HighScore());
+        harness.addToBattlefield(player1, new HighScore());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DragonscaleBoon()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    void drawsWhenYourCreatureBecomesGreatestInResponseToTheTrigger() {
+        harness.addToBattlefield(player1, new HighScore());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new DragonscaleBoon()));
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    void doesNotDrawWhenAnOpponentBecomesGreatestBeforeResolution() {
+        harness.addToBattlefield(player1, new HighScore());
+        harness.addToBattlefield(player1, new HillGiant());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DragonscaleBoon()));
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        advanceToEndStep(player1);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotDrawWithoutCreatures() {
+        harness.addToBattlefield(player1, new HighScore());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotDrawAtAnOpponentsEndStep() {
+        harness.addToBattlefield(player1, new HighScore());
+        harness.addToBattlefield(player1, new HillGiant());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        advanceToEndStep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }
