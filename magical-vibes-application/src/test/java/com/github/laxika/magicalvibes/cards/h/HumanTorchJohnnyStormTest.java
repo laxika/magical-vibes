@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.c.CaptainAmericaSuperSoldier;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HumanTorchJohnnyStorm.class, CaptainAmericaSuperSoldier.class, GrizzlyBears.class})
+@CardUsed({HumanTorchJohnnyStorm.class, CaptainAmericaSuperSoldier.class})
 class HumanTorchJohnnyStormTest extends BaseCardTest {
 
     @Test
@@ -24,7 +23,7 @@ class HumanTorchJohnnyStormTest extends BaseCardTest {
     void drawDealsDamageWithAnotherHero() {
         harness.addToBattlefield(player1, new CaptainAmericaSuperSoldier());
         harness.addToBattlefield(player1, new HumanTorchJohnnyStorm());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new CaptainAmericaSuperSoldier()));
         harness.setLife(player2, 20);
 
         draw(player1.getId());
@@ -44,7 +43,7 @@ class HumanTorchJohnnyStormTest extends BaseCardTest {
     @DisplayName("Drawing a card does not trigger without another Hero")
     void drawDoesNotDealDamageWithoutAnotherHero() {
         harness.addToBattlefield(player1, new HumanTorchJohnnyStorm());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new CaptainAmericaSuperSoldier()));
         harness.setLife(player2, 20);
 
         draw(player1.getId());
@@ -91,6 +90,71 @@ class HumanTorchJohnnyStormTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("only once");
+    }
+
+    @Test
+    @DisplayName("An opponent's Hero does not satisfy the draw condition")
+    void opponentHeroDoesNotEnableTrigger() {
+        harness.addToBattlefield(player1, new HumanTorchJohnnyStorm());
+        harness.addToBattlefield(player2, new CaptainAmericaSuperSoldier());
+        harness.setLibrary(player1, List.of(new CaptainAmericaSuperSoldier()));
+
+        draw(player1.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An opponent drawing does not trigger Human Torch")
+    void opponentDrawDoesNotTrigger() {
+        harness.addToBattlefield(player1, new HumanTorchJohnnyStorm());
+        harness.addToBattlefield(player1, new CaptainAmericaSuperSoldier());
+        harness.setLibrary(player2, List.of(new CaptainAmericaSuperSoldier()));
+
+        draw(player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("The Hero condition is checked again when the draw trigger resolves")
+    void losingOtherHeroBeforeResolutionPreventsDamage() {
+        Permanent hero = harness.addToBattlefieldAndReturn(player1, new CaptainAmericaSuperSoldier());
+        harness.addToBattlefield(player1, new HumanTorchJohnnyStorm());
+        harness.setLibrary(player1, List.of(new CaptainAmericaSuperSoldier()));
+
+        draw(player1.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.inMutationScope(() -> {
+            gd.playerBattlefields.get(player1.getId()).remove(hero);
+            gd.playerGraveyards.get(player1.getId()).add(hero.getCard());
+        });
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Every card drawn can trigger damage in the same turn")
+    void repeatedDrawsEachDealDamage() {
+        harness.addToBattlefield(player1, new CaptainAmericaSuperSoldier());
+        harness.addToBattlefield(player1, new HumanTorchJohnnyStorm());
+        harness.setLibrary(player1, List.of(new CaptainAmericaSuperSoldier(), new CaptainAmericaSuperSoldier()));
+
+        for (int i = 0; i < 2; i++) {
+            draw(player1.getId());
+            harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, player2.getId());
+            harness.passBothPriorities();
+        }
+
+        harness.assertLife(player2, 18);
     }
 
     private void draw(java.util.UUID playerId) {
