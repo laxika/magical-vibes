@@ -6,13 +6,16 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BlackSunsZenith;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.f.Fireball;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.s.Shunt;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,9 +24,72 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HiveMind.class, BlackSunsZenith.class, Boomerang.class, CounselOfTheSoratami.class,
+        Fireball.class, GrizzlyBears.class, LightningBolt.class, Shunt.class})
 class HiveMindTest extends BaseCardTest {
 
-    // ===== Trigger — untargeted sorcery =====
+    @Test
+    @DisplayName("The copy uses the original spell's targets when Hive Mind resolves")
+    void copyUsesTargetsChangedInResponse() {
+        harness.addToBattlefield(player1, new HiveMind());
+        UUID bearsId = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
+        harness.setHand(player1, List.of(new LightningBolt(), new Shunt()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castInstant(player1, 0, player2.getId());
+        UUID boltId = gd.stack.getFirst().getTargetableId();
+        harness.ensurePriority(player1);
+        harness.castInstant(player1, 0, boltId);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bearsId);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bearsId);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(bearsId);
+    }
+
+    @Test
+    @DisplayName("The opponent may choose new targets for a multi-target Fireball copy")
+    void multiTargetCopyOffersRetarget() {
+        harness.addToBattlefield(player1, new HiveMind());
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 8);
+
+        harness.castSorcery(player1, 0, 6, List.of(player1.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("A Fireball copy retains X and its targets without triggering Hive Mind again")
+    void copyRetainsXAndDoesNotTriggerAgain() {
+        harness.addToBattlefield(player1, new HiveMind());
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 8);
+
+        harness.castSorcery(player1, 0, 6, List.of(player1.getId(), player2.getId()));
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player2, false);
+        }
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 14);
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("When a player casts a sorcery, the opponent gets a copy")
@@ -55,9 +121,7 @@ class HiveMindTest extends BaseCardTest {
         harness.setHand(player1, List.of(counsel));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        // Resolve Hive Mind triggered ability
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         // Stack: original sorcery + copy for player2
@@ -81,9 +145,7 @@ class HiveMindTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int p2HandBefore = gd.playerHands.get(player2.getId()).size();
 
-        harness.castSorcery(player1, 0, 0);
-        // Resolve Hive Mind triggered ability → creates copy for player2
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         // Resolve copy → player2 draws 2
         harness.passBothPriorities();
 
@@ -104,9 +166,7 @@ class HiveMindTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int p1HandBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.castSorcery(player1, 0, 0);
-        // Resolve Hive Mind triggered ability
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         // Resolve copy
         harness.passBothPriorities();
         // Resolve original
@@ -117,8 +177,6 @@ class HiveMindTest extends BaseCardTest {
         assertThat(p1HandAfter - p1HandBefore).isEqualTo(1);
     }
 
-    // ===== Trigger — instant =====
-
     @Test
     @DisplayName("Hive Mind triggers on instant spells too")
     void triggersOnInstant() {
@@ -126,8 +184,7 @@ class HiveMindTest extends BaseCardTest {
         harness.addToBattlefield(player1, hiveMind);
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, bears).getId();
 
         LightningBolt bolt = new LightningBolt();
         harness.setHand(player2, List.of(bolt));
@@ -143,8 +200,6 @@ class HiveMindTest extends BaseCardTest {
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
     }
 
-    // ===== Targeted spell — retarget option =====
-
     @Test
     @DisplayName("Copy of targeted spell offers retarget may-ability")
     void targetedSpellOffersRetarget() {
@@ -152,8 +207,7 @@ class HiveMindTest extends BaseCardTest {
         harness.addToBattlefield(player1, hiveMind);
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, bears).getId();
 
         Boomerang boomerang = new Boomerang();
         harness.setHand(player2, List.of(boomerang));
@@ -177,8 +231,7 @@ class HiveMindTest extends BaseCardTest {
         harness.addToBattlefield(player1, hiveMind);
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, bears).getId();
 
         Boomerang boomerang = new Boomerang();
         harness.setHand(player2, List.of(boomerang));
@@ -209,10 +262,8 @@ class HiveMindTest extends BaseCardTest {
 
         GrizzlyBears bears1 = new GrizzlyBears();
         GrizzlyBears bears2 = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears1);
-        harness.addToBattlefield(player2, bears2);
-        UUID bears1PermId = harness.getPermanentId(player1, "Grizzly Bears");
-        UUID bears2PermId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID bears1PermId = harness.addToBattlefieldAndReturn(player1, bears1).getId();
+        UUID bears2PermId = harness.addToBattlefieldAndReturn(player2, bears2).getId();
 
         Boomerang boomerang = new Boomerang();
         harness.setHand(player2, List.of(boomerang));
@@ -239,8 +290,6 @@ class HiveMindTest extends BaseCardTest {
         assertThat(copyEntry.getTargetId()).isEqualTo(bears2PermId);
     }
 
-    // ===== Does not trigger on creature spells =====
-
     @Test
     @DisplayName("Hive Mind does not trigger on creature spells")
     void doesNotTriggerOnCreature() {
@@ -259,8 +308,6 @@ class HiveMindTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
     }
 
-    // ===== Copy does not go to graveyard =====
-
     @Test
     @DisplayName("Spell copy ceases to exist and does not go to graveyard")
     void copyDoesNotGoToGraveyard() {
@@ -271,9 +318,7 @@ class HiveMindTest extends BaseCardTest {
         harness.setHand(player1, List.of(counsel));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        // Resolve Hive Mind trigger
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         // Resolve copy
         harness.passBothPriorities();
         // Resolve original
@@ -282,8 +327,6 @@ class HiveMindTest extends BaseCardTest {
         // Copy should not appear in any graveyard
         harness.assertNotInGraveyard(player2, "Counsel of the Soratami");
     }
-
-    // ===== Opponent casting triggers too =====
 
     @Test
     @DisplayName("Opponent casting a sorcery gives controller a copy")
@@ -309,8 +352,6 @@ class HiveMindTest extends BaseCardTest {
         assertThat(copyEntry.isCopy()).isTrue();
     }
 
-    // ===== Stack is empty after all resolves =====
-
     @Test
     @DisplayName("Stack is empty after trigger, copy, and original all resolve")
     void stackEmptyAfterFullResolution() {
@@ -321,9 +362,7 @@ class HiveMindTest extends BaseCardTest {
         harness.setHand(player1, List.of(counsel));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        // Resolve Hive Mind trigger
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         // Resolve copy
         harness.passBothPriorities();
         // Resolve original
@@ -332,8 +371,6 @@ class HiveMindTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Game log =====
 
     @Test
     @DisplayName("Game log records copy creation")
@@ -345,16 +382,12 @@ class HiveMindTest extends BaseCardTest {
         harness.setHand(player1, List.of(counsel));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        // Resolve Hive Mind trigger
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("copy") && log.contains("Counsel of the Soratami"));
     }
-
-    // ===== Copy of shuffle-into-library spell ceases to exist =====
 
     @Test
     @DisplayName("Copy of Black Sun's Zenith does not get shuffled into opponent's library (CR 707.10a)")
@@ -385,8 +418,6 @@ class HiveMindTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Targeted instant — damage copy hits correct target =====
-
     @Test
     @DisplayName("Copy of Lightning Bolt deals damage controlled by the opponent")
     void copyOfBoltDealsDamageForOpponent() {
@@ -394,8 +425,7 @@ class HiveMindTest extends BaseCardTest {
         harness.addToBattlefield(player1, hiveMind);
 
         GrizzlyBears bears = new GrizzlyBears();
-        harness.addToBattlefield(player1, bears);
-        UUID bearsPermId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID bearsPermId = harness.addToBattlefieldAndReturn(player1, bears).getId();
 
         LightningBolt bolt = new LightningBolt();
         harness.setHand(player2, List.of(bolt));
