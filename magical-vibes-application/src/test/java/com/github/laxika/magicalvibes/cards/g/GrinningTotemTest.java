@@ -86,6 +86,7 @@ class GrinningTotemTest extends BaseCardTest {
 
         // Caster's next upkeep.
         advanceToUpkeep(player1);
+        harness.passBothPriorities();
 
         // Card leaves exile, loses permission, and enters its owner's (player2's) graveyard.
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -216,6 +217,55 @@ class GrinningTotemTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.assertNotOnBattlefield(player1, "Grinning Totem");
         harness.assertInGraveyard(player1, "Grinning Totem");
+    }
+
+    @Test
+    @DisplayName("Upkeep cleanup uses the stack after play permission expires")
+    void cleanupWaitsForDelayedTriggerToResolve() {
+        Card swamp = new Swamp();
+        harness.setLibrary(player2, List.of(swamp));
+
+        activateGrinningTotem();
+        harness.handleCardChosen(player1, 0);
+        advanceToUpkeep(player1);
+
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(swamp.getId());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(swamp);
+        harness.assertNotInGraveyard(player2, "Swamp");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Swamp");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(swamp);
+    }
+
+    @Test
+    @DisplayName("Play permission does not waive the stolen spell's mana cost")
+    void cannotCastWithoutPayingManaCost() {
+        Card bears = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(bears));
+        activateGrinningTotem();
+        harness.handleCardChosen(player1, 0);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(bears);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The opponent cannot use the searching player's play permission")
+    void ownerCannotPlayCardUsingTotemPermission() {
+        Card fog = new Fog();
+        harness.setLibrary(player2, List.of(fog));
+        activateGrinningTotem();
+        harness.handleCardChosen(player1, 0);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player2, fog.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(fog);
     }
 
     @Test

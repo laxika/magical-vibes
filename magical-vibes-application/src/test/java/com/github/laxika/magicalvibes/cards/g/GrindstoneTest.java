@@ -4,6 +4,9 @@ import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.k.KnightOfDawn;
 import com.github.laxika.magicalvibes.cards.l.LeylineOfTheVoid;
 import com.github.laxika.magicalvibes.cards.l.LightningElemental;
+import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
+import com.github.laxika.magicalvibes.cards.p.PaintersServant;
+import com.github.laxika.magicalvibes.cards.p.Progenitus;
 import com.github.laxika.magicalvibes.cards.s.SeleniaDarkAngel;
 import com.github.laxika.magicalvibes.cards.t.TheWaterCrystal;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
@@ -19,8 +22,67 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Grindstone.class, BottleGnomes.class, KnightOfDawn.class, LightningElemental.class,
-        SeleniaDarkAngel.class, TrainedArmodon.class})
+        SeleniaDarkAngel.class, TrainedArmodon.class, LeylineOfTheVoid.class, TheWaterCrystal.class,
+        MycosynthLattice.class, PaintersServant.class, Progenitus.class})
 class GrindstoneTest extends BaseCardTest {
+
+    @Test
+    @CardUsed(MycosynthLattice.class)
+    @DisplayName("Mycosynth Lattice makes matching printed colors colorless and prevents repetition")
+    void doesNotRepeatWhenMilledCardsAreMadeColorless() {
+        harness.addToBattlefield(player1, new Grindstone());
+        harness.addToBattlefield(player1, new MycosynthLattice());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        Card first = new LightningElemental();
+        Card second = new LightningElemental();
+        Card survivor = new LightningElemental();
+        harness.setLibrary(player2, List.of(first, second, survivor));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(survivor);
+    }
+
+    @Test
+    @CardUsed(PaintersServant.class)
+    @DisplayName("Painter's Servant gives colorless milled cards a shared color")
+    void repeatsWithPaintersServant() {
+        harness.addToBattlefield(player1, new Grindstone());
+        harness.setHand(player1, List.of(new PaintersServant()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLUE");
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setLibrary(player2, List.of(
+                new BottleGnomes(), new BottleGnomes(), new BottleGnomes()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed(Progenitus.class)
+    @DisplayName("A revealed card shuffled into the library still contributes its color to repetition")
+    void repeatsWhenProgenitusIsShuffledBack() {
+        harness.addToBattlefield(player1, new Grindstone());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        Card progenitus = new Progenitus();
+        Card first = new LightningElemental();
+        Card second = new LightningElemental();
+        harness.setLibrary(player2, List.of(progenitus, first, second));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(progenitus);
+    }
 
     @Test
     @DisplayName("Repeats while each milled pair shares a color, stopping on the first mismatched pair")
