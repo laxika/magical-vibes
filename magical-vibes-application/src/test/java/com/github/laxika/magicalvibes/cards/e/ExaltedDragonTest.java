@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ExaltedDragon.class, Forest.class, TrainedArmodon.class})
+@CardUsed({ExaltedDragon.class, Forest.class, TrainedArmodon.class, Humble.class})
 class ExaltedDragonTest extends BaseCardTest {
 
     @Test
@@ -67,10 +69,63 @@ class ExaltedDragonTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         addCreatureReady(player2, new TrainedArmodon());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Each attacking Dragon requires a separate land")
+    void twoDragonsCannotShareOneLand() {
+        addCreatureReady(player1, new ExaltedDragon());
+        addCreatureReady(player1, new ExaltedDragon());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0, 1)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(forest);
+    }
+
+    @Test
+    @DisplayName("Two attacking Dragons sacrifice two lands")
+    void twoDragonsSacrificeTwoLands() {
+        addCreatureReady(player1, new ExaltedDragon());
+        addCreatureReady(player1, new ExaltedDragon());
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.addToBattlefield(player1, first);
+        harness.addToBattlefield(player1, second);
+
+        declareAttackers(player1, List.of(0, 1));
+
+        assertThat(findPermanents(player1, "Forest")).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+    }
+
+    @Test
+    @DisplayName("An opponent's land cannot pay the attack cost")
+    void opponentsLandCannotPayAttackCost() {
+        addCreatureReady(player1, new ExaltedDragon());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
+    }
+
+    @Test
+    @CardUsed({ExaltedDragon.class, Humble.class})
+    @DisplayName("Losing all abilities removes the land sacrifice attack cost")
+    void losingAbilitiesRemovesAttackCost() {
+        Permanent dragon = addCreatureReady(player1, new ExaltedDragon());
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, dragon.getId());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThat(dragon.isAttacking()).isTrue();
     }
 }
