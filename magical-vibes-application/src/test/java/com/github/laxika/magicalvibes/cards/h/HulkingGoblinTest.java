@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({HulkingGoblin.class, GrizzlyBears.class})
@@ -18,15 +19,40 @@ class HulkingGoblinTest extends BaseCardTest {
     @Test
     @DisplayName("Hulking Goblin cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
-        Permanent goblin = addCreatureReady(player2, new HulkingGoblin());
+        addCreatureReady(player2, new HulkingGoblin());
+        addCreatureReady(player1, new GrizzlyBears());
 
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setAttacking(true);
-
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid blocker index");
+    }
+
+    @Test
+    @DisplayName("Hulking Goblin can attack")
+    void canAttack() {
+        Permanent goblin = addCreatureReady(player1, new HulkingGoblin());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThat(goblin.isAttacking()).isTrue();
+        assertThat(goblin.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Hulking Goblin does not prevent another creature from blocking")
+    void otherCreatureCanBlock() {
+        Permanent goblin = addCreatureReady(player2, new HulkingGoblin());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+
+        assertThat(goblin.isBlocking()).isFalse();
+        assertThat(bears.isBlocking()).isTrue();
+        assertThat(bears.getBlockingTargetIds()).containsExactly(attacker.getId());
     }
 }
