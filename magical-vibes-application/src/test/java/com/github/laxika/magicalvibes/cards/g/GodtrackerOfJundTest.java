@@ -2,12 +2,15 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
+import com.github.laxika.magicalvibes.cards.i.IgneousPouncer;
+import com.github.laxika.magicalvibes.cards.k.KnightOfNewAlara;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GodtrackerOfJund.class, AvatarOfMight.class, AirElemental.class,
+        IgneousPouncer.class, KnightOfNewAlara.class})
 class GodtrackerOfJundTest extends BaseCardTest {
 
     @Test
@@ -25,9 +30,7 @@ class GodtrackerOfJundTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AvatarOfMight())); // 8/8
         harness.addMana(player1, ManaColor.GREEN, 8);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve Avatar of Might
-
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         GameData gd = harness.getGameData();
@@ -43,9 +46,7 @@ class GodtrackerOfJundTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AvatarOfMight()));
         harness.addMana(player1, ManaColor.GREEN, 8);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve Avatar of Might
-
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         GameData gd = harness.getGameData();
@@ -81,6 +82,59 @@ class GodtrackerOfJundTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve opponent's Avatar of Might
 
         GameData gd = harness.getGameData();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findGodtracker(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Triggers for a creature entering with exactly five power")
+    void triggersAtFivePower() {
+        harness.addToBattlefield(player1, new GodtrackerOfJund());
+        harness.setHand(player1, List.of(new IgneousPouncer()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findGodtracker(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Igneous Pouncer").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Triggers for its own entry when continuous boosts give it at least five power")
+    void triggersForOwnEntryWithContinuousBoosts() {
+        harness.addToBattlefield(player1, new KnightOfNewAlara());
+        harness.addToBattlefield(player1, new KnightOfNewAlara());
+        harness.setHand(player1, List.of(new GodtrackerOfJund()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findGodtracker(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not trigger for its own entry when continuous boosts leave its power below five")
+    void doesNotTriggerForOwnEntryBelowThreshold() {
+        harness.addToBattlefield(player1, new KnightOfNewAlara());
+        harness.setHand(player1, List.of(new GodtrackerOfJund()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
         assertThat(gd.stack).isEmpty();
         assertThat(findGodtracker(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
