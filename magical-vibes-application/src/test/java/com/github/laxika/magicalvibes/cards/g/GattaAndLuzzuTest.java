@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Skullcrack;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,8 +25,7 @@ class GattaAndLuzzuTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(target.getMarkedDamage()).isZero();
@@ -64,8 +64,7 @@ class GattaAndLuzzuTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(target.getMarkedDamage()).isEqualTo(2);
@@ -79,6 +78,53 @@ class GattaAndLuzzuTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void preventsEveryDamageEventThisTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castGattaAndLuzzu(target);
+
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void protectionPersistsAfterGattaAndLuzzuLeavesBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castGattaAndLuzzu(target);
+
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Gatta and Luzzu"));
+        harness.assertInGraveyard(player1, "Gatta and Luzzu");
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @CardUsed({Skullcrack.class})
+    void unpreventableDamageStillAddsCountersAndCreatureSurvives() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castGattaAndLuzzu(target);
+
+        harness.setHand(player2, List.of(new Skullcrack(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     private void castGattaAndLuzzu(Permanent target) {
