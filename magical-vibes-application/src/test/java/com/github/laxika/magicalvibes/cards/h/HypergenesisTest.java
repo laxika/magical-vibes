@@ -5,7 +5,12 @@ import com.github.laxika.magicalvibes.cards.a.AmrouScout;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.c.ChromaticStar;
 import com.github.laxika.magicalvibes.cards.o.OpalGuardian;
+import com.github.laxika.magicalvibes.cards.p.ParadisePlume;
+import com.github.laxika.magicalvibes.cards.s.SageOfEpityr;
+import com.github.laxika.magicalvibes.cards.t.TemporalIsolation;
+import com.github.laxika.magicalvibes.cards.t.TerramorphicExpanse;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -20,7 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Hypergenesis.class, AcademyRuins.class, AmrouScout.class, Cancel.class,
-        ChromaticStar.class, OpalGuardian.class})
+        ChromaticStar.class, OpalGuardian.class, ParadisePlume.class, SageOfEpityr.class,
+        TemporalIsolation.class, TerramorphicExpanse.class})
 class HypergenesisTest extends BaseCardTest {
 
     @Test
@@ -38,21 +44,21 @@ class HypergenesisTest extends BaseCardTest {
     void repeatsAfterDeclineAndEntersPermanentsSequentially() {
         AmrouScout scout = new AmrouScout();
         AcademyRuins firstRuins = new AcademyRuins();
-        AcademyRuins secondRuins = new AcademyRuins();
+        TerramorphicExpanse secondLand = new TerramorphicExpanse();
         Cancel cancel = new Cancel();
         suspendCard(List.of(scout, firstRuins, cancel));
-        harness.setHand(player2, List.of(secondRuins, new AcademyRuins()));
+        harness.setHand(player2, List.of(secondLand, new TerramorphicExpanse()));
 
         resolveSuspendedHypergenesis();
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.EachPlayerMayPutCardFromHandChoice.class);
 
         harness.handleMultipleCardsChosen(player1, List.of());
-        harness.handleMultipleCardsChosen(player2, List.of(secondRuins.getId()));
+        harness.handleMultipleCardsChosen(player2, List.of(secondLand.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
-                .containsExactly("Academy Ruins");
+                .containsExactly("Terramorphic Expanse");
 
         harness.handleMultipleCardsChosen(player1, List.of(scout.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -70,7 +76,7 @@ class HypergenesisTest extends BaseCardTest {
                 .containsExactly("Amrou Scout", "Academy Ruins");
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .extracting(permanent -> permanent.getCard().getName())
-                .containsExactly("Academy Ruins", "Academy Ruins");
+                .containsExactly("Terramorphic Expanse", "Terramorphic Expanse");
         assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
                 .containsExactly("Cancel");
     }
@@ -133,8 +139,132 @@ class HypergenesisTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("sorcery speed");
+                .hasMessageContaining("cannot be suspended at this time");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+    }
+
+    @Test
+    @DisplayName("Stops when both players decline even with eligible cards remaining")
+    void stopsWhenEveryoneDeclines() {
+        AmrouScout scout = new AmrouScout();
+        ChromaticStar star = new ChromaticStar();
+        suspendCard(List.of(scout));
+        harness.setHand(player2, List.of(star));
+
+        resolveSuspendedHypergenesis();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player2, List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Amrou Scout");
+        harness.assertInHand(player2, "Chromatic Star");
+        harness.assertNotOnBattlefield(player1, "Amrou Scout");
+        harness.assertNotOnBattlefield(player2, "Chromatic Star");
+        harness.assertInGraveyard(player1, "Hypergenesis");
+    }
+
+    @Test
+    @DisplayName("Each choice permits only one eligible card")
+    void rejectsMultipleCardsAndInstants() {
+        AmrouScout scout = new AmrouScout();
+        ChromaticStar star = new ChromaticStar();
+        Cancel cancel = new Cancel();
+        suspendCard(List.of(scout, star, cancel));
+        harness.setHand(player2, List.of());
+        resolveSuspendedHypergenesis();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
+                player1, List.of(scout.getId(), star.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(cancel.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(scout, star, cancel);
+        harness.handleMultipleCardsChosen(player1, List.of());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An Aura attaches to a creature put onto the battlefield in an earlier round")
+    void auraAttachesToEarlierCreature() {
+        AmrouScout scout = new AmrouScout();
+        TemporalIsolation aura = new TemporalIsolation();
+        suspendCard(List.of(scout, aura));
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player2, new AmrouScout());
+        resolveSuspendedHypergenesis();
+
+        harness.handleMultipleCardsChosen(player1, List.of(scout.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(aura.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Amrou Scout").getId());
+
+        assertThat(findPermanent(player1, "Temporal Isolation").getAttachedTo())
+                .isEqualTo(findPermanent(player1, "Amrou Scout").getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An Aura with nothing legal to enchant remains in hand")
+    void auraWithoutLegalAttachmentRemainsInHand() {
+        TemporalIsolation aura = new TemporalIsolation();
+        suspendCard(List.of(aura));
+        harness.setHand(player2, List.of());
+        resolveSuspendedHypergenesis();
+
+        harness.handleMultipleCardsChosen(player1, List.of(aura.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(aura);
+        harness.assertNotOnBattlefield(player1, "Temporal Isolation");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Entry triggers wait until the entire Hypergenesis process finishes")
+    void entryTriggersResolveAfterAllChoices() {
+        SageOfEpityr sage = new SageOfEpityr();
+        ChromaticStar star = new ChromaticStar();
+        suspendCard(List.of(sage, star));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new AmrouScout(), new ChromaticStar(),
+                new Cancel(), new AcademyRuins()));
+        resolveSuspendedHypergenesis();
+
+        harness.handleMultipleCardsChosen(player1, List.of(sage.getId()));
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.EachPlayerMayPutCardFromHandChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(star.getId()));
+        harness.assertOnBattlefield(player1, "Chromatic Star");
+        harness.assertInGraveyard(player1, "Hypergenesis");
+        harness.passBothPriorities();
+
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.playerId()).isEqualTo(player1.getId());
+        assertThat(reorder.cards()).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("As-entry color choices happen before the next permanent choice")
+    void choosesColorBeforeContinuingProcess() {
+        ParadisePlume plume = new ParadisePlume();
+        ChromaticStar star = new ChromaticStar();
+        suspendCard(List.of(plume, star));
+        harness.setHand(player2, List.of());
+        resolveSuspendedHypergenesis();
+
+        harness.handleMultipleCardsChosen(player1, List.of(plume.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "GREEN");
+        assertThat(findPermanent(player1, "Paradise Plume").getChosenColor()).isEqualTo(CardColor.GREEN);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.EachPlayerMayPutCardFromHandChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(star.getId()));
+        harness.assertOnBattlefield(player1, "Chromatic Star");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private Hypergenesis suspendCard(List<Card> additionalHandCards) {
