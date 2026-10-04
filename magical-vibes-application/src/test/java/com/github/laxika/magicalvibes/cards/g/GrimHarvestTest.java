@@ -129,4 +129,62 @@ class GrimHarvestTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(harvest);
         assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(harvest);
     }
+
+    @Test
+    @DisplayName("Recover exiles Grim Harvest when the payment cannot be made")
+    void recoverExilesSourceWhenPaymentCannotBeMade() {
+        Card harvest = new GrimHarvest();
+        harness.setGraveyard(player1, List.of(harvest));
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new KrovikanScoundrel());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(harvest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(harvest);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(harvest);
+    }
+
+    @Test
+    @DisplayName("An older recover trigger cannot exile Grim Harvest after it leaves and reenters the graveyard")
+    void olderRecoverCannotExileNewGraveyardObject() {
+        assertOlderRecoverCannotAffectNewGraveyardObject(false);
+    }
+
+    @Test
+    @DisplayName("An older recover trigger cannot return Grim Harvest after it leaves and reenters the graveyard")
+    void olderRecoverCannotReturnNewGraveyardObject() {
+        assertOlderRecoverCannotAffectNewGraveyardObject(true);
+    }
+
+    private void assertOlderRecoverCannotAffectNewGraveyardObject(boolean payOlderTrigger) {
+        Card harvest = new GrimHarvest();
+        harness.setGraveyard(player1, List.of(harvest));
+        harness.setHand(player1, List.of(new GrimHarvest()));
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new KrovikanScoundrel());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new KrovikanScoundrel());
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, first);
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, second);
+        });
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.playerHands.get(player1.getId())).contains(harvest);
+
+        int harvestIndex = gd.playerHands.get(player1.getId()).indexOf(harvest);
+        harness.castAndResolveInstant(player1, harvestIndex, first.getCard().getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(harvest);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, payOlderTrigger);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(harvest);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(harvest);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(harvest);
+    }
 }
