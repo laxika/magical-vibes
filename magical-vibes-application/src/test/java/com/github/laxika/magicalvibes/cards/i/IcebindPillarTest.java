@@ -2,18 +2,19 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IcebindPillar.class, GrizzlyBears.class, AngelsFeather.class, InSearchOfGreatness.class})
 class IcebindPillarTest extends BaseCardTest {
 
     @Test
@@ -58,12 +59,83 @@ class IcebindPillarTest extends BaseCardTest {
     @DisplayName("Cannot target an enchantment")
     void cannotTargetEnchantment() {
         addReadyPillar(player1);
-        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new InSearchOfGreatness());
         addSnowMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact or creature");
+    }
+
+    @Test
+    void tapsSourceAndSpendsSnowManaBeforeTargetIsTapped() {
+        Permanent pillar = addReadyPillar(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IcebindPillar());
+        addSnowMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(pillar.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
+        assertThat(target.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void newlyEnteredNoncreaturePillarCanActivateUsingColorlessSnowMana() {
+        Permanent pillar = harness.addToBattlefieldAndReturn(player1, new IcebindPillar());
+        pillar.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IcebindPillar());
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(pillar.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotActivateAlreadyTappedPillar() {
+        Permanent pillar = addReadyPillar(player1);
+        pillar.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IcebindPillar());
+        addSnowMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void canTargetItselfEvenThoughPayingTheCostTapsIt() {
+        Permanent pillar = addReadyPillar(player1);
+        addSnowMana();
+
+        harness.activateAbility(player1, 0, null, pillar.getId());
+        harness.passBothPriorities();
+
+        assertThat(pillar.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canTargetAnAlreadyTappedArtifactYouControl() {
+        addReadyPillar(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new IcebindPillar());
+        target.setTapped(true);
+        addSnowMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addReadyPillar(Player player) {
@@ -74,7 +146,6 @@ class IcebindPillarTest extends BaseCardTest {
 
     private void addSnowMana() {
         ManaPool pool = gd.playerManaPools.get(player1.getId());
-        pool.add(ManaColor.BLUE, 1);
         pool.addSnowMana(ManaColor.BLUE, 1);
     }
 }
