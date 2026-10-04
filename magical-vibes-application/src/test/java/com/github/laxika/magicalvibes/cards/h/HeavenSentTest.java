@@ -17,6 +17,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HeavenSentTest extends BaseCardTest {
 
     @Test
+    void castingSagaInvestigatesOnEntry() {
+        harness.castFromHand(player1, new HeavenSent(), "{U}{R}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
+        harness.assertOnBattlefield(player1, "Heaven Sent");
+    }
+
+    @Test
     void firstTwoChaptersInvestigate() {
         addSagaWithLore(0);
 
@@ -65,6 +75,27 @@ class HeavenSentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Heaven Sent")).hasSize(1);
+    }
+
+    @Test
+    void chapterThreeDoesNotDrawAndCanLeaveSagaExiled() {
+        Permanent saga = addSagaWithLore(2);
+        harness.setLife(player2, 20);
+        harness.setLibrary(player1, List.of(
+                new Forest(), new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest(), new Forest()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        int controllerLifeBefore = gd.getLife(player1.getId());
+
+        advanceToNextChapter();
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, controllerLifeBefore);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(8);
+        harness.assertNotOnBattlefield(player1, "Heaven Sent");
+        harness.assertNotInGraveyard(player1, "Heaven Sent");
+        assertThat(gd.findExiledCard(saga.getCard().getId())).isNotNull();
     }
 
     private Permanent addSagaWithLore(int loreCounters) {
