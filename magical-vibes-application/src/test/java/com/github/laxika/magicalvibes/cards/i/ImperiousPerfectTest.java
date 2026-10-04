@@ -3,22 +3,27 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.e.ElvishArchdruid;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.n.NamelessInversion;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ImperiousPerfect.class, LlanowarElves.class, GrizzlyBears.class, ElvishArchdruid.class,
+        NamelessInversion.class})
 class ImperiousPerfectTest extends BaseCardTest {
-
-    // ===== Static effect: buffs other Elves you control =====
 
     @Test
     @DisplayName("Other Elves you control get +1/+1")
@@ -26,7 +31,7 @@ class ImperiousPerfectTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LlanowarElves());
         harness.addToBattlefield(player1, new ImperiousPerfect());
 
-        Permanent elf = elf(player1, "Llanowar Elves");
+        Permanent elf = findPermanent(player1, "Llanowar Elves");
         assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(2);
     }
@@ -36,7 +41,7 @@ class ImperiousPerfectTest extends BaseCardTest {
     void doesNotBuffItself() {
         harness.addToBattlefield(player1, new ImperiousPerfect());
 
-        Permanent perfect = elf(player1, "Imperious Perfect");
+        Permanent perfect = findPermanent(player1, "Imperious Perfect");
         assertThat(gqs.getEffectivePower(gd, perfect)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, perfect)).isEqualTo(2);
     }
@@ -47,7 +52,7 @@ class ImperiousPerfectTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new ImperiousPerfect());
 
-        Permanent bears = elf(player1, "Grizzly Bears");
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
@@ -58,7 +63,7 @@ class ImperiousPerfectTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ImperiousPerfect());
         harness.addToBattlefield(player2, new LlanowarElves());
 
-        Permanent opponentElf = elf(player2, "Llanowar Elves");
+        Permanent opponentElf = findPermanent(player2, "Llanowar Elves");
         assertThat(gqs.getEffectivePower(gd, opponentElf)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, opponentElf)).isEqualTo(1);
     }
@@ -70,17 +75,15 @@ class ImperiousPerfectTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ElvishArchdruid());
 
         // Archdruid is a 2/2 Elf, +1/+1 from Imperious Perfect
-        Permanent archdruid = elf(player1, "Elvish Archdruid");
+        Permanent archdruid = findPermanent(player1, "Elvish Archdruid");
         assertThat(gqs.getEffectivePower(gd, archdruid)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, archdruid)).isEqualTo(3);
     }
 
-    // ===== Token creation via {G}, {T} activated ability =====
-
     @Test
     @DisplayName("Activating ability puts token creation on the stack")
     void activatingAbilityPutsOnStack() {
-        addPerfectReady(player1);
+        addCreatureReady(player1, new ImperiousPerfect());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -94,7 +97,7 @@ class ImperiousPerfectTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving ability creates a 1/1 green Elf Warrior token")
     void resolvingAbilityCreatesToken() {
-        addPerfectReady(player1);
+        addCreatureReady(player1, new ImperiousPerfect());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -111,7 +114,7 @@ class ImperiousPerfectTest extends BaseCardTest {
     @Test
     @DisplayName("Created Elf Warrior token is itself buffed by the lord effect")
     void createdTokenIsBuffed() {
-        addPerfectReady(player1);
+        addCreatureReady(player1, new ImperiousPerfect());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -125,7 +128,7 @@ class ImperiousPerfectTest extends BaseCardTest {
     @Test
     @DisplayName("Mana is consumed when activating ability")
     void manaIsConsumed() {
-        addPerfectReady(player1);
+        addCreatureReady(player1, new ImperiousPerfect());
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -136,7 +139,7 @@ class ImperiousPerfectTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutMana() {
-        addPerfectReady(player1);
+        addCreatureReady(player1, new ImperiousPerfect());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -145,7 +148,7 @@ class ImperiousPerfectTest extends BaseCardTest {
     @Test
     @DisplayName("Ability requires tap and cannot be reused the same turn")
     void abilityRequiresTap() {
-        addPerfectReady(player1);
+        addCreatureReady(player1, new ImperiousPerfect());
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.activateAbility(player1, 0, null, null);
@@ -166,16 +169,74 @@ class ImperiousPerfectTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("The ability creates exactly one untapped green creature token for its controller")
+    void tokenHasCorrectColorTypeAndController() {
+        addCreatureReady(player1, new ImperiousPerfect());
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
-    private Permanent elf(Player player, String name) {
-        return findPermanent(player, name);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Elf Warrior")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Elf Warrior")).isZero();
+        Permanent token = findPermanent(player1, "Elf Warrior");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.getCard().getType()).isEqualTo(CardType.CREATURE);
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.GREEN);
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isSummoningSick()).isTrue();
     }
 
-    private Permanent addPerfectReady(Player player) {
-        Permanent perm = new Permanent(new ImperiousPerfect());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Two Perfects buff one another and their bonuses stack on other Elves")
+    void multiplePerfectsStackTheirBonuses() {
+        harness.addToBattlefield(player1, new ImperiousPerfect());
+        harness.addToBattlefield(player1, new ImperiousPerfect());
+        harness.addToBattlefield(player1, new LlanowarElves());
+
+        for (Permanent perfect : findPermanents(player1, "Imperious Perfect")) {
+            assertThat(gqs.getEffectivePower(gd, perfect)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, perfect)).isEqualTo(3);
+        }
+        Permanent elf = findPermanent(player1, "Llanowar Elves");
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Non-green mana cannot pay the activation cost")
+    void cannotActivateWithWrongColorMana() {
+        Permanent perfect = addCreatureReady(player1, new ImperiousPerfect());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(perfect.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Token ability resolves after Perfect dies and its static bonus ends")
+    void abilityResolvesAfterSourceDies() {
+        Permanent perfect = addCreatureReady(player1, new ImperiousPerfect());
+        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new NamelessInversion()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.castInstant(player2, 0, perfect.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Imperious Perfect");
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Elf Warrior")).isEqualTo(1);
+        Permanent token = findPermanent(player1, "Elf Warrior");
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+        Permanent elf = findPermanent(player1, "Llanowar Elves");
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(1);
     }
 }
