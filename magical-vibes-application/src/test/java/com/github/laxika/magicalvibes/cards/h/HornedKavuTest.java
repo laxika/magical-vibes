@@ -101,6 +101,45 @@ class HornedKavuTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Horned Kavu");
     }
 
+    @Test
+    @DisplayName("The trigger still returns another eligible creature after Horned Kavu leaves")
+    void triggerResolvesAfterSourceLeaves() {
+        UUID familiarId = harness.addToBattlefieldAndReturn(player1, new ThornscapeFamiliar()).getId();
+        castHornedKavu();
+
+        var kavu = harness.getGameQueryService().findPermanentById(
+                gd, harness.getPermanentId(player1, "Horned Kavu"));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, kavu));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(familiarId);
+        harness.handlePermanentChosen(player1, familiarId);
+
+        harness.assertInHand(player1, "Thornscape Familiar");
+        harness.assertInHand(player1, "Horned Kavu");
+        harness.assertNotOnBattlefield(player1, "Thornscape Familiar");
+    }
+
+    @Test
+    @DisplayName("The trigger does nothing when no red or green creature remains under your control")
+    void noEligibleCreatureWhenSourceLeaves() {
+        harness.addToBattlefield(player1, new ArcticMerfolk());
+        harness.addToBattlefield(player2, new ThornscapeFamiliar());
+        castHornedKavu();
+
+        var kavu = harness.getGameQueryService().findPermanentById(
+                gd, harness.getPermanentId(player1, "Horned Kavu"));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, kavu));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Arctic Merfolk");
+        harness.assertOnBattlefield(player2, "Thornscape Familiar");
+        harness.assertInHand(player1, "Horned Kavu");
+    }
+
     private void castHornedKavu() {
         harness.castFromHand(player1, new HornedKavu(), "{R}{G}");
         harness.passBothPriorities();
