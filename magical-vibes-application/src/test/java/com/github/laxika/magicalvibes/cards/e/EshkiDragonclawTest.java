@@ -25,8 +25,7 @@ class EshkiDragonclawTest extends BaseCardTest {
     void rewardsCastingBothSpellTypes() {
         Permanent eshki = addCreatureReady(player1, new EshkiDragonclaw());
         Card drawnCard = new Shock();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(drawnCard);
+        harness.setLibrary(player1, List.of(drawnCard));
 
         castCreatureAndNoncreatureSpell();
 
@@ -65,11 +64,80 @@ class EshkiDragonclawTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         advanceToCombat(player1);
         harness.passBothPriorities();
 
+        assertThat(eshki.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("No ability goes on the stack when neither spell type was cast")
+    void doesNotTriggerWithoutSpells() {
+        Permanent eshki = addCreatureReady(player1, new EshkiDragonclaw());
+
+        advanceToCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(eshki.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Only the controller's combat can trigger Eshki")
+    void doesNotTriggerOnOpponentsCombat() {
+        Permanent eshki = addCreatureReady(player1, new EshkiDragonclaw());
+        castCreatureAndNoncreatureSpell();
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(eshki.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Casting Eshki itself satisfies the creature spell requirement")
+    void eshkiCountsAsCreatureSpell() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new EshkiDragonclaw(), new Shock()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        Card drawnCard = new Shock();
+        harness.setLibrary(player1, List.of(drawnCard));
+        Permanent eshki = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(eshki.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("The card is still drawn if Eshki dies before its ability resolves")
+    void drawsAfterSourceDies() {
+        Permanent eshki = addCreatureReady(player1, new EshkiDragonclaw());
+        castCreatureAndNoncreatureSpell();
+        Card drawnCard = new Shock();
+        harness.setLibrary(player1, List.of(drawnCard));
+        advanceToCombat(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, eshki.getId());
+        harness.castAndResolveInstant(player1, 0, eshki.getId());
+        harness.assertInGraveyard(player1, "Eshki Dragonclaw");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
         assertThat(eshki.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
@@ -86,8 +154,7 @@ class EshkiDragonclawTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
     }
 
     private void advanceToCombat(Player activePlayer) {
