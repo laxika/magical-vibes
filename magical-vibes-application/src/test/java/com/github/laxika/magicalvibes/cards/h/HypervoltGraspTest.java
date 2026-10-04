@@ -38,12 +38,13 @@ class HypervoltGraspTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new DryadSophisticate());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new HypervoltGrasp());
         aura.setAttachedTo(creature.getId());
-        Permanent target = addCreatureReady(player2, new DryadSophisticate());
+        addCreatureReady(player2, new DryadSophisticate());
 
-        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Dryad Sophisticate"));
         harness.passBothPriorities();
 
-        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player2, "Dryad Sophisticate");
+        harness.assertNotOnBattlefield(player2, "Dryad Sophisticate");
         assertThat(creature.isTapped()).isTrue();
     }
 
@@ -77,5 +78,92 @@ class HypervoltGraspTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, signet.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Casting the Aura grants the ability to the chosen creature")
+    void castingAuraGrantsAbility() {
+        Permanent creature = addCreatureReady(player1, new DryadSophisticate());
+        harness.setHand(player1, List.of(new HypervoltGrasp()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Hypervolt Grasp");
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The opposing creature's controller activates the granted ability")
+    void opposingCreatureControllerActivatesGrantedAbility() {
+        Permanent creature = addCreatureReady(player2, new DryadSophisticate());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HypervoltGrasp());
+        aura.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        assertThat(creature.isTapped()).isTrue();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Hypervolt Grasp");
+        harness.assertOnBattlefield(player2, "Dryad Sophisticate");
+    }
+
+    @Test
+    @DisplayName("The granted tap ability cannot be used with summoning sickness")
+    void summoningSicknessPreventsGrantedAbility() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DryadSophisticate());
+        creature.setSummoningSick(true);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HypervoltGrasp());
+        aura.setAttachedTo(creature.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(creature.isTapped()).isFalse();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An ordinary artifact is not a legal damage target")
+    void grantedAbilityCannotTargetOrdinaryArtifact() {
+        Permanent creature = addCreatureReady(player1, new DryadSophisticate());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HypervoltGrasp());
+        aura.setAttachedTo(creature.getId());
+        Permanent signet = harness.addToBattlefieldAndReturn(player2, new IzzetSignet());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, signet.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Returning the Aura does not counter an already activated damage ability")
+    void damageAbilityResolvesAfterAuraReturnsToHand() {
+        Permanent creature = addCreatureReady(player1, new DryadSophisticate());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new HypervoltGrasp());
+        aura.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Hypervolt Grasp");
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player1, "Dryad Sophisticate");
     }
 }
