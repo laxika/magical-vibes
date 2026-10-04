@@ -22,6 +22,7 @@ class FaerieSlumberPartyTest extends BaseCardTest {
     @Test
     @DisplayName("Returns all creatures and creates two Faeries for each opponent who controlled one")
     void returnsCreaturesAndCreatesFaeriesForQualifyingOpponents() {
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new AirElemental());

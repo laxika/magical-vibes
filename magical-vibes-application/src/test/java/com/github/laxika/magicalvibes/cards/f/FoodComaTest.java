@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FoodComa.class, GrizzlyBears.class, Unsummon.class})
+@CardUsed({FoodComa.class, GrizzlyBears.class, Boomerang.class})
 class FoodComaTest extends BaseCardTest {
 
     @Test
@@ -30,8 +30,8 @@ class FoodComaTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Food")).isOne();
 
         resetForFollowUpSpell();
-        harness.setHand(player2, List.of(new Unsummon()));
-        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, harness.getPermanentId(player1, "Food Coma"));
         harness.passBothPriorities();

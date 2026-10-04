@@ -22,6 +22,7 @@ class MalevolentWitchkiteTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifices any number of artifacts, enchantments, and tokens, then draws that many cards")
     void sacrificesEligiblePermanentsAndDrawsPerPermanent() {
+        harness.setHand(player1, List.of());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new IvoryCup());
         Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new Opposition());
         Permanent tokenSource = harness.enterBattlefieldAndReturn(player1, new SailorOfMeans());
@@ -52,6 +53,7 @@ class MalevolentWitchkiteTest extends BaseCardTest {
     @Test
     @DisplayName("Only the controller's artifacts, enchantments, and tokens can be sacrificed")
     void onlySacrificesControllerPermanents() {
+        harness.setHand(player1, List.of());
         Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new IvoryCup());
         Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new IvoryCup());
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());

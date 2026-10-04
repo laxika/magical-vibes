@@ -25,7 +25,7 @@ class WildwoodMentorTest extends BaseCardTest {
         Permanent mentor = addCreatureReady(player1, new WildwoodMentor());
         harness.setHand(player1, List.of(new CallTheCavalry()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();

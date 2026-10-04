@@ -26,7 +26,8 @@ class OldFlitterfangTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         assertThat(countPermanents(player1, "Food")).isOne();
     }
@@ -39,7 +40,7 @@ class OldFlitterfangTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.END_STEP);
 
         assertThat(countPermanents(player1, "Food")).isZero();
     }
@@ -49,16 +50,20 @@ class OldFlitterfangTest extends BaseCardTest {
     void sacrificesCreatureAndBoostsSelf() {
         Permanent flitterfang = harness.addToBattlefieldAndReturn(player1, new OldFlitterfang());
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.activateAbility(player1, battlefieldIndex(flitterfang), null, null);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.activateAbility(player1, battlefieldIndex(flitterfang), null, null);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).contains(creature.getId()).doesNotContain(flitterfang.getId());
+            PendingInteraction.PermanentChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice.validIds()).contains(creature.getId(), artifact.getId())
+                    .doesNotContain(flitterfang.getId());
 
-        harness.handlePermanentChosen(player1, creature.getId());
-        harness.passBothPriorities();
+            harness.handlePermanentChosen(player1, creature.getId());
+            resolveAllTriggers();
+        });
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(flitterfang.getEffectivePower()).isEqualTo(5);
@@ -77,11 +82,14 @@ class OldFlitterfangTest extends BaseCardTest {
     void sacrificesArtifactAndBoostsSelf() {
         Permanent flitterfang = harness.addToBattlefieldAndReturn(player1, new OldFlitterfang());
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.activateAbility(player1, battlefieldIndex(flitterfang), null, null);
-        harness.handlePermanentChosen(player1, artifact.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.activateAbility(player1, battlefieldIndex(flitterfang), null, null);
+            harness.handlePermanentChosen(player1, artifact.getId());
+            resolveAllTriggers();
+        });
 
         harness.assertInGraveyard(player1, "Spellbook");
         assertThat(flitterfang.getEffectivePower()).isEqualTo(5);

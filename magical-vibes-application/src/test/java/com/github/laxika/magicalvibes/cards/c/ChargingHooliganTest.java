@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.v.VoraciousVermin;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,8 +15,30 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ChargingHooligan.class, GrizzlyBears.class, VoraciousVermin.class})
+@CardUsed({ChargingHooligan.class, GrizzlyBears.class, VoraciousVermin.class, Unsummon.class})
 class ChargingHooliganTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Counts remaining attackers and checks for a Rat when the trigger resolves")
+    void usesAttackingCreaturesAtResolution() {
+        var hooligan = addCreatureReady(player1, new ChargingHooligan());
+        var rat = addCreatureReady(player1, new VoraciousVermin());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            harness.passPriority(player1);
+            harness.castInstant(player2, 0, rat.getId());
+            resolveAllTriggers();
+        });
+
+        assertThat(gqs.getEffectivePower(gd, hooligan)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, hooligan, Keyword.TRAMPLE)).isFalse();
+        harness.assertNotOnBattlefield(player1, "Voracious Vermin");
+        harness.assertInHand(player1, "Voracious Vermin");
+    }
 
     @Test
     @DisplayName("Gets +1/+0 for each attacking creature, including itself")
@@ -23,8 +47,10 @@ class ChargingHooliganTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(0, 1, 2));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1, 2));
+            resolveAllTriggers();
+        });
 
         assertThat(gqs.getEffectivePower(gd, hooligan)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, hooligan)).isEqualTo(3);
@@ -37,8 +63,10 @@ class ChargingHooliganTest extends BaseCardTest {
         var hooligan = addCreatureReady(player1, new ChargingHooligan());
         addCreatureReady(player1, new VoraciousVermin());
 
-        declareAttackers(List.of(0, 1));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            resolveAllTriggers();
+        });
 
         assertThat(gqs.hasKeyword(gd, hooligan, Keyword.TRAMPLE)).isTrue();
     }
@@ -49,8 +77,10 @@ class ChargingHooliganTest extends BaseCardTest {
         var hooligan = addCreatureReady(player1, new ChargingHooligan());
         addCreatureReady(player1, new VoraciousVermin());
 
-        declareAttackers(List.of(0, 1));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0, 1));
+            resolveAllTriggers();
+        });
         assertThat(gqs.getEffectivePower(gd, hooligan)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, hooligan, Keyword.TRAMPLE)).isTrue();
 
