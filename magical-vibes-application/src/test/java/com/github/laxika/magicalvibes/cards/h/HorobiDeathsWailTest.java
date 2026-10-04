@@ -19,6 +19,49 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HorobiDeathsWailTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Horobi destroys itself when it becomes a target")
+    void destroysItselfWhenTargeted() {
+        UUID horobiId = harness.addToBattlefieldAndReturn(player1, new HorobiDeathsWail()).getId();
+        harness.setHand(player1, List.of(new GlacialRay()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, horobiId);
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Horobi, Death's Wail");
+        harness.assertInGraveyard(player1, "Horobi, Death's Wail");
+        harness.assertInGraveyard(player1, "Glacial Ray");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A queued destruction trigger survives Horobi leaving the battlefield")
+    void queuedTriggerSurvivesHorobiLeavingBattlefield() {
+        UUID horobiId = harness.addToBattlefieldAndReturn(player1, new HorobiDeathsWail()).getId();
+        UUID creatureId = harness.addToBattlefieldAndReturn(player2, new WanderingOnes()).getId();
+        harness.setHand(player1, List.of(new GlacialRay(), new GlacialRay()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, creatureId);
+        harness.castInstant(player1, 0, horobiId);
+
+        assertThat(gd.stack).hasSize(4);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Horobi, Death's Wail");
+        harness.assertOnBattlefield(player2, "Wandering Ones");
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Wandering Ones");
+        harness.assertInGraveyard(player2, "Wandering Ones");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Destroys a creature targeted by an opponent's spell")
     void destroysCreatureTargetedBySpell() {
         harness.addToBattlefield(player1, new HorobiDeathsWail());
