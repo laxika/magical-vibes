@@ -21,6 +21,7 @@ import java.util.Set;
 
 @CardRegistration(set = "PLC", collectorNumber = "110")
 @CardRegistration(set = "DDI", collectorNumber = "58")
+@CardRegistration(set = "E01", collectorNumber = "60")
 public class Torchling extends Card {
 
     public Torchling() {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.s.StoneHavenMedic;
+import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -16,14 +17,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GraveBirthing.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({GraveBirthing.class, GiantMantis.class, StoneHavenMedic.class, SmiteTheMonstrous.class})
 class GraveBirthingTest extends BaseCardTest {
 
     @Test
     void targetOpponentChoosesCardCreatesScionAndDraws() {
-        Card bears = new GrizzlyBears();
-        Card giant = new HillGiant();
-        Card drawn = new GrizzlyBears();
+        Card bears = new GiantMantis();
+        Card giant = new StoneHavenMedic();
+        Card drawn = new GiantMantis();
         harness.setGraveyard(player2, List.of(bears, giant));
         harness.setLibrary(player1, List.of(drawn));
         castGraveBirthing(player2.getId());
@@ -42,7 +43,7 @@ class GraveBirthingTest extends BaseCardTest {
 
     @Test
     void emptyGraveyardStillCreatesScionAndDraws() {
-        Card drawn = new GrizzlyBears();
+        Card drawn = new GiantMantis();
         harness.setLibrary(player1, List.of(drawn));
         castGraveBirthing(player2.getId());
 
@@ -53,7 +54,7 @@ class GraveBirthingTest extends BaseCardTest {
 
     @Test
     void scionCanBeSacrificedForColorlessMana() {
-        harness.setGraveyard(player2, List.of(new HillGiant()));
+        harness.setGraveyard(player2, List.of(new StoneHavenMedic()));
         castGraveBirthing(player2.getId());
 
         Permanent scion = assertScion(player1);
@@ -61,6 +62,47 @@ class GraveBirthingTest extends BaseCardTest {
         harness.activateAbility(player1, scionIndex, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+    }
+
+    @Test
+    void opponentCanChooseANoncreatureAndLaterEffectsWaitForThatChoice() {
+        Card creature = new GiantMantis();
+        Card instant = new SmiteTheMonstrous();
+        Card drawn = new StoneHavenMedic();
+        harness.setGraveyard(player2, List.of(creature, instant));
+        harness.setLibrary(player1, List.of(drawn));
+        castGraveBirthing(player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNotNull();
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+
+        harness.handleGraveyardCardChosen(player2, 1);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(creature);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(instant);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertScion(player1);
+        assertThat(findPermanents(player2, "Eldrazi Scion")).isEmpty();
+    }
+
+    @Test
+    void singleGraveyardCardIsExiledAndOnlyTheCasterGetsTheTokenAndCard() {
+        Card exiled = new SmiteTheMonstrous();
+        Card drawn = new GiantMantis();
+        harness.setGraveyard(player1, List.of(exiled));
+        harness.setLibrary(player2, List.of(drawn));
+        harness.setHand(player2, List.of(new GraveBirthing()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiled);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn);
+        assertScion(player2);
         assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
     }
 
@@ -78,8 +120,7 @@ class GraveBirthingTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GraveBirthing()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, targetPlayerId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetPlayerId);
     }
 
     private Permanent assertScion(com.github.laxika.magicalvibes.model.Player owner) {

@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "SUM", collectorNumber = "224")
 @CardRegistration(set = "3ED", collectorNumber = "224")
 @CardRegistration(set = "2ED", collectorNumber = "224")
+@CardRegistration(set = "LEA", collectorNumber = "223")
 public class WallOfBrambles extends Card {
 
     public WallOfBrambles() {

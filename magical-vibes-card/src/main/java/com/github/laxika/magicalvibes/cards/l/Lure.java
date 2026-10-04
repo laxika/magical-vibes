@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "3ED", collectorNumber = "212")
 @CardRegistration(set = "2ED", collectorNumber = "212")
 @CardRegistration(set = "IMA", collectorNumber = "175")
+@CardRegistration(set = "LEA", collectorNumber = "211")
 @CardRegistration(set = "LEB", collectorNumber = "212")
 public class Lure extends Card {
 

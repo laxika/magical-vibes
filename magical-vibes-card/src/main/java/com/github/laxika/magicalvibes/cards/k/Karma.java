@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "8ED", collectorNumber = "28")
+@CardRegistration(set = "LEA", collectorNumber = "26")
 @CardRegistration(set = "LEB", collectorNumber = "27")
 @CardRegistration(set = "5ED", collectorNumber = "42")
 @CardRegistration(set = "4ED", collectorNumber = "32")

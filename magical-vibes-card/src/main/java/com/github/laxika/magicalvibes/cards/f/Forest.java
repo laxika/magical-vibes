@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "CMD", collectorNumber = "317")
+@CardRegistration(set = "ARC", collectorNumber = "150")
 @CardRegistration(set = "LEB", collectorNumber = "300")
 @CardRegistration(set = "LEB", collectorNumber = "301")
 @CardRegistration(set = "LEB", collectorNumber = "302")
@@ -565,6 +566,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SCD", collectorNumber = "351")
 @CardRegistration(set = "SCD", collectorNumber = "352")
 @CardRegistration(set = "RNA", collectorNumber = "264")
+@CardRegistration(set = "LEA", collectorNumber = "294")
+@CardRegistration(set = "LEA", collectorNumber = "295")
+@CardRegistration(set = "ARC", collectorNumber = "148")
+@CardRegistration(set = "ARC", collectorNumber = "149")
+@CardRegistration(set = "E01", collectorNumber = "101")
+@CardRegistration(set = "E01", collectorNumber = "106")
 public class Forest extends Card {
 
     public Forest() {

@@ -39,5 +39,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SLZ", collectorNumber = "10")
 @CardRegistration(set = "SLZ", collectorNumber = "131")
 @CardRegistration(set = "SLZ", collectorNumber = "252")
+@CardRegistration(set = "LEA", collectorNumber = "39")
 public class SerraAngel extends Card {
 }

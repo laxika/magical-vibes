@@ -15,6 +15,7 @@ import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "161")
 @CardRegistration(set = "DDF", collectorNumber = "53")
+@CardRegistration(set = "ARC", collectorNumber = "119")
 public class SynodCenturion extends Card {
 
     public SynodCenturion() {

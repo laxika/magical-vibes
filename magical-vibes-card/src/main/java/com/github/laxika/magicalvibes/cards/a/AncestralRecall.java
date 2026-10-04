@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
  */
 @CardRegistration(set = "VMA", collectorNumber = "1")
 @CardRegistration(set = "2ED", collectorNumber = "48")
+@CardRegistration(set = "LEA", collectorNumber = "47")
 @CardRegistration(set = "LEB", collectorNumber = "48")
 public class AncestralRecall extends Card {
 

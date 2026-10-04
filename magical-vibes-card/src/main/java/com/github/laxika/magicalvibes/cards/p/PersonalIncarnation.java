@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "3ED", collectorNumber = "31")
 @CardRegistration(set = "ME4", collectorNumber = "22")
 @CardRegistration(set = "2ED", collectorNumber = "32")
+@CardRegistration(set = "LEA", collectorNumber = "31")
 public class PersonalIncarnation extends Card {
 
     public PersonalIncarnation() {

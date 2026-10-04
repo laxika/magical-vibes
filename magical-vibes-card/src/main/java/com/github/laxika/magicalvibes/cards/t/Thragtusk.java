@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "2XM", collectorNumber = "183")
 @CardRegistration(set = "TSR", collectorNumber = "368")
 @CardRegistration(set = "NCC", collectorNumber = "316")
+@CardRegistration(set = "E01", collectorNumber = "75")
 public class Thragtusk extends Card {
 
     public Thragtusk() {

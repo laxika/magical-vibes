@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GraveStrength.class, GrizzlyBears.class, Forest.class})
 class GraveStrengthTest extends BaseCardTest {
 
     @Test
@@ -59,7 +61,46 @@ class GraveStrengthTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castAndResolve(UUID targetId) {
+    @Test
+    @DisplayName("Mills only available cards and ignores the opponent's graveyard")
+    void shortLibraryCountsOnlyControllersGraveyard() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent target = findPermanent(player1, "Grizzly Bears");
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        castAndResolve(target.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Still adds counters from existing creature cards with an empty library")
+    void emptyLibraryStillAddsCounters() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent target = findPermanent(player1, "Grizzly Bears");
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.setLibrary(player1, List.of());
+
+        castAndResolve(target.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not mill when its only target leaves before resolution")
+    void illegalTargetPreventsMilling() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest(), new Forest()));
         harness.setHand(player1, List.of(new GraveStrength()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -67,6 +108,22 @@ class GraveStrengthTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         harness.castSorcery(player1, 0, targetId);
+        gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Grave Strength");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void castAndResolve(UUID targetId) {
+        harness.setHand(player1, List.of(new GraveStrength()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
     }
 }

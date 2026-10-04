@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 @CardRegistration(set = "SUM", collectorNumber = "85")
 @CardRegistration(set = "3ED", collectorNumber = "85")
 @CardRegistration(set = "2ED", collectorNumber = "83")
+@CardRegistration(set = "LEA", collectorNumber = "82")
 @CardRegistration(set = "LEB", collectorNumber = "83")
 public class Thoughtlace extends Card {
 

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "EMA", collectorNumber = "106")
 @CardRegistration(set = "ME4", collectorNumber = "97")
 @CardRegistration(set = "2ED", collectorNumber = "130")
+@CardRegistration(set = "LEA", collectorNumber = "129")
 @CardRegistration(set = "LEB", collectorNumber = "130")
 public class Sinkhole extends Card {
 

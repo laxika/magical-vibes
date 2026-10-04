@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.m.MerfolkOfThePearlTrident;
+import com.github.laxika.magicalvibes.cards.k.KinsbaileAspirant;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,15 +13,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GravelgillScoundrel.class, MerfolkOfThePearlTrident.class})
+@CardUsed({GravelgillScoundrel.class, KinsbaileAspirant.class})
 class GravelgillScoundrelTest extends BaseCardTest {
 
     @Test
     @DisplayName("Tapping another Merfolk makes Gravelgill Scoundrel unblockable")
     void tappingAnotherMerfolkMakesItUnblockable() {
         Permanent scoundrel = addCreatureReady(player1, new GravelgillScoundrel());
-        Permanent merfolk = addCreatureReady(player1, new MerfolkOfThePearlTrident());
-        addCreatureReady(player1, new MerfolkOfThePearlTrident());
+        Permanent merfolk = addCreatureReady(player1, new GravelgillScoundrel());
+        addCreatureReady(player1, new GravelgillScoundrel());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -38,8 +38,8 @@ class GravelgillScoundrelTest extends BaseCardTest {
     @DisplayName("Declining the tap leaves Gravelgill Scoundrel blockable")
     void decliningTapLeavesItBlockable() {
         Permanent scoundrel = addCreatureReady(player1, new GravelgillScoundrel());
-        Permanent merfolk = addCreatureReady(player1, new MerfolkOfThePearlTrident());
-        addCreatureReady(player1, new MerfolkOfThePearlTrident());
+        Permanent merfolk = addCreatureReady(player1, new GravelgillScoundrel());
+        addCreatureReady(player1, new GravelgillScoundrel());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -65,8 +65,8 @@ class GravelgillScoundrelTest extends BaseCardTest {
     @DisplayName("The unblockable effect wears off at end of turn")
     void unblockableWearsOffAtEndOfTurn() {
         Permanent scoundrel = addCreatureReady(player1, new GravelgillScoundrel());
-        Permanent merfolk = addCreatureReady(player1, new MerfolkOfThePearlTrident());
-        addCreatureReady(player1, new MerfolkOfThePearlTrident());
+        Permanent merfolk = addCreatureReady(player1, new GravelgillScoundrel());
+        addCreatureReady(player1, new GravelgillScoundrel());
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
@@ -78,5 +78,51 @@ class GravelgillScoundrelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(scoundrel.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An untapped non-Merfolk creature can pay even while summoning sick")
+    void canTapSummoningSickNonMerfolk() {
+        Permanent scoundrel = addCreatureReady(player1, new GravelgillScoundrel());
+        Permanent kithkin = harness.addToBattlefieldAndReturn(player1, new KinsbaileAspirant());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(kithkin.isTapped()).isTrue();
+        assertThat(scoundrel.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A single eligible creature is tapped automatically when payment is accepted")
+    void tapsOnlyEligibleCreature() {
+        Permanent scoundrel = addCreatureReady(player1, new GravelgillScoundrel());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new GravelgillScoundrel());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(merfolk.isTapped()).isTrue();
+        assertThat(scoundrel.isTapped()).isFalse();
+        assertThat(scoundrel.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapped creatures and opposing creatures cannot pay for the ability")
+    void cannotTapTappedOrOpposingCreature() {
+        Permanent scoundrel = addCreatureReady(player1, new GravelgillScoundrel());
+        Permanent tapped = addCreatureReady(player1, new GravelgillScoundrel());
+        tapped.tap();
+        Permanent opposing = addCreatureReady(player2, new GravelgillScoundrel());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(scoundrel.isCantBeBlocked()).isFalse();
+        assertThat(scoundrel.isTapped()).isFalse();
+        assertThat(opposing.isTapped()).isFalse();
     }
 }

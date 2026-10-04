@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "M13", collectorNumber = "147")
+@CardRegistration(set = "E01", collectorNumber = "56")
 public class SearingSpear extends Card {
 
     public SearingSpear() {

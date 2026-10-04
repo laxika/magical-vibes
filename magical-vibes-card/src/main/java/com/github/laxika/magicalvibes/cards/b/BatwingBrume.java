@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 
 @CardRegistration(set = "EVE", collectorNumber = "81")
 @CardRegistration(set = "SLD", collectorNumber = "2469")
+@CardRegistration(set = "ARC", collectorNumber = "80")
 public class BatwingBrume extends Card {
 
     public BatwingBrume() {

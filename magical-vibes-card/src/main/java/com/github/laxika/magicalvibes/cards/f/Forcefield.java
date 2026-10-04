@@ -9,6 +9,7 @@ import java.util.List;
 
 @CardRegistration(set = "ME1", collectorNumber = "157")
 @CardRegistration(set = "2ED", collectorNumber = "244")
+@CardRegistration(set = "LEA", collectorNumber = "243")
 @CardRegistration(set = "LEB", collectorNumber = "244")
 public class Forcefield extends Card {
 

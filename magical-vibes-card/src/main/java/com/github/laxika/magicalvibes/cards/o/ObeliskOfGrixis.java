@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "ALA", collectorNumber = "214")
 @CardRegistration(set = "DDH", collectorNumber = "60")
 @CardRegistration(set = "C13", collectorNumber = "251")
+@CardRegistration(set = "E01", collectorNumber = "88")
 public class ObeliskOfGrixis extends Card {
 
     public ObeliskOfGrixis() {

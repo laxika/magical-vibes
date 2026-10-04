@@ -21,5 +21,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SLZ", collectorNumber = "77")
 @CardRegistration(set = "SLZ", collectorNumber = "198")
 @CardRegistration(set = "SLZ", collectorNumber = "319")
+@CardRegistration(set = "LEA", collectorNumber = "199")
 public class GrizzlyBears extends Card {
 }

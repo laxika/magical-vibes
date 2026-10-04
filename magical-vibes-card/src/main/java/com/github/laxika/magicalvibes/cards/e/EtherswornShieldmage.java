@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ARB", collectorNumber = "4")
+@CardRegistration(set = "ARC", collectorNumber = "84")
 public class EtherswornShieldmage extends Card {
 
     public EtherswornShieldmage() {

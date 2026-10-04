@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTyp
 
 @CardRegistration(set = "DIS", collectorNumber = "140")
 @CardRegistration(set = "GK2", collectorNumber = "61")
+@CardRegistration(set = "ARC", collectorNumber = "79")
 public class AvatarOfDiscord extends Card {
 
     public AvatarOfDiscord() {

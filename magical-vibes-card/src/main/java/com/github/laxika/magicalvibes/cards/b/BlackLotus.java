@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "VMA", collectorNumber = "4")
 @CardRegistration(set = "2ED", collectorNumber = "233")
+@CardRegistration(set = "LEA", collectorNumber = "232")
 @CardRegistration(set = "LEB", collectorNumber = "233")
 public class BlackLotus extends Card {
 

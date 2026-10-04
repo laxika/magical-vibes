@@ -24,7 +24,9 @@ public enum CardSet {
     SET_OHOP("OHOP"),
     SET_OPC2("OPC2"),
     SET_OPCA("OPCA"),
+    SET_ARC("ARC"),
 
+    SET_LEA("LEA"),
     SET_LEB("LEB"),
     SET_2ED("2ED"),
     SET_3ED("3ED"),
@@ -99,6 +101,7 @@ public enum CardSet {
     SET_ECL("ECL"),
     SET_ECC("ECC"),
     SET_EMN("EMN"),
+    SET_E01("E01"),
     SET_E02("E02"),
     SET_MRD("MRD"),
     SET_5DN("5DN"),

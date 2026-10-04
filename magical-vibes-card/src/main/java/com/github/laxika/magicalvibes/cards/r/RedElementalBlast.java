@@ -22,6 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "A25", collectorNumber = "147")
 @CardRegistration(set = "ME4", collectorNumber = "131")
 @CardRegistration(set = "2ED", collectorNumber = "170")
+@CardRegistration(set = "LEA", collectorNumber = "169")
 public class RedElementalBlast extends Card {
 
     public RedElementalBlast() {

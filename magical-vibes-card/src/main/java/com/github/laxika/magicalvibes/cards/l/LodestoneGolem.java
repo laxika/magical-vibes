@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "WWK", collectorNumber = "127")
 @CardRegistration(set = "MM2", collectorNumber = "219")
 @CardRegistration(set = "BRR", collectorNumber = "29")
+@CardRegistration(set = "ARC", collectorNumber = "111")
 public class LodestoneGolem extends Card {
 
     public LodestoneGolem() {

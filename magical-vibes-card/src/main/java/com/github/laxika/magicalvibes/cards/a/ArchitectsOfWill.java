@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffec
 
 
 @CardRegistration(set = "ARB", collectorNumber = "17")
+@CardRegistration(set = "ARC", collectorNumber = "77")
 public class ArchitectsOfWill extends Card {
 
     public ArchitectsOfWill() {

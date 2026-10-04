@@ -35,8 +35,7 @@ class GraveDefilerTest extends BaseCardTest {
 
     private void castGraveDefiler() {
         harness.castFromHand(player1, new GraveDefiler(), "{3}{B}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     @Test
@@ -88,6 +87,53 @@ class GraveDefilerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(nonZombie);
     }
 
+    @Test
+    @DisplayName("Non-Zombies go below unrevealed cards in the controller's chosen order")
+    void nonZombiesGoToBottomInChosenOrder() {
+        Card zombie = new MournfulZombie();
+        Card creature = new Dodecapod();
+        Card land = new CavesOfKoilos();
+        Card sorcery = new Index();
+        Card unrevealed = new ZombieBoa();
+        harness.setLibrary(player1, List.of(zombie, creature, land, sorcery, unrevealed));
+
+        castGraveDefiler();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNotNull();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(zombie);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealed, sorcery, creature, land);
+    }
+
+    @Test
+    @DisplayName("All revealed Zombies go to hand without a reorder choice")
+    void allZombiesGoToHand() {
+        Card first = new MournfulZombie();
+        Card second = new ZombieBoa();
+        Card third = new GraveDefiler();
+        Card fourth = new MournfulZombie();
+        Card unrevealed = new Index();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, unrevealed));
+
+        castGraveDefiler();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second, third, fourth);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealed);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An empty library requires no reorder choice")
+    void emptyLibraryDoesNothing() {
+        harness.setLibrary(player1, List.of());
+
+        castGraveDefiler();
+
+        harness.assertOnBattlefield(player1, "Grave Defiler");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
     @Test
     @DisplayName("Paying {1}{B} grants Grave Defiler a regeneration shield")
     void payGrantsRegenerationShield() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SUM", collectorNumber = "55")
 @CardRegistration(set = "3ED", collectorNumber = "55")
 @CardRegistration(set = "2ED", collectorNumber = "56")
+@CardRegistration(set = "LEA", collectorNumber = "55")
 @CardRegistration(set = "LEB", collectorNumber = "56")
 public class CreatureBond extends Card {
 

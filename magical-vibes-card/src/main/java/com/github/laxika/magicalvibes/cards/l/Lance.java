@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
+@CardRegistration(set = "LEA", collectorNumber = "27")
 @CardRegistration(set = "SUM", collectorNumber = "27")
 @CardRegistration(set = "3ED", collectorNumber = "27")
 @CardRegistration(set = "2ED", collectorNumber = "28")
