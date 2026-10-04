@@ -25,6 +25,7 @@ public enum CardSet {
     SET_OPC2("OPC2"),
     SET_OPCA("OPCA"),
 
+    SET_LEB("LEB"),
     SET_2ED("2ED"),
     SET_3ED("3ED"),
     SET_4ED("4ED"),

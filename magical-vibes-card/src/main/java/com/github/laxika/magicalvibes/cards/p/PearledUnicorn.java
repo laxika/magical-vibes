@@ -10,5 +10,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "ITP", collectorNumber = "6")
 @CardRegistration(set = "RQS", collectorNumber = "6")
 @CardRegistration(set = "SUM", collectorNumber = "30")
+@CardRegistration(set = "LEB", collectorNumber = "31")
 public class PearledUnicorn extends Card {
 }

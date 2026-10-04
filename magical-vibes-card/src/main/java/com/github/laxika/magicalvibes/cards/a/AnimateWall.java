@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 @CardRegistration(set = "3ED", collectorNumber = "1")
 @CardRegistration(set = "SUM", collectorNumber = "1")
 @CardRegistration(set = "ME1", collectorNumber = "2")
+@CardRegistration(set = "LEB", collectorNumber = "1")
 public class AnimateWall extends Card {
 
     public AnimateWall() {

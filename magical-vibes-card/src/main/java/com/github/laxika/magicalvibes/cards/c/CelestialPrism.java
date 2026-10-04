@@ -11,6 +11,7 @@ import java.util.List;
 @CardRegistration(set = "SUM", collectorNumber = "239")
 @CardRegistration(set = "3ED", collectorNumber = "239")
 @CardRegistration(set = "2ED", collectorNumber = "235")
+@CardRegistration(set = "LEB", collectorNumber = "235")
 public class CelestialPrism extends Card {
 
     public CelestialPrism() {

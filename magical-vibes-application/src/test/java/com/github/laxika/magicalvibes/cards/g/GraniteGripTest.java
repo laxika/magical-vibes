@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -136,5 +137,46 @@ class GraniteGripTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Granite Grip can be cast on an opponent's creature and uses its own controller's Mountains")
+    void canEnchantOpponentsCreature() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.setHand(player1, List.of(new GraniteGrip()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        Permanent grip = findPermanent(player1, "Granite Grip");
+        assertThat(grip.getAttachedTo()).isEqualTo(bears.getId());
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(Shock.class)
+    @DisplayName("Granite Grip goes to the graveyard when its target dies before resolution")
+    void targetDiesBeforeResolution() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setHand(player1, List.of(new GraniteGrip()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Granite Grip");
+        harness.assertNotOnBattlefield(player1, "Granite Grip");
+        harness.assertNotOnBattlefield(player2, "Granite Grip");
+        assertThat(gd.stack).isEmpty();
     }
 }
