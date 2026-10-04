@@ -94,7 +94,7 @@ class ForiysianBrigadeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Foriysian Brigade blocking two 2/2s survives and kills one of them")
+    @DisplayName("Foriysian Brigade blocking two 2/2s dies and kills one of them")
     void combatDamageWithMultiBlock() {
         Permanent brigade = addBrigade();
         brigade.setBlocking(true);
@@ -116,5 +116,31 @@ class ForiysianBrigadeTest extends BaseCardTest {
         // 2/4 takes 4 damage total and dies; only the attacker assigned 2 damage dies.
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player2, "Foriysian Brigade");
+    }
+
+    @Test
+    @DisplayName("Foriysian Brigade can split damage without dealing lethal damage to either attacker")
+    void canSplitDamageBetweenAttackers() {
+        Permanent brigade = addBrigade();
+        brigade.setBlocking(true);
+        brigade.addBlockingTarget(0);
+        brigade.addBlockingTarget(1);
+        addAttackers(2);
+
+        List<Permanent> attackers = gd.playerBattlefields.get(player1.getId());
+        Permanent atk1 = attackers.get(0);
+        Permanent atk2 = attackers.get(1);
+
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(brigade),
+                java.util.Map.of(atk1.getId(), 1, atk2.getId(), 1));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(atk1, atk2);
+        assertThat(atk1.getMarkedDamage()).isEqualTo(1);
+        assertThat(atk2.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Foriysian Brigade");
+        harness.assertLife(player2, 20);
     }
 }
