@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.f.Flight;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GruulCharm.class, GrizzlyBears.class, AirElemental.class, SuntailHawk.class, Flight.class, Mountain.class})
 class GruulCharmTest extends BaseCardTest {
 
     private void castCharm(int modeIndex) {
@@ -28,24 +31,20 @@ class GruulCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({GruulCharm.class, GrizzlyBears.class, AirElemental.class, Flight.class})
     @DisplayName("Mode 0: Creatures without flying can't block this turn")
     class CantBlockMode {
 
         @Test
         @DisplayName("A ground creature can no longer block")
         void groundCreatureCannotBlock() {
-            Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-            attacker.setSummoningSick(false);
-            Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-            blocker.setSummoningSick(false);
+            Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+            addCreatureReady(player2, new GrizzlyBears());
 
             castCharm(0);
 
             attacker.setAttacking(true);
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-            harness.clearPriorityPassed();
-            harness.beginBlockerDeclarationInput();
+            prepareDeclareBlockers();
 
             assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                     .isInstanceOf(IllegalStateException.class);
@@ -54,19 +53,46 @@ class GruulCharmTest extends BaseCardTest {
         @Test
         @DisplayName("A flying creature can still block")
         void flyingCreatureCanStillBlock() {
-            Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-            attacker.setSummoningSick(false);
-            Permanent blocker = harness.addToBattlefieldAndReturn(player2, new AirElemental());
-            blocker.setSummoningSick(false);
+            Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+            Permanent blocker = addCreatureReady(player2, new AirElemental());
 
             castCharm(0);
 
             attacker.setAttacking(true);
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-            harness.clearPriorityPassed();
-            harness.beginBlockerDeclarationInput();
+            prepareDeclareBlockers();
 
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+            assertThat(blocker.isBlocking()).isTrue();
+        }
+
+        @Test
+        void groundCreatureEnteringAfterResolutionCannotBlock() {
+            Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+            castCharm(0);
+            harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+            attacker.setAttacking(true);
+            prepareDeclareBlockers();
+
+            assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+
+        @Test
+        void creatureGainingFlyingAfterResolutionCanBlock() {
+            Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+            Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+            castCharm(0);
+
+            harness.setHand(player2, List.of(new Flight()));
+            harness.addMana(player2, ManaColor.BLUE, 1);
+            harness.forceActivePlayer(player2);
+            harness.castEnchantment(player2, 0, blocker.getId());
+            harness.passBothPriorities();
+
+            attacker.setAttacking(true);
+            prepareDeclareBlockers();
             gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
             assertThat(blocker.isBlocking()).isTrue();
@@ -74,6 +100,7 @@ class GruulCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({GruulCharm.class, GrizzlyBears.class, Mountain.class})
     @DisplayName("Mode 1: Gain control of all permanents you own")
     class ReclaimMode {
 
@@ -101,9 +128,23 @@ class GruulCharmTest extends BaseCardTest {
             assertThat(gd.playerBattlefields.get(player2.getId())).contains(theirs);
             assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(theirs);
         }
+
+        @Test
+        void reclaimsOwnedNoncreatureWithoutUntappingIt() {
+            Permanent land = harness.addToBattlefieldAndReturn(player2, new Mountain());
+            gd.stolenCreatures.put(land.getId(), player1.getId());
+            land.setTapped(true);
+
+            castCharm(1);
+
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
+            assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(land);
+            assertThat(land.isTapped()).isTrue();
+        }
     }
 
     @Nested
+    @CardUsed({GruulCharm.class, SuntailHawk.class, GrizzlyBears.class, AirElemental.class})
     @DisplayName("Mode 2: 3 damage to each creature with flying")
     class FlyingSweepMode {
 
@@ -133,6 +174,21 @@ class GruulCharmTest extends BaseCardTest {
             castCharm(2);
 
             harness.assertLife(player2, startingLife);
+        }
+
+        @Test
+        void dealsExactlyThreeDamageToSurvivingFlyersOnBothSides() {
+            Permanent ownFlyer = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+            Permanent opposingFlyer = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+            Permanent groundCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+            castCharm(2);
+
+            assertThat(ownFlyer.getMarkedDamage()).isEqualTo(3);
+            assertThat(opposingFlyer.getMarkedDamage()).isEqualTo(3);
+            assertThat(groundCreature.getMarkedDamage()).isZero();
+            harness.assertLife(player1, 20);
+            harness.assertLife(player2, 20);
         }
     }
 }
