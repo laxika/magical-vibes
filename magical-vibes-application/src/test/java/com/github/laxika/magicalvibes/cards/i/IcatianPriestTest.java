@@ -135,7 +135,6 @@ class IcatianPriestTest extends BaseCardTest {
         assertThat(target.getEffectiveToughness()).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getPowerModifier()).isEqualTo(0);
@@ -208,6 +207,55 @@ class IcatianPriestTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent priest = harness.addToBattlefieldAndReturn(player1, new IcatianPriest());
+        priest.setSummoningSick(true);
+        priest.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, priest.getId());
+        harness.passBothPriorities();
+
+        assertThat(priest.getEffectivePower()).isEqualTo(2);
+        assertThat(priest.getEffectiveToughness()).isEqualTo(2);
+        assertThat(priest.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Icatian Priest leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent priest = addCreatureReady(player1, new IcatianPriest());
+        Permanent target = addCreatureReady(player1, new IcatianInfantry());
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(priest);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cannot activate with only one white mana even with enough total mana")
+    void cannotActivateWithoutTwoWhiteMana() {
+        Permanent priest = addCreatureReady(player1, new IcatianPriest());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, priest.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
 }
