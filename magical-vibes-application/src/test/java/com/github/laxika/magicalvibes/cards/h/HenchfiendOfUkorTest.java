@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,7 +17,7 @@ class HenchfiendOfUkorTest extends BaseCardTest {
     @Test
     @DisplayName("The activated ability can be paid with red mana")
     void activatedAbilityCanBePaidWithRedMana() {
-        Permanent henchfiend = addReadyHenchfiend(player1);
+        Permanent henchfiend = addCreatureReady(player1, new HenchfiendOfUkor());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -31,7 +30,7 @@ class HenchfiendOfUkorTest extends BaseCardTest {
     @Test
     @DisplayName("The activated ability can be paid with black mana")
     void activatedAbilityCanBePaidWithBlackMana() {
-        Permanent henchfiend = addReadyHenchfiend(player1);
+        Permanent henchfiend = addCreatureReady(player1, new HenchfiendOfUkor());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -43,7 +42,7 @@ class HenchfiendOfUkorTest extends BaseCardTest {
     @Test
     @DisplayName("The activated ability boost wears off at end of turn")
     void activatedAbilityBoostWearsOffAtEndOfTurn() {
-        Permanent henchfiend = addReadyHenchfiend(player1);
+        Permanent henchfiend = addCreatureReady(player1, new HenchfiendOfUkor());
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -101,11 +100,42 @@ class HenchfiendOfUkorTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Henchfiend of Ukor");
     }
 
-    private Permanent addReadyHenchfiend(Player player) {
-        Permanent perm = new Permanent(new HenchfiendOfUkor());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    @DisplayName("Echo does not create an enter-the-battlefield trigger")
+    void echoDoesNotCreateAnEnterTheBattlefieldTrigger() {
+        harness.castFromHand(player1, new HenchfiendOfUkor(), "{3}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Henchfiend of Ukor");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Haste allows Henchfiend to attack on the turn it enters")
+    void canAttackOnTheTurnItEnters() {
+        castAndResolveHenchfiend();
+
+        declareAttackers(java.util.List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Multiple activations accumulate without tapping the creature")
+    void multipleActivationsAccumulate() {
+        Permanent henchfiend = harness.addToBattlefieldAndReturn(player1, new HenchfiendOfUkor());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(henchfiend.getEffectivePower()).isEqualTo(5);
+        assertThat(henchfiend.getEffectiveToughness()).isEqualTo(2);
+        assertThat(henchfiend.isTapped()).isFalse();
     }
 
     private void castAndResolveHenchfiend() {
