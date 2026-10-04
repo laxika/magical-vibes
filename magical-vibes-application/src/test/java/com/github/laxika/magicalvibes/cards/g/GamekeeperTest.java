@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AncientSilverback;
+import com.github.laxika.magicalvibes.cards.c.CorpseDance;
 import com.github.laxika.magicalvibes.cards.r.RapidDecay;
 import com.github.laxika.magicalvibes.cards.r.RecklessAbandon;
 import com.github.laxika.magicalvibes.cards.s.ScentOfJasmine;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Gamekeeper.class, AncientSilverback.class, ScentOfJasmine.class,
-        RecklessAbandon.class, RapidDecay.class})
+        RecklessAbandon.class, RapidDecay.class, CorpseDance.class})
 class GamekeeperTest extends BaseCardTest {
 
     @Test
@@ -139,6 +140,67 @@ class GamekeeperTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .extracting(p -> p.getCard())
                 .contains(creature);
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent Gamekeeper from being exiled")
+    void acceptingWithEmptyLibraryExilesGamekeeper() {
+        Permanent gamekeeper = putGamekeeperOnBattlefield();
+        setLibrary();
+
+        destroyGamekeeper(gamekeeper);
+        resolveDeathTriggerToMayChoice();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(gamekeeper.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(gamekeeper.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature on top enters untapped without revealing the next card")
+    void creatureOnTopEntersUntapped() {
+        Permanent gamekeeper = putGamekeeperOnBattlefield();
+        Card creature = new AncientSilverback();
+        Card nextCard = new ScentOfJasmine();
+        setLibrary(creature, nextCard);
+
+        destroyGamekeeper(gamekeeper);
+        resolveDeathTriggerToMayChoice();
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent revealedCreature = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().equals(creature)).findFirst().orElseThrow();
+        assertThat(revealedCreature.isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(creature, nextCard);
+    }
+
+    @Test
+    @DisplayName("An old death trigger cannot exile Gamekeeper after it returns and dies again")
+    void oldTriggerCannotExileNewGraveyardObject() {
+        Permanent gamekeeper = putGamekeeperOnBattlefield();
+        Card creature = new AncientSilverback();
+        setLibrary(creature);
+        destroyGamekeeper(gamekeeper);
+
+        harness.setHand(player1, List.of(new CorpseDance()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0);
+        Permanent returnedGamekeeper = findPermanent(player1, "Gamekeeper");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .sacrificePermanentToGraveyard(gd, returnedGamekeeper));
+
+        resolveDeathTriggerToMayChoice();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(gamekeeper.getCard());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(gamekeeper.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
     }
 
     private Permanent putGamekeeperOnBattlefield() {
