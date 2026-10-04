@@ -333,5 +333,45 @@ class HighGroundTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("too many times");
     }
+
+    @Test
+    @DisplayName("High Ground does not allow a tapped creature to block")
+    void tappedCreatureCannotBlockTwoAttackers() {
+        harness.addToBattlefield(player2, new HighGround());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setTapped(true);
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(1, 1)
+        )))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid blocker index");
+        assertThat(blocker.isBlocking()).isFalse();
+        assertThat(blocker.getBlockingTargets()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature with summoning sickness can block two attackers with High Ground")
+    void summoningSickCreatureCanBlockTwoAttackers() {
+        harness.addToBattlefield(player2, new HighGround());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        blocker.setSummoningSick(true);
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(1, 0),
+                new BlockerAssignment(1, 1)
+        ));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(blocker.getBlockingTargets()).containsExactlyInAnyOrder(0, 1);
+    }
 }
 
