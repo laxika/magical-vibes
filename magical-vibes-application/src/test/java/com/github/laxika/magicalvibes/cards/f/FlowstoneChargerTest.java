@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -45,11 +46,53 @@ class FlowstoneChargerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(charger.getPowerModifier()).isZero();
         assertThat(charger.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void boostWaitsForTheAttackTriggerToResolve() {
+        Permanent charger = addCreatureReady(player1, new FlowstoneCharger());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(charger.getPowerModifier()).isZero();
+            assertThat(charger.getToughnessModifier()).isZero();
+
+            harness.passBothPriorities();
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gqs.getEffectivePower(gd, charger)).isEqualTo(5);
+            assertThat(gqs.getEffectiveToughness(gd, charger)).isEqualTo(2);
+        });
+    }
+
+    @Test
+    void blockingDoesNotGiveTheBoostAndBothChargersDealLethalDamage() {
+        Permanent attacker = addCreatureReady(player1, new FlowstoneCharger());
+        Permanent blocker = addCreatureReady(player2, new FlowstoneCharger());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(0));
+            resolveAllTriggers();
+        });
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(blocker.getToughnessModifier()).isZero();
+
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        harness.assertInGraveyard(player1, "Flowstone Charger");
+        harness.assertInGraveyard(player2, "Flowstone Charger");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
