@@ -67,6 +67,43 @@ class GemhideSliverTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Each of the five colors can be produced immediately by tapping a Sliver")
+    void producesEachColorWithoutUsingTheStack() {
+        addCreatureReady(player1, new GemhideSliver());
+        for (ManaColor color : new ManaColor[]{ManaColor.WHITE, ManaColor.BLUE,
+                ManaColor.BLACK, ManaColor.RED, ManaColor.GREEN}) {
+            Permanent sliver = addCreatureReady(player1, new WatcherSliver());
+
+            activateForColor(player1, sliver, color.name());
+
+            assertThat(sliver.isTapped()).isTrue();
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+            assertThat(gd.stack).isEmpty();
+            assertThatThrownBy(() -> harness.activateAbility(player1,
+                    gd.playerBattlefields.get(player1.getId()).indexOf(sliver), null, null))
+                    .isInstanceOf(IllegalStateException.class);
+        }
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple Gemhide Slivers do not multiply the mana from one activation")
+    void multipleSourcesStillProduceOneManaPerActivation() {
+        Permanent first = addCreatureReady(player1, new GemhideSliver());
+        addCreatureReady(player1, new GemhideSliver());
+        Permanent sliver = addCreatureReady(player1, new WatcherSliver());
+
+        activateForColor(player1, sliver, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        Permanent anotherSliver = addCreatureReady(player1, new WatcherSliver());
+
+        activateForColor(player1, anotherSliver, "BLACK");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+    }
     private void activateForColor(com.github.laxika.magicalvibes.model.Player player,
                                   Permanent permanent, String color) {
         harness.activateAbility(player,
