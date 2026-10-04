@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({HammerOfBogardan.class, DwarvenNomad.class})
 class HammerOfBogardanTest extends BaseCardTest {
 
-    // ===== Casting as a spell (3 damage to any target) =====
-
     @Nested
     @DisplayName("Spell — deals 3 damage to any target")
     @CardUsed({HammerOfBogardan.class, DwarvenNomad.class})
@@ -69,8 +67,6 @@ class HammerOfBogardanTest extends BaseCardTest {
             harness.assertInGraveyard(player1, "Hammer of Bogardan");
         }
     }
-
-    // ===== Graveyard activated ability ({2}{R}{R}{R}, only during your upkeep) =====
 
     @Nested
     @DisplayName("Graveyard activated ability")
@@ -168,10 +164,9 @@ class HammerOfBogardanTest extends BaseCardTest {
         void cannotActivateWithoutThreeRedMana() {
             HammerOfBogardan hammer = new HammerOfBogardan();
             harness.setGraveyard(player1, List.of(hammer));
+            advanceToUpkeep(player1);
             harness.addMana(player1, ManaColor.RED, 2);
             harness.addMana(player1, ManaColor.COLORLESS, 3);
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.UPKEEP);
 
             assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                     .isInstanceOf(IllegalStateException.class);
@@ -182,9 +177,9 @@ class HammerOfBogardanTest extends BaseCardTest {
         void cannotActivateWithoutEnoughMana() {
             HammerOfBogardan hammer = new HammerOfBogardan();
             harness.setGraveyard(player1, List.of(hammer));
-            harness.addMana(player1, ManaColor.RED, 2);
-            harness.forceActivePlayer(player1);
-            harness.forceStep(TurnStep.UPKEEP);
+            advanceToUpkeep(player1);
+            harness.addMana(player1, ManaColor.RED, 3);
+            harness.addMana(player1, ManaColor.COLORLESS, 1);
 
             assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                     .isInstanceOf(IllegalStateException.class);
@@ -203,6 +198,59 @@ class HammerOfBogardanTest extends BaseCardTest {
 
             harness.assertInHand(player1, "Hammer of Bogardan");
             harness.assertNotInGraveyard(player1, "Hammer of Bogardan");
+        }
+
+        @Test
+        @DisplayName("Can activate twice before either ability resolves, returning only one card")
+        void canActivateAgainInResponse() {
+            harness.setGraveyard(player1, List.of(new HammerOfBogardan()));
+            advanceToUpkeep(player1);
+            harness.addMana(player1, ManaColor.RED, 10);
+
+            harness.activateGraveyardAbility(player1, 0);
+            harness.activateGraveyardAbility(player1, 0);
+
+            assertThat(gd.stack).hasSize(2);
+            harness.passBothPriorities();
+            harness.assertInHand(player1, "Hammer of Bogardan");
+            harness.assertNotInGraveyard(player1, "Hammer of Bogardan");
+            harness.passBothPriorities();
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("Upkeep restriction applies to activation, not resolution")
+        void canResolveAfterUpkeep() {
+            harness.setGraveyard(player1, List.of(new HammerOfBogardan()));
+            advanceToUpkeep(player1);
+            harness.addMana(player1, ManaColor.RED, 5);
+            harness.activateGraveyardAbility(player1, 0);
+
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.passBothPriorities();
+
+            harness.assertInHand(player1, "Hammer of Bogardan");
+            harness.assertNotInGraveyard(player1, "Hammer of Bogardan");
+        }
+
+        @Test
+        @DisplayName("Does not return another Hammer if the activated card leaves the graveyard")
+        void doesNothingWhenSourceLeavesGraveyard() {
+            HammerOfBogardan activatedHammer = new HammerOfBogardan();
+            HammerOfBogardan otherHammer = new HammerOfBogardan();
+            harness.setGraveyard(player1, List.of(activatedHammer, otherHammer));
+            advanceToUpkeep(player1);
+            harness.addMana(player1, ManaColor.RED, 5);
+            harness.activateGraveyardAbility(player1, 0);
+
+            harness.setGraveyard(player1, List.of(otherHammer));
+            harness.passBothPriorities();
+
+            harness.assertNotInHand(player1, "Hammer of Bogardan");
+            assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherHammer);
+            assertThat(gd.stack).isEmpty();
         }
     }
 }
