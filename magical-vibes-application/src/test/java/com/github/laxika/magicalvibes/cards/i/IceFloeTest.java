@@ -18,10 +18,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IceFloe.class, KjeldoranWarrior.class, KjeldoranSkyknight.class})
+@CardUsed({IceFloe.class, KjeldoranWarrior.class, KjeldoranSkyknight.class, Island.class})
 class IceFloeTest extends BaseCardTest {
 
-    // ===== Activated ability: tap target attacking creature =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack targeting the attacker")
@@ -82,7 +81,6 @@ class IceFloeTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Island.class)
     @DisplayName("Cannot target an attacking noncreature permanent")
     void cannotTargetNoncreature() {
         addCreatureReady(player1, new IceFloe());
@@ -102,7 +100,6 @@ class IceFloeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Prevent untap while Ice Floe stays tapped =====
 
     @Test
     @DisplayName("Locked creature does not untap during its controller's untap step while Ice Floe is tapped")
@@ -143,7 +140,6 @@ class IceFloeTest extends BaseCardTest {
         assertThat(attacker.isTapped()).isFalse();
     }
 
-    // ===== May not untap during untap step =====
 
     @Test
     @DisplayName("Choosing NOT to untap Ice Floe keeps it tapped")
@@ -167,14 +163,88 @@ class IceFloeTest extends BaseCardTest {
         assertThat(iceFloe.isTapped()).isFalse();
     }
 
-    // ===== Helpers =====
+
+    @Test
+    @DisplayName("An already tapped attacker is locked and remains in combat")
+    void alreadyTappedAttackerIsLockedAndStillAttacking() {
+        addCreatureReady(player1, new IceFloe());
+        Permanent attacker = addAttacker(player2, player1, new KjeldoranWarrior());
+        attacker.tap();
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(attacker.getAttackTarget()).isEqualTo(player1.getId());
+        harness.performUntapStep(player2);
+        assertThat(attacker.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An attacker removed from combat before resolution is no longer a legal target")
+    void targetMustStillBeAttackingOnResolution() {
+        addCreatureReady(player1, new IceFloe());
+        Permanent attacker = addAttacker(player2, player1, new KjeldoranWarrior());
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+        harness.passBothPriorities();
+
+        assertThat(attacker.isTapped()).isFalse();
+        attacker.tap();
+        harness.performUntapStep(player2);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Untapping Ice Floe before resolution prevents the lock but still taps the attacker")
+    void sourceUntappedBeforeResolutionDoesNotLock() {
+        Permanent iceFloe = addCreatureReady(player1, new IceFloe());
+        Permanent attacker = addAttacker(player2, player1, new KjeldoranWarrior());
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        iceFloe.untap();
+        harness.passBothPriorities();
+
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(attacker.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The lock follows the creature to its new controller")
+    void lockFollowsCreatureController() {
+        addCreatureReady(player1, new IceFloe());
+        Permanent attacker = addAttacker(player2, player1, new KjeldoranWarrior());
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(attacker);
+        gd.playerBattlefields.get(player1.getId()).add(attacker);
+        advanceToNextTurnWithMayChoice(player2, false);
+
+        assertThat(attacker.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ice Floe leaving ends the lock without immediately untapping the creature")
+    void sourceLeavingEndsLock() {
+        Permanent iceFloe = addCreatureReady(player1, new IceFloe());
+        Permanent attacker = addAttacker(player2, player1, new KjeldoranWarrior());
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(iceFloe);
+        assertThat(attacker.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(attacker.isTapped()).isFalse();
+    }
 
     private Permanent addAttacker(Player controller, Player defender, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(controller, card);
         perm.setAttacking(true);
         perm.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(controller.getId()).add(perm);
         return perm;
     }
 
