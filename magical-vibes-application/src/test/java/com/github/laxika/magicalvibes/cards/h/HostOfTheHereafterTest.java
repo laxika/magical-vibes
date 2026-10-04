@@ -94,6 +94,98 @@ class HostOfTheHereafterTest extends BaseCardTest {
         assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("The controller may choose zero targets when another creature dies")
+    void mayDeclineTargetForAnotherCreatureDeath() {
+        Permanent host = castHost();
+        Permanent dyingCreature = addCreatureReady(player1, new GrizzlyBears());
+        dyingCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        dyingCreature.tap();
+
+        destroyWithAssassinateFromPlayerTwo(dyingCreature.getId());
+
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The controller may choose zero targets when Host itself dies")
+    void mayDeclineTargetForOwnDeath() {
+        Permanent host = castHost();
+        host.tap();
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        destroyWithAssassinateFromPlayerTwo(host.getId());
+
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("All counter types on a dying ally are placed on the recipient")
+    void transfersMixedCounterTypes() {
+        Permanent host = castHost();
+        Permanent dyingCreature = addCreatureReady(player1, new GrizzlyBears());
+        dyingCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        dyingCreature.setCounterCount(CounterType.CHARGE, 3);
+        dyingCreature.tap();
+
+        destroyWithAssassinateFromPlayerTwo(dyingCreature.getId());
+        harness.handlePermanentChosen(player1, host.getId());
+        harness.passBothPriorities();
+
+        assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(host.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A dying ally with only nonstat counters still triggers")
+    void transfersCountersWithoutPlusOneCounters() {
+        Permanent host = castHost();
+        Permanent dyingCreature = addCreatureReady(player1, new GrizzlyBears());
+        dyingCreature.setCounterCount(CounterType.CHARGE, 3);
+        dyingCreature.tap();
+
+        destroyWithAssassinateFromPlayerTwo(dyingCreature.getId());
+        harness.handlePermanentChosen(player1, host.getId());
+        harness.passBothPriorities();
+
+        assertThat(host.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature dying with counters does not trigger")
+    void opponentCreatureDeathDoesNotTrigger() {
+        Permanent host = castHost();
+        Permanent dyingCreature = addCreatureReady(player2, new GrizzlyBears());
+        dyingCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        dyingCreature.tap();
+
+        destroyWithAssassinateFromPlayerTwo(dyingCreature.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(host.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Host dying without counters does not trigger")
+    void ownDeathWithoutCountersDoesNotTrigger() {
+        Permanent host = castHost();
+        host.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        host.tap();
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        destroyWithAssassinateFromPlayerTwo(host.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private void destroyWithAssassinateFromPlayerTwo(UUID targetId) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -101,19 +193,14 @@ class HostOfTheHereafterTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
-        gs.playCard(gd, player2, 0, 0, targetId, null);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, targetId);
     }
 
     private Permanent castHost() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new HostOfTheHereafter()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new HostOfTheHereafter(), "{2}{B}{G}");
         harness.passBothPriorities();
         return findPermanent(player1, "Host of the Hereafter");
     }
