@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.c.CephalidAristocrat;
 import com.github.laxika.magicalvibes.cards.d.DawnOfTheDead;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -80,11 +79,7 @@ class HypnoxTest extends BaseCardTest {
     @DisplayName("Hypnox's ETB trigger can target only an opponent")
     void etbTriggerTargetsOnlyOpponent() {
         harness.setHand(player2, new ArrayList<>(List.of(new Aquamoeba())));
-        harness.setHand(player1, List.of(new Hypnox()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 8);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Hypnox(), "{8}{B}{B}{B}");
         harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =
@@ -108,13 +103,72 @@ class HypnoxTest extends BaseCardTest {
         assertThat(gd.exiledCards).noneMatch(entry -> entry.card() == handCard);
     }
 
+    @Test
+    @DisplayName("An empty opposing hand is a legal target and exiles nothing")
+    void emptyHandIsLegalTarget() {
+        castHypnoxWithTargetHand(List.of());
+
+        harness.assertOnBattlefield(player1, "Hypnox");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Hypnox returns only the cards exiled by its own ability")
+    void separateHypnoxInstancesKeepTheirExiledCardsSeparate() {
+        Card firstCard = new Aquamoeba();
+        castHypnoxWithTargetHand(List.of(firstCard));
+        Permanent firstHypnox = findPermanent(player1, "Hypnox");
+
+        Card secondCard = new CephalidAristocrat();
+        castHypnoxWithTargetHand(List.of(secondCard));
+        Permanent secondHypnox = findPermanents(player1, "Hypnox").stream()
+                .filter(permanent -> !permanent.getId().equals(firstHypnox.getId()))
+                .findFirst().orElseThrow();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, firstHypnox));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(firstCard);
+        assertThat(gd.exiledCards).extracting(ExiledCardEntry::card).containsExactly(secondCard);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, secondHypnox));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyInAnyOrder(firstCard, secondCard);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Leaving before the enter trigger resolves leaves the subsequently exiled hand in exile")
+    void leavingBeforeExileTriggerResolvesDoesNotPreventExile() {
+        Card handCard = new Aquamoeba();
+        harness.setHand(player2, List.of(handCard));
+        harness.castFromHand(player1, new Hypnox(), "{8}{B}{B}{B}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        Permanent hypnox = findPermanent(player1, "Hypnox");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, hypnox));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(handCard);
+        assertThat(gd.exiledCards).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.exiledCards).extracting(ExiledCardEntry::card).containsExactly(handCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castHypnoxWithTargetHand(List<Card> targetHand) {
         harness.setHand(player2, new ArrayList<>(targetHand));
-        harness.setHand(player1, List.of(new Hypnox()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 8);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Hypnox(), "{8}{B}{B}{B}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
