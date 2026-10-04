@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AlmightyBrushwagg;
+import com.github.laxika.magicalvibes.cards.s.SleeperDart;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,26 +13,22 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HeightenedReflexes.class, GrizzlyBears.class, FountainOfYouth.class})
+@CardUsed({HeightenedReflexes.class, AlmightyBrushwagg.class, SleeperDart.class})
 class HeightenedReflexesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Gives the target creature +1/+0 and a first strike counter")
     void givesBoostAndFirstStrikeCounter() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new AlmightyBrushwagg());
         harness.setHand(player1, List.of(new HeightenedReflexes()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isEqualTo(1);
         assertThat(bear.getToughnessModifier()).isZero();
         assertThat(bear.getCounterCount(CounterType.FIRST_STRIKE)).isEqualTo(1);
@@ -42,19 +38,16 @@ class HeightenedReflexesTest extends BaseCardTest {
     @Test
     @DisplayName("The power boost expires but the first strike counter remains")
     void boostExpiresButCounterRemains() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new AlmightyBrushwagg());
         harness.setHand(player1, List.of(new HeightenedReflexes()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(bear.getPowerModifier()).isZero();
         assertThat(bear.getCounterCount(CounterType.FIRST_STRIKE)).isEqualTo(1);
         assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
@@ -63,14 +56,43 @@ class HeightenedReflexesTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SleeperDart());
         harness.setHand(player1, List.of(new HeightenedReflexes()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        UUID targetId = harness.getPermanentId(player1, "Fountain of Youth");
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can boost an opponent's creature and put the counter on it")
+    void canTargetOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AlmightyBrushwagg());
+        harness.setHand(player1, List.of(new HeightenedReflexes()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(creature.getPowerModifier()).isEqualTo(1);
+        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(creature.getCounterCount(CounterType.FIRST_STRIKE)).isEqualTo(1);
+        assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated casts stack boosts and place additional first strike counters")
+    void repeatedCastsAccumulateBoostsAndCounters() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AlmightyBrushwagg());
+        harness.setHand(player1, List.of(new HeightenedReflexes(), new HeightenedReflexes()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(creature.getPowerModifier()).isEqualTo(2);
+        assertThat(creature.getToughnessModifier()).isZero();
+        assertThat(creature.getCounterCount(CounterType.FIRST_STRIKE)).isEqualTo(2);
+        assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
     }
 }
