@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "93")
+@CardRegistration(set = "MOM", collectorNumber = "357")
 public class BloatedProcessor extends Card {
 
     public BloatedProcessor() {

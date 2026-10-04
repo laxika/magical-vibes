@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "65")
+@CardRegistration(set = "MOM", collectorNumber = "294")
+@CardRegistration(set = "MOM", collectorNumber = "339")
 public class JinGitaxias extends Card {
 
     public JinGitaxias() {

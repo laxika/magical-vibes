@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastT
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeThisTurnEffect;
 
 @CardRegistration(set = "MOM", collectorNumber = "52")
+@CardRegistration(set = "MOM", collectorNumber = "351")
 public class CompleteTheCircuit extends Card {
 
     public CompleteTheCircuit() {

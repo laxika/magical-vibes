@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "263")
+@CardRegistration(set = "MOM", collectorNumber = "374")
 public class RealmbreakerTheInvasionTree extends Card {
 
     public RealmbreakerTheInvasionTree() {

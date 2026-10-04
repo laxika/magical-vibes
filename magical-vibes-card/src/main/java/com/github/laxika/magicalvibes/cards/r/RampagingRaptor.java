@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentProtectedByDefending
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "160")
+@CardRegistration(set = "MOM", collectorNumber = "366")
 public class RampagingRaptor extends Card {
 
     public RampagingRaptor() {

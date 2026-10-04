@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnteringCreaturePowerBranchEf
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 
 @CardRegistration(set = "MOM", collectorNumber = "211")
+@CardRegistration(set = "MOM", collectorNumber = "373")
 public class TributeToTheWorldTree extends Card {
 
     public TributeToTheWorldTree() {

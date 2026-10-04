@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutAnyNumberCardsFromHandOnBo
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "144")
+@CardRegistration(set = "MOM", collectorNumber = "364")
 public class IntoTheFire extends Card {
 
     public IntoTheFire() {

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.OneOrMoreArtifactOrCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ArtifactGraveyardCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.LeavingPermanentCountersAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
@@ -2407,6 +2408,25 @@ public class DeathTriggerCollectorService {
         ));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers (permanent put into a graveyard from the battlefield)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
+    }
+
+    @CollectsTrigger(value = OneOrMoreArtifactOrCreatureDeathTriggerEffect.class,
+            slot = EffectSlot.ON_ALLY_ARTIFACT_OR_CREATURE_DIES)
+    boolean handleAllyArtifactOrCreatureDeath(TriggerMatchContext match,
+            OneOrMoreArtifactOrCreatureDeathTriggerEffect effect, TriggerContext ctx) {
+        match.gameData().enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect.wrapped())),
+                null,
+                match.permanent().getId()
+        ));
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+        log.info("Game {} - {} triggers (controlled artifact or creature put into a graveyard from the battlefield)",
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }

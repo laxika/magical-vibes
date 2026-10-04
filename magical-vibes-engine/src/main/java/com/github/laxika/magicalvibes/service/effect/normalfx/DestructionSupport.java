@@ -280,6 +280,7 @@ public class DestructionSupport {
                 gameLogService.append(gameData, GameLog.isDestroyed(perm.getCard()));
                 log.info("Game {} - {} is destroyed by {}", gameData.id, perm.getCard().getName(), sourceName);
             }
+            triggerCollectionService.checkBatchedAllyArtifactOrCreatureDeathTriggers(gameData);
             triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
             endSimultaneousCreatureDeaths(gameData);
@@ -591,6 +592,7 @@ public class DestructionSupport {
                 UUID controllerId = gameData.simultaneousDyingPermanentControllers.get(perm.getId());
                 sacrificeAndLog(gameData, perm, controllerId);
             }
+            triggerCollectionService.checkBatchedAllyArtifactOrCreatureDeathTriggers(gameData);
             triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
             endSimultaneousCreatureDeaths(gameData);

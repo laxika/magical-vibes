@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PIO", collectorNumber = "81")
+@CardRegistration(set = "MOM", collectorNumber = "328")
 public class ZephyrWinder extends Card {
 
     public ZephyrWinder() {

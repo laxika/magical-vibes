@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MOM", collectorNumber = "89")
+@CardRegistration(set = "MOM", collectorNumber = "356")
 public class ArchpriestOfShadows extends Card {
 
     public ArchpriestOfShadows() {

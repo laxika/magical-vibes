@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 
 @CardRegistration(set = "MOM", collectorNumber = "11")
+@CardRegistration(set = "MOM", collectorNumber = "344")
 public class DuskLegionDuelist extends Card {
 
     public DuskLegionDuelist() {

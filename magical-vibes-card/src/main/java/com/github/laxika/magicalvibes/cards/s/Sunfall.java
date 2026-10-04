@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MOM", collectorNumber = "40")
+@CardRegistration(set = "MOM", collectorNumber = "349")
 public class Sunfall extends Card {
 
     public Sunfall() {

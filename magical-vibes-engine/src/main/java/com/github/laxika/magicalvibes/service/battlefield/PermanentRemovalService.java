@@ -234,6 +234,7 @@ public class PermanentRemovalService {
                                 gameData, permanent, EffectSlot.ON_ANY_CREATURE_DIES)));
             }
             removal.run();
+            triggerCollectionService.checkBatchedAllyArtifactOrCreatureDeathTriggers(gameData);
             triggerCollectionService.checkBatchedAllyCreatureDeathTriggers(gameData);
         } finally {
             gameData.simultaneousDyingPermanents.clear();
