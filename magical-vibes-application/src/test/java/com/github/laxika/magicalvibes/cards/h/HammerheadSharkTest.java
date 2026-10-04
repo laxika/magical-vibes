@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -31,5 +34,50 @@ class HammerheadSharkTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Island());
 
         declareAttackers(player1, List.of(0));
+    }
+
+    @Test
+    @DisplayName("A tapped defending Island still allows Hammerhead Shark to attack")
+    void canAttackWithTappedDefendingIsland() {
+        addCreatureReady(player2, new HammerheadShark());
+        harness.addToBattlefield(player1, new Island());
+        findPermanent(player1, "Island").setTapped(true);
+
+        declareAttackers(player2, List.of(0));
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Hammerhead Shark remains attacking if the defending Island leaves after declaration")
+    void islandLeavingAfterDeclarationDoesNotStopAttack() {
+        addCreatureReady(player1, new HammerheadShark());
+        harness.addToBattlefield(player2, new Island());
+        Permanent island = findPermanent(player2, "Island");
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0)));
+        gd.playerBattlefields.get(player2.getId()).remove(island);
+        gd.playerGraveyards.get(player2.getId()).add(island.getCard());
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        harness.assertOnBattlefield(player1, "Hammerhead Shark");
+    }
+
+    @Test
+    @DisplayName("Hammerhead Shark can block an attacker whose controller has no Island")
+    void canBlockWithoutAttackingPlayerIsland() {
+        addCreatureReady(player1, new HammerheadShark());
+        addCreatureReady(player2, new HammerheadShark());
+        harness.addToBattlefield(player2, new Island());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Hammerhead Shark");
+        harness.assertOnBattlefield(player2, "Hammerhead Shark");
     }
 }
