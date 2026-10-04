@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FrayingLine.class, GrizzlyBears.class})
+@CardUsed({FrayingLine.class, GrizzlyBears.class, MindStone.class})
 class FrayingLineTest extends BaseCardTest {
 
     @Test
@@ -62,6 +63,56 @@ class FrayingLineTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(line, unroped);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(roped);
         assertThat(roped.getCounterCount(CounterType.ROPE)).isZero();
+    }
+
+    @Test
+    void payingPlacesCounterDuringTheOriginalUpkeepAbility() {
+        harness.addToBattlefield(player1, new FrayingLine());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        advanceToUpkeepWithRopeTrigger(player2);
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(creature.getCounterCount(CounterType.ROPE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void playerWithoutCreaturesCanPayToKeepTheLine() {
+        Permanent line = harness.addToBattlefieldAndReturn(player1, new FrayingLine());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        advanceToUpkeepWithRopeTrigger(player2);
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(line, opponentCreature);
+        assertThat(opponentCreature.getCounterCount(CounterType.ROPE)).isZero();
+    }
+
+    @Test
+    void decliningLeavesRopeCountersOnNoncreaturePermanents() {
+        Permanent line = harness.addToBattlefieldAndReturn(player1, new FrayingLine());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        artifact.setCounterCount(CounterType.ROPE, 1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.setCounterCount(CounterType.ROPE, 2);
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        advanceToUpkeepWithRopeTrigger(player2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(line);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact, creature);
+        assertThat(artifact.getCounterCount(CounterType.ROPE)).isEqualTo(1);
+        assertThat(creature.getCounterCount(CounterType.ROPE)).isZero();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private void advanceToUpkeepWithRopeTrigger(com.github.laxika.magicalvibes.model.Player activePlayer) {

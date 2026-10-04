@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +20,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FranticSalvage.class, LeoninScimitar.class, FountainOfYouth.class, GrizzlyBears.class})
 class FranticSalvageTest extends BaseCardTest {
 
-    // ===== Casting with artifact cards in graveyard =====
 
     @Test
     @DisplayName("Casting with artifact cards in graveyard prompts for target selection")
@@ -50,7 +51,7 @@ class FranticSalvageTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(artifact1, artifact2));
         // Put a card on top of library so we can verify draw
         Card topCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).addFirst(topCard);
+        harness.setLibrary(player1, List.of(topCard));
         harness.setHand(player1, List.of(new FranticSalvage()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -88,7 +89,6 @@ class FranticSalvageTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(artifact1, artifact2));
         harness.setHand(player1, List.of(new FranticSalvage()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.castInstant(player1, 0);
 
@@ -103,8 +103,6 @@ class FranticSalvageTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Frantic Salvage");
 
         // Drew a card (hand was emptied by casting, then drew 1)
-        // The spell was removed from hand, so handSizeBefore - 1 + 1 draw = handSizeBefore
-        // But wait, the artifact that was put on top might have been drawn
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1); // drew 1 card
     }
 
@@ -113,7 +111,7 @@ class FranticSalvageTest extends BaseCardTest {
     void selectingZeroTargetsStillDraws() {
         harness.setGraveyard(player1, List.of(new LeoninScimitar()));
         Card topCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).addFirst(topCard);
+        harness.setLibrary(player1, List.of(topCard));
         harness.setHand(player1, List.of(new FranticSalvage()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -133,7 +131,6 @@ class FranticSalvageTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
-    // ===== Casting with no artifact cards in graveyard =====
 
     @Test
     @DisplayName("Casting with no artifact cards in graveyard skips target prompt and still draws")
@@ -141,7 +138,7 @@ class FranticSalvageTest extends BaseCardTest {
         // Only non-artifact cards in graveyard
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         Card topCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).addFirst(topCard);
+        harness.setLibrary(player1, List.of(topCard));
         harness.setHand(player1, List.of(new FranticSalvage()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -166,7 +163,7 @@ class FranticSalvageTest extends BaseCardTest {
     @DisplayName("Casting with empty graveyard skips target prompt and still draws")
     void castingWithEmptyGraveyardSkipsPromptAndDraws() {
         Card topCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).addFirst(topCard);
+        harness.setLibrary(player1, List.of(topCard));
         harness.setHand(player1, List.of(new FranticSalvage()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -182,7 +179,6 @@ class FranticSalvageTest extends BaseCardTest {
         harness.assertInHand(player1, "Grizzly Bears");
     }
 
-    // ===== Only artifact cards are selectable =====
 
     @Test
     @DisplayName("Only artifact cards appear as valid targets, not creature cards")
@@ -201,7 +197,6 @@ class FranticSalvageTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).contains(artifact.getId());
     }
 
-    // ===== Cards placed on top of library (draw verification) =====
 
     @Test
     @DisplayName("Card placed on top of library is drawn by the subsequent draw effect")
@@ -223,4 +218,93 @@ class FranticSalvageTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()).getFirst().getName()).isEqualTo("Frantic Salvage");
         harness.assertInHand(player1, "Leonin Scimitar");
     }
+
+    @Test
+    @DisplayName("Controller chooses the order before drawing the top returned artifact")
+    void choosesLibraryOrderBeforeDrawing() {
+        Card first = new LeoninScimitar();
+        Card second = new FountainOfYouth();
+        Card originalTop = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setLibrary(player1, List.of(originalTop));
+        harness.setHand(player1, List.of(new FranticSalvage()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        var reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        int secondIndex = reorder.cards().indexOf(second);
+        int firstIndex = reorder.cards().indexOf(first);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(secondIndex, firstIndex)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, originalTop);
+        harness.assertInGraveyard(player1, "Frantic Salvage");
+    }
+
+    @Test
+    @DisplayName("No card is drawn when every chosen target has left the graveyard")
+    void allTargetsRemovedPreventsDraw() {
+        Card artifact = new LeoninScimitar();
+        Card originalTop = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(artifact));
+        harness.setLibrary(player1, List.of(originalTop));
+        harness.setHand(player1, List.of(new FranticSalvage()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(originalTop);
+        harness.assertInGraveyard(player1, "Frantic Salvage");
+    }
+
+    @Test
+    @DisplayName("A remaining legal target is returned and drawn when another target leaves")
+    void oneTargetRemovedStillReturnsOtherAndDraws() {
+        Card removed = new LeoninScimitar();
+        Card remaining = new FountainOfYouth();
+        Card originalTop = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(removed, remaining));
+        harness.setLibrary(player1, List.of(originalTop));
+        harness.setHand(player1, List.of(new FranticSalvage()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(removed.getId(), remaining.getId()));
+        harness.setGraveyard(player1, List.of(remaining));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(originalTop);
+        harness.assertInGraveyard(player1, "Frantic Salvage");
+    }
+
+
+    @Test
+    @DisplayName("Artifacts in an opponent's graveyard cannot be targeted")
+    void opponentsArtifactsAreNotTargets() {
+        Card opponentArtifact = new LeoninScimitar();
+        Card originalTop = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(opponentArtifact));
+        harness.setLibrary(player1, List.of(originalTop));
+        harness.setHand(player1, List.of(new FranticSalvage()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentArtifact);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(originalTop);
+        harness.assertInGraveyard(player1, "Frantic Salvage");
+    }
+
 }

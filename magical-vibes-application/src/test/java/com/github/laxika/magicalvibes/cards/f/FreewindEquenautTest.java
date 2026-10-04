@@ -106,6 +106,62 @@ class FreewindEquenautTest extends BaseCardTest {
         assertThat(attacker.getMarkedDamage()).isZero();
     }
 
+    @Test
+    @DisplayName("Loses the ability when its Aura moves to another creature")
+    void losesAbilityWhenAuraMovesAway() {
+        Permanent equenaut = addEquenautWithAura();
+        Permanent otherCreature = addCreatureReady(player1, new AssaultZeppelid());
+        findPermanent(player1, "Shielding Plax").setAttachedTo(otherCreature.getId());
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+        assertThat(equenaut.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An activated ability still resolves after its Aura moves away")
+    void activatedAbilitySurvivesLosingAura() {
+        Permanent equenaut = addEquenautWithAura();
+        Permanent otherCreature = addCreatureReady(player1, new AssaultZeppelid());
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        findPermanent(player1, "Shielding Plax").setAttachedTo(otherCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(equenaut.isTapped()).isTrue();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Cannot activate the granted tap ability while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent equenaut = addEquenautWithAura();
+        equenaut.setSummoningSick(true);
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(equenaut.isTapped()).isFalse();
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot activate the granted tap ability while already tapped")
+    void cannotActivateWhileTapped() {
+        Permanent equenaut = addEquenautWithAura();
+        equenaut.setTapped(true);
+        Permanent attacker = addCombatCreature(player2, true, false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
     private Permanent addEquenautWithAura() {
         Permanent equenaut = addCreatureReady(player1, new FreewindEquenaut());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new ShieldingPlax());
