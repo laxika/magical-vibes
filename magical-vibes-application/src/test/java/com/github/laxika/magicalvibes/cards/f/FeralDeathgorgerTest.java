@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FeralDeathgorger.class, GrizzlyBears.class, Plains.class, Shock.class})
 class FeralDeathgorgerTest extends BaseCardTest {
@@ -28,10 +29,7 @@ class FeralDeathgorgerTest extends BaseCardTest {
         Card third = new Plains();
         harness.setGraveyard(player2, List.of(first, second, third));
         FeralDeathgorger card = new FeralDeathgorger();
-        harness.setHand(player1, List.of(card));
-        addManaForCreature();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, card, "{5}{B}");
         harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice =
@@ -57,7 +55,7 @@ class FeralDeathgorgerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        gs.playCardWithAlternateCost(gd, player1, 0, 0, target.getId(), null, List.of());
+        harness.castWithAlternateCost(player1, 0, target.getId());
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -66,8 +64,86 @@ class FeralDeathgorgerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
     }
 
-    private void addManaForCreature() {
+    @Test
+    void omenWithoutTargetDrawsAndShufflesExactlyOnePhysicalCard() {
+        Card drawn = new Plains();
+        FeralDeathgorger card = new FeralDeathgorger();
+        harness.setHand(player1, List.of(card));
+        harness.setLibrary(player1, List.of(drawn));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castWithAlternateCost(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(card);
+    }
+
+    @Test
+    void etbCanExileOneCardFromOwnGraveyard() {
+        Card chosen = new Plains();
+        Card retained = new FeralDeathgorger();
+        harness.setGraveyard(player1, List.of(chosen, retained));
+        harness.castFromHand(player1, new FeralDeathgorger(), "{5}{B}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(retained);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(chosen);
+    }
+
+    @Test
+    void etbCanChooseZeroTargets() {
+        Card retained = new Plains();
+        harness.setGraveyard(player2, List.of(retained));
+        harness.castFromHand(player1, new FeralDeathgorger(), "{5}{B}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(retained);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Feral Deathgorger");
+    }
+
+    @Test
+    void etbRejectsTargetsFromDifferentGraveyards() {
+        Card own = new Plains();
+        Card opponents = new Plains();
+        harness.setGraveyard(player1, List.of(own));
+        harness.setGraveyard(player2, List.of(opponents));
+        harness.castFromHand(player1, new FeralDeathgorger(), "{5}{B}");
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
+                player1, List.of(own.getId(), opponents.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("single graveyard");
+
+        harness.handleMultipleCardsChosen(player1, List.of(own.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(own);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponents);
+    }
+
+    @Test
+    void omenDoesNotDrawOrShuffleWhenChosenTargetBecomesIllegal() {
+        Permanent target = addCreatureReady(player2, new FeralDeathgorger());
+        Card drawn = new Plains();
+        FeralDeathgorger card = new FeralDeathgorger();
+        harness.setHand(player1, List.of(card));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castWithAlternateCost(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(card);
     }
 }
