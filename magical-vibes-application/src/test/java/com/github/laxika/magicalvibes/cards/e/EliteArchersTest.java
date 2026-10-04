@@ -102,7 +102,7 @@ class EliteArchersTest extends BaseCardTest {
     void cannotActivateWhileTapped() {
         Permanent archers = addReadyArchers(player1);
         Permanent attacker = addAttacker(player2);
-        archers.setTapped(true);
+        archers.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class);

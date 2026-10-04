@@ -32,9 +32,33 @@ public class StackEntry {
     private final Card card;
     private UUID planarAbilityId = UUID.randomUUID();
 
-    /** Independent stack identity for planar abilities, including abilities with no card source. */
+    /** Independent stack identity for abilities, including abilities with no card source. */
     public UUID getTargetableId() {
-        return getCard() == null || sourcePlanarObject != null ? planarAbilityId : getCard().getId();
+        return getCard() == null || sourcePlanarObject != null
+                || entryType == StackEntryType.ACTIVATED_ABILITY
+                || entryType == StackEntryType.TRIGGERED_ABILITY
+                ? planarAbilityId : getCard().getId();
+    }
+
+    /** Resolves a legacy source-card reference only when it names one unambiguous stack object. */
+    public static UUID resolveTargetableId(List<StackEntry> stack, UUID targetId) {
+        if (targetId == null || stack.stream().anyMatch(entry -> entry.getTargetableId().equals(targetId))) {
+            return targetId;
+        }
+        List<StackEntry> matching = stack.stream()
+                .filter(entry -> entry.getCard() != null && entry.getCard().getId().equals(targetId))
+                .toList();
+        if (matching.size() > 1) {
+            throw new IllegalStateException("Choose a specific ability on the stack");
+        }
+        return matching.isEmpty() ? targetId : matching.getFirst().getTargetableId();
+    }
+
+    /** Copies an ability's context for another trigger or copy that is a distinct stack object. */
+    public StackEntry copyForNewStackObject() {
+        StackEntry copy = new StackEntry(this);
+        copy.planarAbilityId = UUID.randomUUID();
+        return copy;
     }
 
     private Card castCard;
@@ -256,6 +280,8 @@ public class StackEntry {
     @Setter private CardSubtype chosenCreatureType;
     private final Map<UUID, CardSubtype> chosenCreatureTypes = new HashMap<>();
     @Setter private Card damageSourceCard;
+    /** Controller of a distinct damage source when it differs from the ability's controller. */
+    @Setter private UUID damageSourceControllerId;
     /** Carries Demonfire's replacement through redirected damage during this resolution. */
     @Setter private boolean exilesCreaturesDamaged;
     /** Whether a continuation entry still deals damage as part of resolving its source spell. */
@@ -305,6 +331,12 @@ public class StackEntry {
     @Setter private List<UUID> eventNontokenPlayerIds = List.of();
     /** Card ids of the permanents actually destroyed by the event that produced this entry. */
     @Setter private List<UUID> eventCardIds = List.of();
+    /** Cards exiled during this entry's resolution, excluding earlier uses of the same source. */
+    private List<UUID> resolutionExiledCardIds = List.of();
+
+    public void setResolutionExiledCardIds(List<UUID> cardIds) {
+        resolutionExiledCardIds = List.copyOf(cardIds);
+    }
     /**
      * The per-permanent mana value payload behind this entry, positionally aligned with
      * {@link #eventPlayerIds}. Stamped by {@code DestroyAllPermanentsEffectHandler} with the
@@ -343,6 +375,7 @@ public class StackEntry {
      * {@code ON_DAMAGED_CREATURE_DIES} return. Not a target: it is never validated or fizzled.
     */
     @Setter private UUID triggeringCardId;
+    @Setter private boolean triggerOrderChosen;
     /** Last-known card characteristics of the card returned from a graveyard to hand for a triggered ability. */
     @Setter private Card triggeringCardSnapshot;
     @Setter private long triggeringCardGraveyardEntryVersion = -1;
@@ -815,6 +848,7 @@ public class StackEntry {
         this.chosenCreatureType = source.chosenCreatureType;
         this.chosenCreatureTypes.putAll(source.chosenCreatureTypes);
         this.damageSourceCard = source.damageSourceCard;
+        this.damageSourceControllerId = source.damageSourceControllerId;
         this.exilesCreaturesDamaged = source.exilesCreaturesDamaged;
         this.planarAbilityId = source.planarAbilityId;
         this.sourcePlanarObject = source.sourcePlanarObject == null ? null : source.sourcePlanarObject.copy();
@@ -839,6 +873,7 @@ public class StackEntry {
         this.eventNontokenPlayerIds = source.eventNontokenPlayerIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.eventNontokenPlayerIds);
         this.eventCardIds = source.eventCardIds.isEmpty() ? List.of() : new ArrayList<>(source.eventCardIds);
+        this.resolutionExiledCardIds = source.resolutionExiledCardIds;
         this.eventManaValues = source.eventManaValues.isEmpty() ? List.of() : new ArrayList<>(source.eventManaValues);
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
         this.sacrificedAttachedEquipmentIds = source.sacrificedAttachedEquipmentIds.isEmpty()
@@ -851,6 +886,7 @@ public class StackEntry {
         this.searchedPermanentIds = source.searchedPermanentIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.searchedPermanentIds);
         this.triggeringCardId = source.triggeringCardId;
+        this.triggerOrderChosen = source.triggerOrderChosen;
         this.triggeringCardSnapshot = source.triggeringCardSnapshot;
         this.triggeringCardGraveyardEntryVersion = source.triggeringCardGraveyardEntryVersion;
         this.mixedZoneTargetPermanentIds.putAll(source.mixedZoneTargetPermanentIds);
@@ -1106,6 +1142,7 @@ public class StackEntry {
         this.beholdChosenSubtype = null;
         this.chosenCreatureType = null;
         this.damageSourceCard = null;
+        this.damageSourceControllerId = null;
         this.exilesCreaturesDamaged = false;
         this.spellDamageContinuation = false;
         this.stateTriggerEffectIndex = -1;

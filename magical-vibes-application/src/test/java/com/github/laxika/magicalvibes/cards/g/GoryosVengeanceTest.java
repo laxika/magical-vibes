@@ -36,7 +36,7 @@ class GoryosVengeanceTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Kira, Great Glass-Spinner");
 
         Permanent creature = findPermanent(player1, "Kira, Great Glass-Spinner");
-        assertThat(creature.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -52,8 +52,7 @@ class GoryosVengeanceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Kira, Great Glass-Spinner");
@@ -120,6 +119,56 @@ class GoryosVengeanceTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Kira, Great Glass-Spinner");
         harness.assertInHand(player1, "Goryo's Vengeance");
         harness.assertInGraveyard(player1, "Roar of Jukai");
+    }
+
+    @Test
+    @DisplayName("Reanimation during an end step waits until the following turn's end step")
+    void castDuringEndStepWaitsForFollowingEndStep() {
+        Card legend = legendaryCreature();
+        harness.setGraveyard(player1, List.of(legend));
+        harness.setHand(player1, List.of(new GoryosVengeance()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.END_STEP);
+
+        harness.castInstant(player1, 0, legend.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kira, Great Glass-Spinner");
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.assertOnBattlefield(player1, "Kira, Great Glass-Spinner");
+        assertThat(findPermanent(player1, "Kira, Great Glass-Spinner").hasKeyword(Keyword.HASTE)).isTrue();
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Kira, Great Glass-Spinner");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Kira, Great Glass-Spinner");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(legend);
+    }
+
+    @Test
+    @DisplayName("Spliced reanimation grants haste and creates a nontargeting delayed exile")
+    void splicedCreatureHasHasteAndIsExiled() {
+        Card legend = legendaryCreature();
+        harness.setGraveyard(player1, List.of(legend));
+        harness.setHand(player1, List.of(new RoarOfJukai(), new GoryosVengeance()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castWithSplice(player1, 0, legend.getId(), List.of(1));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Kira, Great Glass-Spinner").hasKeyword(Keyword.HASTE)).isTrue();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Kira, Great Glass-Spinner");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Kira, Great Glass-Spinner");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(legend);
+        harness.assertInHand(player1, "Goryo's Vengeance");
     }
 
     private Card legendaryCreature() {

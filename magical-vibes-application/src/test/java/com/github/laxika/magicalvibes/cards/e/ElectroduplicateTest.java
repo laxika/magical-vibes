@@ -125,7 +125,7 @@ class ElectroduplicateTest extends BaseCardTest {
     void doesNotCopyCountersOrTappedStatus() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new BearCub());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        target.setTapped(true);
+        target.tap();
 
         castElectroduplicate(target.getId());
 

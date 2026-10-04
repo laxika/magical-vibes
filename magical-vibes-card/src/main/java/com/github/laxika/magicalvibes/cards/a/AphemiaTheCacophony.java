@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "THB", collectorNumber = "84")
@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 public class AphemiaTheCacophony extends Card {
 
     public AphemiaTheCacophony() {
-        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ExileOwnGraveyardCardThenEffect(
+        addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED, new ExileOwnGraveyardCardThenCreateTokenEffect(
                 new CardTypePredicate(CardType.ENCHANTMENT),
                 CreateTokenEffect.blackZombie(1)));
     }

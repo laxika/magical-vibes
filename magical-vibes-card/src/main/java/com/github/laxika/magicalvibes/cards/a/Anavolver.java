@@ -26,7 +26,7 @@ public class Anavolver extends Card {
 
     public Anavolver() {
         addEffect(EffectSlot.STATIC, new KickerEffect("{1}{U}"));
-        addEffect(EffectSlot.SPELL, RepeatableAdditionalManaCost.singlePayment(List.of("{B}")));
+        addEffect(EffectSlot.SPELL, new RepeatableAdditionalManaCost(List.of("{B}"), true, 1));
 
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));

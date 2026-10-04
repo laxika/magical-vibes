@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.c.CruelCelebrant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GodEternalBontu.class, Forest.class, Mountain.class, Plains.class,
-        WrathOfGod.class, SwordsToPlowshares.class})
+        WrathOfGod.class, SwordsToPlowshares.class, CruelCelebrant.class})
 class GodEternalBontuTest extends BaseCardTest {
 
     @Test
@@ -100,8 +101,7 @@ class GodEternalBontuTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new SwordsToPlowshares()));
         harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.castInstant(player2, 0, bontuPermanent.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bontuPermanent.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -113,6 +113,107 @@ class GodEternalBontuTest extends BaseCardTest {
                 .noneMatch(card -> card.getId().equals(bontu.getId()));
     }
 
+    @Test
+    @DisplayName("Choosing zero sacrifices leaves the battlefield and library unchanged")
+    void maySacrificeZeroPermanents() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Card top = new Plains();
+        harness.setLibrary(player1, List.of(top));
+        harness.setHand(player1, List.of(new GodEternalBontu()));
+        addBontuMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("With no other permanents, Bontu neither sacrifices itself nor draws")
+    void noOtherPermanentsDrawsNothing() {
+        Card top = new Plains();
+        harness.setLibrary(player1, List.of(top));
+        harness.setHand(player1, List.of(new GodEternalBontu()));
+        addBontuMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "God-Eternal Bontu");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+    }
+
+    @Test
+    @DisplayName("Bontu goes to the bottom when its owner's library has only one card")
+    void deathTriggerUsesBottomOfShortLibrary() {
+        Card top = new Plains();
+        harness.setLibrary(player1, List.of(top));
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new GodEternalBontu());
+        Card bontu = permanent.getCard();
+
+        destroyBontuWithWrath();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, bontu);
+        harness.assertNotInGraveyard(player1, "God-Eternal Bontu");
+    }
+
+    @Test
+    @DisplayName("Sacrificed Celebrants each see both simultaneous deaths")
+    void sacrificesAreSimultaneousForDeathTriggers() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new CruelCelebrant());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new CruelCelebrant());
+        Card top = new Plains();
+        Card next = new Forest();
+        harness.setLibrary(player1, List.of(top, next, new Mountain()));
+        harness.setHand(player1, List.of(new GodEternalBontu()));
+        addBontuMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(top, next);
+        for (int i = 0; i < 4 && !gd.stack.isEmpty(); i++) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrder(first.getCard(), second.getCard());
+    }
+
+    @Test
+    @DisplayName("Declining the exile trigger leaves Bontu in exile")
+    void decliningExileTriggerLeavesBontuInExile() {
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new GodEternalBontu());
+        Card top = new Plains();
+        harness.setLibrary(player1, List.of(top));
+        harness.setHand(player1, List.of(new SwordsToPlowshares()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, permanent.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(permanent.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        harness.assertNotOnBattlefield(player1, "God-Eternal Bontu");
+    }
+
     private void addBontuMana() {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -121,8 +222,7 @@ class GodEternalBontuTest extends BaseCardTest {
     private void destroyBontuWithWrath() {
         harness.setHand(player1, List.of(new WrathOfGod()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.passBothPriorities();
     }
 }

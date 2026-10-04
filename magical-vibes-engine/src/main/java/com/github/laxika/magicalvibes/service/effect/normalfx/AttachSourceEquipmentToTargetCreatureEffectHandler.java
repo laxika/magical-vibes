@@ -35,7 +35,8 @@ public class AttachSourceEquipmentToTargetCreatureEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var attachEffect = (AttachSourceEquipmentToTargetCreatureEffect) effect;
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent target = gameQueryService.findPermanentById(gameData,
+                attachEffect.useTriggeringPermanent() ? entry.getTriggeringPermanentId() : entry.getTargetId());
         if (target == null) {
             
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s attach ability fizzles (target creature no longer exists)."));

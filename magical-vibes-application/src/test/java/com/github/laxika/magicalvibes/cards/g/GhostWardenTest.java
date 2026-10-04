@@ -70,7 +70,6 @@ class GhostWardenTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
@@ -95,10 +94,9 @@ class GhostWardenTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate while summoning sick")
     void cannotActivateWithSummoningSickness() {
-        harness.addToBattlefield(player1, new GhostWarden());
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GhostWarden());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        Permanent source = findPermanent(player1, "Ghost Warden");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, source.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -118,6 +116,55 @@ class GhostWardenTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("Can target itself and the boost waits for resolution")
+    void canBoostItself() {
+        Permanent source = addCreatureReady(player1, new GhostWarden());
+        prepareAbility(source);
+
+        harness.activateAbility(player1, 0, null, source.getId());
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The ability resolves even if its source leaves the battlefield")
+    void resolvesAfterSourceLeaves() {
+        Permanent source = addCreatureReady(player1, new GhostWarden());
+        Permanent target = addCreatureReady(player2, new GhostWarden());
+        prepareAbility(source);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Boosts from two Wardens add together")
+    void boostsAreCumulative() {
+        Permanent first = addCreatureReady(player1, new GhostWarden());
+        addCreatureReady(player1, new GhostWarden());
+        Permanent target = addCreatureReady(player2, new GhostWarden());
+        prepareAbility(first);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
     private void prepareAbility(Permanent source) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

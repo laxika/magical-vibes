@@ -143,7 +143,7 @@ class ElderOfLaurelsTest extends BaseCardTest {
     void repeatedActivationsDoNotRequireTapAndExpireAtEndOfTurn() {
         Permanent elder = harness.addToBattlefieldAndReturn(player1, new ElderOfLaurels());
         elder.setSummoningSick(true);
-        elder.setTapped(true);
+        elder.tap();
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
 

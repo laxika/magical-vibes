@@ -81,7 +81,7 @@ class FarmerCottonTest extends BaseCardTest {
     void tappedFoodCannotActivate() {
         cast(1);
         Permanent food = findPermanent(player1, "Food");
-        food.setTapped(true);
+        food.tap();
         int foodIndex = gd.playerBattlefields.get(player1.getId()).indexOf(food);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

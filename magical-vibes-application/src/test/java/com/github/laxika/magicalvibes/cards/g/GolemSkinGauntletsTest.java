@@ -52,6 +52,42 @@ class GolemSkinGauntletsTest extends BaseCardTest {
     }
 
     @Test
+    void countsOpponentsEquipmentButNotEquipmentOnAnotherCreature() {
+        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        Permanent otherCreature = addCreatureReady(player2, new AlphaMyr());
+        Permanent gauntlets = harness.addToBattlefieldAndReturn(player1, new GolemSkinGauntlets());
+        gauntlets.setAttachedTo(creature.getId());
+        Permanent scimitar = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        scimitar.setAttachedTo(creature.getId());
+        Permanent otherScimitar = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        otherScimitar.setAttachedTo(otherCreature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(3);
+    }
+
+    @Test
+    void reequippingMovesTheBonusAndRecountsEquipment() {
+        Permanent gauntlets = harness.addToBattlefieldAndReturn(player1, new GolemSkinGauntlets());
+        Permanent firstCreature = addCreatureReady(player1, new AlphaMyr());
+        Permanent secondCreature = addCreatureReady(player1, new AlphaMyr());
+        gauntlets.setAttachedTo(firstCreature.getId());
+        Permanent scimitar = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        scimitar.setAttachedTo(firstCreature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, secondCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gauntlets.getAttachedTo()).isEqualTo(secondCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, firstCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, firstCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, secondCreature)).isEqualTo(1);
+    }
+
+    @Test
     void equipCannotTargetAnOpponentsCreature() {
         Permanent gauntlets = harness.addToBattlefieldAndReturn(player1, new GolemSkinGauntlets());
         Permanent opponentCreature = addCreatureReady(player2, new AlphaMyr());

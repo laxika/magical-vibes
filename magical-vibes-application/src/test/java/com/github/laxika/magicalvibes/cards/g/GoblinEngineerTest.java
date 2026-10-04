@@ -1,19 +1,15 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.b.BraidwoodCup;
 import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.cards.n.NevinyrralsDisk;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
-import com.github.laxika.magicalvibes.cards.s.SolemnSimulacrum;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.cards.w.WurmcoilEngine;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -23,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinEngineer.class, BraidwoodCup.class, SolemnSimulacrum.class, Spellbook.class, GolemsHeart.class, GrimMonolith.class, GrizzlyBears.class, SolRing.class, WurmcoilEngine.class, DarksteelIngot.class, NevinyrralsDisk.class})
+@CardUsed({GoblinEngineer.class, GolemsHeart.class, GrimMonolith.class, GrizzlyBears.class, SolRing.class, WurmcoilEngine.class})
 class GoblinEngineerTest extends BaseCardTest {
 
     @Test
@@ -40,14 +36,12 @@ class GoblinEngineerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .extracting(Card::getId)
                 .containsExactly(libraryArtifact.getId());
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)
@@ -60,8 +54,7 @@ class GoblinEngineerTest extends BaseCardTest {
     @Test
     @DisplayName("Activation sacrifices an artifact and returns a low mana-value artifact")
     void sacrificesArtifactAndReturnsArtifact() {
-        var engineer = harness.addToBattlefieldAndReturn(player1, new GoblinEngineer());
-        engineer.setSummoningSick(false);
+        addCreatureReady(player1, new GoblinEngineer());
         var sacrificedArtifact = harness.addToBattlefieldAndReturn(player1, new GolemsHeart());
         Card returnedArtifact = new GrimMonolith();
         harness.setGraveyard(player1, List.of(returnedArtifact));
@@ -83,8 +76,7 @@ class GoblinEngineerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an artifact with mana value greater than 3")
     void rejectsArtifactAboveManaValueThree() {
-        var engineer = harness.addToBattlefieldAndReturn(player1, new GoblinEngineer());
-        engineer.setSummoningSick(false);
+        addCreatureReady(player1, new GoblinEngineer());
         harness.addToBattlefieldAndReturn(player1, new GolemsHeart());
         Card highManaValueArtifact = new WurmcoilEngine();
         harness.setGraveyard(player1, List.of(highManaValueArtifact));
@@ -94,8 +86,93 @@ class GoblinEngineerTest extends BaseCardTest {
                 highManaValueArtifact.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("ETB search can put an artifact above mana value three into the graveyard")
+    void searchHasNoManaValueLimit() {
+        harness.setHand(player1, List.of(new GoblinEngineer()));
+        Card artifact = new WurmcoilEngine();
+        harness.setLibrary(player1, List.of(artifact));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An accepted artifact search may fail to find an available artifact")
+    void searchMayFailToFind() {
+        harness.setHand(player1, List.of(new GoblinEngineer()));
+        Card artifact = new SolRing();
+        harness.setLibrary(player1, List.of(artifact));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(artifact);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot target an artifact in an opponent's graveyard")
+    void rejectsOpponentsGraveyard() {
+        Permanent engineer = addCreatureReady(player1, new GoblinEngineer());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new SolRing());
+        Card target = new SolRing();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null,
+                target.getId(), Zone.GRAVEYARD)).isInstanceOf(IllegalStateException.class);
+
+        assertThat(engineer.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(fodder);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target);
+    }
+
+    @Test
+    @DisplayName("Cannot target the artifact that would be sacrificed to pay the cost")
+    void targetMustAlreadyBeInGraveyard() {
+        Permanent engineer = addCreatureReady(player1, new GoblinEngineer());
+        Permanent fodder = harness.addToBattlefieldAndReturn(player1, new SolRing());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null,
+                fodder.getCard().getId(), Zone.GRAVEYARD)).isInstanceOf(IllegalStateException.class);
+
+        assertThat(engineer.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(fodder);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without an artifact to sacrifice")
+    void requiresArtifactToSacrifice() {
+        Permanent engineer = addCreatureReady(player1, new GoblinEngineer());
+        Card target = new SolRing();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null,
+                target.getId(), Zone.GRAVEYARD)).isInstanceOf(IllegalStateException.class);
+
+        assertThat(engineer.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target);
+    }
 }
 
+@CardUsed({GoblinEngineer.class, Spellbook.class, GrizzlyBears.class, DarksteelIngot.class, NevinyrralsDisk.class})
 class Mh1GoblinEngineerTest extends BaseCardTest {
 
     @Test
@@ -114,8 +191,7 @@ class Mh1GoblinEngineerTest extends BaseCardTest {
                 .extracting(Card::getName)
                 .containsExactly("Spellbook");
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Spellbook");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
@@ -140,7 +216,7 @@ class Mh1GoblinEngineerTest extends BaseCardTest {
     @DisplayName("The activated ability sacrifices an artifact and returns an eligible artifact")
     void activationSacrificesArtifactAndReturnsTarget() {
         Permanent engineer = addReadyEngineer();
-        Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.addToBattlefield(player1, new Spellbook());
         DarksteelIngot target = new DarksteelIngot();
         harness.setGraveyard(player1, List.of(target));
         harness.addMana(player1, ManaColor.RED, 1);

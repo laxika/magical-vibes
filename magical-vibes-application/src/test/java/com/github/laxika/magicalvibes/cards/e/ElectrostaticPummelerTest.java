@@ -131,7 +131,7 @@ class ElectrostaticPummelerTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent pummeler = harness.addToBattlefieldAndReturn(player1, new ElectrostaticPummeler());
         pummeler.setSummoningSick(true);
-        pummeler.setTapped(true);
+        pummeler.tap();
         gd.playerEnergyCounters.put(player1.getId(), 3);
 
         harness.activateAbility(player1, 0, null, null);

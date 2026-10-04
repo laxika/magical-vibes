@@ -34,7 +34,7 @@ public class AirbendSupport {
 
         for (Card exiledCard : exiledCards) {
             UUID ownerId = gameQueryService.findExileOwnerById(gameData, exiledCard.getId());
-            if (ownerId != null) {
+            if (ownerId != null && !exiledCard.hasType(com.github.laxika.magicalvibes.model.CardType.LAND)) {
                 exileSupport.grantCastWhileExiledForGenericCost(gameData, exiledCard.getId(), ownerId, 2);
                 String ownerName = gameData.playerIdToName.get(ownerId);
                 gameLogService.append(gameData, GameLog.builder()

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.d.DazzlingTheaterPropRoom;
-import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,17 +15,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GhostlyDancers.class, DazzlingTheaterPropRoom.class, GloriousAnthem.class})
+@CardUsed({GhostlyDancers.class, DazzlingTheaterPropRoom.class})
 class GhostlyDancersTest extends BaseCardTest {
 
     @Test
     void enteringEnchantmentCreatesAThreeOneFlyingSpirit() {
         addDancers();
-        harness.setHand(player1, List.of(new GloriousAnthem()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-
-        harness.castEnchantment(player1, 0);
-        harness.passBothPriorities();
+        castRoom();
         harness.passBothPriorities();
 
         assertThat(findSpiritTokens(player1)).hasSize(1);
@@ -38,7 +33,7 @@ class GhostlyDancersTest extends BaseCardTest {
     @Test
     void etbCanReturnAnEnchantmentFromTheGraveyard() {
         Permanent dancers = addDancers();
-        Card enchantment = new GloriousAnthem();
+        Card enchantment = new DazzlingTheaterPropRoom();
         harness.setGraveyard(player1, List.of(enchantment));
         castDancers(0);
         harness.handleGraveyardCardChosen(player1, 0);
@@ -68,7 +63,7 @@ class GhostlyDancersTest extends BaseCardTest {
 
     @Test
     void fullyUnlockingAControlledRoomCreatesAThreeOneFlyingSpirit() {
-        Permanent room = castRoom();
+        castRoom();
         addDancers();
         harness.addMana(player1, ManaColor.WHITE, 3);
         harness.unlockRoomDoor(player1, 0, 1);
@@ -78,6 +73,70 @@ class GhostlyDancersTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, findSpiritTokens(player1).getFirst(), Keyword.FLYING)).isTrue();
     }
 
+    @Test
+    void etbChoiceIsOfferedDuringResolutionWhenBothActionsArePossible() {
+        Permanent room = castRoom();
+        Card enchantment = new DazzlingTheaterPropRoom();
+        harness.setGraveyard(player1, List.of(enchantment));
+        harness.setHand(player1, List.of(new GhostlyDancers()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        assertThat(room.isRoomDoorUnlocked(1)).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(enchantment);
+
+        harness.passBothPriorities();
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).contains(
+                "Return an enchantment card from your graveyard to your hand",
+                "Unlock a locked door of a Room you control");
+        harness.handleListChoice(player1, "Unlock a locked door of a Room you control");
+        PendingInteraction.ColorChoice doorChoice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, doorChoice.options().getFirst());
+        harness.passBothPriorities();
+
+        assertThat(room.isRoomFullyUnlocked()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(enchantment);
+        assertThat(findSpiritTokens(player1)).hasSize(1);
+    }
+
+    @Test
+    void unlockingOnlyTheFirstDoorDoesNotCreateASpirit() {
+        Permanent room = harness.addToBattlefieldAndReturn(player1, new DazzlingTheaterPropRoom());
+        addDancers();
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.unlockRoomDoor(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(room.isRoomDoorUnlocked(0)).isTrue();
+        assertThat(room.isRoomDoorUnlocked(1)).isFalse();
+        assertThat(findSpiritTokens(player1)).isEmpty();
+    }
+
+    @Test
+    void nonEnchantmentEnteringDoesNotCreateASpirit() {
+        addDancers();
+        harness.setGraveyard(player1, List.of(new DazzlingTheaterPropRoom()));
+        castDancers(0);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(findSpiritTokens(player1)).isEmpty();
+    }
+
+    @Test
+    void opponentsEnchantmentEnteringDoesNotCreateASpirit() {
+        addDancers();
+
+        harness.enterBattlefieldAndReturn(player2, new DazzlingTheaterPropRoom());
+        harness.passBothPriorities();
+
+        assertThat(findSpiritTokens(player1)).isEmpty();
+        assertThat(findSpiritTokens(player2)).isEmpty();
+    }
+
     private Permanent addDancers() {
         return harness.addToBattlefieldAndReturn(player1, new GhostlyDancers());
     }
@@ -85,9 +144,12 @@ class GhostlyDancersTest extends BaseCardTest {
     private void castDancers(int mode) {
         harness.setHand(player1, List.of(new GhostlyDancers()));
         harness.addMana(player1, ManaColor.WHITE, 5);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handleListChoice(player1, mode == 0
+                ? "Return an enchantment card from your graveyard to your hand"
+                : "Unlock a locked door of a Room you control");
     }
 
     private Permanent castRoom() {

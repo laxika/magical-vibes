@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GnawingVermin.class, GrizzlyBears.class, Shock.class})
 class GnawingVerminTest extends BaseCardTest {
 
     @Test
@@ -22,9 +24,7 @@ class GnawingVerminTest extends BaseCardTest {
         int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
         int graveyardSizeBefore = gd.playerGraveyards.get(player2.getId()).size();
 
-        harness.setHand(player1, List.of(new GnawingVermin()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GnawingVermin(), "{B}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -52,8 +52,7 @@ class GnawingVerminTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID verminId = harness.getPermanentId(player1, "Gnawing Vermin");
-        harness.castInstant(player2, 0, verminId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, verminId);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -81,8 +80,7 @@ class GnawingVerminTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID verminId = harness.getPermanentId(player1, "Gnawing Vermin");
-        harness.castInstant(player2, 0, verminId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, verminId);
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         harness.passBothPriorities();
 
@@ -92,5 +90,38 @@ class GnawingVerminTest extends BaseCardTest {
 
         assertThat(opponentCreature.getPowerModifier()).isZero();
         assertThat(opponentCreature.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The enter trigger can mill its controller's library")
+    void etbCanMillController() {
+        GnawingVermin first = new GnawingVermin();
+        GnawingVermin second = new GnawingVermin();
+        GnawingVermin third = new GnawingVermin();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        harness.castFromHand(player1, new GnawingVermin(), "{B}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+    }
+
+    @Test
+    @DisplayName("Milling two from a one-card library mills only the remaining card")
+    void etbMillsShortLibrary() {
+        GnawingVermin remaining = new GnawingVermin();
+        harness.setLibrary(player2, List.of(remaining));
+
+        harness.castFromHand(player1, new GnawingVermin(), "{B}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(remaining);
+        assertThat(gd.stack).isEmpty();
     }
 }

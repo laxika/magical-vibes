@@ -39,10 +39,11 @@ public class DestroyTargetPermanentAndDamageControllerIfDestroyedEffectHandler i
                 }
 
                 // Attempt to destroy the permanent
+                long previousGraveyardEntry = gameData.graveyardEntryVersion(target.getCard().getId());
                 boolean destroyed = destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName());
 
                 // Deal damage only if the permanent was actually put into a graveyard
-                if (destroyed) {
+                if (destroyed && gameData.graveyardEntryVersion(target.getCard().getId()) > previousGraveyardEntry) {
                     destructionSupport.dealNoncombatDamageToPlayer(gameData, targetControllerId, e.damage(),
                             entry.getCard().getName(), entry.getEffectiveDamageSourceCard());
                 }

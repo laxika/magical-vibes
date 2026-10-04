@@ -103,7 +103,7 @@ class DrownyardAmalgamTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent amalgam = harness.addToBattlefieldAndReturn(player1, new DrownyardAmalgam());
         amalgam.setSummoningSick(true);
-        amalgam.setTapped(true);
+        amalgam.tap();
         Permanent other = addCreatureReady(player1, new DrownyardAmalgam());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

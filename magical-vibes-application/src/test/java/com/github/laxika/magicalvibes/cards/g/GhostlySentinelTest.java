@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.l.LongbowArcher;
 import com.github.laxika.magicalvibes.cards.w.Warthog;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -22,30 +21,45 @@ class GhostlySentinelTest extends BaseCardTest {
         Permanent sentinel = addCreatureReady(player1, new GhostlySentinel());
         addCreatureReady(player2, new Warthog());
 
-        declareAttackers(player1, List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThat(sentinel.isTapped()).isFalse();
 
-        harness.beginBlockerDeclarationInput();
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("flying");
     }
 
     @Test
     void creatureWithReachCanBlock() {
-        Permanent sentinel = addCreatureReady(player1, new GhostlySentinel());
+        addCreatureReady(player1, new GhostlySentinel());
         Permanent archer = addCreatureReady(player2, new LongbowArcher());
-        sentinel.setAttacking(true);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
-        prepareDeclareBlockers();
-
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
-                indexOf(player2, archer), indexOf(player1, sentinel))));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(archer.isBlocking()).isTrue();
     }
 
-    private int indexOf(Player player, Permanent permanent) {
-        return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
+    @Test
+    void flyingCreatureCanBlockSentinel() {
+        addCreatureReady(player1, new GhostlySentinel());
+        Permanent blocker = addCreatureReady(player2, new GhostlySentinel());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void vigilanceDoesNotAllowAttackingWhileTapped() {
+        Permanent sentinel = addCreatureReady(player1, new GhostlySentinel());
+        sentinel.tap();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        assertThat(sentinel.isAttacking()).isFalse();
     }
 }

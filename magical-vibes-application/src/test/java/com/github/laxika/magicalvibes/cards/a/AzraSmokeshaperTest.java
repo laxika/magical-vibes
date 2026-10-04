@@ -93,8 +93,10 @@ class AzraSmokeshaperTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         Permanent azra = findPermanent(player1, "Azra Smokeshaper");
-        harness.handlePermanentChosen(player1, azra.getId());
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.handlePermanentChosen(player1, azra.getId());
+            resolveAllTriggers();
+        });
 
         assertThat(gqs.hasKeyword(gd, azra, Keyword.INDESTRUCTIBLE)).isTrue();
     }
@@ -117,8 +119,10 @@ class AzraSmokeshaperTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Azra Smokeshaper");
         harness.passBothPriorities();
         Permanent azra = findPermanent(player1, "Azra Smokeshaper");
-        harness.handlePermanentChosen(player1, azra.getId());
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.handlePermanentChosen(player1, azra.getId());
+            resolveAllTriggers();
+        });
 
         assertThat(gqs.hasKeyword(gd, azra, Keyword.INDESTRUCTIBLE)).isTrue();
         assertThat(azra.isTapped()).isTrue();

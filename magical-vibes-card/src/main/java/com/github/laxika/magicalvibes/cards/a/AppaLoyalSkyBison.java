@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AirbendTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -42,7 +43,7 @@ public class AppaLoyalSkyBison extends Card {
                                 "Target must be another nonland permanent you control"))
         ));
 
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, modes);
-        addEffect(EffectSlot.ON_ATTACK, modes);
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneAtTriggerTimeEffect(modes));
+        addEffect(EffectSlot.ON_ATTACK, new ChooseOneAtTriggerTimeEffect(modes));
     }
 }

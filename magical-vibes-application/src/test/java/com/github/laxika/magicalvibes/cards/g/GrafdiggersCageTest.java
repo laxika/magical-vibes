@@ -2,13 +2,19 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.p.PrecognitionField;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
+import com.github.laxika.magicalvibes.cards.o.OracleOfMulDaya;
 import com.github.laxika.magicalvibes.cards.r.RiseFromTheGrave;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SoulSummons;
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +24,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GrafdiggersCage.class, GrizzlyBears.class, PrecognitionField.class,
+        RiseFromTheGrave.class, Shock.class, ThinkTwice.class, SoulSummons.class,
+        MarchOfTheMachines.class, TurnToFrog.class, GreenSunsZenith.class,
+        DryadArbor.class, OracleOfMulDaya.class})
 class GrafdiggersCageTest extends BaseCardTest {
-
-    // ===== Players can't cast spells from graveyards =====
 
     @Test
     @DisplayName("Prevents flashback casting from graveyards while on the battlefield")
@@ -48,8 +56,6 @@ class GrafdiggersCageTest extends BaseCardTest {
                 .getPlayableFlashbackIndices(gd, player2.getId());
         assertThat(playable).isEmpty();
     }
-
-    // ===== Creature cards in graveyards can't enter the battlefield =====
 
     @Test
     @DisplayName("Blocks reanimation: a creature card stays in the graveyard")
@@ -86,8 +92,6 @@ class GrafdiggersCageTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
-    // ===== Players can't cast spells from libraries =====
-
     @Test
     @DisplayName("Prevents casting a spell from the top of a library")
     void preventsCastingFromLibraryTop() {
@@ -115,7 +119,79 @@ class GrafdiggersCageTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).doesNotContain(shock);
     }
 
-    // ===== Helpers =====
+    @Test
+    void blocksCreatureEnteringFromLibrary() {
+        harness.addToBattlefield(player2, new GrafdiggersCage());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new GreenSunsZenith()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void blocksManifestingCreatureFromLibrary() {
+        assertManifestBlocked(new GrizzlyBears());
+    }
+
+    @Test
+    void blocksManifestingNoncreatureFromLibrary() {
+        assertManifestBlocked(new Shock());
+    }
+
+    private void assertManifestBlocked(Card topCard) {
+        harness.addToBattlefield(player2, new GrafdiggersCage());
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new SoulSummons()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void allowsReanimationAfterCageLosesItsAbilities() {
+        harness.addToBattlefield(player1, new GrafdiggersCage());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new TurnToFrog(), new RiseFromTheGrave()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Grafdigger's Cage"));
+        harness.passBothPriorities();
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void preventsPlayingCreatureLandFromLibrary() {
+        harness.addToBattlefield(player2, new GrafdiggersCage());
+        harness.addToBattlefield(player1, new OracleOfMulDaya());
+        Card arbor = new DryadArbor();
+        harness.setLibrary(player1, List.of(arbor));
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertNotOnBattlefield(player1, "Dryad Arbor");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(arbor);
+    }
 
     private Card testCreature() {
         return new com.github.laxika.magicalvibes.cards.g.GrizzlyBears();

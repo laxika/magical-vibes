@@ -19,9 +19,9 @@ class ExultantSkymarcherTest extends BaseCardTest {
     @Test
     @DisplayName("Exultant Skymarcher can block a creature with flying")
     void canBlockFlyingCreature() {
-        Permanent skymarcher = addReadyCreature(player2, new ExultantSkymarcher());
+        Permanent skymarcher = addCreatureReady(player2, new ExultantSkymarcher());
 
-        Permanent attacker = addReadyCreature(player1, new ExultantSkymarcher());
+        Permanent attacker = addCreatureReady(player1, new ExultantSkymarcher());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -34,9 +34,9 @@ class ExultantSkymarcherTest extends BaseCardTest {
     @Test
     @DisplayName("Exultant Skymarcher can block a creature without flying")
     void canBlockNonFlyingCreature() {
-        Permanent skymarcher = addReadyCreature(player2, new ExultantSkymarcher());
+        Permanent skymarcher = addCreatureReady(player2, new ExultantSkymarcher());
 
-        Permanent attacker = addReadyCreature(player1, new OrazcaRaptor());
+        Permanent attacker = addCreatureReady(player1, new OrazcaRaptor());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -49,10 +49,10 @@ class ExultantSkymarcherTest extends BaseCardTest {
     @Test
     @DisplayName("A creature without flying cannot block Exultant Skymarcher")
     void cannotBeBlockedByNonFlyingCreature() {
-        Permanent skymarcher = addReadyCreature(player1, new ExultantSkymarcher());
+        Permanent skymarcher = addCreatureReady(player1, new ExultantSkymarcher());
         skymarcher.setAttacking(true);
 
-        addReadyCreature(player2, new OrazcaRaptor());
+        addCreatureReady(player2, new OrazcaRaptor());
 
         prepareDeclareBlockers();
 

@@ -51,4 +51,16 @@ class GoblinSkyRaiderTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    void canBlockCreatureWithoutFlying() {
+        addCreatureReady(player1, new GlorySeeker());
+        Permanent blocker = addCreatureReady(player2, new GoblinSkyRaider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }

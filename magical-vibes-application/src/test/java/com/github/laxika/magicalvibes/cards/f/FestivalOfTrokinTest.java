@@ -93,7 +93,7 @@ class FestivalOfTrokinTest extends BaseCardTest {
     @Test
     @DisplayName("Counts tapped creatures")
     void countsTappedCreatures() {
-        harness.addToBattlefieldAndReturn(player1, new AlabornTrooper()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new AlabornTrooper()).tap();
         harness.addToBattlefield(player1, new AlabornTrooper());
         harness.setHand(player1, List.of(new FestivalOfTrokin()));
         harness.addMana(player1, ManaColor.WHITE, 1);

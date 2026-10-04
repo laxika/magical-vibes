@@ -152,7 +152,7 @@ class FlamewaveInvokerTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent invoker = harness.addToBattlefieldAndReturn(player1, new FlamewaveInvoker());
         invoker.setSummoningSick(true);
-        invoker.setTapped(true);
+        invoker.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 7);
         harness.addMana(player1, ManaColor.RED, 1);
 

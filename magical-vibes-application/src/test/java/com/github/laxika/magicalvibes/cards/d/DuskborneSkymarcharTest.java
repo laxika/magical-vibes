@@ -196,7 +196,7 @@ class DuskborneSkymarcharTest extends BaseCardTest {
     @DisplayName("Cannot pay the tap cost while already tapped")
     void cannotActivateWhileTapped() {
         Permanent skymarcher = addReadySkymarcher(player1);
-        skymarcher.setTapped(true);
+        skymarcher.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
         Permanent attacker = addAttackingVampire(player1);
 

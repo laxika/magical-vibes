@@ -145,6 +145,8 @@ class AssembleThePlayersTest extends BaseCardTest {
 
     @Test
     void castingPermissionResetsOnTheNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new AssembleThePlayers());
         GrizzlyBears first = new GrizzlyBears();
         GrizzlyBears drawn = new GrizzlyBears();
@@ -154,7 +156,11 @@ class AssembleThePlayersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveFromLibraryTop(player1);
 
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -193,5 +199,12 @@ class AssembleThePlayersTest extends BaseCardTest {
         assertThat(harness.getConn1().getSentMessages())
                 .anyMatch(message -> message.contains("\"playableLibraryTopCards\":[{")
                         && message.contains("Dog Walker"));
+
+        gs.playCardFromLibraryTop(gd, player1, null, null, List.of(), List.of(), true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getName().equals("Dog Walker")
+                        && permanent.isFaceDown());
     }
 }

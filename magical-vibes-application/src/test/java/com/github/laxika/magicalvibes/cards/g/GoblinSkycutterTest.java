@@ -49,4 +49,41 @@ class GoblinSkycutterTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Goblin Skycutter");
     }
+
+    @Test
+    @DisplayName("Can target its controller's flying creature and deal lethal damage")
+    void canDealLethalDamageToOwnFlyingCreature() {
+        harness.addToBattlefield(player1, new GoblinSkycutter());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SerraAvenger());
+        target.setMarkedDamage(1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Goblin Skycutter");
+        harness.assertInGraveyard(player1, "Serra Avenger");
+        harness.assertNotOnBattlefield(player1, "Serra Avenger");
+    }
+
+    @Test
+    @DisplayName("An activation does not resolve if its target loses flying in response")
+    void doesNotResolveAfterTargetLosesFlying() {
+        harness.addToBattlefield(player1, new GoblinSkycutter());
+        harness.addToBattlefield(player1, new GoblinSkycutter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraAvenger());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Serra Avenger");
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
 }

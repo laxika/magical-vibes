@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -47,9 +46,7 @@ class GoldmeadowStalwartTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getId().equals(stalwart.getId()));
+        harness.assertOnBattlefield(player1, "Goldmeadow Stalwart");
     }
 
     @Test
@@ -63,11 +60,44 @@ class GoldmeadowStalwartTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getId().equals(stalwart.getId()));
+        harness.assertOnBattlefield(player1, "Goldmeadow Stalwart");
         // Revealing does not remove the Kithkin card from hand.
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(kithkinInHand.getId()));
+        harness.assertInHand(player1, "Goldmeadow Harrier");
+    }
+
+    @Test
+    @DisplayName("Avoiding the additional mana publicly reveals the Kithkin before resolution")
+    void revealsKithkinAsCastingCost() {
+        harness.setHand(player1, List.of(new GoldmeadowStalwart(), new GoldmeadowHarrier()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("reveals")
+                && entry.plainText().contains("Goldmeadow Harrier"));
+        harness.assertInHand(player1, "Goldmeadow Harrier");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Goldmeadow Stalwart");
+    }
+
+    @Test
+    @DisplayName("A Kithkin on the battlefield cannot replace the reveal from hand")
+    void battlefieldKithkinDoesNotSatisfyReveal() {
+        harness.setHand(player1, List.of(new GoldmeadowStalwart()));
+        harness.addToBattlefield(player1, new GoldmeadowHarrier());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Revealing a Kithkin does not waive the white mana cost")
+    void revealDoesNotReplaceManaCost() {
+        harness.setHand(player1, List.of(new GoldmeadowStalwart(), new GoldmeadowHarrier()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

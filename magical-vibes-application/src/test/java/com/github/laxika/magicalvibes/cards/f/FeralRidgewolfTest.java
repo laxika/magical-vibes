@@ -127,7 +127,7 @@ class FeralRidgewolfTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTapped() {
         Permanent wolf = harness.addToBattlefieldAndReturn(player1, new FeralRidgewolf());
         wolf.setSummoningSick(true);
-        wolf.setTapped(true);
+        wolf.tap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

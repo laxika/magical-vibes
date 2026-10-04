@@ -95,7 +95,7 @@ class AncientHellkiteTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
         harness.assertOnBattlefield(player2, "Runeclaw Bear");
         assertThat(target.getMarkedDamage()).isEqualTo(1);
 

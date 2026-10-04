@@ -100,6 +100,7 @@ class ArchaeomancersMapTest extends BaseCardTest {
     @Test
     @DisplayName("May find no Plains even when two are available")
     void mayFindZeroPlains() {
+        harness.setHand(player1, List.of());
         Plains first = new Plains();
         Plains second = new Plains();
         harness.setLibrary(player1, List.of(first, second));
@@ -116,6 +117,7 @@ class ArchaeomancersMapTest extends BaseCardTest {
     @Test
     @DisplayName("May stop searching after finding one Plains")
     void mayFindOnlyOnePlains() {
+        harness.setHand(player1, List.of());
         Plains first = new Plains();
         Plains second = new Plains();
         harness.setLibrary(player1, List.of(first, second));
@@ -133,6 +135,7 @@ class ArchaeomancersMapTest extends BaseCardTest {
     @Test
     @DisplayName("Search finishes when there are no basic Plains")
     void searchWithoutMatchingCards() {
+        harness.setHand(player1, List.of());
         Forest forest = new Forest();
         harness.setLibrary(player1, List.of(forest));
         harness.enterBattlefieldAndReturn(player1, new ArchaeomancersMap());

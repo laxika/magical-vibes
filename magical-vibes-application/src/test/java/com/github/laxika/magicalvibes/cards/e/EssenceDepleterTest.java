@@ -57,7 +57,7 @@ class EssenceDepleterTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         var permanent = harness.addToBattlefieldAndReturn(player1, new EssenceDepleter());
-        permanent.setTapped(true);
+        permanent.tap();
         permanent.setSummoningSick(true);
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);

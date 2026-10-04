@@ -844,7 +844,7 @@ public class EnterTriggerCollectorService {
         entry.setEventValue(tokensEnter.count());
         entry.setNonTargeting(true);
         for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
-            match.gameData().enqueueTrigger(new StackEntry(entry));
+            match.gameData().enqueueTrigger(entry.copyForNewStackObject());
         }
         logTriggered(match);
         return true;
@@ -1362,10 +1362,29 @@ public class EnterTriggerCollectorService {
         UUID targetCardId = mayPay.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 ? pe.mayPayTargetCardId()
                 : null;
+        UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+        Permanent enteringPermanent = enteringPermanentId == null ? null
+                : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
-            match.gameData().queueMayAbility(sourceCard, match.controllerId(), mayPay, targetCardId, sourcePermanentId,
-                    eventValue);
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard,
+                    match.controllerId(), sourceCard.getName() + "'s ability", List.of(mayPay),
+                    targetCardId, sourcePermanentId);
+            entry.setEventValue(eventValue);
+            entry.setTriggeringPermanentId(enteringPermanentId);
+            entry.setTriggeringCardId(pe.enteringCard().getId());
+            entry.setNonTargeting(!isTargeting(mayPay));
+            if (match.permanent() != null) {
+                entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+            }
+            if (enteringPermanent != null && enteringPermanent.isAttacking()) {
+                UUID attackedTargetId = enteringPermanent.getAttackTarget();
+                entry.setAttackedTargetId(attackedTargetId);
+                entry.setDefendingPlayerId(attackedTargetId == null ? null
+                        : match.gameData().playerIds.contains(attackedTargetId) ? attackedTargetId
+                        : gameQueryService.findPermanentController(match.gameData(), attackedTargetId));
+            }
+            match.gameData().stack.add(entry);
         }
         logTriggered(match);
         log.info("Game {} - {} triggers for {} entering (may pay mana)",

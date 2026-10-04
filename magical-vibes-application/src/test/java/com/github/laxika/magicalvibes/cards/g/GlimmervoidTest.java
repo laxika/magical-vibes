@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -79,6 +81,49 @@ class GlimmervoidTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Glimmervoid");
         harness.assertOnBattlefield(player1, "Welding Jar");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED"})
+    @DisplayName("Mana ability can produce each other color without using the stack")
+    void manaAbilityProducesOtherColors(ManaColor color) {
+        Permanent glimmervoid = harness.addToBattlefieldAndReturn(player1, new Glimmervoid());
+        int before = gd.playerManaPools.get(player1.getId()).get(color);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(before + 1);
+        assertThat(glimmervoid.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrifices at its controller's end step with no artifacts")
+    void sacrificesAtControllersEndStep() {
+        harness.addToBattlefield(player1, new Glimmervoid());
+
+        advanceToEndStep(player1);
+
+        harness.assertNotOnBattlefield(player1, "Glimmervoid");
+        harness.assertInGraveyard(player1, "Glimmervoid");
+    }
+
+    @Test
+    @DisplayName("Losing the last artifact after the end step begins does not create a trigger")
+    void losingArtifactDuringEndStepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Glimmervoid());
+        Permanent jar = harness.addToBattlefieldAndReturn(player1, new WeldingJar());
+
+        reachEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.activateAbility(player1, 1, null, jar.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Welding Jar");
+        harness.assertOnBattlefield(player1, "Glimmervoid");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void advanceToEndStep(Player activePlayer) {

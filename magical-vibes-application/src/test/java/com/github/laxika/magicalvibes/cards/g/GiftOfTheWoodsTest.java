@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.d.DoomBlade;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.s.SchoolOfTheUnseen;
 import com.github.laxika.magicalvibes.cards.s.SwornDefender;
 import com.github.laxika.magicalvibes.cards.p.PalaceGuard;
@@ -18,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GiftOfTheWoods.class, SwornDefender.class, SchoolOfTheUnseen.class, PalaceGuard.class})
+@CardUsed({GiftOfTheWoods.class, SwornDefender.class, SchoolOfTheUnseen.class,
+        PalaceGuard.class, Naturalize.class, DoomBlade.class})
 class GiftOfTheWoodsTest extends BaseCardTest {
 
     @Test
@@ -40,7 +43,7 @@ class GiftOfTheWoodsTest extends BaseCardTest {
     }
 
     @Test
-    void blockTriggersForEachCreatureBlocked() {
+    void blockingMultipleCreaturesTriggersOnlyOnce() {
         harness.setLife(player2, 20);
 
         Permanent blocker = addCreatureReady(player2, new PalaceGuard());
@@ -54,8 +57,8 @@ class GiftOfTheWoodsTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(blocker.getPowerModifier()).isZero();
-        assertThat(blocker.getToughnessModifier()).isEqualTo(6);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(22);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(3);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(21);
     }
 
     @Test
@@ -159,6 +162,66 @@ class GiftOfTheWoodsTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    void canCastOnOpponentsCreatureAndTriggerForAuraController() {
+        Permanent blocker = addReadyCreature(player2);
+        Permanent attacker = addReadyCreature(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new GiftOfTheWoods()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, blocker.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Gift of the Woods").getAttachedTo()).isEqualTo(blocker.getId());
+        attacker.setAttacking(true);
+        declareBlockers(List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(blocker.getToughnessModifier()).isEqualTo(3);
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void pendingTriggerStillBoostsAndGainsLifeAfterAuraIsDestroyed() {
+        harness.setLife(player2, 20);
+        Permanent blocker = addReadyCreature(player2);
+        Permanent attacker = addReadyCreature(player1);
+        attacker.setAttacking(true);
+        Permanent aura = attachGift(player2, blocker);
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        declareBlockers(List.of(new BlockerAssignment(0, 0)));
+        harness.castInstant(player1, 0, aura.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Gift of the Woods");
+        assertThat(blocker.getToughnessModifier()).isEqualTo(3);
+        harness.assertLife(player2, 21);
+    }
+
+    @Test
+    void pendingTriggerStillGainsLifeAfterEnchantedCreatureIsDestroyed() {
+        harness.setLife(player2, 20);
+        Permanent blocker = addReadyCreature(player2);
+        Permanent attacker = addReadyCreature(player1);
+        attacker.setAttacking(true);
+        attachGift(player2, blocker);
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        declareBlockers(List.of(new BlockerAssignment(0, 0)));
+        harness.castInstant(player1, 0, blocker.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Sworn Defender");
+        harness.assertInGraveyard(player2, "Gift of the Woods");
+        harness.assertLife(player2, 21);
+    }
+
     private Permanent addReadyCreature(Player player) {
         return addCreatureReady(player, new SwornDefender());
     }
@@ -171,10 +234,7 @@ class GiftOfTheWoodsTest extends BaseCardTest {
     }
 
     private void declareBlockers(List<BlockerAssignment> assignments) {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, assignments);
     }
 }

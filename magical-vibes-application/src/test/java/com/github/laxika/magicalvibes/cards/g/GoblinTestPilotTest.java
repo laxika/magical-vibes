@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +15,37 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GoblinTestPilot.class, AvatarOfMight.class, FountainOfYouth.class, Forest.class})
 class GoblinTestPilotTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Chooses and exposes its random target during activation")
+    void choosesTargetDuringActivation() {
+        Permanent pilot = addCreatureReady(player1, new GoblinTestPilot());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        UUID targetId = gd.stack.getFirst().getTargetId();
+        assertThat(targetId).isIn(pilot.getId(), player1.getId(), player2.getId());
+        assertThat(pilot.isTapped()).isTrue();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(pilot.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, targetId.equals(player1.getId()) ? 18 : 20);
+        harness.assertLife(player2, targetId.equals(player2.getId()) ? 18 : 20);
+        if (targetId.equals(pilot.getId())) {
+            harness.assertInGraveyard(player1, "Goblin Test Pilot");
+        } else {
+            harness.assertOnBattlefield(player1, "Goblin Test Pilot");
+            assertThat(pilot.getMarkedDamage()).isZero();
+        }
+    }
 
     @Test
     @DisplayName("Deals 2 damage to exactly one randomly chosen any-target")

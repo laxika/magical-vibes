@@ -145,7 +145,7 @@ class FootfallCraterTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new MosscoatGoriak());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new FootfallCrater());
         aura.setAttachedTo(forest.getId());
-        forest.setTapped(true);
+        forest.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)

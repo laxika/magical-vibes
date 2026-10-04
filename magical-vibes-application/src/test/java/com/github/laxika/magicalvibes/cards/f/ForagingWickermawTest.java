@@ -110,7 +110,7 @@ class ForagingWickermawTest extends BaseCardTest {
     void manaAbilityWorksWhileTappedAndSummoningSickWithoutUsingTheStack() {
         Permanent wickermaw = harness.addToBattlefieldAndReturn(player1, new ForagingWickermaw());
         wickermaw.setSummoningSick(true);
-        wickermaw.setTapped(true);
+        wickermaw.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

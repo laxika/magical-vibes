@@ -135,7 +135,7 @@ class FemerefKnightTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent knight = addCreatureReady(player1, new FemerefKnight());
         knight.setSummoningSick(true);
-        knight.setTapped(true);
+        knight.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

@@ -193,7 +193,7 @@ class FaithfulSquireTest extends BaseCardTest {
     void preventionCoversRepeatedDamageWithoutTapOrSummoningRestriction() {
         Permanent squire = addSquire();
         squire.setSummoningSick(true);
-        squire.setTapped(true);
+        squire.tap();
         squire.setCounterCount(CounterType.KI, 2);
         Permanent target = addCreatureReady(player2, new GoblinCohort());
 

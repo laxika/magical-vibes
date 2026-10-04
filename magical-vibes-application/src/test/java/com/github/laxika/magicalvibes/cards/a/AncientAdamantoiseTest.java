@@ -135,6 +135,7 @@ class AncientAdamantoiseTest extends BaseCardTest {
         Permanent ancient = addCreatureReady(player2, new AncientAdamantoise());
 
         declareAttackers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
         resolveCombat();
         resolveAllTriggers();
 

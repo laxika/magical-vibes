@@ -70,7 +70,7 @@ class FeralContestTest extends BaseCardTest {
     void tappedCreatureIsNotRequiredToBlock() {
         Permanent attacker = addCreatureReady(player1, new LeatherbackBaloth());
         Permanent blocker = addCreatureReady(player2, new LeatherbackBaloth());
-        blocker.setTapped(true);
+        blocker.tap();
 
         castFeralContest(attacker, blocker);
         attacker.setAttacking(true);

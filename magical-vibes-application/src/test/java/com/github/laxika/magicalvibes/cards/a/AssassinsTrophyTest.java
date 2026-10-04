@@ -34,6 +34,7 @@ class AssassinsTrophyTest extends BaseCardTest {
         castTrophy(target);
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(target.getId()));
@@ -53,6 +54,7 @@ class AssassinsTrophyTest extends BaseCardTest {
         castTrophy(target);
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
         Set<UUID> battlefieldBefore = gd.playerBattlefields.get(player2.getId()).stream()
                 .map(Permanent::getId)
                 .collect(Collectors.toSet());
@@ -83,11 +85,7 @@ class AssassinsTrophyTest extends BaseCardTest {
         castTrophy(target);
 
         harness.passBothPriorities();
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
-            harness.handleMayAbilityChosen(player2, false);
-        } else {
-            harness.handleCardChosen(player2, -1);
-        }
+        harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(libraryBefore);
         assertThat(gd.gameLog).noneMatch(log -> log.plainText().toLowerCase().contains("shuffl"));
@@ -103,6 +101,7 @@ class AssassinsTrophyTest extends BaseCardTest {
         castTrophy(target);
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
@@ -136,6 +135,7 @@ class AssassinsTrophyTest extends BaseCardTest {
         castTrophy(target);
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).anyMatch(p -> p.getCard() == basic);

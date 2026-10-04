@@ -35,10 +35,8 @@ class GoldRushTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GoldRush(), new GoldRush()));
         addMana(2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(2);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
@@ -71,11 +69,86 @@ class GoldRushTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void castGoldRush(Permanent target) {
+    @Test
+    @DisplayName("Creates a Treasure without choosing a target or having any creatures")
+    void createsTreasureWithoutTarget() {
+        harness.setHand(player1, List.of(new GoldRush()));
+        addMana(1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        harness.assertInGraveyard(player1, "Gold Rush");
+    }
+
+    @Test
+    @DisplayName("Creates no Treasure if the chosen creature leaves before resolution")
+    void illegalTargetPreventsTreasureCreation() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new GoldRush()));
         addMana(1);
         harness.castInstant(player1, 0, target.getId());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
+
         harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        harness.assertInGraveyard(player1, "Gold Rush");
+    }
+
+    @Test
+    @DisplayName("Counts only the spell controller's Treasures when boosting an opposing creature")
+    void ignoresOpponentsTreasures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new GoldRush()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0);
+
+        castGoldRush(target);
+
+        assertThat(findPermanents(player2, "Treasure")).hasSize(1);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The resolved boost stays fixed when another Treasure is created")
+    void boostDoesNotChangeAfterResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GoldRush(), new GoldRush()));
+        addMana(2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Counts Treasures created in response before the targeted spell resolves")
+    void countsTreasuresAtResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GoldRush(), new GoldRush()));
+        addMana(2);
+        harness.castInstant(player1, 0, target.getId());
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
+    }
+
+    private void castGoldRush(Permanent target) {
+        harness.setHand(player1, List.of(new GoldRush()));
+        addMana(1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addMana(int amount) {

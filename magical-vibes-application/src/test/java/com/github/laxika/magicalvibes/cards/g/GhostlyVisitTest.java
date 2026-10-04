@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.ShuFootSoldiers;
 import com.github.laxika.magicalvibes.cards.w.WeiInfantry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -93,6 +94,34 @@ class GhostlyVisitTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player2, "Shu Foot Soldiers");
         harness.assertNotInGraveyard(player2, "Shu Foot Soldiers");
+    }
+
+    @Test
+    @DisplayName("Ghostly Visit can destroy a creature its caster controls")
+    void destroysOwnCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ShuFootSoldiers());
+        harness.setHand(player1, List.of(new GhostlyVisit()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0, creature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Shu Foot Soldiers");
+        harness.assertInGraveyard(player1, "Shu Foot Soldiers");
+    }
+
+    @Test
+    @DisplayName("Ghostly Visit cannot destroy an indestructible creature")
+    void cannotDestroyIndestructibleCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ShuFootSoldiers());
+        creature.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.setHand(player1, List.of(new GhostlyVisit()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0, creature.getId());
+
+        harness.assertOnBattlefield(player2, "Shu Foot Soldiers");
+        harness.assertNotInGraveyard(player2, "Shu Foot Soldiers");
+        harness.assertInGraveyard(player1, "Ghostly Visit");
     }
 
     @Test

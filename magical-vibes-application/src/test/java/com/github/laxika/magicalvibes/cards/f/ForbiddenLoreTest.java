@@ -137,7 +137,7 @@ class ForbiddenLoreTest extends BaseCardTest {
     void tappedLandCannotActivateGrantedAbility() {
         Permanent forest = attachAura(player1);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
-        forest.setTapped(true);
+        forest.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, bears.getId(), null))
                 .isInstanceOf(IllegalStateException.class);
@@ -168,7 +168,7 @@ class ForbiddenLoreTest extends BaseCardTest {
         assertThat(bears.getEffectivePower()).isEqualTo(4);
         assertThat(bears.getEffectiveToughness()).isEqualTo(3);
 
-        forest.setTapped(false);
+        forest.untap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, bears.getId(), null))
                 .isInstanceOf(IllegalStateException.class);
     }

@@ -123,7 +123,7 @@ class FloodtideSerpentTest extends BaseCardTest {
         NyxbornTriton triton = new NyxbornTriton();
         triton.setOwnerId(player2.getId());
         Permanent enchantment = harness.addToBattlefieldAndReturn(player1, triton);
-        enchantment.setTapped(true);
+        enchantment.tap();
 
         declareAttackers(player1, List.of(0));
 

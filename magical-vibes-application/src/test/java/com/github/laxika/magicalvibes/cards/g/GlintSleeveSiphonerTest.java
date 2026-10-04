@@ -5,12 +5,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GlintSleeveSiphoner.class, Forest.class})
 class GlintSleeveSiphonerTest extends BaseCardTest {
 
     @Test
@@ -83,5 +85,61 @@ class GlintSleeveSiphonerTest extends BaseCardTest {
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        addCreatureReady(player1, new GlintSleeveSiphoner());
+        gd.playerEnergyCounters.put(player1.getId(), 2);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    void canPayWithEnergyGainedAfterTheUpkeepTrigger() {
+        addCreatureReady(player1, new GlintSleeveSiphoner());
+        Forest drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        gd.playerEnergyCounters.put(player1.getId(), 0);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerEnergyCounters.put(player1.getId(), 3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    void twoSiphonersCannotSpendTheSameEnergyTwice() {
+        addCreatureReady(player1, new GlintSleeveSiphoner());
+        addCreatureReady(player1, new GlintSleeveSiphoner());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        gd.playerEnergyCounters.put(player1.getId(), 2);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
     }
 }

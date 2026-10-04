@@ -87,7 +87,7 @@ class DromokaDunecasterTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent dunecaster = addReadyPermanent(player1, new DromokaDunecaster());
-        dunecaster.setTapped(true);
+        dunecaster.tap();
         Permanent target = addReadyPermanent(player2, new DromokaDunecaster());
         addActivationMana();
 

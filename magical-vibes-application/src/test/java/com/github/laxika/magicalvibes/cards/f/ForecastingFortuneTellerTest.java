@@ -40,7 +40,7 @@ class ForecastingFortuneTellerTest extends BaseCardTest {
         resolveAllTriggers();
 
         Permanent clue = findPermanent(player1, "Clue");
-        clue.setTapped(true);
+        clue.tap();
         int clueIndex = gd.playerBattlefields.get(player1.getId()).indexOf(clue);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

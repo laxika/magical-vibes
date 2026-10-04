@@ -119,7 +119,7 @@ class FalseOrdersTest extends BaseCardTest {
         giveSpell();
         gs.declareBlockers(gd, player2, List.of());
         harness.clearPriorityPassed();
-        bystander.setTapped(true);
+        bystander.tap();
 
         harness.castInstant(player2, 0, bystander.getId());
         harness.passBothPriorities();

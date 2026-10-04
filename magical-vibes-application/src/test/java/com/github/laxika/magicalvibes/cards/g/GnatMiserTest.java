@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(GnatMiser.class)
+@CardUsed({GnatMiser.class, Humility.class})
 class GnatMiserTest extends BaseCardTest {
 
     @Test
@@ -57,6 +58,57 @@ class GnatMiserTest extends BaseCardTest {
         gs.advanceStep(gd);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Multiple Gnat Misers reduce the opponent's hand size cumulatively")
+    void multipleMisersStack() {
+        harness.addToBattlefield(player1, new GnatMiser());
+        harness.addToBattlefield(player1, new GnatMiser());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player2, handOfSevenCards());
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(2);
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(5);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("A maximum hand size reduced below zero requires discarding only the whole hand")
+    void reductionsBelowZeroDiscardEntireHand() {
+        for (int i = 0; i < 8; i++) {
+            harness.addToBattlefield(player1, new GnatMiser());
+        }
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player2, handOfSevenCards());
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount())
+                .isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Gnat Miser has no hand-size effect while Humility removes its ability")
+    void abilityRemovalStopsHandSizeReduction() {
+        harness.addToBattlefield(player1, new GnatMiser());
+        harness.addToBattlefield(player1, new Humility());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.setHand(player2, handOfSevenCards());
+
+        gs.advanceStep(gd);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
     }
 
     private List<Card> handOfSevenCards() {

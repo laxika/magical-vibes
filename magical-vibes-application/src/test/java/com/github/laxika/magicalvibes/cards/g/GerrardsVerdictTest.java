@@ -87,8 +87,7 @@ class GerrardsVerdictTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
@@ -121,12 +120,78 @@ class GerrardsVerdictTest extends BaseCardTest {
         harness.assertLife(player1, 20);
     }
 
+    @Test
+    void targetChoosesExactlyTwoCardsFromLargerHand() {
+        var retainedLand = new Forest();
+        var firstDiscard = new GrizzlyBears();
+        var secondDiscard = new GrizzlyBears();
+        harness.setHand(player2, List.of(retainedLand, firstDiscard, secondDiscard));
+        castVerdict();
+
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retainedLand);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactly(firstDiscard, secondDiscard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void gainsLifeOnlyAfterBothCardsHaveBeenDiscarded() {
+        harness.setHand(player2, List.of(new Forest(), new Forest()));
+        castVerdict();
+
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertLife(player1, 26);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void consecutiveVerdictsDoNotCountPreviouslyDiscardedLands() {
+        harness.setHand(player2, List.of(new Forest(), new Forest(), new GrizzlyBears(), new GrizzlyBears()));
+        castVerdict();
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+        harness.assertLife(player1, 26);
+
+        castVerdict();
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertLife(player1, 26);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
+    }
+
+    @Test
+    void controllerCanDiscardOwnCardsDespiteTamiyo() {
+        var tamiyo = harness.addToBattlefieldAndReturn(player1, new TamiyoCollectorOfTales());
+        tamiyo.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setHand(player1, List.of(new GerrardsVerdict(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertLife(player1, 26);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
     private void castVerdict() {
         harness.setHand(player1, List.of(new GerrardsVerdict()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 }

@@ -100,4 +100,53 @@ class GiantCrabTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, crab.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Gaining shroud in response makes a targeted spell fail to resolve")
+    void shroudInResponseInvalidatesSpellTarget() {
+        Permanent crab = addCreatureReady(player1, new GiantCrab());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player2, 0, crab.getId());
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, crab, Keyword.SHROUD)).isTrue();
+        assertThat(crab.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Giant Crab");
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Giant Crab can activate its ability")
+    void tappedSummoningSickCrabCanActivate() {
+        Permanent crab = harness.addToBattlefieldAndReturn(player1, new GiantCrab());
+        crab.setSummoningSick(true);
+        crab.setTapped(true);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, crab, Keyword.SHROUD)).isTrue();
+        assertThat(crab.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability grants shroud only to its source and can be activated again with shroud")
+    void onlySourceGainsShroudAndCanReactivate() {
+        Permanent crab = addCreatureReady(player1, new GiantCrab());
+        Permanent otherCrab = addCreatureReady(player1, new GiantCrab());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, crab, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherCrab, Keyword.SHROUD)).isFalse();
+    }
 }

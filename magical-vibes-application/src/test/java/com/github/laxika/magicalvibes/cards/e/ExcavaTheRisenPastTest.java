@@ -161,7 +161,7 @@ class ExcavaTheRisenPastTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, creature.getName());
         harness.assertNotInGraveyard(player1, creature.getName());
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(creature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
     }
 
     @Test
@@ -182,7 +182,7 @@ class ExcavaTheRisenPastTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(1);
         harness.getPermanentRemovalService().destroyPermanentToGraveyard(gd, returned);
         harness.assertInGraveyard(player1, creature.getName());
-        assertThat(gd.playerExiledCards.get(player1.getId())).doesNotContain(creature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(creature);
     }
 
     @Test
@@ -195,10 +195,10 @@ class ExcavaTheRisenPastTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         gd.playerGraveyards.get(player1.getId()).remove(creature);
-        gd.playerExiledCards.get(player1.getId()).add(creature);
+        gd.addToExile(player1.getId(), creature);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, creature.getName());
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(creature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
     }
 }

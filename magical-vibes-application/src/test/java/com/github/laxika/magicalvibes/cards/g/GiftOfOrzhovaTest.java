@@ -5,21 +5,23 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GiftOfOrzhova.class, GrizzlyBears.class, FountainOfYouth.class})
 class GiftOfOrzhovaTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Gift of Orzhova attaches it to the target creature")
     void resolvingAttachesToTarget() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new GiftOfOrzhova()));
         harness.addMana(player1, ManaColor.WHITE, 3);
@@ -37,12 +39,10 @@ class GiftOfOrzhovaTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature gets +1/+1 and has flying and lifelink")
     void enchantedCreatureGetsBoostAndKeywords() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        Permanent gift = new Permanent(new GiftOfOrzhova());
+        Permanent gift = harness.addToBattlefieldAndReturn(player1, new GiftOfOrzhova());
         gift.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(gift);
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
@@ -53,12 +53,10 @@ class GiftOfOrzhovaTest extends BaseCardTest {
     @Test
     @DisplayName("Creature loses the boost and keywords when Gift of Orzhova leaves")
     void effectsStopWhenRemoved() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        Permanent gift = new Permanent(new GiftOfOrzhova());
+        Permanent gift = harness.addToBattlefieldAndReturn(player1, new GiftOfOrzhova());
         gift.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(gift);
 
         gd.playerBattlefields.get(player1.getId()).remove(gift);
 
@@ -71,15 +69,12 @@ class GiftOfOrzhovaTest extends BaseCardTest {
     @Test
     @DisplayName("Other creatures are unaffected")
     void doesNotAffectOtherCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        Permanent otherBears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(otherBears);
+        Permanent otherBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        Permanent gift = new Permanent(new GiftOfOrzhova());
+        Permanent gift = harness.addToBattlefieldAndReturn(player1, new GiftOfOrzhova());
         gift.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(gift);
 
         assertThat(gqs.getEffectivePower(gd, otherBears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.FLYING)).isFalse();
@@ -90,14 +85,64 @@ class GiftOfOrzhovaTest extends BaseCardTest {
     @DisplayName("Cannot enchant a noncreature permanent")
     void cannotTargetNonCreature() {
         harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new GiftOfOrzhova()));
         harness.addMana(player1, ManaColor.WHITE, 3);
-
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Lifelink gains life for the enchanted creature's controller, not the Aura's controller")
+    void opposingCreatureControllerGainsLifeFromCombatDamage() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GiftOfOrzhova()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, Map.of());
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 23);
+    }
+
+    @Test
+    @DisplayName("Multiple Gifts stack their boosts but lifelink gains life only once")
+    void multipleGiftsDoNotMultiplyLifelink() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GiftOfOrzhova(), new GiftOfOrzhova()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, Map.of());
+        resolveCombat();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Granted flying prevents a ground creature from blocking")
+    void grantedFlyingPreventsGroundBlock() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GiftOfOrzhova()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(bls.canBlockAttacker(gd, blocker, bears,
+                gd.playerBattlefields.get(player2.getId()))).isFalse();
     }
 }

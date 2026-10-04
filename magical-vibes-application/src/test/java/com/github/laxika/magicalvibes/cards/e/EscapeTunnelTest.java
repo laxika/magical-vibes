@@ -136,7 +136,7 @@ class EscapeTunnelTest extends BaseCardTest {
     void tappedTunnelCannotActivate() {
         Permanent tunnel = harness.addToBattlefieldAndReturn(player1, new EscapeTunnel());
         Permanent target = addReadyPermanent(player1, new GrizzlyBears());
-        tunnel.setTapped(true);
+        tunnel.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

@@ -17,7 +17,7 @@ public class AvatarRokuFirebender extends Card {
 
     public AvatarRokuFirebender() {
         addEffect(EffectSlot.ON_ANY_PLAYER_ATTACKS,
-                new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 6));
+                new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 6, false));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

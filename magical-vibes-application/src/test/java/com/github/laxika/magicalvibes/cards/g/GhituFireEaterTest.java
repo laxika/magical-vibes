@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.v.VraskaTheUnseen;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,10 +10,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GhituFireEater.class, GrizzlyBears.class})
+@CardUsed({GhituFireEater.class, GrizzlyBears.class, GiantGrowth.class, VraskaTheUnseen.class})
 class GhituFireEaterTest extends BaseCardTest {
 
     @Test
@@ -51,8 +53,7 @@ class GhituFireEaterTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerGraveyards.get(player2.getId()))
-                .anyMatch(GrizzlyBears.class::isInstance);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
@@ -107,6 +108,51 @@ class GhituFireEaterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        Permanent fireEater = harness.addToBattlefieldAndReturn(player1, new GhituFireEater());
+        fireEater.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(fireEater);
+        harness.assertNotInGraveyard(player1, "Ghitu Fire-Eater");
+    }
+
+    @Test
+    void canTargetItselfButTargetIsGoneAtResolution() {
+        Permanent fireEater = addReadyFireEater(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, fireEater.getId());
+        harness.assertInGraveyard(player1, "Ghitu Fire-Eater");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void usesLastKnownPowerIncludingGiantGrowth() {
+        Permanent fireEater = addReadyFireEater(player1);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, fireEater.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.assertInGraveyard(player1, "Ghitu Fire-Eater");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
     }
 
     private Permanent addReadyFireEater(Player player) {

@@ -1231,6 +1231,13 @@ public class AbilityActivationService {
                 if (target == null) {
                     throw new IllegalStateException("Invalid target permanent");
                 }
+                if (gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)) {
+                    throw new IllegalStateException(target.getCard().getName() + " has shroud");
+                }
+                if (!playerId.equals(gameQueryService.findPermanentController(gameData, targetId))
+                        && gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)) {
+                    throw new IllegalStateException(target.getCard().getName() + " has hexproof");
+                }
                 if (permanent.getCard().getTargetFilter() != null) {
                     predicateEvaluationService.validateTargetFilter(permanent.getCard().getTargetFilter(), target);
                 }
@@ -2575,6 +2582,7 @@ public class AbilityActivationService {
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, card, ability.isCyclingAbility());
             if (ability.isCyclingAbility()) {
                 triggerCollectionService.checkCycleTriggers(gameData, playerId, card);
+                triggerCollectionService.processNextDiscardControllerTriggerTarget(gameData);
             }
         }
 
@@ -3918,6 +3926,14 @@ public class AbilityActivationService {
             }
             activationEffects = EffectResolution.resolveEffects(
                     abilityEffects, null, ability.modalEffectAtActivation().decodeModeIndices(effectiveXValue).getFirst());
+        }
+
+        if (EffectResolution.needsSpellTarget(activationEffects)) {
+            targetId = StackEntry.resolveTargetableId(gameData.stack, targetId);
+            if (targetIds != null) {
+                targetIds = targetIds.stream()
+                        .map(id -> StackEntry.resolveTargetableId(gameData.stack, id)).toList();
+            }
         }
 
         TapCreaturesForManaCost tapCreaturesForManaCost = abilityEffects.stream()

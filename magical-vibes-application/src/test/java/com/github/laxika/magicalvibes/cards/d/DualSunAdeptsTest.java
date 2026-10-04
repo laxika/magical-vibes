@@ -57,7 +57,7 @@ class DualSunAdeptsTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick source can activate repeatedly")
     void repeatedActivationsStackWithoutTapCost() {
         Permanent adepts = harness.addToBattlefieldAndReturn(player1, new DualSunAdepts());
-        adepts.setTapped(true);
+        adepts.tap();
         prepareActivation();
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
@@ -98,7 +98,7 @@ class DualSunAdeptsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         declareAttackers(java.util.List.of(0));
-        harness.passUntil(TurnStep.END_COMBAT);
+        harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }

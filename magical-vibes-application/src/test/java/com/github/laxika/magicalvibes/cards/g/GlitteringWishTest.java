@@ -95,6 +95,52 @@ class GlitteringWishTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
     }
 
+    @Test
+    @DisplayName("Exiles Glittering Wish when the sideboard is empty")
+    void emptySideboardStillExilesWish() {
+        setSideboard();
+
+        GlitteringWish wish = castGlitteringWish();
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(wish);
+    }
+
+    @Test
+    @DisplayName("Exiled multicolored cards are not outside the game")
+    void cannotRetrieveExiledCard() {
+        Card multicolored = new SliverLegion();
+        setSideboard();
+        harness.setExile(player1, List.of(multicolored));
+
+        GlitteringWish wish = castGlitteringWish();
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(multicolored, wish);
+    }
+
+    @Test
+    @DisplayName("Takes exactly one of multiple eligible cards and leaves the rest outside the game")
+    void takesOnlyOneEligibleCard() {
+        Card first = new SliverLegion();
+        Card second = new SliverLegion();
+        setSideboard(first, second);
+
+        GlitteringWish wish = castGlitteringWish();
+        assertThat(pendingSearch().params().cards()).containsExactly(first, second);
+
+        choose(second);
+
+        assertThat(pendingSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(first);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(wish);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(wish);
+    }
+
     private GlitteringWish castGlitteringWish() {
         GlitteringWish wish = new GlitteringWish();
         harness.setHand(player1, List.of(wish));

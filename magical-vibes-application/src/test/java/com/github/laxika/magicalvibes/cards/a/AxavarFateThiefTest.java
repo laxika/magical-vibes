@@ -33,6 +33,11 @@ class AxavarFateThiefTest extends BaseCardTest {
         harness.setHand(player1, List.of(discarded));
         harness.setLibrary(player2, List.of(land, first, second, third));
 
+        for (var playerId : gd.orderedPlayerIds) {
+            var stops = new java.util.HashSet<>(gd.playerAutoStopSteps.getOrDefault(playerId, java.util.Set.of()));
+            stops.add(TurnStep.END_STEP);
+            gd.playerAutoStopSteps.put(playerId, stops);
+        }
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -174,6 +179,11 @@ class AxavarFateThiefTest extends BaseCardTest {
     }
 
     private void enterEndStep() {
+        for (var playerId : gd.orderedPlayerIds) {
+            var stops = new java.util.HashSet<>(gd.playerAutoStopSteps.getOrDefault(playerId, java.util.Set.of()));
+            stops.add(TurnStep.END_STEP);
+            gd.playerAutoStopSteps.put(playerId, stops);
+        }
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

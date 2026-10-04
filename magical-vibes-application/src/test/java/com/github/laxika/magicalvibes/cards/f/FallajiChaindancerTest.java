@@ -45,7 +45,7 @@ class FallajiChaindancerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSickUsingColoredMana() {
         Permanent chaindancer = addChaindancerReady(player1);
         chaindancer.setSummoningSick(true);
-        chaindancer.setTapped(true);
+        chaindancer.tap();
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);

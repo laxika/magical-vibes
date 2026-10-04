@@ -82,11 +82,25 @@ public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffec
                 gameData.id, exiledEntry.card().getName());
     }
 
-    private void queueCastTrigger(GameData gameData, ExiledCardEntry exiledEntry, boolean nativeSuspend) {
+    public static boolean isSuspended(GameData gameData, ExiledCardEntry exiled) {
+        if (exiled.faceDown()) {
+            return false;
+        }
+        UUID cardId = exiled.card().getId();
+        Integer counters = gameData.exiledCardTimeCounters.get(cardId);
+        boolean hasSuspend = !gameData.exiledCardsWithNonSuspendTimeCounters.contains(cardId)
+                || exiled.card().getHandActivatedAbilities().stream()
+                .anyMatch(com.github.laxika.magicalvibes.model.ActivatedAbility::isSuspendsSourceFromHand);
+        return (counters != null && counters > 0 && hasSuspend)
+                || gameData.suspendedSpellExiles.stream().anyMatch(
+                suspended -> suspended.cardId().equals(cardId) && suspended.counters() > 0);
+    }
+
+    public void queueCastTrigger(GameData gameData, ExiledCardEntry exiledEntry, boolean suspendHaste) {
         StackEntry castTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                 exiledEntry.card(), exiledEntry.ownerId(), exiledEntry.card().getName() + "'s casting ability",
                 new ArrayList<>(List.of(new MayEffect(new CastExiledCardWithoutPayingManaCostEffect(
-                        exiledEntry.card().getId(), !nativeSuspend, nativeSuspend),
+                        exiledEntry.card().getId(), !suspendHaste, suspendHaste),
                         "Cast " + exiledEntry.card().getName() + " without paying its mana cost?"))),
                 exiledEntry.card().getId(), (UUID) null);
         castTrigger.setNonTargeting(true);

@@ -2,17 +2,22 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
+import com.github.laxika.magicalvibes.cards.p.Pyroblast;
+import com.github.laxika.magicalvibes.cards.w.WordOfUndoing;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinLyre.class, BalduvianBears.class})
+@CardUsed({GoblinLyre.class, BalduvianBears.class, JaceBeleren.class, Pyroblast.class, WordOfUndoing.class})
 class GoblinLyreTest extends BaseCardTest {
 
     @Test
@@ -141,5 +146,76 @@ class GoblinLyreTest extends BaseCardTest {
                 .hasMessageContaining("opponent");
         harness.assertOnBattlefield(player1, "Goblin Lyre");
         harness.assertNotInGraveyard(player1, "Goblin Lyre");
+    }
+
+    @Test
+    @DisplayName("A creature cannot be chosen as the target")
+    void cannotTargetCreature() {
+        harness.addToBattlefield(player1, new GoblinLyre());
+        Permanent creature = addCreatureReady(player2, new BalduvianBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Goblin Lyre");
+        harness.assertNotInGraveyard(player1, "Goblin Lyre");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creature counts are determined on resolution rather than activation")
+    void countsCreaturesAtResolution() {
+        harness.addToBattlefield(player1, new GoblinLyre());
+        Permanent ownCreature = addCreatureReady(player1, new BalduvianBears());
+        addCreatureReady(player1, new BalduvianBears());
+        addCreatureReady(player1, new BalduvianBears());
+        Permanent opposingCreature = addCreatureReady(player2, new BalduvianBears());
+        addCreatureReady(player2, new BalduvianBears());
+        harness.setHand(player1, List.of(new WordOfUndoing(), new WordOfUndoing()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        int ownLifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.assertInGraveyard(player1, "Goblin Lyre");
+        assertThat(gameLogContains("coin flip for Goblin Lyre")).isFalse();
+        harness.castAndResolveInstant(player1, 0, ownCreature.getId());
+        harness.castAndResolveInstant(player1, 0, opposingCreature.getId());
+        harness.assertInHand(player1, "Balduvian Bears");
+        harness.assertInHand(player2, "Balduvian Bears");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        boolean won = gameLogContains("wins the coin flip for Goblin Lyre");
+        boolean lost = gameLogContains("loses the coin flip for Goblin Lyre");
+        assertThat(won ^ lost).isTrue();
+        harness.assertLife(player1, ownLifeBefore - (lost ? 1 : 0));
+        harness.assertLife(player2, opponentLifeBefore - (won ? 2 : 0));
+    }
+
+    @Test
+    @CardUsed({JaceBeleren.class, Pyroblast.class})
+    @DisplayName("An ability whose planeswalker target leaves does not flip a coin or deal damage")
+    void removedPlaneswalkerTargetStopsEntireAbility() {
+        harness.addToBattlefield(player1, new GoblinLyre());
+        addCreatureReady(player1, new BalduvianBears());
+        addCreatureReady(player2, new BalduvianBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        harness.setHand(player1, List.of(new Pyroblast()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        int ownLifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player1, 0, null, planeswalker.getId());
+        harness.castInstant(player1, 0, 1, planeswalker.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Jace Beleren");
+        harness.assertInGraveyard(player2, "Jace Beleren");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("coin flip for Goblin Lyre")).isFalse();
+        harness.assertInGraveyard(player1, "Goblin Lyre");
+        harness.assertLife(player1, ownLifeBefore);
+        harness.assertLife(player2, opponentLifeBefore);
     }
 }

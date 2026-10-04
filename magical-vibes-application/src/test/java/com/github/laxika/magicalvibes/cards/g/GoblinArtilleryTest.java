@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinArtillery.class, LlanowarElves.class})
 class GoblinArtilleryTest extends BaseCardTest {
-
-    // ===== Activating ability =====
 
     @Test
     @DisplayName("Activating ability targeting player puts it on the stack")
@@ -32,7 +33,6 @@ class GoblinArtilleryTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(entry.getCard().getName()).isEqualTo("Goblin Artillery");
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
     }
 
@@ -45,8 +45,6 @@ class GoblinArtilleryTest extends BaseCardTest {
 
         assertThat(artillery.isTapped()).isTrue();
     }
-
-    // ===== Dealing damage to player =====
 
     @Test
     @DisplayName("Deals 2 damage to target player and 3 damage to controller")
@@ -78,8 +76,6 @@ class GoblinArtilleryTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(15);
     }
 
-    // ===== Dealing damage to creature =====
-
     @Test
     @DisplayName("Deals 2 damage to target creature, destroying a 1/1, and 3 damage to controller")
     void deals2DamageDestroying1ToughnessAnd3ToController() {
@@ -103,9 +99,8 @@ class GoblinArtilleryTest extends BaseCardTest {
     void deals2DamageDoesNotKill3Toughness() {
         harness.setLife(player1, 20);
         // Use another Goblin Artillery as a 1/3 target
-        Permanent targetArtillery = new Permanent(new GoblinArtillery());
+        Permanent targetArtillery = harness.addToBattlefieldAndReturn(player2, new GoblinArtillery());
         targetArtillery.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(targetArtillery);
 
         addReadyArtillery(player1);
 
@@ -116,8 +111,6 @@ class GoblinArtilleryTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Goblin Artillery");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
     }
-
-    // ===== Validation =====
 
     @Test
     @DisplayName("Cannot activate ability when already tapped")
@@ -133,26 +126,21 @@ class GoblinArtilleryTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        GoblinArtillery card = new GoblinArtillery();
-        Permanent artillery = new Permanent(card);
-        // summoningSick is true by default
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(artillery);
+        harness.addToBattlefield(player1, new GoblinArtillery());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("summoning sick");
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("Ability fizzles if target creature is removed — controller takes no damage")
     void fizzlesIfTargetCreatureRemoved() {
         harness.setLife(player1, 20);
         addReadyArtillery(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new LlanowarElves());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
         harness.activateAbility(player1, 0, null, targetId);
 
         // Remove target before resolution
@@ -167,13 +155,55 @@ class GoblinArtilleryTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Ability still deals both amounts of damage after its source leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent artillery = addReadyArtillery(player1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.getGameData().playerBattlefields.get(player1.getId()).remove(artillery);
+        harness.getGameData().playerGraveyards.get(player1.getId()).add(artillery.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Lethal damage to both players results in a draw after the whole ability resolves")
+    void lethalDamageToBothPlayersDrawsGame() {
+        harness.setLife(player1, 3);
+        harness.setLife(player2, 2);
+        addReadyArtillery(player1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 0);
+        harness.assertLife(player2, 0);
+        assertThat(harness.getGameData().gameResult).isEqualTo(GameEventFact.GameResult.DRAW);
+        assertThat(harness.getGameData().winnerPlayerId).isNull();
+    }
+
+    @Test
+    @DisplayName("Can target itself as a creature and survives its own 2 damage")
+    void canTargetItsOwnCreature() {
+        harness.setLife(player1, 20);
+        Permanent artillery = addReadyArtillery(player1);
+
+        harness.activateAbility(player1, 0, null, artillery.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Goblin Artillery");
+        assertThat(artillery.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 17);
+    }
 
     private Permanent addReadyArtillery(Player player) {
-        GoblinArtillery card = new GoblinArtillery();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GoblinArtillery());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
