@@ -24,8 +24,7 @@ class HeroicChargeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HeroicCharge()));
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
@@ -71,5 +70,45 @@ class HeroicChargeTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void kickedSpellAffectsCreaturesPresentAtResolutionButNotLaterArrivals() {
+        Permanent initialCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HeroicCharge()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castKickedInstant(player1, 0);
+
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        for (Permanent affected : List.of(initialCreature, beforeResolution)) {
+            assertThat(gqs.getEffectivePower(gd, affected)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, affected)).isEqualTo(3);
+            assertThat(gqs.hasKeyword(gd, affected, Keyword.TRAMPLE)).isTrue();
+        }
+        assertThat(gqs.getEffectivePower(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, afterResolution)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void kickedSpellResolvesWithNoCreaturesAndDoesNotAffectLaterArrivals() {
+        harness.setHand(player1, List.of(new HeroicCharge()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castKickedInstant(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Heroic Charge");
+        assertThat(gd.stack).isEmpty();
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.TRAMPLE)).isFalse();
     }
 }
