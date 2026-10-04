@@ -61,6 +61,46 @@ class HellSwarmTest extends BaseCardTest {
         assertThat(later.getEffectiveToughness()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Affects creatures that enter while Hell Swarm is on the stack")
+    void affectsCreaturesEnteringBeforeResolution() {
+        harness.castFromHand(player1, new HellSwarm(), "{B}");
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        harness.passBothPriorities();
+
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        assertThat(bears.getEffectivePower()).isEqualTo(1);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Resolves without creatures and does not affect later arrivals")
+    void resolvesOnEmptyBattlefield() {
+        castHellSwarm();
+
+        harness.assertInGraveyard(player1, "Hell Swarm");
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        assertThat(bears.getEffectivePower()).isEqualTo(2);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Hell Swarms stack and can reduce power below zero")
+    void multipleCastsCanGiveNegativePower() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castHellSwarm();
+        castHellSwarm();
+        castHellSwarm();
+
+        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        assertThat(bears.getEffectivePower()).isEqualTo(-1);
+        assertThat(bears.getEffectiveToughness()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
     private void castHellSwarm() {
         harness.castFromHand(player1, new HellSwarm(), "{B}");
         harness.passBothPriorities();
