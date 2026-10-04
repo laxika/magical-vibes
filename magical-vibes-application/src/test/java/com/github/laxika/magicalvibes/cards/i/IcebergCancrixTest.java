@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.ManaColor;
 
 
 
@@ -94,6 +93,67 @@ class IcebergCancrixTest extends BaseCardTest {
                 new GrizzlyBears()
         );
     }
+    @Test
+    @DisplayName("The controller can target themselves and mills the top two cards")
+    void canMillController() {
+        harness.addToBattlefield(player1, new IcebergCancrix());
+        Card first = new SnowCoveredIsland();
+        Card second = new IcebergCancrix();
+        Card third = new SnowCoveredIsland();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        harness.enterBattlefieldAndReturn(player1, new SnowCoveredIsland());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Milling a one-card library mills only the remaining card")
+    void millsOnlyRemainingCard() {
+        harness.addToBattlefield(player1, new IcebergCancrix());
+        Card remaining = new IcebergCancrix();
+        harness.setLibrary(player2, List.of(remaining));
+
+        harness.enterBattlefieldAndReturn(player1, new SnowCoveredIsland());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Another Cancrix entering triggers the existing Cancrix exactly once")
+    void anotherCancrixTriggersExistingCancrix() {
+        harness.addToBattlefield(player1, new IcebergCancrix());
+        harness.setLibrary(player2, List.of(
+                new IcebergCancrix(), new IcebergCancrix(), new IcebergCancrix()));
+
+        harness.enterBattlefieldAndReturn(player1, new IcebergCancrix());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
 
 @CardUsed({IcebergCancrix.class, Forest.class, SnowCoveredIsland.class})
@@ -165,11 +225,7 @@ class Mh1IcebergCancrixTest extends BaseCardTest {
     @DisplayName("Iceberg Cancrix does not trigger for its own entry")
     void ownEntryDoesNotTrigger() {
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
-        harness.setHand(player1, List.of(new IcebergCancrix()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new IcebergCancrix(), "{1}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
