@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.k.KnightOfMeadowgrain;
+import com.github.laxika.magicalvibes.cards.m.MilitiasPride;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GuardianOfCloverdell.class, KnightOfMeadowgrain.class, MilitiasPride.class})
 class GuardianOfCloverdellTest extends BaseCardTest {
-
-    // ===== ETB: creates three Kithkin Soldier tokens =====
 
     @Test
     @DisplayName("ETB creates three 1/1 white Kithkin Soldier tokens")
@@ -37,9 +38,11 @@ class GuardianOfCloverdellTest extends BaseCardTest {
         Permanent token = findKithkinSoldierToken(player1);
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isAttacking()).isFalse();
     }
-
-    // ===== Activated ability: {G}, Sacrifice a Kithkin: gain 1 life =====
 
     @Test
     @DisplayName("Sacrificing a Kithkin gains 1 life and moves it to graveyard")
@@ -79,39 +82,69 @@ class GuardianOfCloverdellTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("A noncreature Kithkin permanent can pay the sacrifice cost")
+    void canSacrificeKithkinEnchantment() {
+        harness.addToBattlefield(player1, new GuardianOfCloverdell());
+        harness.addToBattlefield(player1, new MilitiasPride());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c instanceof MilitiasPride);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
+        harness.passBothPriorities();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("An opponent's Kithkin cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsKithkin() {
+        harness.addToBattlefield(player1, new GuardianOfCloverdell());
+        harness.addToBattlefield(player2, new KnightOfMeadowgrain());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A newly entered Guardian can sacrifice its own token for life")
+    void canSacrificeTokenWhileSummoningSick() {
+        castAndResolveGuardian();
+        Permanent token = findKithkinSoldierToken(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, token.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+        assertThat(countKithkinSoldierTokens(player1)).isEqualTo(2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
 
     private void castAndResolveGuardian() {
         harness.setHand(player1, List.of(new GuardianOfCloverdell()));
         harness.addMana(player1, ManaColor.GREEN, 7);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private Permanent addGuardianReady(Player player) {
-        Permanent guardian = new Permanent(new GuardianOfCloverdell());
-        guardian.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(guardian);
-        return guardian;
+        return addCreatureReady(player, new GuardianOfCloverdell());
     }
 
     private void addKithkin(Player player, int count) {
         for (int i = 0; i < count; i++) {
-            Permanent kithkin = new Permanent(createKithkinCard("Test Kithkin " + i));
-            kithkin.setSummoningSick(false);
-            gd.playerBattlefields.get(player.getId()).add(kithkin);
+            addCreatureReady(player, new KnightOfMeadowgrain());
         }
-    }
-
-    private Card createKithkinCard(String name) {
-        Card card = new Card() {};
-        card.setName(name);
-        card.setSubtypes(List.of(CardSubtype.KITHKIN));
-        card.setType(CardType.CREATURE);
-        card.setPower(1);
-        card.setToughness(1);
-        return card;
     }
 
     private int countKithkinSoldierTokens(Player player) {
