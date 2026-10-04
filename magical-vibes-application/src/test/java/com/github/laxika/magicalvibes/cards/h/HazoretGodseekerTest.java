@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HazoretGodseeker.class, AxegrinderGiant.class, GrizzlyBears.class})
 class HazoretGodseekerTest extends BaseCardTest {
 
     @Test
@@ -48,8 +50,7 @@ class HazoretGodseekerTest extends BaseCardTest {
         addCreatureReady(player2, new AxegrinderGiant());
         addCreatureReady(player1, new HazoretGodseeker());
 
-        declareAttackers(player2, List.of(0));
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
                 List.of(new BlockerAssignment(0, 0))))
@@ -62,8 +63,7 @@ class HazoretGodseekerTest extends BaseCardTest {
         addCreatureReady(player1, new HazoretGodseeker());
         gd.playerSpeeds.put(player1.getId(), 4);
 
-        declareAttackers(player2, List.of(0));
-        harness.beginBlockerDeclarationInput();
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isBlocking()).isTrue();
@@ -90,5 +90,73 @@ class HazoretGodseekerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canActivateWhileSummoningSickAndBelowMaxSpeed() {
+        Permanent hazoret = harness.addToBattlefieldAndReturn(player1, new HazoretGodseeker());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(hazoret.isTapped()).isTrue();
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    void abilityDoesNotResolveIfTargetPowerIncreasesAboveTwo() {
+        addCreatureReady(player1, new HazoretGodseeker());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.setPowerModifier(1);
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    void increasingPowerAfterResolutionDoesNotRemoveUnblockability() {
+        addCreatureReady(player1, new HazoretGodseeker());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        target.setPowerModifier(1);
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void survivesLethalCombatDamageAtMaxSpeed() {
+        addCreatureReady(player2, new AxegrinderGiant());
+        addCreatureReady(player1, new HazoretGodseeker());
+        gd.playerSpeeds.put(player1.getId(), 4);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Hazoret, Godseeker");
+        harness.assertInGraveyard(player2, "Axegrinder Giant");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void enteringWithExistingSpeedDoesNotResetIt() {
+        gd.playerSpeeds.put(player1.getId(), 3);
+        harness.addToBattlefield(player1, new HazoretGodseeker());
+
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(3);
     }
 }
