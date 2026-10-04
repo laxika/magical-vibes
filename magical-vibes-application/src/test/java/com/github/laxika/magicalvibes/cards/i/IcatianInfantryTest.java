@@ -4,15 +4,20 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(IcatianInfantry.class)
+@CardUsed({IcatianInfantry.class})
 class IcatianInfantryTest extends BaseCardTest {
 
     @Test
@@ -96,9 +101,80 @@ class IcatianInfantryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    void canActivateWhileTappedAndSummoningSick(int abilityIndex) {
+        Permanent infantry = harness.addToBattlefieldAndReturn(player1, new IcatianInfantry());
+        infantry.setSummoningSick(true);
+        infantry.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, abilityIndex, null, null);
+        harness.passBothPriorities();
+
+        Keyword keyword = abilityIndex == 0 ? Keyword.FIRST_STRIKE : Keyword.BANDING;
+        assertThat(gqs.hasKeyword(gd, infantry, keyword)).isTrue();
+        assertThat(infantry.isTapped()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1})
+    void keywordIsGrantedOnlyAfterAbilityResolves(int abilityIndex) {
+        Permanent infantry = addCreatureReady(player1, new IcatianInfantry());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Keyword keyword = abilityIndex == 0 ? Keyword.FIRST_STRIKE : Keyword.BANDING;
+
+        harness.activateAbility(player1, 0, abilityIndex, null, null);
+
+        assertThat(gqs.hasKeyword(gd, infantry, keyword)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, infantry, keyword)).isTrue();
+    }
+
+    @Test
+    void gainedFirstStrikeKillsBlockerBeforeItCanDealDamage() {
+        Permanent attacker = addCreatureReady(player1, new IcatianInfantry());
+        Permanent blocker = addCreatureReady(player2, new IcatianInfantry());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void gainedBandingMakesBlockingOneMemberBlockBoth() {
+        Permanent bander = addCreatureReady(player1, new IcatianInfantry());
+        Permanent companion = addCreatureReady(player1, new IcatianInfantry());
+        Permanent blocker = addCreatureReady(player2, new IcatianInfantry());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        harness.inMutationScope(() -> harness.getCombatAttackService()
+                .declareAttackers(gd, player1, List.of(0, 1), null, List.of(List.of(0, 1))));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(bander.getBandId()).isNotNull().isEqualTo(companion.getBandId());
+        assertThat(blocker.getBlockingTargetIds()).containsExactlyInAnyOrder(bander.getId(), companion.getId());
+    }
+
     private void expireTemporaryAbilities() {
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
     }
 }
