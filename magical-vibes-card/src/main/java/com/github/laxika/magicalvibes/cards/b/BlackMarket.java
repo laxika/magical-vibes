@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect
 @CardRegistration(set = "PIP", collectorNumber = "463")
 @CardRegistration(set = "PIP", collectorNumber = "711")
 @CardRegistration(set = "PIP", collectorNumber = "991")
+@CardRegistration(set = "C17", collectorNumber = "98")
 public class BlackMarket extends Card {
 
     public BlackMarket() {

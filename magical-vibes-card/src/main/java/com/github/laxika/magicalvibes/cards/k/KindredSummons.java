@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilChosenCreatureType
 @CardRegistration(set = "SLD", collectorNumber = "1901")
 @CardRegistration(set = "ECC", collectorNumber = "112")
 @CardRegistration(set = "AFC", collectorNumber = "163")
+@CardRegistration(set = "C17", collectorNumber = "32")
 public class KindredSummons extends Card {
 
     public KindredSummons() {

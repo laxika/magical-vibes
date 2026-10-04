@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "1167")
 @CardRegistration(set = "MH1", collectorNumber = "206")
 @CardRegistration(set = "NCC", collectorNumber = "344")
+@CardRegistration(set = "C17", collectorNumber = "39")
 public class KessDissidentMage extends Card {
 
     public KessDissidentMage() {

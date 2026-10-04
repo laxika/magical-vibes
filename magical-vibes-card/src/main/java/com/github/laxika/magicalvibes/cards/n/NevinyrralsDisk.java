@@ -27,6 +27,7 @@ import java.util.List;
 @CardRegistration(set = "MH2", collectorNumber = "298")
 @CardRegistration(set = "C14", collectorNumber = "257")
 @CardRegistration(set = "C16", collectorNumber = "265")
+@CardRegistration(set = "C17", collectorNumber = "217")
 public class NevinyrralsDisk extends Card {
 
     public NevinyrralsDisk() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MB2", collectorNumber = "151")
+@CardRegistration(set = "C17", collectorNumber = "6")
 public class ScalelordReckoner extends Card {
 
     public ScalelordReckoner() {

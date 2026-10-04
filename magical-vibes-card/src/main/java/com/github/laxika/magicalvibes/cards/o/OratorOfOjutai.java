@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "DTK", collectorNumber = "28")
+@CardRegistration(set = "C17", collectorNumber = "67")
 public class OratorOfOjutai extends Card {
 
     public OratorOfOjutai() {

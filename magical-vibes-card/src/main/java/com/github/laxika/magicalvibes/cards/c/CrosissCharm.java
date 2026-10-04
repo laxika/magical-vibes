@@ -19,6 +19,7 @@ import java.util.Set;
 
 @CardRegistration(set = "PLS", collectorNumber = "99")
 @CardRegistration(set = "C13", collectorNumber = "181")
+@CardRegistration(set = "C17", collectorNumber = "169")
 public class CrosissCharm extends Card {
 
     public CrosissCharm() {

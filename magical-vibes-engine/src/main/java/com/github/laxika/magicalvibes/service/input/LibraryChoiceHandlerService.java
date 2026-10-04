@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.ExileToOwnerGraveyardAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChosenCardAwareEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardInGraveyardUntilEndOfTurnEffect;
@@ -1957,9 +1958,13 @@ public class LibraryChoiceHandlerService {
                 gameData.pendingEffectResolutionEntry.setEventValue(chosenCard.getManaValue());
             }
             gameData.pendingEffectResolutionEntry.setChosenObjectCard(chosenCard);
+            CardEffect followUpEffect = selectedCardFollowUp.effect();
+            if (followUpEffect instanceof ChosenCardAwareEffect chosenCardAwareEffect) {
+                followUpEffect = chosenCardAwareEffect.withChosenCard(chosenCard);
+            }
             gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
                     gameData.pendingEffectResolutionIndex,
-                    List.of(selectedCardFollowUp.effect()));
+                    List.of(followUpEffect));
         }
     }
 

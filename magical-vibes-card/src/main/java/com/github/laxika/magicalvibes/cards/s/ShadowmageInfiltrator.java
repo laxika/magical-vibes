@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 @CardRegistration(set = "MM2", collectorNumber = "186")
 @CardRegistration(set = "A25", collectorNumber = "217")
 @CardRegistration(set = "OTC", collectorNumber = "240")
+@CardRegistration(set = "C17", collectorNumber = "193")
 public class ShadowmageInfiltrator extends Card {
 
     public ShadowmageInfiltrator() {

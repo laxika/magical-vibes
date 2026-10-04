@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 
 @CardRegistration(set = "ODY", collectorNumber = "161")
 @CardRegistration(set = "C14", collectorNumber = "162")
+@CardRegistration(set = "C17", collectorNumber = "125")
 public class SkeletalScrying extends Card {
 
     public SkeletalScrying() {

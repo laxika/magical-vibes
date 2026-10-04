@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlaye
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "C21", collectorNumber = "138")
+@CardRegistration(set = "C17", collectorNumber = "16")
 public class CurseOfDisturbance extends Card {
 
     public CurseOfDisturbance() {

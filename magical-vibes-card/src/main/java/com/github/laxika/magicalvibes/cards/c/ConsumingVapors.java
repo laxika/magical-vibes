@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureAndControlle
 
 @CardRegistration(set = "ROE", collectorNumber = "101")
 @CardRegistration(set = "AFC", collectorNumber = "96")
+@CardRegistration(set = "C17", collectorNumber = "105")
 public class ConsumingVapors extends Card {
 
     public ConsumingVapors() {

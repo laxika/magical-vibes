@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "FRF", collectorNumber = "141")
 @CardRegistration(set = "SLD", collectorNumber = "308")
 @CardRegistration(set = "NCC", collectorNumber = "315")
+@CardRegistration(set = "C17", collectorNumber = "159")
 public class TemurSabertooth extends Card {
 
     public TemurSabertooth() {

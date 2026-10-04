@@ -13,6 +13,7 @@ import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "179")
 @CardRegistration(set = "CMD", collectorNumber = "168")
+@CardRegistration(set = "C17", collectorNumber = "157")
 public class RelicCrush extends Card {
 
     public RelicCrush() {

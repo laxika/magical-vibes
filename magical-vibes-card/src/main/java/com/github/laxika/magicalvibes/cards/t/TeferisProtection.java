@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 @CardRegistration(set = "STA", collectorNumber = "11")
 @CardRegistration(set = "TLE", collectorNumber = "7")
 @CardRegistration(set = "MAR", collectorNumber = "51")
+@CardRegistration(set = "C17", collectorNumber = "8")
 public class TeferisProtection extends Card {
 
     public TeferisProtection() {

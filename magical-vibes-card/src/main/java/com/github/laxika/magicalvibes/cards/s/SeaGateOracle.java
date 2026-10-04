@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 @CardRegistration(set = "GN3", collectorNumber = "38")
 @CardRegistration(set = "C14", collectorNumber = "124")
 @CardRegistration(set = "KHC", collectorNumber = "43")
+@CardRegistration(set = "C17", collectorNumber = "92")
 public class SeaGateOracle extends Card {
 
     public SeaGateOracle() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 
 @CardRegistration(set = "FRF", collectorNumber = "157")
+@CardRegistration(set = "C17", collectorNumber = "194")
 public class SilumgarTheDriftingDeath extends Card {
 
     public SilumgarTheDriftingDeath() {

@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "70")
 @CardRegistration(set = "2XM", collectorNumber = "97")
+@CardRegistration(set = "C17", collectorNumber = "115")
 public class MagusOfTheAbyss extends Card {
 
     public MagusOfTheAbyss() {

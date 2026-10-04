@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "25")
+@CardRegistration(set = "C17", collectorNumber = "35")
 public class ArahboRoarOfTheWorld extends Card {
 
     public ArahboRoarOfTheWorld() {

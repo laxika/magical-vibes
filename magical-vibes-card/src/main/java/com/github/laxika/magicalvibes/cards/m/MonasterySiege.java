@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "43")
+@CardRegistration(set = "C17", collectorNumber = "88")
 public class MonasterySiege extends Card {
 
     private static final String KHANS = "Khans";

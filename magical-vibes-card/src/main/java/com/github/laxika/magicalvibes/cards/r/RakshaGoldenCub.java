@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "5DN", collectorNumber = "12")
+@CardRegistration(set = "C17", collectorNumber = "69")
 public class RakshaGoldenCub extends Card {
 
     public RakshaGoldenCub() {

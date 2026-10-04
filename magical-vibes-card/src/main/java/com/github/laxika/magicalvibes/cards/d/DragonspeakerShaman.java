@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 @CardRegistration(set = "SCG", collectorNumber = "89")
 @CardRegistration(set = "DDG", collectorNumber = "53")
 @CardRegistration(set = "GN3", collectorNumber = "75")
+@CardRegistration(set = "C17", collectorNumber = "136")
 public class DragonspeakerShaman extends Card {
 
     public DragonspeakerShaman() {

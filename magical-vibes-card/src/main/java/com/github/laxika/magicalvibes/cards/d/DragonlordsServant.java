@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 @CardRegistration(set = "IMA", collectorNumber = "126")
 @CardRegistration(set = "TDC", collectorNumber = "210")
 @CardRegistration(set = "AFC", collectorNumber = "123")
+@CardRegistration(set = "C17", collectorNumber = "135")
 public class DragonlordsServant extends Card {
 
     public DragonlordsServant() {

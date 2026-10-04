@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "217")
 @CardRegistration(set = "C15", collectorNumber = "270")
+@CardRegistration(set = "C17", collectorNumber = "224")
 public class StaffOfNin extends Card {
 
     public StaffOfNin() {

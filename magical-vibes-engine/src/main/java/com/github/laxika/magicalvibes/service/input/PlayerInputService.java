@@ -2842,7 +2842,7 @@ public class PlayerInputService {
                                           int maxCount, UUID targetPlayerId, String cardName,
                                           boolean drawForHandExiled) {
         beginMultiZoneExileChoice(gameData, choosingPlayerId, matchingCards, maxCount, targetPlayerId,
-                cardName, drawForHandExiled, null, null);
+                cardName, drawForHandExiled, (CreateTokenEffect) null, null);
     }
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
@@ -2865,6 +2865,18 @@ public class PlayerInputService {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
                 choosingPlayerId, validCardIds, Math.min(maxCount, matchingCards.size()), targetPlayerId,
                 choosingPlayerId, cardName, drawForHandExiled, tokenTemplate, sourceSetCode, sourcePermanentId, null));
+    }
+
+    public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
+                                          int maxCount, UUID targetPlayerId, String cardName,
+                                          boolean drawForHandExiled, UUID sourcePermanentId,
+                                          CardEffect followUpEffect) {
+        List<UUID> validCardIds = matchingCards.stream().map(Card::getId).toList();
+
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
+                choosingPlayerId, validCardIds, Math.min(maxCount, matchingCards.size()), targetPlayerId,
+                choosingPlayerId, cardName, drawForHandExiled, null, null, sourcePermanentId,
+                followUpEffect, false));
     }
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,

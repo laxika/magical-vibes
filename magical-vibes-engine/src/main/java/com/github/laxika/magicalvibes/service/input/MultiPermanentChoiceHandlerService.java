@@ -252,6 +252,9 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .EachPlayerChoosesOpponentPermanentToDestroyEffectHandler eachPlayerChoosesOpponentPermanentToDestroyHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
+            .EachPlayerChoosesDifferentOpponentPermanentThenDestroyRestEffectHandler
+            eachPlayerChoosesDifferentOpponentPermanentThenDestroyRestHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx
             .DefendingPlayerChoosesPermanentsToExileEffectHandler defendingPlayerChoosesPermanentsToExileHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .WillOfTheCouncilEffectHandler willOfTheCouncilEffectHandler;
@@ -400,7 +403,8 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.CirdanVoteChoice
                 || context instanceof MultiPermanentChoiceContext.MobVerdictChoice
                 || context instanceof MultiPermanentChoiceContext.ExpropriatePermanentChoice
-                || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice)
+                || context instanceof MultiPermanentChoiceContext.ChooseLandOfEachBasicTypeThenDestroyChoice
+                || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest)
                 && permanentIds.size() != 1) {
             throw new IllegalStateException("Exactly one permanent must be selected");
         }
@@ -1053,6 +1057,8 @@ public class MultiPermanentChoiceHandlerService {
             handleEachPlayerChoosesOpponentPermanentToExile(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToDestroy ctx) {
             handleEachPlayerChoosesOpponentPermanentToDestroy(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest ctx) {
+            handleEachPlayerChoosesDifferentOpponentPermanentThenDestroyRest(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.WillOfTheCouncilChoice ctx) {
             handleWillOfTheCouncilChoice(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice ctx) {
@@ -3599,6 +3605,19 @@ public class MultiPermanentChoiceHandlerService {
     private void handleEachPlayerChoosesOpponentPermanentToDestroy(GameData gameData, List<UUID> permanentIds,
             MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToDestroy context) {
         eachPlayerChoosesOpponentPermanentToDestroyHandler.completeChoice(gameData, permanentIds, context);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private void handleEachPlayerChoosesDifferentOpponentPermanentThenDestroyRest(
+            GameData gameData, List<UUID> permanentIds,
+            MultiPermanentChoiceContext.EachPlayerChoosesDifferentOpponentPermanentThenDestroyRest context) {
+        eachPlayerChoosesDifferentOpponentPermanentThenDestroyRestHandler.completeChoice(
+                gameData, permanentIds, context);
 
         if (gameData.interaction.isAwaitingInput()) {
             return;

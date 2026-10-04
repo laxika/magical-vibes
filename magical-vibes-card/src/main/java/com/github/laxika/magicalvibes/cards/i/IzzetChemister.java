@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "A25", collectorNumber = "138")
 @CardRegistration(set = "AFC", collectorNumber = "130")
+@CardRegistration(set = "C17", collectorNumber = "26")
 public class IzzetChemister extends Card {
 
     public IzzetChemister() {
