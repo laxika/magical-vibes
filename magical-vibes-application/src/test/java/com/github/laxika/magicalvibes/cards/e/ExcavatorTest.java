@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Excavator.class, Forest.class, Island.class, Mountain.class, Plains.class, Swamp.class,
-        TrainedArmodon.class, Wasteland.class})
+        TrainedArmodon.class, Wasteland.class, UrborgTombOfYawgmoth.class})
 class ExcavatorTest extends BaseCardTest {
 
     @Test
@@ -170,5 +170,56 @@ class ExcavatorTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Excavator");
         assertThat(gqs.hasKeyword(gd, armodon, Keyword.FORESTWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tap and sacrifice costs are paid before landwalk resolves")
+    void costsArePaidBeforeResolution() {
+        Permanent excavator = harness.addToBattlefieldAndReturn(player1, new Excavator());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent armodon = harness.addToBattlefieldAndReturn(player1, new TrainedArmodon());
+
+        harness.activateAbility(player1, 0, null, armodon.getId());
+
+        assertThat(excavator.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gqs.hasKeyword(gd, armodon, Keyword.FORESTWALK)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, armodon, Keyword.FORESTWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's basic land cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsBasicLand() {
+        harness.addToBattlefield(player1, new Excavator());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent armodon = harness.addToBattlefieldAndReturn(player1, new TrainedArmodon());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, armodon.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Losing the target does not refund the sacrifice cost or grant landwalk to another creature")
+    void targetLeavingBattlefieldDoesNotRefundCosts() {
+        Permanent excavator = harness.addToBattlefieldAndReturn(player1, new Excavator());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new TrainedArmodon());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new TrainedArmodon());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, target));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player1, "Trained Armodon");
+        assertThat(excavator.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FORESTWALK)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
