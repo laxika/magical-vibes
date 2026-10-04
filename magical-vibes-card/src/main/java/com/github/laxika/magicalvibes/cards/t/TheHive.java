@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "4ED", collectorNumber = "351")
 @CardRegistration(set = "SUM", collectorNumber = "277")
 @CardRegistration(set = "3ED", collectorNumber = "277")
+@CardRegistration(set = "LEB", collectorNumber = "273")
 public class TheHive extends Card {
 
     public TheHive() {

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SLD", collectorNumber = "1738")
 @CardRegistration(set = "SOA", collectorNumber = "50")
 @CardRegistration(set = "2ED", collectorNumber = "186")
+@CardRegistration(set = "LEB", collectorNumber = "186")
 public class Berserk extends Card {
 
     public Berserk() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 @CardRegistration(set = "VMA", collectorNumber = "323")
 @CardRegistration(set = "ME4", collectorNumber = "256")
 @CardRegistration(set = "2ED", collectorNumber = "286")
+@CardRegistration(set = "LEB", collectorNumber = "286")
 public class UndergroundSea extends Card {
 
     public UndergroundSea() {

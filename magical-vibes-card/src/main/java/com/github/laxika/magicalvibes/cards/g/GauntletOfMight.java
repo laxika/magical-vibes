@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "ME4", collectorNumber = "202")
 @CardRegistration(set = "2ED", collectorNumber = "245")
+@CardRegistration(set = "LEB", collectorNumber = "245")
 public class GauntletOfMight extends Card {
 
     public GauntletOfMight() {

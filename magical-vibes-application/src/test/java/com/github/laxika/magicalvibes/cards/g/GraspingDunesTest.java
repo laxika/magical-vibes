@@ -8,14 +8,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GraspingDunes.class, AirElemental.class, Forest.class})
 class GraspingDunesTest extends BaseCardTest {
 
     @Test
@@ -23,7 +23,7 @@ class GraspingDunesTest extends BaseCardTest {
     void tappingProducesColorlessMana() {
         addReadyDunes(player1);
 
-        gs.tapPermanent(gd, player1, 0);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
@@ -81,9 +81,47 @@ class GraspingDunesTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
     }
 
+    @Test
+    @DisplayName("Sacrifice is paid before the counter ability resolves, including for your own creature")
+    void sacrificesImmediatelyAndCanTargetOwnCreature() {
+        addReadyDunes(player1);
+        Permanent elemental = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player1, 0, null, elemental.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grasping Dunes");
+        harness.assertInGraveyard(player1, "Grasping Dunes");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(elemental.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(elemental.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Sacrifice ability cannot be activated during combat on your own turn")
+    void cannotActivateDuringCombat() {
+        addReadyDunes(player1);
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, elemental.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+        harness.assertOnBattlefield(player1, "Grasping Dunes");
+        assertThat(elemental.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
     private void addReadyDunes(Player player) {
-        Permanent permanent = new Permanent(new GraspingDunes());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GraspingDunes());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
     }
 }

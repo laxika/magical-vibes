@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "ME1", collectorNumber = "77")
 @CardRegistration(set = "3ED", collectorNumber = "118")
 @CardRegistration(set = "2ED", collectorNumber = "117")
+@CardRegistration(set = "LEB", collectorNumber = "117")
 public class NetherShadow extends Card {
 
     public NetherShadow() {

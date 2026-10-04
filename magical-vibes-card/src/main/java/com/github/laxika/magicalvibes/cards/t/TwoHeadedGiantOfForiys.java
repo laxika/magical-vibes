@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 
 @CardRegistration(set = "ME4", collectorNumber = "139")
 @CardRegistration(set = "2ED", collectorNumber = "180")
+@CardRegistration(set = "LEB", collectorNumber = "180")
 public class TwoHeadedGiantOfForiys extends Card {
 
     public TwoHeadedGiantOfForiys() {
