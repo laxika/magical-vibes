@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GurmagDrowner.class, GrizzlyBears.class, Shock.class, Forest.class, Island.class})
 class GurmagDrownerTest extends BaseCardTest {
@@ -53,6 +54,94 @@ class GurmagDrownerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(restOne, restTwo, restThree);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Exploiting itself selects only from the top four cards")
+    void exploitingItselfLooksAtOnlyTopFourCards() {
+        Card chosen = new Island();
+        Card first = new Forest();
+        Card second = new Island();
+        Card third = new Forest();
+        Card untouched = new Island();
+        harness.setLibrary(player1, List.of(first, second, chosen, third, untouched));
+
+        exploitDrownerItself();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Gurmag Drowner");
+        harness.assertInGraveyard(player1, "Gurmag Drowner");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second, third)
+                .doesNotContain(chosen, untouched);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A two-card library gives one card to hand and one to the graveyard")
+    void shortLibraryStillPutsOneCardIntoHand() {
+        Card chosen = new Island();
+        Card rest = new Forest();
+        harness.setLibrary(player1, List.of(rest, chosen));
+
+        exploitDrownerItself();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(rest).doesNotContain(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The only library card goes to hand without a selection")
+    void oneCardLibraryPutsOnlyCardIntoHand() {
+        Card onlyCard = new Forest();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        exploitDrownerItself();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Looking at an empty library does not draw or lose the game")
+    void emptyLibraryDoesNotLoseGame() {
+        harness.setLibrary(player1, List.of());
+
+        exploitDrownerItself();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Choosing no card is illegal when cards are available")
+    void cannotPutAllLookedAtCardsIntoGraveyard() {
+        Card first = new Island();
+        Card second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+
+        exploitDrownerItself();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(second).doesNotContain(first);
+    }
+
+    private void exploitDrownerItself() {
+        castDrowner();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Gurmag Drowner"));
+        harness.passBothPriorities();
     }
 
     private void castDrowner() {
