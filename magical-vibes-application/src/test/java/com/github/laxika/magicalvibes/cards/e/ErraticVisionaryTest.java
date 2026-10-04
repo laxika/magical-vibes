@@ -49,6 +49,98 @@ class ErraticVisionaryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Can discard the card just drawn rather than a card already in hand")
+    void canDiscardNewlyDrawnCard() {
+        addCreatureReady(player1, new ErraticVisionary());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new ErraticVisionary()));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertInGraveyard(player1, "Erratic Visionary");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can activate with an empty hand and then discard the drawn card")
+    void canActivateWithEmptyHand() {
+        addCreatureReady(player1, new ErraticVisionary());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Pays the tap cost immediately, before drawing or discarding")
+    void tapsBeforeResolution() {
+        Permanent visionary = addCreatureReady(player1, new ErraticVisionary());
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new ErraticVisionary()));
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(visionary.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+        harness.assertInGraveyard(player1, "Erratic Visionary");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent visionary = addCreatureReady(player1, new ErraticVisionary());
+        visionary.setTapped(true);
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new ErraticVisionary());
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two generic mana cannot pay the blue part of the activation cost")
+    void cannotActivateWithoutBlueMana() {
+        Permanent visionary = addCreatureReady(player1, new ErraticVisionary());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(visionary.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addActivationMana() {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
