@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.p.PantherWarriors;
 import com.github.laxika.magicalvibes.cards.r.RainbowEfreet;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HeatWave.class, PantherWarriors.class, RainbowEfreet.class})
+@CardUsed({HeatWave.class, PantherWarriors.class, RainbowEfreet.class, Opalescence.class, Humble.class})
 class HeatWaveTest extends BaseCardTest {
 
     private Permanent addHeatWave() {
@@ -157,5 +158,74 @@ class HeatWaveTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(heatWave);
         harness.assertInGraveyard(player1, "Heat Wave");
+    }
+
+    @Test
+    @DisplayName("Multiple Heat Waves each charge life for a nonblue blocker")
+    void multipleCopiesStackLifeCosts() {
+        addHeatWave();
+        addHeatWave();
+        addCreatureReady(player1, new PantherWarriors()).setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new PantherWarriors());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 2)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Declaring no blockers costs no life")
+    void noBlockersCostsNoLife() {
+        addHeatWave();
+        addCreatureReady(player1, new PantherWarriors()).setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new PantherWarriors());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(blocker.isBlocking()).isFalse();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Blue creatures can block after Heat Wave is sacrificed")
+    void sacrificeEndsBlueBlockingRestriction() {
+        addHeatWave();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        addCreatureReady(player1, new PantherWarriors()).setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new RainbowEfreet());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Heat Wave charges no life while it has lost all abilities")
+    void losingAbilitiesRemovesLifeTax() {
+        Permanent heatWave = addHeatWave();
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, heatWave.getId());
+        addCreatureReady(player1, new PantherWarriors()).setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new PantherWarriors());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 2)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore);
     }
 }
