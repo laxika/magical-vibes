@@ -1,16 +1,15 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.Gravedigger;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FalkenrathTorturer;
+import com.github.laxika.magicalvibes.cards.c.CurseOfThirst;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,49 +18,30 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({HavengulRunebinder.class, FalkenrathTorturer.class, HeadlessSkaab.class, CurseOfThirst.class})
 class HavengulRunebinderTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
     @Test
-    @DisplayName("Has activated ability: {2}{U}, {T}, exile creature card, create Zombie + counters")
-    void hasActivatedAbility() {
-        HavengulRunebinder card = new HavengulRunebinder();
+    @DisplayName("Cannot activate a tapped Runebinder")
+    void cannotActivateWhenTapped() {
+        Permanent runebinder = harness.addToBattlefieldAndReturn(player1, new HavengulRunebinder());
+        runebinder.setSummoningSick(false);
+        runebinder.setTapped(true);
+        harness.setGraveyard(player1, List.of(new FalkenrathTorturer()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{2}{U}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(3);
-
-        assertThat(ability.getEffects().get(0)).isInstanceOf(ExileCardFromGraveyardCost.class);
-        ExileCardFromGraveyardCost exileCost = (ExileCardFromGraveyardCost) ability.getEffects().get(0);
-        assertThat(exileCost.requiredType()).isEqualTo(CardType.CREATURE);
-
-        assertThat(ability.getEffects().get(1)).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) ability.getEffects().get(1);
-        assertThat(tokenEffect.tokenName()).isEqualTo("Zombie");
-        assertThat(tokenEffect.tokenPower()).isEqualTo(2);
-        assertThat(tokenEffect.tokenToughness()).isEqualTo(2);
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.BLACK);
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.ZOMBIE);
-
-        assertThat(ability.getEffects().get(2))
-                .isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Activation / cost payment =====
 
     @Test
     @DisplayName("Activating prompts for graveyard exile cost choice")
     void promptsForGraveyardExileCost() {
         Permanent runebinder = harness.addToBattlefieldAndReturn(player1, new HavengulRunebinder());
         runebinder.setSummoningSick(false);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new FalkenrathTorturer()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(runebinder);
@@ -76,16 +56,16 @@ class HavengulRunebinderTest extends BaseCardTest {
     void exilesCreatureAndTapsSource() {
         Permanent runebinder = harness.addToBattlefieldAndReturn(player1, new HavengulRunebinder());
         runebinder.setSummoningSick(false);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new FalkenrathTorturer()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(runebinder);
         harness.activateAbility(player1, idx, null, null);
         harness.handleGraveyardCardChosen(player1, 0);
 
-        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Falkenrath Torturer");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+                .anyMatch(c -> c.getName().equals("Falkenrath Torturer"));
         assertThat(runebinder.isTapped()).isTrue();
     }
 
@@ -94,7 +74,7 @@ class HavengulRunebinderTest extends BaseCardTest {
     void manaIsConsumed() {
         Permanent runebinder = harness.addToBattlefieldAndReturn(player1, new HavengulRunebinder());
         runebinder.setSummoningSick(false);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new FalkenrathTorturer()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(runebinder);
@@ -105,14 +85,12 @@ class HavengulRunebinderTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 
-    // ===== Resolution =====
-
     @Test
-    @DisplayName("Resolving creates a 2/2 black Zombie token")
+    @DisplayName("Resolving creates a black Zombie creature token")
     void createsZombieToken() {
         Permanent runebinder = harness.addToBattlefieldAndReturn(player1, new HavengulRunebinder());
         runebinder.setSummoningSick(false);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new FalkenrathTorturer()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(runebinder);
@@ -132,7 +110,7 @@ class HavengulRunebinderTest extends BaseCardTest {
     void newTokenGetsCounter() {
         Permanent runebinder = harness.addToBattlefieldAndReturn(player1, new HavengulRunebinder());
         runebinder.setSummoningSick(false);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new FalkenrathTorturer()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(runebinder);
@@ -151,9 +129,9 @@ class HavengulRunebinderTest extends BaseCardTest {
     void existingZombiesGetCounter() {
         Permanent runebinder = harness.addToBattlefieldAndReturn(player1, new HavengulRunebinder());
         runebinder.setSummoningSick(false);
-        Permanent gravedigger = harness.addToBattlefieldAndReturn(player1, new Gravedigger());
+        Permanent existingZombie = harness.addToBattlefieldAndReturn(player1, new HeadlessSkaab());
 
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new FalkenrathTorturer()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(runebinder);
@@ -161,7 +139,7 @@ class HavengulRunebinderTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gravedigger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(existingZombie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -169,9 +147,9 @@ class HavengulRunebinderTest extends BaseCardTest {
     void nonZombiesDoNotGetCounter() {
         Permanent runebinder = harness.addToBattlefieldAndReturn(player1, new HavengulRunebinder());
         runebinder.setSummoningSick(false);
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent nonZombie = harness.addToBattlefieldAndReturn(player1, new FalkenrathTorturer());
 
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new FalkenrathTorturer()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(runebinder);
@@ -179,7 +157,7 @@ class HavengulRunebinderTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
+        assertThat(nonZombie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(runebinder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
@@ -188,9 +166,9 @@ class HavengulRunebinderTest extends BaseCardTest {
     void opponentZombiesDoNotGetCounter() {
         Permanent runebinder = harness.addToBattlefieldAndReturn(player1, new HavengulRunebinder());
         runebinder.setSummoningSick(false);
-        Permanent opponentZombie = harness.addToBattlefieldAndReturn(player2, new Gravedigger());
+        Permanent opponentZombie = harness.addToBattlefieldAndReturn(player2, new HeadlessSkaab());
 
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new FalkenrathTorturer()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(runebinder);
@@ -200,8 +178,6 @@ class HavengulRunebinderTest extends BaseCardTest {
 
         assertThat(opponentZombie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
-
-    // ===== Validation =====
 
     @Test
     @DisplayName("Cannot activate without a creature card in graveyard")
@@ -222,7 +198,7 @@ class HavengulRunebinderTest extends BaseCardTest {
     void cannotActivateWithoutEnoughMana() {
         Permanent runebinder = harness.addToBattlefieldAndReturn(player1, new HavengulRunebinder());
         runebinder.setSummoningSick(false);
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new FalkenrathTorturer()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(runebinder);
@@ -236,11 +212,63 @@ class HavengulRunebinderTest extends BaseCardTest {
     void cannotActivateWithSummoningSickness() {
         Permanent runebinder = harness.addToBattlefieldAndReturn(player1, new HavengulRunebinder());
         // summoning sick by default
-        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new FalkenrathTorturer()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(runebinder);
         assertThatThrownBy(() -> harness.activateAbility(player1, idx, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A noncreature card cannot pay the graveyard cost")
+    void cannotExileNoncreatureCard() {
+        Permanent runebinder = harness.addToBattlefieldAndReturn(player1, new HavengulRunebinder());
+        runebinder.setSummoningSick(false);
+        harness.setGraveyard(player1, List.of(new CurseOfThirst()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
+        harness.assertInGraveyard(player1, "Curse of Thirst");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature in the opponent's graveyard cannot pay the cost")
+    void cannotExileOpponentsCreature() {
+        Permanent runebinder = harness.addToBattlefieldAndReturn(player1, new HavengulRunebinder());
+        runebinder.setSummoningSick(false);
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new FalkenrathTorturer()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("creature");
+        harness.assertInGraveyard(player2, "Falkenrath Torturer");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Zombies are determined at resolution even if the Runebinder has left")
+    void countersUseBattlefieldAtResolution() {
+        Permanent runebinder = harness.addToBattlefieldAndReturn(player1, new HavengulRunebinder());
+        runebinder.setSummoningSick(false);
+        harness.setGraveyard(player1, List.of(new FalkenrathTorturer()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        gd.playerBattlefields.get(player1.getId()).remove(runebinder);
+        Permanent zombie = harness.addToBattlefieldAndReturn(player1, new HeadlessSkaab());
+        harness.passBothPriorities();
+
+        assertThat(zombie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        Permanent token = findPermanent(player1, "Zombie");
+        assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
     }
 }
