@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -71,8 +72,7 @@ class GlacialChasmTest extends BaseCardTest {
         harness.setHand(player2, List.of(new LightningBolt()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         harness.assertLife(player1, 20);
     }
@@ -101,8 +101,7 @@ class GlacialChasmTest extends BaseCardTest {
         harness.setHand(player2, List.of(new LightningBolt()));
         harness.addMana(player2, ManaColor.RED, 1);
 
-        harness.castInstant(player2, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -209,5 +208,54 @@ class GlacialChasmTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(chasm);
         harness.assertInGraveyard(player1, "Glacial Chasm");
+    }
+
+    @Test
+    @DisplayName("Damage to an opponent is not prevented by the controller's Chasm")
+    void doesNotPreventDamageToOpponent() {
+        harness.addToBattlefield(player1, new GlacialChasm());
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Sacrificing Chasm for upkeep ends its damage prevention")
+    void damagePreventionEndsAfterSacrifice() {
+        harness.addToBattlefield(player1, new GlacialChasm());
+        harness.setLife(player1, 20);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Glacial Chasm");
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("Creatures controlled by Chasm's controller can still block")
+    void controlledCreaturesCanBlock() {
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GlacialChasm());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }
