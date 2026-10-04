@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 @CardRegistration(set = "FDN", collectorNumber = "180")
 @CardRegistration(set = "FDN", collectorNumber = "322")
 @CardRegistration(set = "FDN", collectorNumber = "386")
+@CardRegistration(set = "FDC", collectorNumber = "123")
 @CardRegistration(set = "ONE", collectorNumber = "104")
 @CardRegistration(set = "APC", collectorNumber = "47")
 @CardRegistration(set = "HOP", collectorNumber = "36")

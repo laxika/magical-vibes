@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByMonarchP
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "CMM", collectorNumber = "93")
+@CardRegistration(set = "FDC", collectorNumber = "63")
 public class FallFromFavor extends Card {
 
     public FallFromFavor() {

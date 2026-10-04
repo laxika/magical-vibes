@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "M12", collectorNumber = "171")
+@CardRegistration(set = "FDC", collectorNumber = "199")
 public class DungroveElder extends Card {
 
     public DungroveElder() {

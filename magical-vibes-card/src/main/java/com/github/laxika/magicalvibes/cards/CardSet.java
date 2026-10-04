@@ -240,6 +240,7 @@ public enum CardSet {
     SET_ATH("ATH"),
     SET_LEG("LEG"),
     SET_FDN("FDN"),
+    SET_FDC("FDC"),
     SET_FIN("FIN"),
     SET_FIC("FIC"),
     SET_FCA("FCA"),

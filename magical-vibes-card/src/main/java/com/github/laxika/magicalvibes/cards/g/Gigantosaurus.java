@@ -8,5 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
 @CardRegistration(set = "SLZ", collectorNumber = "76")
 @CardRegistration(set = "SLZ", collectorNumber = "197")
 @CardRegistration(set = "SLZ", collectorNumber = "318")
+@CardRegistration(set = "FDC", collectorNumber = "207")
 public class Gigantosaurus extends Card {
 }

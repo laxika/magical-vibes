@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "IMA", collectorNumber = "114")
 @CardRegistration(set = "C13", collectorNumber = "100")
 @CardRegistration(set = "C16", collectorNumber = "118")
+@CardRegistration(set = "FDC", collectorNumber = "133")
 public class WightOfPrecinctSix extends Card {
 
     public WightOfPrecinctSix() {

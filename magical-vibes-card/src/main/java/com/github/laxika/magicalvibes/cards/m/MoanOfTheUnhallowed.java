@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 @CardRegistration(set = "DDQ", collectorNumber = "62")
 @CardRegistration(set = "UMA", collectorNumber = "107")
 @CardRegistration(set = "GN3", collectorNumber = "57")
+@CardRegistration(set = "FDC", collectorNumber = "116")
 public class MoanOfTheUnhallowed extends Card {
 
     public MoanOfTheUnhallowed() {

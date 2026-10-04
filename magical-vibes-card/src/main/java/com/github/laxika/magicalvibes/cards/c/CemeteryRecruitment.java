@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "EMN", collectorNumber = "83")
 @CardRegistration(set = "FDN", collectorNumber = "517")
+@CardRegistration(set = "FDC", collectorNumber = "90")
 public class CemeteryRecruitment extends Card {
 
     public CemeteryRecruitment() {

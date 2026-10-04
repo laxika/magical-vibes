@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RequirePaymentToBlockEffect;
 
 @CardRegistration(set = "ORI", collectorNumber = "4")
 @CardRegistration(set = "OTJ", collectorNumber = "2")
+@CardRegistration(set = "FDC", collectorNumber = "17")
 public class ArchangelOfTithes extends Card {
 
     public ArchangelOfTithes() {

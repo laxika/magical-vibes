@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "2XM", collectorNumber = "277")
 @CardRegistration(set = "C14", collectorNumber = "255")
 @CardRegistration(set = "C16", collectorNumber = "264")
+@CardRegistration(set = "FDC", collectorNumber = "274")
 public class MyrRetriever extends Card {
 
     public MyrRetriever() {

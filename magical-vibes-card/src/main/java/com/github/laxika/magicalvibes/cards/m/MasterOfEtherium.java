@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "MOC", collectorNumber = "226")
 @CardRegistration(set = "C16", collectorNumber = "92")
 @CardRegistration(set = "BRC", collectorNumber = "86")
+@CardRegistration(set = "FDC", collectorNumber = "66")
 public class MasterOfEtherium extends Card {
 
     public MasterOfEtherium() {

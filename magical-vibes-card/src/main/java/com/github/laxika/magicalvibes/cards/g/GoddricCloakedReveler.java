@@ -23,6 +23,7 @@ import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "132")
 @CardRegistration(set = "WOE", collectorNumber = "347")
+@CardRegistration(set = "FDC", collectorNumber = "158")
 public class GoddricCloakedReveler extends Card {
 
     public GoddricCloakedReveler() {

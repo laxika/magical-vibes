@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleAllOwnCreaturesPowerTou
 @CardRegistration(set = "MAR", collectorNumber = "84")
 @CardRegistration(set = "DBL", collectorNumber = "206")
 @CardRegistration(set = "BLC", collectorNumber = "245")
+@CardRegistration(set = "FDC", collectorNumber = "238")
 public class UnnaturalGrowth extends Card {
 
     public UnnaturalGrowth() {

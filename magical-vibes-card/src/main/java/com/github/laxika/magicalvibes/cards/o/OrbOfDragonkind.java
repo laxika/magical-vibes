@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "157")
+@CardRegistration(set = "FDC", collectorNumber = "168")
 public class OrbOfDragonkind extends Card {
 
     public OrbOfDragonkind() {

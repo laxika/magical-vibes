@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DFT", collectorNumber = "68")
+@CardRegistration(set = "FDC", collectorNumber = "78")
 public class ThopterFabricator extends Card {
 
     public ThopterFabricator() {

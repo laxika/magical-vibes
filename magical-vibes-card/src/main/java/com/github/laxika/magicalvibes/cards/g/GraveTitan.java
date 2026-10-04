@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 @CardRegistration(set = "PIP", collectorNumber = "346")
 @CardRegistration(set = "PIP", collectorNumber = "874")
 @CardRegistration(set = "DRC", collectorNumber = "42")
+@CardRegistration(set = "FDC", collectorNumber = "102")
 public class GraveTitan extends Card {
 
     public GraveTitan() {

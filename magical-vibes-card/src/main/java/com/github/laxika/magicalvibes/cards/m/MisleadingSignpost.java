@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "SLD", collectorNumber = "2127")
 @CardRegistration(set = "WOC", collectorNumber = "11")
 @CardRegistration(set = "WOC", collectorNumber = "47")
+@CardRegistration(set = "FDC", collectorNumber = "69")
 public class MisleadingSignpost extends Card {
 
     public MisleadingSignpost() {

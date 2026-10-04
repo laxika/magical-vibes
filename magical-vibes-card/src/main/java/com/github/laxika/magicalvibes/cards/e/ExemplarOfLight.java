@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 @CardRegistration(set = "FDN", collectorNumber = "297")
 @CardRegistration(set = "FDN", collectorNumber = "366")
 @CardRegistration(set = "FDN", collectorNumber = "445")
+@CardRegistration(set = "FDC", collectorNumber = "28")
 public class ExemplarOfLight extends Card {
 
     public ExemplarOfLight() {

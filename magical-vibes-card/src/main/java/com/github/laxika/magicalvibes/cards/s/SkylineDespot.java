@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "1529")
 @CardRegistration(set = "CMM", collectorNumber = "254")
 @CardRegistration(set = "AFC", collectorNumber = "140")
+@CardRegistration(set = "FDC", collectorNumber = "176")
 public class SkylineDespot extends Card {
 
     public SkylineDespot() {

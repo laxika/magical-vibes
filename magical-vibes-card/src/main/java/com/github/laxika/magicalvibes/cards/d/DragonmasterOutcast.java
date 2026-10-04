@@ -22,6 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "C19", collectorNumber = "139")
 @CardRegistration(set = "ONC", collectorNumber = "98")
 @CardRegistration(set = "SCD", collectorNumber = "136")
+@CardRegistration(set = "FDC", collectorNumber = "153")
 public class DragonmasterOutcast extends Card {
 
     public DragonmasterOutcast() {

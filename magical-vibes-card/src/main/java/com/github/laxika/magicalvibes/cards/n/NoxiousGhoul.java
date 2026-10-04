@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "LGN", collectorNumber = "77")
 @CardRegistration(set = "HOP", collectorNumber = "35")
 @CardRegistration(set = "SLD", collectorNumber = "1459")
+@CardRegistration(set = "FDC", collectorNumber = "120")
 public class NoxiousGhoul extends Card {
 
     public NoxiousGhoul() {

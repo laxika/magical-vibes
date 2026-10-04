@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "197")
+@CardRegistration(set = "FDC", collectorNumber = "157")
 public class FirespitterWhelp extends Card {
 
     public FirespitterWhelp() {

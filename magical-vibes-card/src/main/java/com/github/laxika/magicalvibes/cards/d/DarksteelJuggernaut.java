@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 @CardRegistration(set = "SOM", collectorNumber = "150")
 @CardRegistration(set = "BRC", collectorNumber = "137")
 @CardRegistration(set = "C18", collectorNumber = "202")
+@CardRegistration(set = "FDC", collectorNumber = "252")
 public class DarksteelJuggernaut extends Card {
 
     public DarksteelJuggernaut() {

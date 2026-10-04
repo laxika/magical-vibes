@@ -15,6 +15,7 @@ import java.util.List;
 @CardRegistration(set = "MOC", collectorNumber = "388")
 @CardRegistration(set = "LTC", collectorNumber = "289")
 @CardRegistration(set = "LCC", collectorNumber = "316")
+@CardRegistration(set = "FDC", collectorNumber = "294")
 public class VanquishersBanner extends Card {
 
     public VanquishersBanner() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "C14", collectorNumber = "235")
 @CardRegistration(set = "MIC", collectorNumber = "158")
 @CardRegistration(set = "VOC", collectorNumber = "162")
+@CardRegistration(set = "FDC", collectorNumber = "248")
 public class CharcoalDiamond extends Card {
 
     public CharcoalDiamond() {

@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M14", collectorNumber = "103")
 @CardRegistration(set = "C14", collectorNumber = "147")
+@CardRegistration(set = "FDC", collectorNumber = "110")
 public class LilianasReaver extends Card {
 
     public LilianasReaver() {

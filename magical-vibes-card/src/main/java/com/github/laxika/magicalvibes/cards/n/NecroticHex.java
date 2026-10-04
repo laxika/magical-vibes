@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "SCD", collectorNumber = "95")
+@CardRegistration(set = "FDC", collectorNumber = "118")
 public class NecroticHex extends Card {
 
     public NecroticHex() {

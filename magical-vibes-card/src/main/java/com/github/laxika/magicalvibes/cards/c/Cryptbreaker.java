@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "839")
 @CardRegistration(set = "HA1", collectorNumber = "6")
 @CardRegistration(set = "DRC", collectorNumber = "41")
+@CardRegistration(set = "FDC", collectorNumber = "94")
 public class Cryptbreaker extends Card {
 
     public Cryptbreaker() {

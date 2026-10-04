@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 
 @CardRegistration(set = "TDC", collectorNumber = "34")
 @CardRegistration(set = "TDC", collectorNumber = "74")
+@CardRegistration(set = "FDC", collectorNumber = "159")
 public class GoldlustTriad extends Card {
 
     public GoldlustTriad() {

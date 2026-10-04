@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 @CardRegistration(set = "NEC", collectorNumber = "14")
 @CardRegistration(set = "NEC", collectorNumber = "50")
 @CardRegistration(set = "EOC", collectorNumber = "74")
+@CardRegistration(set = "FDC", collectorNumber = "64")
 public class KappaCannoneer extends Card {
 
     public KappaCannoneer() {

@@ -24,6 +24,7 @@ import java.util.List;
 @CardRegistration(set = "SPG", collectorNumber = "93")
 @CardRegistration(set = "SPG", collectorNumber = "103")
 @CardRegistration(set = "NEC", collectorNumber = "159")
+@CardRegistration(set = "FDC", collectorNumber = "285")
 public class SkysovereignConsulFlagship extends Card {
 
     public SkysovereignConsulFlagship() {

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "M20", collectorNumber = "8")
+@CardRegistration(set = "FDC", collectorNumber = "19")
 public class BishopOfWings extends Card {
 
     public BishopOfWings() {

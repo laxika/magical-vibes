@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "BLB", collectorNumber = "191")
+@CardRegistration(set = "FDC", collectorNumber = "228")
 public class Scrapshooter extends Card {
 
     public Scrapshooter() {

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilLandToBattlefieldRestToBottomEffect;
 
 @CardRegistration(set = "BLB", collectorNumber = "168")
+@CardRegistration(set = "FDC", collectorNumber = "195")
 public class ClifftopLookout extends Card {
 
     public ClifftopLookout() {

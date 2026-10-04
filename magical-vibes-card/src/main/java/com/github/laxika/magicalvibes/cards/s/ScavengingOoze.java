@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "SCD", collectorNumber = "210")
 @CardRegistration(set = "C16", collectorNumber = "166")
 @CardRegistration(set = "ONC", collectorNumber = "112")
+@CardRegistration(set = "FDC", collectorNumber = "227")
 public class ScavengingOoze extends Card {
 
     public ScavengingOoze() {

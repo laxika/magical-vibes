@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "TDM", collectorNumber = "118")
+@CardRegistration(set = "FDC", collectorNumber = "172")
 public class SarkhanDragonAscendant extends Card {
 
     public SarkhanDragonAscendant() {

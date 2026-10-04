@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "AER", collectorNumber = "116")
 @CardRegistration(set = "KLR", collectorNumber = "169")
+@CardRegistration(set = "FDC", collectorNumber = "217")
 public class MonstrousOnslaught extends Card {
 
     public MonstrousOnslaught() {

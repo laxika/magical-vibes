@@ -32,6 +32,7 @@ import java.util.List;
 @CardRegistration(set = "C19", collectorNumber = "270")
 @CardRegistration(set = "HOC", collectorNumber = "212")
 @CardRegistration(set = "FIC", collectorNumber = "415")
+@CardRegistration(set = "FDC", collectorNumber = "310")
 public class RoguesPassage extends Card {
 
     public RoguesPassage() {

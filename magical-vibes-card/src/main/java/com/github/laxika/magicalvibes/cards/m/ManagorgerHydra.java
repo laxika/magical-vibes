@@ -13,6 +13,7 @@ import java.util.Set;
 @CardRegistration(set = "C21", collectorNumber = "199")
 @CardRegistration(set = "BLC", collectorNumber = "230")
 @CardRegistration(set = "C16", collectorNumber = "157")
+@CardRegistration(set = "FDC", collectorNumber = "216")
 public class ManagorgerHydra extends Card {
 
     public ManagorgerHydra() {

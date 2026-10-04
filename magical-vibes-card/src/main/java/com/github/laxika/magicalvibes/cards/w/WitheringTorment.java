@@ -14,6 +14,7 @@ import java.util.List;
 
 @CardRegistration(set = "DSK", collectorNumber = "124")
 @CardRegistration(set = "MSC", collectorNumber = "162")
+@CardRegistration(set = "FDC", collectorNumber = "134")
 public class WitheringTorment extends Card {
 
     public WitheringTorment() {

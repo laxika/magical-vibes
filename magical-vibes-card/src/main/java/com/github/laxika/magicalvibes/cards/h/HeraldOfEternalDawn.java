@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 @CardRegistration(set = "FDN", collectorNumber = "423")
 @CardRegistration(set = "FDN", collectorNumber = "433")
 @CardRegistration(set = "FDN", collectorNumber = "446")
+@CardRegistration(set = "FDC", collectorNumber = "33")
 public class HeraldOfEternalDawn extends Card {
 
     public HeraldOfEternalDawn() {

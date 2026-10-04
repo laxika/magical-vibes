@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfEffect;
 
 @CardRegistration(set = "M14", collectorNumber = "31")
+@CardRegistration(set = "FDC", collectorNumber = "48")
 public class SeraphOfTheSword extends Card {
 
     public SeraphOfTheSword() {

@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "BLB", collectorNumber = "87")
+@CardRegistration(set = "FDC", collectorNumber = "92")
 public class ConsumedByGreed extends Card {
 
     public ConsumedByGreed() {

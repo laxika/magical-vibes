@@ -17,6 +17,7 @@ import java.util.List;
 @CardRegistration(set = "SOC", collectorNumber = "145")
 @CardRegistration(set = "MOC", collectorNumber = "73")
 @CardRegistration(set = "MOC", collectorNumber = "81")
+@CardRegistration(set = "FDC", collectorNumber = "31")
 public class FiremaneCommando extends Card {
 
     public FiremaneCommando() {

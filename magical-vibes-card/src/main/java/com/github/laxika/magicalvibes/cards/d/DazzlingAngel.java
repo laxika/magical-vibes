@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "9")
+@CardRegistration(set = "FDC", collectorNumber = "24")
 public class DazzlingAngel extends Card {
 
     public DazzlingAngel() {

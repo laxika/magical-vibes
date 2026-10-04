@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "MRD", collectorNumber = "31")
 @CardRegistration(set = "HOP", collectorNumber = "8")
+@CardRegistration(set = "FDC", collectorNumber = "60")
 public class Broodstar extends Card {
 
     public Broodstar() {

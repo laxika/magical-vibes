@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 
 @CardRegistration(set = "ONC", collectorNumber = "26")
 @CardRegistration(set = "ONC", collectorNumber = "36")
+@CardRegistration(set = "FDC", collectorNumber = "234")
 public class TangleweaveArmor extends Card {
 
     public TangleweaveArmor() {

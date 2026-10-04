@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DTK", collectorNumber = "210")
 @CardRegistration(set = "CMM", collectorNumber = "326")
+@CardRegistration(set = "FDC", collectorNumber = "232")
 public class SurrakTheHuntCaller extends Card {
 
     public SurrakTheHuntCaller() {

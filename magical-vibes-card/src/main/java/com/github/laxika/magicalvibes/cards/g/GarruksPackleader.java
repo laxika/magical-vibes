@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "M13", collectorNumber = "175")
 @CardRegistration(set = "BLC", collectorNumber = "218")
 @CardRegistration(set = "C19", collectorNumber = "168")
+@CardRegistration(set = "FDC", collectorNumber = "205")
 public class GarruksPackleader extends Card {
 
     public GarruksPackleader() {

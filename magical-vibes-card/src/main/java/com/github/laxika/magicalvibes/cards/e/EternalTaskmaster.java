@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "WAR", collectorNumber = "90")
+@CardRegistration(set = "FDC", collectorNumber = "98")
 public class EternalTaskmaster extends Card {
 
     public EternalTaskmaster() {

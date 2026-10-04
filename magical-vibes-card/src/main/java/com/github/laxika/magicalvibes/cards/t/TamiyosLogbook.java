@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONE", collectorNumber = "70")
+@CardRegistration(set = "FDC", collectorNumber = "76")
 public class TamiyosLogbook extends Card {
 
     public TamiyosLogbook() {

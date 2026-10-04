@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
 @CardRegistration(set = "M20", collectorNumber = "4")
 @CardRegistration(set = "ANB", collectorNumber = "1")
+@CardRegistration(set = "FDC", collectorNumber = "13")
 public class AngelOfVitality extends Card {
 
     public AngelOfVitality() {

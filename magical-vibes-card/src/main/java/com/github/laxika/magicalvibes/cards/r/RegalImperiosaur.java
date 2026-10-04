@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "DFT", collectorNumber = "177")
+@CardRegistration(set = "FDC", collectorNumber = "222")
 public class RegalImperiosaur extends Card {
 
     public RegalImperiosaur() {

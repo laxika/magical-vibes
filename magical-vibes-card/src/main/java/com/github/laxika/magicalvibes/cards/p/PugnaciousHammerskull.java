@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LCI", collectorNumber = "208")
 @CardRegistration(set = "LCI", collectorNumber = "328")
+@CardRegistration(set = "FDC", collectorNumber = "220")
 public class PugnaciousHammerskull extends Card {
 
     public PugnaciousHammerskull() {

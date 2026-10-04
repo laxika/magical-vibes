@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "DMU", collectorNumber = "121")
+@CardRegistration(set = "FDC", collectorNumber = "156")
 public class TheElderDragonWar extends Card {
 
     public TheElderDragonWar() {

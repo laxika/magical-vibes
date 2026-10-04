@@ -21,6 +21,7 @@ import java.util.List;
 @CardRegistration(set = "EOC", collectorNumber = "143")
 @CardRegistration(set = "DRC", collectorNumber = "139")
 @CardRegistration(set = "ONC", collectorNumber = "142")
+@CardRegistration(set = "FDC", collectorNumber = "287")
 public class SoulGuideLantern extends Card {
 
     public SoulGuideLantern() {

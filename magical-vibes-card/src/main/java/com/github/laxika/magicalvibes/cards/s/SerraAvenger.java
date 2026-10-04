@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 @CardRegistration(set = "M13", collectorNumber = "33")
 @CardRegistration(set = "TSP", collectorNumber = "40")
 @CardRegistration(set = "TSR", collectorNumber = "41")
+@CardRegistration(set = "FDC", collectorNumber = "49")
 public class SerraAvenger extends Card {
 
     public SerraAvenger() {

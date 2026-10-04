@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "MOC", collectorNumber = "376")
 @CardRegistration(set = "NEC", collectorNumber = "157")
 @CardRegistration(set = "C16", collectorNumber = "269")
+@CardRegistration(set = "FDC", collectorNumber = "283")
 public class ShimmerMyr extends Card {
 
     public ShimmerMyr() {

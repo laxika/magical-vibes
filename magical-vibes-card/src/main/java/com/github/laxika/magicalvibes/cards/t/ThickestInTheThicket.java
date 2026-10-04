@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BLC", collectorNumber = "34")
 @CardRegistration(set = "BLC", collectorNumber = "67")
+@CardRegistration(set = "FDC", collectorNumber = "236")
 public class ThickestInTheThicket extends Card {
 
     public ThickestInTheThicket() {

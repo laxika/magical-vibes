@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 @CardRegistration(set = "MIC", collectorNumber = "130")
 @CardRegistration(set = "DRC", collectorNumber = "100")
 @CardRegistration(set = "SCD", collectorNumber = "114")
+@CardRegistration(set = "FDC", collectorNumber = "129")
 public class UndeadAugur extends Card {
 
     public UndeadAugur() {

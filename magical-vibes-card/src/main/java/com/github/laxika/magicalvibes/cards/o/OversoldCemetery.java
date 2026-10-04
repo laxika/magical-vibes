@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 @CardRegistration(set = "ONS", collectorNumber = "160")
 @CardRegistration(set = "WOT", collectorNumber = "33")
 @CardRegistration(set = "DMR", collectorNumber = "96")
+@CardRegistration(set = "FDC", collectorNumber = "122")
 public class OversoldCemetery extends Card {
 
     public OversoldCemetery() {

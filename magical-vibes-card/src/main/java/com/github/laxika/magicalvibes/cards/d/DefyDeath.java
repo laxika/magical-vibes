@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "AVR", collectorNumber = "16")
+@CardRegistration(set = "FDC", collectorNumber = "25")
 public class DefyDeath extends Card {
 
     public DefyDeath() {

@@ -17,6 +17,7 @@ import java.util.Set;
 
 @CardRegistration(set = "OGW", collectorNumber = "25")
 @CardRegistration(set = "PIO", collectorNumber = "25")
+@CardRegistration(set = "FDC", collectorNumber = "37")
 public class LinvalaThePreserver extends Card {
 
     public LinvalaThePreserver() {

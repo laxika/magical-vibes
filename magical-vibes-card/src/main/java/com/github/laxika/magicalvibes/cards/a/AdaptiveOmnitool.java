@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "DRC", collectorNumber = "16")
 @CardRegistration(set = "DRC", collectorNumber = "32")
+@CardRegistration(set = "FDC", collectorNumber = "243")
 public class AdaptiveOmnitool extends Card {
 
     public AdaptiveOmnitool() {

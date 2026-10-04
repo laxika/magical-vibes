@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "TDM", collectorNumber = "101")
+@CardRegistration(set = "FDC", collectorNumber = "141")
 public class BreachingDragonstorm extends Card {
 
     public BreachingDragonstorm() {

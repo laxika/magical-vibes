@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "FDN", collectorNumber = "336")
 @CardRegistration(set = "FDN", collectorNumber = "398")
 @CardRegistration(set = "FDN", collectorNumber = "470")
+@CardRegistration(set = "FDC", collectorNumber = "215")
 public class LootExuberantExplorer extends Card {
 
     public LootExuberantExplorer() {

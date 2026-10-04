@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "122")
+@CardRegistration(set = "FDC", collectorNumber = "124")
 public class RazorlashTransmogrant extends Card {
 
     public RazorlashTransmogrant() {

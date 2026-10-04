@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 import java.util.List;
 
 @CardRegistration(set = "BLB", collectorNumber = "132")
+@CardRegistration(set = "FDC", collectorNumber = "151")
 public class DragonhawkFatesTempest extends Card {
 
     public DragonhawkFatesTempest() {

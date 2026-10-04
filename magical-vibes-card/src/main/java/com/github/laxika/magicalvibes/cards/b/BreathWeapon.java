@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "HBG", collectorNumber = "176")
+@CardRegistration(set = "FDC", collectorNumber = "142")
 public class BreathWeapon extends Card {
 
     public BreathWeapon() {

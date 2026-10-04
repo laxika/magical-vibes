@@ -20,6 +20,7 @@ import java.util.List;
 
 @CardRegistration(set = "TDC", collectorNumber = "36")
 @CardRegistration(set = "TDC", collectorNumber = "76")
+@CardRegistration(set = "FDC", collectorNumber = "170")
 public class ParapetThrasher extends Card {
 
     public ParapetThrasher() {

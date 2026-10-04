@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ELD", collectorNumber = "249")
+@CardRegistration(set = "FDC", collectorNumber = "319")
 public class WitchsCottage extends Card {
 
     public WitchsCottage() {

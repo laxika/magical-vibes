@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "244")
 @CardRegistration(set = "M3C", collectorNumber = "293")
+@CardRegistration(set = "FDC", collectorNumber = "258")
 public class ForsakenMonument extends Card {
 
     public ForsakenMonument() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventManaDrainEffect;
 
 @CardRegistration(set = "ZNR", collectorNumber = "147")
 @CardRegistration(set = "TDC", collectorNumber = "221")
+@CardRegistration(set = "FDC", collectorNumber = "162")
 public class LeylineTyrant extends Card {
 
     public LeylineTyrant() {

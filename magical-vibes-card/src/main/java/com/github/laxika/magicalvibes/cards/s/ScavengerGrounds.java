@@ -29,6 +29,7 @@ import java.util.List;
 @CardRegistration(set = "MKC", collectorNumber = "287")
 @CardRegistration(set = "C20", collectorNumber = "306")
 @CardRegistration(set = "FIC", collectorNumber = "419")
+@CardRegistration(set = "FDC", collectorNumber = "311")
 public class ScavengerGrounds extends Card {
 
     public ScavengerGrounds() {

@@ -22,6 +22,7 @@ import java.util.List;
 @CardRegistration(set = "AKH", collectorNumber = "182")
 @CardRegistration(set = "AKR", collectorNumber = "213")
 @CardRegistration(set = "MP2", collectorNumber = "28")
+@CardRegistration(set = "FDC", collectorNumber = "223")
 public class RhonasTheIndomitable extends Card {
 
     public RhonasTheIndomitable() {

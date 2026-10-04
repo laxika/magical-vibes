@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 @CardRegistration(set = "CMM", collectorNumber = "13")
 @CardRegistration(set = "CMM", collectorNumber = "456")
 @CardRegistration(set = "C14", collectorNumber = "2")
+@CardRegistration(set = "FDC", collectorNumber = "15")
 public class AngelicFieldMarshal extends Card {
 
     public AngelicFieldMarshal() {

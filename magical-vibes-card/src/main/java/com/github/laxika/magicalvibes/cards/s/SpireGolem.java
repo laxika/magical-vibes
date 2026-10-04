@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 @CardRegistration(set = "DST", collectorNumber = "145")
 @CardRegistration(set = "DD2", collectorNumber = "16")
 @CardRegistration(set = "JVC", collectorNumber = "16")
+@CardRegistration(set = "FDC", collectorNumber = "288")
 public class SpireGolem extends Card {
 
     public SpireGolem() {

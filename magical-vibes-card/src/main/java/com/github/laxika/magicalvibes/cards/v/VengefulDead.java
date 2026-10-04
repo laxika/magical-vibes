@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "SCG", collectorNumber = "80")
 @CardRegistration(set = "SCD", collectorNumber = "117")
+@CardRegistration(set = "FDC", collectorNumber = "132")
 public class VengefulDead extends Card {
 
     public VengefulDead() {

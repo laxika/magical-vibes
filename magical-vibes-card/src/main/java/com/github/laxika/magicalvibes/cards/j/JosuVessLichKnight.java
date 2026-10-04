@@ -18,6 +18,7 @@ import java.util.Set;
 @CardRegistration(set = "MOC", collectorNumber = "253")
 @CardRegistration(set = "DMC", collectorNumber = "113")
 @CardRegistration(set = "SCD", collectorNumber = "82")
+@CardRegistration(set = "FDC", collectorNumber = "107")
 public class JosuVessLichKnight extends Card {
 
     public JosuVessLichKnight() {

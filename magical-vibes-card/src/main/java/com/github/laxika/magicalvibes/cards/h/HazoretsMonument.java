@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "AKH", collectorNumber = "229")
 @CardRegistration(set = "AKR", collectorNumber = "273")
 @CardRegistration(set = "DMC", collectorNumber = "183")
+@CardRegistration(set = "FDC", collectorNumber = "261")
 public class HazoretsMonument extends Card {
 
     public HazoretsMonument() {

@@ -20,6 +20,7 @@ import java.util.Set;
 @CardRegistration(set = "MIC", collectorNumber = "112")
 @CardRegistration(set = "SLD", collectorNumber = "840")
 @CardRegistration(set = "SIR", collectorNumber = "108")
+@CardRegistration(set = "FDC", collectorNumber = "96")
 public class DiregrafColossus extends Card {
 
     public DiregrafColossus() {

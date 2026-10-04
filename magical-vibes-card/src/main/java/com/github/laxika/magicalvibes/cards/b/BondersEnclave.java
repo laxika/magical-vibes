@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "EOS", collectorNumber = "94")
 @CardRegistration(set = "EOS", collectorNumber = "139")
 @CardRegistration(set = "OTC", collectorNumber = "274")
+@CardRegistration(set = "FDC", collectorNumber = "297")
 public class BondersEnclave extends Card {
 
     public BondersEnclave() {

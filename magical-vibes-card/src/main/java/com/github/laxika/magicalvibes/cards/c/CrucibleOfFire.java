@@ -15,6 +15,7 @@ import java.util.Set;
 @CardRegistration(set = "IMA", collectorNumber = "122")
 @CardRegistration(set = "GN3", collectorNumber = "70")
 @CardRegistration(set = "SCD", collectorNumber = "129")
+@CardRegistration(set = "FDC", collectorNumber = "148")
 public class CrucibleOfFire extends Card {
 
     public CrucibleOfFire() {

@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONE", collectorNumber = "229")
+@CardRegistration(set = "FDC", collectorNumber = "260")
 public class GraazUnstoppableJuggernaut extends Card {
 
     public GraazUnstoppableJuggernaut() {

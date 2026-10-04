@@ -4,5 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "DFT", collectorNumber = "182")
+@CardRegistration(set = "FDC", collectorNumber = "235")
 public class TerrianWorldTyrant extends Card {
 }

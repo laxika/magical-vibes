@@ -14,6 +14,7 @@ import java.util.Set;
 @CardRegistration(set = "DOM", collectorNumber = "26")
 @CardRegistration(set = "DMR", collectorNumber = "13")
 @CardRegistration(set = "DMR", collectorNumber = "266")
+@CardRegistration(set = "FDC", collectorNumber = "38")
 public class LyraDawnbringer extends Card {
 
     public LyraDawnbringer() {

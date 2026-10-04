@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "DOM", collectorNumber = "242")
 @CardRegistration(set = "C20", collectorNumber = "288")
 @CardRegistration(set = "C19", collectorNumber = "259")
+@CardRegistration(set = "FDC", collectorNumber = "306")
 public class MemorialToFolly extends Card {
 
     public MemorialToFolly() {

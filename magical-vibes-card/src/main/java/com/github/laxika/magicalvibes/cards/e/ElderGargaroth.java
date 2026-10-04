@@ -16,6 +16,7 @@ import java.util.Set;
 @CardRegistration(set = "M21", collectorNumber = "179")
 @CardRegistration(set = "M21", collectorNumber = "373")
 @CardRegistration(set = "DRC", collectorNumber = "111")
+@CardRegistration(set = "FDC", collectorNumber = "200")
 public class ElderGargaroth extends Card {
 
     public ElderGargaroth() {

@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "C16", collectorNumber = "122")
 @CardRegistration(set = "DRC", collectorNumber = "48")
 @CardRegistration(set = "SCD", collectorNumber = "127")
+@CardRegistration(set = "FDC", collectorNumber = "146")
 public class ChaosWarp extends Card {
 
     public ChaosWarp() {

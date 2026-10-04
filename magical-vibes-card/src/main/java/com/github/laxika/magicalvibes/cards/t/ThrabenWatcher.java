@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "MH2", collectorNumber = "34")
+@CardRegistration(set = "FDC", collectorNumber = "54")
 public class ThrabenWatcher extends Card {
 
     public ThrabenWatcher() {

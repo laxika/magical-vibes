@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "212")
 @CardRegistration(set = "DMU", collectorNumber = "155")
+@CardRegistration(set = "FDC", collectorNumber = "192")
 public class BiteDown extends Card {
 
     public BiteDown() {

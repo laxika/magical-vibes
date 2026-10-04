@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffec
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 @CardRegistration(set = "DOM", collectorNumber = "182")
+@CardRegistration(set = "FDC", collectorNumber = "230")
 public class SteelLeafChampion extends Card {
 
     public SteelLeafChampion() {

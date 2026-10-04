@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 
 @CardRegistration(set = "DFT", collectorNumber = "118")
+@CardRegistration(set = "FDC", collectorNumber = "147")
 public class CountOnLuck extends Card {
 
     public CountOnLuck() {

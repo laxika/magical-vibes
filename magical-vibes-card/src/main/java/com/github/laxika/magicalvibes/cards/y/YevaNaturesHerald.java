@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "DDU", collectorNumber = "27")
 @CardRegistration(set = "SLD", collectorNumber = "1284")
 @CardRegistration(set = "RVR", collectorNumber = "162")
+@CardRegistration(set = "FDC", collectorNumber = "242")
 public class YevaNaturesHerald extends Card {
 
     public YevaNaturesHerald() {

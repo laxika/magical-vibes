@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 @CardRegistration(set = "FDN", collectorNumber = "415")
 @CardRegistration(set = "FDN", collectorNumber = "486")
 @CardRegistration(set = "SLD", collectorNumber = "2399")
+@CardRegistration(set = "FDC", collectorNumber = "282")
 public class ScrawlingCrawler extends Card {
 
     public ScrawlingCrawler() {

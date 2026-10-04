@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LCC", collectorNumber = "58")
 @CardRegistration(set = "LCC", collectorNumber = "90")
+@CardRegistration(set = "FDC", collectorNumber = "198")
 public class CuriousAltisaur extends Card {
 
     public CuriousAltisaur() {

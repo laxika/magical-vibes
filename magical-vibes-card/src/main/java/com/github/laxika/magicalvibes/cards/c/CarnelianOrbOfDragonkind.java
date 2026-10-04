@@ -11,6 +11,7 @@ import java.util.List;
 
 @CardRegistration(set = "FDN", collectorNumber = "534")
 @CardRegistration(set = "HBG", collectorNumber = "177")
+@CardRegistration(set = "FDC", collectorNumber = "143")
 public class CarnelianOrbOfDragonkind extends Card {
 
     public CarnelianOrbOfDragonkind() {

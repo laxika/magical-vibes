@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "CMM", collectorNumber = "54")
 @CardRegistration(set = "CMM", collectorNumber = "471")
 @CardRegistration(set = "SCD", collectorNumber = "33")
+@CardRegistration(set = "FDC", collectorNumber = "47")
 public class SepharaSkysBlade extends Card {
 
     public SepharaSkysBlade() {

@@ -13,6 +13,7 @@ import java.util.List;
 @CardRegistration(set = "MRD", collectorNumber = "141")
 @CardRegistration(set = "DDF", collectorNumber = "61")
 @CardRegistration(set = "MMA", collectorNumber = "196")
+@CardRegistration(set = "FDC", collectorNumber = "244")
 public class AetherSpellbomb extends Card {
 
     public AetherSpellbomb() {

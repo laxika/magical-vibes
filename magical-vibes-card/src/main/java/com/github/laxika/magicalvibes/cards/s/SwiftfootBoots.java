@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "BRC", collectorNumber = "166")
 @CardRegistration(set = "C18", collectorNumber = "225")
 @CardRegistration(set = "FIC", collectorNumber = "361")
+@CardRegistration(set = "FDC", collectorNumber = "291")
 @CardRegistration(set = "C16", collectorNumber = "276")
 @CardRegistration(set = "KHC", collectorNumber = "105")
 @CardRegistration(set = "VOC", collectorNumber = "169")

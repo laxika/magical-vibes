@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 @CardRegistration(set = "KLR", collectorNumber = "60")
 @CardRegistration(set = "CMM", collectorNumber = "109")
 @CardRegistration(set = "BRC", collectorNumber = "91")
+@CardRegistration(set = "FDC", collectorNumber = "71")
 public class PadeemConsulOfInnovation extends Card {
 
     public PadeemConsulOfInnovation() {

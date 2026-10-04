@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "C19", collectorNumber = "175")
 @CardRegistration(set = "DSC", collectorNumber = "192")
 @CardRegistration(set = "LTC", collectorNumber = "254")
+@CardRegistration(set = "FDC", collectorNumber = "218")
 public class OverwhelmingStampede extends Card {
 
     public OverwhelmingStampede() {

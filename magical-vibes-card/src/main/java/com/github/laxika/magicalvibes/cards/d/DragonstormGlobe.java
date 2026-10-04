@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
 
 @CardRegistration(set = "TDM", collectorNumber = "241")
+@CardRegistration(set = "FDC", collectorNumber = "254")
 public class DragonstormGlobe extends Card {
 
     public DragonstormGlobe() {

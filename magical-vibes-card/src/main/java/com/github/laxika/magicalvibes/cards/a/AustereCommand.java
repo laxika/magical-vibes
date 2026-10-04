@@ -33,6 +33,7 @@ import java.util.List;
 @CardRegistration(set = "LCC", collectorNumber = "126")
 @CardRegistration(set = "BRC", collectorNumber = "69")
 @CardRegistration(set = "WOC", collectorNumber = "62")
+@CardRegistration(set = "FDC", collectorNumber = "18")
 public class AustereCommand extends Card {
 
     public AustereCommand() {

@@ -14,6 +14,7 @@ import java.util.Set;
 @CardRegistration(set = "NEO", collectorNumber = "211")
 @CardRegistration(set = "SLD", collectorNumber = "2320")
 @CardRegistration(set = "SLD", collectorNumber = "2335")
+@CardRegistration(set = "FDC", collectorNumber = "233")
 public class TamiyosSafekeeping extends Card {
 
     public TamiyosSafekeeping() {

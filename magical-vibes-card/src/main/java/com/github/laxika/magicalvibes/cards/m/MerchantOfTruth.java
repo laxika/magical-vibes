@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MKC", collectorNumber = "11")
 @CardRegistration(set = "MKC", collectorNumber = "322")
+@CardRegistration(set = "FDC", collectorNumber = "39")
 public class MerchantOfTruth extends Card {
 
     public MerchantOfTruth() {

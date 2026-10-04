@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate
 
 @CardRegistration(set = "NCC", collectorNumber = "12")
 @CardRegistration(set = "NCC", collectorNumber = "113")
+@CardRegistration(set = "FDC", collectorNumber = "16")
 public class AngelicSleuth extends Card {
 
     public AngelicSleuth() {

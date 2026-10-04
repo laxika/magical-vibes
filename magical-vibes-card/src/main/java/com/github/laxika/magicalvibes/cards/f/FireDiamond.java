@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "6ED", collectorNumber = "284")
 @CardRegistration(set = "C14", collectorNumber = "240")
 @CardRegistration(set = "VOC", collectorNumber = "164")
+@CardRegistration(set = "FDC", collectorNumber = "257")
 public class FireDiamond extends Card {
 
     public FireDiamond() {

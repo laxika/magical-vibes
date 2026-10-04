@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "DMR", collectorNumber = "254")
 @CardRegistration(set = "C14", collectorNumber = "309")
 @CardRegistration(set = "C20", collectorNumber = "302")
+@CardRegistration(set = "FDC", collectorNumber = "309")
 public class RemoteIsle extends Card {
 
     public RemoteIsle() {

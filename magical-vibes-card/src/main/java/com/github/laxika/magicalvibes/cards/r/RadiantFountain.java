@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 @CardRegistration(set = "M21", collectorNumber = "248")
 @CardRegistration(set = "IMA", collectorNumber = "244")
 @CardRegistration(set = "C21", collectorNumber = "310")
+@CardRegistration(set = "FDC", collectorNumber = "308")
 public class RadiantFountain extends Card {
 
     public RadiantFountain() {

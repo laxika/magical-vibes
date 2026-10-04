@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 
 @CardRegistration(set = "FDN", collectorNumber = "28")
+@CardRegistration(set = "FDC", collectorNumber = "56")
 public class VanguardSeraph extends Card {
 
     public VanguardSeraph() {

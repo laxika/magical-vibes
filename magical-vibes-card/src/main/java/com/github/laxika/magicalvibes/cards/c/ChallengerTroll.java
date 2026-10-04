@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBl
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 @CardRegistration(set = "WAR", collectorNumber = "157")
+@CardRegistration(set = "FDC", collectorNumber = "194")
 public class ChallengerTroll extends Card {
 
     public ChallengerTroll() {

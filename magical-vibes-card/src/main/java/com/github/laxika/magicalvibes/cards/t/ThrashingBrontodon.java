@@ -18,6 +18,7 @@ import java.util.List;
 @CardRegistration(set = "LCI", collectorNumber = "216")
 @CardRegistration(set = "LCI", collectorNumber = "329")
 @CardRegistration(set = "GNT", collectorNumber = "50")
+@CardRegistration(set = "FDC", collectorNumber = "237")
 public class ThrashingBrontodon extends Card {
 
     public ThrashingBrontodon() {

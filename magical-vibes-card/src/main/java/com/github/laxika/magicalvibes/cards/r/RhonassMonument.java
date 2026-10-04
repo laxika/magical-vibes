@@ -26,6 +26,7 @@ import java.util.List;
 @CardRegistration(set = "AKR", collectorNumber = "279")
 @CardRegistration(set = "MB1", collectorNumber = "236")
 @CardRegistration(set = "GNT", collectorNumber = "56")
+@CardRegistration(set = "FDC", collectorNumber = "281")
 public class RhonassMonument extends Card {
 
     public RhonassMonument() {

@@ -20,6 +20,7 @@ import java.util.Set;
 
 @CardRegistration(set = "GN3", collectorNumber = "4")
 @CardRegistration(set = "TDC", collectorNumber = "226")
+@CardRegistration(set = "FDC", collectorNumber = "167")
 public class NogiDracoZealot extends Card {
 
     public NogiDracoZealot() {

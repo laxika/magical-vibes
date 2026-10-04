@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "156")
+@CardRegistration(set = "FDC", collectorNumber = "166")
 public class MinionOfTheMighty extends Card {
 
     public MinionOfTheMighty() {

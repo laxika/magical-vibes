@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "NEC", collectorNumber = "134")
 @CardRegistration(set = "C18", collectorNumber = "36")
+@CardRegistration(set = "FDC", collectorNumber = "240")
 public class WhiptongueHydra extends Card {
 
     public WhiptongueHydra() {

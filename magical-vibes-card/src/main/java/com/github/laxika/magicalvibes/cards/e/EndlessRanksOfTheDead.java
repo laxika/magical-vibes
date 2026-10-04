@@ -19,6 +19,7 @@ import java.util.Set;
 @CardRegistration(set = "ISD", collectorNumber = "99")
 @CardRegistration(set = "DBL", collectorNumber = "535")
 @CardRegistration(set = "MIC", collectorNumber = "116")
+@CardRegistration(set = "FDC", collectorNumber = "97")
 public class EndlessRanksOfTheDead extends Card {
 
     public EndlessRanksOfTheDead() {

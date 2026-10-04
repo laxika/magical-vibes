@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 
 @CardRegistration(set = "DMU", collectorNumber = "143")
+@CardRegistration(set = "FDC", collectorNumber = "175")
 public class ShivanDevastator extends Card {
 
     public ShivanDevastator() {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate
 
 @CardRegistration(set = "ONC", collectorNumber = "8")
 @CardRegistration(set = "ONC", collectorNumber = "46")
+@CardRegistration(set = "FDC", collectorNumber = "41")
 public class NornsChoirmaster extends Card {
 
     public NornsChoirmaster() {

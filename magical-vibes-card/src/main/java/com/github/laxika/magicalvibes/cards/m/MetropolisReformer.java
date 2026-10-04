@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 
 @CardRegistration(set = "MAT", collectorNumber = "4")
+@CardRegistration(set = "FDC", collectorNumber = "40")
 public class MetropolisReformer extends Card {
 
     public MetropolisReformer() {

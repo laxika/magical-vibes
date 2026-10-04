@@ -21,6 +21,7 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "1146")
 @CardRegistration(set = "GN2", collectorNumber = "41")
 @CardRegistration(set = "TDC", collectorNumber = "219")
+@CardRegistration(set = "FDC", collectorNumber = "7")
 public class LathlissDragonQueen extends Card {
 
     public LathlissDragonQueen() {

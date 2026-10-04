@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "BLC", collectorNumber = "172")
 @CardRegistration(set = "EOC", collectorNumber = "76")
 @CardRegistration(set = "DRC", collectorNumber = "81")
+@CardRegistration(set = "FDC", collectorNumber = "73")
 public class PullFromTomorrow extends Card {
 
     public PullFromTomorrow() {

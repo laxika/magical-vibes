@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "LTC", collectorNumber = "255")
 @CardRegistration(set = "AFC", collectorNumber = "165")
 @CardRegistration(set = "WOC", collectorNumber = "129")
+@CardRegistration(set = "FDC", collectorNumber = "219")
 public class ParadiseDruid extends Card {
 
     public ParadiseDruid() {

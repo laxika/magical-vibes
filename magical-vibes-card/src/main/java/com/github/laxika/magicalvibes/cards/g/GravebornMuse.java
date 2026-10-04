@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "145")
 @CardRegistration(set = "LGN", collectorNumber = "73")
+@CardRegistration(set = "FDC", collectorNumber = "103")
 public class GravebornMuse extends Card {
 
     public GravebornMuse() {

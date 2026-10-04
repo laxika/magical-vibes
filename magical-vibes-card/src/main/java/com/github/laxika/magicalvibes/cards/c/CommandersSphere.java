@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import java.util.List;
 
 @CardRegistration(set = "DRC", collectorNumber = "125")
+@CardRegistration(set = "FDC", collectorNumber = "250")
 @CardRegistration(set = "SLD", collectorNumber = "203")
 @CardRegistration(set = "SLD", collectorNumber = "315")
 @CardRegistration(set = "CMM", collectorNumber = "377")
