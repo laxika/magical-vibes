@@ -9,10 +9,24 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({HeartSliver.class, MetallicSliver.class, MoggConscripts.class})
 class HeartSliverTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Newly entered Heart Sliver and another Sliver can attack immediately")
+    void newlyEnteredSliversCanAttack() {
+        Permanent heartSliver = harness.addToBattlefieldAndReturn(player1, new HeartSliver());
+        Permanent otherSliver = harness.addToBattlefieldAndReturn(player1, new MetallicSliver());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThat(heartSliver.isAttacking()).isTrue();
+        assertThat(otherSliver.isAttacking()).isTrue();
+    }
 
     @Test
     @DisplayName("Heart Sliver grants itself haste (it is a Sliver)")
