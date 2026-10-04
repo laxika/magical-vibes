@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HeirloomAuntie.class, GrizzlyBears.class, Shock.class})
 class HeirloomAuntieTest extends BaseCardTest {
 
     @Test
@@ -42,7 +44,7 @@ class HeirloomAuntieTest extends BaseCardTest {
         Permanent auntie = addReadyAuntie(player1);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Card topCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).add(0, topCard);
+        harness.setLibrary(player1, List.of(topCard));
 
         killWithShock(player2, bears.getId());
         harness.passBothPriorities();
@@ -62,7 +64,7 @@ class HeirloomAuntieTest extends BaseCardTest {
         Permanent auntie = addReadyAuntie(player1);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Card topCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).add(0, topCard);
+        harness.setLibrary(player1, List.of(topCard));
 
         killWithShock(player2, bears.getId());
         harness.passBothPriorities();
@@ -84,12 +86,56 @@ class HeirloomAuntieTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("An empty library does not prevent counter removal")
+    void emptyLibraryStillRemovesCounter() {
+        Permanent auntie = addReadyAuntie(player1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of());
+
+        killWithShock(player2, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(auntie.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Surveil still happens when no -1/-1 counters remain")
+    void surveilsWithoutCounters() {
+        Permanent auntie = addReadyAuntie(player1);
+        auntie.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+
+        killWithShock(player2, bears.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
+        assertThat(auntie.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Heirloom Auntie's own death does not trigger its ability")
+    void ownDeathDoesNotTrigger() {
+        addReadyAuntie(player1);
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+
+        killWithShock(player2, harness.getPermanentId(player1, "Heirloom Auntie"));
+
+        harness.assertInGraveyard(player1, "Heirloom Auntie");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
     private Permanent addReadyAuntie(Player player) {
-        HeirloomAuntie card = new HeirloomAuntie();
-        Permanent auntie = new Permanent(card);
+        Permanent auntie = harness.addToBattlefieldAndReturn(player, new HeirloomAuntie());
         auntie.setSummoningSick(false);
         auntie.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
-        gd.playerBattlefields.get(player.getId()).add(auntie);
         return auntie;
     }
 
@@ -99,7 +145,6 @@ class HeirloomAuntieTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(caster, List.of(new Shock()));
         harness.addMana(caster, ManaColor.RED, 1);
-        harness.castInstant(caster, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(caster, 0, targetId);
     }
 }
