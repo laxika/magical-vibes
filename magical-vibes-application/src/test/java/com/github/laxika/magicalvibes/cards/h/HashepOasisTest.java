@@ -8,12 +8,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HashepOasis.class, AirElemental.class, Forest.class, GraspingDunes.class})
 class HashepOasisTest extends BaseCardTest {
 
     @Test
@@ -63,9 +65,8 @@ class HashepOasisTest extends BaseCardTest {
     @DisplayName("With multiple Deserts, controller chooses which to sacrifice")
     void choosesWhichDesertToSacrifice() {
         Permanent oasis = addReadyOasis(player1);
-        Permanent otherDesert = new Permanent(new GraspingDunes());
+        Permanent otherDesert = harness.addToBattlefieldAndReturn(player1, new GraspingDunes());
         otherDesert.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherDesert);
         Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 2);
@@ -127,10 +128,79 @@ class HashepOasisTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
     }
 
+    @Test
+    @DisplayName("Green mana cannot be produced without enough life to pay")
+    void cannotPayLifeAtZeroLife() {
+        Permanent oasis = addReadyOasis(player1);
+        harness.setLife(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough life");
+
+        assertThat(oasis.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Mana abilities can be activated outside the controller's main phase")
+    void greenManaIsNotRestrictedToSorcerySpeed() {
+        addReadyOasis(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.assertLife(player1, lifeBefore - 1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Pump cannot be activated outside a main phase even during your own turn")
+    void pumpCannotBeActivatedDuringUpkeep() {
+        Permanent oasis = addReadyOasis(player1);
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, elemental.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+
+        assertThat(oasis.isTapped()).isFalse();
+        harness.assertNotInGraveyard(player1, "Hashep Oasis");
+    }
+
+    @Test
+    @DisplayName("Pump cannot be activated while another ability is on the stack")
+    void pumpRequiresAnEmptyStack() {
+        Permanent firstOasis = addReadyOasis(player1);
+        Permanent secondOasis = addReadyOasis(player1);
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, 2, null, elemental.getId());
+        harness.handlePermanentChosen(player1, firstOasis.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(elemental.getPowerModifier()).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, elemental.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(secondOasis.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(elemental.getPowerModifier()).isEqualTo(3);
+        assertThat(elemental.getToughnessModifier()).isEqualTo(3);
+    }
+
     private Permanent addReadyOasis(Player player) {
-        Permanent perm = new Permanent(new HashepOasis());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new HashepOasis());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
