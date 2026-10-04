@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,9 +14,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HarborSerpent.class, Island.class, RuneclawBear.class})
 class HarborSerpentTest extends BaseCardTest {
-
-    // ===== Attack restriction =====
 
     @Test
     @DisplayName("Harbor Serpent can attack when there are exactly 5 Islands on the battlefield")
@@ -27,16 +28,9 @@ class HarborSerpentTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Island());
         harness.addToBattlefield(player2, new Island());
 
-        Permanent serpent = new Permanent(new HarborSerpent());
-        serpent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(serpent);
+        Permanent serpent = addCreatureReady(player1, new HarborSerpent());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(findIndex(player1, serpent)));
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(serpent)));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
@@ -52,16 +46,9 @@ class HarborSerpentTest extends BaseCardTest {
             harness.addToBattlefield(player2, new Island());
         }
 
-        Permanent serpent = new Permanent(new HarborSerpent());
-        serpent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(serpent);
+        Permanent serpent = addCreatureReady(player1, new HarborSerpent());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(findIndex(player1, serpent)));
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(serpent)));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
@@ -75,33 +62,19 @@ class HarborSerpentTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Island());
         harness.addToBattlefield(player2, new Island());
 
-        Permanent serpent = new Permanent(new HarborSerpent());
-        serpent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(serpent);
+        Permanent serpent = addCreatureReady(player1, new HarborSerpent());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        int serpentIndex = findIndex(player1, serpent);
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(serpentIndex)))
+        int serpentIndex = gd.playerBattlefields.get(player1.getId()).indexOf(serpent);
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(serpentIndex)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     @DisplayName("Harbor Serpent cannot attack when there are no Islands on the battlefield")
     void cannotAttackWithNoIslands() {
-        Permanent serpent = new Permanent(new HarborSerpent());
-        serpent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(serpent);
+        addCreatureReady(player1, new HarborSerpent());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -116,27 +89,57 @@ class HarborSerpentTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Island());
         harness.addToBattlefield(player2, new Island());
 
-        Permanent serpent = new Permanent(new HarborSerpent());
-        serpent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(serpent);
+        Permanent serpent = addCreatureReady(player1, new HarborSerpent());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        gs.declareAttackers(gd, player1, List.of(findIndex(player1, serpent)));
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(serpent)));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
     }
 
-    // ===== Helper =====
-
-    private int findIndex(com.github.laxika.magicalvibes.model.Player player, Permanent target) {
-        List<Permanent> bf = gd.playerBattlefields.get(player.getId());
-        for (int i = 0; i < bf.size(); i++) {
-            if (bf.get(i) == target) return i;
+    @Test
+    void islandwalkPreventsBlockingWhenDefenderControlsIsland() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player2, new Island());
         }
-        throw new IllegalStateException("Permanent not found on battlefield");
+        Permanent serpent = addCreatureReady(player1, new HarborSerpent());
+        Permanent blocker = addCreatureReady(player2, new RuneclawBear());
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(serpent);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    void controllersIslandsAllowAttackButDoNotPreventBlocking() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new Island());
+        }
+        Permanent serpent = addCreatureReady(player1, new HarborSerpent());
+        Permanent blocker = addCreatureReady(player2, new RuneclawBear());
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(serpent);
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex));
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    void canBlockWithoutAnyIslands() {
+        Permanent attacker = addCreatureReady(player2, new RuneclawBear());
+        Permanent serpent = addCreatureReady(player1, new HarborSerpent());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(serpent.isBlocking()).isTrue();
+        assertThat(attacker.isAttacking()).isTrue();
     }
 }
