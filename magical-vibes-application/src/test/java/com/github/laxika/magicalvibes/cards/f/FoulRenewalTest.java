@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.Maro;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FoulRenewal.class, AirElemental.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class})
+@CardUsed({FoulRenewal.class, AirElemental.class, Forest.class, FountainOfYouth.class, GrizzlyBears.class, Maro.class})
 class FoulRenewalTest extends BaseCardTest {
 
     @Test
@@ -87,7 +88,6 @@ class FoulRenewalTest extends BaseCardTest {
         harness.castInstant(player1, 0, graveyardCreature.getId(), target.getId());
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
@@ -113,6 +113,54 @@ class FoulRenewalTest extends BaseCardTest {
         Card graveyardCreature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(graveyardCreature));
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        harness.setHand(player1, List.of(new FoulRenewal()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, graveyardCreature.getId(), target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Uses characteristic-defined toughness as the returned card last existed in the graveyard")
+    void usesCharacteristicDefinedToughnessBeforeReturn() {
+        Card graveyardCreature = new Maro();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        harness.setHand(player1, List.of(new FoulRenewal(), new Forest(), new Forest(), new Forest()));
+        addMana();
+
+        harness.castInstant(player1, 0, graveyardCreature.getId(), target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Maro");
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Puts a creature with zero toughness into the graveyard")
+    void lethalToughnessReduction() {
+        Card graveyardCreature = new AirElemental();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(graveyardCreature));
+        harness.setHand(player1, List.of(new FoulRenewal()));
+        addMana();
+
+        harness.castInstant(player1, 0, graveyardCreature.getId(), target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Air Elemental");
+        harness.assertNotInGraveyard(player1, "Air Elemental");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot return a creature card from an opponent's graveyard")
+    void cannotTargetOpponentsGraveyard() {
+        Card graveyardCreature = new GrizzlyBears();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setGraveyard(player2, List.of(graveyardCreature));
         harness.setHand(player1, List.of(new FoulRenewal()));
         addMana();
 
