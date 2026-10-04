@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.l.LoseCalm;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IcefallRegent.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed({IcefallRegent.class, GrizzlyBears.class, LightningBolt.class, LoseCalm.class})
 class IcefallRegentTest extends BaseCardTest {
 
     @Test
@@ -28,6 +29,8 @@ class IcefallRegentTest extends BaseCardTest {
 
         assertThat(bears.isTapped()).isTrue();
         assertThat(bears.getUntapPreventedWhileSourceOnBattlefieldIds()).isNotEmpty();
+        harness.performUntapStep(player2);
+        assertThat(bears.isTapped()).isTrue();
     }
 
     @Test
@@ -71,6 +74,109 @@ class IcefallRegentTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, regent.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana to pay targeting tax");
+    }
+
+    @Test
+    void lockEndsWhenOpponentGainsControlOfRegent() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        castAndResolveRegent(bears);
+        Permanent regent = findPermanent(player1, "Icefall Regent");
+
+        stealRegent(regent);
+        harness.assertOnBattlefield(player2, "Icefall Regent");
+        harness.performUntapStep(player2);
+
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    void lockDoesNotResumeWhenRegentReturnsToOriginalController() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        castAndResolveRegent(bears);
+        Permanent regent = findPermanent(player1, "Icefall Regent");
+
+        stealRegent(regent);
+        advanceToNextTurn(player2);
+        harness.assertOnBattlefield(player1, "Icefall Regent");
+        harness.performUntapStep(player2);
+
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    void opponentsCanPayTargetingTaxToResolveSpell() {
+        Permanent regent = addCreatureReady(player1, new IcefallRegent());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player2, 0, regent.getId());
+
+        harness.assertInGraveyard(player1, "Icefall Regent");
+    }
+
+    @Test
+    void controllersOwnSpellIsNotTaxed() {
+        Permanent regent = addCreatureReady(player1, new IcefallRegent());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, regent.getId());
+
+        harness.assertInGraveyard(player1, "Icefall Regent");
+    }
+
+    @Test
+    void opponentSpellTargetingAnotherCreatureIsNotTaxed() {
+        addCreatureReady(player1, new IcefallRegent());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Icefall Regent");
+    }
+
+    @Test
+    void targetIsTappedButNotLockedWhenRegentLeavesBeforeTriggerResolves() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new IcefallRegent(), new LightningBolt()));
+        addRegentMana();
+        harness.castCreature(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        Permanent regent = findPermanent(player1, "Icefall Regent");
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, regent.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.isTapped()).isTrue();
+        harness.performUntapStep(player2);
+        assertThat(bears.isTapped()).isFalse();
+    }
+
+    @Test
+    void alreadyTappedCreatureIsStillLocked() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        bears.setTapped(true);
+
+        castAndResolveRegent(bears);
+        harness.performUntapStep(player2);
+
+        assertThat(bears.isTapped()).isTrue();
+    }
+
+    private void stealRegent(Permanent regent) {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new LoseCalm()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 5);
+        harness.castAndResolveSorcery(player2, 0, regent.getId());
     }
 
     private void castAndResolveRegent(Permanent target) {
