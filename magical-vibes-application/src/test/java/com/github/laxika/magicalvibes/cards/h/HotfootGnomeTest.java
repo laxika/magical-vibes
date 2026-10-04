@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArmoredKincaller;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,14 +14,14 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HotfootGnome.class, GrizzlyBears.class, Mountain.class})
+@CardUsed({HotfootGnome.class, ArmoredKincaller.class, Mountain.class})
 class HotfootGnomeTest extends BaseCardTest {
 
     @Test
     @DisplayName("Another target creature gains haste")
     void grantsHasteToAnotherCreature() {
         Permanent gnome = addReadyGnome(player1);
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ArmoredKincaller());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -34,7 +34,7 @@ class HotfootGnomeTest extends BaseCardTest {
     @DisplayName("Haste wears off at end of turn")
     void hasteWearsOffAtEndOfTurn() {
         addReadyGnome(player1);
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ArmoredKincaller());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -66,6 +66,46 @@ class HotfootGnomeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, mountain.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("another creature");
+    }
+
+    @Test
+    @DisplayName("Gnome can activate immediately thanks to its own haste")
+    void canActivateWhileSummoningSick() {
+        Permanent gnome = harness.addToBattlefieldAndReturn(player1, new HotfootGnome());
+        gnome.setSummoningSick(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ArmoredKincaller());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gnome.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can grant haste to an opponent's creature")
+    void canTargetOpponentsCreature() {
+        addReadyGnome(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ArmoredKincaller());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability resolves even if the Gnome leaves the battlefield")
+    void abilityResolvesWithoutItsSource() {
+        Permanent gnome = addReadyGnome(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ArmoredKincaller());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(gnome);
+        gd.playerGraveyards.get(player1.getId()).add(gnome.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 
     private Permanent addReadyGnome(Player player) {
