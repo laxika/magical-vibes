@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RelentlessAssault;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HouseCartographer.class, Forest.class, GrizzlyBears.class})
+@CardUsed({HouseCartographer.class, Forest.class, GrizzlyBears.class, RelentlessAssault.class})
 class HouseCartographerTest extends BaseCardTest {
 
     @Test
@@ -67,11 +68,98 @@ class HouseCartographerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
     }
 
+    @Test
+    void untappingBeforeResolutionStopsTheAbility() {
+        Permanent cartographer = harness.addToBattlefieldAndReturn(player1, new HouseCartographer());
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+        cartographer.tap();
+
+        advanceToPostcombatMain();
+        assertThat(gd.stack).hasSize(1);
+        cartographer.untap();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(land);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+    }
+
+    @Test
+    void unrevealedCardsStayAboveTheBottomedCardsInTheirOriginalOrder() {
+        Permanent cartographer = harness.addToBattlefieldAndReturn(player1, new HouseCartographer());
+        Card firstRevealed = new HouseCartographer();
+        Card secondRevealed = new HouseCartographer();
+        Forest foundLand = new Forest();
+        Card firstUnrevealed = new HouseCartographer();
+        Forest secondUnrevealed = new Forest();
+        harness.setLibrary(player1, List.of(firstRevealed, secondRevealed, foundLand,
+                firstUnrevealed, secondUnrevealed));
+        cartographer.tap();
+
+        advanceToPostcombatMain();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(foundLand).doesNotContain(secondUnrevealed);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4)
+                .startsWith(firstUnrevealed, secondUnrevealed);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(2, 4))
+                .containsExactlyInAnyOrder(firstRevealed, secondRevealed);
+    }
+
+    @Test
+    void doesNotTriggerAgainInThirdMainPhase() {
+        Permanent cartographer = harness.addToBattlefieldAndReturn(player1, new HouseCartographer());
+        Forest firstLand = new Forest();
+        Forest secondLand = new Forest();
+        harness.setLibrary(player1, List.of(firstLand, secondLand));
+        cartographer.tap();
+        advanceToPostcombatMain();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).contains(firstLand);
+
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.passUntilWithNoAttackers(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondLand);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(secondLand);
+    }
+
+    @Test
+    void emptyLibraryRevealsNothing() {
+        Permanent cartographer = harness.addToBattlefieldAndReturn(player1, new HouseCartographer());
+        harness.setLibrary(player1, List.of());
+        int handSize = gd.playerHands.get(player1.getId()).size();
+        cartographer.tap();
+
+        advanceToPostcombatMain();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerInOpponentsSecondMainPhase() {
+        Permanent cartographer = harness.addToBattlefieldAndReturn(player1, new HouseCartographer());
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+        cartographer.tap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+
+        harness.passUntil(player2, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+    }
+
     private void advanceToPostcombatMain() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_OF_COMBAT);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
     }
 }
