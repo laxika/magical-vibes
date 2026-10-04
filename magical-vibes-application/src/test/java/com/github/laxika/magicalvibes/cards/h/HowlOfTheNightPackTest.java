@@ -101,4 +101,26 @@ class HowlOfTheNightPackTest extends BaseCardTest {
         assertThat(wolf.getEffectivePower()).isEqualTo(2);
         assertThat(wolf.getEffectiveToughness()).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Counts tapped Forests but not Forest cards outside the battlefield")
+    void countsOnlyBattlefieldForestsRegardlessOfTappedState() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setTapped(true);
+        harness.addToBattlefield(player1, new Island());
+        harness.setHand(player1, List.of(new HowlOfTheNightPack(), new Forest()));
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setExile(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 7);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(findPermanents(player1, "Wolf")).hasSize(1);
+        Permanent wolf = findPermanent(player1, "Wolf");
+        assertThat(wolf.getCard().isToken()).isTrue();
+        assertThat(wolf.isTapped()).isFalse();
+        assertThat(wolf.isSummoningSick()).isTrue();
+        assertThat(findPermanents(player2, "Wolf")).isEmpty();
+    }
 }
