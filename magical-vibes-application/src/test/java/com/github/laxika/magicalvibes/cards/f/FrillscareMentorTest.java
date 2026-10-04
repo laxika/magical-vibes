@@ -59,4 +59,79 @@ class FrillscareMentorTest extends BaseCardTest {
         assertThat(menacingCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(ordinaryCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+
+    @Test
+    void cannotTargetOpponentsNonHumanCreature() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FrillscareMentor()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canEnterWithoutAnyLegalTriggerTarget() {
+        harness.castFromHand(player1, new FrillscareMentor(), "{2}{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Frillscare Mentor");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void activatedAbilityIncludesHumanSourceWithMenaceAndExcludesOpponentsCreatures() {
+        Permanent mentor = addCreatureReady(player1, new FrillscareMentor());
+        mentor.setCounterCount(CounterType.MENACE, 1);
+        Permanent ally = addCreatureReady(player1, new GrizzlyBears());
+        ally.setCounterCount(CounterType.MENACE, 2);
+        Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
+        opponent.setCounterCount(CounterType.MENACE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(mentor.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(mentor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void activatedAbilityChecksMenaceAtResolution() {
+        addCreatureReady(player1, new FrillscareMentor());
+        Permanent losingMenace = addCreatureReady(player1, new GrizzlyBears());
+        losingMenace.setCounterCount(CounterType.MENACE, 1);
+        Permanent gainingMenace = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        losingMenace.setCounterCount(CounterType.MENACE, 0);
+        gainingMenace.setCounterCount(CounterType.MENACE, 1);
+        harness.passBothPriorities();
+
+        assertThat(losingMenace.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gainingMenace.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void entryTriggerDoesNotPutCounterOnTargetThatChangesController() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FrillscareMentor()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.MENACE)).isZero();
+        harness.assertOnBattlefield(player1, "Frillscare Mentor");
+    }
 }
