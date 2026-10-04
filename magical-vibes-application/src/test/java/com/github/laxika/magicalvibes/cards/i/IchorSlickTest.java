@@ -44,7 +44,6 @@ class IchorSlickTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, tombstalker.getId());
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(tombstalker.getPowerModifier()).isZero();
@@ -72,9 +71,53 @@ class IchorSlickTest extends BaseCardTest {
 
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Ichor Slick");
         harness.assertInHand(player1, "Augur of Skulls");
+    }
+
+    @Test
+    @DisplayName("Cycling can cast Ichor Slick through madness before drawing")
+    void cyclingCastsThroughMadnessBeforeDrawing() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AugurOfSkulls());
+        harness.setHand(player1, List.of(new IchorSlick()));
+        harness.setLibrary(player1, List.of(new ZoeticCavern()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.assertNotInHand(player1, "Ichor Slick");
+        harness.assertNotInGraveyard(player1, "Ichor Slick");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Augur of Skulls");
+        harness.assertInGraveyard(player1, "Ichor Slick");
+        harness.assertNotInHand(player1, "Zoetic Cavern");
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Zoetic Cavern");
+    }
+
+    @Test
+    @DisplayName("Ichor Slick can target and kill its controller's creature")
+    void killsOwnCreatureWithZeroOrLessToughness() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AugurOfSkulls());
+        harness.setHand(player1, List.of(new IchorSlick()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Augur of Skulls");
+        harness.assertInGraveyard(player1, "Augur of Skulls");
+        harness.assertInGraveyard(player1, "Ichor Slick");
     }
 
     @Test
