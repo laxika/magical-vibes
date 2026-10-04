@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.e.EagerFirstYear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -17,22 +16,21 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IlluminateHistory.class, Forest.class, GrizzlyBears.class})
+@CardUsed({IlluminateHistory.class, EagerFirstYear.class})
 class IlluminateHistoryTest extends BaseCardTest {
 
     @Test
     @DisplayName("Discards and draws the chosen number, then creates a Spirit at seven cards in its graveyard")
     void discardsDrawsAndCreatesSpiritAtGraveyardThreshold() {
-        Card discard = new GrizzlyBears();
-        Card kept = new GrizzlyBears();
-        Card draw = new Forest();
+        Card discard = new EagerFirstYear();
+        Card kept = new EagerFirstYear();
+        Card draw = new EagerFirstYear();
         harness.setGraveyard(player1, filler(6));
         harness.setLibrary(player1, List.of(draw));
         harness.setHand(player1, List.of(new IlluminateHistory(), discard, kept));
         addMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleXValueChosen(player1, 1);
         harness.handleCardChosen(player1, 0);
 
@@ -61,18 +59,76 @@ class IlluminateHistoryTest extends BaseCardTest {
         harness.setHand(player1, List.of(new IlluminateHistory()));
         addMana();
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().isToken()
                         && permanent.getCard().getName().equals("Spirit"));
     }
 
+    @Test
+    @DisplayName("Choosing zero preserves the hand and library and still creates a Spirit at threshold")
+    void choosingZeroStillCreatesSpirit() {
+        Card kept = new EagerFirstYear();
+        Card top = new EagerFirstYear();
+        harness.setGraveyard(player1, filler(7));
+        harness.setLibrary(player1, List.of(top));
+        harness.setHand(player1, List.of(new IlluminateHistory(), kept));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(kept);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(spirit -> assertThat(spirit.getCard().getName()).isEqualTo("Spirit"));
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Discarding the entire hand draws that many cards before checking the graveyard")
+    void discardsEntireHandAndDrawsThatMany() {
+        Card firstDiscard = new EagerFirstYear();
+        Card secondDiscard = new EagerFirstYear();
+        Card firstDraw = new EagerFirstYear();
+        Card secondDraw = new EagerFirstYear();
+        Card remaining = new EagerFirstYear();
+        harness.setGraveyard(player1, filler(5));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, remaining));
+        harness.setHand(player1, List.of(new IlluminateHistory(), firstDiscard, secondDiscard));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleXValueChosen(player1, 2);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstDiscard, secondDiscard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(spirit -> assertThat(spirit.getCard().getName()).isEqualTo("Spirit"));
+    }
+
+    @Test
+    @DisplayName("An empty hand still creates a Spirit when seven cards are already in the graveyard")
+    void emptyHandStillCreatesSpirit() {
+        harness.setGraveyard(player1, filler(7));
+        harness.setHand(player1, List.of(new IlluminateHistory()));
+        addMana();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(spirit -> assertThat(spirit.getCard().getName()).isEqualTo("Spirit"));
+    }
+
     private List<Card> filler(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            cards.add(new GrizzlyBears());
+            cards.add(new EagerFirstYear());
         }
         return cards;
     }
