@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.l.Lignify;
 import com.github.laxika.magicalvibes.cards.t.Thoughtseize;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,10 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Guile.class, Cancel.class, GrizzlyBears.class, Thoughtseize.class})
+@CardUsed({Guile.class, Cancel.class, GrizzlyBears.class, Thoughtseize.class, Lignify.class})
 class GuileTest extends BaseCardTest {
-
-    // ===== Counter replacement =====
 
     @Test
     @DisplayName("A counter you control exiles the spell instead and offers a free play (Guile)")
@@ -134,8 +133,6 @@ class GuileTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
-    // ===== Blocking restriction =====
-
     @Test
     @DisplayName("Guile can't be blocked by fewer than three creatures")
     void cannotBeBlockedByFewerThanThree() {
@@ -146,10 +143,7 @@ class GuileTest extends BaseCardTest {
             addCreatureReady(player2, new GrizzlyBears());
         }
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0))))
@@ -167,10 +161,7 @@ class GuileTest extends BaseCardTest {
             addCreatureReady(player2, new GrizzlyBears());
         }
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -179,8 +170,6 @@ class GuileTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()).get(0).isBlocking()).isTrue();
     }
-
-    // ===== Put into graveyard =====
 
     @Test
     @DisplayName("When Guile is put into a graveyard it is shuffled into its owner's library")
@@ -208,12 +197,82 @@ class GuileTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
         harness.handleCardChosen(player2, 0);
         harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Guile");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(guile.getId()));
+    }
+
+    @Test
+    @DisplayName("Guile with no abilities does not replace controlled counters")
+    void lignifiedGuileDoesNotReplaceCounters() {
+        Permanent guile = harness.addToBattlefieldAndReturn(player2, new Guile());
+        harness.setHand(player1, List.of(new Lignify()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castEnchantment(player1, 0, guile.getId());
+        harness.passBothPriorities();
+
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Guile with no abilities can be blocked by one creature")
+    void lignifiedGuileCanBeBlockedByOneCreature() {
+        Permanent guile = addCreatureReady(player1, new Guile());
+        harness.setHand(player1, List.of(new Lignify()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castEnchantment(player1, 0, guile.getId());
+        harness.passBothPriorities();
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        guile.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opposing Guile does not replace your counter")
+    void opposingGuileDoesNotReplaceCounter() {
+        harness.addToBattlefield(player1, new Guile());
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Countered Guile triggers from the graveyard and returns to its owner's library")
+    void counteredGuileShufflesIntoLibrary() {
+        harness.setLibrary(player1, List.of());
+        Guile guile = new Guile();
+        harness.castFromHand(player1, guile, "{3}{U}{U}{U}");
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castAndResolveInstant(player2, 0, guile.getId());
+        resolveAllTriggers();
 
         harness.assertNotInGraveyard(player1, "Guile");
         assertThat(gd.playerDecks.get(player1.getId()))
