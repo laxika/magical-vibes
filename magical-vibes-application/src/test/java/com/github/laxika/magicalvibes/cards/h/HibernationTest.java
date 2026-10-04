@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.l.Lure;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.w.WildGrowth;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Forest.class, GrizzlyBears.class, Hibernation.class, HillGiant.class, LlanowarElves.class, RagingGoblin.class, WildGrowth.class})
+@CardUsed({Forest.class, GrizzlyBears.class, Hibernation.class, HillGiant.class, LlanowarElves.class, Lure.class, RagingGoblin.class, WildGrowth.class})
 class HibernationTest extends BaseCardTest {
 
     @Test
@@ -121,6 +122,23 @@ class HibernationTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertInHand(player2, "Grizzly Bears");
         harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Returns a green creature and its green Aura to their respective owners' hands")
+    void returnsGreenCreatureAndAttachedGreenAuraTogether() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Lure());
+        aura.setAttachedTo(creature.getId());
+
+        castHibernation();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Lure");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Lure");
+        harness.assertNotInHand(player1, "Lure");
+        harness.assertNotInHand(player2, "Grizzly Bears");
     }
 
     private void castHibernation() {
