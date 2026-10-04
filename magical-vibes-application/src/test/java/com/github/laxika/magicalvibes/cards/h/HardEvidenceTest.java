@@ -22,8 +22,7 @@ class HardEvidenceTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HardEvidence()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         Permanent crab = findPermanent(player1, "Crab");
         assertThat(crab.getCard().getPower()).isEqualTo(0);
@@ -31,5 +30,32 @@ class HardEvidenceTest extends BaseCardTest {
         assertThat(crab.getCard().getColor()).isEqualTo(CardColor.BLUE);
         assertThat(crab.getCard().getSubtypes()).containsExactly(CardSubtype.CRAB);
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The Clue is sacrificed as a cost and draws a card on resolution")
+    void clueSacrificeDrawsCard() {
+        HardEvidence drawCard = new HardEvidence();
+        harness.setHand(player1, List.of(new HardEvidence()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(drawCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        Permanent clue = findPermanent(player1, "Clue");
+        int clueIndex = gd.playerBattlefields.get(player1.getId()).indexOf(clue);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, clueIndex, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Clue");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawCard);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(findPermanents(player1, "Crab")).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 }
