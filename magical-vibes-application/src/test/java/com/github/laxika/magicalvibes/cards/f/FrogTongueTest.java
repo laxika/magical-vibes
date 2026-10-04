@@ -69,10 +69,7 @@ class FrogTongueTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new BayouDragonfly());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -106,6 +103,49 @@ class FrogTongueTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Frog Tongue");
         harness.assertNotOnBattlefield(player1, "Frog Tongue");
+    }
+
+    @Test
+    @DisplayName("Enchanting an opponent's creature draws for the Aura controller")
+    void enchantingOpponentsCreatureDrawsForAuraController() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BloodPet());
+        harness.setHand(player1, List.of(new FrogTongue()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new BayouDragonfly()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.REACH)).isTrue();
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Bayou Dragonfly");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(findPermanent(player1, "Frog Tongue").getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("The draw trigger resolves even after the Aura leaves")
+    void drawTriggerResolvesAfterAuraLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new BloodPet());
+        harness.setHand(player1, List.of(new FrogTongue()));
+        harness.setLibrary(player1, List.of(new BayouDragonfly()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Frog Tongue");
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Bayou Dragonfly");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.REACH)).isFalse();
     }
 
     private Permanent attachFrogTongue(Player controller, Permanent creature) {
