@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.n.NantukoMonastery;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,9 +12,51 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Forest.class, HarvesterDruid.class, Island.class})
+@CardUsed({Forest.class, HarvesterDruid.class, Island.class, NantukoMonastery.class})
 class HarvesterDruidTest extends BaseCardTest {
+
+    @Test
+    void colorlessOnlyLandProducesNoManaButStillPaysTapCost() {
+        Permanent druid = addCreatureReady(player1, new HarvesterDruid());
+        harness.addToBattlefield(player1, new NantukoMonastery());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(druid.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent druid = harness.addToBattlefieldAndReturn(player1, new HarvesterDruid());
+        druid.setSummoningSick(true);
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(druid.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void cannotActivateAgainWhileTapped() {
+        addCreatureReady(player1, new HarvesterDruid());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Produces no mana when no land you control could produce colored mana")
