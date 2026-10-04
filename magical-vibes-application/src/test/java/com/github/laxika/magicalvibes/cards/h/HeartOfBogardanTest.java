@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HeartOfBogardan.class, BenalishKnight.class})
+@CardUsed({HeartOfBogardan.class, BenalishKnight.class, ChandraNalaar.class})
 class HeartOfBogardanTest extends BaseCardTest {
 
     @Test
@@ -30,7 +31,7 @@ class HeartOfBogardanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(heart);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -46,7 +47,10 @@ class HeartOfBogardanTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(heart);
         harness.assertInGraveyard(player1, "Heart of Bogardan");
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(knight);
     }
 
@@ -75,7 +79,7 @@ class HeartOfBogardanTest extends BaseCardTest {
         // X = 2 * 3 - 2 = 4: lethal to the 2/2 and 4 off the opponent's life total.
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        harness.assertLife(player2, 16);
         harness.assertInGraveyard(player2, "Benalish Knight");
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(heart);
     }
@@ -111,8 +115,57 @@ class HeartOfBogardanTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
         harness.assertInGraveyard(player1, "Benalish Knight");
+    }
+
+    @Test
+    @DisplayName("Unpaid second upkeep damages only the targeted player's creatures")
+    void secondUpkeepDamagesOnlyTargetedPlayersCreatures() {
+        Permanent heart = harness.addToBattlefieldAndReturn(player1, new HeartOfBogardan());
+        heart.setCounterCount(CounterType.AGE, 1);
+        Permanent ownKnight = harness.addToBattlefieldAndReturn(player1, new BenalishKnight());
+        harness.addToBattlefield(player2, new BenalishKnight());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Heart of Bogardan");
+        harness.assertInGraveyard(player2, "Benalish Knight");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownKnight);
+        assertThat(ownKnight.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Targeting a planeswalker damages it and its controller's creatures, but not that player")
+    void targetsPlaneswalkerAndItsControllersCreatures() {
+        Permanent heart = harness.addToBattlefieldAndReturn(player1, new HeartOfBogardan());
+        heart.setCounterCount(CounterType.AGE, 2);
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
+        harness.addToBattlefield(player2, new BenalishKnight());
+        Permanent ownKnight = harness.addToBattlefieldAndReturn(player1, new BenalishKnight());
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handlePermanentChosen(player1, chandra.getId());
+        harness.passBothPriorities();
+
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Benalish Knight");
+        harness.assertInGraveyard(player1, "Heart of Bogardan");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownKnight);
+        assertThat(ownKnight.getMarkedDamage()).isZero();
     }
 }
