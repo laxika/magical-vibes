@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.b.BoundByMoonsilver;
 import com.github.laxika.magicalvibes.cards.g.GoblinCohort;
 import com.github.laxika.magicalvibes.cards.k.KamiOfFalseHope;
 import com.github.laxika.magicalvibes.cards.s.Scarmaker;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({HiredMuscle.class, Scarmaker.class, KamiOfFalseHope.class, VitalSurge.class,
-        GoblinCohort.class, Shuko.class})
+        GoblinCohort.class, Shuko.class, BoundByMoonsilver.class})
 class HiredMuscleTest extends BaseCardTest {
 
     @Test
@@ -237,6 +238,53 @@ class HiredMuscleTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, equipment.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A restriction on transforming does not prevent Hired Muscle from flipping")
+    void flipsWhileEnchantedByBoundByMoonsilver() {
+        Permanent muscle = addMuscle();
+        muscle.setCounterCount(CounterType.KI, 2);
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new BoundByMoonsilver());
+        aura.setAttachedTo(muscle.getId());
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(muscle.isTransformed()).isTrue();
+        assertThat(muscle.getCounterCount(CounterType.KI)).isEqualTo(2);
+        assertThat(aura.getAttachedTo()).isEqualTo(muscle.getId());
+    }
+
+    @Test
+    @DisplayName("Scarmaker can grant fear to an opponent's creature and pays the counter immediately")
+    void scarmakerTargetsOpponentsCreature() {
+        Permanent muscle = addFlippedMuscle();
+        Permanent goblin = addCreatureReady(player2, new GoblinCohort());
+        prepareMainPhase();
+
+        harness.activateAbility(player1, 0, null, goblin.getId());
+
+        assertThat(muscle.getCounterCount(CounterType.KI)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.FEAR)).isFalse();
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.FEAR)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The flipped creature no longer gains ki counters from Spirit spells")
+    void flippedMuscleDoesNotTriggerOnSpiritSpell() {
+        Permanent muscle = addFlippedMuscle();
+        prepareMainPhase();
+        harness.setHand(player1, List.of(new KamiOfFalseHope()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(muscle.getCounterCount(CounterType.KI)).isEqualTo(2);
     }
 
     private Permanent addMuscle() {
