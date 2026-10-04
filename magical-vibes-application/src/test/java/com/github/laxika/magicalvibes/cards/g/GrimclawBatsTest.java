@@ -100,4 +100,61 @@ class GrimclawBatsTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bats)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bats)).isEqualTo(1);
     }
+
+    @Test
+    @DisplayName("Life is paid immediately and the boost waits for resolution")
+    void lifeIsPaidBeforeResolution() {
+        Permanent bats = addCreatureReady(player1, new GrimclawBats());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gqs.getEffectivePower(gd, bats)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, bats)).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(gqs.getEffectivePower(gd, bats)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bats)).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Tapped and summoning-sick Grimclaw Bats can activate the ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent bats = harness.addToBattlefieldAndReturn(player1, new GrimclawBats());
+        bats.setSummoningSick(true);
+        bats.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bats)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bats)).isEqualTo(2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
+        assertThat(bats.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The boost affects only the copy that activated the ability")
+    void boostsOnlyItsSource() {
+        Permanent first = addCreatureReady(player1, new GrimclawBats());
+        Permanent second = addCreatureReady(player1, new GrimclawBats());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+    }
 }
