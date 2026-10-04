@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 
 @CardRegistration(set = "M12", collectorNumber = "126")
 @CardRegistration(set = "M14", collectorNumber = "134")
+@CardRegistration(set = "E01", collectorNumber = "44")
 public class ChandrasPhoenix extends Card {
 
     public ChandrasPhoenix() {

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDu
 @CardRegistration(set = "CMM", collectorNumber = "27")
 @CardRegistration(set = "CMM", collectorNumber = "460")
 @CardRegistration(set = "CMM", collectorNumber = "625")
+@CardRegistration(set = "E01", collectorNumber = "12")
 public class GrandAbolisher extends Card {
 
     public GrandAbolisher() {

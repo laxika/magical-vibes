@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
  */
 @CardRegistration(set = "M12", collectorNumber = "156")
 @CardRegistration(set = "MM2", collectorNumber = "130")
+@CardRegistration(set = "E01", collectorNumber = "58")
 public class StormbloodBerserker extends Card {
 
     public StormbloodBerserker() {

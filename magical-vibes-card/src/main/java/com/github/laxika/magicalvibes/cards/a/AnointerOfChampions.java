@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "ORI", collectorNumber = "3")
+@CardRegistration(set = "E01", collectorNumber = "3")
 public class AnointerOfChampions extends Card {
 
     public AnointerOfChampions() {

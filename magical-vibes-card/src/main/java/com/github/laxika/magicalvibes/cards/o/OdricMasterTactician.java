@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 @CardRegistration(set = "CMM", collectorNumber = "46")
 @CardRegistration(set = "CMM", collectorNumber = "468")
 @CardRegistration(set = "MIC", collectorNumber = "90")
+@CardRegistration(set = "E01", collectorNumber = "17")
 public class OdricMasterTactician extends Card {
 
     public OdricMasterTactician() {

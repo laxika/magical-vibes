@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "GK2", collectorNumber = "63")
 @CardRegistration(set = "PIO", collectorNumber = "221")
 @CardRegistration(set = "RVR", collectorNumber = "180")
+@CardRegistration(set = "E01", collectorNumber = "83")
 public class Dreadbore extends Card {
 
     public Dreadbore() {

@@ -20,6 +20,7 @@ import java.util.List;
 @CardRegistration(set = "M14", collectorNumber = "132")
 @CardRegistration(set = "M15", collectorNumber = "134")
 @CardRegistration(set = "AKR", collectorNumber = "146")
+@CardRegistration(set = "E01", collectorNumber = "42")
 public class ChandraPyromaster extends Card {
 
     public ChandraPyromaster() {

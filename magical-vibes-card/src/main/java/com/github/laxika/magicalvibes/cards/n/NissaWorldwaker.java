@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M15", collectorNumber = "187")
+@CardRegistration(set = "E01", collectorNumber = "68")
 public class NissaWorldwaker extends Card {
 
     public NissaWorldwaker() {

@@ -98,6 +98,7 @@ public enum CardSet {
     SET_ECL("ECL"),
     SET_ECC("ECC"),
     SET_EMN("EMN"),
+    SET_E01("E01"),
     SET_E02("E02"),
     SET_MRD("MRD"),
     SET_5DN("5DN"),
