@@ -174,7 +174,7 @@ class DeathsporeThallidTest extends BaseCardTest {
     void tokenAbilityPaysCountersBeforeResolutionWithoutTapRestriction() {
         Permanent thallid = harness.addToBattlefieldAndReturn(player1, new DeathsporeThallid());
         thallid.setSummoningSick(true);
-        thallid.setTapped(true);
+        thallid.tap();
         thallid.setCounterCount(CounterType.FUNGUS, 3);
 
         harness.activateAbility(player1, 0, null, null);

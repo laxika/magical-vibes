@@ -82,6 +82,64 @@ class FlaringFlameKinTest extends BaseCardTest {
                 .hasMessageContaining("no activated ability");
     }
 
+    @Test
+    @DisplayName("An opponent-controlled Aura enables all conditional benefits")
+    void opponentControlledAuraEnablesBenefits() {
+        Permanent kin = addKin();
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new ElementalResonance());
+        aura.setAttachedTo(kin.getId());
+
+        assertThat(gqs.getEffectivePower(gd, kin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, kin)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, kin, Keyword.TRAMPLE)).isTrue();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, kin)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Multiple Auras do not multiply the bonus, and one remaining Aura keeps it enabled")
+    void multipleAurasDoNotMultiplyBonus() {
+        Permanent kin = addKin();
+        Permanent firstAura = addAura(kin);
+        addAura(kin);
+
+        assertThat(gqs.getEffectivePower(gd, kin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, kin)).isEqualTo(4);
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstAura);
+
+        assertThat(gqs.getEffectivePower(gd, kin)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, kin)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, kin, Keyword.TRAMPLE)).isTrue();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, kin)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("An activated firebreathing ability still resolves after the last Aura leaves")
+    void activatedAbilityResolvesAfterAuraLeaves() {
+        Permanent kin = addKin();
+        Permanent aura = addAura(kin);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, kin)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, kin)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, kin, Keyword.TRAMPLE)).isFalse();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+    }
+
     private Permanent addKin() {
         return addCreatureReady(player1, new FlaringFlameKin());
     }

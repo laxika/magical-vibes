@@ -144,10 +144,90 @@ class EbonyHorseTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Untapping the target leaves it attacking the same defender")
+    void targetRemainsInCombat() {
+        Permanent ebonyHorse = addEbonyHorse(player1);
+        Permanent attacker = addAttacker(player1, player2, 2, 2);
+        attacker.tap();
+
+        activateEbonyHorse(ebonyHorse, attacker);
+
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(attacker.getAttackTarget()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    @DisplayName("Prevents combat damage to a blocker as well as to the chosen attacker")
+    void preventsCombatDamageInBothDirections() {
+        Permanent ebonyHorse = addEbonyHorse(player1);
+        Permanent attacker = addAttacker(player1, player2, 2, 2);
+        Permanent blocker = addBlocker(player2, 2, 2,
+                gd.playerBattlefields.get(player1.getId()).indexOf(attacker));
+
+        activateEbonyHorse(ebonyHorse, attacker);
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Other attackers still deal combat damage")
+    void onlyChosenAttackerIsProtected() {
+        harness.setLife(player2, 20);
+        Permanent ebonyHorse = addEbonyHorse(player1);
+        Permanent attacker = addAttacker(player1, player2, 2, 2);
+        addAttacker(player1, player2, 2, 2);
+
+        activateEbonyHorse(ebonyHorse, attacker);
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Ability resolves even if Ebony Horse leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        harness.setLife(player2, 20);
+        Permanent ebonyHorse = addEbonyHorse(player1);
+        Permanent attacker = addAttacker(player1, player2, 2, 2);
+        attacker.tap();
+        prepareAbilityActivation();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(ebonyHorse);
+        harness.activateAbility(player1, index, null, attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(ebonyHorse);
+        gd.playerGraveyards.get(player1.getId()).add(ebonyHorse.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(attacker.isTapped()).isFalse();
+        resolveCombat();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A tapped Ebony Horse cannot pay its tap cost")
+    void cannotActivateWhileTapped() {
+        Permanent ebonyHorse = addEbonyHorse(player1);
+        Permanent attacker = addAttacker(player1, player2, 2, 2);
+        ebonyHorse.tap();
+        prepareAbilityActivation();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(ebonyHorse);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addEbonyHorse(Player owner) {
-        Permanent perm = new Permanent(new EbonyHorse());
+        Permanent perm = harness.addToBattlefieldAndReturn(owner, new EbonyHorse());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(owner.getId()).add(perm);
         return perm;
     }
 
@@ -169,11 +249,10 @@ class EbonyHorseTest extends BaseCardTest {
         Card bears = new GrizzlyBears();
         bears.setPower(power);
         bears.setToughness(toughness);
-        Permanent perm = new Permanent(bears);
+        Permanent perm = harness.addToBattlefieldAndReturn(owner, bears);
         perm.setSummoningSick(false);
         perm.setAttacking(true);
         perm.setAttackTarget(defender.getId());
-        gd.playerBattlefields.get(owner.getId()).add(perm);
         return perm;
     }
 
@@ -181,11 +260,10 @@ class EbonyHorseTest extends BaseCardTest {
         Card bears = new GrizzlyBears();
         bears.setPower(power);
         bears.setToughness(toughness);
-        Permanent perm = new Permanent(bears);
+        Permanent perm = harness.addToBattlefieldAndReturn(owner, bears);
         perm.setSummoningSick(false);
         perm.setBlocking(true);
         perm.addBlockingTarget(blockedAttackerIndex);
-        gd.playerBattlefields.get(owner.getId()).add(perm);
         return perm;
     }
 }

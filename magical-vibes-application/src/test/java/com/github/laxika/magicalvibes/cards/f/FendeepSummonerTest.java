@@ -124,4 +124,71 @@ class FendeepSummonerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot choose the same Swamp twice")
+    void cannotTargetSameSwampTwice() {
+        addCreatureReady(player1, new FendeepSummoner());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(swamp.getId(), swamp.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Summoner cannot pay the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new FendeepSummoner());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(swamp.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped Summoner cannot activate again")
+    void cannotActivateWhileTapped() {
+        Permanent summoner = addCreatureReady(player1, new FendeepSummoner());
+        summoner.setTapped(true);
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(swamp.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The remaining legal Swamp is animated when the other target leaves")
+    void animatesRemainingTarget() {
+        addCreatureReady(player1, new FendeepSummoner());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Swamp());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(first.getId(), second.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, first));
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, second)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(5);
+        assertThat(first.isAnimatedUntilEndOfTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability resolves after the Summoner leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent summoner = addCreatureReady(player1, new FendeepSummoner());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(swamp.getId()));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, summoner));
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, swamp)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, swamp)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, swamp)).isEqualTo(5);
+        assertThat(gqs.isLand(gd, swamp)).isTrue();
+    }
+
 }

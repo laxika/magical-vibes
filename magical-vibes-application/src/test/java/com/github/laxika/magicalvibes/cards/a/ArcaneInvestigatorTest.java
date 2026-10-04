@@ -32,6 +32,7 @@ class ArcaneInvestigatorTest extends BaseCardTest {
 
     @BeforeEach
     void captureRollService() {
+        harness.setHand(player1, List.of());
         rollHandler = GameTestEngineContext.get().getBean(RollD20EffectHandler.class);
         originalRollService = (D20RollService) ReflectionTestUtils.getField(rollHandler, "d20RollService");
     }

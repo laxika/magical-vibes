@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.g.GrimPoppet;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -71,5 +72,49 @@ class FlourishingDefensesTest extends BaseCardTest {
 
         assertThat(elfWarriorTokenCount(player2)).isEqualTo(3);
         assertThat(elfWarriorTokenCount(player1)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each counter's token creation can be accepted or declined independently")
+    void choicesAreIndependentForEachCounter() {
+        harness.addToBattlefield(player1, new FlourishingDefenses());
+        harness.enterBattlefieldAndReturn(player2, new GrimPoppet());
+
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllMayPrompts(player1, false);
+
+        assertThat(elfWarriorTokenCount(player1)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A counter that kills a creature still creates a token, while removing a counter does not")
+    void lethalCounterStillTriggers() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new FlourishingDefenses());
+        harness.enterBattlefieldAndReturn(player1, new GrimPoppet());
+        resolveAllMayPrompts(player1, true);
+        var elfId = harness.getPermanentId(player1, "Elf Warrior");
+
+        harness.activateAbility(player1, 1, null, elfId);
+        resolveAllMayPrompts(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(elfId));
+        assertThat(elfWarriorTokenCount(player1)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Each Flourishing Defenses triggers separately for every counter")
+    void multipleDefensesEachTrigger() {
+        harness.addToBattlefield(player1, new FlourishingDefenses());
+        harness.addToBattlefield(player1, new FlourishingDefenses());
+        harness.enterBattlefieldAndReturn(player2, new GrimPoppet());
+        resolveAllMayPrompts(player1, true);
+
+        assertThat(elfWarriorTokenCount(player1)).isEqualTo(6);
+        assertThat(elfWarriorTokenCount(player2)).isZero();
     }
 }

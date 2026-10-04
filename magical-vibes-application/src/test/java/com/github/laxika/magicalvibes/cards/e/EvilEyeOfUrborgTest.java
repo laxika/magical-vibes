@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.h.HavenwoodWurm;
+import com.github.laxika.magicalvibes.cards.s.SuddenDeath;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EvilEyeOfUrborg.class, AshcoatBear.class, HavenwoodWurm.class})
+@CardUsed({EvilEyeOfUrborg.class, AshcoatBear.class, HavenwoodWurm.class, SuddenDeath.class})
 class EvilEyeOfUrborgTest extends BaseCardTest {
 
     @Test
@@ -87,5 +90,42 @@ class EvilEyeOfUrborgTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(card -> card.getName())
                 .containsExactlyInAnyOrder("Havenwood Wurm", "Havenwood Wurm");
+    }
+
+    @Test
+    @DisplayName("The destruction trigger resolves even if Evil Eye leaves the battlefield")
+    void destroysBlockerAfterSourceLeavesBattlefield() {
+        Permanent eye = addCreatureReady(player1, new EvilEyeOfUrborg());
+        addCreatureReady(player2, new HavenwoodWurm());
+        harness.setHand(player2, List.of(new SuddenDeath()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.castInstant(player2, 0, eye.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Evil Eye of Urborg");
+        harness.assertOnBattlefield(player2, "Havenwood Wurm");
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Havenwood Wurm");
+        harness.assertInGraveyard(player2, "Havenwood Wurm");
+    }
+
+    @Test
+    @DisplayName("Blocking with Evil Eye does not trigger its destruction ability")
+    void blockingDoesNotDestroyAttackerBeforeCombatDamage() {
+        addCreatureReady(player1, new HavenwoodWurm());
+        addCreatureReady(player2, new EvilEyeOfUrborg());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))));
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Havenwood Wurm");
+        harness.assertOnBattlefield(player2, "Evil Eye of Urborg");
     }
 }

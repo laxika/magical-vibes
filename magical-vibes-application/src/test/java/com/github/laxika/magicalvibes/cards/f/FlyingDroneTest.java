@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.Levitation;
 import com.github.laxika.magicalvibes.cards.s.SkyshroudFalcon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FlyingDrone.class, SkyshroudFalcon.class, GrizzlyBears.class})
+@CardUsed({FlyingDrone.class, SkyshroudFalcon.class, GrizzlyBears.class, Levitation.class})
 class FlyingDroneTest extends BaseCardTest {
 
     @Test
@@ -75,5 +76,74 @@ class FlyingDroneTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    void opponentsFlyingCreatureDoesNotReduceCost() {
+        addCreatureReady(player1, new FlyingDrone());
+        harness.enterBattlefieldAndReturn(player2, new SkyshroudFalcon());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    void paidActivationDrawsBeforeDiscardingAndCanKeepDrawnCard() {
+        Permanent drone = addCreatureReady(player1, new FlyingDrone());
+        Card original = new GrizzlyBears();
+        Card drawn = new SkyshroudFalcon();
+        harness.setHand(player1, List.of(original));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(drone.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(original, drawn);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(original);
+    }
+
+    @Test
+    void freeActivationStillRequiresAnUntappedSource() {
+        Permanent drone = addCreatureReady(player1, new FlyingDrone());
+        drone.setTapped(true);
+        harness.enterBattlefieldAndReturn(player1, new SkyshroudFalcon());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void freeActivationStillRequiresSourceNotToBeSummoningSick() {
+        harness.enterBattlefieldAndReturn(player1, new FlyingDrone());
+        harness.enterBattlefieldAndReturn(player1, new SkyshroudFalcon());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void flyingGrantedAsCreatureEntersQualifiesForDiscount() {
+        addCreatureReady(player1, new FlyingDrone());
+        harness.addToBattlefield(player1, new Levitation());
+        harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card drawn = new SkyshroudFalcon();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(drawn);
     }
 }

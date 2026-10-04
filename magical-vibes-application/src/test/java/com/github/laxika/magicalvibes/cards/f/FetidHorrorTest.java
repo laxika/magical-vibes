@@ -80,8 +80,7 @@ class FetidHorrorTest extends BaseCardTest {
     @Test
     @DisplayName("Ability can be activated while Fetid Horror has summoning sickness")
     void canActivateWithSummoningSickness() {
-        Permanent horror = addCreatureReady(player1, new FetidHorror());
-        horror.setSummoningSick(true);
+        Permanent horror = harness.addToBattlefieldAndReturn(player1, new FetidHorror());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -105,5 +104,57 @@ class FetidHorrorTest extends BaseCardTest {
         assertThat(firstHorror.getEffectiveToughness()).isEqualTo(2);
         assertThat(secondHorror.getEffectivePower()).isEqualTo(2);
         assertThat(secondHorror.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Ability can be activated while Fetid Horror is tapped")
+    void canActivateWhileTapped() {
+        Permanent horror = addCreatureReady(player1, new FetidHorror());
+        horror.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(horror.isTapped()).isTrue();
+        assertThat(horror.getEffectivePower()).isEqualTo(2);
+        assertThat(horror.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Boost applies only when the activated ability resolves")
+    void boostWaitsForResolution() {
+        Permanent horror = addCreatureReady(player1, new FetidHorror());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(horror.getEffectivePower()).isEqualTo(1);
+        assertThat(horror.getEffectiveToughness()).isEqualTo(2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(horror.getEffectivePower()).isEqualTo(2);
+        assertThat(horror.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Other mana colors cannot pay the black activation cost")
+    void cannotPayWithOtherManaColor() {
+        Permanent horror = addCreatureReady(player1, new FetidHorror());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(horror.getEffectivePower()).isEqualTo(1);
+        assertThat(horror.getEffectiveToughness()).isEqualTo(2);
     }
 }

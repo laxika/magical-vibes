@@ -1122,6 +1122,20 @@ public class TriggeredAbilityQueueService {
     private boolean hasLegalTriggeredModeTarget(GameData gameData,
             PermanentChoiceContext.TriggeredModalTrigger pending,
             ChooseOneEffect.ChooseOneOption option) {
+        GraveyardTargetingSupport.Target graveyardTarget = graveyardTargetingSupport.findTarget(option.effects());
+        if (graveyardTarget != null && graveyardTarget.minTargets() > 0) {
+            long validCards = graveyardTarget.scope().graveyardOwners(gameData.orderedPlayerIds, pending.controllerId())
+                    .stream()
+                    .mapToLong(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream()
+                            .filter(card -> graveyardTarget.filter() == null
+                                    || predicateEvaluationService.matchesCardPredicate(card, graveyardTarget.filter(),
+                                    pending.sourceCard().getId(), gameData, ownerId))
+                            .count())
+                    .sum();
+            if (validCards < graveyardTarget.minTargets()) {
+                return false;
+            }
+        }
         boolean requiresTarget = option.minTargets() > 0 && option.effects().stream().anyMatch(effect ->
                 effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
@@ -1467,6 +1481,13 @@ public class TriggeredAbilityQueueService {
                     }
                 }
 
+                if (!pending.nonTargeting()) {
+                    validPermanentTargets = validPermanentTargets.stream()
+                            .filter(id -> targetLegalityService.checkTriggeredPermanentTargetableReason(gameData,
+                                    gameQueryService.findPermanentById(gameData, id),
+                                    pending.sourceCard(), pending.controllerId()).isEmpty())
+                            .toList();
+                }
                 // If a target filter is present but no valid targets exist, skip this trigger
                 if (filter != null && !(filter instanceof AnyTargetPredicateTargetFilter)
                         && validPermanentTargets.isEmpty()) {

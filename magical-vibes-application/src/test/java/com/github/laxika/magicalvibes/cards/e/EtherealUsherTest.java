@@ -109,6 +109,95 @@ class EtherealUsherTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
 
+    @Test
+    void transmutePaysManaAndDiscardsBeforeResolution() {
+        EtherealUsher usher = new EtherealUsher();
+        OathswornGiant matchingCard = new OathswornGiant();
+        harness.setHand(player1, List.of(usher));
+        harness.setLibrary(player1, List.of(matchingCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Ethereal Usher");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingCard);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(matchingCard);
+    }
+
+    @Test
+    void transmuteCanFailToFindEvenWhenAMatchingCardExists() {
+        EtherealUsher usher = new EtherealUsher();
+        OathswornGiant matchingCard = new OathswornGiant();
+        harness.setHand(player1, List.of(usher));
+        harness.setLibrary(player1, List.of(matchingCard));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertInGraveyard(player1, "Ethereal Usher");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void transmuteResolvesWhenNoCardHasTheMatchingManaValue() {
+        harness.setHand(player1, List.of(new EtherealUsher()));
+        GlassGolem differentManaValue = new GlassGolem();
+        harness.setLibrary(player1, List.of(differentManaValue));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ethereal Usher");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(differentManaValue);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void activatedAbilityCanTargetAnOpponentCreatureAndSurvivesSourceRemoval() {
+        Permanent usher = addCreatureReady(player1, new EtherealUsher());
+        Permanent target = addCreatureReady(player2, new GlassGolem());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, indexOf(player1, usher), 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(usher);
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    void activatedAbilityCannotBeUsedWhileSummoningSick() {
+        Permanent usher = harness.addToBattlefieldAndReturn(player1, new EtherealUsher());
+        usher.setSummoningSick(true);
+        Permanent target = addCreatureReady(player1, new GlassGolem());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, indexOf(player1, usher), 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(usher.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private int indexOf(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }

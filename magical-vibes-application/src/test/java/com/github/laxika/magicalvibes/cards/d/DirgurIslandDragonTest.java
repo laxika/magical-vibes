@@ -175,7 +175,7 @@ class DirgurIslandDragonTest extends BaseCardTest {
     @Test
     void ownDragonDoesNotTriggerWardAndAlreadyTappedTargetStillAllowsDraw() {
         Permanent dragon = harness.addToBattlefieldAndReturn(player1, new DirgurIslandDragon());
-        dragon.setTapped(true);
+        dragon.tap();
         harness.setHand(player1, List.of(new DirgurIslandDragon()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 

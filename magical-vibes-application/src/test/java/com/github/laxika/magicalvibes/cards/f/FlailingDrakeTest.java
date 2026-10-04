@@ -25,9 +25,7 @@ class FlailingDrakeTest extends BaseCardTest {
         Permanent drake = addCreatureReady(player2, new FlailingDrake());
         addCreatureReady(player1, new TrainedArmodon());
 
-        declareAttackers(List.of(0));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(1);
@@ -51,8 +49,7 @@ class FlailingDrakeTest extends BaseCardTest {
         Permanent secondDrake = addCreatureReady(player2, new FlailingDrake());
         addCreatureReady(player1, new TrainedArmodon());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
@@ -77,9 +74,7 @@ class FlailingDrakeTest extends BaseCardTest {
         Permanent drake = addCreatureReady(player1, new FlailingDrake());
         Permanent blocker = addCreatureReady(player2, new WindDrake());
 
-        declareAttackers(List.of(0));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(1);
@@ -103,9 +98,7 @@ class FlailingDrakeTest extends BaseCardTest {
         addCreatureReady(player2, new WindDrake());
         addCreatureReady(player2, new WindDrake());
 
-        declareAttackers(List.of(0));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
@@ -128,12 +121,10 @@ class FlailingDrakeTest extends BaseCardTest {
     @Test
     @DisplayName("The boost wears off at end of turn")
     void boostWearsOffAtEndOfTurn() {
-        Permanent drake = addCreatureReady(player1, new FlailingDrake());
+        addCreatureReady(player1, new FlailingDrake());
         addCreatureReady(player2, new WindDrake());
 
-        declareAttackers(List.of(0));
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
@@ -144,5 +135,40 @@ class FlailingDrakeTest extends BaseCardTest {
         Permanent blocker = findPermanent(player2, "Wind Drake");
         assertThat(blocker.getPowerModifier()).isZero();
         assertThat(blocker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two Flailing Drakes in combat each boost their opponent")
+    void opposingDrakesBoostEachOther() {
+        Permanent attacker = addCreatureReady(player1, new FlailingDrake());
+        Permanent blocker = addCreatureReady(player2, new FlailingDrake());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack).allMatch(StackEntry::isNonTargeting);
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+        assertThat(blocker.getPowerModifier()).isEqualTo(1);
+        assertThat(blocker.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An unblocked attack does not trigger a boost")
+    void unblockedAttackDoesNotBoostAnyCreature() {
+        Permanent attacker = addCreatureReady(player1, new FlailingDrake());
+        Permanent defender = addCreatureReady(player2, new WindDrake());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(defender.getPowerModifier()).isZero();
+        assertThat(defender.getToughnessModifier()).isZero();
     }
 }

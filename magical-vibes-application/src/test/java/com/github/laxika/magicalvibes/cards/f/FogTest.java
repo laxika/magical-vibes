@@ -115,6 +115,28 @@ class FogTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Combat damage is dealt normally on the turn after Fog resolves")
+    void combatDamageResumesNextTurn() {
+        harness.setHand(player1, List.of(new Fog()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        addCreatureReady(player2, new BayFalcon());
+        addCreatureReady(player1, new GiantMantis());
+        harness.setLife(player1, 20);
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
     @DisplayName("Fog goes to graveyard after resolving")
     void goesToGraveyardAfterResolving() {
         harness.setHand(player1, List.of(new Fog()));

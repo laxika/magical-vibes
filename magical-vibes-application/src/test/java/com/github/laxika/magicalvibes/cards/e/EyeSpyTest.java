@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BearCub;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,10 +13,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EyeSpy.class, GrizzlyBears.class, Plains.class})
+@CardUsed({EyeSpy.class, BearCub.class, Plains.class})
 class EyeSpyTest extends BaseCardTest {
-
-    // ===== Accepted: top card goes to target player's graveyard =====
 
     @Test
     @DisplayName("Controller may put target player's top card into their graveyard")
@@ -24,7 +22,7 @@ class EyeSpyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EyeSpy()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        Card topCard = new GrizzlyBears();
+        Card topCard = new BearCub();
         gd.playerDecks.get(player2.getId()).add(0, topCard);
 
         harness.castSorcery(player1, 0, player2.getId());
@@ -35,15 +33,13 @@ class EyeSpyTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(topCard);
     }
 
-    // ===== Declined: card stays on top of target player's library =====
-
     @Test
     @DisplayName("Leaves the top card on the library when declined")
     void leavesTopCardWhenDeclined() {
         harness.setHand(player1, List.of(new EyeSpy()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        Card topCard = new GrizzlyBears();
+        Card topCard = new BearCub();
         gd.playerDecks.get(player2.getId()).add(0, topCard);
         int deckBefore = gd.playerDecks.get(player2.getId()).size();
 
@@ -56,15 +52,13 @@ class EyeSpyTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(topCard);
     }
 
-    // ===== Can target self =====
-
     @Test
     @DisplayName("Can target yourself and mill your own top card")
     void canTargetSelf() {
         harness.setHand(player1, List.of(new EyeSpy()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        Card topCard = new GrizzlyBears();
+        Card topCard = new BearCub();
         gd.playerDecks.get(player1.getId()).add(0, topCard);
 
         harness.castSorcery(player1, 0, player1.getId());
@@ -92,15 +86,13 @@ class EyeSpyTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(topCard);
     }
 
-    // ===== Empty library: no prompt, spell resolves =====
-
     @Test
     @DisplayName("Resolves with no effect when target library is empty")
     void emptyLibraryResolvesCleanly() {
         harness.setHand(player1, List.of(new EyeSpy()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
 
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
@@ -108,6 +100,54 @@ class EyeSpyTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the top card moves and the remaining library keeps its order")
+    void movesOnlyTopCardAndPreservesRemainingOrder() {
+        harness.setHand(player1, List.of(new EyeSpy()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        Card topCard = new BearCub();
+        Card secondCard = new Plains();
+        Card thirdCard = new BearCub();
+        harness.setLibrary(player2, List.of(topCard, secondCard, thirdCard));
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(secondCard, thirdCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card == topCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the caster sees the top card before deciding whether to leave it")
+    void privatelyShowsTopCardBeforeChoice() {
+        harness.setHand(player1, List.of(new EyeSpy()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        Card topCard = new BearCub();
+        Card secondCard = new Plains();
+        harness.setLibrary(player2, List.of(topCard, secondCard));
+        harness.clearMessages();
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(harness.getConn1().getMessagesContaining("Bear Cub")).isNotEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("Bear Cub")).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, secondCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, secondCard);
+        assertThat(harness.getConn2().getMessagesContaining("Bear Cub")).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 }

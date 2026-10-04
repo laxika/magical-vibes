@@ -124,7 +124,7 @@ class DiscipleOfKangeeTest extends BaseCardTest {
     @DisplayName("A tapped Disciple cannot activate its ability")
     void cannotActivateWhileTapped() {
         Permanent disciple = addCreatureReady(player1, new DiscipleOfKangee());
-        disciple.setTapped(true);
+        disciple.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, disciple.getId()))

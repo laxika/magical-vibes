@@ -54,7 +54,7 @@ class CoralColonyTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(library.get(1));
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(library.get(0));
-        colony.setTapped(false);
+        colony.untap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -130,7 +130,7 @@ class CoralColonyTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).getFirst().setSummoningSick(false);
         harness.activateAbility(player1, 0, 0, null, player2.getId());
         harness.passBothPriorities();
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(false);
+        gd.playerBattlefields.get(player1.getId()).getFirst().untap();
         harness.addMana(player1, ManaColor.WHITE, 2);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);

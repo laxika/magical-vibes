@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.w.WarHistorian;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FailedConversion.class, ColossalDreadmaw.class, Forest.class})
+@CardUsed({FailedConversion.class, ColossalDreadmaw.class, Forest.class, WarHistorian.class})
 class FailedConversionTest extends BaseCardTest {
 
     @Test
@@ -32,7 +32,7 @@ class FailedConversionTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("When enchanted creature dies, its controller surveils two")
+    @DisplayName("When enchanted creature dies, the Aura's controller surveils two")
     void enchantedCreatureDeathSurveilsTwo() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new ColossalDreadmaw());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new FailedConversion());
@@ -67,5 +67,94 @@ class FailedConversionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Killing an opposing creature with the Aura lets the Aura's controller reorder both cards")
+    void auraControllerSurveilsWhenDebuffKillsOpposingCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new WarHistorian());
+        Card aura = new FailedConversion();
+        Card first = new Forest();
+        Card second = new FailedConversion();
+        Card third = new Forest();
+        Card opponentTop = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.setLibrary(player2, List.of(opponentTop));
+        harness.setHand(player1, List.of(aura));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(creature.getCard());
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura);
+        harness.passBothPriorities();
+
+        PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(surveil).isNotNull();
+        assertThat(surveil.playerId()).isEqualTo(player1.getId());
+        assertThat(surveil.cards()).containsExactly(first, second);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, first, third);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentTop);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(first, second);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void surveilCanPutBothCardsIntoGraveyard() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new WarHistorian());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FailedConversion());
+        aura.setAttachedTo(creature.getId());
+        Card first = new Forest();
+        Card second = new FailedConversion();
+        Card third = new Forest();
+        harness.setLibrary(player1, List.of(first, second, third));
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+    }
+
+    @Test
+    void surveilWithOneCardUsesOnlyAvailableCard() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new WarHistorian());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FailedConversion());
+        aura.setAttachedTo(creature.getId());
+        Card onlyCard = new Forest();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        PendingInteraction.Scry surveil = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
+        assertThat(surveil).isNotNull();
+        assertThat(surveil.cards()).containsExactly(onlyCard);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(onlyCard);
+    }
+
+    @Test
+    void surveilWithEmptyLibraryFinishesWithoutChoice() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new WarHistorian());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FailedConversion());
+        aura.setAttachedTo(creature.getId());
+        harness.setLibrary(player1, List.of());
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }

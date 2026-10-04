@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -165,7 +164,7 @@ class ElvishPiperTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("has no creature cards in hand"));
+        assertThat(gameLogContains("has no creature cards in hand")).isTrue();
     }
 
     @Test
@@ -263,6 +262,71 @@ class ElvishPiperTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("has no creature cards in hand"));
+        assertThat(gameLogContains("has no creature cards in hand")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability can be activated with an empty hand and resolves without putting a card")
+    void emptyHandDoesNotPreventActivation() {
+        Permanent piper = addReadyPiper();
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(piper.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(piper);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Choosing one creature leaves other creatures in hand and rejects noncreatures")
+    void putsExactlyOneCreatureOntoBattlefield() {
+        addReadyPiper();
+        Forest forest = new Forest();
+        GrizzlyBears bears = new GrizzlyBears();
+        Ornithopter ornithopter = new Ornithopter();
+        harness.setHand(player1, List.of(forest, bears, ornithopter));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid card index");
+        harness.handleCardChosen(player1, 2);
+
+        harness.assertOnBattlefield(player1, "Ornithopter");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest, bears);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creature is chosen from the hand at resolution rather than activation")
+    void usesHandAtResolution() {
+        addReadyPiper();
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(findPermanent(player1, "Grizzly Bears").isSummoningSick()).isTrue();
     }
 }

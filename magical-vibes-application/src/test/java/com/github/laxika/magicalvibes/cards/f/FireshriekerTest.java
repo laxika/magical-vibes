@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -105,7 +105,7 @@ class FireshriekerTest extends BaseCardTest {
     @Test
     @DisplayName("Equip fizzles if target creature is removed before resolution")
     void equipFizzlesIfTargetRemoved() {
-        Permanent fireshrieker = addFireshriekerReady(player1);
+        addFireshriekerReady(player1);
         Permanent creature = addCreatureReady(player1, new AlphaMyr());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -119,7 +119,7 @@ class FireshriekerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         Permanent remaining = findPermanent(player1, "Fireshrieker");
         assertThat(remaining.getAttachedTo()).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     @Test
@@ -176,6 +176,109 @@ class FireshriekerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(fireshrieker.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Equipped unblocked creature deals both first-strike and regular combat damage")
+    void equippedAttackerDealsDamageTwice() {
+        Permanent attacker = addCreatureReady(player1, new AlphaMyr());
+        Permanent fireshrieker = addFireshriekerReady(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 1, null, attacker.getId());
+        harness.passBothPriorities();
+        assertThat(fireshrieker.getAttachedTo()).isEqualTo(attacker.getId());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Killing a blocker with first-strike damage does not let regular damage through")
+    void killedBlockerDoesNotLetDamageThrough() {
+        Permanent attacker = addCreatureReady(player1, new AlphaMyr());
+        Permanent fireshrieker = addFireshriekerReady(player1);
+        fireshrieker.setAttachedTo(attacker.getId());
+        harness.addToBattlefield(player2, new AlphaMyr());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Alpha Myr");
+        harness.assertInGraveyard(player2, "Alpha Myr");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An equipped blocker kills an attacker before regular combat damage")
+    void equippedBlockerDealsFirstStrikeDamage() {
+        addCreatureReady(player1, new AlphaMyr());
+        Permanent blocker = addCreatureReady(player2, new AlphaMyr());
+        Permanent fireshrieker = addFireshriekerReady(player2);
+        fireshrieker.setAttachedTo(blocker.getId());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Alpha Myr");
+        harness.assertOnBattlefield(player2, "Alpha Myr");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated while another equip ability is on the stack")
+    void cannotEquipWithNonemptyStack() {
+        Permanent fireshrieker = addFireshriekerReady(player1);
+        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, creature.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+
+        harness.passBothPriorities();
+        assertThat(fireshrieker.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Failed re-equip leaves Fireshrieker attached to its original creature")
+    void failedReEquipPreservesOriginalAttachment() {
+        Permanent fireshrieker = addFireshriekerReady(player1);
+        Permanent original = addCreatureReady(player1, new AlphaMyr());
+        Permanent target = addCreatureReady(player1, new AlphaMyr());
+        fireshrieker.setAttachedTo(original.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(fireshrieker.getAttachedTo()).isEqualTo(original.getId());
+        assertThat(gqs.hasKeyword(gd, original, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Equip does not grant double strike if Fireshrieker leaves before resolution")
+    void equipmentRemovedBeforeEquipResolves() {
+        Permanent fireshrieker = addFireshriekerReady(player1);
+        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, creature.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(fireshrieker);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addFireshriekerReady(Player player) {

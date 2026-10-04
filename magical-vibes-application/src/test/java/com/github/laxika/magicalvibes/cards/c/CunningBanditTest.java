@@ -235,10 +235,10 @@ class CunningBanditTest extends BaseCardTest {
         advanceToEndStep(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        bandit.setTapped(true);
+        bandit.tap();
         bandit.setSummoningSick(true);
         Permanent creature = addCreatureReady(player2, new GoblinCohort());
-        creature.setTapped(true);
+        creature.tap();
 
         prepareMainPhase();
         harness.activateAbility(player1, 0, null, creature.getId());

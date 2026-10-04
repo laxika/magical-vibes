@@ -102,7 +102,7 @@ class DragonTurtleTest extends BaseCardTest {
     @DisplayName("Already tapped creatures still receive the untap restriction")
     void alreadyTappedTargetIsLocked() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new HillGiantHerdgorger());
-        creature.setTapped(true);
+        creature.tap();
         castDragonTurtle(List.of(creature.getId()));
 
         harness.performUntapStep(player2);

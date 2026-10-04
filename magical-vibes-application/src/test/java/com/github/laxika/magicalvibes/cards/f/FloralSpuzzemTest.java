@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.b.BronzeHorse;
 import com.github.laxika.magicalvibes.cards.d.DurkwoodBoars;
+import com.github.laxika.magicalvibes.cards.e.EverlastingTorment;
+import com.github.laxika.magicalvibes.cards.f.ForethoughtAmulet;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FloralSpuzzem.class, BronzeHorse.class, DurkwoodBoars.class})
+@CardUsed({FloralSpuzzem.class, BronzeHorse.class, DurkwoodBoars.class,
+        EverlastingTorment.class, ForethoughtAmulet.class})
 class FloralSpuzzemTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -89,6 +91,71 @@ class FloralSpuzzemTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed(ForethoughtAmulet.class)
+    @DisplayName("A noncreature artifact can be destroyed by the unblocked ability")
+    void destroysNoncreatureArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ForethoughtAmulet());
+        addAttacker();
+        int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUnblockedMay(artifact);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore);
+    }
+
+    @Test
+    @DisplayName("A blocked attacker does not offer artifact destruction even with an eligible artifact")
+    void blockedWithArtifactDoesNotTrigger() {
+        addAttacker();
+        Permanent artifact = addDefenderArtifact();
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+    }
+
+    @Test
+    @DisplayName("Regeneration replaces destruction but the accepted choice still stops combat damage")
+    void regeneratedArtifactStillStopsCombatDamage() {
+        Permanent artifact = addDefenderArtifact();
+        artifact.setRegenerationShield(1);
+        addAttacker();
+        int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUnblockedMay(artifact);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        assertThat(artifact.getRegenerationShield()).isZero();
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore);
+    }
+
+    @Test
+    @CardUsed(EverlastingTorment.class)
+    @DisplayName("Assigning no combat damage still applies when damage cannot be prevented")
+    void noCombatDamageEvenWhenDamageCannotBePrevented() {
+        harness.addToBattlefield(player1, new EverlastingTorment());
+        Permanent artifact = addDefenderArtifact();
+        addAttacker();
+        int defenderLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUnblockedMay(artifact);
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(defenderLifeBefore);
+    }
+
+    @Test
     @DisplayName("Only artifacts controlled by the defending player are eligible")
     void onlyDefendingPlayerArtifactsAreEligible() {
         Permanent attacker = addAttacker();
@@ -126,10 +193,7 @@ class FloralSpuzzemTest extends BaseCardTest {
         Permanent attacker = addAttacker();
         addCreatureReady(player2, new DurkwoodBoars());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();

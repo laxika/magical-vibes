@@ -132,9 +132,7 @@ class FireDragonTest extends BaseCardTest {
         for (int i = 0; i < 6; i++) {
             harness.addToBattlefield(player1, new Mountain());
         }
-        harness.setHand(player1, List.of(new FireDragon()));
-        harness.addMana(player1, ManaColor.RED, 9);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FireDragon(), "{6}{R}{R}{R}");
         harness.passBothPriorities(); // resolve creature spell and open ETB target selection
 
         UUID fireDragonId = harness.getPermanentId(player1, "Fire Dragon");
@@ -145,7 +143,54 @@ class FireDragonTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Fire Dragon");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Tapped Mountains still count toward the damage")
+    void countsTappedMountains() {
+        harness.addToBattlefieldAndReturn(player1, new Mountain()).setTapped(true);
+        var target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castFireDragon(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The trigger resolves even after Fire Dragon leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castFireDragon(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        UUID dragonId = harness.getPermanentId(player1, "Fire Dragon");
+        gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getId().equals(dragonId));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The trigger does not damage a new creature when its target leaves")
+    void doesNotRetargetWhenTargetLeaves() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        var originalTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castFireDragon(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player2.getId()).remove(originalTarget);
+        var newCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(newCreature.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
 
     private void castFireDragon(Player targetOwner, String targetName) {
         UUID targetId = harness.getPermanentId(targetOwner, targetName);

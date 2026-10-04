@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CylianElf;
 import com.github.laxika.magicalvibes.cards.t.Terminate;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DisplayName("Fatestitcher")
+@CardUsed({Fatestitcher.class, CylianElf.class, Forest.class, Terminate.class})
 class FatestitcherTest extends BaseCardTest {
-
-    // ===== {T}: tap or untap another target permanent =====
 
     @Test
     @DisplayName("Taps an untapped target permanent")
@@ -30,6 +29,7 @@ class FatestitcherTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isTrue();
     }
@@ -43,6 +43,7 @@ class FatestitcherTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(target.isTapped()).isFalse();
     }
@@ -65,11 +66,10 @@ class FatestitcherTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, land.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(land.isTapped()).isTrue();
     }
-
-    // ===== Unearth {U} =====
 
     @Test
     @DisplayName("Unearth returns Fatestitcher to the battlefield with haste")
@@ -82,7 +82,7 @@ class FatestitcherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent perm = findPermanent(player1, "Fatestitcher");
-        assertThat(perm.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, perm, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Fatestitcher");
     }
 
@@ -137,8 +137,7 @@ class FatestitcherTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Terminate()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, perm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, perm.getId());
 
         harness.assertNotOnBattlefield(player1, "Fatestitcher");
         harness.assertNotInGraveyard(player1, "Fatestitcher");
@@ -146,28 +145,142 @@ class FatestitcherTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Fatestitcher"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Controller may decline tapping an untapped target")
+    void mayDeclineTappingTarget() {
+        Permanent source = addReadyFatestitcher(player1);
+        Permanent target = addReadyLand(player2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        assertThat(source.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(source.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Controller may decline untapping a tapped target")
+    void mayDeclineUntappingTarget() {
+        addReadyFatestitcher(player1);
+        Permanent target = addReadyLand(player2);
+        target.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Newly entered Fatestitcher cannot pay its tap cost without haste")
+    void summoningSicknessPreventsActivation() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new Fatestitcher());
+        Permanent target = addReadyLand(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(source.isTapped()).isFalse();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Unearth haste permits immediately paying the tap cost")
+    void unearthPermitsImmediateActivation() {
+        harness.setGraveyard(player1, List.of(new Fatestitcher()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        Permanent target = addReadyLand(player2);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        Permanent source = findPermanent(player1, "Fatestitcher");
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Unearth requires blue mana")
+    void unearthCannotBeActivatedWithoutMana() {
+        harness.setGraveyard(player1, List.of(new Fatestitcher()));
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Fatestitcher");
+        harness.assertNotOnBattlefield(player1, "Fatestitcher");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Unearth cannot be activated with an ability on the stack")
+    void unearthRequiresEmptyStack() {
+        addReadyFatestitcher(player1);
+        Permanent target = addReadyLand(player2);
+        harness.setGraveyard(player1, List.of(new Fatestitcher()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Fatestitcher");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Unearth returns only the activated card, not another copy")
+    void unearthReturnsOnlyActivatedCard() {
+        Fatestitcher first = new Fatestitcher();
+        Fatestitcher second = new Fatestitcher();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateGraveyardAbility(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Fatestitcher").getCard().getId()).isEqualTo(second.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(c -> c.getId())
+                .containsExactly(first.getId());
+        assertThat(countPermanents(player1, "Fatestitcher")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Unearth does nothing if its card leaves the graveyard before resolution")
+    void unearthDoesNothingIfSourceLeavesGraveyard() {
+        Fatestitcher card = new Fatestitcher();
+        harness.setGraveyard(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateGraveyardAbility(player1, 0);
+        gd.playerGraveyards.get(player1.getId()).remove(card);
+        gd.getPlayerExiledCards(player1.getId()).add(card);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Fatestitcher");
+        harness.assertNotInGraveyard(player1, "Fatestitcher");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+    }
 
     private Permanent addReadyFatestitcher(Player player) {
-        Fatestitcher card = new Fatestitcher();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new Fatestitcher());
     }
 
     private Permanent addReadyCreature(Player player) {
-        Card card = new GrizzlyBears();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new CylianElf());
     }
 
     private Permanent addReadyLand(Player player) {
-        Forest card = new Forest();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 }

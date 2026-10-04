@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.b.BlatantThievery;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.g.GoblinSkyRaider;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -12,10 +13,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FlamestickCourier.class, GoblinSkyRaider.class, GlorySeeker.class, Forest.class})
+@CardUsed({FlamestickCourier.class, GoblinSkyRaider.class, GlorySeeker.class, Forest.class, BlatantThievery.class})
 class FlamestickCourierTest extends BaseCardTest {
 
     @Test
@@ -194,6 +197,70 @@ class FlamestickCourierTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, secondGoblin)).isEqualTo(secondBaseToughness + 2);
         assertThat(gqs.hasKeyword(gd, firstGoblin, Keyword.HASTE)).isFalse();
         assertThat(gqs.hasKeyword(gd, secondGoblin, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Flamestick Courier can boost itself")
+    void canTargetItself() {
+        Permanent courier = addCreatureReady(player1, new FlamestickCourier());
+        int basePower = gqs.getEffectivePower(gd, courier);
+        int baseToughness = gqs.getEffectiveToughness(gd, courier);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, courier.getId());
+        harness.passBothPriorities();
+
+        assertThat(courier.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, courier)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, courier)).isEqualTo(baseToughness + 2);
+        assertThat(gqs.hasKeyword(gd, courier, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The bonus persists when the tapped Courier changes controllers")
+    void bonusPersistsWhenCourierChangesControllers() {
+        Permanent courier = addCreatureReady(player1, new FlamestickCourier());
+        Permanent goblin = addCreatureReady(player1, new GoblinSkyRaider());
+        int basePower = gqs.getEffectivePower(gd, goblin);
+        int baseToughness = gqs.getEffectiveToughness(gd, goblin);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, goblin.getId());
+        harness.passBothPriorities();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new BlatantThievery()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.castAndResolveSorcery(player2, 0, List.of(courier.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(courier);
+        assertThat(courier.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(baseToughness + 2);
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The bonus ends when Courier leaves after its ability resolves")
+    void bonusEndsWhenCourierLeavesAfterResolution() {
+        Permanent courier = addCreatureReady(player1, new FlamestickCourier());
+        Permanent goblin = addCreatureReady(player1, new GoblinSkyRaider());
+        int basePower = gqs.getEffectivePower(gd, goblin);
+        int baseToughness = gqs.getEffectiveToughness(gd, goblin);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, goblin.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(basePower + 2);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().tryDestroyPermanent(gd, courier));
+
+        assertThat(gqs.getEffectivePower(gd, goblin)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, goblin)).isEqualTo(baseToughness);
+        assertThat(gqs.hasKeyword(gd, goblin, Keyword.HASTE)).isFalse();
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {

@@ -104,6 +104,65 @@ class EvasiveActionTest extends BaseCardTest {
                 .hasMessageContaining("spell on the stack");
     }
 
+    @Test
+    @DisplayName("The controller may decline an affordable domain payment")
+    void countersWhenControllerDeclinesPayment() {
+        harness.addToBattlefield(player2, new Island());
+        castEvasiveAction(3);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Gaea's Skyfolk");
+        harness.assertNotOnBattlefield(player1, "Gaea's Skyfolk");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Zero domain allows the controller to pay zero even with no mana")
+    void zeroDomainAllowsZeroPayment() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Island());
+        castEvasiveAction(2);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Gaea's Skyfolk");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("The controller may decline to pay zero")
+    void zeroDomainStillAllowsDecliningPayment() {
+        castEvasiveAction(2);
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Gaea's Skyfolk");
+        harness.assertNotOnBattlefield(player1, "Gaea's Skyfolk");
+    }
+
+    @Test
+    @DisplayName("The controller may generate mana to pay during resolution")
+    void offersPaymentWhenManaCanBeGeneratedDuringResolution() {
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player1, new Forest());
+        castEvasiveAction(2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.assertNotInGraveyard(player1, "Gaea's Skyfolk");
+        harness.tapPermanent(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Gaea's Skyfolk");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
     private void castEvasiveAction(int playerMana) {
         GaeasSkyfolk skyfolk = new GaeasSkyfolk();
         harness.castFromHand(player1, skyfolk, "{G}{U}");

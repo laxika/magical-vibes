@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.a.AweStrike;
+import com.github.laxika.magicalvibes.cards.c.Commandeer;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
 import com.github.laxika.magicalvibes.cards.o.Override;
 import com.github.laxika.magicalvibes.cards.r.Regress;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FracturedLoyalty.class, AlphaMyr.class, AweStrike.class, IcyManipulator.class,
-        Override.class, Regress.class})
+        Override.class, Regress.class, Commandeer.class})
 class FracturedLoyaltyTest extends BaseCardTest {
 
     @Test
@@ -90,8 +91,7 @@ class FracturedLoyaltyTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new AweStrike()));
         harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.castInstant(player2, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creature.getId());
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
 
@@ -133,8 +133,7 @@ class FracturedLoyaltyTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Override()));
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castInstant(player1, 0, aweStrike.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, aweStrike.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Awe Strike");
@@ -163,6 +162,50 @@ class FracturedLoyaltyTest extends BaseCardTest {
                 .anyMatch(permanent -> permanent.getId().equals(creature.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(creature.getId()));
+    }
+
+    @Test
+    @DisplayName("Each targeting player can take the creature while the Aura keeps its controller")
+    void successiveTargetingSpellsChangeControlBack() {
+        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        Permanent aura = addAura(player1, creature);
+
+        harness.setHand(player2, List.of(new AweStrike()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.assertOnBattlefield(player2, "Alpha Myr");
+        harness.assertOnBattlefield(player1, "Fractured Loyalty");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new AweStrike()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.assertOnBattlefield(player1, "Alpha Myr");
+        harness.assertNotOnBattlefield(player2, "Alpha Myr");
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Control is given to the targeting spell's current controller at trigger resolution")
+    void usesCurrentControllerWhenTargetingSpellChangesControl() {
+        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+        addAura(player1, creature);
+
+        AweStrike aweStrike = new AweStrike();
+        harness.setHand(player2, List.of(aweStrike));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castInstant(player2, 0, creature.getId());
+
+        harness.setHand(player1, List.of(new Commandeer()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+        harness.castAndResolveInstant(player1, 0, aweStrike.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Alpha Myr");
+        harness.assertNotOnBattlefield(player2, "Alpha Myr");
     }
 
     private Permanent addAura(Player controller, Permanent creature) {

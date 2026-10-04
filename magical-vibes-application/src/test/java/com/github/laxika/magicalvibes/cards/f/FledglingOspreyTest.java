@@ -56,4 +56,34 @@ class FledglingOspreyTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, osprey, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FLYING)).isTrue();
     }
+
+    @Test
+    @DisplayName("An opponent's Aura grants Fledgling Osprey flying")
+    void hasFlyingWithOpponentsAura() {
+        Permanent osprey = addCreatureReady(player1, new FledglingOsprey());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new PatternOfRebirth());
+        aura.setAttachedTo(osprey.getId());
+
+        assertThat(gqs.hasKeyword(gd, osprey, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Fledgling Osprey retains flying until its last Aura leaves")
+    void retainsFlyingUntilLastAuraLeaves() {
+        Permanent osprey = addCreatureReady(player1, new FledglingOsprey());
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new PatternOfRebirth());
+        firstAura.setAttachedTo(osprey.getId());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player2, new PatternOfRebirth());
+        secondAura.setAttachedTo(osprey.getId());
+
+        assertThat(gqs.hasKeyword(gd, osprey, Keyword.FLYING)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstAura);
+
+        assertThat(gqs.hasKeyword(gd, osprey, Keyword.FLYING)).isTrue();
+
+        gd.playerBattlefields.get(player2.getId()).remove(secondAura);
+
+        assertThat(gqs.hasKeyword(gd, osprey, Keyword.FLYING)).isFalse();
+    }
 }

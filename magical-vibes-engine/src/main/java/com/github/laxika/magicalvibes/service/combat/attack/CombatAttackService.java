@@ -992,7 +992,9 @@ public class CombatAttackService {
             Permanent attacker = battlefield.get(idx);
             int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
             try {
-            List<CardEffect> nativeAttackEffects = attacker.getCard().getEffects(EffectSlot.ON_ATTACK);
+            List<CardEffect> nativeAttackEffects = attacker.isFaceDown()
+                    || gameQueryService.hasLostPrintedAbilities(gameData, attacker)
+                    ? List.of() : attacker.getCard().getEffects(EffectSlot.ON_ATTACK);
             List<CardEffect> temporaryAttackEffects = attacker.getTemporaryTriggeredEffects(EffectSlot.ON_ATTACK);
             // Continuously granted ON_ATTACK abilities (Thorncaster Sliver giving every Sliver
             // "Whenever this creature attacks, it deals 1 damage to any target").
@@ -1297,7 +1299,9 @@ public class CombatAttackService {
                                     && attackCard.getSpellTargets().getFirst().getDynamicMinTargets() == null
                                     && attackCard.getSpellTargets().getFirst().getDynamicMaxTargets() == null;
                             boolean attachesEquipment = otherEffects.stream()
-                                    .anyMatch(AttachTargetEquipmentToTriggeringPermanentEffect.class::isInstance);
+                                    .anyMatch(effect -> effect instanceof AttachTargetEquipmentToTriggeringPermanentEffect
+                                            || effect instanceof MayEffect may
+                                            && may.wrapped() instanceof AttachTargetEquipmentToTriggeringPermanentEffect);
                             if (attackCard.getSpellTargets().size() > 1
                                     || ((!staticSingleMultiTargetGroup || attachesEquipment)
                                     && etbTokenTargetService.needsSlotBySlotTargetSelection(attackCard))) {
@@ -1318,24 +1322,38 @@ public class CombatAttackService {
                             // triggers that act on the defending player (e.g. Nemesis of Reason's
                             // MillDefendingPlayerEffect) can read it as attackedTargetId.
                             // xValue locks the attacker count for MinimumAttackers (Odric / similar).
-                            StackEntry attackTrigger = new StackEntry(
-                                    StackEntryType.TRIGGERED_ABILITY,
-                                    attacker.getCard(),
-                                    playerId,
-                                    attacker.getCard().getName() + "'s attack trigger",
-                                    otherEffects,
-                                    attackerIndices.size(),
-                                    attacker.getId()
-                            );
-                            attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
-                            attackTrigger.setDefendingPlayerId(defendingPlayerId);
-                            attackTrigger.setSourcePermanentSnapshot(new Permanent(attacker));
-                            if (otherEffects.stream().anyMatch(AwardPersistentAnyColorManaEffect.class::isInstance)) {
-                                attackTrigger.setEventValue(attackingPower);
+                            List<CardEffect> bundledEffects = new ArrayList<>(otherEffects);
+                            List<List<CardEffect>> abilities = new ArrayList<>();
+                            for (var registration : attacker.getCard().getEffectRegistrations(EffectSlot.ON_ATTACK)) {
+                                if (registration.triggerMode()
+                                        == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT
+                                        && bundledEffects.remove(registration.effect())) {
+                                    abilities.add(List.of(registration.effect()));
+                                }
                             }
-                            gameData.stack.add(attackTrigger);
-                            triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
-                                    gameData, attacker, attackTrigger);
+                            if (!bundledEffects.isEmpty()) {
+                                abilities.addFirst(bundledEffects);
+                            }
+                            for (List<CardEffect> abilityEffects : abilities) {
+                                StackEntry attackTrigger = new StackEntry(
+                                        StackEntryType.TRIGGERED_ABILITY,
+                                        attacker.getCard(),
+                                        playerId,
+                                        attacker.getCard().getName() + "'s attack trigger",
+                                        abilityEffects,
+                                        attackerIndices.size(),
+                                        attacker.getId()
+                                );
+                                attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
+                                attackTrigger.setDefendingPlayerId(defendingPlayerId);
+                                attackTrigger.setSourcePermanentSnapshot(new Permanent(attacker));
+                                if (abilityEffects.stream().anyMatch(AwardPersistentAnyColorManaEffect.class::isInstance)) {
+                                    attackTrigger.setEventValue(attackingPower);
+                                }
+                                gameData.stack.add(attackTrigger);
+                                triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
+                                        gameData, attacker, attackTrigger);
+                            }
                         }
 
                         if (!needsGraveyardTarget && !isTriggerTimeModal) {
@@ -3663,7 +3681,7 @@ public class CombatAttackService {
             }
             if (withBanding < 1) {
                 List<Permanent> bandPermanents = members.stream().map(battlefield::get).toList();
-                if (!gameQueryService.canUseBandsWithOther(gameData, bandPermanents)) {
+                if (!gameQueryService.canUseBandsWithOther(gameData, bandPermanents, false)) {
                     throw new IllegalStateException("A band must contain at least one creature with banding");
                 }
             }

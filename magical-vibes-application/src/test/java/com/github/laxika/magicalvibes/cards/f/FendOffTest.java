@@ -65,8 +65,7 @@ class FendOffTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-creature permanent")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new YavimayaHollow());
-        Permanent land = findPermanent(player2, "Yavimaya Hollow");
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new YavimayaHollow());
         harness.setHand(player1, List.of(new FendOff()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -87,6 +86,56 @@ class FendOffTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Fend Off");
+        harness.assertInHand(player1, "Cinder Seer");
+    }
+
+    @Test
+    @DisplayName("Prevents damage to a blocker but does not protect the targeted attacker")
+    void preventsDamageToBlockerButNotToAttacker() {
+        Permanent attacker = addAttacker(player2);
+        Permanent blocker = addCreatureReady(player1, new CinderSeer());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        castFendOff(attacker);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player1, "Cinder Seer");
+        harness.assertNotOnBattlefield(player2, "Cinder Seer");
+        harness.assertInGraveyard(player2, "Cinder Seer");
+    }
+
+    @Test
+    @DisplayName("Can target a friendly blocker and prevent its damage to the attacker")
+    void preventsDamageByFriendlyBlocker() {
+        addAttacker(player2);
+        Permanent blocker = addCreatureReady(player1, new CinderSeer());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        castFendOff(blocker);
+
+        resolveCombat(player2);
+
+        harness.assertOnBattlefield(player2, "Cinder Seer");
+        harness.assertNotOnBattlefield(player1, "Cinder Seer");
+        harness.assertInGraveyard(player1, "Cinder Seer");
+    }
+
+    @Test
+    @DisplayName("Cycling discards immediately while the draw waits for resolution")
+    void cyclingDiscardsAsCost() {
+        harness.setHand(player1, List.of(new FendOff()));
+        harness.setLibrary(player1, List.of(new CinderSeer()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Fend Off");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
         harness.assertInHand(player1, "Cinder Seer");
     }
 

@@ -167,7 +167,7 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent disciple = harness.addToBattlefieldAndReturn(player1, new DiscipleOfGriselbrand());
         disciple.setSummoningSick(true);
-        disciple.setTapped(true);
+        disciple.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int lifeBefore = gd.getLife(player1.getId());

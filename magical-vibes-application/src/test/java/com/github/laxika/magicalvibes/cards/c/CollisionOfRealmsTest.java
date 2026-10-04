@@ -75,7 +75,7 @@ class CollisionOfRealmsTest extends BaseCardTest {
         assertThat(returned).isIn(first, second);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
         assertThat(gd.playerDecks.get(player1.getId())).contains(first == returned ? second : first);
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsNoneOf(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(first, second);
     }
 
     @Test

@@ -28,7 +28,7 @@ class FlowstoneShamblerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Repeated activations lower toughness to 0, destroying it")
+    @DisplayName("Repeated activations lower toughness to 0, putting it into the graveyard")
     void repeatedActivationsCanKillIt() {
         addCreatureReady(player1, new FlowstoneShambler());
         harness.addMana(player1, ManaColor.RED, 2);
@@ -71,5 +71,44 @@ class FlowstoneShamblerTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, shambler)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, shambler)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent shambler = harness.enterBattlefieldAndReturn(player1, new FlowstoneShambler());
+        shambler.setSummoningSick(true);
+        shambler.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, shambler)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shambler)).isEqualTo(1);
+        assertThat(shambler.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Boost applies on resolution and affects only the activating creature")
+    void boostAppliesOnResolutionOnlyToItsSource() {
+        Permanent shambler = addCreatureReady(player1, new FlowstoneShambler());
+        Permanent ally = addCreatureReady(player1, new FlowstoneShambler());
+        Permanent opponent = addCreatureReady(player2, new FlowstoneShambler());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.getEffectivePower(gd, shambler)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, shambler)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, shambler)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shambler)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(2);
     }
 }

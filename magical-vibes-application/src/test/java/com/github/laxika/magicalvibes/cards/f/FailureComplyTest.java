@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FailureComply.class, Shock.class})
 class FailureComplyTest extends BaseCardTest {
 
     @Test
@@ -31,8 +33,7 @@ class FailureComplyTest extends BaseCardTest {
         UUID shockId = gd.stack.getFirst().getCard().getId();
 
         harness.forceActivePlayer(player1);
-        harness.castInstant(player1, 0, shockId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, shockId);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player2.getId()))
@@ -47,8 +48,7 @@ class FailureComplyTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new FailureComply()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
@@ -79,8 +79,7 @@ class FailureComplyTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new FailureComply()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
         harness.handleListChoice(player1, "Shock");
 
         harness.setHand(player1, List.of(new Shock()));
@@ -89,8 +88,7 @@ class FailureComplyTest extends BaseCardTest {
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
@@ -101,8 +99,7 @@ class FailureComplyTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new FailureComply()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
         harness.handleListChoice(player1, "Shock");
 
         assertThat(gd.opponentsCantCastNamedSpellsUntilControllerNextTurn.get(player1.getId()))
@@ -145,5 +142,63 @@ class FailureComplyTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFlashback(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Failure exiles Comply cast from a graveyard instead of returning it to hand")
+    void failureExilesAftermathSpell() {
+        FailureComply aftermath = new FailureComply();
+        harness.setGraveyard(player1, List.of(aftermath));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castFlashback(player1, 0);
+        UUID spellId = gd.stack.getFirst().getTargetableId();
+
+        harness.setHand(player2, List.of(new FailureComply()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, spellId);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(aftermath);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(aftermath);
+        assertThat(gd.opponentsCantCastNamedSpellsUntilControllerNextTurn).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Naming Comply prevents opponents from casting the aftermath half")
+    void namingComplyPreventsAftermathCast() {
+        harness.setGraveyard(player1, List.of(new FailureComply()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveFlashback(player1, 0, null);
+        harness.handleListChoice(player1, "Comply");
+
+        harness.setGraveyard(player2, List.of(new FailureComply()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castFlashback(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Naming Failure does not prevent casting the Comply half")
+    void namingFailureDoesNotPreventAftermathCast() {
+        harness.setGraveyard(player1, List.of(new FailureComply()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveFlashback(player1, 0, null);
+        harness.handleListChoice(player1, "Failure");
+
+        harness.setGraveyard(player2, List.of(new FailureComply()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castAndResolveFlashback(player2, 0, null);
+        harness.handleListChoice(player2, "Shock");
+        assertThat(gd.opponentsCantCastNamedSpellsUntilControllerNextTurn.get(player2.getId()))
+                .contains("Shock");
     }
 }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FeelingOfDread.class, GrizzlyBears.class, GiantSpider.class, FountainOfYouth.class})
 class FeelingOfDreadTest extends BaseCardTest {
 
     @Test
@@ -192,10 +194,85 @@ class FeelingOfDreadTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Feeling of Dread");
     }
 
+    @Test
+    @DisplayName("Can cast with zero targets on an empty battlefield")
+    void canCastWithZeroTargets() {
+        harness.setHand(player1, List.of(new FeelingOfDread()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Feeling of Dread");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback with zero targets resolves and exiles the card")
+    void flashbackWithZeroTargets() {
+        harness.setGraveyard(player1, List.of(new FeelingOfDread()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castFlashback(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Feeling of Dread");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Feeling of Dread"));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target an already tapped creature and a creature you control")
+    void canTargetTappedAndOwnCreatures() {
+        Permanent tappedCreature = addReadyCreature(player2, new GrizzlyBears());
+        tappedCreature.setTapped(true);
+        Permanent ownCreature = addReadyCreature(player1, new GiantSpider());
+        harness.setHand(player1, List.of(new FeelingOfDread()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castInstant(player1, 0, List.of(tappedCreature.getId(), ownCreature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(tappedCreature.isTapped()).isTrue();
+        assertThat(ownCreature.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Feeling of Dread");
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void cannotChooseDuplicateTarget() {
+        Permanent creature = addReadyCreature(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FeelingOfDread()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Flashback exiles the spell even when all targets leave the battlefield")
+    void flashbackExilesWhenAllTargetsLeave() {
+        Permanent creature = addReadyCreature(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new FeelingOfDread()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castFlashback(player1, 0, List.of(creature.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Feeling of Dread");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Feeling of Dread"));
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }

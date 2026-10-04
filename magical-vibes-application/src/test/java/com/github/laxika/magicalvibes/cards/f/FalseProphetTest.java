@@ -46,6 +46,53 @@ class FalseProphetTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Plated Spider");
     }
 
+    @Test
+    @DisplayName("Sacrificing False Prophet triggers exile before Reckless Abandon resolves")
+    void sacrificeTriggersBeforeSpellResolves() {
+        Permanent prophet = harness.addToBattlefieldAndReturn(player1, new FalseProphet());
+        harness.addToBattlefield(player2, new PlatedSpider());
+        harness.setHand(player1, List.of(new RecklessAbandon()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castSorceryWithSacrifice(player1, 0, player2.getId(), prophet.getId());
+
+        harness.assertInGraveyard(player1, "False Prophet");
+        harness.assertOnBattlefield(player2, "Plated Spider");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Plated Spider");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Plated Spider");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiling a second False Prophet does not trigger its death ability")
+    void exilingAnotherProphetDoesNotTriggerDeath() {
+        harness.addToBattlefield(player1, new FalseProphet());
+        harness.addToBattlefield(player2, new FalseProphet());
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player2, new PlatedSpider());
+
+        killFalseProphet(sacrificed);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "False Prophet");
+        harness.assertNotInGraveyard(player2, "False Prophet");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getName)
+                .containsExactly("False Prophet");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void killFalseProphet(Permanent sacrificed) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

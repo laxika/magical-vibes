@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.cards.c.ChoMannoRevolutionary;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
@@ -15,6 +18,8 @@ import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -148,7 +153,17 @@ class AutonSoldierTest extends BaseCardTest {
         assertThat(token.getCard().getSupertypes()).doesNotContain(CardSupertype.LEGENDARY);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
-        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, () -> {
+            for (int passes = 0; gd.currentStep != TurnStep.POSTCOMBAT_MAIN && passes < 20; passes++) {
+                if (gd.interaction.activeInteraction() instanceof PendingInteraction.BlockerDeclaration blockers) {
+                    gs.declareBlockers(gd, new Player(blockers.chooserId(),
+                            gd.playerIdToName.get(blockers.chooserId())), List.of());
+                } else {
+                    harness.passBothPriorities();
+                }
+            }
+        });
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(auton).doesNotContain(token);
         harness.assertNotInGraveyard(player1, "Cho-Manno, Revolutionary");
@@ -158,8 +173,9 @@ class AutonSoldierTest extends BaseCardTest {
     @DisplayName("Attacking a planeswalker still creates myriad tokens for other opponents")
     void attackingPlaneswalkerCreatesMyriadToken() {
         addThirdPlayer();
-        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
         Permanent auton = castAndCopy(new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 3);
         auton.setSummoningSick(false);
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
             harness.forceActivePlayer(player1);
@@ -184,6 +200,38 @@ class AutonSoldierTest extends BaseCardTest {
     }
 
     private Player player3;
+
+    @Test
+    void myriadUsesLastControllerOfDepartedAttackedPlaneswalker() {
+        addThirdPlayer();
+        Permanent auton = castAndCopy(new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        planeswalker.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 3);
+        auton.setSummoningSick(false);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+            harness.clearPriorityPassed();
+            harness.beginAttackerDeclarationInput();
+            int index = gd.playerBattlefields.get(player1.getId()).indexOf(auton);
+            gs.declareAttackers(gd, player1, List.of(index), Map.of(index, planeswalker.getId()));
+            harness.inMutationScope(() -> {
+                GameTestEngineContext.get().getBean(CreatureControlService.class).applyControlEffect(
+                        gd, player3.getId(), planeswalker,
+                        new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                        EffectDuration.PERMANENT, null, "Control effect");
+                harness.getPermanentRemovalService().removePermanentToExile(gd, planeswalker);
+            });
+            resolveAllTriggers();
+            harness.handleMayAbilityChosen(player1, true);
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .singleElement()
+                .satisfies(token -> assertThat(token.getAttackTarget()).isEqualTo(player2.getId()));
+    }
 
     private void addThirdPlayer() {
         player3 = addOpponent("Charlie", "conn-3");
@@ -227,5 +275,27 @@ class AutonSoldierTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(2);
         harness.assertLife(player1, 24);
+    }
+
+    @Test
+    void decliningFinalOpponentStillCreatesAcceptedCopies() {
+        addThirdPlayer();
+        addOpponent("Dana", "conn-4");
+        Permanent auton = castAndCopy(new SoulWarden());
+        resolveAllTriggers();
+        auton.setSummoningSick(false);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(auton)));
+            resolveAllTriggers();
+            harness.handleMayAbilityChosen(player1, true);
+            assertThat(gd.playerBattlefields.get(player1.getId()))
+                    .noneMatch(permanent -> permanent.getCard().isToken());
+            harness.handleMayAbilityChosen(player1, false);
+            resolveAllTriggers();
+        });
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+        harness.assertLife(player1, 21);
     }
 }

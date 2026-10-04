@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndCreateTokenEffect;
@@ -25,6 +26,7 @@ public class ArchfiendsVessel extends Card {
                 new ConditionalEffect(new CastFromZone(Zone.GRAVEYARD),
                         new ExileSelfAndCreateTokenEffect(demon)));
         addEffect(EffectSlot.ON_SELF_ENTERS_FROM_GRAVEYARD,
-                new ExileSelfAndCreateTokenEffect(demon));
+                new ConditionalEffect(new EnteredFromZone(Zone.GRAVEYARD, true),
+                        new ExileSelfAndCreateTokenEffect(demon)));
     }
 }

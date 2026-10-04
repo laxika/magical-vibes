@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.k.KrovodHaunch;
 import com.github.laxika.magicalvibes.cards.l.LeechGauntlet;
 import com.github.laxika.magicalvibes.cards.l.LionSash;
 import com.github.laxika.magicalvibes.cards.m.MaceOfTheValiant;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.m.MaulOfTheSkyclaves;
 import com.github.laxika.magicalvibes.cards.s.ShieldOfTheRealm;
 import com.github.laxika.magicalvibes.cards.s.SigiledSwordOfValeron;
@@ -25,11 +26,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @CardUsed({AdaptiveArmorer.class, AmorphousAxe.class, CitizensCrowbar.class, CloudsteelKirin.class,
         ConquerorsFlail.class, Fireshrieker.class, FishingPole.class, KrovodHaunch.class,
-        LeechGauntlet.class, LionSash.class, MaceOfTheValiant.class, MaulOfTheSkyclaves.class,
+        LeechGauntlet.class, LionSash.class, MaceOfTheValiant.class, MarchOfTheMachines.class, MaulOfTheSkyclaves.class,
         ShieldOfTheRealm.class, SigiledSwordOfValeron.class, ThranPowerSuit.class,
         ThunderLasso.class})
 class AdaptiveArmorerTest extends BaseCardTest {
@@ -135,21 +135,18 @@ class AdaptiveArmorerTest extends BaseCardTest {
     @Test
     @DisplayName("A drafted Equipment creature cannot attach to itself")
     void equipmentCannotAttachToItself() {
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
         castAndResolveArmorer();
         PendingInteraction.LibraryRevealChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
-        Card selected = choice.allCards().stream()
-                .filter(card -> card instanceof CloudsteelKirin
-                        || card instanceof LeechGauntlet || card instanceof LionSash)
-                .findFirst().orElse(null);
-        assumeTrue(selected != null, "The random draft must offer an Equipment creature");
+        Card selected = selectEquipment(choice);
         harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
         Permanent drafted = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(selected.getId()))
                 .findFirst().orElseThrow();
 
-        harness.handlePermanentChosen(player1, drafted.getId());
-        resolveAllTriggers();
+        assertThat(gqs.isCreature(gd, drafted)).isTrue();
+        resolveAttachments(drafted);
 
         assertThat(drafted.getAttachedTo()).isNull();
         assertThat(gameLogContains(selected.getName() + " is now attached to " + selected.getName()))
@@ -157,17 +154,21 @@ class AdaptiveArmorerTest extends BaseCardTest {
     }
 
     private void resolveAttachments(Permanent target) {
-        while (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null
-                || !gd.stack.isEmpty()) {
-            if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
-                harness.handlePermanentChosen(player1, target.getId());
+        harness.withAutoStop(gd.currentStep, () -> {
+            while (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null
+                    || !gd.stack.isEmpty()) {
+                if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
+                    harness.handlePermanentChosen(player1, target.getId());
+                }
+                resolveAllTriggers();
             }
-            resolveAllTriggers();
-        }
+        });
     }
 
     private void castAndResolveArmorer() {
-        harness.castFromHand(player1, new AdaptiveArmorer(), "{2}{W}{W}");
-        resolveAllTriggers();
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.castFromHand(player1, new AdaptiveArmorer(), "{2}{W}{W}");
+            resolveAllTriggers();
+        });
     }
 }

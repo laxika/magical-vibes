@@ -1,9 +1,5 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.f.ForestBear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -24,8 +20,7 @@ class ForcedRetreatTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNonCreaturePermanent() {
-        harness.addToBattlefield(player2, new Forest());
-        UUID landId = harness.getPermanentId(player2, "Forest");
+        UUID landId = harness.addToBattlefieldAndReturn(player2, new Forest()).getId();
 
         harness.setHand(player1, List.of(new ForcedRetreat()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -38,16 +33,14 @@ class ForcedRetreatTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving Forced Retreat puts target creature on top of its owner's library")
     void resolvingPutsTargetCreatureOnTopOfOwnersLibrary() {
-        harness.addToBattlefield(player2, new ForestBear());
-        UUID targetId = harness.getPermanentId(player2, "Forest Bear");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new ForestBear()).getId();
         int deckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
 
         harness.setHand(player1, List.of(new ForcedRetreat()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Forest Bear");
@@ -60,10 +53,51 @@ class ForcedRetreatTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can put your own creature on top of an empty library")
+    void canTargetOwnCreatureWithEmptyLibrary() {
+        ForestBear bear = new ForestBear();
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, bear).getId();
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new ForcedRetreat()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Forest Bear");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bear);
+        harness.assertNotInGraveyard(player1, "Forest Bear");
+        harness.assertInGraveyard(player1, "Forced Retreat");
+    }
+
+    @Test
+    @DisplayName("A creature controlled by another player goes to its owner's library without shuffling")
+    void controlledCreatureReturnsToOwnersLibrary() {
+        ForestBear bear = new ForestBear();
+        bear.setOwnerId(player1.getId());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, bear).getId();
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        List<Card> opponentLibrary = List.copyOf(gd.playerDecks.get(player2.getId()));
+        harness.setHand(player1, List.of(new ForcedRetreat()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Forest Bear");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bear, first, second);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentLibrary);
+        harness.assertNotInGraveyard(player1, "Forest Bear");
+        harness.assertNotInGraveyard(player2, "Forest Bear");
+        harness.assertInGraveyard(player1, "Forced Retreat");
+    }
+
+    @Test
     @DisplayName("Forced Retreat fizzles if the target is removed before resolution")
     void fizzlesIfTargetRemovedBeforeResolution() {
-        harness.addToBattlefield(player2, new ForestBear());
-        UUID targetId = harness.getPermanentId(player2, "Forest Bear");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new ForestBear()).getId();
         int deckSizeBefore = harness.getGameData().playerDecks.get(player2.getId()).size();
 
         harness.setHand(player1, List.of(new ForcedRetreat()));
@@ -76,7 +110,7 @@ class ForcedRetreatTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
         harness.assertInGraveyard(player1, "Forced Retreat");
     }
 }

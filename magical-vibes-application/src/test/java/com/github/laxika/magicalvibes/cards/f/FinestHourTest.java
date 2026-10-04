@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FinestHour.class, GrizzlyBears.class})
 class FinestHourTest extends BaseCardTest {
 
     @Test
@@ -58,7 +60,7 @@ class FinestHourTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FinestHour());
 
         declareAttackers(player1, List.of(0), 2); // already the turn's second combat phase
-        harness.passBothPriorities(); // the trigger resolves, but its intervening-"if" now fails
+        harness.passBothPriorities(); // resolve exalted; the extra-combat ability must not trigger
 
         assertThat(bear.isTapped()).isTrue();               // not untapped
         assertThat(gd.combatPhasesThisTurn).isEqualTo(2);   // no third combat phase was created
@@ -77,12 +79,57 @@ class FinestHourTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(e -> e.getCard().getName().equals("Finest Hour"));
     }
 
+    @Test
+    void laterCombatTriggersOnlyExalted() {
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FinestHour());
+
+        declareAttackers(player1, List.of(0), 2);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void exaltedBonusesAccumulateAcrossBothCombats() {
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FinestHour());
+
+        declareAttackers(player1, List.of(0), 1);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
+
+        declareAttackers(player1, List.of(0), 2);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, this::resolveAllTriggers);
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(4);
+        assertThat(bear.isTapped()).isTrue();
+    }
+
+    @Test
+    void multipleCopiesEachGrantACombatButDoNotUntapAtItsBeginning() {
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new FinestHour());
+        harness.addToBattlefield(player1, new FinestHour());
+
+        declareAttackers(player1, List.of(0), 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(2);
+        assertThat(gd.additionalCombatPhasesOnly).isEqualTo(1);
+        assertThat(bear.isTapped()).isFalse();
+
+        declareAttackers(player1, List.of(0), 2);
+        harness.passBothPriorities();
+
+        assertThat(gd.combatPhasesThisTurn).isEqualTo(3);
+        assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
+        assertThat(bear.isTapped()).isTrue();
+    }
+
     private void declareAttackers(Player player, List<Integer> attackerIndices, int combatPhaseNumber) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         gd.combatPhasesThisTurn = combatPhaseNumber;
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, attackerIndices);
+        declareAttackers(player, attackerIndices);
     }
 }

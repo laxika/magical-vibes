@@ -108,10 +108,47 @@ class FeveredStrengthTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("The delayed draw survives the target leaving after resolution and happens only once")
+    void delayedDrawSurvivesTargetLeavingAndDoesNotRepeat() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SoldeviHeretic());
+        castFeveredStrength(target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, target));
+
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Casting during upkeep waits until the following turn's upkeep")
+    void castingDuringUpkeepWaitsUntilNextTurn() {
+        advanceToUpkeep(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SoldeviHeretic());
+        castFeveredStrength(target.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        int handBeforeUpkeep = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBeforeUpkeep + 1);
+    }
+
     private void castFeveredStrength(UUID targetId) {
         prepareFeveredStrength();
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
     private void prepareFeveredStrength() {

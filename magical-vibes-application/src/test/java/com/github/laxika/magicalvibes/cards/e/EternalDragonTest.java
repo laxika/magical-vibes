@@ -125,7 +125,7 @@ class EternalDragonTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(dragon));
         advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
@@ -147,5 +147,66 @@ class EternalDragonTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("upkeep");
+    }
+
+    @Test
+    @DisplayName("The graveyard ability cannot be activated during an opponent's upkeep")
+    void cannotReturnDuringOpponentsUpkeep() {
+        EternalDragon dragon = new EternalDragon();
+        harness.setGraveyard(player1, List.of(dragon));
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("upkeep");
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(dragon);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Plainscycling discards immediately and can decline an available Plains")
+    void plainscyclingDiscardsAsCostAndCanDecline() {
+        EternalDragon dragon = new EternalDragon();
+        Card plateau = new Plateau();
+        harness.setHand(player1, List.of(dragon));
+        harness.setLibrary(player1, List.of(plateau));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(dragon);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plateau);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(plateau);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plateau);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Multiple graveyard activations return the Dragon only once")
+    void multipleActivationsReturnDragonOnlyOnce() {
+        EternalDragon dragon = new EternalDragon();
+        harness.setGraveyard(player1, List.of(dragon));
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.activateGraveyardAbility(player1, 0);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(dragon);
+        assertThat(gd.stack).hasSize(2);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(dragon);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -143,7 +143,7 @@ class DeathMaskDuplicantTest extends BaseCardTest {
     void imprintsWhileTappedAndSummoningSick() {
         Permanent duplicant = addDuplicantReady(player1);
         duplicant.setSummoningSick(true);
-        duplicant.setTapped(true);
+        duplicant.tap();
         Card fearCreature = new DrossGolem();
         Card hasteCreature = new OxiddaGolem();
         harness.setGraveyard(player1, new ArrayList<>(List.of(fearCreature, hasteCreature)));

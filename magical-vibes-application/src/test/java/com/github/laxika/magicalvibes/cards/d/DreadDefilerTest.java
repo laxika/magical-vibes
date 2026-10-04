@@ -90,7 +90,7 @@ class DreadDefilerTest extends BaseCardTest {
     void canActivateWhileSummoningSickAndTappedWithMixedMana() {
         Permanent defiler = harness.addToBattlefieldAndReturn(player1, new DreadDefiler());
         defiler.setSummoningSick(true);
-        defiler.setTapped(true);
+        defiler.tap();
         harness.setGraveyard(player1, List.of(new SlaughterDrone()));
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

@@ -44,9 +44,8 @@ class FacelessDevourerTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Unsummon()));
         harness.addMana(player2, ManaColor.BLUE, 1);
         UUID sourceId = harness.getPermanentId(player1, "Faceless Devourer");
-        harness.passPriority(player1);
-        harness.castInstant(player2, 0, sourceId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, sourceId);
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player2, "Soltari Foot Soldier");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -92,12 +91,62 @@ class FacelessDevourerTest extends BaseCardTest {
                 .hasMessageContaining("creature with shadow");
     }
 
+    @Test
+    @DisplayName("The exiled creature stays exiled until the leave trigger resolves")
+    void returnWaitsForLeaveTrigger() {
+        Permanent shadowCreature = harness.addToBattlefieldAndReturn(player2, new SoltariFootSoldier());
+        castAndResolve(shadowCreature.getId());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Faceless Devourer"));
+
+        harness.assertInHand(player1, "Faceless Devourer");
+        harness.assertNotOnBattlefield(player2, "Soltari Foot Soldier");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getName().equals("Soltari Foot Soldier"));
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Soltari Foot Soldier");
+    }
+
+    @Test
+    @DisplayName("ETB can exile a shadow creature controlled by the same player")
+    void exilesControllersShadowCreature() {
+        Permanent shadowCreature = harness.addToBattlefieldAndReturn(player1, new SoltariFootSoldier());
+        castAndResolve(shadowCreature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Soltari Foot Soldier");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Soltari Foot Soldier"));
+    }
+
+    @Test
+    @DisplayName("ETB does not exile a target that left the battlefield in response")
+    void targetLeavingInResponseIsNotExiled() {
+        Permanent shadowCreature = harness.addToBattlefieldAndReturn(player2, new SoltariFootSoldier());
+        harness.setHand(player1, List.of(new FacelessDevourer()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0, 0, shadowCreature.getId());
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, shadowCreature.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Soltari Foot Soldier");
+        harness.assertOnBattlefield(player1, "Faceless Devourer");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
     private void castAndResolve(UUID targetId) {
         harness.setHand(player1, List.of(new FacelessDevourer()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

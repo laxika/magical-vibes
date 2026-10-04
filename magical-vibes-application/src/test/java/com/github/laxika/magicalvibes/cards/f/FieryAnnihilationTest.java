@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,12 +18,13 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FieryAnnihilation.class, AvatarOfMight.class, GrizzlyBears.class, LeoninScimitar.class, Terror.class})
 class FieryAnnihilationTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 5 damage and exiles the target creature and attached Equipment")
     void exilesCreatureAndAttachedEquipment() {
-        Permanent creature = addCreature(player2, new GrizzlyBears());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent equipment = addEquipment(creature);
 
         cast(List.of(creature.getId(), equipment.getId()));
@@ -40,11 +41,12 @@ class FieryAnnihilationTest extends BaseCardTest {
     @Test
     @DisplayName("Can resolve without choosing an Equipment")
     void equipmentTargetIsOptional() {
-        Permanent creature = addCreature(player2, new AvatarOfMight());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
 
         cast(List.of(creature.getId()));
         harness.passBothPriorities();
 
+        harness.assertOnBattlefield(player2, "Avatar of Might");
         assertThat(creature.getMarkedDamage()).isEqualTo(5);
         assertThat(creature.isExileInsteadOfDieThisTurn()).isTrue();
     }
@@ -52,7 +54,7 @@ class FieryAnnihilationTest extends BaseCardTest {
     @Test
     @DisplayName("Rejects an Equipment that is not attached to the target creature")
     void equipmentMustBeAttachedToCreature() {
-        Permanent creature = addCreature(player2, new AvatarOfMight());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
         Permanent equipment = addEquipment(null);
 
         harness.setHand(player1, List.of(new FieryAnnihilation()));
@@ -66,7 +68,7 @@ class FieryAnnihilationTest extends BaseCardTest {
     @Test
     @DisplayName("Does not exile the Equipment if it becomes unattached before resolution")
     void unattachedEquipmentIsNotExiled() {
-        Permanent creature = addCreature(player2, new AvatarOfMight());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
         Permanent equipment = addEquipment(creature);
 
         cast(List.of(creature.getId(), equipment.getId()));
@@ -81,7 +83,7 @@ class FieryAnnihilationTest extends BaseCardTest {
     @Test
     @DisplayName("Does not exile the Equipment if the creature is illegal on resolution")
     void illegalCreatureTargetLeavesEquipmentAlone() {
-        Permanent creature = addCreature(player2, new AvatarOfMight());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
         Permanent equipment = addEquipment(creature);
 
         cast(List.of(creature.getId(), equipment.getId()));
@@ -92,19 +94,44 @@ class FieryAnnihilationTest extends BaseCardTest {
         assertThat(gd.exiledCards).noneMatch(exiled -> exiled.card().getName().equals("Leonin Scimitar"));
     }
 
-    private Permanent addCreature(Player player, Card card) {
-        Permanent creature = new Permanent(card);
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
+    @Test
+    @DisplayName("Exiles a surviving creature destroyed later in the same turn")
+    void exilesCreatureDestroyedLaterThisTurn() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+
+        cast(List.of(creature.getId()));
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Avatar of Might");
+
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.assertNotOnBattlefield(player2, "Avatar of Might");
+        harness.assertNotInGraveyard(player2, "Avatar of Might");
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card().getName().equals("Avatar of Might"));
+    }
+
+    @Test
+    @DisplayName("Exiles attached Equipment while its creature survives the damage")
+    void exilesEquipmentWithoutExilingSurvivingCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        Permanent equipment = addEquipment(creature);
+
+        cast(List.of(creature.getId(), equipment.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Avatar of Might");
+        assertThat(creature.getMarkedDamage()).isEqualTo(5);
+        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
+        assertThat(gd.exiledCards).anyMatch(exiled -> exiled.card().getName().equals("Leonin Scimitar"));
     }
 
     private Permanent addEquipment(Permanent attachedTo) {
-        Permanent equipment = new Permanent(new LeoninScimitar());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
         if (attachedTo != null) {
             equipment.setAttachedTo(attachedTo.getId());
         }
-        gd.playerBattlefields.get(player2.getId()).add(equipment);
         return equipment;
     }
 

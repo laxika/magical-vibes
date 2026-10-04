@@ -83,7 +83,7 @@ class FallingTimberTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FallingTimber()));
         addBaseMana();
 
-        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, source.getId());
 
         harness.addMana(player2, ManaColor.RED, 1);
         harness.activateAbility(player2, 0, null, target.getId());
@@ -101,8 +101,7 @@ class FallingTimberTest extends BaseCardTest {
         addBaseMana();
 
         harness.castAndResolveInstant(player1, 0, attacker.getId());
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player2);
 
@@ -125,6 +124,47 @@ class FallingTimberTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(nonland);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void kickedSpellStillPreventsDamageByRemainingLegalTarget() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new MeteorCrater());
+        Permanent firstTarget = addCreatureReady(player2, new AlphaKavu());
+        Permanent secondTarget = addCreatureReady(player2, new AlphaKavu());
+        addCreatureReady(player2, new AlphaKavu());
+        harness.setHand(player1, List.of(new FallingTimber()));
+        addBaseMana();
+
+        gs.playCard(gd, player1, 0, 0, null, null,
+                List.of(firstTarget.getId(), secondTarget.getId()), List.of(), false, land.getId(), null,
+                null, null, null, true);
+        gd.playerBattlefields.get(player2.getId()).remove(firstTarget);
+        gd.playerGraveyards.get(player2.getId()).add(firstTarget.getCard());
+        harness.passBothPriorities();
+        declareAttackers(player2, List.of(0, 1));
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Meteor Crater");
+    }
+
+    @Test
+    void preventsDamageByTargetBlockerWithoutPreventingDamageToIt() {
+        Permanent attacker = addCreatureReady(player2, new AlphaKavu());
+        Permanent blocker = addCreatureReady(player1, new AlphaKavu());
+        harness.setHand(player1, List.of(new FallingTimber()));
+        addBaseMana();
+
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(blocker);
+        harness.assertInGraveyard(player1, "Alpha Kavu");
+        harness.assertLife(player1, 20);
     }
 
     private void addBaseMana() {

@@ -90,7 +90,7 @@ class BookOfRassTest extends BaseCardTest {
     void canActivateWhileTapped() {
         BookOfRass drawnCard = new BookOfRass();
         var book = harness.addToBattlefieldAndReturn(player1, new BookOfRass());
-        book.setTapped(true);
+        book.tap();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawnCard));
         harness.addMana(player1, ManaColor.COLORLESS, 2);

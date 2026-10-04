@@ -65,7 +65,7 @@ class EarthlinkTest extends BaseCardTest {
     void opponentCreatureDiesOpponentSacrificesChosenLand() {
         harness.addToBattlefield(player1, new Earthlink());
         harness.addToBattlefield(player2, new BalduvianBears());
-        harness.addToBattlefield(player2, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.addToBattlefield(player2, new Mountain());
 
         harness.forceActivePlayer(player1);
@@ -83,7 +83,6 @@ class EarthlinkTest extends BaseCardTest {
         assertThat(choice.maxCount()).isEqualTo(1);
         assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
 
-        Permanent forest = findPermanent(player2, "Forest");
         harness.handleMultiplePermanentsChosen(player2, List.of(forest.getId()));
 
         harness.assertNotOnBattlefield(player2, "Forest");
@@ -153,5 +152,41 @@ class EarthlinkTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Forest");
         harness.assertNotOnBattlefield(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Accepting upkeep payment with insufficient mana sacrifices Earthlink")
+    void insufficientManaAtUpkeepSacrificesIt() {
+        harness.addToBattlefield(player1, new Earthlink());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Earthlink");
+        harness.assertInGraveyard(player1, "Earthlink");
+    }
+
+    @Test
+    @DisplayName("Earthlink's controller controls the death trigger even when an opponent sacrifices")
+    void earthlinkControllerControlsOpponentCreatureDeathTrigger() {
+        harness.addToBattlefield(player1, new Earthlink());
+        harness.addToBattlefield(player2, new BalduvianBears());
+        harness.addToBattlefield(player2, new Forest());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new Pyroclasm(), "{1}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
     }
 }

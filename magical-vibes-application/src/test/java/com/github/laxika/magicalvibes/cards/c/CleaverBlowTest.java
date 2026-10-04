@@ -160,7 +160,7 @@ class CleaverBlowTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 2);
 
         harness.castInstant(player1, 0, 16, bears.getId());
-        var spellId = gd.stack.getLast().getId();
+        var spellId = gd.stack.getLast().getTargetableId();
         harness.castInstant(player2, 0, 2, spellId);
         harness.passBothPriorities();
 

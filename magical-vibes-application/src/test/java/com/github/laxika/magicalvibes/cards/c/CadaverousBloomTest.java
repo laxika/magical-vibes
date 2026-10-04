@@ -119,7 +119,7 @@ class CadaverousBloomTest extends BaseCardTest {
     @DisplayName("A tapped Bloom can repeatedly produce the same color without mana payment")
     void tappedBloomCanRepeatedlyProduceGreenMana() {
         var bloom = harness.addToBattlefieldAndReturn(player1, new CadaverousBloom());
-        bloom.setTapped(true);
+        bloom.tap();
         harness.setHand(player1, List.of(new GiantMantis(), new Forest()));
 
         harness.activateAbility(player1, 0, 1, null, null);

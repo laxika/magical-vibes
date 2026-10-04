@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.y.YumaProudProtector;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.DeckFormat;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,6 +21,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -104,7 +106,7 @@ class CactusPreserveTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, cactus)).isEqualTo(8);
 
-        commanderPermanent.setFaceDown(true);
+        commanderPermanent.setFaceDown(2, 2, Set.of(CardType.CREATURE));
 
         assertThat(gqs.getEffectivePower(gd, cactus)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, cactus)).isEqualTo(8);
@@ -136,7 +138,7 @@ class CactusPreserveTest extends BaseCardTest {
     void manaAbilityCanUseTypeProducedByTappedLand() {
         addCactusReady(player1);
         Permanent land = harness.addToBattlefieldAndReturn(player1, new BondersEnclave());
-        land.setTapped(true);
+        land.tap();
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -148,7 +150,7 @@ class CactusPreserveTest extends BaseCardTest {
         prepareCommander();
         addCactusReady(player1);
         Permanent tower = harness.addToBattlefieldAndReturn(player1, new CommandTower());
-        tower.setTapped(true);
+        tower.tap();
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.handleListChoice(player1, "GREEN");

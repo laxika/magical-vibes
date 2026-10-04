@@ -10,8 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 @CardUsed({ErtaisTrickery.class, ArcticMerfolk.class})
 class ErtaisTrickeryTest extends BaseCardTest {
 
@@ -27,16 +25,15 @@ class ErtaisTrickeryTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new ErtaisTrickery()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castInstant(player2, 0, merfolk.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, merfolk.getId());
 
         harness.assertInGraveyard(player1, "Arctic Merfolk");
         harness.assertInHand(player1, "Arctic Merfolk");
     }
 
     @Test
-    @DisplayName("Cannot target a spell that was not kicked")
-    void cannotTargetNonKickedSpell() {
+    @DisplayName("Can target an unkicked spell but does not counter it")
+    void canTargetNonKickedSpellWithoutCounteringIt() {
         ArcticMerfolk merfolk = new ArcticMerfolk();
         harness.setHand(player1, List.of(merfolk));
         harness.addMana(player1, ManaColor.BLUE, 2);
@@ -45,8 +42,13 @@ class ErtaisTrickeryTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new ErtaisTrickery()));
         harness.addMana(player2, ManaColor.BLUE, 1);
-        assertThatThrownBy(() -> harness.castInstant(player2, 0, merfolk.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("kicked");
+        harness.castAndResolveInstant(player2, 0, merfolk.getId());
+        harness.assertInGraveyard(player2, "Ertai's Trickery");
+        harness.assertNotInGraveyard(player1, "Arctic Merfolk");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Arctic Merfolk");
+        harness.assertNotInGraveyard(player1, "Arctic Merfolk");
     }
 }

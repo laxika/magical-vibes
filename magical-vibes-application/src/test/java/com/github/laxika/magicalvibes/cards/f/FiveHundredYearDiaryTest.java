@@ -18,11 +18,7 @@ class FiveHundredYearDiaryTest extends BaseCardTest {
 
     @Test
     void entersTapped() {
-        harness.setHand(player1, List.of(new FiveHundredYearDiary()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new FiveHundredYearDiary(), "{3}{U}");
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
@@ -49,6 +45,54 @@ class FiveHundredYearDiaryTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(drawnCard));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(diary);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(diary.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
+    }
+
+    @Test
+    void countsItselfButNotOpponentsClues() {
+        Permanent diary = harness.addToBattlefieldAndReturn(player1, new FiveHundredYearDiary());
+        harness.addToBattlefield(player2, new FiveHundredYearDiary());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(diary.isTapped()).isTrue();
+    }
+
+    @Test
+    void canSacrificeWhileTappedFromEntering() {
+        Permanent diary = harness.enterBattlefieldAndReturn(player1, new FiveHundredYearDiary());
+        Card drawnCard = new FiveHundredYearDiary();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        assertThat(diary.isTapped()).isTrue();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(diary);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(diary.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(drawnCard);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).contains(drawnCard);
+    }
+
+    @Test
+    void canSacrificeAfterProducingMana() {
+        Permanent diary = harness.addToBattlefieldAndReturn(player1, new FiveHundredYearDiary());
+        Card drawnCard = new FiveHundredYearDiary();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(diary.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 

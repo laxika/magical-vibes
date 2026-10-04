@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FlamekinBladewhirl.class})
 class FlamekinBladewhirlTest extends BaseCardTest {
 
     @Test
@@ -22,6 +24,33 @@ class FlamekinBladewhirlTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An Elemental in the opponent's hand cannot pay the reveal cost")
+    void opponentsElementalDoesNotAvoidTheThree() {
+        harness.setHand(player1, List.of(new FlamekinBladewhirl()));
+        harness.setHand(player2, List.of(new FlamekinBladewhirl()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The Elemental used to avoid paying {3} is shown to the opponent")
+    void revealCostShowsTheHandCardToOpponent() {
+        FlamekinBladewhirl elementalInHand = new FlamekinBladewhirl();
+        harness.setHand(player1, List.of(new FlamekinBladewhirl(), elementalInHand));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.clearMessages();
+
+        harness.castCreature(player1, 0);
+
+        assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND"))
+                .anyMatch(message -> message.contains(elementalInHand.getId().toString()));
+        assertThat(harness.getGameData().playerHands.get(player1.getId()))
+                .containsExactly(elementalInHand);
     }
 
     @Test

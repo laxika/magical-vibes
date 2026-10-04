@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LoomingAltisaur;
+import com.github.laxika.magicalvibes.cards.l.LightningStrike;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,15 +20,13 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FathomFleetCutthroat.class, LoomingAltisaur.class, LightningStrike.class})
 class FathomFleetCutthroatTest extends BaseCardTest {
-
-    // ===== ETB destroys creature dealt damage this turn =====
 
     @Test
     @DisplayName("ETB destroys target creature an opponent controls that was dealt damage this turn")
     void etbDestroysCreatureDealtDamageThisTurn() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new LoomingAltisaur()).getId();
 
         // Mark the creature as having been dealt damage this turn
         gd.permanentsDealtDamageThisTurn.add(targetId);
@@ -34,7 +34,7 @@ class FathomFleetCutthroatTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FathomFleetCutthroat()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
 
         // Resolve creature spell → enters battlefield, ETB triggers
         harness.passBothPriorities();
@@ -48,24 +48,21 @@ class FathomFleetCutthroatTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Looming Altisaur");
+        harness.assertInGraveyard(player2, "Looming Altisaur");
     }
-
-    // ===== Target restrictions =====
 
     @Test
     @DisplayName("Cannot target creature that was not dealt damage this turn")
     void cannotTargetCreatureNotDealtDamage() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new LoomingAltisaur()).getId();
 
         // Do NOT mark the creature as dealt damage
 
         harness.setHand(player1, List.of(new FathomFleetCutthroat()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("dealt damage this turn");
     }
@@ -73,8 +70,7 @@ class FathomFleetCutthroatTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target own creature even if it was dealt damage this turn")
     void cannotTargetOwnCreature() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        UUID targetId = harness.addToBattlefieldAndReturn(player1, new LoomingAltisaur()).getId();
 
         // Mark own creature as dealt damage
         gd.permanentsDealtDamageThisTurn.add(targetId);
@@ -82,17 +78,15 @@ class FathomFleetCutthroatTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FathomFleetCutthroat()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(gd, player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent controls");
     }
 
-    // ===== No target scenarios =====
-
     @Test
     @DisplayName("Can cast without target when no creature was dealt damage this turn")
     void canCastWithoutTargetWhenNoCreatureDealtDamage() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new LoomingAltisaur());
         harness.setHand(player1, List.of(new FathomFleetCutthroat()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
@@ -103,8 +97,8 @@ class FathomFleetCutthroatTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB does not trigger when cast without a target")
-    void etbDoesNotTriggerWithoutTarget() {
+    @DisplayName("ETB leaves no ability on the stack when no legal target exists")
+    void etbLeavesNoAbilityOnStackWithoutLegalTarget() {
         harness.setHand(player1, List.of(new FathomFleetCutthroat()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
@@ -117,19 +111,16 @@ class FathomFleetCutthroatTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Fizzle =====
-
     @Test
     @DisplayName("ETB fizzles if target creature is removed before resolution")
     void etbFizzlesIfTargetRemoved() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new LoomingAltisaur()).getId();
         gd.permanentsDealtDamageThisTurn.add(targetId);
 
         harness.setHand(player1, List.of(new FathomFleetCutthroat()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
 
         // Resolve creature spell → ETB on stack
         harness.passBothPriorities();
@@ -144,31 +135,87 @@ class FathomFleetCutthroatTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Indestructible =====
-
     @Test
     @DisplayName("Indestructible creature survives the ETB")
     void indestructibleCreatureSurvives() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new LoomingAltisaur()).getId();
         gd.permanentsDealtDamageThisTurn.add(targetId);
 
         harness.setHand(player1, List.of(new FathomFleetCutthroat()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.getGameService().playCard(gd, player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0, targetId);
 
         // Resolve creature spell → ETB on stack
         harness.passBothPriorities();
 
         // Grant indestructible before ETB resolves
-        Permanent target = findPermanent(player2, "Grizzly Bears");
+        Permanent target = findPermanent(player2, "Looming Altisaur");
         target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
 
         // Resolve ETB → creature survives
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Looming Altisaur");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("indestructible"));
+    }
+
+    @Test
+    @DisplayName("ETB destroys a creature damaged by Lightning Strike earlier this turn")
+    void destroysCreatureAfterActualSpellDamage() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LoomingAltisaur());
+        harness.setHand(player1, List.of(new LightningStrike(), new FathomFleetCutthroat()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.assertOnBattlefield(player2, "Looming Altisaur");
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Looming Altisaur");
+        harness.assertNotOnBattlefield(player2, "Looming Altisaur");
+        harness.assertOnBattlefield(player1, "Fathom Fleet Cutthroat");
+    }
+
+    @Test
+    @DisplayName("A creature damaged in response to Cutthroat becomes a legal ETB target")
+    void choosesTargetDamagedWhileCreatureSpellIsOnStack() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LoomingAltisaur());
+        harness.setHand(player1, List.of(new FathomFleetCutthroat(), new LightningStrike()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Looming Altisaur");
+        harness.assertNotOnBattlefield(player2, "Looming Altisaur");
+        harness.assertOnBattlefield(player1, "Fathom Fleet Cutthroat");
+    }
+
+    @Test
+    @DisplayName("ETB does not destroy its target after that creature changes to your control")
+    void targetBecomesIllegalWhenItsControllerChanges() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LoomingAltisaur());
+        gd.permanentsDealtDamageThisTurn.add(target.getId());
+        harness.setHand(player1, List.of(new FathomFleetCutthroat()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Looming Altisaur");
+        harness.assertNotInGraveyard(player2, "Looming Altisaur");
     }
 }

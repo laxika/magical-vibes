@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FirmamentSage.class, Forest.class, GrizzlyBears.class})
+@CardUsed({FirmamentSage.class, Forest.class})
 class FirmamentSageTest extends BaseCardTest {
 
     @Test
@@ -21,11 +20,16 @@ class FirmamentSageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FirmamentSage()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
+        Card undrawn = new Forest();
+        harness.setLibrary(player1, List.of(undrawn));
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
     }
 
     @Test
@@ -36,7 +40,7 @@ class FirmamentSageTest extends BaseCardTest {
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawn));
 
-        makeItNight();
+        advanceToNextUpkeepAndResolveTriggers();
 
         assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
@@ -49,28 +53,94 @@ class FirmamentSageTest extends BaseCardTest {
         Card drawn = new Forest();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(drawn));
-        gd.recordSpellCast(player2.getId(), new GrizzlyBears());
-        gd.recordSpellCast(player2.getId(), new GrizzlyBears());
+        gd.recordSpellCast(player1.getId(), new FirmamentSage());
+        gd.recordSpellCast(player1.getId(), new FirmamentSage());
 
-        makeItDay();
+        advanceToNextUpkeepAndResolveTriggers();
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
 
-    private void makeItNight() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+    @Test
+    void enteringAtNightDoesNotMakeItDayOrDraw() {
+        gd.dayNight = DayNight.NIGHT;
+        harness.setHand(player1, List.of(new FirmamentSage()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        Card undrawn = new Forest();
+        harness.setLibrary(player1, List.of(undrawn));
+
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
     }
 
-    private void makeItDay() {
+    @Test
+    void enteringDuringDayDoesNotDraw() {
+        gd.dayNight = DayNight.DAY;
+        harness.setHand(player1, List.of(new FirmamentSage()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void opponentsSpellsDoNotMakeNightBecomeDay() {
+        gd.dayNight = DayNight.NIGHT;
+        harness.addToBattlefield(player1, new FirmamentSage());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        gd.recordSpellCast(player2.getId(), new FirmamentSage());
+        gd.recordSpellCast(player2.getId(), new FirmamentSage());
+
+        advanceToNextUpkeepAndResolveTriggers();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void eachSageDrawsForItsController() {
+        gd.dayNight = DayNight.DAY;
+        harness.addToBattlefield(player1, new FirmamentSage());
+        harness.addToBattlefield(player1, new FirmamentSage());
+        harness.addToBattlefield(player2, new FirmamentSage());
+        Card first = new Forest();
+        Card second = new Forest();
+        Card opponentDraw = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setLibrary(player2, List.of(opponentDraw));
+
+        advanceToNextUpkeepAndResolveTriggers();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentDraw);
+    }
+
+    private void advanceToNextUpkeepAndResolveTriggers() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        for (int i = 0; i < 3 && !gd.stack.isEmpty(); i++) {
+            harness.passBothPriorities();
+        }
+        assertThat(gd.stack).isEmpty();
     }
 }

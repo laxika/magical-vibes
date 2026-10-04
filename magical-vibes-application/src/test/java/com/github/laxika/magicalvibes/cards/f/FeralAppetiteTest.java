@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,13 +27,9 @@ class FeralAppetiteTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FeralAppetite());
         harness.setHand(player1, List.of(new PestSummoning()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        List<Permanent> pests = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getName().equals("Pest"))
-                .toList();
+        List<Permanent> pests = findPermanents(player1, "Pest");
         pests.forEach(pest -> pest.setSummoningSick(false));
         pests.getFirst().setAttacking(true);
 
@@ -50,7 +45,7 @@ class FeralAppetiteTest extends BaseCardTest {
     void exilingCreatureCreatesPest() {
         harness.addToBattlefield(player1, new FeralAppetite());
         Card creature = new GrizzlyBears();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(creature)));
+        harness.setGraveyard(player2, List.of(creature));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -59,9 +54,7 @@ class FeralAppetiteTest extends BaseCardTest {
 
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(creature);
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getName().equals("Pest")))
+        assertThat(findPermanents(player1, "Pest"))
                 .hasSize(1);
     }
 
@@ -70,7 +63,7 @@ class FeralAppetiteTest extends BaseCardTest {
     void exilingNoncreatureCreatesNoPest() {
         harness.addToBattlefield(player1, new FeralAppetite());
         Card noncreature = new Cancel();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(noncreature)));
+        harness.setGraveyard(player2, List.of(noncreature));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -78,9 +71,7 @@ class FeralAppetiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertNotInGraveyard(player2, "Cancel");
-        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getName().equals("Pest")))
+        assertThat(findPermanents(player1, "Pest"))
                 .isEmpty();
     }
 
@@ -89,24 +80,96 @@ class FeralAppetiteTest extends BaseCardTest {
     void createdPestGainsLifeWhenItDies() {
         harness.addToBattlefield(player1, new FeralAppetite());
         Card creature = new GrizzlyBears();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(creature)));
+        harness.setGraveyard(player2, List.of(creature));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.activateAbility(player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        Permanent pest = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().isToken()
-                        && permanent.getCard().getName().equals("Pest"))
-                .findFirst()
-                .orElseThrow();
+        Permanent pest = findPermanent(player1, "Pest");
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, pest.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, pest.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("A creature in your own graveyard can create a Pest")
+    void exilingOwnCreatureCreatesPest() {
+        harness.addToBattlefield(player1, new FeralAppetite());
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
+        assertThat(findPermanents(player1, "Pest")).hasSize(1);
+        assertThat(findPermanents(player2, "Pest")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two activations targeting the same card create only one Pest")
+    void missingGraveyardTargetCreatesNoAdditionalPest() {
+        harness.addToBattlefield(player1, new FeralAppetite());
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD);
+        harness.activateAbility(player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(creature);
+        assertThat(findPermanents(player1, "Pest")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The bonus excludes opposing Pests and attacking non-Pests")
+    void bonusOnlyAppliesToYourAttackingPests() {
+        harness.addToBattlefield(player1, new FeralAppetite());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        bear.setAttacking(true);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new PestSummoning()));
+        harness.addMana(player2, ManaColor.GREEN, 3);
+        harness.castAndResolveSorcery(player2, 0, 0);
+        Permanent opposingPest = findPermanent(player2, "Pest");
+        opposingPest.setSummoningSick(false);
+        opposingPest.setAttacking(true);
+
+        assertThat(gqs.getEffectivePower(gd, opposingPest)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, opposingPest, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Multiple copies stack their power bonus only while a Pest attacks")
+    void multipleCopiesStopBoostingWhenPestStopsAttacking() {
+        harness.addToBattlefield(player1, new FeralAppetite());
+        harness.addToBattlefield(player1, new FeralAppetite());
+        harness.setHand(player1, List.of(new PestSummoning()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        Permanent pest = findPermanent(player1, "Pest");
+        pest.setSummoningSick(false);
+        pest.setAttacking(true);
+
+        assertThat(gqs.getEffectivePower(gd, pest)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, pest)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, pest, Keyword.DEATHTOUCH)).isTrue();
+
+        pest.setAttacking(false);
+
+        assertThat(gqs.getEffectivePower(gd, pest)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, pest, Keyword.DEATHTOUCH)).isFalse();
     }
 }

@@ -58,7 +58,7 @@ class CameraLauncherTest extends BaseCardTest {
     void exhaustDoesNotRequireTappingOrHaste() {
         Permanent launcher = harness.addToBattlefieldAndReturn(player1, new CameraLauncher());
         launcher.setSummoningSick(true);
-        launcher.setTapped(true);
+        launcher.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, 0, null, null);

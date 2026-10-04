@@ -54,6 +54,25 @@ class EpochrasiteTest extends BaseCardTest {
     }
 
     @Test
+    void suspendRemovesOneCounterOnlyDuringOwnersUpkeep() {
+        Card epochrasiteCard = exileEpochrasiteWithFatalAttraction();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(epochrasiteCard.getId(), 3);
+
+        for (int remaining = 2; remaining >= 1; remaining--) {
+            advanceToUpkeep(player1);
+            resolveAllTriggers();
+
+            assertThat(gd.exiledCardTimeCounters).containsEntry(epochrasiteCard.getId(), remaining);
+            assertThat(gd.getPlayerExiledCards(player1.getId())).contains(epochrasiteCard);
+            assertThat(countPermanents(player1, "Epochrasite")).isZero();
+        }
+    }
+
+    @Test
     void decliningSuspendCastLeavesItInExile() {
         Card epochrasiteCard = exileEpochrasiteWithFatalAttraction();
 

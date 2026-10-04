@@ -785,6 +785,7 @@ public class LayerSystemService {
         flags = flags << 1 | (p.isTransformed() ? 1 : 0);
         flags = flags << 1 | (p.isFaceDown() ? 1 : 0);
         flags = flags << 1 | (p.isCloaked() ? 1 : 0);
+        flags = flags << 1 | (p.isFaceDownWard() ? 1 : 0);
         flags = flags << 1 | (p.isRoomDoorUnlocked(0) ? 1 : 0);
         flags = flags << 1 | (p.isRoomDoorUnlocked(1) ? 1 : 0);
         flags = flags << 1 | (p.isBlockedWithoutBlockers() ? 1 : 0);
@@ -827,6 +828,7 @@ public class LayerSystemService {
             h = mix(h, counter.getKey().ordinal());
             h = mix(h, counter.getValue());
         }
+        h = mix(h, p.getLastCounterRemovalVersions().hashCode());
         for (Map.Entry<CounterType, Long> timestamp : p.getCounterTimestamps().entrySet()) {
             h = mix(h, timestamp.getKey().ordinal());
             h = mix(h, timestamp.getValue());
@@ -1050,6 +1052,9 @@ public class LayerSystemService {
         for (PermanentSlot slot : slots) {
             Permanent permanent = slot.permanent();
             CharacteristicState state = new CharacteristicState(permanent.getCard(), permanent);
+            if (permanent.isFaceDown() && (permanent.isCloaked() || permanent.isFaceDownWard())) {
+                state.addKeyword(Keyword.WARD);
+            }
             // The constructor seeds card values + persistent grants; the legacy engine also
             // treats transient (until-end-of-turn) grants as part of the object's types until
             // they become floating effects in a later migration step.
@@ -1063,6 +1068,11 @@ public class LayerSystemService {
             // leaves answering from the states never see less than the intrinsic values
             // (colors and keywords are untouched by layer 4).
             seedLegacyColorAndAbilityState(gameData, permanent, state, globalWordChange);
+            if (state.hasKeyword(Keyword.CHANGELING)) {
+                for (CardSubtype subtype : CardSubtype.values()) {
+                    if (StaticEffectSupport.isCreatureSubtype(subtype)) state.addSubtype(subtype);
+                }
+            }
             // Layer 3 on the object's own type line: a text change replacing a basic land
             // type word (Mind Bend targeting a Forest) rewrites the printed subtype itself,
             // and with it the land's intrinsic mana ability (CR 612, 305.6).
@@ -1619,7 +1629,6 @@ public class LayerSystemService {
                         slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     allCreatureTypes.forEach(state::addSubtype);
-                    state.addKeyword(Keyword.CHANGELING);
                     record(board, instance, target, new L4Contribution(allCreatureTypes, false, false));
                 }
             }
@@ -2081,7 +2090,6 @@ public class LayerSystemService {
                     for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                         CharacteristicState state = states.get(target.permanent().getId());
                         state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
-                        state.removeKeyword(Keyword.CHANGELING);
                     }
                 } else {
                     applyStaticInstanceViaHandlers(gameData, instance, slots, board, true,
@@ -2091,7 +2099,6 @@ public class LayerSystemService {
                                 }
                                 CharacteristicState state = states.get(target.permanent().getId());
                                 state.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
-                                state.removeKeyword(Keyword.CHANGELING);
                                 record(board, instance, target, new L4Contribution(List.of(), true, false));
                             });
                 }
@@ -2107,9 +2114,15 @@ public class LayerSystemService {
                 // made visible to later-layer subtype filters here — an Elf lord with an
                 // EARLIER timestamp still boosts the target (no CR 613.8 dependency needed).
                 // The keyword itself is (re-)applied and removable in layer 6.
-                if (instance.floating() != null && grant.keywords().contains(Keyword.CHANGELING)) {
-                    for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
+                if (grant.keywords().contains(Keyword.CHANGELING)) {
+                    for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope(),
+                            grant.filter(), slots, slotsById, board)) {
                         states.get(target.permanent().getId()).addKeyword(Keyword.CHANGELING);
+                        for (CardSubtype subtype : CardSubtype.values()) {
+                            if (StaticEffectSupport.isCreatureSubtype(subtype)) {
+                                states.get(target.permanent().getId()).addSubtype(subtype);
+                            }
+                        }
                     }
                 }
             }
@@ -2140,6 +2153,9 @@ public class LayerSystemService {
                         animate.grantedSubtypes().forEach(state::addSubtype);
                         if (animate.grantedKeywords().contains(Keyword.CHANGELING)) {
                             state.addKeyword(Keyword.CHANGELING);
+                            for (CardSubtype subtype : CardSubtype.values()) {
+                                if (StaticEffectSupport.isCreatureSubtype(subtype)) state.addSubtype(subtype);
+                            }
                         }
                     }
                     return;
@@ -2531,11 +2547,6 @@ public class LayerSystemService {
                     .getOrDefault(permanent.getCard().getId(), Set.of())
                     .forEach(state::removeKeyword);
         }
-        if (permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
-            // Losing all creature types nullifies the Changeling grant (legacy semantics).
-            state.removeKeyword(Keyword.CHANGELING);
-        }
-
         state.snapshotSeededCharacteristics();
     }
 

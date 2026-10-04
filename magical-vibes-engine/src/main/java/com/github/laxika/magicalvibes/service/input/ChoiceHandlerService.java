@@ -157,6 +157,7 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveAnyNumberOfCountersFromAllPermanentsEffectHandler
             removeAnyNumberOfCountersFromAllPermanentsEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterFromExiledCardEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.RemoveSuspendCounterFromExiledSpellEffectHandler removeSuspendCounterFromExiledSpellEffectHandler;
     private final TimeTravelService timeTravelService;
     private final ToymakersTrapEffectHandler toymakersTrapEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PhaseOutChosenTypeSupport phaseOutChosenTypeSupport;
@@ -298,6 +299,16 @@ public class ChoiceHandlerService {
             throw new IllegalArgumentException("Invalid mode: " + colorName);
         }
 
+        if (colorChoice.context() instanceof ChoiceContext.TappedEntryStateChoice ctx) {
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid tapped entry state");
+            }
+            gameData.interaction.clearAwaitingInput();
+            var request = ctx.request();
+            request.permanent().setChosenTappedEntryState("Tapped".equals(colorName));
+            libraryChoiceHandlerService.completeTappedEntryStateChoice(gameData, request);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.UnlockRoomDoorChoice ctx) {
             unlockControlledRoomDoorEffectHandler.completeChoice(gameData, colorName, ctx);
             return;
@@ -3240,6 +3251,21 @@ public class ChoiceHandlerService {
 
         gameData.interaction.clearAwaitingInput();
         if (ctx.targetZone() == Zone.EXILE) {
+            GameData.SuspendedSpellExile suspended = gameData.suspendedSpellExiles.stream()
+                    .filter(pending -> pending.cardId().equals(ctx.targetId())).findFirst().orElse(null);
+            if (suspended != null) {
+                if (ChoiceContext.AdjustChosenCounterActionChoice.ADD.equals(choice)) {
+                    int index = gameData.suspendedSpellExiles.indexOf(suspended);
+                    gameData.suspendedSpellExiles.set(index, new GameData.SuspendedSpellExile(
+                            suspended.cardId(), suspended.ownerId(), suspended.counters() + 1));
+                } else {
+                    removeSuspendCounterFromExiledSpellEffectHandler.resolve(gameData,
+                            gameData.pendingEffectResolutionEntry,
+                            new com.github.laxika.magicalvibes.model.effect.RemoveSuspendCounterFromExiledSpellEffect(ctx.targetId()));
+                }
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
             if (ChoiceContext.AdjustChosenCounterActionChoice.ADD.equals(choice)) {
                 Integer counters = gameData.exiledCardTimeCounters.get(ctx.targetId());
                 if (gameData.findExiledCard(ctx.targetId()) != null && counters != null && counters > 0) {
@@ -7018,6 +7044,11 @@ public class ChoiceHandlerService {
     }
 
     private void handleExileByNameChoice(GameData gameData, String cardName, ChoiceContext.ExileByNameChoice ctx) {
+        PendingInteraction.ColorChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (choice == null || !choice.options().contains(cardName)) {
+            throw new IllegalArgumentException("Invalid card name: " + cardName);
+        }
         gameData.interaction.clearAwaitingInput();
 
         UUID targetPlayerId = ctx.targetPlayerId();
@@ -7558,7 +7589,7 @@ public class ChoiceHandlerService {
 
         // Always shuffle target player's library
         if (library != null) {
-            Collections.shuffle(library);
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
         }
 
         String exileLog = controllerName + " exiles " + exiledCount + " card" + (exiledCount != 1 ? "s" : "")

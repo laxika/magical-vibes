@@ -127,7 +127,7 @@ class CryptCreeperTest extends BaseCardTest {
     @DisplayName("Can activate while tapped and exiles only the chosen card")
     void canActivateWhileTappedAndExilesOnlyChosenCard() {
         Permanent creeper = addCreatureReady(player1, new CryptCreeper());
-        creeper.setTapped(true);
+        creeper.tap();
         Card target = new CryptCreeper();
         Card other = new CryptCreeper();
         harness.setGraveyard(player2, List.of(target, other));

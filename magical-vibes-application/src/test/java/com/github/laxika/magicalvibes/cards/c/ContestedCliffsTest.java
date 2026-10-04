@@ -124,7 +124,7 @@ class ContestedCliffsTest extends BaseCardTest {
         addReadyCliffs();
         Permanent ownBaloth = addCreatureReady(player1, new RavenousBaloth());
         Permanent opponentBaloth = addCreatureReady(player2, new RavenousBaloth());
-        ownBaloth.setTapped(true);
+        ownBaloth.tap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 

@@ -8,8 +8,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -19,11 +17,9 @@ class ElectricEelTest extends BaseCardTest {
     @Test
     @DisplayName("When Electric Eel enters, it deals 1 damage to its controller")
     void enterTheBattlefieldDealsDamage() {
-        harness.setHand(player1, List.of(new ElectricEel()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ElectricEel(), "{U}");
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
@@ -83,9 +79,7 @@ class ElectricEelTest extends BaseCardTest {
     }
     @Test
     void abilityCanBeActivatedWithSummoningSickness() {
-        harness.setHand(player1, List.of(new ElectricEel()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ElectricEel(), "{U}");
         resolveAllTriggers();
 
         Permanent eel = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -97,5 +91,60 @@ class ElectricEelTest extends BaseCardTest {
 
         assertThat(eel.getPowerModifier()).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    void stackedActivationsResolveIndependentlyAndAccumulate() {
+        Permanent eel = addCreatureReady(player1, new ElectricEel());
+        harness.addMana(player1, ManaColor.RED, 4);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(eel.getPowerModifier()).isZero();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(eel.getPowerModifier()).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+
+        harness.passBothPriorities();
+
+        assertThat(eel.getPowerModifier()).isEqualTo(4);
+        assertThat(eel.getToughnessModifier()).isZero();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
+    }
+
+    @Test
+    void abilityCanBeActivatedWhileTapped() {
+        Permanent eel = addCreatureReady(player1, new ElectricEel());
+        eel.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(eel.isTapped()).isTrue();
+        assertThat(eel.getPowerModifier()).isEqualTo(2);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    void opponentsEnterTriggerDamagesOnlyItsControllerOnResolution() {
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.enterBattlefieldAndReturn(player2, new ElectricEel());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore - 1);
     }
 }

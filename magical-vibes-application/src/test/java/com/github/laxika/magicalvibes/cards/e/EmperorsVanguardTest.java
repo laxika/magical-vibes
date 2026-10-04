@@ -4,19 +4,18 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({EmperorsVanguard.class, Forest.class, GrizzlyBears.class, SerraAngel.class})
 class EmperorsVanguardTest extends BaseCardTest {
-
-    // ===== Explore on combat damage to player — land on top =====
 
     @Test
     @DisplayName("Deals combat damage and explores with land on top — land goes to hand")
@@ -47,8 +46,6 @@ class EmperorsVanguardTest extends BaseCardTest {
 
         assertThat(vanguard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
-
-    // ===== Explore on combat damage to player — non-land on top =====
 
     @Test
     @DisplayName("Deals combat damage and explores with non-land on top — gets +1/+1 counter")
@@ -98,8 +95,6 @@ class EmperorsVanguardTest extends BaseCardTest {
                 .isEqualTo(creature.getId());
     }
 
-    // ===== No trigger when blocked =====
-
     @Test
     @DisplayName("No explore trigger when blocked and killed")
     void noTriggerWhenBlocked() {
@@ -107,11 +102,9 @@ class EmperorsVanguardTest extends BaseCardTest {
         vanguard.setAttacking(true);
 
         // 4/4 blocker — Vanguard is 4/3, both die
-        Permanent blocker = new Permanent(new SerraAngel());
-        blocker.setSummoningSick(false);
+        Permanent blocker = addCreatureReady(player2, new SerraAngel());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
@@ -121,8 +114,6 @@ class EmperorsVanguardTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Emperor's Vanguard");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
     }
-
-    // ===== Combat damage dealt =====
 
     @Test
     @DisplayName("Deals 4 combat damage to defending player")
@@ -136,20 +127,66 @@ class EmperorsVanguardTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Exploring with an empty library still adds a counter")
+    void emptyLibraryStillAddsCounter() {
+        Permanent vanguard = addVanguardReady(player1);
+        vanguard.setAttacking(true);
+        gd.playerDecks.get(player1.getId()).clear();
+
+        resolveCombatAndExploreTrigger();
+
+        assertThat(vanguard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Explores even if Vanguard leaves before its trigger resolves")
+    void exploresAfterLeavingBattlefield() {
+        Permanent vanguard = addVanguardReady(player1);
+        vanguard.setAttacking(true);
+        Card creature = new GrizzlyBears();
+        gd.playerDecks.get(player1.getId()).addFirst(creature);
+
+        resolveCombat();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(vanguard);
+        gd.playerGraveyards.get(player1.getId()).add(vanguard.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
+        assertThat(vanguard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Explores its current controller's library after changing control")
+    void exploresCurrentControllersLibrary() {
+        Permanent vanguard = addVanguardReady(player1);
+        vanguard.setAttacking(true);
+        Card originalControllersLand = new Forest();
+        Card currentControllersLand = new Forest();
+        gd.playerDecks.get(player1.getId()).addFirst(originalControllersLand);
+        gd.playerDecks.get(player2.getId()).addFirst(currentControllersLand);
+
+        resolveCombat();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(vanguard);
+        vanguard.setAttacking(false);
+        gd.playerBattlefields.get(player2.getId()).add(vanguard);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(currentControllersLand);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(originalControllersLand);
+        assertThat(vanguard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 
     private Permanent addVanguardReady(Player player) {
-        Permanent perm = new Permanent(new EmperorsVanguard());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new EmperorsVanguard());
     }
 
     private void resolveCombatAndExploreTrigger() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // combat damage dealt, explore trigger put on stack
+        resolveCombat();
         harness.passBothPriorities(); // resolve explore trigger
     }
 }

@@ -127,7 +127,7 @@ class BorosReckonerTest extends BaseCardTest {
     void redManaCanActivateWhileTappedAndSummoningSick() {
         Permanent reckoner = harness.addToBattlefieldAndReturn(player1, new BorosReckoner());
         reckoner.setSummoningSick(true);
-        reckoner.setTapped(true);
+        reckoner.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, null, null);

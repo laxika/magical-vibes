@@ -114,7 +114,7 @@ class DarksteelAxeTest extends BaseCardTest {
     @Test
     void tappedAxeCanEquip() {
         Permanent axe = harness.addToBattlefieldAndReturn(player1, new DarksteelAxe());
-        axe.setTapped(true);
+        axe.tap();
         Permanent creature = addCreatureReady(player1, new CarapaceForger());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

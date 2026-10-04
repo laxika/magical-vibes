@@ -56,7 +56,7 @@ public class PutCountersOnSelfEffectHandler implements NormalEffectHandlerBean {
                 .findFirst()
                 .orElse(null);
         if (source == null) {
-            source = entry.getSourcePlanarObject();
+            return;
         }
 
         int count = effect.amount() != null

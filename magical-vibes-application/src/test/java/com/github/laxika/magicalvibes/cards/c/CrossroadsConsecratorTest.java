@@ -120,7 +120,7 @@ class CrossroadsConsecratorTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void rejectsTappedSource() {
         Permanent attacker = setupAttackingTarget(new CrossroadsConsecrator());
-        gd.playerBattlefields.get(player1.getId()).getFirst().setTapped(true);
+        gd.playerBattlefields.get(player1.getId()).getFirst().tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
                 .isInstanceOf(IllegalStateException.class);

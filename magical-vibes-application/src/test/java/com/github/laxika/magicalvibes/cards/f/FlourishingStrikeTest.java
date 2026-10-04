@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FlourishingStrike.class, AirElemental.class, GrizzlyBears.class, Millstone.class})
+@CardUsed({FlourishingStrike.class, AirElemental.class, GrizzlyBears.class, Millstone.class, Boomerang.class})
 class FlourishingStrikeTest extends BaseCardTest {
 
     @Test
@@ -38,7 +39,6 @@ class FlourishingStrikeTest extends BaseCardTest {
         assertThat(target.getEffectiveToughness()).isEqualTo(5);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(target.getEffectivePower()).isEqualTo(2);
@@ -82,6 +82,75 @@ class FlourishingStrikeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalInstantWithModes(
                 player1, 0, 1, 2, new int[]{1}, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void entwineCanTargetTheSameFlyingCreatureWithBothModes() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+
+        cast(new int[]{0, 1}, List.of(target.getId(), target.getId()), true);
+
+        harness.assertOnBattlefield(player1, "Air Elemental");
+        assertThat(target.getMarkedDamage()).isEqualTo(5);
+        assertThat(target.getEffectivePower()).isEqualTo(7);
+        assertThat(target.getEffectiveToughness()).isEqualTo(7);
+    }
+
+    @Test
+    void cannotChooseBothModesWithoutEnoughManaForEntwine() {
+        Permanent flyingCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FlourishingStrike()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 1, 2, new int[]{0, 1}, List.of(flyingCreature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Flourishing Strike");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void entwineStillBoostsWhenDamageTargetLeavesBeforeResolution() {
+        Permanent flyingCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FlourishingStrike()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castModalInstantWithModes(player1, 0, 1, 2,
+                new int[]{0, 1}, List.of(flyingCreature.getId(), creature.getId()));
+
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, flyingCreature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Air Elemental");
+        assertThat(creature.getEffectivePower()).isEqualTo(5);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(5);
+        harness.assertInGraveyard(player1, "Flourishing Strike");
+    }
+
+    @Test
+    void entwineStillDealsDamageWhenBoostTargetLeavesBeforeResolution() {
+        Permanent flyingCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FlourishingStrike()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castModalInstantWithModes(player1, 0, 1, 2,
+                new int[]{0, 1}, List.of(flyingCreature.getId(), creature.getId()));
+
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Flourishing Strike");
     }
 
     private void cast(int[] modes, List<java.util.UUID> targetIds, boolean entwined) {

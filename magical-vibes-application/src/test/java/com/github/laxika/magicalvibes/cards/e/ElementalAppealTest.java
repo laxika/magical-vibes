@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ElementalAppeal.class})
 @DisplayName("Elemental Appeal")
 class ElementalAppealTest extends BaseCardTest {
 
@@ -59,12 +61,48 @@ class ElementalAppealTest extends BaseCardTest {
 
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Elemental");
+    }
+
+    @Test
+    @DisplayName("Kicking a second spell does not boost the first spell's token")
+    void kickedSpellOnlyBoostsItsOwnToken() {
+        cast(false);
+        Permanent firstToken = elementalToken();
+
+        cast(true);
+
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .toList();
+        assertThat(tokens).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, firstToken)).isEqualTo(7);
+        Permanent secondToken = tokens.stream()
+                .filter(permanent -> !permanent.getId().equals(firstToken.getId()))
+                .findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, secondToken)).isEqualTo(14);
+        assertThat(gqs.getEffectiveToughness(gd, secondToken)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The kicked token remains until its end-step exile trigger resolves")
+    void kickedTokenExileUsesTheStack() {
+        cast(true);
+        Permanent token = elementalToken();
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Elemental");
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(14);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Elemental");
+        harness.assertNotInGraveyard(player1, "Elemental");
     }
 
     private void cast(boolean kicked) {

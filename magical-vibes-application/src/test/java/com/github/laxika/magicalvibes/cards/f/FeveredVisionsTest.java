@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,13 +12,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FeveredVisions.class, GrizzlyBears.class})
 class FeveredVisionsTest extends BaseCardTest {
 
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.passBothPriorities();
     }
 
@@ -70,5 +73,60 @@ class FeveredVisionsTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Checks hand size at resolution rather than when the end step begins")
+    void checksHandSizeAtResolution() {
+        harness.addToBattlefield(player1, new FeveredVisions());
+        harness.setHand(player2, List.of(new FeveredVisions(), new FeveredVisions(),
+                new FeveredVisions(), new FeveredVisions()));
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        harness.setHand(player2, List.of(new FeveredVisions(), new FeveredVisions()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Each copy checks hand size after its own draw")
+    void multipleCopiesResolveSeparately() {
+        harness.addToBattlefield(player1, new FeveredVisions());
+        harness.addToBattlefield(player1, new FeveredVisions());
+        harness.setHand(player2, List.of(new FeveredVisions(), new FeveredVisions()));
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("The triggered ability still draws and damages after its source leaves")
+    void triggerResolvesWithoutSource() {
+        harness.addToBattlefield(player1, new FeveredVisions());
+        harness.setHand(player2, List.of(new FeveredVisions(), new FeveredVisions(), new FeveredVisions()));
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 }

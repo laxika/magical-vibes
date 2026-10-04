@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.PastInFlames;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FarWanderings.class, Forest.class, GrizzlyBears.class, Island.class, Plains.class})
+@CardUsed({FarWanderings.class, Forest.class, GrizzlyBears.class, Island.class, Plains.class, PastInFlames.class})
 class FarWanderingsTest extends BaseCardTest {
 
     @Test
@@ -132,6 +133,144 @@ class FarWanderingsTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getCard().hasType(CardType.LAND));
     }
 
+    @Test
+    @DisplayName("Below threshold, the controller may fail to find an available basic land")
+    void belowThresholdCanFailToFind() {
+        setupLibrary();
+        castFarWanderings();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Far Wanderings");
+    }
+
+    @Test
+    @DisplayName("At threshold, the controller may choose zero lands")
+    void atThresholdCanChooseZeroLands() {
+        harness.setGraveyard(player1, graveyardWithCards(7));
+        setupLibrary();
+        castFarWanderings();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("At threshold, the controller may stop after one land despite more available lands")
+    void atThresholdCanChooseOnlyOneLand() {
+        harness.setGraveyard(player1, graveyardWithCards(7));
+        setupLibrary();
+        castFarWanderings();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1)
+                .allMatch(com.github.laxika.magicalvibes.model.Permanent::isTapped);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Threshold gained before resolution upgrades the search")
+    void thresholdIsCheckedAtResolution() {
+        harness.setGraveyard(player1, graveyardWithCards(6));
+        setupLibrary();
+        castFarWanderings();
+        harness.setGraveyard(player1, graveyardWithCards(7));
+
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().remainingCount()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Threshold lost before resolution uses the one-land search")
+    void thresholdLostBeforeResolution() {
+        harness.setGraveyard(player1, graveyardWithCards(7));
+        setupLibrary();
+        castFarWanderings();
+        harness.setGraveyard(player1, graveyardWithCards(6));
+
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().remainingCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The opponent's graveyard does not enable threshold")
+    void opponentsGraveyardDoesNotEnableThreshold() {
+        harness.setGraveyard(player2, graveyardWithCards(7));
+        setupLibrary();
+        castFarWanderings();
+
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().remainingCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("At threshold, all lands are selected before entering the battlefield together")
+    void thresholdLandsEnterTogether() {
+        harness.setGraveyard(player1, graveyardWithCards(7));
+        setupLibrary();
+        castFarWanderings();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3)
+                .allMatch(com.github.laxika.magicalvibes.model.Permanent::isTapped);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Granted flashback preserves the threshold search for three lands")
+    void grantedFlashbackPreservesThresholdSearch() {
+        java.util.ArrayList<Card> graveyard = new java.util.ArrayList<>(graveyardWithCards(7));
+        graveyard.addFirst(new FarWanderings());
+        harness.setGraveyard(player1, graveyard);
+        harness.setHand(player1, List.of(new PastInFlames()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveSorcery(player1, 0, 0);
+        setupLibrary();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFlashback(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().remainingCount()).isEqualTo(3);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3)
+                .allMatch(com.github.laxika.magicalvibes.model.Permanent::isTapped);
+    }
+
     private void castFarWanderings() {
         harness.setHand(player1, List.of(new FarWanderings()));
         harness.addMana(player1, ManaColor.GREEN, 3);
@@ -139,9 +278,7 @@ class FarWanderingsTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
     }
 
     private List<Card> graveyardWithSevenCards() {

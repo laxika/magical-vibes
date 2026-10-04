@@ -72,7 +72,7 @@ class CouncilsJudgmentTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player2, List.of(voted.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(unvoted);
-        assertThat(gd.playerExiledCards.get(player2.getId())).contains(voted.getCard());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(voted.getCard());
         harness.assertNotInGraveyard(player2, "Sol Ring");
     }
 
@@ -87,7 +87,7 @@ class CouncilsJudgmentTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player2, List.of(shrouded.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(artifact);
-        assertThat(gd.playerExiledCards.get(player2.getId())).contains(shrouded.getCard());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(shrouded.getCard());
         harness.assertNotInGraveyard(player2, "Blastoderm");
     }
 
@@ -127,7 +127,7 @@ class CouncilsJudgmentTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(ownPermanent);
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(first.getCard(), second.getCard());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(first.getCard(), second.getCard());
     }
 
     @Test

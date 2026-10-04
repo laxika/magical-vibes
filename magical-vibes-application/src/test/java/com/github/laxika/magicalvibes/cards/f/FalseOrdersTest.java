@@ -24,8 +24,7 @@ class FalseOrdersTest extends BaseCardTest {
         Permanent firstAttacker = addCreatureReady(player1, new SavannahLions());
         Permanent secondAttacker = addCreatureReady(player1, new SavannahLions());
         Permanent blocker = addCreatureReady(player2, new SavannahLions());
-        declareAttackers(List.of(0, 1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.clearPriorityPassed();
 
@@ -35,7 +34,6 @@ class FalseOrdersTest extends BaseCardTest {
         assertThat(firstAttacker.isBlockedWithoutBlockers()).isFalse();
 
         harness.handleMayAbilityChosen(player2, true);
-        harness.passBothPriorities();
         harness.handlePermanentChosen(player2, secondAttacker.getId());
 
         assertThat(blocker.isBlocking()).isTrue();
@@ -47,8 +45,7 @@ class FalseOrdersTest extends BaseCardTest {
     void canDeclineReassignment() {
         Permanent attacker = addCreatureReady(player1, new SavannahLions());
         Permanent blocker = addCreatureReady(player2, new SavannahLions());
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.clearPriorityPassed();
 
@@ -91,6 +88,84 @@ class FalseOrdersTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature defending player controls");
 
         assertThat(defender.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("reassignment finishes during spell resolution without another priority round")
+    void reassignmentResolvesWithSpell() {
+        Permanent attacker = addCreatureReady(player1, new SavannahLions());
+        Permanent bystander = addCreatureReady(player2, new SavannahLions());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        giveSpell();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.clearPriorityPassed();
+
+        harness.castInstant(player2, 0, bystander.getId());
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMayAbilityChosen(player2, true));
+
+        assertThat(bystander.isBlocking()).isTrue();
+        assertThat(bystander.getBlockingTargetIds()).containsExactly(attacker.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("can have a tapped creature block through the effect")
+    void tappedCreatureCanBlockThroughEffect() {
+        Permanent attacker = addCreatureReady(player1, new SavannahLions());
+        Permanent bystander = addCreatureReady(player2, new SavannahLions());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        giveSpell();
+        gs.declareBlockers(gd, player2, List.of());
+        harness.clearPriorityPassed();
+        bystander.setTapped(true);
+
+        harness.castInstant(player2, 0, bystander.getId());
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMayAbilityChosen(player2, true));
+
+        assertThat(bystander.isTapped()).isTrue();
+        assertThat(bystander.isBlocking()).isTrue();
+        assertThat(bystander.getBlockingTargetIds()).containsExactly(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("does not unblock an attacker that had another blocker earlier this combat")
+    void previouslyMultipleBlockedAttackerStaysBlocked() {
+        Permanent attacker = addCreatureReady(player1, new SavannahLions());
+        Permanent firstBlocker = addCreatureReady(player2, new SavannahLions());
+        Permanent secondBlocker = addCreatureReady(player2, new SavannahLions());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        harness.clearPriorityPassed();
+
+        castFalseOrders(firstBlocker);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMayAbilityChosen(player2, false));
+        harness.clearPriorityPassed();
+        castFalseOrders(secondBlocker);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMayAbilityChosen(player2, false));
+
+        assertThat(firstBlocker.isBlocking()).isFalse();
+        assertThat(secondBlocker.isBlocking()).isFalse();
+        assertThat(attacker.isBlockedWithoutBlockers()).isTrue();
+    }
+
+    @Test
+    @DisplayName("cannot be cast outside the declare blockers step")
+    void rejectsCastingDuringDeclareAttackers() {
+        Permanent defender = addCreatureReady(player2, new SavannahLions());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        giveSpell();
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, defender.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castFalseOrders(Permanent target) {

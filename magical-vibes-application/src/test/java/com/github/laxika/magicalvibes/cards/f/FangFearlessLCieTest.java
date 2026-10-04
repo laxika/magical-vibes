@@ -28,8 +28,7 @@ class FangFearlessLCieTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.castSorcery(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
@@ -49,12 +48,10 @@ class FangFearlessLCieTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.castSorcery(player1, 0, firstBears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, firstBears.getId());
         harness.passBothPriorities();
 
-        harness.castSorcery(player1, 0, secondBears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, secondBears.getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
@@ -72,8 +69,7 @@ class FangFearlessLCieTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         int lifeBefore = gd.getLife(player1.getId());
 
-        harness.castSorcery(player1, 0, firstBears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, firstBears.getId());
         harness.passBothPriorities();
 
         advanceTurn();
@@ -86,13 +82,54 @@ class FangFearlessLCieTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castSorcery(player1, 0, secondBears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, secondBears.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
                 .containsExactly("Grizzly Bears", "Forest");
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    void doesNotTriggerWhenCardLeavesOpponentsGraveyard() {
+        addFang();
+        FangFearlessLCie returned = new FangFearlessLCie();
+        harness.setGraveyard(player2, List.of(returned));
+        harness.setHand(player2, List.of(new Disentomb()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castAndResolveSorcery(player2, 0, returned.getId());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(returned);
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    void triggerResolvesAfterFangLeavesBattlefield() {
+        addFang();
+        FangFearlessLCie returned = new FangFearlessLCie();
+        harness.setGraveyard(player1, List.of(returned));
+        harness.setHand(player1, List.of(new Disentomb()));
+        Forest drawn = new Forest();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castAndResolveSorcery(player1, 0, returned.getId());
+        assertThat(gd.stack).hasSize(1);
+        var fang = gd.playerBattlefields.get(player1.getId()).getFirst();
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, fang));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(returned, drawn);
+        harness.assertLife(player1, lifeBefore - 1);
     }
 
     private void addFang() {

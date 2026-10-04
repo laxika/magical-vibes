@@ -110,6 +110,66 @@ class FiremawKavuTest extends BaseCardTest {
                 .hasMessageContaining("This spell cannot target players");
     }
 
+    @Test
+    @DisplayName("Echo still triggers when the entry damage target becomes illegal")
+    void echoTriggersAfterEntryDamageFailsToResolve() {
+        Permanent target = addCreatureReady(player2, new HavenwoodWurm());
+        harness.setHand(player1, List.of(new FiremawKavu()));
+        addFiremawCastMana();
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Firemaw Kavu");
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @DisplayName("Returning Firemaw Kavu to hand triggers four damage")
+    void returningToHandTriggersDamage() {
+        Permanent target = addCreatureReady(player2, new HavenwoodWurm());
+        Permanent firemaw = castFiremaw(target.getId());
+        Permanent leaveTarget = addCreatureReady(player2, new HavenwoodWurm());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToHand(gd, firemaw));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, leaveTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(leaveTarget.getMarkedDamage()).isEqualTo(4);
+        harness.assertInHand(player1, "Firemaw Kavu");
+        harness.assertNotOnBattlefield(player1, "Firemaw Kavu");
+    }
+
+    @Test
+    @DisplayName("Exiling Firemaw Kavu triggers four damage")
+    void exilingTriggersDamage() {
+        Permanent target = addCreatureReady(player2, new HavenwoodWurm());
+        Permanent firemaw = castFiremaw(target.getId());
+        Permanent leaveTarget = addCreatureReady(player2, new HavenwoodWurm());
+
+        harness.inMutationScope(
+                () -> harness.getPermanentRemovalService().removePermanentToExile(gd, firemaw));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, leaveTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(leaveTarget.getMarkedDamage()).isEqualTo(4);
+        harness.assertNotOnBattlefield(player1, "Firemaw Kavu");
+        harness.assertNotInGraveyard(player1, "Firemaw Kavu");
+        assertThat(gd.exiledCards)
+                .anyMatch(entry -> entry.card().getName().equals("Firemaw Kavu")
+                        && entry.ownerId().equals(player1.getId()));
+    }
+
     private Permanent castFiremaw(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new FiremawKavu()));
         addFiremawCastMana();

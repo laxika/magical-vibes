@@ -1,24 +1,26 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BearCub;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FishingPole.class, BearCub.class})
 class FishingPoleTest extends BaseCardTest {
 
     @Test
     @DisplayName("The granted ability taps both permanents and puts a bait counter on Fishing Pole")
     void baitAbilityTapsCreatureAndPole() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new BearCub());
         Permanent pole = addPoleReady(player1);
         pole.setAttachedTo(creature.getId());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -34,13 +36,13 @@ class FishingPoleTest extends BaseCardTest {
     @Test
     @DisplayName("The untap trigger removes a bait counter and creates a Fish")
     void untappingEquippedCreatureCreatesFish() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new BearCub());
         Permanent pole = addPoleReady(player1);
         pole.setAttachedTo(creature.getId());
         pole.setCounterCount(CounterType.BAIT, 1);
         creature.tap();
 
-        runUntapStep(player1);
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(pole.getCounterCount(CounterType.BAIT)).isZero();
@@ -50,12 +52,12 @@ class FishingPoleTest extends BaseCardTest {
     @Test
     @DisplayName("The untap trigger resolves without a Fish when Fishing Pole has no bait")
     void untappingWithNoBaitCreatesNoFish() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new BearCub());
         Permanent pole = addPoleReady(player1);
         pole.setAttachedTo(creature.getId());
         creature.tap();
 
-        runUntapStep(player1);
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Fish")).isZero();
@@ -64,13 +66,13 @@ class FishingPoleTest extends BaseCardTest {
     @Test
     @DisplayName("A Pole controlled by another player still triggers for its equipped creature")
     void opponentControlledPoleTriggersForEquippedCreature() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new BearCub());
         Permanent pole = addPoleReady(player2);
         pole.setAttachedTo(creature.getId());
         pole.setCounterCount(CounterType.BAIT, 1);
         creature.tap();
 
-        runUntapStep(player1);
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(pole.getCounterCount(CounterType.BAIT)).isZero();
@@ -81,7 +83,7 @@ class FishingPoleTest extends BaseCardTest {
     @Test
     @DisplayName("The granted ability cannot be activated while Fishing Pole is tapped")
     void baitAbilityRequiresUntappedPole() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new BearCub());
         Permanent pole = addPoleReady(player1);
         pole.setAttachedTo(creature.getId());
         pole.tap();
@@ -92,21 +94,116 @@ class FishingPoleTest extends BaseCardTest {
                 .hasMessageContaining("granting Equipment is already tapped");
     }
 
-    private Permanent addPoleReady(Player player) {
-        Permanent perm = new Permanent(new FishingPole());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    void equipAttachesToControlledCreatureForTwoMana() {
+        Permanent creature = addCreatureReady(player1, new BearCub());
+        Permanent pole = addPoleReady(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 1, 0, creature.getId(), null);
+        harness.passBothPriorities();
+
+        assertThat(pole.getAttachedTo()).isEqualTo(creature.getId());
     }
 
-    private void runUntapStep(Player untappingPlayer) {
-        Player opponent = untappingPlayer.equals(player1) ? player2 : player1;
-        harness.forceActivePlayer(opponent);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+    @Test
+    void oneUntapConsumesOnlyOneOfSeveralBaitCounters() {
+        Permanent creature = addCreatureReady(player1, new BearCub());
+        Permanent pole = addPoleReady(player1);
+        pole.setAttachedTo(creature.getId());
+        pole.setCounterCount(CounterType.BAIT, 3);
+        creature.tap();
+
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.clearPriorityPassed();
+
+        assertThat(pole.getCounterCount(CounterType.BAIT)).isEqualTo(2);
+        assertThat(countPermanents(player1, "Fish")).isEqualTo(1);
+    }
+
+    @Test
+    void untappingAnotherCreatureDoesNotConsumeBait() {
+        Permanent creature = addCreatureReady(player1, new BearCub());
+        Permanent other = addCreatureReady(player1, new BearCub());
+        Permanent pole = addPoleReady(player1);
+        pole.setAttachedTo(creature.getId());
+        pole.setCounterCount(CounterType.BAIT, 1);
+        other.tap();
+
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
+
+        assertThat(pole.getCounterCount(CounterType.BAIT)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Fish")).isZero();
+    }
+
+    @Test
+    void removingBaitBeforeTriggerResolvesPreventsFish() {
+        Permanent creature = addCreatureReady(player1, new BearCub());
+        Permanent pole = addPoleReady(player1);
+        pole.setAttachedTo(creature.getId());
+        pole.setCounterCount(CounterType.BAIT, 1);
+        creature.tap();
+
+        advanceToUpkeep(player1);
+        pole.setCounterCount(CounterType.BAIT, 0);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Fish")).isZero();
+    }
+
+    @Test
+    void baitAbilityStillPlacesCounterAfterEquipmentMoves() {
+        Permanent creature = addCreatureReady(player1, new BearCub());
+        Permanent other = addCreatureReady(player1, new BearCub());
+        Permanent pole = addPoleReady(player1);
+        pole.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        pole.setAttachedTo(other.getId());
+        harness.passBothPriorities();
+
+        assertThat(pole.getCounterCount(CounterType.BAIT)).isEqualTo(1);
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(other.isTapped()).isFalse();
+    }
+
+    @Test
+    void baitAddedAfterUntapCanBeConsumedOnResolution() {
+        Permanent creature = addCreatureReady(player1, new BearCub());
+        Permanent pole = addPoleReady(player1);
+        pole.setAttachedTo(creature.getId());
+        creature.tap();
+
+        advanceToUpkeep(player1);
+        pole.setCounterCount(CounterType.BAIT, 1);
+        harness.passBothPriorities();
+
+        assertThat(pole.getCounterCount(CounterType.BAIT)).isZero();
+        assertThat(countPermanents(player1, "Fish")).isEqualTo(1);
+    }
+
+    @Test
+    void untappingOnlyFishingPoleDoesNotCreateFish() {
+        Permanent creature = addCreatureReady(player1, new BearCub());
+        Permanent pole = addPoleReady(player1);
+        pole.setAttachedTo(creature.getId());
+        pole.setCounterCount(CounterType.BAIT, 1);
+        pole.tap();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(pole.isTapped()).isFalse();
+        assertThat(pole.getCounterCount(CounterType.BAIT)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Fish")).isZero();
+    }
+
+    private Permanent addPoleReady(Player player) {
+        return harness.addToBattlefieldAndReturn(player, new FishingPole());
     }
 
 }

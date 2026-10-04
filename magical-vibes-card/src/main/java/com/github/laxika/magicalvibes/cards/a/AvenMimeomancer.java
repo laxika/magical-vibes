@@ -18,18 +18,14 @@ import java.util.Set;
 public class AvenMimeomancer extends Card {
 
     public AvenMimeomancer() {
-        // "that creature has base power and toughness 3/1 and has flying for as long as it has a
-        // feather counter on it" — a source-independent continuous rule keyed off feather counters,
-        // installed on entry so it persists even after this creature leaves the battlefield.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                new GrantBaseStatsToCounterBearersEffect(CounterType.FEATHER, 3, 1, Set.of(Keyword.FLYING)));
-
         // At the beginning of your upkeep, you may put a feather counter on target creature.
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature."
         )).addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
-                new PutCounterOnTargetPermanentEffect(CounterType.FEATHER),
+                com.github.laxika.magicalvibes.model.effect.SequenceEffect.of(
+                        new PutCounterOnTargetPermanentEffect(CounterType.FEATHER),
+                        new GrantBaseStatsToCounterBearersEffect(CounterType.FEATHER, 3, 1, Set.of(Keyword.FLYING))),
                 "Put a feather counter on target creature?"
         ));
     }

@@ -110,7 +110,7 @@ class ClaimOfErebosTest extends BaseCardTest {
     void tappedCreatureCannotActivateGrantedAbility() {
         Permanent creature = addReadyCreature();
         addAttachedClaim(creature);
-        creature.setTapped(true);
+        creature.tap();
         harness.addMana(player1, ManaColor.BLACK, 2);
         readyMainPhase();
 

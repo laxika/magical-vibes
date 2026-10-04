@@ -150,7 +150,7 @@ class CreepyCrawlerTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.setLibrary(player1, List.of(drawnCard));
         Permanent horror = harness.enterBattlefieldAndReturn(player2, new Frightcrawler());
-        horror.setTapped(true);
+        horror.tap();
         Permanent crawler = addCreatureReady(player1, new CreepyCrawler());
         crawler.setAttacking(true);
 

@@ -94,4 +94,16 @@ class ForcedMarchTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
+
+    @Test
+    @DisplayName("Destroys matching creatures with shroud because it does not target")
+    void destroysMatchingCreaturesWithShroud() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.getGrantedKeywords().add(Keyword.SHROUD);
+
+        castForcedMarch(2);
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
 }

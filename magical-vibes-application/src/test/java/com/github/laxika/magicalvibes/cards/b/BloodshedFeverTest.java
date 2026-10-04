@@ -73,7 +73,7 @@ class BloodshedFeverTest extends BaseCardTest {
     @DisplayName("Tapped enchanted creature is not forced to attack")
     void tappedCreatureIsNotForcedToAttack() {
         Permanent creature = addCreatureReady(player1, new SickleRipper());
-        creature.setTapped(true);
+        creature.tap();
         Permanent fever = harness.addToBattlefieldAndReturn(player1, new BloodshedFever());
         fever.setAttachedTo(creature.getId());
 

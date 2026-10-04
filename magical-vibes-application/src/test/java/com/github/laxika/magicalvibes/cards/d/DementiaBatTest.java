@@ -155,7 +155,7 @@ class DementiaBatTest extends BaseCardTest {
     @DisplayName("A tapped, newly entered Bat can activate during the opponent's turn")
     void canActivateTappedBatDuringOpponentsTurn() {
         var bat = harness.addToBattlefieldAndReturn(player1, new DementiaBat());
-        bat.setTapped(true);
+        bat.tap();
         bat.setSummoningSick(true);
         harness.forceActivePlayer(player2);
         harness.setHand(player2, List.of(new Forest()));

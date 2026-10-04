@@ -56,7 +56,7 @@ class CliffsideLookoutTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Lookout can activate repeatedly with cumulative boosts")
     void tappedSummoningSickLookoutCanActivateRepeatedly() {
         Permanent lookout = harness.addToBattlefieldAndReturn(player1, new CliffsideLookout());
-        lookout.setTapped(true);
+        lookout.tap();
         harness.addMana(player1, ManaColor.WHITE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 

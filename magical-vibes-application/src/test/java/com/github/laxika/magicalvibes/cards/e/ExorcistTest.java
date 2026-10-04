@@ -60,6 +60,76 @@ class ExorcistTest extends BaseCardTest {
         assertThat(exorcist.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Can destroy its controller's black creature")
+    void destroysOwnBlackCreature() {
+        addCreatureReady(player1, new Exorcist());
+        Permanent target = addCreatureReady(player1, new MarshGoblins());
+        addWhiteAbilityMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Marsh Goblins");
+        harness.assertInGraveyard(player1, "Marsh Goblins");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent exorcist = harness.addToBattlefieldAndReturn(player1, new Exorcist());
+        Permanent target = addCreatureReady(player2, new MarshGoblins());
+        addWhiteAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(exorcist.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Marsh Goblins");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent exorcist = addCreatureReady(player1, new Exorcist());
+        exorcist.setTapped(true);
+        Permanent target = addCreatureReady(player2, new MarshGoblins());
+        addWhiteAbilityMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        harness.assertOnBattlefield(player2, "Marsh Goblins");
+    }
+
+    @Test
+    @DisplayName("Cannot pay the activation cost with only colorless mana")
+    void requiresWhiteMana() {
+        Permanent exorcist = addCreatureReady(player1, new Exorcist());
+        Permanent target = addCreatureReady(player2, new MarshGoblins());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(exorcist.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Marsh Goblins");
+    }
+
+    @Test
+    @DisplayName("Cannot activate with only the white portion of the cost")
+    void requiresGenericManaToo() {
+        Permanent exorcist = addCreatureReady(player1, new Exorcist());
+        Permanent target = addCreatureReady(player2, new MarshGoblins());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(exorcist.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Marsh Goblins");
+    }
+
     private void addWhiteAbilityMana() {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

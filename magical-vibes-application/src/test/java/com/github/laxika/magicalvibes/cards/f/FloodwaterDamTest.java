@@ -107,4 +107,67 @@ class FloodwaterDamTest extends BaseCardTest {
                 player1, 0, 0, 2, List.of(land.getId(), land.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Lands controlled by either player can be targeted, including tapped lands")
+    void targetsLandsRegardlessOfControllerOrTappedState() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new FloodwaterDam());
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new SchoolOfTheUnseen());
+        Permanent opposingLand = harness.addToBattlefieldAndReturn(player2, new SchoolOfTheUnseen());
+        opposingLand.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, 2, List.of(ownLand.getId(), opposingLand.getId()));
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(ownLand.isTapped()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(ownLand.isTapped()).isTrue();
+        assertThat(opposingLand.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Floodwater Dam cannot pay its tap cost")
+    void rejectsActivationWhenSourceIsTapped() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new FloodwaterDam());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new SchoolOfTheUnseen());
+        source.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, 1, List.of(land.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(land.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The remaining legal land is tapped if another target leaves before resolution")
+    void resolvesForRemainingLegalTarget() {
+        harness.addToBattlefield(player1, new FloodwaterDam());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new SchoolOfTheUnseen());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new SchoolOfTheUnseen());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, 2, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isFalse();
+        assertThat(second.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability still resolves after Floodwater Dam leaves the battlefield")
+    void resolvesIndependentlyOfSource() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new FloodwaterDam());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new SchoolOfTheUnseen());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, 1, List.of(land.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+    }
 }

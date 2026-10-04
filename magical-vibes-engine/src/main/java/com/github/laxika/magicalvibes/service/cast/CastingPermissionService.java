@@ -1038,6 +1038,12 @@ public class CastingPermissionService {
         return false;
     }
 
+    private boolean cardHasFlash(GameData gameData, Card card) {
+        return (card.getKeywords().contains(Keyword.FLASH)
+                || gameData.perpetualKeywords.getOrDefault(card.getId(), Set.of()).contains(Keyword.FLASH)
+                || gameData.perpetualCardKeywords.getOrDefault(card.getId(), Set.of()).contains(Keyword.FLASH))
+                && !gameData.perpetualCardRemovedKeywords.getOrDefault(card.getId(), Set.of()).contains(Keyword.FLASH);
+    }
     public boolean canCastWithTiming(GameData gameData, UUID playerId, Card card,
                                      boolean isActivePlayer, boolean isMainPhase, boolean stackEmpty) {
         return canCastWithTiming(gameData, playerId, card, isActivePlayer, isMainPhase, stackEmpty, false, 0);
@@ -1067,7 +1073,7 @@ public class CastingPermissionService {
         }
 
         boolean isInstantSpeed = card.hasType(CardType.INSTANT)
-                || card.getKeywords().contains(Keyword.FLASH)
+                || cardHasFlash(gameData, card)
                 || hasFlashGrantForCard(gameData, playerId, card)
                 || (fromLibraryTop && hasTopLibraryFlashGrant(gameData, playerId, card))
                 || grantsItselfFlashTiming(card)
@@ -1147,7 +1153,7 @@ public class CastingPermissionService {
         if (!hasAvailableFlashAlternateCast(gameData, playerId, card)
                 && !hasSneakTiming(gameData, playerId, card)) return false;
         return !card.hasType(CardType.INSTANT)
-                && !card.getKeywords().contains(Keyword.FLASH)
+                && !cardHasFlash(gameData, card)
                 && !hasFlashGrantForCard(gameData, playerId, card)
                 && !grantsItselfFlashTiming(card)
                 && !hasMetFlashCastCondition(gameData, playerId, card);
@@ -1163,7 +1169,7 @@ public class CastingPermissionService {
             return false;
         }
         return !card.hasType(CardType.INSTANT)
-                && !card.getKeywords().contains(Keyword.FLASH)
+                && !cardHasFlash(gameData, card)
                 && !hasFlashGrantForCard(gameData, playerId, card)
                 && !grantsItselfFlashTiming(card)
                 && !hasAvailableFlashAlternateCast(gameData, playerId, card);
@@ -1174,7 +1180,7 @@ public class CastingPermissionService {
             return false;
         }
         return !card.hasType(CardType.INSTANT)
-                && !card.getKeywords().contains(Keyword.FLASH)
+                && !cardHasFlash(gameData, card)
                 && !hasFlashGrantForCard(gameData, playerId, card)
                 && !hasMetFlashCastCondition(gameData, playerId, card)
                 && !hasAvailableFlashAlternateCast(gameData, playerId, card);

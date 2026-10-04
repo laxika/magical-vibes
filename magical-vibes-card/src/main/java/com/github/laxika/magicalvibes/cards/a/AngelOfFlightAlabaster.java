@@ -14,6 +14,6 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class AngelOfFlightAlabaster extends Card {
 
     public AngelOfFlightAlabaster() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.HAND).filter(new CardSubtypePredicate(CardSubtype.SPIRIT)).build());
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.HAND).filter(new CardSubtypePredicate(CardSubtype.SPIRIT)).targetGraveyard(true).mandatory(true).build());
     }
 }

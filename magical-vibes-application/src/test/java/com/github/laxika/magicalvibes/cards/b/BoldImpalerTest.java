@@ -63,7 +63,7 @@ class BoldImpalerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent impaler = harness.addToBattlefieldAndReturn(player1, new BoldImpaler());
         impaler.setSummoningSick(true);
-        impaler.setTapped(true);
+        impaler.tap();
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 

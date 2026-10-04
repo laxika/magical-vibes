@@ -73,7 +73,7 @@ class FaultRidersTest extends BaseCardTest {
 
         harness.addToBattlefield(player1, new RhysticCave());
         harness.forceStep(TurnStep.END_STEP);
-        harness.passUntil(player2, TurnStep.UNTAP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -90,5 +90,100 @@ class FaultRidersTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Land is sacrificed as a cost before the boost resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent riders = harness.addToBattlefieldAndReturn(player1, new FaultRiders());
+        harness.addToBattlefield(player1, new RhysticCave());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Rhystic Cave");
+        harness.assertNotOnBattlefield(player1, "Rhystic Cave");
+        assertThat(riders.getEffectivePower()).isEqualTo(2);
+        assertThat(riders.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.addToBattlefield(player1, new RhysticCave());
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Rhystic Cave");
+
+        harness.passBothPriorities();
+
+        assertThat(riders.getEffectivePower()).isEqualTo(4);
+        assertThat(riders.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's land cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsLand() {
+        harness.addToBattlefield(player1, new FaultRiders());
+        harness.addToBattlefield(player2, new RhysticCave());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Rhystic Cave");
+        harness.assertNotInGraveyard(player2, "Rhystic Cave");
+    }
+
+    @Test
+    @DisplayName("A failed attempt does not consume the activation for the turn")
+    void failedAttemptDoesNotConsumeActivation() {
+        Permanent riders = harness.addToBattlefieldAndReturn(player1, new FaultRiders());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addToBattlefield(player1, new RhysticCave());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(riders.getEffectivePower()).isEqualTo(4);
+        assertThat(riders.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        harness.assertInGraveyard(player1, "Rhystic Cave");
+    }
+
+    @Test
+    @DisplayName("Tapped Fault Riders can sacrifice a tapped land")
+    void tappedPermanentsDoNotPreventActivation() {
+        Permanent riders = harness.addToBattlefieldAndReturn(player1, new FaultRiders());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+        riders.setTapped(true);
+        land.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(riders.isTapped()).isTrue();
+        assertThat(riders.getEffectivePower()).isEqualTo(4);
+        assertThat(riders.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        harness.assertInGraveyard(player1, "Rhystic Cave");
+    }
+
+    @Test
+    @DisplayName("Each Fault Riders has an independent activation limit")
+    void separateCopiesCanEachActivate() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new FaultRiders());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new FaultRiders());
+        harness.addToBattlefield(player1, new RhysticCave());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(second.getEffectivePower()).isEqualTo(2);
+        assertThat(second.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.addToBattlefield(player1, new RhysticCave());
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(4);
+        assertThat(second.getEffectivePower()).isEqualTo(4);
+        assertThat(first.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(second.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
     }
 }

@@ -54,7 +54,7 @@ class CrosissAttendantTest extends BaseCardTest {
     @Test
     @DisplayName("Crosis's Attendant can activate while tapped")
     void canActivateWhileTapped() {
-        harness.addToBattlefieldAndReturn(player1, new CrosissAttendant()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new CrosissAttendant()).tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);

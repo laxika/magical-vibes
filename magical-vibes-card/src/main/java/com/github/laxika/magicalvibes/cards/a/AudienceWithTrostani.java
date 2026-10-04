@@ -22,7 +22,7 @@ public class AudienceWithTrostani extends Card {
 
     public AudienceWithTrostani() {
         addEffect(EffectSlot.SPELL,
-                new CreateTokenEffect("Plant", 0, 1, CardColor.GREEN, List.of(CardSubtype.PLANT), Set.of(), Set.of()));
+                new CreateTokenEffect("Plant Token", 0, 1, CardColor.GREEN, List.of(CardSubtype.PLANT), Set.of(), Set.of()));
         addEffect(EffectSlot.SPELL, new DrawCardEffect(new DistinctPermanentNamesCount(
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

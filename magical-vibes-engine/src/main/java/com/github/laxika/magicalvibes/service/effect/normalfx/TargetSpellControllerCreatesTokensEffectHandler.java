@@ -30,6 +30,9 @@ public class TargetSpellControllerCreatesTokensEffectHandler implements NormalEf
         var tokenEffect = ((TargetSpellControllerCreatesTokensEffect) effect).tokenEffect();
         UUID targetSpellControllerId = findTargetSpellControllerId(gameData, entry.getTargetId());
         if (targetSpellControllerId == null) {
+            targetSpellControllerId = entry.getCounteredSpellControllerId();
+        }
+        if (targetSpellControllerId == null) {
             return;
         }
 

@@ -111,7 +111,7 @@ class ComponentPouchTest extends BaseCardTest {
     @Test
     void tappedPouchCannotActivateTheRollAbility() {
         Permanent pouch = harness.addToBattlefieldAndReturn(player1, new ComponentPouch());
-        pouch.setTapped(true);
+        pouch.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);

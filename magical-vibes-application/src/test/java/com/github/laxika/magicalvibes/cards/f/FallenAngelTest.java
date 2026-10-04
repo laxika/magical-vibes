@@ -184,4 +184,49 @@ class FallenAngelTest extends BaseCardTest {
         assertThat(angel.getPowerModifier()).isEqualTo(0);
         assertThat(angel.getToughnessModifier()).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("Tapped, summoning-sick creatures can activate and pay the sacrifice cost")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new FallenAngel());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        angel.setSummoningSick(true);
+        bears.setSummoningSick(true);
+        angel.tap();
+        bears.tap();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(angel.getPowerModifier()).isZero();
+        assertThat(angel.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(angel.isTapped()).isTrue();
+        assertThat(angel.getPowerModifier()).isEqualTo(2);
+        assertThat(angel.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Ability can be activated during the opponent's turn")
+    void canActivateDuringOpponentsTurn() {
+        Permanent angel = addCreatureReady(player1, new FallenAngel());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(angel.getPowerModifier()).isEqualTo(2);
+        assertThat(angel.getToughnessModifier()).isEqualTo(1);
+    }
 }

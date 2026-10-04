@@ -110,7 +110,7 @@ class DaghatarTheAdamantTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Daghatar can use either color for each hybrid symbol")
     void paysHybridManaAndMovesExactlyOneCounter(int black, int green) {
         Permanent daghatar = harness.enterBattlefieldAndReturn(player1, new DaghatarTheAdamant());
-        daghatar.setTapped(true);
+        daghatar.tap();
         daghatar.setSummoningSick(true);
         Permanent source = harness.addToBattlefieldAndReturn(player2, new ArashinCleric());
         source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);

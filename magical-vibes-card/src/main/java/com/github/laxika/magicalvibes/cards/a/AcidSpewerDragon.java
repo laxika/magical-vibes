@@ -20,6 +20,9 @@ public class AcidSpewerDragon extends Card {
     public AcidSpewerDragon() {
         addMorph("{5}{B}{B}");
         addEffect(EffectSlot.ON_TURNED_FACE_UP,
+                new com.github.laxika.magicalvibes.model.effect.PutCountersOnTurnFaceUpEffect(
+                        CounterType.PLUS_ONE_PLUS_ONE, 1, false));
+        addEffect(EffectSlot.ON_TURNED_FACE_UP,
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         1,

@@ -145,9 +145,9 @@ class CrownOfEmpiresTest extends BaseCardTest {
         Permanent scepter = addCreatureReady(player1, new ScepterOfEmpires());
         Permanent throne = addCreatureReady(player1, new ThroneOfEmpires());
         Permanent target = addCreatureReady(player2, new RuneclawBear());
-        target.setTapped(true);
-        scepter.setTapped(true);
-        throne.setTapped(true);
+        target.tap();
+        scepter.tap();
+        throne.tap();
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -186,7 +186,7 @@ class CrownOfEmpiresTest extends BaseCardTest {
     @Test
     void cannotActivateTappedCrown() {
         Permanent crown = addCreatureReady(player1, new CrownOfEmpires());
-        crown.setTapped(true);
+        crown.tap();
         Permanent target = addCreatureReady(player2, new RuneclawBear());
         harness.addMana(player1, ManaColor.RED, 3);
 

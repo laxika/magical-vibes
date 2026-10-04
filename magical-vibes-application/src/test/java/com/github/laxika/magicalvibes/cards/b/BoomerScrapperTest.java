@@ -83,7 +83,7 @@ class BoomerScrapperTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(scrapper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(topCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(topCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThatThrownBy(() -> harness.castFromExile(player1, topCard.getId()))
                 .isInstanceOf(IllegalStateException.class);

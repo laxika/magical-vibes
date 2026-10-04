@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
 import com.github.laxika.magicalvibes.cards.w.WallOfGranite;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -28,8 +29,8 @@ class FireTempestTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 14);
     }
 
     @Test
@@ -61,7 +62,43 @@ class FireTempestTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(0);
+        harness.assertLife(player1, 0);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Surviving creatures retain damage for another Fire Tempest in the same turn")
+    void survivingCreaturesRetainDamage() {
+        harness.addToBattlefield(player1, new WallOfGranite());
+        harness.addToBattlefield(player2, new WallOfGranite());
+
+        castFireTempest();
+
+        harness.assertOnBattlefield(player1, "Wall of Granite");
+        harness.assertOnBattlefield(player2, "Wall of Granite");
+
+        castFireTempest();
+
+        harness.assertNotOnBattlefield(player1, "Wall of Granite");
+        harness.assertNotOnBattlefield(player2, "Wall of Granite");
+        harness.assertInGraveyard(player1, "Wall of Granite");
+        harness.assertInGraveyard(player2, "Wall of Granite");
+        harness.assertLife(player1, 8);
+        harness.assertLife(player2, 8);
+    }
+
+    @Test
+    @DisplayName("Fire Tempest draws the game when both players take lethal damage")
+    void drawsWhenBothPlayersTakeLethalDamage() {
+        harness.setLife(player1, 6);
+        harness.setLife(player2, 6);
+
+        castFireTempest();
+
+        harness.assertLife(player1, 0);
+        harness.assertLife(player2, 0);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.DRAW);
+        assertThat(gd.winnerPlayerId).isNull();
     }
 }

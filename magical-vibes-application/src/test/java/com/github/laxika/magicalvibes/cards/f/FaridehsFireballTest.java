@@ -14,6 +14,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -54,14 +56,62 @@ class FaridehsFireballTest extends BaseCardTest {
     @DisplayName("Deals 5 damage to a planeswalker, then 2 damage to each opponent on a high roll")
     void highRollDealsDamageToEachOpponent() {
         setRoll(10);
-        Permanent target = new Permanent(new ChandraNalaar());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         target.setCounterCount(CounterType.LOYALTY, 10);
-        gd.playerBattlefields.get(player2.getId()).add(target);
         castAt(target);
 
         assertThat(target.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("A roll of 1 damages each player even when the target planeswalker dies")
+    void lowestRollStillDamagesPlayersAfterLethalPlaneswalkerDamage() {
+        setRoll(1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        target.setCounterCount(CounterType.LOYALTY, 5);
+
+        castAt(target);
+
+        harness.assertNotOnBattlefield(player2, "Chandra Nalaar");
+        harness.assertInGraveyard(player2, "Chandra Nalaar");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A roll of 20 damages only opponents when targeting your own creature")
+    void highestRollCanTargetOwnCreature() {
+        setRoll(20);
+        Permanent target = addCreatureReady(player1, new DarksteelColossus());
+
+        castAt(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(5);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 20})
+    @DisplayName("No player damage is dealt when the only target has left the battlefield")
+    void illegalTargetStopsTheEntireSpell(int roll) {
+        setRoll(roll);
+        Permanent target = addCreatureReady(player2, new DarksteelColossus());
+        harness.setHand(player1, List.of(new FaridehsFireball()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerHands.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Farideh's Fireball");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void setRoll(int result) {
@@ -73,8 +123,7 @@ class FaridehsFireballTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private static final class FixedD20RollService extends D20RollService {

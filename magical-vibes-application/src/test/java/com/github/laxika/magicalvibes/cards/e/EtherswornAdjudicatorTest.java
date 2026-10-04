@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +16,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EtherswornAdjudicator.class, AngelicChorus.class, FountainOfYouth.class, GrizzlyBears.class})
 class EtherswornAdjudicatorTest extends BaseCardTest {
 
-    // ===== {1}{W}{B}, {T}: Destroy target creature or enchantment. =====
 
     @Test
     @DisplayName("Destroy ability destroys target creature")
@@ -61,7 +62,6 @@ class EtherswornAdjudicatorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== {2}{U}: Untap this creature. =====
 
     @Test
     @DisplayName("Untap ability untaps Ethersworn Adjudicator")
@@ -77,12 +77,62 @@ class EtherswornAdjudicatorTest extends BaseCardTest {
         assertThat(adjudicator.isTapped()).isFalse();
     }
 
-    // ===== Helpers =====
+    @Test
+    void destroyAbilityPaysTapCostImmediately() {
+        Permanent adjudicator = addAdjudicatorReady(player1);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        addDestroyMana(player1);
+
+        harness.activateAbility(player1, 0, 0, null, harness.getPermanentId(player2, "Grizzly Bears"));
+
+        assertThat(adjudicator.isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void destroyAbilityCannotBeActivatedWhileSummoningSick() {
+        harness.addToBattlefield(player1, new EtherswornAdjudicator());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        addDestroyMana(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null,
+                harness.getPermanentId(player2, "Grizzly Bears")))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("summoning sickness");
+    }
+
+    @Test
+    void destroyAbilityCanTargetItself() {
+        Permanent adjudicator = addAdjudicatorReady(player1);
+        addDestroyMana(player1);
+
+        harness.activateAbility(player1, 0, 0, null, adjudicator.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ethersworn Adjudicator");
+        harness.assertInGraveyard(player1, "Ethersworn Adjudicator");
+    }
+
+    @Test
+    void untapAbilityWorksWhileSummoningSickAndOnlyUntapsItsSource() {
+        Permanent adjudicator = harness.addToBattlefieldAndReturn(player1, new EtherswornAdjudicator());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new EtherswornAdjudicator());
+        adjudicator.tap();
+        other.tap();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(adjudicator.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(adjudicator.isTapped()).isFalse();
+        assertThat(other.isTapped()).isTrue();
+    }
 
     private Permanent addAdjudicatorReady(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new EtherswornAdjudicator());
-        perm.setSummoningSick(false);
-        return perm;
+        return addCreatureReady(player, new EtherswornAdjudicator());
     }
 
     private void addDestroyMana(Player player) {

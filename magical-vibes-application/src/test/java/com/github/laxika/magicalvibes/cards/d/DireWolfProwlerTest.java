@@ -106,7 +106,7 @@ class DireWolfProwlerTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent prowler = harness.addToBattlefieldAndReturn(player1, new DireWolfProwler());
         prowler.setSummoningSick(true);
-        prowler.setTapped(true);
+        prowler.tap();
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, null);

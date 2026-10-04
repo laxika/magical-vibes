@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.l.LanternKami;
+import com.github.laxika.magicalvibes.cards.h.HideousLaughter;
 import com.github.laxika.magicalvibes.cards.r.RendSpirit;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,8 +15,54 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FloatingDreamZubera.class, RendSpirit.class, LanternKami.class})
+@CardUsed({FloatingDreamZubera.class, RendSpirit.class, LanternKami.class, HideousLaughter.class})
 class FloatingDreamZuberaTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Each simultaneous death trigger counts every Zubera that died")
+    void countsSimultaneousDeaths() {
+        harness.addToBattlefield(player2, new FloatingDreamZubera());
+        harness.addToBattlefield(player2, new FloatingDreamZubera());
+        harness.addToBattlefield(player1, new FloatingDreamZubera());
+        harness.addToBattlefield(player1, new LanternKami());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new HideousLaughter()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int startingHand = gd.playerHands.get(player2.getId()).size();
+
+        harness.castAndResolveInstant(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(startingHand + 6);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        harness.assertNotOnBattlefield(player1, "Floating-Dream Zubera");
+        harness.assertNotOnBattlefield(player2, "Floating-Dream Zubera");
+    }
+
+    @Test
+    @DisplayName("Counts deaths occurring after the trigger was put on the stack")
+    void countsDeathsBeforeResolution() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new FloatingDreamZubera());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new FloatingDreamZubera());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new RendSpirit(), new RendSpirit()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        int startingHand = gd.playerHands.get(player2.getId()).size();
+
+        harness.castAndResolveInstant(player1, 0, first.getId());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(startingHand);
+        harness.castAndResolveInstant(player1, 0, second.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(startingHand + 4);
+    }
 
     @Test
     @DisplayName("Draws a card for each Zubera that died this turn")

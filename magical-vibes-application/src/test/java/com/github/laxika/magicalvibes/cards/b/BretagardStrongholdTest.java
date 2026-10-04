@@ -189,7 +189,7 @@ class BretagardStrongholdTest extends BaseCardTest {
     @DisplayName("A tapped Stronghold cannot activate its sacrifice ability")
     void tappedSourceCannotActivate() {
         Permanent stronghold = addReady(player1, new BretagardStronghold());
-        stronghold.setTapped(true);
+        stronghold.tap();
         Permanent creature = addReady(player1, new GrizzledOutrider());
         addManaForAbility();
 

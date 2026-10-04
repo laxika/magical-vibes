@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.ObeliskOfBant;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +21,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({ElspethKnightErrant.class, GrizzlyBears.class, Plains.class, Ornithopter.class,
+        GloriousAnthem.class, ObeliskOfBant.class})
 class ElspethKnightErrantTest extends BaseCardTest {
-
-    // ===== +1: Create a 1/1 white Soldier token =====
 
     @Test
     @DisplayName("First +1 creates a 1/1 white Soldier token")
@@ -38,8 +40,6 @@ class ElspethKnightErrantTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(1);
         assertThat(soldier.getCard().getColor()).isEqualTo(CardColor.WHITE);
     }
-
-    // ===== +1: Target creature gets +3/+3 and gains flying =====
 
     @Test
     @DisplayName("Second +1 gives target creature +3/+3 and flying")
@@ -91,8 +91,6 @@ class ElspethKnightErrantTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, plainsId))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== -8: Indestructible emblem =====
 
     @Test
     @DisplayName("-8 emblem makes controller's artifacts, creatures, enchantments and lands indestructible")
@@ -153,14 +151,68 @@ class ElspethKnightErrantTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Emblem protects a noncreature artifact after Elspeth leaves and the turn ends")
+    void emblemPersistsAfterSourceLeavesAndTurnEnds() {
+        Permanent elspeth = addReadyElspeth(player1);
+        elspeth.setCounterCount(CounterType.LOYALTY, 8);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ObeliskOfBant());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(elspeth);
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.INDESTRUCTIBLE)).isTrue();
+        creature.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A surviving Elspeth does not gain indestructible from her emblem")
+    void emblemDoesNotProtectSurvivingPlaneswalker() {
+        Permanent elspeth = addReadyElspeth(player1);
+        elspeth.setCounterCount(CounterType.LOYALTY, 9);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(elspeth);
+        assertThat(elspeth.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, elspeth, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Pump ability does not affect another creature when its target dies before resolution")
+    void pumpDoesNotRetargetWhenTargetDies() {
+        Permanent elspeth = addReadyElspeth(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        target.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target).contains(other);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
+        assertThat(elspeth.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
+    }
 
     private Permanent addReadyElspeth(Player player) {
-        ElspethKnightErrant card = new ElspethKnightErrant();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new ElspethKnightErrant());
         perm.setCounterCount(CounterType.LOYALTY, 4);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;

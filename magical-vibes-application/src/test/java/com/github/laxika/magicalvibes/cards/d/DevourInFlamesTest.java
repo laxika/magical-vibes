@@ -82,7 +82,7 @@ class DevourInFlamesTest extends BaseCardTest {
     @DisplayName("A tapped land is returned during casting, before damage resolves")
     void returnsTappedLandBeforeResolution() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Mountain());
-        land.setTapped(true);
+        land.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new DevourInFlames()));
         addMana();

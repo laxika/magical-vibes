@@ -142,7 +142,7 @@ class DeathbringerThoctarTest extends BaseCardTest {
     void tappedSummoningSickThoctarCanActivate() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new DeathbringerThoctar());
         source.setSummoningSick(true);
-        source.setTapped(true);
+        source.tap();
         source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.setLife(player2, 20);
         harness.forceActivePlayer(player1);

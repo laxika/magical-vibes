@@ -215,6 +215,58 @@ class ErtaisMeddlingTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Ertai's Meddling");
     }
 
+    @Test
+    @DisplayName("The delay trigger is controlled by the player who resolved Ertai's Meddling")
+    void meddlingControllerControlsDelayTrigger() {
+        castGiantAndMeddle(1);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getControllerId()).isEqualTo(player2.getId()));
+    }
+
+    @Test
+    @DisplayName("Ertai's Meddling is the source of the delay trigger")
+    void meddlingIsDelayTriggerSource() {
+        castGiantAndMeddle(1);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getCard()).isInstanceOf(ErtaisMeddling.class));
+    }
+
+    @Test
+    @DisplayName("No delay trigger is created after the delayed card leaves exile")
+    void noTriggerAfterCardLeavesExile() {
+        LowlandGiant giant = castGiantAndMeddle(1);
+        gd.removeFromExile(giant.getId());
+        harness.setHand(player1, List.of(giant));
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Lowland Giant");
+    }
+
+    @Test
+    @DisplayName("Leaving and reentering exile does not restore the original delay effect")
+    void reexiledCardIsNotReturnedByOldDelayTrigger() {
+        LowlandGiant giant = castGiantAndMeddle(1);
+        gd.removeFromExile(giant.getId());
+        harness.setHand(player1, List.of(giant));
+        harness.setHand(player1, List.of());
+        harness.setExile(player1, List.of(giant));
+
+        triggerUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(giant.getId()));
+        harness.assertNotOnBattlefield(player1, "Lowland Giant");
+    }
+
     /**
      * player1 casts Lowland Giant, player2 responds with Ertai's Meddling for the given X and both
      * players let the Meddling resolve.

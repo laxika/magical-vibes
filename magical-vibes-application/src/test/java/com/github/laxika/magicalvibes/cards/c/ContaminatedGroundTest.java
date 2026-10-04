@@ -129,7 +129,7 @@ class ContaminatedGroundTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Contaminated Ground");
         harness.assertLife(player1, 18);
-        land.setTapped(false);
+        land.untap();
         harness.tapPermanent(player1, 0);
         resolveAllTriggers();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
@@ -163,7 +163,7 @@ class ContaminatedGroundTest extends BaseCardTest {
 
         harness.tapPermanent(player1, 0);
         resolveAllTriggers();
-        land.setTapped(false);
+        land.untap();
         harness.tapPermanent(player1, 0);
         resolveAllTriggers();
 

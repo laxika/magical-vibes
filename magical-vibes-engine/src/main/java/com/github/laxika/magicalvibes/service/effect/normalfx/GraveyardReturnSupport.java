@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -326,7 +327,8 @@ public class GraveyardReturnSupport {
             } else {
                 returnedPermanent = putCardOntoBattlefield(gameData, destinationPlayerId, targetCard,
                         effect.grantColor(), effect.grantSubtype(), effect.enterTapped(), effect.enterAttacking(),
-                        null, effect.grantIndestructible(), losesAllAbilitiesBeforeEntering(effect));
+                        null, effect.grantIndestructible(), losesAllAbilitiesBeforeEntering(effect), 0,
+                        permanent -> permanent.setEnteredFromGraveyardOwnerId(targetOwnerId));
             }
         } else {
             moveCardToDestination(gameData, destinationPlayerId, targetCard, effect.destination(),
@@ -643,12 +645,23 @@ public class GraveyardReturnSupport {
                             && loses.duration() == EffectDuration.PERMANENT) {
                         p.setLosesAllAbilitiesPermanently(true);
                     }
+                    EffectDuration grantDuration = effect.battlefieldEffectGrantDuration() == null
+                            ? EffectDuration.PERMANENT : effect.battlefieldEffectGrantDuration();
+                    if (grantDuration == EffectDuration.PERMANENT
+                            && grantedEffect instanceof GrantKeywordEffect keywordGrant) {
+                        grantDuration = switch (keywordGrant.duration()) {
+                            case END_OF_TURN -> EffectDuration.UNTIL_END_OF_TURN;
+                            case UNTIL_END_OF_COMBAT -> EffectDuration.UNTIL_END_OF_COMBAT;
+                            case UNTIL_YOUR_NEXT_TURN -> EffectDuration.UNTIL_YOUR_NEXT_TURN;
+                            case UNTIL_YOUR_NEXT_UPKEEP -> EffectDuration.UNTIL_CONTROLLERS_NEXT_UPKEEP;
+                            case WHILE_SOURCE_ON_BATTLEFIELD -> EffectDuration.WHILE_SOURCE_ON_BATTLEFIELD;
+                            case WHILE_SOURCE_REMAINS -> EffectDuration.WHILE_SOURCE_REMAINS;
+                            case INDEFINITE -> EffectDuration.PERMANENT;
+                        };
+                    }
                     gameData.addFloatingEffect(new FloatingContinuousEffect(
                             UUID.randomUUID(), sourceCardName, sourcePermanentId, controllerId,
-                            grantedEffect, p.getId(), null, null,
-                            effect.battlefieldEffectGrantDuration() == null
-                                    ? EffectDuration.PERMANENT
-                                    : effect.battlefieldEffectGrantDuration(), 0));
+                            grantedEffect, p.getId(), null, null, grantDuration, 0));
                 }
             }
             if (effect.perpetualBattlefieldEffectGrants() != null) {
@@ -1666,6 +1679,7 @@ public class GraveyardReturnSupport {
         if (enterTapped) {
             permanent.tap();
         }
+        permanent.setEnteredFromZone(Zone.GRAVEYARD);
         permanent.setEnteredFromGraveyardOwnerId(controllerId);
         beforeEntry.accept(permanent);
         if (!losesAllAbilities) {
@@ -1968,7 +1982,7 @@ public class GraveyardReturnSupport {
         initializePlaneswalkerLoyalty(permanent, card);
         permanent.setLosesAllAbilitiesPermanently(losesAllAbilities);
         if (grantHaste) {
-            permanent.getGrantedKeywords().add(Keyword.HASTE);
+            permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
         }
         if (enterTapped) {
             permanent.tap();
@@ -2884,14 +2898,16 @@ public class GraveyardReturnSupport {
                     }
                 }
             }
-            int cardsPutIntoGraveyard = 0;
-            for (UUID cardId : otherPileCardIds) {
-                Card card = allCards.stream().filter(c -> c.getId().equals(cardId)).findFirst().orElse(null);
-                if (card != null) {
-                    gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
-                    cardsPutIntoGraveyard++;
-                    gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card, " into their graveyard."));
-                }
+            List<Card> graveyardPile = otherPileCardIds.stream()
+                    .map(cardId -> allCards.stream().filter(card -> card.getId().equals(cardId))
+                            .findFirst().orElse(null))
+                    .filter(Objects::nonNull).toList();
+            List<Card> enteredGraveyard = graveyardService.addCardsFromLibraryToGraveyard(
+                    gameData, controllerId, graveyardPile);
+            int cardsPutIntoGraveyard = enteredGraveyard.size();
+            for (Card card : enteredGraveyard) {
+                gameLogService.append(gameData, GameLog.textCardText(controllerName + " puts ", card,
+                        " into their graveyard."));
             }
             if (state.disposition() == CardPileDisposition.HAND_AND_THOPTER
                     && gameData.pendingEffectResolutionEntry != null) {

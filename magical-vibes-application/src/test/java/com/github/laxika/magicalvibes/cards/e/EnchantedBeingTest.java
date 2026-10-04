@@ -75,6 +75,57 @@ class EnchantedBeingTest extends BaseCardTest {
         assertThat(being.getMarkedDamage()).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Prevents combat damage from an enchanted blocker while attacking")
+    void preventsCombatDamageFromEnchantedBlocker() {
+        Permanent being = addCreatureReady(player1, new EnchantedBeing());
+        being.setAttacking(true);
+
+        Permanent blocker = addCreatureReady(player2, new DAvenantArcher());
+        attachGiantStrength(player2, blocker);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        assertThat(being.getMarkedDamage()).isZero();
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Enchanted Being");
+    }
+
+    @Test
+    @DisplayName("Enchanting Enchanted Being does not prevent damage from an unenchanted creature")
+    void enchantingBeingDoesNotPreventDamageFromUnenchantedCreature() {
+        Permanent being = addCreatureReady(player2, new EnchantedBeing());
+        attachGiantStrength(player2, being);
+        being.setBlocking(true);
+        being.addBlockingTarget(0);
+
+        Permanent attacker = addCreatureReady(player1, new DAvenantArcher());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(being.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Stops preventing combat damage after the source loses its Aura")
+    void stopsPreventingDamageAfterSourceLosesAura() {
+        Permanent being = addCreatureReady(player2, new EnchantedBeing());
+        being.setBlocking(true);
+        being.addBlockingTarget(0);
+
+        Permanent attacker = addCreatureReady(player1, new DAvenantArcher());
+        attachGiantStrength(attacker);
+        attacker.setAttacking(true);
+        gd.playerBattlefields.get(player1.getId()).removeIf(p -> attacker.getId().equals(p.getAttachedTo()));
+
+        resolveCombat();
+
+        assertThat(being.getMarkedDamage()).isEqualTo(1);
+    }
+
     private void attachGiantStrength(Permanent creature) {
         attachGiantStrength(player1, creature);
     }

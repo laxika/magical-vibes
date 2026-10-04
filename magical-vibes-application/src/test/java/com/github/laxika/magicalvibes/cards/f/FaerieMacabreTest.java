@@ -120,4 +120,66 @@ class FaerieMacabreTest extends BaseCardTest {
         harness.assertInHand(player1, "Faerie Macabre");
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Rejects selecting the same graveyard card twice")
+    void rejectsDuplicateTarget() {
+        harness.setHand(player1, List.of(new FaerieMacabre()));
+        Card target = new Cinderbones();
+        harness.setGraveyard(player2, List.of(target));
+
+        assertThatThrownBy(() -> harness.activateHandAbilityWithGraveyardTargets(
+                player1, 0, List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Faerie Macabre");
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target itself because targets are chosen before discarding")
+    void cannotTargetItsOwnDiscardCost() {
+        FaerieMacabre source = new FaerieMacabre();
+        harness.setHand(player1, List.of(source));
+
+        assertThatThrownBy(() -> harness.activateHandAbilityWithGraveyardTargets(
+                player1, 0, List.of(source.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Faerie Macabre");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Still exiles the remaining target when another target is exiled in response")
+    void resolvesWithOneRemainingLegalTarget() {
+        FaerieMacabre source = new FaerieMacabre();
+        FaerieMacabre response = new FaerieMacabre();
+        harness.setHand(player1, List.of(source));
+        harness.setHand(player2, List.of(response));
+        Card first = new Cinderbones();
+        Card second = new Cinderbones();
+        harness.setGraveyard(player2, List.of(first, second));
+
+        harness.activateHandAbilityWithGraveyardTargets(
+                player1, 0, List.of(first.getId(), second.getId()));
+        harness.assertNotInHand(player1, "Faerie Macabre");
+        harness.assertInGraveyard(player1, "Faerie Macabre");
+        assertThat(gd.exiledCards).isEmpty();
+
+        harness.activateHandAbilityWithGraveyardTargets(player2, 0, List.of(first.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId())
+                .containsExactly(first.getId());
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getId())
+                .containsExactlyInAnyOrder(first.getId(), second.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(source);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(response);
+    }
 }
