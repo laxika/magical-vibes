@@ -17,13 +17,12 @@ class HoarShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving ability gives +1/+1 to Hoar Shade")
     void resolvingAbilityBoosts() {
-        addCreatureReady(player1, new HoarShade());
+        Permanent shade = addCreatureReady(player1, new HoarShade());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent shade = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(shade.getEffectivePower()).isEqualTo(2);
         assertThat(shade.getEffectiveToughness()).isEqualTo(3);
     }
@@ -31,7 +30,7 @@ class HoarShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate multiple times if mana allows")
     void canActivateMultipleTimes() {
-        addCreatureReady(player1, new HoarShade());
+        Permanent shade = addCreatureReady(player1, new HoarShade());
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbility(player1, 0, null, null);
@@ -41,7 +40,6 @@ class HoarShadeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent shade = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(shade.getEffectivePower()).isEqualTo(4);
         assertThat(shade.getEffectiveToughness()).isEqualTo(5);
     }
@@ -74,13 +72,12 @@ class HoarShadeTest extends BaseCardTest {
     @Test
     @DisplayName("Boost resets at end of turn cleanup")
     void boostResetsAtEndOfTurn() {
-        addCreatureReady(player1, new HoarShade());
+        Permanent shade = addCreatureReady(player1, new HoarShade());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        Permanent shade = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         assertThat(shade.getEffectivePower()).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -91,6 +88,38 @@ class HoarShadeTest extends BaseCardTest {
         assertThat(shade.getToughnessModifier()).isEqualTo(0);
         assertThat(shade.getEffectivePower()).isEqualTo(1);
         assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Stacked activations boost only their source and only on resolution")
+    void stackedActivationsBoostOnlyTheirSourceOnResolution() {
+        Permanent shade = addCreatureReady(player1, new HoarShade());
+        Permanent otherShade = addCreatureReady(player1, new HoarShade());
+        Permanent opposingShade = addCreatureReady(player2, new HoarShade());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(shade.getEffectivePower()).isEqualTo(1);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(shade.getEffectivePower()).isEqualTo(2);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(3);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(shade.getEffectivePower()).isEqualTo(3);
+        assertThat(shade.getEffectiveToughness()).isEqualTo(4);
+        assertThat(otherShade.getEffectivePower()).isEqualTo(1);
+        assertThat(otherShade.getEffectiveToughness()).isEqualTo(2);
+        assertThat(opposingShade.getEffectivePower()).isEqualTo(1);
+        assertThat(opposingShade.getEffectiveToughness()).isEqualTo(2);
     }
 
     @Test
