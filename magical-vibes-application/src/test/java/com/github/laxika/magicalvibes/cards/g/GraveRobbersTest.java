@@ -83,6 +83,70 @@ class GraveRobbersTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(artifact);
     }
 
+    @Test
+    void cannotActivateWithoutBlackMana() {
+        Permanent graveRobbers = addReadyGraveRobbers();
+        Card artifact = new TormodsCrypt();
+        harness.setGraveyard(player2, List.of(artifact));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, battlefieldIndex(player1, graveRobbers), 0, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(graveRobbers.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(artifact);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent graveRobbers = addReadyGraveRobbers();
+        graveRobbers.setTapped(true);
+        Card artifact = new TormodsCrypt();
+        harness.setGraveyard(player2, List.of(artifact));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, battlefieldIndex(player1, graveRobbers), 0, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(artifact);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        Permanent graveRobbers = harness.addToBattlefieldAndReturn(player1, new GraveRobbers());
+        graveRobbers.setSummoningSick(true);
+        Card artifact = new TormodsCrypt();
+        harness.setGraveyard(player2, List.of(artifact));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, battlefieldIndex(player1, graveRobbers), 0, List.of(artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(graveRobbers.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent graveRobbers = addReadyGraveRobbers();
+        Card artifact = new TormodsCrypt();
+        harness.setGraveyard(player2, List.of(artifact));
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbilityWithGraveyardTargets(player1, battlefieldIndex(player1, graveRobbers), 0,
+                List.of(artifact.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(graveRobbers);
+        harness.setGraveyard(player1, List.of(graveRobbers.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(artifact);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveRobbers.getCard());
+    }
     private Permanent addReadyGraveRobbers() {
         return addCreatureReady(player1, new GraveRobbers());
     }
