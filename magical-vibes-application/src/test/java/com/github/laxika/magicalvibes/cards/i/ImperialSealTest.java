@@ -94,6 +94,25 @@ class ImperialSealTest extends BaseCardTest {
         harness.castFromHand(player1, new ImperialSeal(), "{B}");
     }
 
+    @Test
+    @DisplayName("Searching a single-card library preserves the card and only the caster loses life")
+    void singleCardLibraryPreservesCardAndOnlyCasterLosesLife() {
+        Card onlyCard = new RavagesOfWar();
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.setLife(player1, 1);
+        harness.setLife(player2, 20);
+        cast();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        harness.assertLife(player1, -1);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Imperial Seal");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void setupLibrary() {
         harness.setLibrary(player1, List.of(new Island(), new Swamp(), new RavagesOfWar()));
     }
