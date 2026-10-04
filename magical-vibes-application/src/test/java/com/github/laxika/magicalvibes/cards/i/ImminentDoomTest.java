@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TormentOfHailfire;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ImminentDoom.class, Shock.class, GrizzlyBears.class, TormentOfHailfire.class})
 class ImminentDoomTest extends BaseCardTest {
 
     @Test
@@ -121,5 +124,95 @@ class ImminentDoomTest extends BaseCardTest {
 
         harness.assertLife(player1, 18); // only Shock
         assertThat(doom.getCounterCount(CounterType.DOOM)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A matching creature spell triggers before the creature resolves")
+    void matchingCreatureSpellTriggers() {
+        Permanent doom = harness.addToBattlefieldAndReturn(player1, new ImminentDoom());
+        doom.setCounterCount(CounterType.DOOM, 2);
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setLife(player2, 20);
+
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        assertThat(doom.getCounterCount(CounterType.DOOM)).isEqualTo(3);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The trigger can damage a creature and adds its counter afterward")
+    void damagesCreature() {
+        Permanent doom = harness.addToBattlefieldAndReturn(player1, new ImminentDoom());
+        doom.setCounterCount(CounterType.DOOM, 1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(bears.getMarkedDamage()).isEqualTo(1);
+        assertThat(doom.getCounterCount(CounterType.DOOM)).isEqualTo(2);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("An illegal sole target prevents the trigger from adding a doom counter")
+    void illegalTargetPreventsCounter() {
+        Permanent doom = harness.addToBattlefieldAndReturn(player1, new ImminentDoom());
+        doom.setCounterCount(CounterType.DOOM, 1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.castInstant(player1, 0, bears.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, 19);
+        assertThat(doom.getCounterCount(CounterType.DOOM)).isEqualTo(2);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+        assertThat(doom.getCounterCount(CounterType.DOOM)).isEqualTo(2);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("The chosen X contributes to the triggering spell's mana value")
+    void chosenXCountsTowardManaValue() {
+        Permanent doom = harness.addToBattlefieldAndReturn(player1, new ImminentDoom());
+        doom.setCounterCount(CounterType.DOOM, 4);
+        harness.setHand(player1, List.of(new TormentOfHailfire()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.setLife(player2, 20);
+
+        harness.castSorcery(player1, 0, 2);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(doom.getCounterCount(CounterType.DOOM)).isEqualTo(5);
+
+        harness.passBothPriorities();
+        harness.assertLife(player2, 10);
     }
 }
