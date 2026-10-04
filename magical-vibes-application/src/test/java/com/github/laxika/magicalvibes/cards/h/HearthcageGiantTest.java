@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.f.FlamekinHarbinger;
+import com.github.laxika.magicalvibes.cards.r.RebellionOfTheFlamekin;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -9,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HearthcageGiant.class, FlamekinHarbinger.class, RebellionOfTheFlamekin.class})
 class HearthcageGiantTest extends BaseCardTest {
 
     @Test
@@ -65,8 +69,7 @@ class HearthcageGiantTest extends BaseCardTest {
         assertThat(giant.getEffectivePower()).isEqualTo(8);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(giant.getEffectivePower()).isEqualTo(5);
         assertThat(giant.getEffectiveToughness()).isEqualTo(5);
@@ -94,12 +97,62 @@ class HearthcageGiantTest extends BaseCardTest {
         ).isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    void etbTokensAreRedCreaturesControlledByGiantController() {
+        harness.enterBattlefieldAndReturn(player2, new HearthcageGiant());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Elemental Shaman"))
+                .hasSize(2)
+                .allSatisfy(p -> {
+                    assertThat(p.getCard().getColor()).isEqualTo(CardColor.RED);
+                    assertThat(p.getCard().getType()).isEqualTo(CardType.CREATURE);
+                });
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void canSacrificeNoncreatureElemental() {
+        Permanent giant = addHearthcageGiantReady(player1);
+        harness.addToBattlefield(player1, new RebellionOfTheFlamekin());
+
+        harness.activateAbility(player1, 0, null, giant.getId());
+
+        harness.assertNotOnBattlefield(player1, "Rebellion of the Flamekin");
+        harness.passBothPriorities();
+        assertThat(giant.getEffectivePower()).isEqualTo(8);
+        assertThat(giant.getEffectiveToughness()).isEqualTo(6);
+    }
+
+    @Test
+    void canBoostOpponentsGiantWhileSummoningSick() {
+        harness.addToBattlefield(player1, new HearthcageGiant());
+        harness.addToBattlefield(player1, new FlamekinHarbinger());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new HearthcageGiant());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Flamekin Harbinger");
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        harness.passBothPriorities();
+        assertThat(target.getEffectivePower()).isEqualTo(8);
+        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+    }
+
+    @Test
+    void cannotSacrificeOpponentsElemental() {
+        Permanent giant = addHearthcageGiantReady(player1);
+        harness.addToBattlefield(player2, new FlamekinHarbinger());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, giant.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Flamekin Harbinger");
+    }
 
     private Permanent addHearthcageGiantReady(Player player) {
-        Permanent perm = new Permanent(new HearthcageGiant());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new HearthcageGiant());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
