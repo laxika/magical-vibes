@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.f.FullFlowering;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HateMirage.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({HateMirage.class, GrizzlyBears.class, HillGiant.class, FullFlowering.class})
 class HateMirageTest extends BaseCardTest {
 
     @Test
@@ -44,9 +45,9 @@ class HateMirageTest extends BaseCardTest {
         cast(List.of(bears.getId()));
         assertThat(tokenCopies(player1)).hasSize(1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(tokenCopies(player1)).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         assertThat(tokenCopies(player1)).isEmpty();
@@ -69,16 +70,67 @@ class HateMirageTest extends BaseCardTest {
     void canResolveWithNoTargets() {
         prepareSpell();
 
-        harness.castSorcery(player1, 0, List.of());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of());
 
         assertThat(tokenCopies(player1)).isEmpty();
     }
 
+    @Test
+    @DisplayName("Both tokens are exiled by one delayed triggered ability")
+    void exilesBothTokensTogether() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        cast(List.of(bears.getId(), giant.getId()));
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(tokenCopies(player1)).hasSize(2);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(tokenCopies(player1)).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(bears, giant);
+    }
+
+    @Test
+    @DisplayName("Populated copies do not inherit the granted haste")
+    void populatedCopyDoesNotInheritHaste() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        cast(List.of(bears.getId()));
+        Permanent originalToken = tokenCopies(player1).getFirst();
+        harness.setHand(player1, List.of(new FullFlowering()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 1);
+
+        assertThat(tokenCopies(player1)).hasSize(2);
+        Permanent populatedToken = tokenCopies(player1).stream()
+                .filter(permanent -> !permanent.getId().equals(originalToken.getId()))
+                .findFirst().orElseThrow();
+        assertThat(populatedToken.getCard().getKeywords()).doesNotContain(Keyword.HASTE);
+    }
+
+    @Test
+    @DisplayName("Populated copies survive the original token's delayed exile")
+    void populatedCopyIsNotExiled() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        cast(List.of(bears.getId()));
+        Permanent originalToken = tokenCopies(player1).getFirst();
+        harness.setHand(player1, List.of(new FullFlowering()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castAndResolveSorcery(player1, 0, 1);
+        Permanent populatedToken = tokenCopies(player1).stream()
+                .filter(permanent -> !permanent.getId().equals(originalToken.getId()))
+                .findFirst().orElseThrow();
+
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(tokenCopies(player1)).containsExactly(populatedToken);
+    }
+
     private void cast(List<UUID> targetIds) {
         prepareSpell();
-        harness.castSorcery(player1, 0, targetIds);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetIds);
     }
 
     private void prepareSpell() {
