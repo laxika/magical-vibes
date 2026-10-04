@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -9,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GryffsBoon.class, GrizzlyBears.class, HillGiant.class, Mountain.class})
 class GryffsBoonTest extends BaseCardTest {
 
     @Test
@@ -120,9 +121,7 @@ class GryffsBoonTest extends BaseCardTest {
     @Test
     @DisplayName("Can attach from graveyard to an opponent's creature")
     void canAttachToOpponentCreature() {
-        Permanent giant = new Permanent(new HillGiant());
-        giant.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(giant);
+        Permanent giant = addCreatureReady(player2, new HillGiant());
 
         harness.setGraveyard(player1, List.of(new GryffsBoon()));
         harness.forceActivePlayer(player1);
@@ -137,5 +136,62 @@ class GryffsBoonTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Gryff's Boon")
                         && p.getAttachedTo().equals(giant.getId()));
         assertThat(gqs.hasKeyword(gd, giant, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Graveyard ability cannot be activated during your upkeep")
+    void cannotActivateOutsideMainPhase() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new GryffsBoon()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Gryff's Boon");
+    }
+
+    @Test
+    @DisplayName("Graveyard ability cannot be activated while the stack is nonempty")
+    void cannotActivateWithNonemptyStack() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GryffsBoon()));
+        harness.setGraveyard(player1, List.of(new GryffsBoon()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castEnchantment(player1, 0, bears.getId());
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertInGraveyard(player1, "Gryff's Boon");
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Graveyard ability does not return Boon after it leaves the graveyard")
+    void sourceLeavingGraveyardPreventsReturn() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        GryffsBoon boon = new GryffsBoon();
+        harness.setGraveyard(player1, List.of(boon));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateGraveyardAbility(player1, 0, bears.getId());
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(boon));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Gryff's Boon");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(boon);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 }
