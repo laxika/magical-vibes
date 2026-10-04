@@ -24,6 +24,10 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "26")
+@CardRegistration(set = "MAT", collectorNumber = "76")
+@CardRegistration(set = "MAT", collectorNumber = "126")
+@CardRegistration(set = "MAT", collectorNumber = "165")
+@CardRegistration(set = "MAT", collectorNumber = "206")
 public class CalixGuidedByFate extends Card {
 
     private static final PermanentPredicate NONLEGENDARY_ENCHANTMENT = new PermanentAllOfPredicate(List.of(

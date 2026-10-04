@@ -20,6 +20,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MAT", collectorNumber = "42")
+@CardRegistration(set = "MAT", collectorNumber = "92")
+@CardRegistration(set = "MAT", collectorNumber = "142")
+@CardRegistration(set = "MAT", collectorNumber = "177")
+@CardRegistration(set = "MAT", collectorNumber = "221")
 public class PiaNalaarConsulOfRevival extends Card {
 
     public PiaNalaarConsulOfRevival() {

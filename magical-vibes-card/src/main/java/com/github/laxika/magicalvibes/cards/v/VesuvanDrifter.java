@@ -14,6 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "MAT", collectorNumber = "10")
+@CardRegistration(set = "MAT", collectorNumber = "60")
+@CardRegistration(set = "MAT", collectorNumber = "110")
+@CardRegistration(set = "MAT", collectorNumber = "156")
+@CardRegistration(set = "MAT", collectorNumber = "194")
 public class VesuvanDrifter extends Card {
 
     public VesuvanDrifter() {

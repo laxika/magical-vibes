@@ -15,6 +15,10 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "47")
+@CardRegistration(set = "MAT", collectorNumber = "97")
+@CardRegistration(set = "MAT", collectorNumber = "147")
+@CardRegistration(set = "MAT", collectorNumber = "182")
+@CardRegistration(set = "MAT", collectorNumber = "226")
 public class SigardaFontOfBlessings extends Card {
 
     public SigardaFontOfBlessings() {
