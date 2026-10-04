@@ -82,4 +82,50 @@ class HundredTalonKamiTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
+    @Test
+    @DisplayName("Soulshift returns a Spirit at the mana value four boundary")
+    void soulshiftReturnsManaValueFourSpirit() {
+        harness.addToBattlefield(player1, new HundredTalonKami());
+        Card boundary = new KamiOfOldStone();
+        harness.setGraveyard(player1, List.of(boundary));
+
+        killKami();
+
+        harness.handleMultipleCardsChosen(player1, List.of(boundary.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Kami of Old Stone");
+        harness.assertNotInGraveyard(player1, "Kami of Old Stone");
+        harness.assertInGraveyard(player1, "Hundred-Talon Kami");
+        harness.assertNotInHand(player1, "Hundred-Talon Kami");
+    }
+
+    @Test
+    @DisplayName("An opponent's Kami returns a Spirit to that opponent's hand")
+    void opponentsSoulshiftUsesOpponentsGraveyardAndHand() {
+        harness.addToBattlefield(player2, new HundredTalonKami());
+        Card eligible = new LanternKami();
+        Card otherPlayersSpirit = new KamiOfOldStone();
+        harness.setGraveyard(player2, List.of(eligible));
+        harness.setGraveyard(player1, List.of(otherPlayersSpirit));
+        harness.setHand(player1, List.of(new RendSpirit()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player2, "Hundred-Talon Kami"));
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validCardIds()).containsExactly(eligible.getId());
+
+        harness.handleMultipleCardsChosen(player2, List.of(eligible.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Lantern Kami");
+        harness.assertNotInHand(player1, "Lantern Kami");
+        harness.assertNotInGraveyard(player2, "Lantern Kami");
+        harness.assertInGraveyard(player1, "Kami of Old Stone");
+        harness.assertInGraveyard(player2, "Hundred-Talon Kami");
+    }
 }
