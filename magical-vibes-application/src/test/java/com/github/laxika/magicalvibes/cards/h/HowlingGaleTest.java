@@ -28,8 +28,8 @@ class HowlingGaleTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownFlyingCreature);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentFlyingCreature, groundCreature);
         assertThat(ownFlyingCreature.getMarkedDamage()).isEqualTo(1);
@@ -56,8 +56,8 @@ class HowlingGaleTest extends BaseCardTest {
 
         harness.castAndResolveFlashback(player1, 0, null);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
         harness.assertNotInGraveyard(player1, "Howling Gale");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Howling Gale"));
@@ -71,5 +71,47 @@ class HowlingGaleTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFlashback(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Normal casting and flashback accumulate lethal damage on flying creatures")
+    void normalCastThenFlashbackAccumulatesLethalDamage() {
+        Permanent flyer = harness.addToBattlefieldAndReturn(player2, new AvenFlock());
+        flyer.setMarkedDamage(1);
+        Permanent groundCreature = harness.addToBattlefieldAndReturn(player2, new CrashingCentaur());
+        harness.setHand(player1, List.of(new HowlingGale()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(flyer.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Aven Flock");
+        harness.assertInGraveyard(player1, "Howling Gale");
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        harness.assertNotOnBattlefield(player2, "Aven Flock");
+        harness.assertInGraveyard(player2, "Aven Flock");
+        harness.assertOnBattlefield(player2, "Crashing Centaur");
+        assertThat(groundCreature.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        harness.assertNotInGraveyard(player1, "Howling Gale");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Howling Gale"));
+    }
+
+    @Test
+    @DisplayName("Flashback cannot be paid with only colorless mana")
+    void flashbackRequiresGreenMana() {
+        harness.setGraveyard(player1, List.of(new HowlingGale()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Howling Gale");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }
