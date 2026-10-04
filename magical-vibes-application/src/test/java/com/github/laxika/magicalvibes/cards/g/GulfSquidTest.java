@@ -51,6 +51,34 @@ class GulfSquidTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Gulf Squid");
     }
 
+    @Test
+    @DisplayName("ETB waits for resolution and still taps newly added lands after the Squid leaves")
+    void tapsCurrentLandsAfterSourceLeaves() {
+        Permanent originalForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new GulfSquid()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castCreature(player1, 0, player2.getId());
+
+        assertThat(originalForest.isTapped()).isFalse();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Gulf Squid");
+        assertThat(originalForest.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        Permanent squid = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof GulfSquid)
+                .findFirst().orElseThrow();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, squid));
+        Permanent newForest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        resolveAllTriggers();
+
+        assertThat(originalForest.isTapped()).isTrue();
+        assertThat(newForest.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Gulf Squid");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castAndResolve(java.util.UUID targetPlayerId) {
         harness.setHand(player1, List.of(new GulfSquid()));
         harness.addMana(player1, ManaColor.BLUE, 4);
