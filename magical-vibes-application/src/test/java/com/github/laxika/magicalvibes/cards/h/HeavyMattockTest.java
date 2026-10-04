@@ -1,55 +1,34 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
+import com.github.laxika.magicalvibes.cards.d.DawntreaderElk;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HeavyMattock.class, HinterlandHermit.class, HinterlandScourge.class, DawntreaderElk.class})
 class HeavyMattockTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    
-
-    @Test
-    @DisplayName("Heavy Mattock has equip {2} ability at sorcery speed")
-    void hasEquipAbility() {
-        HeavyMattock card = new HeavyMattock();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}");
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().get(0).getEffects())
-                .anyMatch(e -> e instanceof EquipEffect);
-    }
-
-    // ===== Static boost: non-Human =====
 
     @Test
     @DisplayName("Equipped non-Human creature gets +1/+1")
     void equippedNonHumanGetsBaseBoost() {
-        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent creature = addCreatureReady(player1, new DawntreaderElk());
         Permanent mattock = addMattockReady(player1);
         mattock.setAttachedTo(creature.getId());
 
-        // Grizzly Bears 2/2 -> 3/3
+        // Dawntreader Elk 2/2 -> 3/3
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
     }
-
-    // ===== Static boost: Human =====
 
     @Test
     @DisplayName("Equipped Human creature gets an additional +1/+1 for +2/+2 total")
@@ -58,7 +37,7 @@ class HeavyMattockTest extends BaseCardTest {
         Permanent mattock = addMattockReady(player1);
         mattock.setAttachedTo(human.getId());
 
-        // Elite Vanguard 2/1 -> 4/3
+        // Hinterland Hermit 2/1 -> 4/3
         assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(3);
     }
@@ -68,7 +47,7 @@ class HeavyMattockTest extends BaseCardTest {
     void movingFromHumanToNonHumanRemovesAdditionalBoost() {
         Permanent mattock = addMattockReady(player1);
         Permanent human = addReadyHuman(player1);
-        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent bear = addCreatureReady(player1, new DawntreaderElk());
 
         mattock.setAttachedTo(human.getId());
         assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(4);
@@ -85,8 +64,6 @@ class HeavyMattockTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
     }
-
-    // ===== Removal / isolation =====
 
     @Test
     @DisplayName("Equipped creature loses boost when Heavy Mattock is removed")
@@ -115,8 +92,6 @@ class HeavyMattockTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(1);
     }
 
-    // ===== Equip ability resolution =====
-
     @Test
     @DisplayName("Activating equip targets the creature and resolving attaches the Mattock")
     void equipAttachesToTarget() {
@@ -137,19 +112,86 @@ class HeavyMattockTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Equip cannot be activated with only one mana")
+    void equipRequiresTwoMana() {
+        Permanent mattock = addMattockReady(player1);
+        Permanent human = addReadyHuman(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, human.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(mattock.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void equipCannotTargetOpponentsCreature() {
+        Permanent mattock = addMattockReady(player1);
+        Permanent human = addReadyHuman(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, human.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(mattock.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated during combat")
+    void equipRequiresSorceryTiming() {
+        Permanent mattock = addMattockReady(player1);
+        Permanent human = addReadyHuman(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, human.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(mattock.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bonuses still apply when attached to an opponent's Human")
+    void attachedOpponentsHumanGetsBothBonuses() {
+        Permanent mattock = addMattockReady(player1);
+        Permanent human = addReadyHuman(player2);
+        mattock.setAttachedTo(human.getId());
+
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The additional bonus stops when the equipped Human transforms into a non-Human")
+    void transformingEquippedHumanRemovesAdditionalBonus() {
+        Permanent human = addReadyHuman(player1);
+        Permanent mattock = addMattockReady(player1);
+        mattock.setAttachedTo(human.getId());
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(3);
+
+        gd.spellsCastLastTurn.clear();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UNTAP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(human.isTransformed()).isTrue();
+        assertThat(mattock.getAttachedTo()).isEqualTo(human.getId());
+        assertThat(gqs.getEffectivePower(gd, human)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, human)).isEqualTo(3);
+    }
 
     private Permanent addMattockReady(Player player) {
-        Permanent perm = new Permanent(new HeavyMattock());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new HeavyMattock());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addReadyHuman(Player player) {
-        Permanent perm = new Permanent(new EliteVanguard());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new HinterlandHermit());
     }
 }
