@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -74,11 +75,57 @@ class IAmIronManTest extends BaseCardTest {
                 .hasMessageContaining("artifact or creature");
     }
 
-    private void castAt(Permanent target) {
+    @Test
+    void countersApplyOnTopOfTheNewBasePowerAndToughness() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        castAt(target);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(6);
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        harness.assertInHand(player1, "Forest");
+    }
+
+    @Test
+    void noncreatureArtifactStopsBeingACreatureAtEndOfTurn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Spellbook());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        castAt(target);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
+        assertThat(gqs.isCreature(gd, target)).isFalse();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isFalse();
+        harness.assertOnBattlefield(player2, "Spellbook");
+    }
+
+    @Test
+    void doesNotDrawWhenTheTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player1, List.of(new IAmIronMan()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castInstant(player1, 0, target.getId());
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target);
         harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "I Am Iron Man");
+    }
+
+    private void castAt(Permanent target) {
+        harness.setHand(player1, List.of(new IAmIronMan()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
