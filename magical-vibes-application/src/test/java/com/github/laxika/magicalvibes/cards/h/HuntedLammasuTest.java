@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -38,6 +39,25 @@ class HuntedLammasuTest extends BaseCardTest {
         assertThat(horror.getCard().getColor()).isEqualTo(CardColor.BLACK);
         assertThat(horror.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(horror.getCard().getSubtypes()).containsExactly(CardSubtype.HORROR);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast targets the entering creature's opponent")
+    void etbChoosesOpponentWhenEnteringWithoutBeingCast() {
+        harness.enterBattlefieldAndReturn(player2, new HuntedLammasu());
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).containsExactly(player1.getId());
+        assertThat(findPermanents(player1, "Horror")).isEmpty();
+
+        harness.handlePermanentChosen(player2, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Horror")).hasSize(1);
+        assertThat(findPermanents(player2, "Horror")).isEmpty();
+        harness.assertOnBattlefield(player2, "Hunted Lammasu");
     }
 
     @Test
