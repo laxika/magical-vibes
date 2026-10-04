@@ -7,7 +7,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AlloyMyr;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,14 +22,13 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({HexParasite.class, AlloyMyr.class})
 class HexParasiteTest extends BaseCardTest {
-
-    // ===== Activate ability =====
 
     @Test
     @DisplayName("Activating ability puts it on the stack with correct X value")
     void activatingPutsOnStack() {
-        Permanent hexPerm = addHexParasiteReady(player1);
+        addHexParasiteReady(player1);
         Permanent targetPerm = addCreatureWithPlusCounters(player2, 3);
         harness.addMana(player1, ManaColor.BLACK, 3); // X=2, {B/P}=1
 
@@ -86,35 +91,31 @@ class HexParasiteTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Removes counters of multiple types")
+    @DisplayName("Controller chooses which counter types to remove at resolution")
     void removesMultipleCounterTypes() {
         Permanent hexPerm = addHexParasiteReady(player1);
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent targetPerm = new Permanent(bear);
+        Permanent targetPerm = harness.addToBattlefieldAndReturn(player2, new AlloyMyr());
         targetPerm.setSummoningSick(false);
         targetPerm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         targetPerm.setCounterCount(CounterType.CHARGE, 3);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(targetPerm);
         harness.addMana(player1, ManaColor.BLACK, 5); // X=4, {B/P}=1
 
         harness.activateAbility(player1, 0, 4, targetPerm.getId());
         harness.passBothPriorities();
 
-        // Should remove 2 +1/+1 counters first, then 2 charge counters
-        assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
-        assertThat(targetPerm.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
-        // Hex Parasite gets +4/+0
-        assertThat(hexPerm.getPowerModifier()).isEqualTo(4);
+        // Both kinds must remain available until the controller makes a choice.
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(targetPerm.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        assertThat(hexPerm.getPowerModifier()).isZero();
     }
 
     @Test
     @DisplayName("No boost when target has no counters")
     void noBoostWhenNoCounters() {
         Permanent hexPerm = addHexParasiteReady(player1);
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent targetPerm = new Permanent(bear);
+        Permanent targetPerm = harness.addToBattlefieldAndReturn(player2, new AlloyMyr());
         targetPerm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(targetPerm);
         harness.addMana(player1, ManaColor.BLACK, 3); // X=2, {B/P}=1
 
         harness.activateAbility(player1, 0, 2, targetPerm.getId());
@@ -200,31 +201,103 @@ class HexParasiteTest extends BaseCardTest {
         assertThat(hexPerm.getPowerModifier()).isEqualTo(0);
     }
 
-    // ===== Helper methods =====
+    @Test
+    void canChooseToRemoveZeroCountersWithPositiveX() {
+        Permanent source = addHexParasiteReady(player1);
+        Permanent target = addCreatureWithPlusCounters(player2, 3);
+        harness.addMana(player1, ManaColor.BLACK, 3);
 
-    private Permanent addHexParasiteReady(com.github.laxika.magicalvibes.model.Player player) {
-        HexParasite card = new HexParasite();
-        Permanent perm = new Permanent(card);
+        harness.activateAbility(player1, 0, 2, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(source.getPowerModifier()).isZero();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CounterType.class, names = {"MAGNET", "LEVEL", "LORE", "OIL", "STUN", "FLYING"})
+    void removesCountersBeyondTheHardcodedTypes(CounterType counterType) {
+        Permanent source = addHexParasiteReady(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlloyMyr());
+        target.setCounterCount(counterType, 2);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, 2, target.getId());
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.XValueChoice) {
+            harness.handleXValueChosen(player1, 2);
+        }
+
+        assertThat(target.getCounterCount(counterType)).isZero();
+        assertThat(source.getPowerModifier()).isEqualTo(2);
+    }
+
+    @Test
+    void removesCountersEvenWhenSourceLeavesBeforeResolution() {
+        Permanent source = addHexParasiteReady(player1);
+        Permanent target = addCreatureWithPlusCounters(player2, 3);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, 2, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void boostExpiresAtEndOfTurn() {
+        Permanent source = addHexParasiteReady(player1);
+        Permanent target = addCreatureWithPlusCounters(player2, 3);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.activateAbility(player1, 0, 2, target.getId());
+        harness.passBothPriorities();
+        assertThat(source.getPowerModifier()).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isZero();
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void canActivateWhileSummoningSickAndTargetItself() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new HexParasite());
+        source.setSummoningSick(true);
+        source.setCounterCount(CounterType.CHARGE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, 2, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(source.getPowerModifier()).isEqualTo(2);
+        assertThat(source.isTapped()).isFalse();
+    }
+
+    private Permanent addHexParasiteReady(Player player) {
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new HexParasite());
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
-    private Permanent addCreatureWithPlusCounters(com.github.laxika.magicalvibes.model.Player player, int counters) {
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent perm = new Permanent(bear);
+    private Permanent addCreatureWithPlusCounters(Player player, int counters) {
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new AlloyMyr());
         perm.setSummoningSick(false);
         perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
-    private Permanent addPermanentWithChargeCounters(com.github.laxika.magicalvibes.model.Player player, int counters) {
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent perm = new Permanent(bear);
+    private Permanent addPermanentWithChargeCounters(Player player, int counters) {
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new AlloyMyr());
         perm.setSummoningSick(false);
         perm.setCounterCount(CounterType.CHARGE, counters);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
