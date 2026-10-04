@@ -2,30 +2,105 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.ArvadTheCursed;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.c.CaligoSkinWitch;
+import com.github.laxika.magicalvibes.cards.t.TheFlameOfKeld;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GuardiansOfKoilos.class, GildedLotus.class, ArvadTheCursed.class,
+        TheFlameOfKeld.class, CaligoSkinWitch.class})
 class GuardiansOfKoilosTest extends BaseCardTest {
 
     private void castGuardians() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new GuardiansOfKoilos()));
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GuardiansOfKoilos(), "{5}");
+    }
+
+    @Test
+    void acceptingMayBouncesSaga() {
+        UUID sagaId = harness.addToBattlefieldAndReturn(player1, new TheFlameOfKeld()).getId();
+        castGuardians();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, sagaId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "The Flame of Keld");
+        harness.assertInHand(player1, "The Flame of Keld");
+    }
+
+    @Test
+    void nonhistoricCreatureIsNotALegalTarget() {
+        harness.addToBattlefield(player1, new CaligoSkinWitch());
+        castGuardians();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Caligo Skin-Witch");
+        harness.assertOnBattlefield(player1, "Guardians of Koilos");
+    }
+
+    @Test
+    void borrowedHistoricPermanentReturnsToOwner() {
+        var lotus = harness.addToBattlefieldAndReturn(player1, new GildedLotus());
+        gd.stolenCreatures.put(lotus.getId(), player2.getId());
+        castGuardians();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, lotus.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Gilded Lotus");
+        harness.assertInHand(player2, "Gilded Lotus");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void targetChangingControllerBeforeResolutionIsNotReturned() {
+        var lotus = harness.addToBattlefieldAndReturn(player1, new GildedLotus());
+        castGuardians();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, lotus.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(lotus);
+        gd.playerBattlefields.get(player2.getId()).add(lotus);
+        gd.stolenCreatures.put(lotus.getId(), player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Gilded Lotus");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void targetLeavingBeforeResolutionDoesNotPromptForMay() {
+        var lotus = harness.addToBattlefieldAndReturn(player1, new GildedLotus());
+        castGuardians();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, lotus.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(lotus);
+        gd.playerGraveyards.get(player1.getId()).add(lotus.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Gilded Lotus");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
     @Nested
     @DisplayName("ETB may bounce historic")
+    @CardUsed({GuardiansOfKoilos.class, GildedLotus.class, ArvadTheCursed.class})
     class EtbMayBounce {
 
         @Test
@@ -43,8 +118,7 @@ class GuardiansOfKoilosTest extends BaseCardTest {
         @Test
         @DisplayName("Accepting may bounces target artifact to hand")
         void acceptingMayBouncesArtifact() {
-            harness.addToBattlefield(player1, new GildedLotus());
-            UUID lotusId = harness.getPermanentId(player1, "Gilded Lotus");
+            UUID lotusId = harness.addToBattlefieldAndReturn(player1, new GildedLotus()).getId();
             castGuardians();
             harness.passBothPriorities();
             harness.handlePermanentChosen(player1, lotusId);
@@ -58,8 +132,7 @@ class GuardiansOfKoilosTest extends BaseCardTest {
         @Test
         @DisplayName("Accepting may bounces legendary permanent to hand")
         void acceptingMayBouncesLegendary() {
-            harness.addToBattlefield(player1, new ArvadTheCursed());
-            UUID arvadId = harness.getPermanentId(player1, "Arvad the Cursed");
+            UUID arvadId = harness.addToBattlefieldAndReturn(player1, new ArvadTheCursed()).getId();
             castGuardians();
             harness.passBothPriorities();
             harness.handlePermanentChosen(player1, arvadId);
@@ -88,8 +161,7 @@ class GuardiansOfKoilosTest extends BaseCardTest {
         @Test
         @DisplayName("Guardians of Koilos enters the battlefield after resolution")
         void guardiansEntersBattlefield() {
-            harness.addToBattlefield(player1, new GildedLotus());
-            UUID lotusId = harness.getPermanentId(player1, "Gilded Lotus");
+            UUID lotusId = harness.addToBattlefieldAndReturn(player1, new GildedLotus()).getId();
             castGuardians();
             harness.passBothPriorities();
             harness.handlePermanentChosen(player1, lotusId);
@@ -102,6 +174,7 @@ class GuardiansOfKoilosTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Targeting restrictions")
+    @CardUsed({GuardiansOfKoilos.class, GildedLotus.class})
     class TargetingRestrictions {
 
         @Test
@@ -109,7 +182,7 @@ class GuardiansOfKoilosTest extends BaseCardTest {
         void cannotTargetOpponentHistoric() {
             // The bounce targets "another target historic permanent you control". An opponent's
             // Gilded Lotus is not a legal target, so the targeted "may" ETB has no legal target and
-            // is never put on the stack (CR 601.2c / 603.3b) — the controller is never prompted.
+            // is removed from the stack — the controller is never prompted.
             harness.addToBattlefield(player2, new GildedLotus());
             castGuardians();
             harness.passBothPriorities(); // resolve creature spell -> enters battlefield
@@ -124,7 +197,7 @@ class GuardiansOfKoilosTest extends BaseCardTest {
         @DisplayName("Cannot target itself — 'another' excludes source, may never triggers with no other historics")
         void cannotTargetItself() {
             // No other historic permanents — only Guardians itself, which "another" excludes. With
-            // no legal target the "may" ETB is never put on the stack, so no prompt appears.
+            // no legal target the "may" ETB is removed from the stack, so no prompt appears.
             castGuardians();
             harness.passBothPriorities(); // resolve creature spell -> enters battlefield
 
@@ -138,8 +211,7 @@ class GuardiansOfKoilosTest extends BaseCardTest {
         @DisplayName("Can bounce another artifact creature you control")
         void canBounceAnotherArtifactCreature() {
             // Add another Guardians as a second artifact creature
-            harness.addToBattlefield(player1, new GuardiansOfKoilos());
-            UUID otherGuardiansId = harness.getPermanentId(player1, "Guardians of Koilos");
+            UUID otherGuardiansId = harness.addToBattlefieldAndReturn(player1, new GuardiansOfKoilos()).getId();
             castGuardians();
             harness.passBothPriorities();
             harness.handlePermanentChosen(player1, otherGuardiansId);
