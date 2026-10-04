@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,20 +12,20 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HanweirBattlements.class, HanweirGarrison.class, HanweirTheWrithingTownship.class})
+@CardUsed({HanweirBattlements.class, HanweirGarrison.class, HanweirTheWrithingTownship.class, Clone.class})
 class HanweirBattlementsTest extends BaseCardTest {
 
     @Test
     @DisplayName("{R}, {T} grants haste to a target creature")
     void grantsHaste() {
         harness.addToBattlefield(player1, new HanweirBattlements());
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new HanweirGarrison());
+        Permanent garrison = harness.addToBattlefieldAndReturn(player1, new HanweirGarrison());
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.activateAbility(player1, 0, 1, null, bears.getId());
+        harness.activateAbility(player1, 0, 1, null, garrison.getId());
         harness.passBothPriorities();
 
-        assertThat(gqs.hasKeyword(gd, bears, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, garrison, Keyword.HASTE)).isTrue();
     }
 
     @Test
@@ -70,6 +71,53 @@ class HanweirBattlementsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Hanweir, the Writhing Township");
     }
 
+    @Test
+    @DisplayName("Tapping Battlements adds colorless mana without using the stack")
+    void addsColorlessMana() {
+        Permanent battlements = harness.addToBattlefieldAndReturn(player1, new HanweirBattlements());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(battlements.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Meld condition is checked again when Garrison leaves in response")
+    void partnerLeavingInResponsePreventsMeld() {
+        harness.addToBattlefield(player1, new HanweirBattlements());
+        Permanent garrison = harness.addToBattlefieldAndReturn(player1, new HanweirGarrison());
+        addMeldMana();
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToExile(gd, garrison));
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hanweir Battlements");
+        harness.assertNotOnBattlefield(player1, "Hanweir, the Writhing Township");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getName())
+                .containsExactly("Hanweir Garrison");
+    }
+    @Test
+    @DisplayName("Controller chooses which Garrison melds when multiple are eligible")
+    void choosesPartnerAtResolution() {
+        harness.addToBattlefield(player1, new HanweirBattlements());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new HanweirGarrison());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new HanweirGarrison());
+        addMeldMana();
+        harness.activateAbility(player1, 0, 2, null, null);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, second.getId());
+        Permanent melded = findPermanent(player1, "Hanweir, the Writhing Township");
+        assertThat(melded.getMeldComponentCards()).contains(second.getOriginalCard())
+                .doesNotContain(first.getOriginalCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(first).doesNotContain(second);
+    }
     private void addMeldMana() {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -90,5 +138,27 @@ class HanweirBattlementsTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Hanweir Battlements");
         harness.assertNotOnBattlefield(player1, "Hanweir Garrison");
         harness.assertNotOnBattlefield(player1, "Hanweir, the Writhing Township");
+    }
+
+    @Test
+    @DisplayName("A copy of Garrison is exiled but cannot meld")
+    void copyCannotMeld() {
+        harness.addToBattlefield(player1, new HanweirBattlements());
+        Permanent original = harness.addToBattlefieldAndReturn(player2, new HanweirGarrison());
+        harness.castFromHand(player1, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, original.getId());
+        addMeldMana();
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hanweir Battlements");
+        harness.assertNotOnBattlefield(player1, "Hanweir Garrison");
+        harness.assertNotOnBattlefield(player1, "Hanweir, the Writhing Township");
+        assertThat(gd.exiledCards).extracting(entry -> entry.card().getName())
+                .containsExactlyInAnyOrder("Hanweir Battlements", "Clone");
+        harness.assertOnBattlefield(player2, "Hanweir Garrison");
     }
 }
