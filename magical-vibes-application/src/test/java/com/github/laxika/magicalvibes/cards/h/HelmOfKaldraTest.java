@@ -88,6 +88,39 @@ class HelmOfKaldraTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Missing Equipment can arrive after activation and before resolution")
+    void requirementCanBecomeTrueBeforeResolution() {
+        Permanent helm = harness.addToBattlefieldAndReturn(player1, new HelmOfKaldra());
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new SwordOfKaldra());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        Permanent shield = harness.addToBattlefieldAndReturn(player1, new ShieldOfKaldra());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Kaldra")).hasSize(1);
+        Permanent kaldra = findPermanent(player1, "Kaldra");
+        assertThat(helm.getAttachedTo()).isEqualTo(kaldra.getId());
+        assertThat(sword.getAttachedTo()).isEqualTo(kaldra.getId());
+        assertThat(shield.getAttachedTo()).isEqualTo(kaldra.getId());
+    }
+
+    @Test
+    @DisplayName("Kaldra creation can be activated during the opponent's turn")
+    void creationAbilityIsNotRestrictedToSorceryTiming() {
+        harness.addToBattlefieldAndReturn(player1, new HelmOfKaldra());
+        harness.addToBattlefieldAndReturn(player1, new SwordOfKaldra());
+        harness.addToBattlefieldAndReturn(player1, new ShieldOfKaldra());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Kaldra")).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Creates legendary Kaldra and attaches only the three Kaldra Equipment")
     void createsAndEquipsKaldra() {
         Permanent helm = harness.addToBattlefieldAndReturn(player1, new HelmOfKaldra());
