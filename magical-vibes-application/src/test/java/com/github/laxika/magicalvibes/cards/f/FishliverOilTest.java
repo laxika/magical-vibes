@@ -20,8 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({FishliverOil.class, GrizzlyBears.class, Island.class})
 class FishliverOilTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
-
     @Test
     @DisplayName("Casting Fishliver Oil puts it on the stack")
     void castingPutsOnStack() {
@@ -30,7 +28,7 @@ class FishliverOilTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FishliverOil()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
@@ -44,7 +42,7 @@ class FishliverOilTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FishliverOil()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -53,8 +51,6 @@ class FishliverOilTest extends BaseCardTest {
                         && p.isAttached()
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
-
-    // ===== Grants islandwalk =====
 
     @Test
     @DisplayName("Enchanted creature has islandwalk")
@@ -104,8 +100,6 @@ class FishliverOilTest extends BaseCardTest {
         assertThat(blocker.isBlocking()).isTrue();
     }
 
-    // ===== Effects stop when removed =====
-
     @Test
     @DisplayName("Creature loses islandwalk when Fishliver Oil is removed")
     void effectsStopWhenRemoved() {
@@ -121,8 +115,6 @@ class FishliverOilTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.ISLANDWALK)).isFalse();
     }
 
-    // ===== Does not affect other creatures =====
-
     @Test
     @DisplayName("Fishliver Oil does not affect other creatures")
     void doesNotAffectOtherCreatures() {
@@ -136,8 +128,6 @@ class FishliverOilTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.ISLANDWALK)).isFalse();
     }
 
-    // ===== Targeting restriction =====
-
     @Test
     @DisplayName("Cannot target a noncreature permanent with Fishliver Oil")
     void cannotTargetNonCreature() {
@@ -148,5 +138,54 @@ class FishliverOilTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Fishliver Oil can enchant an opponent's creature")
+    void enchantsOpponentsCreature() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FishliverOil()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof FishliverOil)
+                .findFirst().orElseThrow();
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.ISLANDWALK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Fishliver Oil goes to the graveyard when its target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FishliverOil()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Fishliver Oil");
+        harness.assertInGraveyard(player1, "Fishliver Oil");
+    }
+
+    @Test
+    @DisplayName("An Island controlled only by the attacker does not prevent blocking")
+    void attackersIslandDoesNotPreventBlocking() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FishliverOil());
+        aura.setAttachedTo(attacker.getId());
+        harness.addToBattlefield(player1, new Island());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }
