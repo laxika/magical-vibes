@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.c.CloakOfMists;
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.h.HeatRay;
+import com.github.laxika.magicalvibes.cards.r.Rescind;
 import com.github.laxika.magicalvibes.cards.w.WizardMentor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,8 +18,40 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Guma.class, CloakOfMists.class, CoralMerfolk.class, HeatRay.class, WizardMentor.class})
+@CardUsed({Guma.class, CloakOfMists.class, CoralMerfolk.class, HeatRay.class, Rescind.class, WizardMentor.class})
 class GumaTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A nonblue creature can block Guma and deal lethal combat damage")
+    void nonblueCreatureCanBlockAndDealDamage() {
+        addCreatureReady(player1, new Guma());
+        addCreatureReady(player2, new Guma());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Guma");
+        harness.assertInGraveyard(player2, "Guma");
+        harness.assertNotOnBattlefield(player1, "Guma");
+        harness.assertNotOnBattlefield(player2, "Guma");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Guma cannot be targeted by a blue instant, even from its controller")
+    void cannotBeTargetedByOwnBlueInstant() {
+        Permanent guma = addCreatureReady(player1, new Guma());
+        harness.setHand(player1, List.of(new Rescind()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, guma.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+
+        harness.assertOnBattlefield(player1, "Guma");
+    }
 
     @Test
     @DisplayName("Blue creature cannot block Guma")
