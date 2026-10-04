@@ -1,16 +1,17 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +19,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HorizonSpellbomb.class, Forest.class, Island.class, Plains.class, GrizzlyBears.class})
 class HorizonSpellbombTest extends BaseCardTest {
 
-    // ===== Activated ability: search for basic land =====
 
     @Test
     @DisplayName("Activating ability sacrifices spellbomb and prompts death trigger")
@@ -28,7 +29,7 @@ class HorizonSpellbombTest extends BaseCardTest {
         harness.addToBattlefield(player1, new HorizonSpellbomb());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         // Clear deck so the search ability finds nothing and auto-completes
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -85,12 +86,11 @@ class HorizonSpellbombTest extends BaseCardTest {
         List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = offered.getFirst().getName();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosenName));
     }
 
-    // ===== Death trigger: may pay {G} to draw =====
 
     @Test
     @DisplayName("Accepting death trigger and paying {G} draws a card")
@@ -127,7 +127,7 @@ class HorizonSpellbombTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
         // Clear deck so search auto-completes (test focuses on death trigger)
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -151,7 +151,7 @@ class HorizonSpellbombTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         // No green mana added
         // Clear deck so search auto-completes (test focuses on death trigger)
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -164,13 +164,13 @@ class HorizonSpellbombTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         // No card drawn
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
 
         // Resolve the search ability (finds nothing)
         harness.passBothPriorities();
     }
 
-    // ===== Both abilities interact correctly =====
 
     @Test
     @DisplayName("Both abilities work: search for land AND draw a card")
@@ -199,22 +199,63 @@ class HorizonSpellbombTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Hand should have grown by 2 (draw + search)
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 2);
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(c -> c.getName().equals(chosenName));
     }
 
+    @Test
+    @DisplayName("A basic land search may find nothing even when basic lands are available")
+    void mayFailToFindBasicLand() {
+        harness.addToBattlefield(player1, new HorizonSpellbomb());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        setupLibraryWithBasicLands();
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({Shatter.class})
+    @DisplayName("Destruction triggers the draw ability without activating the land search")
+    void destructionTriggersDrawWithoutSearch() {
+        harness.addToBattlefield(player1, new HorizonSpellbomb());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Horizon Spellbomb"));
+        harness.assertInGraveyard(player1, "Horizon Spellbomb");
+        harness.assertNotOnBattlefield(player1, "Horizon Spellbomb");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void setupLibraryWithBasicLands() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears()));
     }
 
     private void setupLibraryWithNonBasicLands() {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
     }
 }
