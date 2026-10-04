@@ -62,8 +62,7 @@ class HarvestWurmTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, forestIndex);
 
         assertThat(basicLandsInHand()).isEqualTo(1);
-        assertThat(gd.playerHands.get(player1.getId()).stream()
-                .anyMatch(c -> c.getName().equals("Forest"))).isTrue();
+        harness.assertInHand(player1, "Forest");
         harness.assertOnBattlefield(player1, "Harvest Wurm");
         harness.assertNotInGraveyard(player1, "Forest");
     }
@@ -92,5 +91,40 @@ class HarvestWurmTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Harvest Wurm");
         harness.assertInGraveyard(player1, "Forest");
         assertThat(basicLandsInHand()).isZero();
+    }
+
+    @Test
+    @DisplayName("A basic land added after entry can pay for the triggered ability")
+    void canReturnLandThatArrivesBeforeTriggerResolves() {
+        harness.castFromHand(player1, new HarvestWurm(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Harvest Wurm");
+
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
+        harness.assertOnBattlefield(player1, "Harvest Wurm");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A basic land removed before the trigger resolves cannot pay for it")
+    void sacrificesWhenLandLeavesBeforeTriggerResolves() {
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.castFromHand(player1, new HarvestWurm(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Harvest Wurm");
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Harvest Wurm");
+        harness.assertInGraveyard(player1, "Harvest Wurm");
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
