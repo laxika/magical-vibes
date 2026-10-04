@@ -99,6 +99,52 @@ class IcatianJavelineersTest extends BaseCardTest {
         assertThat(javelineers.getCounterCount(CounterType.JAVELIN)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Cannot activate while tapped even with a javelin counter")
+    void cannotActivateWhileTapped() {
+        Permanent javelineers = addReadyJavelineers();
+        javelineers.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(javelineers.getCounterCount(CounterType.JAVELIN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Untapping does not allow a second activation after the counter is spent")
+    void cannotReuseSpentJavelin() {
+        Permanent javelineers = addReadyJavelineers();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        javelineers.setTapped(false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(javelineers.isTapped()).isFalse();
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("The ability still deals damage after its source dies in response")
+    void abilityResolvesAfterSourceDies() {
+        Permanent javelineers = addReadyJavelineers();
+        Permanent opponentJavelineers = harness.enterBattlefieldAndReturn(player2, new IcatianJavelineers());
+        opponentJavelineers.setSummoningSick(false);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player2, 0, null, javelineers.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Icatian Javelineers");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
     private Permanent addReadyJavelineers() {
         Permanent javelineers = harness.enterBattlefieldAndReturn(player1, new IcatianJavelineers());
         javelineers.setSummoningSick(false);
