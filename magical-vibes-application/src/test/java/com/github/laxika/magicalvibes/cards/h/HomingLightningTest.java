@@ -3,25 +3,28 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HomingLightning.class, AvatarOfMight.class, GrizzlyBears.class, LlanowarElves.class})
 class HomingLightningTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 4 damage to target creature")
     void damagesTargetCreature() {
-        Permanent target = addCreature(player2, new AvatarOfMight());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
         castHomingLightning(target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(4);
@@ -30,10 +33,10 @@ class HomingLightningTest extends BaseCardTest {
     @Test
     @DisplayName("Damages every other creature with the same name across both battlefields")
     void damagesAllCreaturesWithSameName() {
-        Permanent ownAvatar = addCreature(player1, new AvatarOfMight());
-        Permanent oppAvatar1 = addCreature(player2, new AvatarOfMight());
-        Permanent oppAvatar2 = addCreature(player2, new AvatarOfMight());
-        Permanent elves = addCreature(player2, new LlanowarElves());
+        Permanent ownAvatar = harness.addToBattlefieldAndReturn(player1, new AvatarOfMight());
+        Permanent oppAvatar1 = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        Permanent oppAvatar2 = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
 
         castHomingLightning(oppAvatar1.getId());
 
@@ -46,9 +49,9 @@ class HomingLightningTest extends BaseCardTest {
     @Test
     @DisplayName("Lethal damage kills every creature with the same name")
     void killsAllCreaturesWithSameName() {
-        addCreature(player1, new GrizzlyBears());
-        Permanent target = addCreature(player2, new GrizzlyBears());
-        addCreature(player2, new LlanowarElves());
+        harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
 
         castHomingLightning(target.getId());
 
@@ -60,8 +63,8 @@ class HomingLightningTest extends BaseCardTest {
     @Test
     @DisplayName("Fizzles when the target creature is removed before resolution")
     void fizzlesWhenTargetRemoved() {
-        Permanent target = addCreature(player2, new AvatarOfMight());
-        Permanent other = addCreature(player2, new AvatarOfMight());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
 
         harness.setHand(player1, List.of(new HomingLightning()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -84,18 +87,59 @@ class HomingLightningTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void damagesSameNameCreatureWithHexproofWithoutTargetingIt() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new AvatarOfMight());
+        other.getGrantedKeywords().add(Keyword.HEXPROOF);
+
+        castHomingLightning(target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        assertThat(other.getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    void faceDownTargetDoesNotShareANameWithFaceUpCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castHomingLightning(target.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target).contains(other);
+        assertThat(other.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void faceDownCreaturesDoNotShareANameWithEachOther() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        other.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        castHomingLightning(target.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target).contains(other);
+        assertThat(other.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void faceUpTargetDoesNotDamageFaceDownCreatureWithSamePrintedName() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        other.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        castHomingLightning(target.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target).contains(other);
+        assertThat(other.getMarkedDamage()).isZero();
+    }
+
     private void castHomingLightning(java.util.UUID targetId) {
         harness.setHand(player1, List.of(new HomingLightning()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
-    }
-
-    private Permanent addCreature(Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }
