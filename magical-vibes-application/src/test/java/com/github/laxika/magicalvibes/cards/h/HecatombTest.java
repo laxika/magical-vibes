@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.b.BloodArtist;
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -11,12 +12,10 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Hecatomb.class, LlanowarElves.class, Swamp.class})
+@CardUsed({Hecatomb.class, LlanowarElves.class, Swamp.class, GarrukWildspeaker.class, BloodArtist.class})
 class HecatombTest extends BaseCardTest {
 
     private void castHecatomb() {
@@ -45,11 +44,9 @@ class HecatombTest extends BaseCardTest {
     void dealsDamageToCreature() {
         harness.addToBattlefield(player1, new Hecatomb());
         harness.addToBattlefield(player1, new Swamp());
-        harness.addToBattlefield(player2, new LlanowarElves());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
 
-        UUID elvesId = findPermanent(player2, "Llanowar Elves").getId();
-
-        harness.activateAbility(player1, 0, null, elvesId);
+        harness.activateAbility(player1, 0, null, elves.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
@@ -92,6 +89,33 @@ class HecatombTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A noncreature land is not a legal damage target")
+    void cannotTargetNoncreatureLand() {
+        harness.addToBattlefield(player1, new Hecatomb());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Swamp());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(swamp.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The same Swamp cannot pay for a second activation while tapped")
+    void cannotReuseTappedSwamp() {
+        harness.addToBattlefield(player1, new Hecatomb());
+        harness.addToBattlefield(player1, new Swamp());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
     @DisplayName("With multiple Swamps the controller chooses which to tap")
     void multipleSwampsPromptChoice() {
         harness.addToBattlefield(player1, new Hecatomb());
@@ -123,6 +147,49 @@ class HecatombTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Hecatomb");
         // The three creatures are untouched.
         assertThat(countPermanents(player1, "Llanowar Elves")).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Opponent-controlled creatures cannot pay Hecatomb's entry requirement")
+    void opponentsCreaturesDoNotCountForSacrifice() {
+        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.addToBattlefield(player2, new LlanowarElves());
+        castHecatomb();
+
+        harness.assertInGraveyard(player1, "Hecatomb");
+        assertThat(countPermanents(player1, "Llanowar Elves")).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @CardUsed(BloodArtist.class)
+    @DisplayName("All four creatures are sacrificed simultaneously, including death-trigger observers")
+    void sacrificedCreatureSeesAllFourDeaths() {
+        harness.addToBattlefield(player1, new BloodArtist());
+        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        castHecatomb();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        for (int i = 0; i < 4; i++) {
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player1, player2.getId());
+        }
+        for (int i = 0; i < 4; i++) {
+            harness.passBothPriorities();
+        }
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 16);
+        harness.assertOnBattlefield(player1, "Hecatomb");
+        harness.assertInGraveyard(player1, "Blood Artist");
+        assertThat(countPermanents(player1, "Llanowar Elves")).isZero();
     }
 
     @Test
