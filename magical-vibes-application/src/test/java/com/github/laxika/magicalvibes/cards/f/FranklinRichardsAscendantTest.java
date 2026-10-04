@@ -21,7 +21,7 @@ class FranklinRichardsAscendantTest extends BaseCardTest {
     @Test
     @DisplayName("Discovers 6 at the beginning of combat after casting a noncreature spell")
     void discoversAfterCastingNoncreatureSpell() {
-        Permanent franklin = harness.addToBattlefieldAndReturn(player1, new FranklinRichardsAscendant());
+        harness.addToBattlefield(player1, new FranklinRichardsAscendant());
         GrizzlyBears discovered = new GrizzlyBears();
         harness.setLibrary(player1, List.of(discovered));
 
@@ -40,7 +40,7 @@ class FranklinRichardsAscendantTest extends BaseCardTest {
     @Test
     @DisplayName("May put the discovered card into hand")
     void mayPutDiscoveredCardIntoHand() {
-        Permanent franklin = harness.addToBattlefieldAndReturn(player1, new FranklinRichardsAscendant());
+        harness.addToBattlefield(player1, new FranklinRichardsAscendant());
         GrizzlyBears discovered = new GrizzlyBears();
         harness.setLibrary(player1, List.of(discovered));
 
@@ -76,20 +76,86 @@ class FranklinRichardsAscendantTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(franklin, findPermanent(player1, "Grizzly Bears"));
     }
 
+    @Test
+    @DisplayName("Does not trigger when no spell was cast before combat")
+    void doesNotTriggerWithoutCastingSpell() {
+        harness.addToBattlefield(player1, new FranklinRichardsAscendant());
+        GrizzlyBears top = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(top));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        advanceToBeginningOfCombat();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+    }
+
+    @Test
+    @DisplayName("Does not trigger at an opponent's beginning of combat")
+    void doesNotTriggerOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new FranklinRichardsAscendant());
+        GrizzlyBears top = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(top));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.passUntil(player2, TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+    }
+
+    @Test
+    @DisplayName("Discover accepts a card with mana value exactly six and leaves later cards alone")
+    void discoversCardAtManaValueBoundary() {
+        harness.addToBattlefield(player1, new FranklinRichardsAscendant());
+        FranklinRichardsAscendant discovered = new FranklinRichardsAscendant();
+        Shock remaining = new Shock();
+        harness.setLibrary(player1, List.of(discovered, remaining));
+
+        castNoncreatureSpell();
+        advanceToBeginningOfCombat();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(discovered);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+    }
+
+    @Test
+    @DisplayName("The discovered card is exiled while the cast-or-hand choice is pending")
+    void exilesDiscoveredCardBeforeChoice() {
+        harness.addToBattlefield(player1, new FranklinRichardsAscendant());
+        GrizzlyBears discovered = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(discovered));
+
+        castNoncreatureSpell();
+        advanceToBeginningOfCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card() == discovered);
+        harness.handleCardChosen(player1, -1);
+        assertThat(gd.exiledCards).noneMatch(entry -> entry.card() == discovered);
+        assertThat(gd.playerHands.get(player1.getId())).contains(discovered);
+    }
+
     private void castNoncreatureSpell() {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
     }
 
     private void advanceToBeginningOfCombat() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
