@@ -20,7 +20,7 @@ class MagusOfTheMindTest extends BaseCardTest {
 
     @Test
     void exilesOneCardAndAllowsAFreeLandPlay() {
-        Permanent magus = harness.addToBattlefieldAndReturn(player1, new MagusOfTheMind());
+        Permanent magus = addCreatureReady(player1, new MagusOfTheMind());
         Card land = new Forest();
         harness.setLibrary(player1, List.of(land));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -48,7 +48,7 @@ class MagusOfTheMindTest extends BaseCardTest {
 
     @Test
     void exilesOnePlusSpellsCastThisTurnAndFreeCastsAFromExileSpell() {
-        harness.addToBattlefieldAndReturn(player1, new MagusOfTheMind());
+        addCreatureReady(player1, new MagusOfTheMind());
         Card first = new GrizzlyBears();
         Card second = new Forest();
         Card third = new GrizzlyBears();

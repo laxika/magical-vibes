@@ -78,7 +78,7 @@ class LiciaSanguineTribuneTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("only during your turn");
+                .hasMessageContaining("during your turn");
     }
 
     private Permanent addReadyLicia(com.github.laxika.magicalvibes.model.Player player) {

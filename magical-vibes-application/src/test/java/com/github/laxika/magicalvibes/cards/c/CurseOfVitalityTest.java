@@ -24,8 +24,10 @@ class CurseOfVitalityTest extends BaseCardTest {
         placeCurseOnPlayer1();
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player2, List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(player2, List.of(0));
+            resolveAllTriggers();
+        });
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(22);
         assertThat(gd.getLife(player2.getId())).isEqualTo(22);
@@ -37,8 +39,10 @@ class CurseOfVitalityTest extends BaseCardTest {
         placeCurseOnPlayer(player2);
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(player1, List.of(1));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(player1, List.of(1));
+            resolveAllTriggers();
+        });
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(22);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
@@ -50,8 +54,10 @@ class CurseOfVitalityTest extends BaseCardTest {
         placeCurseOnPlayer(player2);
         addCreatureReady(player2, new GrizzlyBears());
 
-        declareAttackers(player2, List.of(0));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(player2, List.of(0));
+            resolveAllTriggers();
+        });
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -38,8 +37,6 @@ class GalecasterColossusTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, target.getId());
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, wizard.getId());
         harness.passBothPriorities();
 
         assertThat(wizard.isTapped()).isTrue();

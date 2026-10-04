@@ -25,6 +25,7 @@ class MairsilThePretenderTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class)).isNotNull();
 
         harness.handleMultipleCardsChosen(player1, List.of(rodOfRuin.getId()));
@@ -56,6 +57,7 @@ class MairsilThePretenderTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMultipleCardsChosen(player1, List.of(rodOfRuin.getId()));
 
         assertThat(gd.exiledCardsWithCageCounters).contains(rodOfRuin.getId());
