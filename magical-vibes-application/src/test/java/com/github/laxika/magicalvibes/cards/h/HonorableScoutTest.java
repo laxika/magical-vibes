@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({HonorableScout.class, MaggotCarrier.class, MireKavu.class, AncientSpider.class,
@@ -81,6 +82,35 @@ class HonorableScoutTest extends BaseCardTest {
         castHonorableScout();
 
         harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Gains no life when the target opponent controls no creatures")
+    void gainsNoLifeForEmptyBattlefield() {
+        harness.setLife(player1, 20);
+
+        castHonorableScout();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Counts creatures when the triggered ability resolves")
+    void countsCreaturesAtResolution() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new HonorableScout()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Honorable Scout");
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 20);
+
+        harness.addToBattlefield(player2, new MireKavu());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
     }
 
     @Test
