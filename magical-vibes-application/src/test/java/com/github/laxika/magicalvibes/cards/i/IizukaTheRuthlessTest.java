@@ -140,6 +140,45 @@ class IizukaTheRuthlessTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, ownSamurai, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
+    @Test
+    @DisplayName("Bushido triggers only once when Iizuka is blocked by two creatures")
+    void multipleBlockersGiveOneBushidoBonus() {
+        Permanent iizuka = addCreatureReady(player1, new IizukaTheRuthless());
+        addCreatureReady(player2, new GodosIrregulars());
+        addCreatureReady(player2, new GodosIrregulars());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, iizuka)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, iizuka)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately and double strike affects only Samurai present at resolution")
+    void sacrificeIsACostAndRecipientsAreChosenAtResolution() {
+        Permanent iizuka = addCreatureReady(player1, new IizukaTheRuthless());
+        Permanent sacrificedSamurai = addCreatureReady(player1, new ArabaMothrider());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, battlefieldIndex(player1, iizuka), null, null);
+        harness.handlePermanentChosen(player1, sacrificedSamurai.getId());
+
+        harness.assertInGraveyard(player1, "Araba Mothrider");
+        assertThat(gqs.hasKeyword(gd, iizuka, Keyword.DOUBLE_STRIKE)).isFalse();
+        Permanent samuraiBeforeResolution = addCreatureReady(player1, new HandOfHonor());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, iizuka, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, samuraiBeforeResolution, Keyword.DOUBLE_STRIKE)).isTrue();
+        Permanent samuraiAfterResolution = addCreatureReady(player1, new ArabaMothrider());
+        assertThat(gqs.hasKeyword(gd, samuraiAfterResolution, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
     private int battlefieldIndex(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }
