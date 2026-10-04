@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -42,7 +44,7 @@ class HuntedByTheFamilyTest extends BaseCardTest {
         assertThat(gqs.effectiveCreatureSubtypes(gd, artifactCreature)).containsExactly(CardSubtype.HUMAN);
         assertThat(gqs.getEffectivePower(gd, artifactCreature)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, artifactCreature)).isEqualTo(1);
-        assertThat(gqs.hasKeyword(gd, artifactCreature, com.github.laxika.magicalvibes.model.Keyword.FLYING))
+        assertThat(gqs.hasKeyword(gd, artifactCreature, Keyword.FLYING))
                 .isFalse();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -62,11 +64,100 @@ class HuntedByTheFamilyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canResolveWithoutChoosingAnyTargets() {
+        cast(List.of());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        harness.assertInGraveyard(player1, "Hunted by The Family");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void allFourTargetsCanChooseCopies() {
+        List<Permanent> targets = java.util.stream.IntStream.range(0, 4)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new GoldForgedSentinel()))
+                .toList();
+
+        cast(targets.stream().map(Permanent::getId).toList());
+        for (int i = 0; i < 4; i++) {
+            harness.handleListChoice(player2, HuntedByTheFamilyEffect.COPY_OPTION);
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(4)
+                .allSatisfy(token -> {
+                    assertThat(token.getCard().isToken()).isTrue();
+                    assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+                    assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
+                    assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+                });
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactlyElementsOf(targets);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+    }
+
+    @Test
+    void skipsATargetThatLeftTheBattlefieldBeforeResolution() {
+        Permanent gone = harness.addToBattlefieldAndReturn(player2, new GoldForgedSentinel());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HuntedByTheFamily()));
+        addMana();
+        harness.castSorcery(player1, 0, List.of(gone.getId(), remaining.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(gone);
+        harness.passBothPriorities();
+
+        harness.handleListChoice(player2, HuntedByTheFamilyEffect.COPY_OPTION);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(token ->
+                assertThat(token.getCard().getName()).isEqualTo("Grizzly Bears"));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotChooseMoreThanFourTargets() {
+        List<java.util.UUID> targets = java.util.stream.IntStream.range(0, 5)
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId())
+                .toList();
+        harness.setHand(player1, List.of(new HuntedByTheFamily()));
+        addMana();
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> harness.castSorcery(player1, 0, targets))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void humanTransformationKeepsCountersAndCopyUsesOriginalCharacteristics() {
+        Permanent sentinel = harness.addToBattlefieldAndReturn(player2, new GoldForgedSentinel());
+        sentinel.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        cast(List.of(sentinel.getId()));
+        harness.handleListChoice(player2, HuntedByTheFamilyEffect.HUMAN_OPTION);
+
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, sentinel)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, sentinel, Keyword.FLYING)).isFalse();
+
+        cast(List.of(sentinel.getId()));
+        harness.handleListChoice(player2, HuntedByTheFamilyEffect.COPY_OPTION);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(gqs.getEffectiveCardTypes(gd, token)).contains(CardType.ARTIFACT, CardType.CREATURE);
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
+            assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+            assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        });
+        assertThat(gqs.getEffectivePower(gd, sentinel)).isEqualTo(3);
+    }
+
     private void cast(List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new HuntedByTheFamily()));
         addMana();
-        harness.castSorcery(player1, 0, targetIds);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetIds);
     }
 
     private void addMana() {
