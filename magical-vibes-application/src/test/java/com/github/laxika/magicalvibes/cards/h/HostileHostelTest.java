@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.c.CreepingInn;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.UnrulyMob;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -20,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HostileHostel.class, CreepingInn.class, GrizzlyBears.class, Island.class})
+@CardUsed({HostileHostel.class, CreepingInn.class, UnrulyMob.class, Island.class})
 class HostileHostelTest extends BaseCardTest {
 
     @Test
@@ -38,7 +38,7 @@ class HostileHostelTest extends BaseCardTest {
     @DisplayName("The soul ability sacrifices a creature and adds a soul counter")
     void addsSoulCounterAfterSacrificingCreature() {
         Permanent hostel = addReadyHostel(player1);
-        addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new UnrulyMob());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, indexOf(player1, hostel), 1, null, null);
@@ -46,7 +46,7 @@ class HostileHostelTest extends BaseCardTest {
 
         assertThat(hostel.getCounterCount(CounterType.SOUL)).isOne();
         assertThat(hostel.isTapped()).isTrue();
-        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Unruly Mob");
     }
 
     @Test
@@ -54,7 +54,7 @@ class HostileHostelTest extends BaseCardTest {
     void thirdSoulCounterTransformsAndUntaps() {
         Permanent hostel = addReadyHostel(player1);
         hostel.setCounterCount(CounterType.SOUL, 2);
-        addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new UnrulyMob());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, indexOf(player1, hostel), 1, null, null);
@@ -70,7 +70,7 @@ class HostileHostelTest extends BaseCardTest {
     @DisplayName("The soul ability is sorcery speed")
     void soulAbilityRequiresSorcerySpeed() {
         Permanent hostel = addReadyHostel(player1);
-        addReadyCreature(player1, new GrizzlyBears());
+        addCreatureReady(player1, new UnrulyMob());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.forceStep(TurnStep.UPKEEP);
 
@@ -82,7 +82,7 @@ class HostileHostelTest extends BaseCardTest {
     @DisplayName("Creeping Inn exiles a creature and drains each opponent by the number exiled with it")
     void attackTriggerUsesCreatureCardsExiledWithIt() {
         Permanent inn = addTransformedInn(player1);
-        Card creature = new GrizzlyBears();
+        Card creature = new UnrulyMob();
         Card nonCreature = new Island();
         harness.setGraveyard(player1, List.of(creature, nonCreature));
         harness.setLife(player1, 20);
@@ -91,14 +91,12 @@ class HostileHostelTest extends BaseCardTest {
         attack(inn);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
-        resolveAllStack();
+        exileAndResolveDrain(creature);
 
-        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(22);
         assertThat(gd.getLife(player1.getId())).isEqualTo(21);
         assertThat(gd.getCardsExiledByPermanent(inn.getId())).extracting(Card::getName)
-                .containsExactly("Grizzly Bears");
+                .containsExactly("Unruly Mob");
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(nonCreature);
     }
 
@@ -115,40 +113,137 @@ class HostileHostelTest extends BaseCardTest {
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(inn);
     }
 
-    private Permanent addReadyHostel(Player player) {
-        Permanent hostel = new Permanent(new HostileHostel());
-        hostel.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(hostel);
-        return hostel;
+    @Test
+    void drainResolvesTogetherWithExileWithoutAnotherPriorityRound() {
+        Permanent inn = addTransformedInn(player1);
+        Card creature = new UnrulyMob();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        attack(inn);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+
+            harness.assertLife(player1, 21);
+            harness.assertLife(player2, 19);
+            assertThat(gd.stack).isEmpty();
+        });
     }
 
-    private Permanent addReadyCreature(Player player, Card card) {
-        Permanent creature = new Permanent(card);
-        creature.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(creature);
-        return creature;
+    @Test
+    void decliningExileDoesNotDrain() {
+        Permanent inn = addTransformedInn(player1);
+        Card creature = new UnrulyMob();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        attack(inn);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.handleMayAbilityChosen(player1, false);
+            resolveAllTriggers();
+        });
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.getCardsExiledByPermanent(inn.getId())).isEmpty();
+    }
+
+    @Test
+    void noCreatureInGraveyardDoesNotDrain() {
+        Permanent inn = addTransformedInn(player1);
+        Card land = new Island();
+        harness.setGraveyard(player1, List.of(land));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            attack(inn);
+            if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+                harness.handleMayAbilityChosen(player1, true);
+            }
+            resolveAllTriggers();
+        });
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(land);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void phasingPreservesExiledCardsAndSubsequentAttackDrainsTwo() {
+        Permanent inn = addTransformedInn(player1);
+        Card first = new UnrulyMob();
+        Card second = new UnrulyMob();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        attack(inn);
+        exileAndResolveDrain(first);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.activateAbility(player1, indexOf(player1, inn), 0, null, null);
+            harness.passBothPriorities();
+        });
+
+        assertThat(inn.isAttacking()).isFalse();
+        harness.performUntapStep(player2);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(inn);
+        harness.performUntapStep(player1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(inn);
+        assertThat(inn.isTransformed()).isTrue();
+        assertThat(inn.isTapped()).isFalse();
+
+        attack(inn);
+        exileAndResolveDrain(second);
+
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 17);
+        assertThat(gd.getCardsExiledByPermanent(inn.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    void soulAbilityCannotBeActivatedWithoutACreature() {
+        Permanent hostel = addReadyHostel(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, hostel), 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(hostel.isTapped()).isFalse();
+        assertThat(hostel.getCounterCount(CounterType.SOUL)).isZero();
+    }
+
+    private Permanent addReadyHostel(Player player) {
+        return addCreatureReady(player, new HostileHostel());
     }
 
     private Permanent addTransformedInn(Player player) {
         HostileHostel card = new HostileHostel();
-        Permanent inn = new Permanent(card);
+        Permanent inn = addCreatureReady(player, card);
         inn.setCard(card.getBackFaceCard());
         inn.setTransformed(true);
-        inn.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(inn);
         return inn;
     }
 
     private void attack(Permanent inn) {
-        declareAttackers(player1, List.of(indexOf(player1, inn)));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(player1, List.of(indexOf(player1, inn)));
+            harness.passBothPriorities();
+        });
     }
 
-    private void resolveAllStack() {
-        int guard = 0;
-        while ((!gd.stack.isEmpty() || gd.interaction.isAwaitingInput()) && guard++ < 50) {
-            harness.passBothPriorities();
-        }
+    private void exileAndResolveDrain(Card creature) {
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+            resolveAllTriggers();
+        });
     }
 
     private int indexOf(Player player, Permanent permanent) {
