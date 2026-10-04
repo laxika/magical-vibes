@@ -50,8 +50,7 @@ class GrizzlyFateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertBears(4);
         harness.assertNotInGraveyard(player1, "Grizzly Fate");
@@ -124,5 +123,42 @@ class GrizzlyFateTest extends BaseCardTest {
             assertThat(bear.getCard().getColor()).isEqualTo(CardColor.GREEN);
             assertThat(bear.getCard().getSubtypes()).contains(CardSubtype.BEAR);
         });
+    }
+
+    @Test
+    @DisplayName("Threshold gained after casting creates four Bears")
+    void thresholdGainedBeforeResolutionCreatesFourBears() {
+        harness.setGraveyard(player1, graveyardWithCardsForJudReview(6));
+        harness.castFromHand(player1, new GrizzlyFate(), "{3}{G}{G}");
+
+        harness.setGraveyard(player1, graveyardWithCardsForJudReview(7));
+        harness.passBothPriorities();
+
+        assertBears(4);
+        harness.assertInGraveyard(player1, "Grizzly Fate");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Threshold lost after casting creates only two Bears")
+    void thresholdLostBeforeResolutionCreatesTwoBears() {
+        harness.setGraveyard(player1, graveyardWithCardsForJudReview(7));
+        harness.castFromHand(player1, new GrizzlyFate(), "{3}{G}{G}");
+
+        harness.setGraveyard(player1, graveyardWithCardsForJudReview(6));
+        harness.passBothPriorities();
+
+        assertBears(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's graveyard does not count toward threshold")
+    void opponentsGraveyardDoesNotCountTowardThreshold() {
+        harness.setGraveyard(player2, graveyardWithCardsForJudReview(7));
+
+        castFromHand(graveyardWithCardsForJudReview(6));
+
+        assertBears(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 }
