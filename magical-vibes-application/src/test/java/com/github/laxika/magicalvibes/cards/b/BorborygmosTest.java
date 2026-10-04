@@ -82,9 +82,11 @@ class BorborygmosTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new GruulScrapper()));
         harness.addMana(player1, ManaColor.BLUE, 8);
 
-        declareAttackersAndPrepareBlockers(List.of(0));
-        gs.declareBlockers(gd, player2, List.of());
-        harness.passBothPriorities();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE, () -> {
+            declareAttackersAndPrepareBlockers(List.of(0));
+            gs.declareBlockers(gd, player2, List.of());
+            harness.passBothPriorities();
+        });
 
         assertThat(gd.stack).hasSize(1);
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

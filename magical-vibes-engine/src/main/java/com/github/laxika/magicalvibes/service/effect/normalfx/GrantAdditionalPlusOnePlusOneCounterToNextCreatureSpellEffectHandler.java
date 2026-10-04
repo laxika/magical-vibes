@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CreatureSpellEmpowerment;
+import com.github.laxika.magicalvibes.model.Boon;
+import com.github.laxika.magicalvibes.model.BoonTrigger;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalPlusOnePlusOneCounterToNextCreatureSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +29,9 @@ public class GrantAdditionalPlusOnePlusOneCounterToNextCreatureSpellEffectHandle
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        gameData.addPersistentNextCreatureSpellEmpowerment(
-                entry.getControllerId(), new CreatureSpellEmpowerment(false, 1));
+        gameData.boons.add(new Boon(entry.getControllerId(), entry.getCard(),
+                new GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect(new Fixed(1)),
+                1, BoonTrigger.CREATURE_CAST, null));
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" empowers its controller's next creature spell with a +1/+1 counter.")

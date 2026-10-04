@@ -794,6 +794,24 @@ public class ETBTokenTargetService {
                 return;
             }
         }
+        com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect dividedDamage = pending.effects().stream()
+                .filter(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect divided
+                        && divided.etbAssignments()
+                        && divided.targetRestriction() instanceof com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate)
+                .map(effect -> (com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect) effect)
+                .findFirst().orElse(null);
+        if (dividedDamage != null && !pending.chosenTargetsSoFar().isEmpty()) {
+            Permanent source = pending.sourcePermanentId() == null ? null
+                    : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+            int total = amountEvaluationService.evaluate(gameData, dividedDamage.totalDamage(),
+                    new AmountContext(pending.controllerId(), source, null, pending.xValue(),
+                            pending.eventValue(), false, null, pending.repeatedAdditionalCosts(), null));
+            playerInputService.beginCounterDistributionAssignmentChoice(gameData, pending.controllerId(),
+                    new ChoiceContext.CounterDistributionAssignment(card, pending.controllerId(),
+                            pending.effects(), pending.sourcePermanentId(), null,
+                            pending.chosenTargetsSoFar(), Map.of(), total, 0));
+            return;
+        }
         // Shared by ETB token copies, ON_SELF_CAST, and multi-target ON_ATTACK — keep the label generic.
         String abilityLabel = card.getName() + "'s ability";
         Zone targetZone = pending.chosenTargetsSoFar().stream()

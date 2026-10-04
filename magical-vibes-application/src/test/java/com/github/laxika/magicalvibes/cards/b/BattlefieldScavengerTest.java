@@ -37,6 +37,7 @@ class BattlefieldScavengerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(scavenger.isTapped()).isTrue();
         assertThat(scavenger.getSkipUntapCount()).isGreaterThan(0);
@@ -54,6 +55,7 @@ class BattlefieldScavengerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true); // accept exert
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true); // accept loot
 
         // Discard happens before the draw.
@@ -75,6 +77,7 @@ class BattlefieldScavengerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);  // accept exert
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false); // decline loot
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -128,6 +131,7 @@ class BattlefieldScavengerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
         resolveAllTriggers();
 
@@ -146,6 +150,7 @@ class BattlefieldScavengerTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

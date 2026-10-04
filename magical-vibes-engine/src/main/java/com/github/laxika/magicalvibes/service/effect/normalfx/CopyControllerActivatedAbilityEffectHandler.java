@@ -71,7 +71,7 @@ public class CopyControllerActivatedAbilityEffectHandler implements NormalEffect
                     copyControllerId,
                     List.of(retargetEffect),
                     "Choose a new target for the copy of " + snapshot.getCard().getName() + "'s ability?",
-                    copyCard.getId()
+                    copyEntry.getTargetableId()
             );
             gameData.pendingMayAbilities.addFirst(retargetAbility);
         }

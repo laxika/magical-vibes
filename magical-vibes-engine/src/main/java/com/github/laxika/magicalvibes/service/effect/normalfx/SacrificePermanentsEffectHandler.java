@@ -24,21 +24,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves the whole forced-sacrifice family via {@link SacrificePermanentsEffect}: the
- * {@link com.github.laxika.magicalvibes.model.effect.SacrificeRecipient} routes who sacrifices and
- * the filter selects the interaction mechanic.
- *
- * <p>A bare {@link PermanentIsCreaturePredicate} filter routes through the single-select
- * "sacrifice a creature" primitive ({@link DestructionSupport#performSacrificeCreatureForPlayer} +
- * {@code PermanentChoiceContext.SacrificeCreature}) — byte-identical to the old
- * {@code SacrificeCreatureEffect} / {@code ControllerSacrificesCreatureEffect} /
- * {@code EachOpponentSacrificesCreatureEffect} handlers. Any other filter routes through the
- * multi-permanent choice ({@code MultiPermanentChoiceContext.ForcedSacrifice}) — byte-identical to
- * the old {@code TargetPlayerSacrificesPermanentsEffect} / {@code EachPlayerSacrificesPermanentsEffect}
- * / {@code EachOpponentSacrificesPermanentsEffect} handlers. Both mechanics are behaviourally tested
- * and rules-correct ("sacrifice a creature" is always a single creature). The each-player mechanics
- * differ too: creature single-sac loops per player (sequential), permanents use the APNAP
- * simultaneous {@link PendingForcedSacrifice} queue (CR 101.4 / Destructive Force ruling).
+ * Resolves filtered sacrifices. A single affected player uses the appropriate creature or
+ * permanent selection; multiple players choose in turn order before their simultaneous sacrifices.
  */
 @Component
 @RequiredArgsConstructor

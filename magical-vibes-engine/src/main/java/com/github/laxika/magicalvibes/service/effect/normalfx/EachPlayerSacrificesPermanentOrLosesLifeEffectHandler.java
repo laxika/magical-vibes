@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EachPlayerSacrificeOrLoseLifeState;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -148,13 +147,6 @@ public class EachPlayerSacrificesPermanentOrLosesLifeEffectHandler implements No
                 permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent)
                         && predicateEvaluationService.matchesPermanentPredicate(
                                 gameData, permanent, effect.filter()));
-    }
-
-    private void sacrifice(GameData gameData, UUID permanentId, UUID playerId) {
-        Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
-        if (permanent != null) {
-            destructionSupport.sacrificeAndLog(gameData, permanent, playerId);
-        }
     }
 
     private int lifeLoss(GameData gameData, StackEntry entry,

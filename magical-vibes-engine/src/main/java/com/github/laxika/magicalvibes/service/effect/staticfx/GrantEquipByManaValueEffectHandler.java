@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.SourceCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -39,7 +38,7 @@ public class GrantEquipByManaValueEffectHandler implements StaticEffectHandlerBe
         if (support.matchesStaticFilter(context, target, grant.filter())) {
             int manaValue = target.getCard().getManaValue();
             accumulator.addGrantedEffect(new AttachedBoostEffect(
-                    new SourceCardManaValue(), new Fixed(0), GrantScope.EQUIPPED_CREATURE));
+                    new Fixed(manaValue), new Fixed(0), GrantScope.EQUIPPED_CREATURE));
             String cost = "{" + manaValue + "}";
             accumulator.addActivatedAbility(new ActivatedAbility(
                     false,

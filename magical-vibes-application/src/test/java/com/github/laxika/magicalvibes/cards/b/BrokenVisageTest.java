@@ -99,7 +99,7 @@ class BrokenVisageTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Spirit");
 
         // Advance to the end step — the token should be sacrificed.
-        harness.passUntilWithNoAttackers(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Spirit");
@@ -176,7 +176,7 @@ class BrokenVisageTest extends BaseCardTest {
         castBrokenVisage(attacker.getId());
         harness.passBothPriorities();
 
-        harness.passUntilWithNoAttackers(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player2, "Spirit");
         assertThat(gd.stack).hasSize(1);
@@ -200,7 +200,7 @@ class BrokenVisageTest extends BaseCardTest {
                                 com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
                         com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT, null, "Test setup"));
 
-        harness.passUntilWithNoAttackers(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Spirit");
@@ -219,7 +219,7 @@ class BrokenVisageTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, spirit, Keyword.INDESTRUCTIBLE)).isFalse();
         spirit.setRegenerationShield(1);
 
-        harness.passUntilWithNoAttackers(TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Spirit");

@@ -107,6 +107,7 @@ class BlinkingSpiritTest extends BaseCardTest {
     @Test
     @DisplayName("Multiple activations return the source only once and leave other Spirits alone")
     void repeatedActivationsDoNotReturnAnotherSpirit() {
+        harness.setHand(player1, List.of());
         harness.addToBattlefield(player1, new BlinkingSpirit());
         var otherSpirit = harness.addToBattlefieldAndReturn(player1, new BlinkingSpirit());
 

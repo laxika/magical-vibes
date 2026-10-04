@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.s.SimicInitiate;
 import com.github.laxika.magicalvibes.cards.v.Voidslime;
 import com.github.laxika.magicalvibes.cards.w.WreckingBall;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -131,7 +132,7 @@ class BoundDeterminedTest extends BaseCardTest {
     void boundCanReturnTheCreatureItJustSacrificed() {
         SimicInitiate initiate = new SimicInitiate();
         Permanent creature = harness.addToBattlefieldAndReturn(player1, initiate);
-        creature.setPlusOnePlusOneCounters(1);
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         BoundDetermined bound = new BoundDetermined();
         harness.setHand(player1, List.of(bound));
         harness.addMana(player1, ManaColor.BLACK, 1);

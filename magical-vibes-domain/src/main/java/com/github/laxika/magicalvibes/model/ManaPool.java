@@ -1413,6 +1413,8 @@ public class ManaPool {
 
     public void remove(ManaColor color) {
         pool.merge(color, -1, Integer::sum);
+        persistentMana.put(color, Math.min(persistentMana.getOrDefault(color, 0),
+                Math.max(0, pool.getOrDefault(color, 0))));
         if (color == ManaColor.COLORLESS && promotedColorlessSpellOrPermanentAbilityMana > 0) {
             promotedColorlessSpellOrPermanentAbilityMana--;
         }

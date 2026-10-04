@@ -2887,13 +2887,17 @@ public class DeathTriggerCollectorService {
             DyingCreatureControllerDiscardsCardEffect effect, TriggerContext ctx) {
         // Bereavement: the dying creature's controller (not the source's controller) discards a card.
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        match.gameData().stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
-                cd.dyingCreatureControllerId(),
+                match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new DiscardEffect(1, DiscardRecipient.CONTROLLER)))
-        ));
+                new ArrayList<>(List.of(new DiscardEffect(1, DiscardRecipient.TRIGGERING_PLAYER))),
+                cd.dyingCreatureControllerId(),
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        match.gameData().stack.add(entry);
         logAnyCreatureDeath(match);
         return true;
     }

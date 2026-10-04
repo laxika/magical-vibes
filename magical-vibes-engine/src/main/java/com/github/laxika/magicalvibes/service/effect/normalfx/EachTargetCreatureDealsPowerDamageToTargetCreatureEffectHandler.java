@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachTargetCreatureDealsPowerDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -60,8 +61,12 @@ public class EachTargetCreatureDealsPowerDamageToTargetCreatureEffectHandler imp
             }
 
             int power = gameQueryService.getPowerBasedDamage(gameData, source);
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
-            damageSupport.dealCreatureDamage(gameData, entry, victim, rawDamage, source);
+            StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(), gameQueryService.findPermanentController(gameData, sourceId),
+                    entry.getDescription(), List.of(), victim.getId(), sourceId);
+            damageEntry.setSourcePermanentSnapshot(new Permanent(source));
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, damageEntry);
+            damageSupport.dealCreatureDamage(gameData, damageEntry, victim, rawDamage, source);
         }
 
         gameOutcomeService.checkWinCondition(gameData);

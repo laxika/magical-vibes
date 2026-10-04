@@ -2875,7 +2875,7 @@ public class PermanentChoiceTriggerHandlerService {
                         sct.sourcePermanentId()
                 );
                 if (!sct.targetFilters().isEmpty()) {
-                    entry.setTargetFilter(sct.targetFilters().getFirst());
+                    entry.setTargetFilter(sct.targetFilters().iterator().next());
                 }
                 pushTriggeredEntry(gameData, entry);
 

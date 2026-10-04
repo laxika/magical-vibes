@@ -124,6 +124,8 @@ public class ChoiceHandlerService {
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport> exileFreeCastSupportProvider;
 
     private final GameQueryService gameQueryService;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService permanentRemovalService;
     private final WarpWorldService warpWorldService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final ExileAndReturnTransformedService exileAndReturnTransformedService;
@@ -5548,7 +5550,7 @@ public class ChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        gameData.stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 ctx.sourceCard(),
                 ctx.controllerId(),
@@ -5560,9 +5562,19 @@ public class ChoiceHandlerService {
                 assignments,
                 null,
                 List.of(),
-                ctx.targetIds()));
+                ctx.targetIds());
+        Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        if (source != null) {
+            Permanent snapshot = new Permanent(source);
+            snapshot.setCard(permanentRemovalService.snapshotEffectivePermanentCard(gameData, source));
+            snapshot.setLastKnownPower(gameQueryService.getEffectivePower(gameData, source));
+            snapshot.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, source));
+            snapshot.setLastKnownColors(Set.copyOf(gameQueryService.getEffectiveColors(gameData, source)));
+            entry.setSourcePermanentSnapshot(snapshot);
+        }
+        gameData.stack.add(entry);
         gameLogService.append(gameData, GameLog.cardThen(ctx.sourceCard(),
-                "'s counter distribution is set."));
+                ctx.counterType() == null ? "'s damage division is set." : "'s counter distribution is set."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

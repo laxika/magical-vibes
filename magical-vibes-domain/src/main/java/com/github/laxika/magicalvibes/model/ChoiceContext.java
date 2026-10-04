@@ -92,6 +92,7 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /** Division before a triggered ability is stacked; a null counter type denotes damage. */
     record CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, CounterType counterType,
                                           List<UUID> targetIds, Map<UUID, Integer> assignments, int total,

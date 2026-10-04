@@ -155,13 +155,13 @@ class BlindZealotTest extends BaseCardTest {
         zealot.setAttacking(true);
         Permanent bears = addCreatureReady(player2, new PhyrexianHulk());
 
-        resolveCombat();
-
-        harness.handlePermanentChosen(player1, bears.getId());
-        harness.passBothPriorities();
-        GameData gd = harness.getGameData();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, () -> {
+            resolveCombat();
+            harness.handlePermanentChosen(player1, bears.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+        });
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
@@ -174,11 +174,13 @@ class BlindZealotTest extends BaseCardTest {
         Permanent victim = addCreatureReady(player2, new PhyrexianHulk());
         victim.setRegenerationShield(1);
 
-        resolveCombat();
-        harness.handlePermanentChosen(player1, victim.getId());
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.POSTCOMBAT_MAIN, () -> {
+            resolveCombat();
+            harness.handlePermanentChosen(player1, victim.getId());
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.passBothPriorities();
+        });
 
         harness.assertInGraveyard(player1, "Blind Zealot");
         harness.assertOnBattlefield(player2, "Phyrexian Hulk");

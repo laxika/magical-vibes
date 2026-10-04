@@ -69,6 +69,10 @@ Damage events retain snapshots of damaged permanents before state-based actions.
 
 Simultaneous death batches snapshot continuously granted `ON_DEATH` abilities before moving any permanent. The snapshot preserves abilities supplied by a paired creature or another permanent dying in the same event and is cleared when that event ends.
 
+Myriad prepares copies and applies token replacements before choosing a player or planeswalker for each token to attack. `PreparedOpponentTokenCopiesAttacking` holds the prepared batch until every choice completes; doubled tokens have independent choices and enter simultaneously.
+
+`SourceCardInGraveyard` can retain an expected graveyard entry version. Graveyard creature-put triggers bind this version when collected, so leaving and reentering the graveyard cannot satisfy an older Bridge from Below ability.
+
 Delayed graveyard returns use stack entries and `CardIdSetPredicate` with graveyard entry versions.
 Divided damage assignments belong to the individual stack entry; copies retain their division
 while offering legal replacement targets. Additional ETB abilities on token copies can register
@@ -110,3 +114,7 @@ Queued exile casts with a mandatory discard cost carry a prepared spell in `Disc
 `StackEntry.resolutionExiledCardIds` is an immutable list of cards exiled during that resolution, copied unchanged into simulation snapshots. Follow-up permissions for "cards exiled this way" use that list rather than historical source-linked exile records. Free casts retain their original zone in modal and target-choice contexts until the spell is put onto the stack.
 
 Persistent face-down exile access keeps separate play and look permissions, each bound to the player granted access during the exiling resolution. Source control changes do not transfer those permissions. `GameStateMessage.lookedAtExileCards` exposes an immutable list only to that viewer, including cards that cannot be cast and cards whose source has left; those cards are not added to `playableExileCards`. Removing a card from exile clears its look permission.
+
+Bane Alley Broker-style implicit look abilities grant additional persistent face-down exile viewers as source control changes. GameData.additionalExileLookPermissions retains each granted viewer until the card leaves exile and is independently copied for simulations. The view projection exposes those cards only to permitted viewers, including after the source leaves.
+
+Aura attachment legality checks independent protection in a fresh layer pass excluding that Aura's protection grant, preserving other abilities and the normal board cache.

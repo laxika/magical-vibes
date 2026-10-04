@@ -1672,7 +1672,7 @@ public class PermanentRemovalService {
 
     private record RemovedPermanentInfo(UUID controllerId, UUID ownerId, boolean hadPrintedAbilities) {}
 
-    /** Captures a permanent's effective card types and subtypes before it leaves the battlefield. */
+    /** Captures a permanent's effective types, subtypes, colors, and keywords before departure. */
     public Card snapshotEffectivePermanentCard(GameData gameData, Permanent permanent) {
         Card lastKnownCard = permanent.getCard().createRuntimeCopy();
         java.util.EnumSet<CardType> lastKnownTypes = java.util.EnumSet.noneOf(CardType.class);
@@ -1694,6 +1694,13 @@ public class PermanentRemovalService {
             }
         }
         lastKnownCard.setSubtypes(lastKnownSubtypes);
+        lastKnownCard.setColors(List.copyOf(gameQueryService.getEffectiveColors(gameData, permanent)));
+        var bonus = gameQueryService.computeStaticBonus(gameData, permanent);
+        java.util.EnumSet<Keyword> keywords = java.util.EnumSet.noneOf(Keyword.class);
+        for (Keyword keyword : Keyword.values()) {
+            if (gameQueryService.hasKeyword(permanent, bonus, keyword)) keywords.add(keyword);
+        }
+        lastKnownCard.setKeywords(keywords);
         return lastKnownCard;
     }
 
@@ -1715,9 +1722,13 @@ public class PermanentRemovalService {
                 boolean hadPrintedAbilities = hadPrintedAbilitiesBeforeRemoval(gameData, target);
                 target.setLastKnownToughness(removalSnapshot != null && removalSnapshot.getLastKnownToughness() != null
                         ? removalSnapshot.getLastKnownToughness() : gameQueryService.getEffectiveToughness(gameData, target));
-                target.setLastKnownColors(Set.copyOf(gameQueryService.getEffectiveColors(gameData, target)));
+                target.setLastKnownColors(removalSnapshot != null
+                        ? Set.copyOf(removalSnapshot.getCard().getColors())
+                        : Set.copyOf(gameQueryService.getEffectiveColors(gameData, target)));
                 target.setLastKnownPower(gameData.simultaneousDyingPowers.getOrDefault(
                         target.getId(), gameQueryService.getEffectivePower(gameData, target)));
+                Card lastKnownCard = removalSnapshot != null ? removalSnapshot.getCard()
+                        : snapshotEffectivePermanentCard(gameData, target);
                 for (StackEntry entry : gameData.stack) {
                     for (Permanent attacker : entry.getAttackingPermanentSnapshots()) {
                         if (target.getId().equals(attacker.getId())) {
@@ -1725,7 +1736,9 @@ public class PermanentRemovalService {
                         }
                     }
                     if (target.getId().equals(entry.getSourcePermanentId())) {
-                        entry.setSourcePermanentSnapshot(new Permanent(target));
+                        Permanent sourceSnapshot = new Permanent(target);
+                        sourceSnapshot.setCard(lastKnownCard);
+                        entry.setSourcePermanentSnapshot(sourceSnapshot);
                     }
                     if (entry.getAttachedPermanentSnapshot() != null
                             && target.getId().equals(entry.getAttachedPermanentSnapshot().getId())) {
@@ -1747,7 +1760,6 @@ public class PermanentRemovalService {
                         target, gameQueryService.getEffectivePower(gameData, target));
                 boolean wasLand = gameQueryService.isLand(gameData, target);
                 unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, target, target.getAttachedTo(), playerId);
-                Card lastKnownCard = snapshotEffectivePermanentCard(gameData, target);
                 List<StackEntry> watchingEntries = new ArrayList<>(gameData.stack);
                 watchingEntries.addAll(gameData.pendingManaAbilityTriggers);
                 for (StackEntry entry : watchingEntries) {
@@ -1761,7 +1773,9 @@ public class PermanentRemovalService {
                     entry.getLastKnownPermanentCounters().put(target.getId(),
                             new java.util.EnumMap<>(target.getCounters()));
                     if (target.getId().equals(entry.getSourcePermanentId())) {
-                        entry.setSourcePermanentSnapshot(new Permanent(target));
+                        Permanent sourceSnapshot = new Permanent(target);
+                        sourceSnapshot.setCard(lastKnownCard);
+                        entry.setSourcePermanentSnapshot(sourceSnapshot);
                         for (CardEffect resolvingEffect : entry.getEffectsToResolve()) {
                             if (resolvingEffect instanceof com.github.laxika.magicalvibes.model.effect.CreateTokenWithAttachedCountCountersEffect attachmentCount) {
                                 int[] attached = {0};

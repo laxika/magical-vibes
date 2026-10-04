@@ -119,7 +119,7 @@ import java.util.function.Predicate;
  * silently invisible to satisfiability/validation the way {@code DiscardCardTypeCost} once was.
  */
 @Component
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_ = @org.springframework.beans.factory.annotation.Autowired)
 public class AdditionalSpellCostService {
 
     /**
@@ -194,6 +194,12 @@ public class AdditionalSpellCostService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final ObjectProvider<CastingCostService> castingCostService;
+
+    /** Compatibility constructor for isolated additional-cost queries without a casting-cost service. */
+    public AdditionalSpellCostService(GameQueryService gameQueryService,
+                                      PredicateEvaluationService predicateEvaluationService) {
+        this(gameQueryService, predicateEvaluationService, null);
+    }
 
     /** Returns the spell's optional counter-removal cost reduction, if it has one. */
     public RemoveCountersForCostReductionEffect findRemoveCountersForCostReductionEffect(Card card) {
@@ -2036,7 +2042,8 @@ public class AdditionalSpellCostService {
             }
         }
         ManaCost totalCost = baseCost.increasedBy(new ManaCost(optionManaCost));
-        int genericAdjustment = castingCostService.getObject().getCastCostModifier(gameData, playerId, card);
+        int genericAdjustment = castingCostService == null ? 0
+                : castingCostService.getObject().getCastCostModifier(gameData, playerId, card);
         if (genericAdjustment < 0) {
             totalCost = totalCost.reducedBy(new ManaCost("{" + -genericAdjustment + "}"));
         } else if (genericAdjustment > 0) {

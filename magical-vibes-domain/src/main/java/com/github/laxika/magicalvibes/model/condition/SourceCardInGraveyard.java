@@ -6,7 +6,12 @@ package com.github.laxika.magicalvibes.model.condition;
  * Fails if the card left the graveyard in the meantime, so the ability does nothing (CR 603.4).
  * Used by Vengeful Pharaoh.
  */
-public record SourceCardInGraveyard() implements Condition {
+public record SourceCardInGraveyard(long expectedEntryVersion) implements Condition {
+
+    /** An unbound condition is bound to a graveyard incarnation when its trigger is collected. */
+    public SourceCardInGraveyard() {
+        this(-1L);
+    }
 
     @Override
     public String conditionName() {

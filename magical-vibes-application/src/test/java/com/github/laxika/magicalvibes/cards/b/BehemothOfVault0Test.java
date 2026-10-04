@@ -112,7 +112,7 @@ class BehemothOfVault0Test extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
-        harness.withAutoStopAtStep(TurnStep.PRECOMBAT_MAIN,
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
                 () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);

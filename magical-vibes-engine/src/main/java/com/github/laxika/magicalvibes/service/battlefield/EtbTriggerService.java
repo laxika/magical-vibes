@@ -804,11 +804,15 @@ public class EtbTriggerService {
             List<UUID> activeTargetIds = targetsForActiveEtbGroups(card, otherEffects, targetIds);
             Map<UUID, Integer> dividedAssignments = otherEffects.stream().anyMatch(effect ->
                     effect instanceof com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect divided
-                            && divided.etbAssignments() && divided.targetRestriction() == null
+                            && divided.etbAssignments() && (divided.targetRestriction() == null
+                            || divided.targetRestriction() instanceof com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate)
                             || effect instanceof com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect prevention
                             && prevention.etbAssignments())
                     ? new java.util.LinkedHashMap<>(gameData.pendingETBDamageAssignments) : Map.of();
             if (!dividedAssignments.isEmpty()) gameData.pendingETBDamageAssignments = Map.of();
+            if (!dividedAssignments.isEmpty() && activeTargetIds.isEmpty()) {
+                activeTargetIds = List.copyOf(dividedAssignments.keySet());
+            }
             boolean hasTarget = targetId != null || !activeTargetIds.isEmpty();
 
             // A permanent that entered without a target chosen at cast time — a token copy,

@@ -1178,6 +1178,13 @@ public class LayerSystemService {
                 && grant.effect() instanceof com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
     }
 
+    /** Whether the active attachment check excludes this source's protection ability. */
+    public boolean isExcludedProtectionGrant(GameData gameData, UUID sourceId, CardEffect effect) {
+        Pass pass = activePass(gameData);
+        return pass != null && sourceId.equals(pass.excludedProtectionSourceId)
+                && isAttachmentProtectionGrant(effect);
+    }
+
     /**
      * Collects every effect instance classified into the given layer from all STATIC slots and
      * floating effects, ordered per CR 613.2b/613.7: characteristic-defining instances first,

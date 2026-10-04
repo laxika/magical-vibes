@@ -1652,7 +1652,7 @@ public class GameData {
     public final Map<UUID, Set<CardPredicate>> cardTypeFlashGrantsUntilNextTurn =
             new ConcurrentHashMap<>();
 
-    /** Land subtype -&gt; extra mana colors added whenever a player taps a land of that subtype for mana
+    /** Land subtype -&gt; extra mana colors and creating controllers, used when a player taps that subtype for mana
      *  this turn (Chaos Moon's odd branch: "whenever a player taps a Mountain for mana, that player
      *  adds an additional {R}"). Each resolved effect contributes separately. Cleared at end of turn. */
     public final Map<CardSubtype, List<TemporaryLandTapMana>> extraManaOnLandSubtypeTapThisTurn = new ConcurrentHashMap<>();
@@ -8060,8 +8060,8 @@ public class GameData {
                 copy.playersCantCastSpellTypesUntilEndOfControllerNextTurn.put(k, new HashMap<>(v)));
         copy.cardsRevealedInHandUntilOwnerNextTurn.putAll(this.cardsRevealedInHandUntilOwnerNextTurn);
         copy.cardsCantBePlayedInHandUntilOwnerNextTurn.putAll(this.cardsCantBePlayedInHandUntilOwnerNextTurn);
-        this.extraManaOnLandSubtypeTapThisTurn.forEach((subtype, colors) ->
-                copy.extraManaOnLandSubtypeTapThisTurn.put(subtype, new ArrayList<>(colors)));
+        this.extraManaOnLandSubtypeTapThisTurn.forEach((subtype, bonuses) ->
+                copy.extraManaOnLandSubtypeTapThisTurn.put(subtype, new ArrayList<>(bonuses)));
         copy.landSubtypeFixedManaColorThisTurn.putAll(this.landSubtypeFixedManaColorThisTurn);
         copy.nonbasicLandsFixedManaColorThisTurn = this.nonbasicLandsFixedManaColorThisTurn;
         copy.allLandsFixedManaColorThisTurn = this.allLandsFixedManaColorThisTurn;

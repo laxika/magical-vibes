@@ -227,3 +227,4 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 
 
 | ETB any player may sacrifice two creatures, then sacrifice this creature | `p/ProwlingPangolin.java` | AnyPlayerMaySacrificeCreaturesThenSacrificeSourceEffect(2) — offers eligible players the choice in APNAP order, uses the multi-permanent sacrifice flow, and continues to later players after an acceptance |
+| ETB any-number targets with pre-stack damage division | `b/BogardanHellkite.java` | `target(0, 5)` with `DealDividedDamageEffect(Fixed(5), null, CHOSEN, PermanentTruePredicate, 5, true, false, true)`; choose targets and assign at least 1 damage to each before priority. Zero targets is legal. |

@@ -5694,6 +5694,9 @@ public class GameQueryService {
                 if (source.isFaceDown()) {
                     continue;
                 }
+                if (layerSystemService.isExcludedProtectionGrant(gameData, source.getId(), effect)) {
+                    continue;
+                }
                 if (source == target && !(effect instanceof GrantActivatedAbilityEffect grant
                         && grant.scope() == GrantScope.OWN_PERMANENTS)) {
                     continue;

@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingSourceDamage;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInGraveyard;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggerMode;
@@ -770,6 +771,7 @@ public class TriggerCollectionService {
         }
         var ctx = new TriggerContext.SpellCast(spellCard, castingPlayerId, castZone,
                 exiledSourcePermanentId);
+        collectCreatureSpellBoonTriggers(gameData, spellCard, castingPlayerId, castFaceDown);
         if (!castFaceDown && !spellCard.hasType(CardType.CREATURE)) {
             for (Permanent source : gameData.playerBattlefields.getOrDefault(castingPlayerId, List.of())) {
                 if (!gameQueryService.hasKeyword(gameData, source, Keyword.PROWESS)) continue;
@@ -11554,18 +11556,26 @@ public class TriggerCollectionService {
         if (resolved == null) {
             return;
         }
+        long sourceEntryVersion = gameData.graveyardEntryVersion(sourceCard.getId());
+        if (resolved instanceof ConditionalEffect conditional
+                && conditional.condition() instanceof SourceCardInGraveyard) {
+            resolved = new ConditionalEffect(new SourceCardInGraveyard(sourceEntryVersion),
+                    conditional.wrapped(), conditional.interveningIf(), conditional.triggerTimeOnly());
+        }
         if (resolved instanceof MayPayManaEffect mayPay) {
             gameData.queueMayAbility(sourceCard, controllerId, mayPay, null);
         } else if (resolved instanceof MayEffect may) {
             gameData.queueMayAbility(sourceCard, controllerId, may);
         } else {
-            gameData.stack.add(new StackEntry(
+            StackEntry trigger = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sourceCard,
                     controllerId,
                     sourceCard.getName() + "'s ability",
                     new ArrayList<>(List.of(resolved))
-            ));
+            );
+            trigger.setTriggeringCardGraveyardEntryVersion(sourceEntryVersion);
+            gameData.stack.add(trigger);
         }
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} graveyard trigger fires when a creature enters a graveyard",
@@ -13681,6 +13691,27 @@ public class TriggerCollectionService {
         }
     }
 
+    private void collectCreatureSpellBoonTriggers(GameData gameData, Card spellCard,
+                                                 UUID castingPlayerId, boolean castFaceDown) {
+        if (!castFaceDown && !spellCard.hasType(CardType.CREATURE)) return;
+        for (Boon boon : List.copyOf(gameData.boons)) {
+            if (boon.trigger() != com.github.laxika.magicalvibes.model.BoonTrigger.CREATURE_CAST
+                    || !castingPlayerId.equals(boon.controllerId())) continue;
+            gameData.boons.remove(boon);
+            if (boon.remainingUses() > 1) {
+                gameData.boons.add(new Boon(boon.controllerId(), boon.sourceCard(), boon.effect(),
+                        boon.remainingUses() - 1, boon.trigger(), boon.targetFilter()));
+            }
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, boon.sourceCard(),
+                    boon.controllerId(), boon.sourceCard().getName() + "'s boon",
+                    new ArrayList<>(List.of(boon.effect())));
+            entry.setTriggeringCardId(spellCard.getId());
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
+        }
+    }
+
     private void collectAllyCreatureBoonTriggers(GameData gameData, UUID controllerId,
                                                   List<UUID> enteringPermanentIds) {
         if (enteringPermanentIds == null || enteringPermanentIds.isEmpty()) return;
@@ -15107,7 +15138,10 @@ public class TriggerCollectionService {
             return true;
         }
         if (gameQueryService.isCreature(gameData, source)
-                && gameQueryService.hasKeyword(gameData, source, Keyword.WARD)) {
+                && (gameQueryService.hasKeyword(gameData, source, Keyword.WARD)
+                || grantedTriggeredAbilitySupport.grantedTriggeredEffects(
+                gameData, source, EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL).stream()
+                .anyMatch(this::isCounterUnlessTrigger))) {
             return true;
         }
         if (source.isAttached() && source.getAttachedTo() != null) {

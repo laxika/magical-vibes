@@ -405,7 +405,8 @@ public class UntapStepService {
     }
 
     private boolean hasSelfCrossPlayerUntap(GameData gameData, Permanent source, UUID controllerId, TurnStep step) {
-        return source.getCard().getEffects(EffectSlot.STATIC).stream()
+        return !gameQueryService.hasLostPrintedAbilities(gameData, source)
+                && source.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(effect -> isActiveSelfCrossPlayerUntap(gameData, source, controllerId, step, effect));
     }
 

@@ -158,8 +158,8 @@ class BlazingCrescendoTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
-        harness.clearBattlefield(player1);
-        harness.clearBattlefield(player2);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        gd.playerBattlefields.get(player2.getId()).clear();
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.END_STEP);
@@ -180,7 +180,7 @@ class BlazingCrescendoTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         gd.queueExtraTurnFirst(player1.getId(), false);
-        harness.clearBattlefield(player1);
+        gd.playerBattlefields.get(player1.getId()).clear();
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
 

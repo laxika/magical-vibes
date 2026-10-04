@@ -84,7 +84,7 @@ class BasilicaGuardsTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
-        harness.withAutoStopAtStep(TurnStep.PRECOMBAT_MAIN,
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
                 () -> harness.handleMayAbilityChosen(player1, true));
 
         harness.assertLife(player1, 21);

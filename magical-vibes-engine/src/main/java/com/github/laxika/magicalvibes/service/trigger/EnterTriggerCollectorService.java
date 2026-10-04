@@ -1111,8 +1111,13 @@ public class EnterTriggerCollectorService {
                     match.markSourceOncePerTurnOnAcceptance(),
                     enteringPermanent == null ? null : gameQueryService.getEffectiveToughness(
                             match.gameData(), enteringPermanent));
-            if (gainLifeEqualToEnteringPower) {
-                match.gameData().stack.getLast().setNonTargeting(true);
+            if (gainLifeEqualToEnteringPower || may.wrapped().usesEnteringPermanentReference()) {
+                StackEntry entry = match.gameData().stack.getLast();
+                entry.setNonTargeting(true);
+                if (enteringPermanent != null) {
+                    entry.setTriggeringPermanentPowerAtTrigger(gameQueryService.getEffectivePower(
+                            match.gameData(), enteringPermanent));
+                }
             }
         }
         logTriggered(match);
