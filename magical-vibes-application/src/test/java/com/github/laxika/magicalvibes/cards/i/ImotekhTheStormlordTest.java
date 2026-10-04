@@ -29,8 +29,7 @@ class ImotekhTheStormlordTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Reminisce()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
@@ -52,8 +51,7 @@ class ImotekhTheStormlordTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Reminisce()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -83,5 +81,91 @@ class ImotekhTheStormlordTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    void doesNotTriggerWhenArtifactsLeaveOpponentsGraveyard() {
+        harness.addToBattlefield(player1, new ImotekhTheStormlord());
+        harness.setGraveyard(player2, List.of(new Spellbook(), new MyrRetriever()));
+        harness.setHand(player1, List.of(new Reminisce()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void artifactCreatureLeavingGraveyardCreatesOnlyTwoTokens() {
+        harness.addToBattlefield(player1, new ImotekhTheStormlord());
+        harness.setGraveyard(player1, List.of(new MyrRetriever(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Reminisce()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(2);
+    }
+
+    @Test
+    void doesNotBuffCreaturesDuringOpponentsCombat() {
+        harness.addToBattlefield(player1, new ImotekhTheStormlord());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MyrRetriever());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isFalse();
+    }
+
+    @Test
+    void combatTriggerHasNoLegalTargetWhenOnlyImotekhIsAnArtifactCreature() {
+        Permanent imotekh = harness.addToBattlefieldAndReturn(player1, new ImotekhTheStormlord());
+        harness.addToBattlefield(player1, new Spellbook());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new MyrRetriever());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, imotekh)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, imotekh, Keyword.MENACE)).isFalse();
+    }
+
+    @Test
+    void combatBonusExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player1, new ImotekhTheStormlord());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MyrRetriever());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isFalse();
     }
 }
