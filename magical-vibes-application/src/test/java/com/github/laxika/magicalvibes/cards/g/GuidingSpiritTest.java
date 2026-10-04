@@ -116,4 +116,64 @@ class GuidingSpiritTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, spiritIndex, null, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Uses the new top creature card when the graveyard changes before resolution")
+    void usesTopCardAtResolution() {
+        GuidingSpirit originalTop = new GuidingSpirit();
+        GuidingSpirit newTop = new GuidingSpirit();
+        harness.setGraveyard(player2, List.of(originalTop));
+        harness.setLibrary(player2, List.of());
+
+        harness.activateAbility(player1, spiritIndex, null, player2.getId());
+        harness.setGraveyard(player2, List.of(originalTop, newTop));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(originalTop);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(newTop);
+    }
+
+    @Test
+    @DisplayName("Does nothing if a noncreature becomes the top card before resolution")
+    void nonCreatureAddedBeforeResolutionPreventsReturn() {
+        GuidingSpirit creature = new GuidingSpirit();
+        Forest forest = new Forest();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, spiritIndex, null, player1.getId());
+        harness.setGraveyard(player1, List.of(creature, forest));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature, forest);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate with a noncreature on top and return a creature added before resolution")
+    void creatureAddedBeforeResolutionCanBeReturned() {
+        Forest forest = new Forest();
+        GuidingSpirit creature = new GuidingSpirit();
+        harness.setGraveyard(player2, List.of(forest));
+        harness.setLibrary(player2, List.of());
+
+        harness.activateAbility(player1, spiritIndex, null, player2.getId());
+        harness.setGraveyard(player2, List.of(forest, creature));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(forest);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(creature);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the tap cost while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        spirit.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, spiritIndex, null, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(spirit.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }
