@@ -83,8 +83,7 @@ class HotSpringsTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a land you do not control")
     void cannotEnchantOpponentsLand() {
-        harness.addToBattlefield(player2, new Forest());
-        Permanent opponentForest = gd.playerBattlefields.get(player2.getId()).getFirst();
+        Permanent opponentForest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.setHand(player1, List.of(new HotSprings()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -105,12 +104,79 @@ class HotSpringsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void auraResolvesOntoControlledLandAndGrantsAbility() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new HotSprings()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+        castIncinerateAt(player1);
+
+        assertThat(forest.isTapped()).isTrue();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    void shieldIsConsumedByFirstDamageEvent() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        attach(player1);
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        castIncinerateAt(player1);
+        castIncinerateAt(player1);
+
+        harness.assertLife(player1, 15);
+    }
+
+    @Test
+    void shieldsFromTwoLandsStackToProtectCreature() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        attach(player1);
+        attach(player1);
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        harness.activateAbility(player1, 0, 0, null, bear.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 2, 0, null, bear.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bear);
+        assertThat(bear.getMarkedDamage()).isEqualTo(1);
+        assertThat(bear.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    void unusedShieldExpiresAtEndOfTurn() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        attach(player1);
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+
+        castIncinerateAt(player1);
+
+        harness.assertLife(player1, 17);
+    }
+
     private Permanent attach(Player player) {
-        harness.addToBattlefield(player, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player.getId()).getFirst();
-        Permanent aura = new Permanent(new HotSprings());
+        Permanent forest = harness.addToBattlefieldAndReturn(player, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player, new HotSprings());
         aura.setAttachedTo(forest.getId());
-        gd.playerBattlefields.get(player.getId()).add(aura);
         return forest;
     }
 
