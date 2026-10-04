@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.DreadshipReef;
 import com.github.laxika.magicalvibes.cards.m.Mossdog;
+import com.github.laxika.magicalvibes.cards.r.RemoteFarm;
+import com.github.laxika.magicalvibes.cards.s.SubterraneanHangar;
 import com.github.laxika.magicalvibes.cards.t.TerrainGenerator;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HarvestMage.class, Forest.class, Mossdog.class, TerrainGenerator.class})
+@CardUsed({HarvestMage.class, Forest.class, Mossdog.class, TerrainGenerator.class,
+        RemoteFarm.class, SubterraneanHangar.class, DreadshipReef.class})
 class HarvestMageTest extends BaseCardTest {
 
     @Test
@@ -55,12 +60,7 @@ class HarvestMageTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.tapPermanent(player1, 1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -110,6 +110,114 @@ class HarvestMageTest extends BaseCardTest {
         harness.handleListChoice(player1, "BLUE");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Harvest Mage does not change an opponent's land mana")
+    void doesNotReplaceOpponentsMana() {
+        setupMainPhase();
+        addReadyHarvestMage();
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new Mossdog()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Harvest Mage replaces multiple mana with one while preserving costs and sacrifice")
+    void replacesAmountAndPreservesOtherEffects() {
+        setupMainPhase();
+        addReadyHarvestMage();
+        Permanent farm = harness.addToBattlefieldAndReturn(player1, new RemoteFarm());
+        farm.setCounterCount(CounterType.DEPLETION, 1);
+        farm.untap();
+        harness.setHand(player1, List.of(new Mossdog()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        harness.assertInGraveyard(player1, "Remote Farm");
+        harness.assertNotOnBattlefield(player1, "Remote Farm");
+    }
+
+    @Test
+    @DisplayName("Harvest Mage does not waive a storage land's counter removal cost")
+    void stillRemovesStorageCounters() {
+        setupMainPhase();
+        addReadyHarvestMage();
+        Permanent hangar = harness.addToBattlefieldAndReturn(player1, new SubterraneanHangar());
+        hangar.setCounterCount(CounterType.STORAGE, 3);
+        hangar.untap();
+        harness.setHand(player1, List.of(new Mossdog()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, "2");
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(hangar.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Harvest Mage cannot replace a mana production event that produces no mana")
+    void emptyStorageLandProducesNoMana() {
+        setupMainPhase();
+        addReadyHarvestMage();
+        Permanent hangar = harness.addToBattlefieldAndReturn(player1, new SubterraneanHangar());
+        hangar.untap();
+        harness.setHand(player1, List.of(new Mossdog()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(hangar.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Harvest Mage leaves mana abilities without a tap cost unchanged")
+    void doesNotReplaceManaFromAbilityWithoutTapCost() {
+        setupMainPhase();
+        addReadyHarvestMage();
+        Permanent reef = harness.addToBattlefieldAndReturn(player1, new DreadshipReef());
+        reef.setCounterCount(CounterType.STORAGE, 3);
+        harness.setHand(player1, List.of(new Mossdog()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.handleListChoice(player1, "2");
+        harness.handleListChoice(player1, "BLUE");
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(reef.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
