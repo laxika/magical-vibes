@@ -85,6 +85,45 @@ class ImperialRecruiterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
+    @Test
+    @DisplayName("An empty library still causes a search and shuffle")
+    void emptyLibraryStillShuffles() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast searches only the controller's library")
+    void enteringWithoutCastingSearchesControllersLibrary() {
+        Card ownCreature = new AlertShuInfantry();
+        Card opponentCreature = new VolunteerMilitia();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(ownCreature));
+        harness.setLibrary(player2, List.of(opponentCreature));
+
+        harness.enterBattlefieldAndReturn(player1, new ImperialRecruiter());
+        resolveAllTriggers();
+
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(ownCreature);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(ownCreature);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentCreature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
     private void setupAndCast() {
         harness.castFromHand(player1, new ImperialRecruiter(), "{2}{R}");
     }
