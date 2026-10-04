@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "IKO", collectorNumber = "207")
+@CardRegistration(set = "SCD", collectorNumber = "243")
 public class SkycatSovereign extends Card {
 
     public SkycatSovereign() {

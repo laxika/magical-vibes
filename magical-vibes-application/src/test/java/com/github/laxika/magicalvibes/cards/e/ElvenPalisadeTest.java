@@ -134,6 +134,59 @@ class ElvenPalisadeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("A tapped Forest can pay the sacrifice cost")
+    void canSacrificeTappedForest() {
+        harness.addToBattlefield(player1, new ElvenPalisade());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.setTapped(true);
+        Permanent attacker = addAttacker(player1);
+        declareAttackerWithBlocker(player1, attacker);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(attacker.getPowerModifier()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(-3);
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's Forest cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsForest() {
+        harness.addToBattlefield(player1, new ElvenPalisade());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent attacker = addAttacker(player1);
+        declareAttackerWithBlocker(player1, attacker);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(attacker.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Repeated activations each sacrifice a Forest and stack their reductions")
+    void canActivateRepeatedly() {
+        harness.addToBattlefield(player1, new ElvenPalisade());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent attacker = addAttacker(player1);
+        declareAttackerWithBlocker(player1, attacker);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(-6);
+        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof Forest).hasSize(2);
+    }
+
     private Permanent addAttacker(Player player) {
         return addCreatureReady(player, new RagingGoblin());
     }

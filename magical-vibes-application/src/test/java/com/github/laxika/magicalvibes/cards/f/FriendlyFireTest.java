@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.ArashinCleric;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
@@ -7,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FriendlyFire.class, GrizzlyBears.class, Mountain.class, ArashinCleric.class})
 class FriendlyFireTest extends BaseCardTest {
 
     @Test
@@ -30,8 +33,7 @@ class FriendlyFireTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         UUID targetId = harness.getPermanentId(player2, "Large Beast");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .singleElement()
@@ -53,8 +55,7 @@ class FriendlyFireTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         UUID targetId = harness.getPermanentId(player2, "Large Beast");
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .singleElement()
@@ -74,6 +75,79 @@ class FriendlyFireTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Mountain");
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Lethal creature damage still deals the full revealed mana value to its controller")
+    void lethalDamageAlsoDamagesController() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new ArashinCleric()).getId();
+        harness.setHand(player2, List.of(new FriendlyFire()));
+        harness.setHand(player1, List.of(new FriendlyFire()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertInGraveyard(player2, "Arashin Cleric");
+        harness.assertNotOnBattlefield(player2, "Arashin Cleric");
+        harness.assertLife(player2, 16);
+        harness.assertInHand(player2, "Friendly Fire");
+    }
+
+    @Test
+    @DisplayName("A revealed land deals no damage")
+    void revealedLandDealsNoDamage() {
+        var target = harness.addToBattlefieldAndReturn(player2, new ArashinCleric());
+        harness.setHand(player2, List.of(new Mountain()));
+        harness.setHand(player1, List.of(new FriendlyFire()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Can target your own creature and reveals from your hand after casting")
+    void targetsOwnCreatureAndUsesControllersHand() {
+        var target = harness.addToBattlefieldAndReturn(player1, new ArashinCleric());
+        harness.setHand(player1, List.of(new FriendlyFire(), new ArashinCleric()));
+        harness.setHand(player2, List.of(new FriendlyFire()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player1, "Arashin Cleric");
+    }
+
+    @Test
+    @DisplayName("Does not damage the controller if the only target has left the battlefield")
+    void removedTargetPreventsPlayerDamage() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new ArashinCleric()).getId();
+        harness.setHand(player2, List.of(new FriendlyFire()));
+        harness.setHand(player1, List.of(new FriendlyFire()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.castInstant(player1, 0, targetId);
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player2, "Friendly Fire");
+        harness.assertInGraveyard(player1, "Friendly Fire");
     }
 
     private static Card createCreature(String name, int power, int toughness) {

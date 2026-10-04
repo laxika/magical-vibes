@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.s.SpiritualVisit;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -119,6 +120,9 @@ class ElderPineOfJukaiTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
         assertThat(gd.playerHands.get(player1.getId())).contains(spirit);
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card.getId().equals(spirit.getId()));
     }
@@ -138,6 +142,8 @@ class ElderPineOfJukaiTest extends BaseCardTest {
 
         var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.maxCount()).isEqualTo(1);
         assertThat(choice.validCardIds()).contains(eligibleSpirit.getId());
         assertThat(choice.validCardIds()).doesNotContain(
                 expensiveSpirit.getId(), nonSpirit.getId(), opponentSpirit.getId());
@@ -154,8 +160,10 @@ class ElderPineOfJukaiTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spirit);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(spirit);
@@ -170,5 +178,61 @@ class ElderPineOfJukaiTest extends BaseCardTest {
         destroyElderPine();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Revealed nonlands go below the untouched library in the chosen order")
+    void nonlandsAreOrderedOnBottom() {
+        harness.addToBattlefield(player1, new ElderPineOfJukai());
+        Card land = new MirenTheMoaningWell();
+        Card firstNonland = new AkkiUnderling();
+        Card secondNonland = new Secretkeeper();
+        Card untouchedLand = new MikokoroCenterOfTheSea();
+        harness.setLibrary(player1, List.of(firstNonland, land, secondNonland, untouchedLand));
+        harness.setHand(player1, List.of(new SpiritualVisit()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        var reorder = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder).isNotNull();
+        assertThat(reorder.cards()).containsExactlyInAnyOrder(firstNonland, secondNonland);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(
+                List.of(reorder.cards().indexOf(secondNonland), reorder.cards().indexOf(firstNonland))));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouchedLand, secondNonland, firstNonland);
+    }
+
+    @Test
+    @DisplayName("With fewer than three cards, only the available cards are revealed")
+    void shortLibraryIsProcessed() {
+        harness.addToBattlefield(player1, new ElderPineOfJukai());
+        Card land = new MirenTheMoaningWell();
+        Card nonland = new AkkiUnderling();
+        harness.setLibrary(player1, List.of(land, nonland));
+        harness.setHand(player1, List.of(new SpiritualVisit()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonland);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The cast trigger does nothing with an empty library")
+    void emptyLibraryDoesNotPrompt() {
+        harness.addToBattlefield(player1, new ElderPineOfJukai());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new SpiritualVisit()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

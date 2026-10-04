@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationTriggerEffe
 @CardRegistration(set = "XLN", collectorNumber = "165")
 @CardRegistration(set = "C21", collectorNumber = "180")
 @CardRegistration(set = "BLC", collectorNumber = "116")
+@CardRegistration(set = "SCD", collectorNumber = "159")
 public class SunbirdsInvocation extends Card {
 
     public SunbirdsInvocation() {

@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HeritageReclamation;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,17 +12,19 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EssenceAnchor.class, GrizzlyBears.class})
+@CardUsed({EssenceAnchor.class, HeritageReclamation.class})
 class EssenceAnchorTest extends BaseCardTest {
 
     @Test
     @DisplayName("Surveils 1 at the beginning of its controller's upkeep")
     void upkeepSurveilsOne() {
         harness.addToBattlefield(player1, new EssenceAnchor());
-        Card topCard = new GrizzlyBears();
+        Card topCard = new HeritageReclamation();
         gd.playerDecks.get(player1.getId()).addFirst(topCard);
 
         advanceToUpkeep(player1);
@@ -71,6 +74,97 @@ class EssenceAnchorTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void surveilCanKeepTopCardWithoutEnablingActivation() {
+        harness.addToBattlefield(player1, new EssenceAnchor());
+        Card topCard = new HeritageReclamation();
+        gd.playerDecks.get(player1.getId()).addFirst(topCard);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP,
+                () -> harness.handleMayAbilityChosen(player1, false));
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("card left your graveyard this turn");
+    }
+
+    @Test
+    void puttingSurveilledCardIntoGraveyardDoesNotEnableActivation() {
+        harness.addToBattlefield(player1, new EssenceAnchor());
+        Card topCard = new HeritageReclamation();
+        gd.playerDecks.get(player1.getId()).addFirst(topCard);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.UPKEEP,
+                () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(topCard);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("card left your graveyard this turn");
+    }
+
+    @Test
+    void doesNotSurveilDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new EssenceAnchor());
+        Card topCard = new HeritageReclamation();
+        gd.playerDecks.get(player1.getId()).addFirst(topCard);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
+    }
+
+    @Test
+    void exilingNoncreatureFromOwnGraveyardEnablesActivationDuringEndStep() {
+        forceMainPhase();
+        Permanent anchor = harness.addToBattlefieldAndReturn(player1, new EssenceAnchor());
+        Card graveyardCard = new EssenceAnchor();
+        harness.setGraveyard(player1, List.of(graveyardCard));
+        harness.setHand(player1, List.of(new HeritageReclamation()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, 2, graveyardCard.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(graveyardCard);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(graveyardCard);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(anchor.isTapped()).isTrue();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
+
+        assertThat(countPermanents(player1, "Zombie Druid")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Zombie Druid")).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void exilingCardFromOpponentsGraveyardDoesNotEnableActivation() {
+        forceMainPhase();
+        harness.addToBattlefield(player1, new EssenceAnchor());
+        Card graveyardCard = new EssenceAnchor();
+        harness.setGraveyard(player2, List.of(graveyardCard));
+        harness.setHand(player1, List.of(new HeritageReclamation()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, 2, graveyardCard.getId());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(graveyardCard);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("card left your graveyard this turn");
     }
 
     private void forceMainPhase() {

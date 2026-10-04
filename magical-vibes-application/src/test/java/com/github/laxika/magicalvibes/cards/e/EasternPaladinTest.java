@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.f.Fecundity;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.r.Regeneration;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EasternPaladin.class, Fecundity.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({EasternPaladin.class, Fecundity.class, GrizzlyBears.class, HillGiant.class, Regeneration.class})
 class EasternPaladinTest extends BaseCardTest {
 
     @Test
@@ -218,5 +219,42 @@ class EasternPaladinTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.BLACK, blackMana);
         return paladin;
+    }
+
+    @Test
+    @DisplayName("Activated ability resolves after Eastern Paladin leaves the battlefield")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent paladin = setupPaladin();
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(paladin);
+        gd.playerGraveyards.get(player1.getId()).add(paladin.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Eastern Paladin");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A regeneration shield saves the targeted green creature")
+    void regenerationSavesTarget() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Regeneration());
+        aura.setAttachedTo(target.getId());
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.activateAbility(player2, 1, null, null);
+        harness.passBothPriorities();
+
+        setupPaladin();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 }

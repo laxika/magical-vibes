@@ -79,7 +79,7 @@ class DawnhartRejuvenatorTest extends BaseCardTest {
     void tappedCreatureCannotActivateManaAbility() {
         Permanent rejuvenator = harness.addToBattlefieldAndReturn(player1, new DawnhartRejuvenator());
         rejuvenator.setSummoningSick(false);
-        rejuvenator.setTapped(true);
+        rejuvenator.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "M14", collectorNumber = "196")
+@CardRegistration(set = "SCD", collectorNumber = "212")
 public class Sporemound extends Card {
 
     public Sporemound() {

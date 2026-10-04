@@ -266,7 +266,7 @@ public class TurnCleanupService {
 
         gameData.forEachPermanent((playerId, p) -> {
             // CR 514.2 — remove all damage marked on permanents during cleanup step
-            List<CardEffect> activeStaticEffects = gameQueryService.getActiveStaticEffects(gameData, p);
+            List<CardEffect> activeStaticEffects = new ArrayList<>(gameQueryService.getActiveStaticEffects(gameData, p));
             activeStaticEffects.addAll(gameQueryService.getGrantedEffects(gameData, p));
             activeStaticEffects.addAll(p.getPersistentTriggeredEffects(EffectSlot.STATIC));
             boolean damagePersists = !p.isLosesAllAbilitiesUntilEndOfTurn()
@@ -308,6 +308,7 @@ public class TurnCleanupService {
         gameData.playerStaticEffectsUntilEndOfTurn.clear();
         gameData.damageRedirectShields.clear();
         gameData.comeuppanceDamagePreventionShields.clear();
+        gameData.judgmentOfAlexanderDamagePreventionShields.clear();
         gameData.sourceDamageRedirectShields.clear();
         gameData.creatureDamageRedirectShields.clear();
         gameData.turnDamageRedirectToCreatureShields.clear();
@@ -327,6 +328,7 @@ public class TurnCleanupService {
         gameData.preventAllDamageByCreatures = false;
         gameData.preventAllDamageFromNonHumanSources = false;
         gameData.combatDamageExemptPredicate = null;
+        gameData.combatDamageExemptPredicatesByController.clear();
         gameData.combatDamageExemptControllerId = null;
         gameData.allPermanentsEnterTappedThisTurn = false;
         gameData.permanentEnterTappedFiltersThisTurn.clear();

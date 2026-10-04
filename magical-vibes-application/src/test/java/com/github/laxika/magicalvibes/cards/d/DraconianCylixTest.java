@@ -101,7 +101,7 @@ class DraconianCylixTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent cylix = harness.addToBattlefieldAndReturn(player1, new DraconianCylix());
-        cylix.setTapped(true);
+        cylix.tap();
         Permanent target = addCreatureReady(player1, new Thallid());
         harness.setHand(player1, List.of(new Thallid()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);

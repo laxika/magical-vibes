@@ -153,7 +153,7 @@ class CoastalBulwarkTest extends BaseCardTest {
     @Test
     void cannotActivateWhenAlreadyTapped() {
         Permanent bulwark = addCreatureReady(player1, new CoastalBulwark());
-        bulwark.setTapped(true);
+        bulwark.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

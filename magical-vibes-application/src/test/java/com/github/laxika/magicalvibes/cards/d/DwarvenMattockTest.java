@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -55,7 +54,7 @@ class DwarvenMattockTest extends BaseCardTest {
     @Test
     @DisplayName("Equip {3} attaches Dwarven Mattock to a creature you control")
     void equipAttachesToCreatureYouControl() {
-        Permanent mattock = addReadyMattock(player1);
+        Permanent mattock = addCreatureReady(player1, new DwarvenMattock());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -68,7 +67,7 @@ class DwarvenMattockTest extends BaseCardTest {
     @Test
     @DisplayName("Ward counters an opponent's spell when they cannot pay")
     void wardCountersUnpaidSpell() {
-        Permanent mattock = addReadyMattock(player1);
+        Permanent mattock = addCreatureReady(player1, new DwarvenMattock());
         Permanent dwarf = addCreatureReady(player1, new DwarvenSeaClan());
         mattock.setAttachedTo(dwarf.getId());
 
@@ -88,7 +87,7 @@ class DwarvenMattockTest extends BaseCardTest {
     @Test
     @DisplayName("Ward lets an opponent's spell resolve when they pay")
     void wardAllowsPaidSpell() {
-        Permanent mattock = addReadyMattock(player1);
+        Permanent mattock = addCreatureReady(player1, new DwarvenMattock());
         Permanent dwarf = addCreatureReady(player1, new DwarvenSeaClan());
         mattock.setAttachedTo(dwarf.getId());
 
@@ -110,7 +109,7 @@ class DwarvenMattockTest extends BaseCardTest {
     @Test
     @DisplayName("Ward counters an opponent's ability when they cannot pay")
     void wardCountersUnpaidAbility() {
-        Permanent mattock = addReadyMattock(player1);
+        Permanent mattock = addCreatureReady(player1, new DwarvenMattock());
         Permanent dwarf = addCreatureReady(player1, new DwarvenSeaClan());
         mattock.setAttachedTo(dwarf.getId());
         Permanent spellcaster = addCreatureReady(player2, new ZuranSpellcaster());
@@ -127,10 +126,43 @@ class DwarvenMattockTest extends BaseCardTest {
         assertThat(dwarf.getMarkedDamage()).isZero();
     }
 
-    private Permanent addReadyMattock(Player player) {
-        Permanent mattock = new Permanent(new DwarvenMattock());
-        mattock.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(mattock);
-        return mattock;
+    @Test
+    @DisplayName("Ward does not counter its controller's own spell")
+    void wardDoesNotCounterOwnSpell() {
+        Permanent mattock = addCreatureReady(player1, new DwarvenMattock());
+        Permanent dwarf = addCreatureReady(player1, new DwarvenSeaClan());
+        mattock.setAttachedTo(dwarf.getId());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, dwarf.getId());
+        resolveAllTriggers();
+
+        assertThat(dwarf.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Shock");
+    }
+
+    @Test
+    @DisplayName("Ward counters each unpaid opponent spell in the same turn")
+    void wardCountersEachUnpaidSpellInSameTurn() {
+        Permanent mattock = addCreatureReady(player1, new DwarvenMattock());
+        Permanent dwarf = addCreatureReady(player1, new DwarvenSeaClan());
+        mattock.setAttachedTo(dwarf.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, dwarf.getId());
+        resolveAllTriggers();
+        assertThat(dwarf.getMarkedDamage()).isZero();
+
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, dwarf.getId());
+        resolveAllTriggers();
+
+        assertThat(dwarf.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(dwarf);
     }
 }

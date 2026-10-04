@@ -29,6 +29,8 @@ class EldraziSkyspawnerTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(CardSubtype.ELDRAZI, CardSubtype.SCION);
         assertThat(gqs.getEffectivePower(gd, scion)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, scion)).isEqualTo(1);
+        assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(1);
+        assertThat(findPermanents(player2, "Eldrazi Scion")).isEmpty();
     }
 
     @Test
@@ -42,6 +44,40 @@ class EldraziSkyspawnerTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The Scion is created only when the enter trigger resolves")
+    void tokenCreationUsesTheStack() {
+        harness.setHand(player1, List.of(new EldraziSkyspawner()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Eldrazi Skyspawner")).hasSize(1);
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Eldrazi Scion")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Player two's Skyspawner creates a Scion for player two")
+    void tokenBelongsToEnteringCreaturesController() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new EldraziSkyspawner()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player2, "Eldrazi Scion")).hasSize(1);
+        assertThat(findPermanents(player1, "Eldrazi Scion")).isEmpty();
     }
 
     private void castEldraziSkyspawner() {
@@ -50,7 +86,6 @@ class EldraziSkyspawnerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }

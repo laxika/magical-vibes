@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,38 +15,35 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FrenziedRage.class, GrizzlyBears.class, FountainOfYouth.class})
 class FrenziedRageTest extends BaseCardTest {
-
-    // ===== Casting and resolving =====
 
     @Test
     @DisplayName("Casting Frenzied Rage puts it on the stack")
     void castingPutsOnStack() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new FrenziedRage()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ENCHANTMENT_SPELL);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Frenzied Rage");
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(FrenziedRage.class);
     }
 
     @Test
     @DisplayName("Resolving Frenzied Rage attaches it to target creature")
     void resolvingAttachesToTarget() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
         harness.setHand(player1, List.of(new FrenziedRage()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -55,51 +53,39 @@ class FrenziedRageTest extends BaseCardTest {
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 
-    // ===== +2/+1 boost =====
-
     @Test
     @DisplayName("Enchanted creature gets +2/+1")
     void enchantedCreatureGetsBoost() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new FrenziedRage());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new FrenziedRage());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, bearsPerm)).isEqualTo(3);
     }
 
-    // ===== Menace =====
-
     @Test
     @DisplayName("Enchanted creature has menace")
     void enchantedCreatureHasMenace() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new FrenziedRage());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new FrenziedRage());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.MENACE)).isTrue();
     }
 
-    // ===== Effects stop when removed =====
-
     @Test
     @DisplayName("Creature loses boost and menace when Frenzied Rage is removed")
     void effectsStopWhenRemoved() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent auraPerm = new Permanent(new FrenziedRage());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new FrenziedRage());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         // Verify effects are active
         assertThat(gqs.getEffectivePower(gd, bearsPerm)).isEqualTo(4);
@@ -115,13 +101,10 @@ class FrenziedRageTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bearsPerm, Keyword.MENACE)).isFalse();
     }
 
-    // ===== Targeting restriction =====
-
     @Test
     @DisplayName("Can target a creature with Frenzied Rage")
     void canTargetCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new FrenziedRage()));
         harness.addMana(player1, ManaColor.RED, 2);
 
@@ -133,38 +116,67 @@ class FrenziedRageTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent with Frenzied Rage")
     void cannotTargetNonCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player1, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
         harness.setHand(player1, List.of(new FrenziedRage()));
         harness.addMana(player1, ManaColor.RED, 2);
-
-        Permanent artifact = findPermanent(player1, "Fountain of Youth");
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
 
-    // ===== Does not affect other creatures =====
-
     @Test
     @DisplayName("Frenzied Rage does not affect other creatures")
     void doesNotAffectOtherCreatures() {
-        Permanent bearsPerm = new Permanent(new GrizzlyBears());
+        Permanent bearsPerm = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bearsPerm);
 
-        Permanent otherBears = new Permanent(new GrizzlyBears());
+        Permanent otherBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         otherBears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(otherBears);
 
-        Permanent auraPerm = new Permanent(new FrenziedRage());
+        Permanent auraPerm = harness.addToBattlefieldAndReturn(player1, new FrenziedRage());
         auraPerm.setAttachedTo(bearsPerm.getId());
-        gd.playerBattlefields.get(player1.getId()).add(auraPerm);
 
         // Other creature should not be affected
         assertThat(gqs.getEffectivePower(gd, otherBears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, otherBears)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, otherBears, Keyword.MENACE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Frenzied Rage can enchant an opponent's creature")
+    void enchantsOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FrenziedRage()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard() instanceof FrenziedRage
+                        && creature.getId().equals(p.getAttachedTo()));
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Frenzied Rage goes to the graveyard when its target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FrenziedRage()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard() instanceof FrenziedRage);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c instanceof FrenziedRage);
     }
 }

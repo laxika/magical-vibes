@@ -118,9 +118,55 @@ class EnsouledScimitarTest extends BaseCardTest {
         assertThat(scimitar.getAttachedTo()).isEqualTo(creature.getId());
     }
 
+    @Test
+    @DisplayName("Animation in response to equip prevents the attachment")
+    void animationInResponseToEquipPreventsAttachment() {
+        Permanent scimitar = addScimitarReady(player1);
+        Permanent creature = addCreatureReady(player1, new Arachnoid());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+        harness.activateAbility(player1, 0, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, scimitar)).isTrue();
+        assertThat(scimitar.getAttachedTo()).isNull();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Expired animation does not reattach the Scimitar, but it can equip again")
+    void expiredAnimationAllowsEquippingAgain() {
+        Permanent scimitar = addScimitarReady(player1);
+        Permanent creature = addCreatureReady(player1, new Arachnoid());
+        scimitar.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, scimitar)).isFalse();
+        assertThat(scimitar.getAttachedTo()).isNull();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(scimitar.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(11);
+    }
+
     private Permanent addScimitarReady(Player player) {
-        Permanent permanent = harness.addToBattlefieldAndReturn(player, new EnsouledScimitar());
-        permanent.setSummoningSick(false);
-        return permanent;
+        return addCreatureReady(player, new EnsouledScimitar());
     }
 }

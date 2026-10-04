@@ -55,12 +55,48 @@ class FearOfLostTeethTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Llanowar Elves");
     }
 
+    @Test
+    @DisplayName("The death trigger can target its controller for no net life change")
+    void deathTriggerCanTargetItsController() {
+        harness.addToBattlefield(player1, new FearOfLostTeeth());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        killFearOfLostTeeth();
+
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An illegal sole target prevents both the damage and the life gain")
+    void deathTriggerDoesNotGainLifeWhenTargetLeavesBattlefield() {
+        harness.addToBattlefield(player1, new FearOfLostTeeth());
+        UUID elvesId = harness.addToBattlefieldAndReturn(player2, new LlanowarElves()).getId();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        killFearOfLostTeeth();
+        harness.handlePermanentChosen(player1, elvesId);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, elvesId);
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
     private void killFearOfLostTeeth() {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         UUID fearId = harness.getPermanentId(player1, "Fear of Lost Teeth");
-        harness.castInstant(player1, 0, fearId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, fearId);
         harness.assertInGraveyard(player1, "Fear of Lost Teeth");
     }
 }

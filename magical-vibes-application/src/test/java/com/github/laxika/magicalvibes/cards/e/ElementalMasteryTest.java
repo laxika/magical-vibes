@@ -68,9 +68,8 @@ class ElementalMasteryTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(elementalCount()).isEqualTo(2);
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(elementalCount()).isZero();
     }
@@ -115,5 +114,75 @@ class ElementalMasteryTest extends BaseCardTest {
 
         assertThat(countPermanents(player2, "Elemental")).isEqualTo(2);
         assertThat(countPermanents(player1, "Elemental")).isZero();
+    }
+
+    @Test
+    @DisplayName("One activation exiles all its tokens with a single delayed trigger")
+    void tokensShareOneDelayedExileTrigger() {
+        setupEnchantedCreature();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(elementalCount()).isEqualTo(2);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(elementalCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("Power is evaluated when the granted ability resolves")
+    void usesPowerAtResolution() {
+        Permanent creature = setupEnchantedCreature();
+        harness.activateAbility(player1, 0, null, null);
+        creature.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        harness.passBothPriorities();
+
+        assertThat(elementalCount()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Zero power creates no tokens")
+    void zeroPowerCreatesNoTokens() {
+        Permanent creature = setupEnchantedCreature();
+        creature.setCounterCount(com.github.laxika.magicalvibes.model.CounterType.MINUS_ONE_MINUS_ZERO, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(elementalCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing the Aura does not stop an already activated ability or delayed exile")
+    void removalDoesNotStopPendingAbilityOrExile() {
+        setupEnchantedCreature();
+        harness.activateAbility(player1, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Elemental Mastery"));
+
+        harness.passBothPriorities();
+        assertThat(elementalCount()).isEqualTo(2);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+        assertThat(elementalCount()).isZero();
+    }
+
+    @Test
+    @DisplayName("Tokens created during the end step survive until the following end step")
+    void tokensCreatedDuringEndStepWaitForNextEndStep() {
+        setupEnchantedCreature();
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(elementalCount()).isEqualTo(2);
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(elementalCount()).isEqualTo(2);
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+        assertThat(elementalCount()).isZero();
     }
 }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeTargetPlayersLifeTotalsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -22,7 +21,7 @@ public class ExchangeTargetPlayersLifeTotalsEffectHandler implements NormalEffec
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
-    private final TriggerCollectionService triggerCollectionService;
+    private final LifeSupport lifeSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -72,54 +71,25 @@ public class ExchangeTargetPlayersLifeTotalsEffectHandler implements NormalEffec
         boolean aCantGain = aWouldGain && !gameQueryService.canPlayerGainLife(gameData, playerA);
         boolean bCantGain = bWouldGain && !gameQueryService.canPlayerGainLife(gameData, playerB);
 
-        if (aCantGain || bCantGain) {
+        if (aCantGain || bCantGain
+                || (lifeB < lifeA && !gameQueryService.canPlayerLoseLife(gameData, playerA))
+                || (lifeA < lifeB && !gameQueryService.canPlayerLoseLife(gameData, playerB))) {
             String nameA = gameData.playerIdToName.get(playerA);
             String nameB = gameData.playerIdToName.get(playerB);
-            gameLogService.append(gameData, GameLog.text(nameA + " and " + nameB + " can't gain life. Exchange doesn't occur."));
+            gameLogService.append(gameData, GameLog.text(nameA + " and " + nameB
+                    + " can't complete the life-total exchange. Exchange doesn't occur."));
             return;
         }
 
         String nameA = gameData.playerIdToName.get(playerA);
         String nameB = gameData.playerIdToName.get(playerB);
 
-        int newLifeA = aCantGain ? lifeA : lifeB;
-        int newLifeB = bCantGain ? lifeB : lifeA;
-        newLifeA = gameData.capLifeTotal(playerA, newLifeA);
-        newLifeB = gameData.capLifeTotal(playerB, newLifeB);
-
-        if (newLifeA < lifeA) {
-            newLifeA = lifeA - (lifeA - newLifeA)
-                    * gameQueryService.opponentLifeLossMultiplier(gameData, playerA);
-        }
-        if (newLifeB < lifeB) {
-            newLifeB = lifeB - (lifeB - newLifeB)
-                    * gameQueryService.opponentLifeLossMultiplier(gameData, playerB);
-        }
-
-        if (aCantGain) {
-            gameLogService.append(gameData, GameLog.text(nameA + " can't gain life."));
-        }
-        if (bCantGain) {
-            gameLogService.append(gameData, GameLog.text(nameB + " can't gain life."));
-        }
-
+        lifeSupport.applySetLifeTotal(gameData, playerA, lifeB);
+        lifeSupport.applySetLifeTotal(gameData, playerB, lifeA);
+        int newLifeA = gameData.getLife(playerA);
+        int newLifeB = gameData.getLife(playerB);
         gameLogService.append(gameData, GameLog.text(nameA + " and " + nameB + " exchange life totals (" + nameA + ": " + lifeA + " -> " + newLifeA
-                        + ", " + nameB + ": " + lifeB + " -> " + newLifeB + ")."));
-
-        // Apply the new totals with triggers (bypass applySetLifeTotal since we already checked)
-        gameData.playerLifeTotals.put(playerA, newLifeA);
-        gameData.playerLifeTotals.put(playerB, newLifeB);
-
-        if (newLifeA > lifeA) {
-            triggerCollectionService.checkLifeGainTriggers(gameData, playerA, newLifeA - lifeA);
-        } else if (newLifeA < lifeA) {
-            triggerCollectionService.checkLifeLossTriggers(gameData, playerA, lifeA - newLifeA);
-        }
-        if (newLifeB > lifeB) {
-            triggerCollectionService.checkLifeGainTriggers(gameData, playerB, newLifeB - lifeB);
-        } else if (newLifeB < lifeB) {
-            triggerCollectionService.checkLifeLossTriggers(gameData, playerB, lifeB - newLifeB);
-        }
+                + ", " + nameB + ": " + lifeB + " -> " + newLifeB + ")."));
 
         log.info("Game {} - {} and {} exchange life totals ({} -> {}, {} -> {})",
                 gameData.id, nameA, nameB, lifeA, newLifeA, lifeB, newLifeB);

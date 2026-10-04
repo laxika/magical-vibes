@@ -87,9 +87,7 @@ class FeralDeceiverTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, deceiver)).isEqualTo(4);
         assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(3);
         assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isFalse();
@@ -150,10 +148,7 @@ class FeralDeceiverTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(5);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        advanceToUpkeep(player2);
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.activateAbility(player1, 0, 1, null, null);
@@ -161,6 +156,125 @@ class FeralDeceiverTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(5);
         assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The reveal ability checks the top card at resolution rather than activation")
+    void checksTopCardAtResolution() {
+        Permanent deceiver = addReadyDeceiver(player1);
+        harness.setLibrary(player1, List.of(new HumbleBudoka()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, deceiver)).isEqualTo(4);
+        assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A land present at activation does not grant a bonus if the top card changes to a nonland")
+    void landAtActivationDoesNotGuaranteeBonus() {
+        Permanent deceiver = addReadyDeceiver(player1);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        Card nonland = new HumbleBudoka();
+        harness.setLibrary(player1, List.of(nonland));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonland);
+        assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, deceiver)).isEqualTo(2);
+        assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Both abilities can be used while tapped and summoning sick in the same turn")
+    void abilitiesDoNotRequireTappingOrHaste() {
+        Permanent deceiver = addReadyDeceiver(player1);
+        deceiver.setSummoningSick(true);
+        deceiver.setTapped(true);
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, deceiver)).isEqualTo(4);
+        assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(deceiver.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The reveal activation limit applies while the first activation is still on the stack")
+    void cannotActivateRevealAgainBeforeResolution() {
+        addReadyDeceiver(player1);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Revealing a nonland still uses up the reveal activation for the turn")
+    void nonlandRevealUsesActivationLimit() {
+        Permanent deceiver = addReadyDeceiver(player1);
+        harness.setLibrary(player1, List.of(new HumbleBudoka()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        assertThat(gqs.getEffectivePower(gd, deceiver)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, deceiver)).isEqualTo(2);
+        assertThat(deceiver.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each Deceiver has its own reveal activation limit and boosts only itself")
+    void separateDeceiversHaveIndependentLimits() {
+        Permanent first = addReadyDeceiver(player1);
+        Permanent second = addReadyDeceiver(player1);
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(second.hasKeyword(Keyword.TRAMPLE)).isFalse();
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+        assertThat(first.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(second.hasKeyword(Keyword.TRAMPLE)).isTrue();
     }
 
     private Permanent addReadyDeceiver(Player player) {

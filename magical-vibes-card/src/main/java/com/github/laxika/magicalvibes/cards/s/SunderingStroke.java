@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "144")
+@CardRegistration(set = "ELD", collectorNumber = "366")
 public class SunderingStroke extends Card {
 
     public SunderingStroke() {

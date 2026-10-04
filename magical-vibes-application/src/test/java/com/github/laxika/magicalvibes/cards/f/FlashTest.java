@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.e.EkunduGriffin;
 import com.github.laxika.magicalvibes.cards.g.GrinningTotem;
 import com.github.laxika.magicalvibes.cards.l.LightningSerpent;
 import com.github.laxika.magicalvibes.cards.p.PorcelainLegionnaire;
+import com.github.laxika.magicalvibes.cards.r.ReaperKing;
 import com.github.laxika.magicalvibes.cards.v.VenerableMonk;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,15 +21,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Flash.class, EkunduGriffin.class, GrinningTotem.class, LightningSerpent.class,
-        PorcelainLegionnaire.class, VenerableMonk.class})
+        PorcelainLegionnaire.class, VenerableMonk.class, DryadArbor.class, ReaperKing.class})
 class FlashTest extends BaseCardTest {
 
     private void castFlash() {
         // Flash costs {1}{U}.
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
     }
 
     @Test
@@ -168,5 +169,50 @@ class FlashTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Porcelain Legionnaire");
         harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("A creature with no mana cost must be sacrificed")
+    void creatureWithNoManaCostCannotBeKept() {
+        harness.setHand(player1, List.of(new Flash(), new DryadArbor()));
+        castFlash();
+
+        harness.handleCardChosen(player1, 0);
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.assertNotOnBattlefield(player1, "Dryad Arbor");
+        harness.assertInGraveyard(player1, "Dryad Arbor");
+    }
+
+    @Test
+    @DisplayName("Generic mana chosen for monocolored hybrid symbols receives the reduction")
+    void monocoloredHybridGenericPaymentIsReduced() {
+        harness.setHand(player1, List.of(new Flash(), new ReaperKing()));
+        castFlash();
+
+        harness.handleCardChosen(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Reaper King");
+        harness.assertNotInGraveyard(player1, "Reaper King");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Phyrexian mana may be paid with its color instead of life")
+    void phyrexianManaCanBePaidWithWhiteMana() {
+        harness.setHand(player1, List.of(new Flash(), new PorcelainLegionnaire()));
+        castFlash();
+
+        harness.handleCardChosen(player1, 0);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Porcelain Legionnaire");
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

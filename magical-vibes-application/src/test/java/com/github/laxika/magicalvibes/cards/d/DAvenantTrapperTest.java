@@ -173,7 +173,7 @@ class DAvenantTrapperTest extends BaseCardTest {
     void alreadyTappedCreatureIsLegalTarget() {
         harness.addToBattlefield(player1, new DAvenantTrapper());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new DAvenantTrapper());
-        target.setTapped(true);
+        target.tap();
         harness.setHand(player1, List.of(new Spellbook()));
 
         harness.castArtifact(player1, 0);

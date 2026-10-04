@@ -27,8 +27,7 @@ class FlourishingFoxTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateHandAbility(player1, 0, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(fox.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertInGraveyard(player1, "Censor");
@@ -51,5 +50,87 @@ class FlourishingFoxTest extends BaseCardTest {
         assertThat(fox.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.assertInGraveyard(player1, "Censor");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cycling Flourishing Fox discards it and draws without triggering itself")
+    void cyclingFoxFromHandDrawsWithoutSelfTrigger() {
+        FlourishingFox cycledFox = new FlourishingFox();
+        FlourishingFox drawnFox = new FlourishingFox();
+        harness.setHand(player1, List.of(cycledFox));
+        harness.setLibrary(player1, List.of(drawnFox));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(cycledFox);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnFox);
+    }
+
+    @Test
+    @DisplayName("The counter trigger resolves before the cycling draw")
+    void counterIsAddedBeforeCyclingDraw() {
+        Permanent fox = harness.addToBattlefieldAndReturn(player1, new FlourishingFox());
+        FlourishingFox drawnFox = new FlourishingFox();
+        harness.setHand(player1, List.of(new FlourishingFox()));
+        harness.setLibrary(player1, List.of(drawnFox));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(fox.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(fox.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnFox);
+    }
+
+    @Test
+    @DisplayName("Cycling by an opponent does not put a counter on your Fox")
+    void opponentsCyclingDoesNotAddCounter() {
+        Permanent fox = harness.addToBattlefieldAndReturn(player1, new FlourishingFox());
+        FlourishingFox drawnFox = new FlourishingFox();
+        harness.setHand(player2, List.of(new FlourishingFox()));
+        harness.setLibrary(player2, List.of(drawnFox));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.activateHandAbility(player2, 0, null);
+        resolveAllTriggers();
+
+        assertThat(fox.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnFox);
+    }
+
+    @Test
+    @DisplayName("Each Fox gets a counter for each card its controller cycles")
+    void multipleFoxesTriggerForEveryCycle() {
+        Permanent firstFox = harness.addToBattlefieldAndReturn(player1, new FlourishingFox());
+        Permanent secondFox = harness.addToBattlefieldAndReturn(player1, new FlourishingFox());
+        harness.setHand(player1, List.of(new FlourishingFox(), new FlourishingFox()));
+        harness.setLibrary(player1, List.of(new FlourishingFox(), new FlourishingFox()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+        resolveAllTriggers();
+
+        assertThat(firstFox.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(secondFox.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.activateHandAbility(player1, 0, null);
+        resolveAllTriggers();
+
+        assertThat(firstFox.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(secondFox.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 }

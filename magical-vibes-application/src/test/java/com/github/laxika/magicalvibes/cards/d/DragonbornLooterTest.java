@@ -104,7 +104,7 @@ class DragonbornLooterTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent looter = addCreatureReady(player1, new DragonbornLooter());
-        looter.setTapped(true);
+        looter.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

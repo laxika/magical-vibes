@@ -117,7 +117,7 @@ class DebtorsPulpitTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new DebtorsPulpit());
         aura.setAttachedTo(forest.getId());
-        forest.setTapped(true);
+        forest.tap();
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
@@ -133,7 +133,7 @@ class DebtorsPulpitTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new DebtorsPulpit());
         aura.setAttachedTo(forest.getId());
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
-        creature.setTapped(true);
+        creature.tap();
 
         harness.activateAbility(player1, 0, null, creature.getId());
         harness.passBothPriorities();

@@ -1,13 +1,10 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,17 +12,39 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EmbraceTheParadox.class, Forest.class})
 class EmbraceTheParadoxTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Draws three then offers a may land drop")
-    void hasCorrectStructure() {
-        EmbraceTheParadox card = new EmbraceTheParadox();
+    @DisplayName("A land drawn by the spell can be put onto the battlefield")
+    void canPutNewlyDrawnLandTapped() {
+        Forest drawnLand = new Forest();
+        harness.setLibrary(player1, List.of(new EmbraceTheParadox(), drawnLand, new EmbraceTheParadox()));
+        harness.castFromHand(player1, new EmbraceTheParadox(), "{3}{G}{U}");
+        harness.passBothPriorities();
 
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(0)).amount()).isEqualTo(new Fixed(3));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(MayEffect.class);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3).contains(drawnLand);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2).doesNotContain(drawnLand);
+        harness.assertNotOnBattlefield(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Drawing still succeeds when there is no land in hand")
+    void drawsWithoutLandInHand() {
+        harness.setLibrary(player1, List.of(new EmbraceTheParadox(), new EmbraceTheParadox(), new EmbraceTheParadox()));
+        harness.castFromHand(player1, new EmbraceTheParadox(), "{3}{G}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

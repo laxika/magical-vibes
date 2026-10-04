@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "325")
 @CardRegistration(set = "INV", collectorNumber = "326")
+@CardRegistration(set = "SCD", collectorNumber = "316")
 public class SaltMarsh extends Card {
 
     public SaltMarsh() {

@@ -54,6 +54,44 @@ class EmblemOfTheWarmindTest extends BaseCardTest {
                 .hasMessageContaining("you control");
     }
 
+    @Test
+    @DisplayName("Resolves attached to its target and grants haste to creatures entering later")
+    void resolvesAndGrantsHasteToLaterCreatures() {
+        Permanent enchantedCreature = addCreatureReady(player1, new BlindPhantasm());
+        harness.setHand(player1, List.of(new EmblemOfTheWarmind()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, enchantedCreature.getId());
+        harness.passBothPriorities();
+
+        Permanent emblem = findPermanent(player1, "Emblem of the Warmind");
+        assertThat(emblem.getAttachedTo()).isEqualTo(enchantedCreature.getId());
+        assertThat(gqs.hasKeyword(gd, enchantedCreature, Keyword.HASTE)).isTrue();
+
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new BlindPhantasm());
+        Permanent opponentCreature = harness.enterBattlefieldAndReturn(player2, new BlindPhantasm());
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentCreature, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Aura goes to the graveyard when its enchanted creature changes controller")
+    void losesHasteWhenEnchantedCreatureChangesController() {
+        Permanent enchantedCreature = addCreatureReady(player1, new BlindPhantasm());
+        Permanent otherCreature = addCreatureReady(player1, new BlindPhantasm());
+        attachEmblem(enchantedCreature);
+
+        gd.playerBattlefields.get(player1.getId()).remove(enchantedCreature);
+        gd.playerBattlefields.get(player2.getId()).add(enchantedCreature);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Emblem of the Warmind");
+        harness.assertInGraveyard(player1, "Emblem of the Warmind");
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.HASTE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, enchantedCreature, Keyword.HASTE)).isFalse();
+    }
+
     private Permanent attachEmblem(Permanent creature) {
         Permanent emblem = harness.addToBattlefieldAndReturn(player1, new EmblemOfTheWarmind());
         emblem.setAttachedTo(creature.getId());

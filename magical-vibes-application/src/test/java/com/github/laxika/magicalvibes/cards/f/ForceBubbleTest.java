@@ -19,6 +19,54 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ForceBubbleTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The affected player chooses between two Force Bubbles")
+    void choosesWhichBubbleReplacesDamage() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ForceBubble());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ForceBubble());
+        first.setCounterCount(CounterType.DEPLETION, 3);
+        harness.setHand(player2, List.of(new SparkSpray()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(first.getCounterCount(CounterType.DEPLETION)).isEqualTo(3);
+        assertThat(second.getCounterCount(CounterType.DEPLETION)).isZero();
+    }
+
+    @Test
+    @DisplayName("All simultaneous combat damage is replaced even above four counters")
+    void replacesAllSimultaneousCombatDamageBeforeSacrifice() {
+        Permanent bubble = harness.addToBattlefieldAndReturn(player1, new ForceBubble());
+        addCreatureReady(player2, new GoblinBrigand());
+        addCreatureReady(player2, new GoblinBrigand());
+        addCreatureReady(player2, new GoblinBrigand());
+
+        declareAttackers(player2, List.of(0, 1, 2));
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(bubble.getCounterCount(CounterType.DEPLETION)).isEqualTo(6);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bubble);
+        harness.assertInGraveyard(player1, "Force Bubble");
+    }
+
+    @Test
+    @DisplayName("Damage to a creature is not replaced")
+    void doesNotReplaceDamageToCreature() {
+        Permanent bubble = harness.addToBattlefieldAndReturn(player1, new ForceBubble());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GoblinBrigand());
+        harness.setHand(player2, List.of(new SparkSpray()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        assertThat(bubble.getCounterCount(CounterType.DEPLETION)).isZero();
+    }
+
+    @Test
     @DisplayName("Damage to the controller becomes depletion counters")
     void replacesDamageWithDepletionCounters() {
         Permanent bubble = harness.addToBattlefieldAndReturn(player1, new ForceBubble());

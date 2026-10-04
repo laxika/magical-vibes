@@ -174,7 +174,7 @@ class ControlMagicTest extends BaseCardTest {
     @DisplayName("Control Magic preserves a creature's tapped state and makes it summoning sick")
     void stealingDoesNotUntapAndRestartsSummoningSickness() {
         Permanent creature = addCreatureReady(player2, new GrizzlyBears());
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new ControlMagic()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 

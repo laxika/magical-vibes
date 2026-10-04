@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FaerieDuelist.class, GrizzlyBears.class})
 class FaerieDuelistTest extends BaseCardTest {
 
     @Test
@@ -22,8 +24,7 @@ class FaerieDuelistTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castFaerieDuelist(bears.getId());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(bears.getPowerModifier()).isEqualTo(-2);
         assertThat(bears.getToughnessModifier()).isZero();
@@ -48,8 +49,7 @@ class FaerieDuelistTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castFaerieDuelist(bears.getId());
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         assertThat(bears.getPowerModifier()).isEqualTo(-2);
 
         harness.forceStep(TurnStep.END_STEP);
@@ -70,6 +70,70 @@ class FaerieDuelistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Faerie Duelist");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flash allows casting during an opponent's turn")
+    void canCastDuringOpponentTurn() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+
+        castFaerieDuelist(bears.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Faerie Duelist");
+        assertThat(bears.getPowerModifier()).isEqualTo(-2);
+        assertThat(bears.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Only the targeted opponent creature is weakened")
+    void weakensOnlyTheChosenCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castFaerieDuelist(target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getPowerModifier()).isEqualTo(-2);
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(own.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The triggered ability resolves even if Faerie Duelist leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castFaerieDuelist(bears.getId());
+        harness.passBothPriorities();
+        Permanent duelist = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Faerie Duelist"));
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, duelist);
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Faerie Duelist");
+        assertThat(bears.getPowerModifier()).isEqualTo(-2);
+        assertThat(bears.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("The triggered ability does not affect another creature if its target leaves")
+    void triggerDoesNotRetargetWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castFaerieDuelist(target.getId());
+        harness.passBothPriorities();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target);
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Faerie Duelist");
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

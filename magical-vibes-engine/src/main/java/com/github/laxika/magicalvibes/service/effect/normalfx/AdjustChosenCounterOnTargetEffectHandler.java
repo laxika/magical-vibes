@@ -38,6 +38,11 @@ public class AdjustChosenCounterOnTargetEffectHandler implements NormalEffectHan
 
         if (entry.getTargetZone() == Zone.EXILE) {
             Integer timeCounters = gameData.exiledCardTimeCounters.get(targetId);
+            if (timeCounters == null) {
+                timeCounters = gameData.suspendedSpellExiles.stream()
+                        .filter(pending -> pending.cardId().equals(targetId))
+                        .map(GameData.SuspendedSpellExile::counters).findFirst().orElse(null);
+            }
             if (gameData.findExiledCard(targetId) != null && timeCounters != null && timeCounters > 0) {
                 playerInputService.beginAdjustChosenCounterTypeChoice(
                         gameData, entry.getControllerId(), targetId, Zone.EXILE,

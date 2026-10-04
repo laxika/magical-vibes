@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.i.IpnuRivulet;
 import com.github.laxika.magicalvibes.cards.s.StoneRain;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({DunesOfTheDead.class, StoneRain.class, IpnuRivulet.class})
 class DunesOfTheDeadTest extends BaseCardTest {
 
     @Test
@@ -37,8 +40,7 @@ class DunesOfTheDeadTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player1, "Dunes of the Dead");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities(); // Resolve Stone Rain — land to graveyard
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         harness.assertInGraveyard(player1, "Dunes of the Dead");
         assertThat(gd.stack).hasSize(1);
@@ -64,11 +66,71 @@ class DunesOfTheDeadTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 4);
 
         UUID targetId = harness.getPermanentId(player2, "Dunes of the Dead");
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities(); // Resolve Stone Rain
+        harness.castAndResolveSorcery(player1, 0, targetId);
         harness.passBothPriorities(); // Resolve graveyard trigger
 
         assertThat(findPermanents(player2, "Zombie")).hasSize(1);
         assertThat(findPermanents(player1, "Zombie")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A destroyed land owned by another player creates a Zombie for its former controller")
+    void differentOwnerAndController() {
+        DunesOfTheDead land = new DunesOfTheDead();
+        land.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, land);
+        harness.setHand(player1, List.of(new StoneRain()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveSorcery(player1, 0, harness.getPermanentId(player2, "Dunes of the Dead"));
+
+        harness.assertInGraveyard(player1, "Dunes of the Dead");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Zombie")).hasSize(1);
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+    }
+
+    @Test
+    @CardUsed({DunesOfTheDead.class, IpnuRivulet.class})
+    @DisplayName("Sacrificing Dunes of the Dead as an activation cost creates a Zombie before the ability resolves")
+    void sacrificeCreatesZombie() {
+        harness.addToBattlefield(player1, new IpnuRivulet());
+        harness.addToBattlefield(player1, new DunesOfTheDead());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Dunes of the Dead"));
+
+        harness.assertInGraveyard(player1, "Dunes of the Dead");
+        assertThat(gd.stack).hasSize(2);
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Zombie")).hasSize(1);
+    }
+
+    @Test
+    @CardUsed({DunesOfTheDead.class, IpnuRivulet.class})
+    @DisplayName("Milling Dunes of the Dead does not create a Zombie")
+    void millingDoesNotTrigger() {
+        harness.addToBattlefield(player1, new IpnuRivulet());
+        harness.setLibrary(player2, List.of(new DunesOfTheDead(), new DunesOfTheDead(),
+                new DunesOfTheDead(), new DunesOfTheDead()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+        assertThat(findPermanents(player2, "Zombie")).isEmpty();
     }
 }

@@ -55,7 +55,7 @@ class ColdCaseCrackerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent clue = findPermanent(player1, "Clue");
-        clue.setTapped(true);
+        clue.tap();
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.activateAbility(player1, 0, null, null);
 

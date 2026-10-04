@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import java.util.List;
 
 @CardRegistration(set = "IKO", collectorNumber = "223")
+@CardRegistration(set = "SCD", collectorNumber = "232")
 public class JubilantSkybonder extends Card {
 
     public JubilantSkybonder() {

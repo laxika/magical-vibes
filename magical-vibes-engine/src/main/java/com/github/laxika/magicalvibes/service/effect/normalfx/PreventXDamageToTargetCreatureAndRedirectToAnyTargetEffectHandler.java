@@ -34,7 +34,7 @@ public class PreventXDamageToTargetCreatureAndRedirectToAnyTargetEffectHandler i
         var e = (PreventXDamageToTargetCreatureAndRedirectToAnyTargetEffect) effect;
         List<UUID> protectedTargets = entry.targetsForGroup(e.protectedTargetGroup());
         List<UUID> redirectTargets = entry.targetsForGroup(e.redirectTargetGroup());
-        if (protectedTargets.isEmpty() || redirectTargets.isEmpty()) return;
+        if (protectedTargets.isEmpty()) return;
 
         UUID protectedTargetId = protectedTargets.getFirst();
         Permanent protectedCreature = gameQueryService.findPermanentById(gameData, protectedTargetId);
@@ -47,7 +47,7 @@ public class PreventXDamageToTargetCreatureAndRedirectToAnyTargetEffectHandler i
                 AmountContext.forStackEntry(entry, source));
         if (amount <= 0) return;
 
-        UUID redirectTargetId = redirectTargets.getFirst();
+        UUID redirectTargetId = redirectTargets.isEmpty() ? null : redirectTargets.getFirst();
         gameData.damageRedirectShields.add(new DamageRedirectShield(
                 entry.getControllerId(), amount, entry.getSourcePermanentId(), entry.getCard(),
                 redirectTargetId, false, protectedTargetId));

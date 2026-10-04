@@ -4,12 +4,15 @@ import com.github.laxika.magicalvibes.cards.g.GrinningTotem;
 import com.github.laxika.magicalvibes.cards.t.TalruumMinotaur;
 import com.github.laxika.magicalvibes.cards.z.ZhalfirinKnight;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -103,5 +106,62 @@ class DwarvenNomadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(target.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    void canTargetItself() {
+        Permanent nomad = addCreatureReady(player1, new DwarvenNomad());
+
+        harness.activateAbility(player1, 0, null, nomad.getId());
+        harness.passBothPriorities();
+
+        assertThat(nomad.isTapped()).isTrue();
+        assertThat(nomad.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    void summoningSickNomadCannotActivate() {
+        Permanent nomad = harness.addToBattlefieldAndReturn(player1, new DwarvenNomad());
+        nomad.setSummoningSick(true);
+        Permanent target = addCreatureReady(player1, new ZhalfirinKnight());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(nomad.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedNomadCannotActivate() {
+        Permanent nomad = addCreatureReady(player1, new DwarvenNomad());
+        nomad.setTapped(true);
+        Permanent target = addCreatureReady(player1, new ZhalfirinKnight());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void powerIncreaseAfterResolutionDoesNotAllowBlocking() {
+        addCreatureReady(player1, new DwarvenNomad());
+        Permanent target = addCreatureReady(player1, new ZhalfirinKnight());
+        Permanent blocker = addCreatureReady(player2, new TalruumMinotaur());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        target.setAttacking(true);
+        prepareDeclareBlockers();
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(target);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class);
     }
 }

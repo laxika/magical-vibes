@@ -119,7 +119,7 @@ class BullwhipTest extends BaseCardTest {
     void tappedTargetDoesNotHaveToAttack() {
         harness.addToBattlefield(player1, new Bullwhip());
         Permanent target = addCreatureReady(player2, new SpinedWurm());
-        target.setTapped(true);
+        target.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, null, target.getId());

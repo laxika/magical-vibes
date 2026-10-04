@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.u.UniversalAutomaton;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -83,6 +84,8 @@ class AyulaQueenAmongBearsTest extends BaseCardTest {
     @Test
     void opponentsBearDoesNotTrigger() {
         harness.addToBattlefield(player1, new AyulaQueenAmongBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player2, new UniversalAutomaton(), "{1}");
         harness.passBothPriorities();
 

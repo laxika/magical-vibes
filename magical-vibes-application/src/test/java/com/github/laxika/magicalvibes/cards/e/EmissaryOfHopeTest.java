@@ -79,6 +79,62 @@ class EmissaryOfHopeTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("Counts artifacts that enter after combat damage but before resolution")
+    void countsArtifactsEnteringBeforeResolution() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new EmissaryOfHope()).setAttacking(true);
+
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 10);
+        harness.addToBattlefield(player2, new DarksteelIngot());
+        harness.addToBattlefield(player2, new SpireGolem());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Does not count artifacts that leave before the trigger resolves")
+    void doesNotCountArtifactsLeavingBeforeResolution() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new EmissaryOfHope()).setAttacking(true);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SpireGolem());
+        harness.addToBattlefield(player2, new DarksteelIngot());
+
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+        gd.playerHands.get(player2.getId()).add(artifact.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 11);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("The trigger still gains life after Emissary leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        Permanent emissary = addCreatureReady(player1, new EmissaryOfHope());
+        emissary.setAttacking(true);
+        harness.addToBattlefield(player2, new DarksteelIngot());
+
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(emissary);
+        gd.playerHands.get(player1.getId()).add(emissary.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 11);
+        harness.assertLife(player2, 18);
+    }
+
     private void resolveCombatAndTrigger() {
         resolveCombat();
         harness.passBothPriorities();

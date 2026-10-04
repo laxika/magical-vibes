@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -11,20 +10,20 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FaithfulMending.class, GrizzlyBears.class, Island.class})
+@CardUsed({FaithfulMending.class, Island.class})
 class FaithfulMendingTest extends BaseCardTest {
 
     @Test
     void gainsLifeDrawsTwoThenDiscardsTwo() {
         harness.setLife(player1, 18);
         harness.setLibrary(player1, List.of(new Island(), new Island()));
-        harness.setHand(player1, List.of(new FaithfulMending(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new FaithfulMending(), new Island()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -48,13 +47,55 @@ class FaithfulMendingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         harness.assertNotInGraveyard(player1, "Faithful Mending");
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(mending);
+    }
+
+    @Test
+    void drawsBeforeDiscardingWithNoOtherCardsInHand() {
+        Island firstDraw = new Island();
+        Island secondDraw = new Island();
+        FaithfulMending mending = new FaithfulMending();
+        harness.setHand(player1, List.of(mending));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setLife(player1, 18);
+        harness.setLife(player2, 17);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(mending, firstDraw, secondDraw);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void flashbackCannotBeCastForItsCheaperHandCost() {
+        FaithfulMending mending = new FaithfulMending();
+        harness.setGraveyard(player1, List.of(mending));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(mending);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(mending);
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "ONS", collectorNumber = "276")
+@CardRegistration(set = "SCD", collectorNumber = "202")
 public class OverwhelmingInstinct extends Card {
 
     public OverwhelmingInstinct() {

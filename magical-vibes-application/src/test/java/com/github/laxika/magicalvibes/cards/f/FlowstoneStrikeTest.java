@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.k.KorHaven;
+import com.github.laxika.magicalvibes.cards.l.LaccolithWhelp;
 import com.github.laxika.magicalvibes.cards.r.RootwaterCommando;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FlowstoneStrike.class, RootwaterCommando.class, KorHaven.class})
+@CardUsed({FlowstoneStrike.class, RootwaterCommando.class, KorHaven.class, LaccolithWhelp.class})
 class FlowstoneStrikeTest extends BaseCardTest {
 
     @Test
@@ -55,12 +56,40 @@ class FlowstoneStrikeTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature permanent")
     void cannotTargetNoncreature() {
-        Permanent target = new Permanent(new KorHaven());
-        gd.playerBattlefields.get(player2.getId()).add(target);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KorHaven());
         harness.setHand(player1, List.of(new FlowstoneStrike()));
         harness.addMana(player1, ManaColor.RED, 2);
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A creature reduced to zero toughness dies")
+    void killsOneToughnessCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LaccolithWhelp());
+        harness.setHand(player1, List.of(new FlowstoneStrike()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Laccolith Whelp");
+        harness.assertInGraveyard(player2, "Laccolith Whelp");
+        harness.assertInGraveyard(player1, "Flowstone Strike");
+    }
+
+    @Test
+    @DisplayName("Haste allows a newly entered creature to attack")
+    void allowsSummoningSickCreatureToAttack() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RootwaterCommando());
+        target.setSummoningSick(true);
+        harness.setHand(player1, List.of(new FlowstoneStrike()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(target.isAttacking()).isTrue();
+        assertThat(target.isTapped()).isTrue();
     }
 }

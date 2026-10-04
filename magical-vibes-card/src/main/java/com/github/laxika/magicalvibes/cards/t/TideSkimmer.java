@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "M21", collectorNumber = "79")
+@CardRegistration(set = "SCD", collectorNumber = "62")
 public class TideSkimmer extends Card {
 
     public TideSkimmer() {

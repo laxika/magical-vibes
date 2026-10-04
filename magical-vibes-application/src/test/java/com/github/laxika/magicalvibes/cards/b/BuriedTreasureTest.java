@@ -97,7 +97,7 @@ class BuriedTreasureTest extends BaseCardTest {
 
     @Test
     void tappedTreasureCannotPayTheTapCost() {
-        harness.addToBattlefieldAndReturn(player1, new BuriedTreasure()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new BuriedTreasure()).tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

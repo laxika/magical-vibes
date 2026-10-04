@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({EvolvedSpinoderm.class})
 class EvolvedSpinodermTest extends BaseCardTest {
 
     @Test
@@ -70,13 +72,51 @@ class EvolvedSpinodermTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Evolved Spinoderm");
     }
 
+    @Test
+    @DisplayName("Zero oil counters grant trample without sacrificing before upkeep")
+    void zeroCountersGrantTrampleUntilUpkeep() {
+        Permanent spinoderm = addCreatureReady(player1, new EvolvedSpinoderm());
+        spinoderm.setCounterCount(CounterType.OIL, 0);
+
+        assertThat(gqs.hasKeyword(gd, spinoderm, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, spinoderm, Keyword.HEXPROOF)).isFalse();
+        harness.assertOnBattlefield(player1, "Evolved Spinoderm");
+
+        advanceToPlayerOneUpkeep();
+
+        harness.assertNotOnBattlefield(player1, "Evolved Spinoderm");
+        harness.assertInGraveyard(player1, "Evolved Spinoderm");
+    }
+
+    @Test
+    @DisplayName("Does not remove oil counters during an opponent's upkeep")
+    void opponentUpkeepDoesNotRemoveCounters() {
+        Permanent spinoderm = addCreatureReady(player1, new EvolvedSpinoderm());
+        spinoderm.setCounterCount(CounterType.OIL, 1);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(spinoderm.getCounterCount(CounterType.OIL)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Evolved Spinoderm");
+    }
+
+    @Test
+    @DisplayName("Upkeep changes hexproof to trample when three oil counters become two")
+    void upkeepSwitchesKeywordsAtThreshold() {
+        Permanent spinoderm = addCreatureReady(player1, new EvolvedSpinoderm());
+        spinoderm.setCounterCount(CounterType.OIL, 3);
+
+        advanceToPlayerOneUpkeep();
+
+        assertThat(spinoderm.getCounterCount(CounterType.OIL)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, spinoderm, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, spinoderm, Keyword.HEXPROOF)).isFalse();
+        harness.assertOnBattlefield(player1, "Evolved Spinoderm");
+    }
+
     private void advanceToPlayerOneUpkeep() {
-        harness.forceActivePlayer(player2);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
     }
 }

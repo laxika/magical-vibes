@@ -28,7 +28,7 @@ public class AbigaleEloquentFirstYear extends Card {
         ));
         target(new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"), 0, 1)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN))
+                        new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         new PutCounterOnTargetPermanentEffect(CounterType.FLYING))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,

@@ -46,6 +46,52 @@ class DwarvenProvisionerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, provisioner)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Repeated activations stack even while the provisioner is tapped and summoning sick")
+    void repeatedActivationsStackWhileTapped() {
+        Permanent provisioner = harness.addToBattlefieldAndReturn(player1, new DwarvenProvisioner());
+        provisioner.setTapped(true);
+        provisioner.setSummoningSick(true);
+
+        activateProvisioner(provisioner);
+        activateProvisioner(provisioner);
+
+        assertThat(gqs.getEffectivePower(gd, provisioner)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, provisioner)).isEqualTo(4);
+        assertThat(provisioner.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution do not receive the boost")
+    void creaturesEnteringAfterResolutionAreNotBoosted() {
+        Permanent provisioner = harness.addToBattlefieldAndReturn(player1, new DwarvenProvisioner());
+
+        activateProvisioner(provisioner);
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new DwarvenProvisioner());
+
+        assertThat(gqs.getEffectivePower(gd, provisioner)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, provisioner)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creatures entering before resolution receive the boost")
+    void creaturesEnteringBeforeResolutionAreBoosted() {
+        Permanent provisioner = harness.addToBattlefieldAndReturn(player1, new DwarvenProvisioner());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(provisioner), null, null);
+
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player1, new DwarvenProvisioner());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, provisioner)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, provisioner)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(3);
+    }
+
     private void activateProvisioner(Permanent provisioner) {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

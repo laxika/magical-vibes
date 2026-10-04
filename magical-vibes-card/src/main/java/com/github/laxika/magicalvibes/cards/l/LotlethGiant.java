@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 @CardRegistration(set = "GRN", collectorNumber = "74")
 @CardRegistration(set = "CMM", collectorNumber = "171")
+@CardRegistration(set = "SCD", collectorNumber = "89")
 public class LotlethGiant extends Card {
 
     public LotlethGiant() {

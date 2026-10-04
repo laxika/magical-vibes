@@ -54,8 +54,11 @@ class ArmsRaceTest extends BaseCardTest {
         Permanent ornithopter = findPermanent(player1, "Ornithopter");
         assertThat(ornithopter.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(ornithopter.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+        assertThat(gd.getDelayedActions(com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger.class))
+                .anySatisfy(action -> {
+                    assertThat(action.permanentId()).isEqualTo(ornithopter.getId());
+                    assertThat(action.controllerId()).isEqualTo(player1.getId());
+                });
     }
 
     @Test
@@ -79,6 +82,7 @@ class ArmsRaceTest extends BaseCardTest {
     void sacrificeWaitsForItsTriggerToResolve() {
         putOrnithopterWithArmsRace();
 
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Ornithopter");
@@ -91,6 +95,7 @@ class ArmsRaceTest extends BaseCardTest {
     @Test
     @DisplayName("Activating during the end step grants haste beyond cleanup")
     void hastePersistsAcrossCleanup() {
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         putOrnithopterWithArmsRace();
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
@@ -111,6 +116,7 @@ class ArmsRaceTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(ornithopter);
         gd.playerBattlefields.get(player2.getId()).add(ornithopter);
 
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
         if (!gd.stack.isEmpty()) {
             harness.passBothPriorities();

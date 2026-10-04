@@ -26,8 +26,7 @@ class FatalBlowTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FatalBlow()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -42,11 +41,9 @@ class FatalBlowTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0, elemental.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, elemental.getId());
 
-        harness.castInstant(player1, 0, elemental.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, elemental.getId());
 
         harness.assertNotOnBattlefield(player2, "Air Elemental");
         harness.assertInGraveyard(player2, "Air Elemental");
@@ -87,8 +84,7 @@ class FatalBlowTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FatalBlow()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -103,9 +99,40 @@ class FatalBlowTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FatalBlow()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bears.getId());
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Damage prevention does not make a creature a legal target")
+    void cannotTargetCreatureWhoseDamageWasPrevented() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        elemental.setDamagePreventionShield(2);
+        harness.setHand(player1, List.of(new Shock(), new FatalBlow()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, elemental.getId());
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, elemental.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Removing marked damage does not erase damage dealt this turn")
+    void canTargetCreatureAfterMarkedDamageIsRemoved() {
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new Shock(), new FatalBlow()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, elemental.getId());
+        elemental.setMarkedDamage(0);
+        harness.castAndResolveInstant(player1, 0, elemental.getId());
+
+        harness.assertNotOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player2, "Air Elemental");
     }
 }

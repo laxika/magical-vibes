@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,9 +20,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Excommunicate.class, GrizzlyBears.class, Forest.class})
 class ExcommunicateTest extends BaseCardTest {
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting Excommunicate targeting a creature puts it on the stack")
@@ -42,8 +42,6 @@ class ExcommunicateTest extends BaseCardTest {
         assertThat(entry.getTargetId()).isEqualTo(targetId);
     }
 
-    // ===== Targeting restrictions =====
-
     @Test
     @DisplayName("Cannot target a land")
     void cannotTargetLand() {
@@ -57,8 +55,6 @@ class ExcommunicateTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Resolving =====
-
     @Test
     @DisplayName("Resolving puts creature on top of owner's library")
     void resolvingPutsCreatureOnTopOfLibrary() {
@@ -70,8 +66,7 @@ class ExcommunicateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Excommunicate()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         // Creature removed from battlefield
@@ -99,8 +94,7 @@ class ExcommunicateTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Excommunicate()));
         harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Vampire");
@@ -109,8 +103,6 @@ class ExcommunicateTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
                 .anyMatch(log -> log.contains("Vampire") && log.contains("ceases to exist"));
     }
-
-    // ===== Excommunicate goes to graveyard =====
 
     @Test
     @DisplayName("Excommunicate goes to caster's graveyard after resolving")
@@ -121,15 +113,12 @@ class ExcommunicateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Excommunicate()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castSorcery(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetId);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Excommunicate");
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("Fizzles if target is removed before resolution")
@@ -156,4 +145,45 @@ class ExcommunicateTest extends BaseCardTest {
         // Excommunicate still goes to graveyard
         harness.assertInGraveyard(player1, "Excommunicate");
     }
+
+    @Test
+    @DisplayName("A creature controlled by another player goes to its owner's library")
+    void controlledCreatureReturnsToOwnersLibrary() {
+        Card creature = new GrizzlyBears();
+        creature.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, creature);
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        List<Card> ownersLibraryBefore = List.copyOf(gd.playerDecks.get(player1.getId()));
+        List<Card> controllersLibraryBefore = List.copyOf(gd.playerDecks.get(player2.getId()));
+        harness.setHand(player1, List.of(new Excommunicate()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(creature);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(1, ownersLibraryBefore.size() + 1))
+                .containsExactlyElementsOf(ownersLibraryBefore);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(controllersLibraryBefore);
+        harness.assertInGraveyard(player1, "Excommunicate");
+    }
+
+    @Test
+    @DisplayName("Can put your own creature on top of an empty library")
+    void ownCreatureGoesOnTopOfEmptyLibrary() {
+        Card creature = new GrizzlyBears();
+        harness.addToBattlefield(player1, creature);
+        UUID targetId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new Excommunicate()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Excommunicate");
+    }
+
 }

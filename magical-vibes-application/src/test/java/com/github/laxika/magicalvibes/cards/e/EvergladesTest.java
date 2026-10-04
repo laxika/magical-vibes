@@ -116,6 +116,44 @@ class EvergladesTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("A Swamp tapped in response cannot pay the enter trigger")
+    void swampTappedInResponseCannotBeReturned() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.setHand(player1, List.of(new Everglades()));
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertOnBattlefield(player1, "Everglades");
+        harness.tapPermanent(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Everglades");
+        harness.assertInGraveyard(player1, "Everglades");
+        harness.assertOnBattlefield(player1, "Swamp");
+        harness.assertNotInHand(player1, "Swamp");
+    }
+
+    @Test
+    @DisplayName("Only the untapped Swamp is returned when another Swamp is tapped")
+    void returnsOnlyUntappedSwamp() {
+        harness.addToBattlefield(player1, new Swamp());
+        Permanent tappedSwamp = findPermanent(player1, "Swamp");
+        tappedSwamp.tap();
+        harness.addToBattlefield(player1, new Swamp());
+        playAndResolveEtb();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Everglades");
+        assertThat(countPermanents(player1, "Swamp")).isEqualTo(1);
+        assertThat(findPermanent(player1, "Swamp").getId()).isEqualTo(tappedSwamp.getId());
+        assertThat(findPermanent(player1, "Swamp").isTapped()).isTrue();
+        harness.assertInHand(player1, "Swamp");
+    }
+
     private void playAndResolveEtb() {
         harness.setHand(player1, List.of(new Everglades()));
         harness.playLand(player1, 0);

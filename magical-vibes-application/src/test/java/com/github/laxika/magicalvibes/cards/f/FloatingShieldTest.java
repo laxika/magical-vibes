@@ -87,6 +87,69 @@ class FloatingShieldTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing white while enchanting an opponent's creature keeps the Aura attached")
+    void choosingWhiteOnOpponentsCreatureKeepsAuraAttached() {
+        Permanent host = addCreatureReady(player2, new AngelOfRetribution());
+        harness.setHand(player1, List.of(new FloatingShield()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0, host.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+        harness.runStateBasedActions();
+
+        Permanent shield = findPermanent(player1, "Floating Shield");
+        assertThat(shield.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gqs.hasProtectionFrom(gd, host, CardColor.WHITE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sacrificing the Aura can protect its own enchanted creature")
+    void sacrificeCanProtectItsOwnHost() {
+        Permanent host = addCreatureReady(player1, new AngelOfRetribution());
+        attachShield(host, CardColor.BLUE);
+
+        harness.activateAbility(player1, 1, null, host.getId());
+
+        harness.assertInGraveyard(player1, "Floating Shield");
+        assertThat(gqs.hasProtectionFrom(gd, host, CardColor.BLUE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, host, CardColor.BLUE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Choosing white prevents the Aura's ability from targeting its host")
+    void whiteProtectionPreventsAbilityFromTargetingHost() {
+        Permanent host = addCreatureReady(player1, new AngelOfRetribution());
+        Permanent shield = attachShield(host, CardColor.WHITE);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, host.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(shield);
+        harness.assertNotInGraveyard(player1, "Floating Shield");
+    }
+
+    @Test
+    @DisplayName("Protection from white granted by another Shield removes the attached Aura")
+    void independentlyGrantedWhiteProtectionRemovesAura() {
+        Permanent host = addCreatureReady(player1, new AngelOfRetribution());
+        Permanent attachedShield = attachShield(host, CardColor.RED);
+        Permanent otherHost = addCreatureReady(player1, new AngelOfRetribution());
+        attachShield(otherHost, CardColor.WHITE);
+
+        harness.activateAbility(player1, 3, null, host.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, host, CardColor.WHITE)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attachedShield);
+        assertThat(gqs.hasProtectionFrom(gd, host, CardColor.RED)).isFalse();
+    }
+
+    @Test
     @DisplayName("The sacrifice ability cannot target a noncreature permanent")
     void sacrificeAbilityCannotTargetNoncreature() {
         Permanent host = addCreatureReady(player1, new AngelOfRetribution());

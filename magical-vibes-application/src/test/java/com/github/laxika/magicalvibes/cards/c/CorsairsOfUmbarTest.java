@@ -91,7 +91,7 @@ class CorsairsOfUmbarTest extends BaseCardTest {
     @DisplayName("Can target an opposing Goblin while the source is tapped and summoning sick")
     void makesOpposingGoblinUnblockableWithoutTapCost() {
         Permanent corsairs = harness.addToBattlefieldAndReturn(player1, new CorsairsOfUmbar());
-        corsairs.setTapped(true);
+        corsairs.tap();
         Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinCratermaker());
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

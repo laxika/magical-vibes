@@ -15,6 +15,7 @@ import java.util.Set;
 
 @CardRegistration(set = "FIC", collectorNumber = "79")
 @CardRegistration(set = "FIC", collectorNumber = "166")
+@CardRegistration(set = "FIC", collectorNumber = "472")
 public class BarretAvalancheLeader extends Card {
 
     public BarretAvalancheLeader() {

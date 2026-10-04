@@ -29,8 +29,7 @@ class FoldIntoAetherTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -57,8 +56,7 @@ class FoldIntoAetherTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Blind Creeper");
@@ -79,8 +77,7 @@ class FoldIntoAetherTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
@@ -105,12 +102,72 @@ class FoldIntoAetherTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, target.getId());
 
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Carnage Tyrant");
         harness.assertInHand(player1, "Blind Creeper");
         assertThat(harness.getGameData().interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void countersTheTargetBeforeOfferingTheOptionalCreature() {
+        BlindCreeper target = new BlindCreeper();
+        harness.setHand(player1, List.of(target, new BlindCreeper()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setHand(player2, List.of(new FoldIntoAether()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == target);
+
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInHand(player1, "Blind Creeper");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canCounterItsControllersOwnSpellAndPutTheirCreatureOntoBattlefield() {
+        BlindCreeper target = new BlindCreeper();
+        BlindCreeper creature = new BlindCreeper();
+        harness.setHand(player1, List.of(target, new FoldIntoAether(), creature));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void stillCountersTheSpellWhenItsControllerHasAnEmptyHand() {
+        BlindCreeper target = new BlindCreeper();
+        harness.setHand(player1, List.of(target));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setHand(player2, List.of(new FoldIntoAether()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }

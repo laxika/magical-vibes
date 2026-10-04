@@ -17,6 +17,7 @@ import java.util.List;
 
 @CardRegistration(set = "M13", collectorNumber = "150")
 @CardRegistration(set = "IMA", collectorNumber = "149")
+@CardRegistration(set = "SCD", collectorNumber = "164")
 public class ThundermawHellkite extends Card {
 
     public ThundermawHellkite() {

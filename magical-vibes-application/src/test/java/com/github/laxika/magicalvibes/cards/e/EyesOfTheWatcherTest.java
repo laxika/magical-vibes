@@ -127,6 +127,93 @@ class EyesOfTheWatcherTest extends BaseCardTest {
                 && entry.getCard().getName().equals("Eyes of the Watcher"));
     }
 
+    @Test
+    @DisplayName("Scry can put both cards on the bottom in either order")
+    void scryBothCardsToBottom() {
+        Card first = new Arachnoid();
+        Card second = new AbunasChant();
+        Card third = new ChannelTheSuns();
+        setUp(first, second, third);
+        castSorceryAndPayForScry();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(first, second);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, second, first);
+    }
+
+    @Test
+    @DisplayName("Scry can keep one card on top and put the other on the bottom")
+    void scrySplitsCardsBetweenTopAndBottom() {
+        Card first = new Arachnoid();
+        Card second = new AbunasChant();
+        Card third = new ChannelTheSuns();
+        setUp(first, second, third);
+        castSorceryAndPayForScry();
+
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, third, first);
+    }
+
+    @Test
+    @DisplayName("Two copies trigger separately and each requires its own payment")
+    void twoCopiesRequireSeparatePayments() {
+        setUp(new Arachnoid(), new AbunasChant());
+        harness.addToBattlefield(player1, new EyesOfTheWatcher());
+        castSorceryAndPayForScry();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(2);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
+                .isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Scry 2 with one card in the library only looks at that card")
+    void scryWithOneCardInLibrary() {
+        Card onlyCard = new Arachnoid();
+        setUp(onlyCard);
+        castSorceryAndPayForScry();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(onlyCard);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+    }
+
+    @Test
+    @DisplayName("Paying to scry an empty library does not require a card ordering choice")
+    void scryWithEmptyLibrary() {
+        setUp();
+        castSorceryAndPayForScry();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    private void castSorceryAndPayForScry() {
+        harness.setHand(player1, List.of(new ChannelTheSuns()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
+                .isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+    }
+
     private void setUp(Card... libraryCards) {
         harness.addToBattlefield(player1, new EyesOfTheWatcher());
         harness.setLibrary(player1, List.of(libraryCards));

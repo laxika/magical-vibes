@@ -126,7 +126,7 @@ class DegaDiscipleTest extends BaseCardTest {
     @Test
     void tappedDiscipleCannotActivateEitherAbility() {
         Permanent disciple = addReadyDisciple(player1);
-        disciple.setTapped(true);
+        disciple.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
 

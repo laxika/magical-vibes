@@ -101,7 +101,7 @@ class BrimstoneMageTest extends BaseCardTest {
     @Test
     void canLevelWhileTappedAndSummoningSickInPostcombatMainPhase() {
         Permanent mage = harness.addToBattlefieldAndReturn(player1, new BrimstoneMage());
-        mage.setTapped(true);
+        mage.tap();
         mage.setSummoningSick(true);
         prepareForLeveling(player1, 4);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

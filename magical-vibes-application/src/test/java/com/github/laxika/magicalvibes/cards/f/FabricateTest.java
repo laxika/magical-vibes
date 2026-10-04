@@ -28,7 +28,7 @@ class FabricateTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Fabricate");
+        assertThat(entry.getCard()).isInstanceOf(Fabricate.class);
     }
 
     @Test
@@ -131,6 +131,52 @@ class FabricateTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
+        harness.assertInGraveyard(player1, "Fabricate");
+    }
+
+    @Test
+    @DisplayName("Fabricate takes only the selected artifact from its controller's library")
+    void choosesOneOfMultipleArtifactsFromOwnLibrary() {
+        Ornithopter firstArtifact = new Ornithopter();
+        Ornithopter selectedArtifact = new Ornithopter();
+        Forest land = new Forest();
+        Ornithopter opposingArtifact = new Ornithopter();
+        harness.setLibrary(player1, List.of(land, firstArtifact, selectedArtifact));
+        harness.setLibrary(player2, List.of(opposingArtifact));
+        setupAndCast();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(firstArtifact, selectedArtifact);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selectedArtifact);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(land, firstArtifact);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingArtifact);
+        harness.assertNotInHand(player2, "Ornithopter");
+        harness.assertNotOnBattlefield(player1, "Ornithopter");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Fabricate");
+    }
+
+    @Test
+    @DisplayName("Failing to find still shuffles and leaves all library cards in the library")
+    void failingToFindStillShuffles() {
+        Ornithopter artifact = new Ornithopter();
+        Forest land = new Forest();
+        harness.setLibrary(player1, List.of(artifact, land));
+        setupAndCast();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(artifact, land);
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(entry -> entry.contains("chooses not to take a card")
+                        && entry.contains("Library is shuffled"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Fabricate");
     }
 

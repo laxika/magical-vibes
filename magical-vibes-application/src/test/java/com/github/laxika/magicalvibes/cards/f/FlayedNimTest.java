@@ -133,4 +133,61 @@ class FlayedNimTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(nim);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
     }
+
+    @Test
+    @DisplayName("A blocking Flayed Nim causes life loss even when it regenerates from lethal combat damage")
+    void blockingNimTriggersAndRegenerates() {
+        Permanent attacker = addCreatureReady(player1, new AlphaMyr());
+        Permanent nim = addCreatureReady(player2, new FlayedNim());
+        harness.setLife(player1, 20);
+        harness.addMana(player2, ManaColor.BLACK, 3);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(nim);
+        assertThat(nim.isTapped()).isTrue();
+        assertThat(nim.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Another Flayed Nim does not duplicate the damage source's trigger")
+    void secondNimDoesNotDuplicateTrigger() {
+        addCreatureReady(player1, new FlayedNim());
+        addCreatureReady(player1, new FlayedNim());
+        addCreatureReady(player2, new SteelWall());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Flayed Nim can activate regeneration while tapped and summoning sick")
+    void regenerationDoesNotRequireTappingOrHaste() {
+        Permanent nim = harness.addToBattlefieldAndReturn(player1, new FlayedNim());
+        nim.setSummoningSick(true);
+        nim.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new ElectrostaticBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, nim.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(nim);
+        assertThat(nim.getRegenerationShield()).isZero();
+    }
 }

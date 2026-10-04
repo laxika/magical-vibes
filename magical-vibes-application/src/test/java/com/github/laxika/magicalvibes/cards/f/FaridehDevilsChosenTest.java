@@ -87,6 +87,42 @@ class FaridehDevilsChosenTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, farideh, Keyword.MENACE)).isFalse();
     }
 
+    @Test
+    void opponentsRollDoesNotTriggerFarideh() {
+        setRoll(10);
+        Card libraryCard = new GrizzlyBears();
+        prepare(libraryCard);
+        Permanent opposingFarideh = harness.addToBattlefieldAndReturn(player2, new FaridehDevilsChosen());
+        harness.setHand(player2, List.of());
+        Card opposingLibraryCard = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(opposingLibraryCard));
+
+        castRollSpell();
+
+        assertThat(gqs.hasKeyword(gd, opposingFarideh, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingFarideh, Keyword.MENACE)).isFalse();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingLibraryCard);
+    }
+
+    @Test
+    void stillDrawsWhenFaridehLeavesBeforeTriggerResolves() {
+        setRoll(10);
+        Card libraryCard = new GrizzlyBears();
+        Permanent farideh = prepare(libraryCard);
+        harness.castAndResolveInstant(player1, 0);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(farideh);
+        gd.playerGraveyards.get(player1.getId()).add(farideh.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3).contains(libraryCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
     private Permanent prepare(Card libraryCard) {
         Permanent farideh = harness.addToBattlefieldAndReturn(player1, new FaridehDevilsChosen());
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), libraryCard));
@@ -97,8 +133,7 @@ class FaridehDevilsChosenTest extends BaseCardTest {
     }
 
     private void castRollSpell() {
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         if (gd.interaction.activeInteraction(PendingInteraction.Scry.class) != null) {
             gs.handleInteractionAnswer(gd, player1,
                     new InteractionAnswer.ScryOrder(List.of(0, 1), List.of()));

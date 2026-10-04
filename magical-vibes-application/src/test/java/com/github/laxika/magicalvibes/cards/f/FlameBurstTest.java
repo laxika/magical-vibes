@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
+import com.github.laxika.magicalvibes.cards.p.PardicFirecat;
+import com.github.laxika.magicalvibes.cards.y.YixlidJailer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FlameBurst.class, DuskImp.class})
+@CardUsed({FlameBurst.class, DuskImp.class, PardicFirecat.class, YixlidJailer.class})
 class FlameBurstTest extends BaseCardTest {
 
     @Test
@@ -77,5 +79,51 @@ class FlameBurstTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("Counts Pardic Firecats in both graveyards alongside Flame Burst")
+    void countsPardicFirecatsInAllGraveyards() {
+        harness.setGraveyard(player1, List.of(new FlameBurst(), new PardicFirecat()));
+        harness.setGraveyard(player2, List.of(new PardicFirecat()));
+        harness.setHand(player1, List.of(new FlameBurst()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Does not count Pardic Firecat when graveyard cards lose their abilities")
+    void doesNotCountPardicFirecatUnderYixlidJailer() {
+        harness.addToBattlefield(player2, new YixlidJailer());
+        harness.setGraveyard(player1, List.of(new FlameBurst(), new PardicFirecat()));
+        harness.setGraveyard(player2, List.of(new PardicFirecat()));
+        harness.setHand(player1, List.of(new FlameBurst()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Counts a responding Flame Burst only after it resolves into the graveyard")
+    void evaluatesGraveyardCountAtResolution() {
+        harness.setHand(player1, List.of(new FlameBurst()));
+        harness.setHand(player2, List.of(new FlameBurst()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.a.AlexiosDeimosOfKosmos;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
@@ -18,9 +19,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({EddieBrock.class, VenomLethalProtector.class, LlanowarElves.class,
-        GrizzlyBears.class, MindStone.class, Opt.class})
+        GrizzlyBears.class, MindStone.class, Opt.class, AlexiosDeimosOfKosmos.class})
 class EddieBrockTest extends BaseCardTest {
 
     @Test
@@ -67,7 +69,7 @@ class EddieBrockTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindStone()));
         harness.setLibrary(player1, List.of(new Opt(), new Opt()));
 
-        declareAttackers();
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player1, true);
@@ -88,7 +90,7 @@ class EddieBrockTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindStone()));
         harness.setLibrary(player1, List.of(new Opt(), new Opt()));
 
-        declareAttackers();
+        declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -97,12 +99,92 @@ class EddieBrockTest extends BaseCardTest {
         harness.assertInHand(player1, "Mind Stone");
     }
 
+    @Test
+    @DisplayName("Sacrificing is allowed without putting a permanent from hand")
+    void declinesPuttingPermanentAfterDrawing() {
+        addBackReady(player1);
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MindStone()));
+        harness.setLibrary(player1, List.of(new Opt(), new Opt()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Mind Stone");
+        harness.assertNotOnBattlefield(player1, "Mind Stone");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Venom cannot sacrifice itself or an opposing creature")
+    void noOtherControlledCreatureMeansNoDraw() {
+        addBackReady(player1);
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Opt(), new Opt()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Venom, Lethal Protector");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A creature that cannot be sacrificed is excluded from Venom's choices")
+    void excludesCreaturesThatCannotBeSacrificed() {
+        addBackReady(player1);
+        Permanent alexios = addCreatureReady(player1, new AlexiosDeimosOfKosmos());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MindStone()));
+        harness.setLibrary(player1, List.of(new Opt(), new Opt()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        if (choice != null) {
+            harness.handlePermanentChosen(player1, bears.getId());
+        }
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertOnBattlefield(player1, "Alexios, Deimos of Kosmos");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        if (choice != null) {
+            assertThat(choice.validPermanentIds()).doesNotContain(alexios.getId());
+        }
+    }
+
+    @Test
+    @DisplayName("Transformation cannot be activated during combat")
+    void rejectsTransformationDuringCombat() {
+        Permanent eddie = addFrontReady(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(eddie.isTransformed()).isFalse();
+    }
+
     private void castEddieBrock() {
         prepareMainPhase();
-        harness.setHand(player1, List.of(new EddieBrock()));
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EddieBrock(), "{2}{B}");
         harness.passBothPriorities();
     }
 
@@ -116,14 +198,6 @@ class EddieBrockTest extends BaseCardTest {
         permanent.setCard(card.getBackFaceCard());
         permanent.setTransformed(true);
         return permanent;
-    }
-
-    private void declareAttackers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player1, List.of(0));
     }
 
     private void prepareMainPhase() {

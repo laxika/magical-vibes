@@ -185,7 +185,7 @@ class DeadlyAllureTest extends BaseCardTest {
     void canRemainUnblockedWhenOnlyBlockerIsTapped() {
         Permanent target = addCreatureReady(player1, new DawntreaderElk());
         Permanent blocker = addCreatureReady(player2, new HollowhengeBeast());
-        blocker.setTapped(true);
+        blocker.tap();
         harness.setHand(player1, List.of(new DeadlyAllure()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.castAndResolveSorcery(player1, 0, target.getId());

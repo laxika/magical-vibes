@@ -110,7 +110,7 @@ class CustodiSoulbindersTest extends BaseCardTest {
     void tappedSourceCanActivateRepeatedly() {
         Permanent soulbinders = harness.addToBattlefieldAndReturn(player1, new CustodiSoulbinders());
         soulbinders.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        soulbinders.setTapped(true);
+        soulbinders.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.WHITE, 2);
 

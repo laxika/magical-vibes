@@ -49,8 +49,8 @@ class FloweringFieldTest extends BaseCardTest {
         activatePreventionAbility(land, blocker.getId());
         harness.passBothPriorities();
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(
+                List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
@@ -109,6 +109,61 @@ class FloweringFieldTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
+    }
+
+    @Test
+    @DisplayName("The controller of an opponent's enchanted land can activate the granted ability")
+    void opponentControlsGrantedAbility() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new RhysticCave());
+        harness.setHand(player1, List.of(new FloweringField()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, land.getId());
+        harness.passBothPriorities();
+        Permanent attacker = addCreatureReady(player1, new CoastalHornclaw());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(land), 1, null, player2.getId());
+        harness.passBothPriorities();
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        resolveCombat();
+
+        assertThat(land.isTapped()).isTrue();
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("A resolved prevention shield survives removal of Flowering Field")
+    void resolvedShieldSurvivesAuraRemoval() {
+        Permanent land = setUpEnchantedLand();
+        Permanent attacker = addCreatureReady(player1, new CoastalHornclaw());
+        harness.setLife(player2, 20);
+        activatePreventionAbility(land, player2.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).removeIf(p -> p.getCard() instanceof FloweringField);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("One activation prevents only one damage across multiple attacking sources")
+    void shieldPreventsOnlyOneDamageAcrossSources() {
+        Permanent land = setUpEnchantedLand();
+        Permanent first = addCreatureReady(player1, new CoastalHornclaw());
+        Permanent second = addCreatureReady(player1, new CoastalHornclaw());
+        harness.setLife(player2, 20);
+        activatePreventionAbility(land, player2.getId());
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(
+                gd.playerBattlefields.get(player1.getId()).indexOf(first),
+                gd.playerBattlefields.get(player1.getId()).indexOf(second)));
+        resolveCombat();
+
+        harness.assertLife(player2, 15);
     }
 
     private Permanent setUpEnchantedLand() {

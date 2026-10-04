@@ -30,8 +30,7 @@ class FiresOfYavimayaTest extends BaseCardTest {
     @DisplayName("Sacrificing Fires of Yavimaya gives a target creature +2/+2 until end of turn")
     void sacrificeAbilityBoostsTarget() {
         harness.addToBattlefield(player1, new FiresOfYavimaya());
-        harness.addToBattlefield(player2, new YavimayaBarbarian());
-        Permanent target = findPermanent(player2, "Yavimaya Barbarian");
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new YavimayaBarbarian());
 
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
@@ -71,5 +70,47 @@ class FiresOfYavimayaTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid and haste is lost before the boost resolves")
+    void sacrificeImmediatelyRemovesHaste() {
+        harness.addToBattlefield(player1, new FiresOfYavimaya());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new YavimayaBarbarian());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Fires of Yavimaya");
+        harness.assertInGraveyard(player1, "Fires of Yavimaya");
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Another Fires of Yavimaya continues granting haste after one is sacrificed")
+    void remainingCopyStillGrantsHaste() {
+        harness.addToBattlefield(player1, new FiresOfYavimaya());
+        harness.addToBattlefield(player1, new FiresOfYavimaya());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new YavimayaBarbarian());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertOnBattlefield(player1, "Fires of Yavimaya");
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
     }
 }

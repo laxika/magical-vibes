@@ -94,13 +94,49 @@ class FinalPunishmentTest extends BaseCardTest {
 
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
 
         castFinalPunishment(player2.getId());
 
         harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Can target its controller after they have taken damage")
+    void controllerCanLoseLifeFromTheirOwnDamageTotal() {
+        carbonizePlayer(player1.getId());
+
+        castFinalPunishment(player1.getId());
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Counts only the unprevented portion of damage")
+    void countsPartiallyPreventedDamage() {
+        gd.playerDamagePreventionShields.put(player2.getId(), 2);
+        carbonizePlayer(player2.getId());
+        harness.assertLife(player2, 19);
+
+        castFinalPunishment(player2.getId());
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Includes damage dealt in response before Final Punishment resolves")
+    void evaluatesDamageTotalAtResolution() {
+        harness.setHand(player1, List.of(new FinalPunishment(), new Carbonize()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 17);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 14);
     }
 
     private void carbonizePlayer(UUID targetPlayerId) {

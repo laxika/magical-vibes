@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.Guma;
+import com.github.laxika.magicalvibes.cards.v.VoltaicKey;
 import com.github.laxika.magicalvibes.cards.w.WornPowerstone;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Endoskeleton.class, Guma.class, WornPowerstone.class})
+@CardUsed({Endoskeleton.class, Guma.class, WornPowerstone.class, VoltaicKey.class})
 class EndoskeletonTest extends BaseCardTest {
 
     @Test
@@ -190,6 +191,59 @@ class EndoskeletonTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, guma)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, guma)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Untapping Endoskeleton in response prevents the boost")
+    void untappingBeforeResolutionPreventsBoost() {
+        Permanent endoskeleton = addReadyEndoskeleton(player1);
+        Permanent guma = addReadyGuma(player1);
+        harness.addToBattlefield(player1, new VoltaicKey());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, guma.getId());
+        harness.activateAbility(player1, 2, null, endoskeleton.getId());
+        harness.passBothPriorities();
+
+        assertThat(endoskeleton.isTapped()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveToughness(gd, guma)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Untapping and reactivating before resolution does not revive the older boost")
+    void retappingBeforeResolutionDoesNotReviveOlderBoost() {
+        Permanent endoskeleton = addReadyEndoskeleton(player1);
+        Permanent firstGuma = addReadyGuma(player1);
+        Permanent secondGuma = addReadyGuma(player1);
+        harness.addToBattlefield(player1, new VoltaicKey());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, firstGuma.getId());
+        harness.activateAbility(player1, 3, null, endoskeleton.getId());
+        harness.passBothPriorities();
+        assertThat(endoskeleton.isTapped()).isFalse();
+
+        harness.activateAbility(player1, 0, null, secondGuma.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(endoskeleton.isTapped()).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, firstGuma)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondGuma)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("The ability requires two mana")
+    void cannotActivateWithInsufficientMana() {
+        Permanent endoskeleton = addReadyEndoskeleton(player1);
+        Permanent guma = addReadyGuma(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, guma.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(endoskeleton.isTapped()).isFalse();
     }
 
     private Permanent addReadyEndoskeleton(Player player) {

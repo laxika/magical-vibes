@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -68,6 +69,77 @@ class FinalShowdownTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("All three modes resolve in printed order and spare only the chosen creature")
+    void allModesSpareChosenCreatureAfterChoice() {
+        Permanent chosen = addCreatureReady(player1, new SerraAngel());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new SerraAngel());
+
+        cast(new int[]{2, 1, 0}, 8);
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("A sole controlled creature is protected before the destruction mode")
+    void automaticallyProtectsSoleCreature() {
+        Permanent chosen = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new SerraAngel());
+
+        cast(new int[]{1, 2}, 7);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.INDESTRUCTIBLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Having no creature to choose does not stop the destruction mode")
+    void noControlledCreatureDoesNotStopRemainingModes() {
+        addCreatureReady(player2, new SerraAngel());
+
+        cast(new int[]{1, 2}, 7);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Final Showdown");
+    }
+
+    @Test
+    @DisplayName("Creatures arriving after the first mode retain their abilities")
+    void abilityLossDoesNotAffectLaterCreatures() {
+        Permanent existing = addCreatureReady(player1, new SerraAngel());
+
+        cast(new int[]{0}, 2);
+        Permanent later = addCreatureReady(player2, new SerraAngel());
+
+        assertThat(gqs.hasKeyword(gd, existing, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability loss and indestructible both expire at end of turn")
+    void temporaryEffectsExpireTogether() {
+        Permanent chosen = addCreatureReady(player1, new SerraAngel());
+
+        cast(new int[]{0, 1}, 3);
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.INDESTRUCTIBLE)).isFalse();
     }
 
     private void cast(int[] modes, int whiteMana) {

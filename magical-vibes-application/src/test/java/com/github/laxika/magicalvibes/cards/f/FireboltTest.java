@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Firebolt.class, EmberBeast.class, Mountain.class})
+@CardUsed({Firebolt.class, EmberBeast.class, Mountain.class, ChandraNalaar.class, InvasionOfInnistrad.class})
 class FireboltTest extends BaseCardTest {
 
     @Test
@@ -78,7 +78,6 @@ class FireboltTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(ChandraNalaar.class)
     @DisplayName("Firebolt deals 2 damage to a target planeswalker")
     void deals2DamageToPlaneswalker() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
@@ -92,7 +91,6 @@ class FireboltTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(InvasionOfInnistrad.class)
     @DisplayName("Firebolt deals 2 damage to a target battle")
     void deals2DamageToBattle() {
         Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfInnistrad());
@@ -114,5 +112,60 @@ class FireboltTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Firebolt can target its controller and then be flashed back")
+    void normalCastThenFlashback() {
+        harness.setHand(player1, List.of(new Firebolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 18);
+        harness.assertInGraveyard(player1, "Firebolt");
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveFlashback(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+        harness.assertNotInGraveyard(player1, "Firebolt");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Firebolt"));
+    }
+
+    @Test
+    @DisplayName("Flashback exiles Firebolt even when its target leaves the battlefield")
+    void flashbackExilesWhenTargetDisappears() {
+        harness.setGraveyard(player1, List.of(new Firebolt()));
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new EmberBeast());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castFlashback(player1, 0, creature.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 20);
+        harness.assertNotInGraveyard(player1, "Firebolt");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Firebolt"));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Five colorless mana cannot pay Firebolt's flashback cost")
+    void flashbackCannotBePaidWithOnlyColorlessMana() {
+        harness.setGraveyard(player1, List.of(new Firebolt()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Firebolt");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Murder;
+import com.github.laxika.magicalvibes.cards.b.BilbosDeadlySlice;
+import com.github.laxika.magicalvibes.cards.o.OrdinaryBear;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,7 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FearsomeGoblinPair.class, Murder.class, GrizzlyBears.class})
+@CardUsed({FearsomeGoblinPair.class, BilbosDeadlySlice.class, OrdinaryBear.class})
 class FearsomeGoblinPairTest extends BaseCardTest {
 
     @Test
@@ -35,7 +36,7 @@ class FearsomeGoblinPairTest extends BaseCardTest {
     @Test
     @DisplayName("When Fearsome Goblin Pair dies, it amasses Goblins 4 on an existing Army")
     void deathTriggerAmassesOnExistingArmy() {
-        Permanent army = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent army = harness.addToBattlefieldAndReturn(player1, new OrdinaryBear());
         army.getGrantedSubtypes().add(CardSubtype.ARMY);
         Permanent pair = harness.addToBattlefieldAndReturn(player1, new FearsomeGoblinPair());
 
@@ -46,11 +47,83 @@ class FearsomeGoblinPairTest extends BaseCardTest {
         assertThat(army.getGrantedSubtypes()).contains(CardSubtype.GOBLIN);
     }
 
+    @Test
+    @DisplayName("Amass adds counters to an existing Army without removing its other types")
+    void deathTriggerPreservesExistingCountersAndTypes() {
+        Permanent army = harness.addToBattlefieldAndReturn(player1, new OrdinaryBear());
+        army.getGrantedSubtypes().add(CardSubtype.ARMY);
+        army.getCounters().put(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent pair = harness.addToBattlefieldAndReturn(player1, new FearsomeGoblinPair());
+
+        destroyPair(pair.getId());
+
+        assertThat(army.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(gqs.hasEffectiveSubtype(gd, army, CardSubtype.BEAR)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, army, CardSubtype.ARMY)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, army, CardSubtype.GOBLIN)).isTrue();
+        assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's Army does not prevent creation of your Goblin Army")
+    void deathTriggerIgnoresOpponentsArmy() {
+        Permanent opposingArmy = harness.addToBattlefieldAndReturn(player2, new OrdinaryBear());
+        opposingArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        Permanent pair = harness.addToBattlefieldAndReturn(player1, new FearsomeGoblinPair());
+
+        destroyPair(pair.getId());
+
+        assertThat(findPermanent(player1, "Goblin Army")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(opposingArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasEffectiveSubtype(gd, opposingArmy, CardSubtype.GOBLIN)).isFalse();
+        assertThat(findPermanents(player2, "Goblin Army")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("With multiple Armies, only the chosen Army receives counters and becomes a Goblin")
+    void deathTriggerChoosesOneArmy() {
+        Permanent firstArmy = harness.addToBattlefieldAndReturn(player1, new OrdinaryBear());
+        firstArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        Permanent secondArmy = harness.addToBattlefieldAndReturn(player1, new OrdinaryBear());
+        secondArmy.getGrantedSubtypes().add(CardSubtype.ARMY);
+        Permanent pair = harness.addToBattlefieldAndReturn(player1, new FearsomeGoblinPair());
+
+        destroyPair(pair.getId());
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(firstArmy.getId(), secondArmy.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(secondArmy.getId()));
+
+        assertThat(firstArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasEffectiveSubtype(gd, firstArmy, CardSubtype.GOBLIN)).isFalse();
+        assertThat(secondArmy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(gqs.hasEffectiveSubtype(gd, secondArmy, CardSubtype.GOBLIN)).isTrue();
+        assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exiling Fearsome Goblin Pair does not trigger amass")
+    void exileDoesNotTriggerAmass() {
+        Permanent pair = harness.addToBattlefieldAndReturn(player1, new FearsomeGoblinPair());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, pair));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Goblin Army")).isEmpty();
+        assertThat(gd.exiledCards).anySatisfy(entry -> {
+            assertThat(entry.card()).isEqualTo(pair.getCard());
+            assertThat(entry.ownerId()).isEqualTo(player1.getId());
+        });
+    }
+
     private void destroyPair(UUID pairId) {
-        harness.setHand(player1, List.of(new Murder()));
+        harness.setHand(player1, List.of(new BilbosDeadlySlice()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castInstant(player1, 0, pairId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, pairId);
         harness.passBothPriorities();
     }
 }

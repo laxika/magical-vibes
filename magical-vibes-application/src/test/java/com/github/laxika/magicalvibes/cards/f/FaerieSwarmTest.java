@@ -3,16 +3,49 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.b.BallynockCohort;
 import com.github.laxika.magicalvibes.cards.c.Cursecatcher;
 import com.github.laxika.magicalvibes.cards.p.PucasMischief;
+import com.github.laxika.magicalvibes.cards.w.WaspLancer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FaerieSwarm.class, BallynockCohort.class, Cursecatcher.class, PucasMischief.class})
+@CardUsed({FaerieSwarm.class, BallynockCohort.class, Cursecatcher.class, PucasMischief.class, WaspLancer.class})
 class FaerieSwarmTest extends BaseCardTest {
+    @Test
+    void countsMulticoloredBluePermanentOnce() {
+        Permanent swarm = addCreatureReady(player1, new FaerieSwarm());
+        harness.addToBattlefield(player1, new WaspLancer());
+
+        assertThat(gqs.getEffectivePower(gd, swarm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, swarm)).isEqualTo(2);
+    }
+
+    @Test
+    void characteristicAbilityWorksInHandWithoutCountingCardsInHand() {
+        FaerieSwarm swarm = new FaerieSwarm();
+        harness.setHand(player1, List.of(swarm, new Cursecatcher()));
+        harness.addToBattlefield(player1, new PucasMischief());
+        harness.addToBattlefield(player2, new Cursecatcher());
+
+        assertThat(gqs.getEffectiveCardPower(gd, swarm)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, swarm)).isEqualTo(1);
+    }
+
+    @Test
+    void characteristicAbilityWorksInGraveyardWithNoBluePermanents() {
+        FaerieSwarm swarm = new FaerieSwarm();
+        harness.setGraveyard(player1, List.of(swarm, new Cursecatcher()));
+        harness.addToBattlefield(player1, new BallynockCohort());
+        harness.addToBattlefield(player2, new Cursecatcher());
+
+        assertThat(gqs.getEffectiveCardPower(gd, swarm)).isZero();
+        assertThat(gqs.getEffectiveCardToughness(gd, swarm)).isZero();
+    }
 
     @Test
     @DisplayName("Counts itself as a blue permanent when alone: 1/1")

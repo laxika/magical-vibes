@@ -78,4 +78,57 @@ class EelHoundsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, eelHounds.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Attacking alone does not boost the source or ask for an impossible target")
+    void attackingAloneHasNoLegalTarget() {
+        Permanent eelHounds = addCreatureReady(player1, new EelHounds());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(eelHounds.getPowerModifier()).isZero();
+        assertThat(eelHounds.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Attack trigger resolves after Eel-Hounds leaves the battlefield")
+    void attackTriggerSurvivesSourceLeaving() {
+        Permanent eelHounds = addCreatureReady(player1, new EelHounds());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        eelHounds.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(eelHounds);
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Attack trigger does not affect a different creature when its target leaves")
+    void attackTriggerDoesNotRetarget() {
+        Permanent eelHounds = addCreatureReady(player1, new EelHounds());
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, target.getId());
+        target.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(eelHounds.getPowerModifier()).isZero();
+        assertThat(otherCreature.getPowerModifier()).isZero();
+        assertThat(otherCreature.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.TRAMPLE)).isFalse();
+    }
 }

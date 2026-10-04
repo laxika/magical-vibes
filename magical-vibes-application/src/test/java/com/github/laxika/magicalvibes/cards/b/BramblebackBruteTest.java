@@ -150,7 +150,7 @@ class BramblebackBruteTest extends BaseCardTest {
         Permanent brute = harness.addToBattlefieldAndReturn(player1, new BramblebackBrute());
         Permanent target = addCreatureReady(player2, new SizzlingChangeling());
         brute.setSummoningSick(true);
-        brute.setTapped(true);
+        brute.tap();
         brute.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);

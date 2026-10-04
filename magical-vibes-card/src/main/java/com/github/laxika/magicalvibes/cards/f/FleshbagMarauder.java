@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 @CardRegistration(set = "CMD", collectorNumber = "83")
 @CardRegistration(set = "MIC", collectorNumber = "118")
 @CardRegistration(set = "DRC", collectorNumber = "92")
+@CardRegistration(set = "SCD", collectorNumber = "78")
 public class FleshbagMarauder extends Card {
 
     public FleshbagMarauder() {

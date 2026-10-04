@@ -51,8 +51,8 @@ class FarhavenElfTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting with no basic land leaves the library unchanged")
-    void acceptingWithNoBasicLandLeavesLibraryUnchanged() {
+    @DisplayName("Accepting with no basic land puts no land onto the battlefield")
+    void acceptingWithNoBasicLandPutsNoLandOntoBattlefield() {
         harness.castFromHand(player1, new FarhavenElf(), "{2}{G}");
         harness.setLibrary(player1, List.of(new SapseepForest(), new FarhavenElf()));
 
@@ -98,6 +98,65 @@ class FarhavenElfTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
+    }
+
+    @Test
+    @DisplayName("The controller may fail to find even when a basic land is available")
+    void mayFailToFindAnAvailableBasicLand() {
+        Plains plains = new Plains();
+        SapseepForest nonbasic = new SapseepForest();
+        harness.setLibrary(player1, List.of(plains, nonbasic));
+        harness.castFromHand(player1, new FarhavenElf(), "{2}{G}");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(plains, nonbasic);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1)
+                .noneMatch(p -> p.getCard().hasType(CardType.LAND));
+    }
+
+    @Test
+    @DisplayName("Accepting with an empty library completes without putting a land onto the battlefield")
+    void acceptingWithEmptyLibraryCompletes() {
+        harness.setLibrary(player1, List.of());
+        harness.castFromHand(player1, new FarhavenElf(), "{2}{G}");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1)
+                .noneMatch(p -> p.getCard().hasType(CardType.LAND));
+    }
+
+    @Test
+    @DisplayName("Entering without being cast searches the entering creature controller's library")
+    void enteringWithoutCastingSearchesControllersLibrary() {
+        Plains opponentsLand = new Plains();
+        Forest chosenLand = new Forest();
+        Island remainingLand = new Island();
+        harness.setLibrary(player1, List.of(opponentsLand));
+        harness.setLibrary(player2, List.of(chosenLand, remainingLand));
+        harness.enterBattlefieldAndReturn(player2, new FarhavenElf());
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(opponentsLand);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remainingLand);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2)
+                .anyMatch(p -> p.getCard() == chosenLand && p.isTapped());
     }
 
     private void setupLibrary() {

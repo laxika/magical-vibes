@@ -18,7 +18,11 @@ import java.util.Set;
 public class AppaTheVigilant extends Card {
 
     public AppaTheVigilant() {
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, SequenceEffect.of(
+                new BoostAllOwnCreaturesEffect(1, 1),
+                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE),
+                        GrantScope.ALL_OWN_CREATURES)));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ALLY),
                         SequenceEffect.of(
                                 new BoostAllOwnCreaturesEffect(1, 1),

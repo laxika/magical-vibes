@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.b.BlastOfGenius;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Far // Away is one card whose two halves (and their fusion) are the three modes of a single
  * modal spell, each paying its own total cost.
  */
+@CardUsed({FarAway.class, GrizzlyBears.class, GiantSpider.class, BlastOfGenius.class})
 class FarAwayTest extends BaseCardTest {
 
     private static final int FAR = 0;
@@ -114,5 +117,69 @@ class FarAwayTest extends BaseCardTest {
         UUID playerId = player2.getId();
         assertThatThrownBy(() -> harness.castModalInstant(player1, 0, FUSE, List.of(bearsId, playerId)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Away can target its caster")
+    void awayCanTargetCaster() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FarAway()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0, AWAY, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Away resolves when its target controls no creatures")
+    void awayWithNoCreaturesDoesNothing() {
+        harness.setHand(player1, List.of(new FarAway()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0, AWAY, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Fuse still resolves Away if Far's creature target leaves before resolution")
+    void fuseResolvesAwayWhenCreatureTargetLeaves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GiantSpider());
+        harness.setHand(player1, List.of(new FarAway()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castModalInstant(player1, 0, FUSE, List.of(bears.getId(), player2.getId()));
+
+        harness.setHand(player2, List.of(new FarAway()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, FAR, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Giant Spider");
+    }
+
+    @Test
+    @DisplayName("Discarding Far // Away deals its combined mana value with Blast of Genius")
+    void discardedSplitCardHasCombinedManaValue() {
+        harness.setHand(player1, List.of(new BlastOfGenius(), new FarAway()));
+        harness.setLibrary(player1, List.of(new FarAway(), new FarAway(), new FarAway()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertLife(player2, 15);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ELD", collectorNumber = "122")
+@CardRegistration(set = "ELD", collectorNumber = "292")
 public class EmberethShieldbreaker extends Card {
 
     public EmberethShieldbreaker() {

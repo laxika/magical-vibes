@@ -72,4 +72,65 @@ class FrostwallaTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, frostwalla)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, frostwalla)).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Tapped, summoning-sick Frostwalla can use colored snow mana to pump")
+    void tappedSummoningSickCreatureCanPump() {
+        Permanent frostwalla = addCreatureReady(player1, new Frostwalla());
+        frostwalla.setSummoningSick(true);
+        frostwalla.setTapped(true);
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, frostwalla)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, frostwalla)).isEqualTo(4);
+        assertThat(frostwalla.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Each Frostwalla has its own activation limit, counted before resolution")
+    void activationLimitsAreIndependentAndApplyBeforeResolution() {
+        Permanent first = addCreatureReady(player1, new Frostwalla());
+        Permanent second = addCreatureReady(player1, new Frostwalla());
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.GREEN, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        assertThat(gd.playerManaPools.get(player1.getId()).getSnowManaTotal()).isEqualTo(2);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Frostwalla can pump again on the opponent's next turn")
+    void activationLimitResetsOnOpponentsTurn() {
+        Permanent frostwalla = addCreatureReady(player1, new Frostwalla());
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, frostwalla)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, frostwalla)).isEqualTo(2);
+        gd.playerManaPools.get(player1.getId()).addSnowMana(ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, frostwalla)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, frostwalla)).isEqualTo(4);
+    }
 }

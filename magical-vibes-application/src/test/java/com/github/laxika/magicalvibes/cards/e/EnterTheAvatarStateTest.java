@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EnterTheAvatarState.class, GrizzlyBears.class})
+@CardUsed({EnterTheAvatarState.class, GrizzlyBears.class, Plains.class, Unsummon.class})
 class EnterTheAvatarStateTest extends BaseCardTest {
 
     @Test
@@ -63,7 +65,68 @@ class EnterTheAvatarStateTest extends BaseCardTest {
     private void cast(Permanent target) {
         harness.setHand(player1, List.of(new EnterTheAvatarState()));
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+    }
+
+    @Test
+    void cannotTargetNoncreatureYouControl() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Plains());
+        harness.setHand(player1, List.of(new EnterTheAvatarState()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void onlyTargetCreatureReceivesGrants() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        cast(target);
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, other)).containsExactly(CardSubtype.BEAR);
+        for (Keyword keyword : List.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.LIFELINK, Keyword.HEXPROOF)) {
+            assertThat(gqs.hasKeyword(gd, other, keyword)).isFalse();
+        }
+    }
+
+    @Test
+    void hexproofPreventsOpponentTargetingButAllowsControllerTargeting() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        cast(bears);
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void targetLeavingBattlefieldInResponseMakesSpellDoNothing() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new EnterTheAvatarState()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, bears.getId());
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
         harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Enter the Avatar State");
+        assertThat(gqs.effectiveCreatureSubtypes(gd, other)).containsExactly(CardSubtype.BEAR);
+        for (Keyword keyword : List.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.LIFELINK, Keyword.HEXPROOF)) {
+            assertThat(gqs.hasKeyword(gd, other, keyword)).isFalse();
+        }
     }
 }

@@ -88,7 +88,7 @@ class DaringFiendbonderTest extends BaseCardTest {
     @Test
     void tappedFiendbonderDoesNotHaveToAttack() {
         Permanent fiendbonder = addCreatureReady(player1, new DaringFiendbonder());
-        fiendbonder.setTapped(true);
+        fiendbonder.tap();
 
         declareAttackers(List.of());
 

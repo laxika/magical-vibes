@@ -80,6 +80,38 @@ class EnslavedHorrorTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Island");
     }
 
+    @Test
+    void emptyOpponentGraveyardDoesNotRequireAChoice() {
+        harness.setGraveyard(player1, List.of(new CloudSprite()));
+        harness.setGraveyard(player2, List.of());
+
+        castEnslavedHorror();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertOnBattlefield(player1, "Enslaved Horror");
+        harness.assertInGraveyard(player1, "Cloud Sprite");
+    }
+
+    @Test
+    void returnedHorrorTriggersForItsControllerOtherPlayer() {
+        harness.setGraveyard(player1, List.of(new CloudSprite()));
+        harness.setGraveyard(player2, List.of(new EnslavedHorror()));
+        castEnslavedHorror();
+
+        harness.handleGraveyardCardChosen(player2, 0);
+        harness.assertOnBattlefield(player2, "Enslaved Horror");
+        harness.assertNotInGraveyard(player2, "Enslaved Horror");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class))
+                .isNotNull();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Cloud Sprite");
+        harness.assertNotInGraveyard(player1, "Cloud Sprite");
+        harness.assertNotOnBattlefield(player2, "Cloud Sprite");
+    }
+
     private void castEnslavedHorror() {
         harness.setHand(player1, List.of(new EnslavedHorror()));
         harness.addMana(player1, ManaColor.BLACK, 4);

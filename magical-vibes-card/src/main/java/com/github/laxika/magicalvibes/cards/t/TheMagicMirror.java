@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "51")
+@CardRegistration(set = "ELD", collectorNumber = "345")
 public class TheMagicMirror extends Card {
 
     public TheMagicMirror() {

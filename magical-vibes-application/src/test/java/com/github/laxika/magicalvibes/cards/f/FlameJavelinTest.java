@@ -14,12 +14,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FlameJavelin.class, SafeholdSentry.class})
+@CardUsed({FlameJavelin.class, SafeholdSentry.class, ChandraHopesBeacon.class,
+        InvasionOfZendikar.class, AwakenedSkyclave.class})
 class FlameJavelinTest extends BaseCardTest {
 
     @Test
@@ -37,12 +37,11 @@ class FlameJavelinTest extends BaseCardTest {
     @Test
     @DisplayName("Flame Javelin deals 4 damage to target creature, destroying a 2/2")
     void deals4DamageToCreatureDestroysIt() {
-        harness.addToBattlefield(player2, new SafeholdSentry());
+        Permanent sentry = harness.addToBattlefieldAndReturn(player2, new SafeholdSentry());
         harness.setHand(player1, List.of(new FlameJavelin()));
         harness.addMana(player1, ManaColor.RED, 3);
 
-        UUID targetId = harness.getPermanentId(player2, "Safehold Sentry");
-        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, sentry.getId());
 
         harness.assertNotOnBattlefield(player2, "Safehold Sentry");
         harness.assertInGraveyard(player2, "Safehold Sentry");
@@ -110,5 +109,60 @@ class FlameJavelinTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Flame Javelin can be cast with two red and two blue mana")
+    void canBeCastWithTwoRedAndTwoBlueMana() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 16);
+        harness.assertInGraveyard(player1, "Flame Javelin");
+    }
+
+    @Test
+    @DisplayName("Flame Javelin can be cast with one red and four colorless mana")
+    void canBeCastWithOneRedAndFourColorlessMana() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 16);
+        harness.assertInGraveyard(player1, "Flame Javelin");
+    }
+
+    @Test
+    @DisplayName("Five nonred mana cannot pay for Flame Javelin")
+    void cannotBeCastWithFiveNonredMana() {
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.assertInHand(player1, "Flame Javelin");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flame Javelin can target its controller")
+    void canTargetItsController() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 16);
+        harness.assertInGraveyard(player1, "Flame Javelin");
     }
 }

@@ -22,8 +22,26 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class FuneralCharmTest extends BaseCardTest {
 
     @Nested
+    @CardUsed({FuneralCharm.class, LongbowArcher.class, WandOfDenial.class})
     @DisplayName("Mode 0: Target player discards a card")
     class DiscardMode {
+
+        @Test
+        @DisplayName("The targeted player chooses which card to discard")
+        void targetedPlayerChoosesDiscard() {
+            harness.setHand(player1, List.of(new FuneralCharm()));
+            harness.addMana(player1, ManaColor.BLACK, 1);
+            harness.setHand(player2, List.of(new LongbowArcher(), new WandOfDenial()));
+
+            harness.castInstant(player1, 0, 0, player2.getId());
+            harness.passBothPriorities();
+            harness.handleCardChosen(player2, 1);
+
+            harness.assertInHand(player2, "Longbow Archer");
+            harness.assertNotInHand(player2, "Wand of Denial");
+            harness.assertInGraveyard(player2, "Wand of Denial");
+            assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        }
 
         @Test
         @DisplayName("Targeted player discards a card")
@@ -85,8 +103,27 @@ class FuneralCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({FuneralCharm.class, LongbowArcher.class, WandOfDenial.class})
     @DisplayName("Mode 1: Target creature gets +2/-1 until end of turn")
     class BoostMode {
+
+        @Test
+        @DisplayName("Repeated boosts put a creature with zero toughness into the graveyard")
+        void repeatedBoostsKillCreature() {
+            Permanent target = harness.addToBattlefieldAndReturn(player2, new LongbowArcher());
+            harness.setHand(player1, List.of(new FuneralCharm(), new FuneralCharm()));
+            harness.addMana(player1, ManaColor.BLACK, 2);
+
+            harness.castInstant(player1, 0, 1, target.getId());
+            harness.passBothPriorities();
+            harness.assertOnBattlefield(player2, "Longbow Archer");
+
+            harness.castInstant(player1, 0, 1, target.getId());
+            harness.passBothPriorities();
+
+            harness.assertNotOnBattlefield(player2, "Longbow Archer");
+            harness.assertInGraveyard(player2, "Longbow Archer");
+        }
 
         @Test
         @DisplayName("Gives +2/-1")
@@ -145,6 +182,7 @@ class FuneralCharmTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({FuneralCharm.class, LongbowArcher.class, WandOfDenial.class})
     @DisplayName("Mode 2: Target creature gains swampwalk until end of turn")
     class SwampwalkMode {
 

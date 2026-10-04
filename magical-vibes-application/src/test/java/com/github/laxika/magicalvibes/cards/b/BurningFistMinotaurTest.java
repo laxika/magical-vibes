@@ -118,7 +118,7 @@ class BurningFistMinotaurTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         Permanent minotaur = harness.addToBattlefieldAndReturn(player1, new BurningFistMinotaur());
-        minotaur.setTapped(true);
+        minotaur.tap();
         minotaur.setSummoningSick(true);
         int basePower = gqs.getEffectivePower(gd, minotaur);
         harness.setHand(player1, List.of(new Abrade()));

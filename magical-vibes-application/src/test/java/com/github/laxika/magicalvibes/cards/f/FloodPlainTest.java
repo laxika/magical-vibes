@@ -106,6 +106,60 @@ class FloodPlainTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Flood Plain is sacrificed as a cost before the search resolves")
+    void sacrificedBeforeResolution() {
+        activateSearch();
+
+        harness.assertNotOnBattlefield(player1, "Flood Plain");
+        harness.assertInGraveyard(player1, "Flood Plain");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(5);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Plains");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An Island can be chosen and only that card leaves the library")
+    void chosenIslandEntersUntapped() {
+        harness.addToBattlefield(player1, new FloodPlain());
+        Island island = new Island();
+        Plains plains = new Plains();
+        harness.setLibrary(player1, List.of(island, plains));
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        Permanent found = findPermanent(player1, "Island");
+        assertThat(found.getCard()).isSameAs(island);
+        assertThat(found.isTapped()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
+        harness.assertNotOnBattlefield(player2, "Island");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Searching an empty library still sacrifices Flood Plain and finishes resolving")
+    void searchEmptyLibrary() {
+        harness.addToBattlefield(player1, new FloodPlain());
+        harness.setLibrary(player1, List.of());
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Flood Plain");
+        harness.assertInGraveyard(player1, "Flood Plain");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void activateSearch() {
         harness.addToBattlefield(player1, new FloodPlain());
         setupLibrary();

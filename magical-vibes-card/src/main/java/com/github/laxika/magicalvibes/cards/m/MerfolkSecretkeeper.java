@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 
 @CardRegistration(set = "ELD", collectorNumber = "53")
+@CardRegistration(set = "ELD", collectorNumber = "284")
 public class MerfolkSecretkeeper extends Card {
 
     public MerfolkSecretkeeper() {

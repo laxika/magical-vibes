@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.ArgothianWurm;
 import com.github.laxika.magicalvibes.cards.g.GoblinRaider;
 import com.github.laxika.magicalvibes.cards.h.HeatRay;
 import com.github.laxika.magicalvibes.cards.h.Humble;
@@ -12,11 +13,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FogBank.class, GoblinRaider.class, TitaniasBoon.class, HeatRay.class, Humble.class})
+@CardUsed({FogBank.class, GoblinRaider.class, TitaniasBoon.class, HeatRay.class, Humble.class, ArgothianWurm.class})
 class FogBankTest extends BaseCardTest {
 
     @Test
@@ -114,5 +116,39 @@ class FogBankTest extends BaseCardTest {
 
         // Only combat damage is prevented, so Heat Ray's 1 damage is marked normally.
         assertThat(fogBank.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Trample assigns lethal damage to Fog Bank before overflowing to its controller")
+    void trampleOverflowIsNotPrevented() {
+        Permanent fogBank = addCreatureReady(player1, new FogBank());
+        fogBank.setBlocking(true);
+        fogBank.addBlockingTarget(0);
+        Permanent attacker = addCreatureReady(player2, new ArgothianWurm());
+        attacker.setAttacking(true);
+        harness.setLife(player1, 20);
+
+        resolveCombat(player2);
+        harness.handleCombatDamageAssigned(player2, 0,
+                Map.of(fogBank.getId(), 2, player1.getId(), 4));
+
+        harness.assertOnBattlefield(player1, "Fog Bank");
+        assertThat(fogBank.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @DisplayName("Lethal noncombat damage destroys Fog Bank")
+    void lethalNoncombatDamageIsNotPrevented() {
+        Permanent fogBank = addCreatureReady(player2, new FogBank());
+        harness.setHand(player1, List.of(new HeatRay()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castInstant(player1, 0, 2, fogBank.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Fog Bank");
+        harness.assertInGraveyard(player2, "Fog Bank");
     }
 }

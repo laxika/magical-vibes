@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ExtremisElite.class, GrizzlyBears.class})
+@CardUsed({ExtremisElite.class})
 class ExtremisEliteTest extends BaseCardTest {
 
     @Test
@@ -61,7 +60,7 @@ class ExtremisEliteTest extends BaseCardTest {
     @DisplayName("Power-up can deal damage to a creature")
     void powerUpDealsDamageToCreature() {
         Permanent elite = addReadyElite();
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ExtremisElite());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -70,7 +69,46 @@ class ExtremisEliteTest extends BaseCardTest {
 
         assertThat(elite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(target.getMarkedDamage()).isEqualTo(1);
-        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Extremis Elite");
+    }
+
+    @Test
+    void powerUpCanTargetItself() {
+        Permanent elite = harness.enterBattlefieldAndReturn(player1, new ExtremisElite());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, elite.getId());
+        harness.passBothPriorities();
+
+        assertThat(elite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(elite.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Extremis Elite");
+    }
+
+    @Test
+    void powerUpCannotBeActivatedAgainBeforeItResolves() {
+        Permanent elite = harness.enterBattlefieldAndReturn(player1, new ExtremisElite());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once");
+
+        harness.passBothPriorities();
+        assertThat(elite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void entryTurnDiscountStillRequiresThreeMana() {
+        Permanent elite = harness.enterBattlefieldAndReturn(player1, new ExtremisElite());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(elite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private Permanent addReadyElite() {

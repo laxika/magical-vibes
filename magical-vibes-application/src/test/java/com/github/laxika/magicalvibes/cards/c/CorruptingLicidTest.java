@@ -253,7 +253,7 @@ class CorruptingLicidTest extends BaseCardTest {
 
         assertThat(licid.isTapped()).isTrue();
         assertThat(gqs.hasKeyword(gd, firstHost, Keyword.FEAR)).isFalse();
-        licid.setTapped(false);
+        licid.untap();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.activateAbility(player1, 0, null, secondHost.getId());
         harness.passBothPriorities();

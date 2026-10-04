@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({EmpyrialPlate.class, YotianSoldier.class})
 class EmpyrialPlateTest extends BaseCardTest {
@@ -83,5 +84,58 @@ class EmpyrialPlateTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Re-equipping moves the hand-size bonus to the new creature")
+    void reequippingMovesBonus() {
+        Permanent plate = harness.addToBattlefieldAndReturn(player1, new EmpyrialPlate());
+        Permanent first = addCreatureReady(player1, new YotianSoldier());
+        Permanent second = addCreatureReady(player1, new YotianSoldier());
+        harness.setHand(player1, List.of(new YotianSoldier(), new YotianSoldier()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, first.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(4);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        assertThat(plate.getAttachedTo()).isEqualTo(first.getId());
+        harness.passBothPriorities();
+
+        assertThat(plate.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void cannotEquipOpponentsCreature() {
+        Permanent plate = harness.addToBattlefieldAndReturn(player1, new EmpyrialPlate());
+        Permanent soldier = addCreatureReady(player2, new YotianSoldier());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, soldier.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(plate.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated with only one mana")
+    void cannotEquipWithInsufficientMana() {
+        Permanent plate = harness.addToBattlefieldAndReturn(player1, new EmpyrialPlate());
+        Permanent soldier = addCreatureReady(player1, new YotianSoldier());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, soldier.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(plate.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }

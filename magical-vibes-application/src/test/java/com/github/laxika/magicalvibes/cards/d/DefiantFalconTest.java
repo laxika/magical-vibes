@@ -136,7 +136,7 @@ class DefiantFalconTest extends BaseCardTest {
     @DisplayName("A tapped Falcon cannot activate its search ability")
     void tappedFalconCannotActivate() {
         Permanent falcon = addReadyFalcon();
-        falcon.setTapped(true);
+        falcon.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);

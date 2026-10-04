@@ -85,7 +85,7 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
             returnToBattlefield(gameData, controllerId, target.card(), sourceName,
                     returnEffect.grantedSubtype(), returnEffect.enterTapped(),
                     returnEffect.enterAttacking(), returnEffect.additionalPlusOnePlusOneCounters(),
-                    returnEffect.grantHaste());
+                    returnEffect.grantHaste(), returnEffect.battlefieldEntryReplacement());
             return;
         }
 
@@ -107,7 +107,7 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
             Card chosen = matching.get(ThreadLocalRandom.current().nextInt(matching.size()));
             returnToBattlefield(gameData, controllerId, chosen, sourceName,
                     returnEffect.grantedSubtype(), returnEffect.enterTapped(), returnEffect.enterAttacking(),
-                    returnEffect.grantHaste());
+                    returnEffect.grantHaste(), returnEffect.battlefieldEntryReplacement());
             return;
         }
 
@@ -115,13 +115,13 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
             returnToBattlefield(gameData, controllerId, matching.getFirst(), sourceName,
                     returnEffect.grantedSubtype(), returnEffect.enterTapped(),
                     returnEffect.enterAttacking(), returnEffect.additionalPlusOnePlusOneCounters(),
-                    returnEffect.grantHaste());
+                    returnEffect.grantHaste(), returnEffect.battlefieldEntryReplacement());
             return;
         }
 
         gameData.queueInteraction(new PendingReturnExiledWithSourceCard(true, controllerId,
                 returnEffect.grantedSubtype(), returnEffect.enterTapped(), returnEffect.enterAttacking(),
-                returnEffect.grantHaste()));
+                returnEffect.grantHaste(), returnEffect.battlefieldEntryReplacement()));
         List<UUID> validIds = matching.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                 controllerId, new ArrayList<>(matching), validIds,
@@ -176,6 +176,16 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
         returnToBattlefield(gameData, controllerId, card, sourceName,
                 grantedSubtype, enterTapped, enterAttacking, 0, grantHaste,
                 null, null, battlefieldEntryReplacement);
+    }
+
+    /** Shared with resolution-time choices that carry both a counter bonus and an entry replacement. */
+    public void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,
+                                    CardSubtype grantedSubtype, boolean enterTapped, boolean enterAttacking,
+                                    int additionalPlusOnePlusOneCounters, boolean grantHaste,
+                                    EnterWithCountersEffect battlefieldEntryReplacement) {
+        returnToBattlefield(gameData, controllerId, card, sourceName,
+                grantedSubtype, enterTapped, enterAttacking, additionalPlusOnePlusOneCounters,
+                grantHaste, null, null, battlefieldEntryReplacement);
     }
 
     private void returnToBattlefield(GameData gameData, UUID controllerId, Card card, String sourceName,

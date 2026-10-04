@@ -1,13 +1,17 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.MistveilPlains;
+import com.github.laxika.magicalvibes.cards.p.PrismaticOmen;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,31 +19,26 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({ElsewhereFlask.class, Forest.class, MistveilPlains.class, PrismaticOmen.class})
 class ElsewhereFlaskTest extends BaseCardTest {
-
-    // ===== ETB draw =====
 
     @Test
     @DisplayName("ETB ability draws one card")
     void etbDrawsOneCard() {
         harness.setHand(player1, List.of(new ElsewhereFlask()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new Forest()));
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities(); // resolve artifact, ETB trigger onto stack
-        harness.passBothPriorities(); // resolve ETB trigger
+        resolveAllTriggers();
 
         assertThat(gd.stack).isEmpty();
         // One card cast, one drawn: net hand size returns to what it was before casting.
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handBefore);
         harness.assertInHand(player1, "Forest");
     }
-
-    // ===== Sacrifice ability =====
 
     @Test
     @DisplayName("Activating the ability sacrifices Elsewhere Flask")
@@ -69,9 +68,8 @@ class ElsewhereFlaskTest extends BaseCardTest {
         var interaction = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(interaction.playerId()).isEqualTo(player1.getId());
         assertThat(interaction.context()).isInstanceOf(ChoiceContext.OwnLandsBecomeBasicTypeChoice.class);
+        assertThat(interaction.options()).containsExactlyInAnyOrder("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
     }
-
-    // ===== Type replacement (rule 305.7) =====
 
     @Test
     @DisplayName("Every land the controller controls becomes the chosen type")
@@ -96,8 +94,7 @@ class ElsewhereFlaskTest extends BaseCardTest {
 
         activateAndChoose("ISLAND");
 
-        int forestIndex = indexOnBattlefield(player1, "Forest");
-        gs.tapPermanent(gd, player1, forestIndex);
+        harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
@@ -116,8 +113,6 @@ class ElsewhereFlaskTest extends BaseCardTest {
         assertThat(opponentForest.getTransientLandTypeOverride()).isNull();
     }
 
-    // ===== Until end of turn =====
-
     @Test
     @DisplayName("Override is cleared at end of turn")
     void overrideClearedAtEndOfTurn() {
@@ -128,12 +123,90 @@ class ElsewhereFlaskTest extends BaseCardTest {
         activateAndChoose("ISLAND");
         assertThat(forest.getTransientLandTypeOverride()).isEqualTo(CardSubtype.ISLAND);
 
-        forest.resetModifiers();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(forest.getTransientLandTypeOverride()).isNull();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Lands entering after resolution keep their original type")
+    void laterLandsAreUnaffected() {
+        harness.addToBattlefield(player1, new ElsewhereFlask());
+        Permanent original = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.forceActivePlayer(player1);
+
+        activateAndChoose("ISLAND");
+        Permanent later = harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, original)).containsExactly(CardSubtype.ISLAND);
+        assertThat(gqs.effectiveBasicLandTypes(gd, later)).containsExactly(CardSubtype.FOREST);
+    }
+
+    @Test
+    @DisplayName("Lands entering before resolution are included")
+    void landsAreDeterminedAtResolution() {
+        harness.addToBattlefield(player1, new ElsewhereFlask());
+        harness.forceActivePlayer(player1);
+        harness.activateAbility(player1, 0, null, null);
+        Permanent land = harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "SWAMP");
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, land)).containsExactly(CardSubtype.SWAMP);
+    }
+
+    @Test
+    @DisplayName("Ability resolves with no controlled lands")
+    void resolvesWithoutLands() {
+        harness.addToBattlefield(player1, new ElsewhereFlask());
+        harness.forceActivePlayer(player1);
+
+        activateAndChoose("MOUNTAIN");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Elsewhere Flask");
+    }
+
+    @Test
+    @DisplayName("Nonbasic lands lose their printed abilities and old land types")
+    void nonbasicLandBecomesIsland() {
+        harness.addToBattlefield(player1, new ElsewhereFlask());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new MistveilPlains());
+        harness.forceActivePlayer(player1);
+
+        activateAndChoose("ISLAND");
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, land)).containsExactly(CardSubtype.ISLAND);
+        assertThat(gqs.hasLostPrintedAbilities(gd, land)).isTrue();
+        harness.tapPermanent(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, land)).containsExactly(CardSubtype.PLAINS);
+        assertThat(gqs.hasLostPrintedAbilities(gd, land)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Prismatic Omen entering later adds all basic land types")
+    void laterPrismaticOmenAddsAllBasicLandTypes() {
+        harness.addToBattlefield(player1, new ElsewhereFlask());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.forceActivePlayer(player1);
+        activateAndChoose("ISLAND");
+
+        harness.setHand(player1, List.of(new PrismaticOmen()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castEnchantment(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, land)).containsExactlyInAnyOrder(
+                CardSubtype.PLAINS, CardSubtype.ISLAND, CardSubtype.SWAMP,
+                CardSubtype.MOUNTAIN, CardSubtype.FOREST);
+    }
 
     private void activateAndChoose(String subtype) {
         harness.activateAbility(player1, 0, null, null);
@@ -141,13 +214,4 @@ class ElsewhereFlaskTest extends BaseCardTest {
         harness.handleListChoice(player1, subtype);
     }
 
-    private int indexOnBattlefield(com.github.laxika.magicalvibes.model.Player player, String name) {
-        List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());
-        for (int i = 0; i < battlefield.size(); i++) {
-            if (battlefield.get(i).getCard().getName().equals(name)) {
-                return i;
-            }
-        }
-        throw new IllegalStateException("No " + name + " on battlefield");
-    }
 }

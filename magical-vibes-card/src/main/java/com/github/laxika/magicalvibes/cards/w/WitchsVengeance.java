@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesOfChosenSubtypeEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "111")
+@CardRegistration(set = "ELD", collectorNumber = "358")
 public class WitchsVengeance extends Card {
 
     public WitchsVengeance() {

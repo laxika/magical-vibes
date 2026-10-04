@@ -95,8 +95,7 @@ class FlashOfDefianceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         Permanent attacker = addCreatureReady(player1, new Aquamoeba());
         assertThat(bls.canBlockAttacker(gd, green, attacker,
@@ -133,6 +132,48 @@ class FlashOfDefianceTest extends BaseCardTest {
 
         assertThat(bls.canBlockAttacker(gd, green, attacker,
                 gd.playerBattlefields.get(player2.getId()))).isTrue();
+    }
+
+    @Test
+    @DisplayName("A white creature entering after resolution cannot block")
+    void whiteCreatureEnteringAfterResolutionCannotBlock() {
+        Permanent attacker = addCreatureReady(player1, new Aquamoeba());
+        castFromHand();
+        Permanent white = addCreatureReady(player2, new AvenTrooper());
+
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(white.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Casting from hand does not require or pay the flashback life cost")
+    void castingFromHandDoesNotPayLife() {
+        harness.setLife(player1, 2);
+
+        castFromHand();
+
+        harness.assertLife(player1, 2);
+        harness.assertInGraveyard(player1, "Flash of Defiance");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback requires red mana as well as life")
+    void flashbackRequiresRedMana() {
+        harness.setGraveyard(player1, List.of(new FlashOfDefiance()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Flash of Defiance");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void castFromHand() {

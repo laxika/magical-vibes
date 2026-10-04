@@ -97,6 +97,52 @@ class FirefrightMageTest extends BaseCardTest {
     }
 
     @Test
+    void discardIsPaidBeforeAbilityResolves() {
+        Permanent mage = addCreatureReady(player1, new FirefrightMage());
+        Permanent target = addCreatureReady(player1, new CitanulWoodreaders());
+        harness.setHand(player1, List.of(new Ornithopter(), new CitanulWoodreaders()));
+        addActivationMana();
+
+        harness.activateAbility(player1, indexOf(player1, mage), null, target.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.assertNotInHand(player1, "Ornithopter");
+        harness.assertInHand(player1, "Citanul Woodreaders");
+        assertThat(mage.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void summoningSickMageCannotActivateTapAbility() {
+        Permanent mage = addCreatureReady(player1, new FirefrightMage());
+        mage.setSummoningSick(true);
+        Permanent target = addCreatureReady(player1, new CitanulWoodreaders());
+        harness.setHand(player1, List.of(new CitanulWoodreaders()));
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, indexOf(player1, mage), null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        harness.assertInHand(player1, "Citanul Woodreaders");
+        assertThat(mage.isTapped()).isFalse();
+    }
+
+    @Test
+    void restrictionDoesNotAffectOtherCreatures() {
+        activateOnTarget();
+        Permanent otherAttacker = addCreatureReady(player1, new CitanulWoodreaders());
+        Permanent blocker = addCreatureReady(player2, new CitanulWoodreaders());
+
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, otherAttacker)));
+        declareBlock(blocker, otherAttacker);
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
     void canTargetCreatureOpponentControls() {
         Permanent target = activateOnTarget(player2);
         Permanent blocker = addCreatureReady(player1, new CitanulWoodreaders());

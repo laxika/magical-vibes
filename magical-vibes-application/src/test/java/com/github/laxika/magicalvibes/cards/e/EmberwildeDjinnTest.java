@@ -88,7 +88,7 @@ class EmberwildeDjinnTest extends BaseCardTest {
         UUID djinnId = harness.addToBattlefieldAndReturn(player1, new EmberwildeDjinn()).getId();
 
         advanceToUpkeep(player2);
-        gd.playerLifeTotals.put(player2.getId(), 1);
+        harness.setLife(player2, 1);
 
         harness.passBothPriorities();
 
@@ -115,6 +115,62 @@ class EmberwildeDjinnTest extends BaseCardTest {
         assertThat(controls(player1, returned.getId())).isTrue();
         assertThat(controls(player2, returned.getId())).isFalse();
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("The player may choose life while enough red mana is available")
+    void canChooseLifeInsteadOfAvailableMana() {
+        UUID djinnId = harness.addToBattlefieldAndReturn(player1, new EmberwildeDjinn()).getId();
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.RED, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        PendingInteraction.ColorChoice choice =
+                (PendingInteraction.ColorChoice) gd.interaction.activeInteraction();
+        assertThat(choice.options()).contains("Pay {R}{R}", "Pay 2 life");
+        harness.handleListChoice(player2, "Pay 2 life");
+
+        assertThat(controls(player2, djinnId)).isTrue();
+        harness.assertLife(player2, lifeBefore - 2);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("One red mana is insufficient, so accepting pays life and preserves the mana")
+    void insufficientRedManaPaysLife() {
+        UUID djinnId = harness.addToBattlefieldAndReturn(player1, new EmberwildeDjinn()).getId();
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.RED, 1);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(controls(player2, djinnId)).isTrue();
+        harness.assertLife(player2, lifeBefore - 2);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The original controller can regain the Djinn on their next upkeep")
+    void originalControllerCanRegainDjinn() {
+        UUID djinnId = harness.addToBattlefieldAndReturn(player1, new EmberwildeDjinn()).getId();
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(controls(player2, djinnId)).isTrue();
+
+        advanceToUpkeep(player1);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(controls(player1, djinnId)).isTrue();
+        assertThat(controls(player2, djinnId)).isFalse();
+        harness.assertLife(player1, lifeBefore - 2);
     }
 
     private boolean controls(Player player, UUID permanentId) {

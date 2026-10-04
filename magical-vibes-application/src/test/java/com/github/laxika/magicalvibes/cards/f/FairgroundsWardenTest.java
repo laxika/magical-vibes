@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FairgroundsWarden.class, GrizzlyBears.class, LightningBolt.class, Unsummon.class})
 class FairgroundsWardenTest extends BaseCardTest {
 
     @Test
@@ -61,7 +63,6 @@ class FairgroundsWardenTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Unsummon()));
         harness.addMana(player2, ManaColor.BLUE, 1);
         UUID wardenId = harness.getPermanentId(player1, "Fairgrounds Warden");
-        harness.passPriority(player1);
         harness.castInstant(player2, 0, wardenId);
         harness.passBothPriorities();
 
@@ -81,6 +82,54 @@ class FairgroundsWardenTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Removing Warden before its entry ability resolves leaves the target in place")
+    void sourceLeavesBeforeExileResolves() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castWarden(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        killWarden();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Fairgrounds Warden");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An entry ability whose target leaves does not exile anything")
+    void targetLeavesBeforeExileResolves() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        castWarden(player2, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Fairgrounds Warden");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Warden can enter when no opponent controls a creature")
+    void entersWithNoLegalTarget() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new FairgroundsWarden(), "{2}{W}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Fairgrounds Warden");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
     private void castWarden(Player targetOwner, String targetName) {
         UUID targetId = harness.getPermanentId(targetOwner, targetName);
         harness.setHand(player1, List.of(new FairgroundsWarden()));
@@ -93,7 +142,6 @@ class FairgroundsWardenTest extends BaseCardTest {
         harness.setHand(player2, List.of(new LightningBolt()));
         harness.addMana(player2, ManaColor.RED, 1);
         UUID wardenId = harness.getPermanentId(player1, "Fairgrounds Warden");
-        harness.passPriority(player1);
         harness.castInstant(player2, 0, wardenId);
         harness.passBothPriorities();
     }

@@ -18,6 +18,7 @@ import java.util.Set;
 
 @CardRegistration(set = "GNT", collectorNumber = "2")
 @CardRegistration(set = "KHC", collectorNumber = "40")
+@CardRegistration(set = "SCD", collectorNumber = "55")
 public class InspiredSphinx extends Card {
 
     public InspiredSphinx() {

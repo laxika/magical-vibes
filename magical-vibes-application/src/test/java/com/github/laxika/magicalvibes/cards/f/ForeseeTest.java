@@ -56,8 +56,7 @@ class ForeseeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Foresee()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
@@ -72,8 +71,7 @@ class ForeseeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Foresee()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Complete scry by keeping all on top
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1, 2, 3), List.of()));
@@ -96,8 +94,7 @@ class ForeseeTest extends BaseCardTest {
         Card top2 = deck.get(2);
         Card top3 = deck.get(3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Reverse the top 4, then draw 2 — should draw what was originally at positions 3 and 2
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(3, 2, 1, 0), List.of()));
@@ -122,8 +119,7 @@ class ForeseeTest extends BaseCardTest {
         Card top4 = deck.get(4);
         Card top5 = deck.get(5);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Put all 4 on bottom, then draw 2 — should draw what was originally at positions 4 and 5
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0, 1, 2, 3)));
@@ -145,8 +141,7 @@ class ForeseeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Foresee()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
                 .containsExactly(top0, top1, top2);
@@ -164,13 +159,49 @@ class ForeseeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Foresee()));
         harness.addMana(player1, ManaColor.BLUE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Complete scry
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(0, 1, 2, 3), List.of()));
 
         assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Foresee");
+    }
+
+    @Test
+    @DisplayName("Scry can split and reorder both piles before drawing")
+    void scrySplitsAndReordersBothPiles() {
+        List<Card> original = List.copyOf(gd.playerDecks.get(player1.getId()).subList(0, 6));
+        harness.setLibrary(player1, original);
+        harness.setHand(player1, List.of(new Foresee()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(3, 1), List.of(2, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(original.get(3), original.get(1));
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(original.get(4), original.get(5), original.get(2), original.get(0));
+        harness.assertInGraveyard(player1, "Foresee");
+    }
+
+    @Test
+    @DisplayName("Bottoming a two-card library still draws both cards in the chosen order")
+    void drawsBottomedCardsFromTwoCardLibrary() {
+        List<Card> original = List.copyOf(gd.playerDecks.get(player1.getId()).subList(0, 2));
+        harness.setLibrary(player1, original);
+        harness.setHand(player1, List.of(new Foresee()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(original.get(1), original.get(0));
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         harness.assertInGraveyard(player1, "Foresee");
     }
 }

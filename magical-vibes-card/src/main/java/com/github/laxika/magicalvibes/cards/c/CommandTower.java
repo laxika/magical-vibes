@@ -74,11 +74,17 @@ import java.util.List;
 @CardRegistration(set = "BRC", collectorNumber = "178")
 @CardRegistration(set = "ONC", collectorNumber = "151")
 @CardRegistration(set = "WOC", collectorNumber = "156")
+@CardRegistration(set = "FIC", collectorNumber = "382")
+@CardRegistration(set = "FIC", collectorNumber = "484")
+@CardRegistration(set = "FIC", collectorNumber = "485")
+@CardRegistration(set = "FIC", collectorNumber = "486")
 @CardRegistration(set = "C16", collectorNumber = "286")
 @CardRegistration(set = "KHC", collectorNumber = "108")
 @CardRegistration(set = "VOC", collectorNumber = "172")
 @CardRegistration(set = "DRC", collectorNumber = "59")
 @CardRegistration(set = "DRC", collectorNumber = "60")
+@CardRegistration(set = "ELD", collectorNumber = "333")
+@CardRegistration(set = "SCD", collectorNumber = "297")
 public class CommandTower extends Card {
 
     public CommandTower() {

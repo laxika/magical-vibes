@@ -128,4 +128,51 @@ class FacelessButcherTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .noneMatch(card -> card.getName().equals("Cabal Coffers"));
     }
+
+    @Test
+    @DisplayName("A creature removed in response is not exiled by the ETB trigger")
+    void targetDiesBeforeExileTriggerResolves() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new CarrionRats()).getId();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new FacelessButcher(), "{2}{B}{B}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, targetId);
+
+        harness.setHand(player2, List.of(new FieryTemper()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, targetId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Carrion Rats");
+        harness.assertOnBattlefield(player1, "Faceless Butcher");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each Faceless Butcher returns only the creature it exiled")
+    void separateButchersKeepTheirExiledCardsLinked() {
+        CarrionRats firstTarget = new CarrionRats();
+        CarrionRats secondTarget = new CarrionRats();
+        UUID firstTargetId = harness.addToBattlefieldAndReturn(player2, firstTarget).getId();
+        UUID secondTargetId = harness.addToBattlefieldAndReturn(player2, secondTarget).getId();
+        castAndExileTarget(firstTargetId);
+        UUID firstButcherId = harness.getPermanentId(player1, "Faceless Butcher");
+        castAndExileTarget(secondTargetId);
+
+        harness.setHand(player2, List.of(new FieryTemper()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player2, 0, firstButcherId);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .containsExactly(firstTarget.getId());
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(card -> card.getId())
+                .containsExactly(secondTarget.getId());
+        harness.assertOnBattlefield(player1, "Faceless Butcher");
+    }
 }

@@ -45,12 +45,10 @@ class FeastOrFamineTest extends BaseCardTest {
     @Test
     @DisplayName("Mode 2 destroys a nonartifact, nonblack creature")
     void destroysCreature() {
-        harness.addToBattlefield(player2, new ElvishRanger());
+        Permanent ranger = harness.addToBattlefieldAndReturn(player2, new ElvishRanger());
 
         harness.setHand(player1, List.of(new FeastOrFamine()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-
-        Permanent ranger = findPermanent(player2, "Elvish Ranger");
 
         harness.castInstant(player1, 0, 1, ranger.getId());
         harness.passBothPriorities();
@@ -62,13 +60,11 @@ class FeastOrFamineTest extends BaseCardTest {
     @Test
     @DisplayName("Mode 2 cannot target a black creature")
     void cannotTargetBlackCreature() {
-        harness.addToBattlefield(player2, new KrovikanHorror());
+        Permanent horror = harness.addToBattlefieldAndReturn(player2, new KrovikanHorror());
         harness.addToBattlefield(player1, new ElvishRanger());
 
         harness.setHand(player1, List.of(new FeastOrFamine()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-
-        Permanent horror = findPermanent(player2, "Krovikan Horror");
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, horror.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -77,13 +73,11 @@ class FeastOrFamineTest extends BaseCardTest {
     @Test
     @DisplayName("Mode 2 cannot target an artifact creature")
     void cannotTargetArtifactCreature() {
-        harness.addToBattlefield(player2, new ShieldSphere());
+        Permanent sphere = harness.addToBattlefieldAndReturn(player2, new ShieldSphere());
         harness.addToBattlefield(player1, new ElvishRanger());
 
         harness.setHand(player1, List.of(new FeastOrFamine()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-
-        Permanent sphere = findPermanent(player2, "Shield Sphere");
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, sphere.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -92,13 +86,11 @@ class FeastOrFamineTest extends BaseCardTest {
     @Test
     @DisplayName("Mode 2 cannot target a noncreature permanent")
     void cannotTargetNoncreaturePermanent() {
-        harness.addToBattlefield(player2, new SchoolOfTheUnseen());
+        Permanent school = harness.addToBattlefieldAndReturn(player2, new SchoolOfTheUnseen());
         harness.addToBattlefield(player1, new ElvishRanger());
 
         harness.setHand(player1, List.of(new FeastOrFamine()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-
-        Permanent school = findPermanent(player2, "School of the Unseen");
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, school.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -118,5 +110,46 @@ class FeastOrFamineTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Gorilla Chieftain");
         harness.assertInGraveyard(player2, "Gorilla Chieftain");
+    }
+
+    @Test
+    @DisplayName("Mode 2 can destroy your own creature without creating a Zombie")
+    void destroysOwnCreatureWithoutCreatingToken() {
+        Permanent ranger = harness.addToBattlefieldAndReturn(player1, new ElvishRanger());
+        harness.setHand(player1, List.of(new FeastOrFamine()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castInstant(player1, 0, 1, ranger.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Elvish Ranger");
+        harness.assertInGraveyard(player1, "Feast or Famine");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mode 2 does not switch to token creation when its target is sacrificed")
+    void sacrificedTargetDoesNotCreateToken() {
+        harness.addToBattlefield(player2, new KrovikanHorror());
+        Permanent ranger = harness.addToBattlefieldAndReturn(player2, new ElvishRanger());
+        harness.setHand(player1, List.of(new FeastOrFamine()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.setLife(player1, 20);
+
+        harness.castInstant(player1, 0, 1, ranger.getId());
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.handlePermanentChosen(player2, ranger.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertInGraveyard(player2, "Elvish Ranger");
+        harness.assertInGraveyard(player1, "Feast or Famine");
+        harness.assertOnBattlefield(player2, "Krovikan Horror");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
     }
 }

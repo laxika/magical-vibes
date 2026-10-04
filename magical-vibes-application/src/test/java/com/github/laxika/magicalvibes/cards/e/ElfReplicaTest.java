@@ -96,6 +96,50 @@ class ElfReplicaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Sacrifice ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent replica = addElfReplica();
+        replica.setSummoningSick(true);
+        replica.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SphereOfPurity());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Elf Replica");
+        harness.assertInGraveyard(player2, "Sphere of Purity");
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot pay the green activation cost")
+    void cannotActivateWithoutGreenMana() {
+        addElfReplica();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SphereOfPurity());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Elf Replica");
+        harness.assertOnBattlefield(player2, "Sphere of Purity");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate without a target enchantment")
+    void cannotActivateWithoutTarget() {
+        addElfReplica();
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Elf Replica");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addElfReplica() {
         return harness.addToBattlefieldAndReturn(player1, new ElfReplica());
     }

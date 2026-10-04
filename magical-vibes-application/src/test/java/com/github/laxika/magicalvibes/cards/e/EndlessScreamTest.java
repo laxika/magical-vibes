@@ -119,4 +119,56 @@ class EndlessScreamTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Endless Scream");
         harness.assertNotOnBattlefield(player1, "Endless Scream");
     }
+
+    @Test
+    @DisplayName("The power bonus follows the current scream counter count on the Aura")
+    void bonusUpdatesWhenAuraCountersChange() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
+        harness.setHand(player1, List.of(new EndlessScream()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        gs.playCard(gd, player1, 0, 3, creature.getId(), null);
+        harness.passBothPriorities();
+
+        Permanent aura = findPermanent(player1, "Endless Scream");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        aura.setCounterCount(CounterType.SCREAM, 1);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        aura.setCounterCount(CounterType.SCREAM, 5);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        aura.setCounterCount(CounterType.SCREAM, 0);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two Endless Screams on an opposing creature each count their own counters")
+    void multipleAurasEachUseTheirOwnCounters() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new MoggFanatic());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player2, new MoggFanatic());
+        harness.setHand(player1, List.of(new EndlessScream(), new EndlessScream()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        gs.playCard(gd, player1, 0, 2, creature.getId(), null);
+        harness.passBothPriorities();
+        Permanent firstAura = findPermanent(player1, "Endless Scream");
+        assertThat(firstAura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(firstAura.getCounterCount(CounterType.SCREAM)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+
+        gs.playCard(gd, player1, 0, 3, creature.getId(), null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(1);
+
+        firstAura.setCounterCount(CounterType.SCREAM, 0);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+    }
 }

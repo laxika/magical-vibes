@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FlinthoofBoar.class, Mountain.class, Forest.class})
 class FlinthoofBoarTest extends BaseCardTest {
 
     @Test
@@ -64,10 +66,52 @@ class FlinthoofBoarTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(boar.getGrantedKeywords()).contains(Keyword.HASTE);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(boar.getGrantedKeywords()).doesNotContain(Keyword.HASTE);
+    }
+
+    @Test
+    @DisplayName("Multiple Mountains grant only one boost")
+    void multipleMountainsDoNotStackBoost() {
+        Permanent boar = addCreatureReady(player1, new FlinthoofBoar());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+
+        assertThat(gqs.getEffectivePower(gd, boar)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, boar)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Boost updates immediately when Mountains enter and leave")
+    void boostUpdatesWithMountainControl() {
+        Permanent boar = addCreatureReady(player1, new FlinthoofBoar());
+        assertThat(gqs.getEffectivePower(gd, boar)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, boar)).isEqualTo(2);
+
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        assertThat(gqs.getEffectivePower(gd, boar)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, boar)).isEqualTo(3);
+
+        gd.playerBattlefields.get(player1.getId()).remove(mountain);
+        gd.playerGraveyards.get(player1.getId()).add(mountain.getCard());
+        assertThat(gqs.getEffectivePower(gd, boar)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, boar)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Haste lets a newly entered Boar attack and applies only to the source")
+    void hasteEnablesOnlySourceToAttack() {
+        Permanent boar = harness.addToBattlefieldAndReturn(player1, new FlinthoofBoar());
+        Permanent otherBoar = harness.addToBattlefieldAndReturn(player1, new FlinthoofBoar());
+        assertThat(als.canAttack(gd, boar, player1.getId())).isFalse();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(als.canAttack(gd, boar, player1.getId())).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(als.canAttack(gd, boar, player1.getId())).isTrue();
+        assertThat(als.canAttack(gd, otherBoar, player1.getId())).isFalse();
     }
 }

@@ -103,6 +103,74 @@ class EnigmaRidgesTest extends BaseCardTest {
                 .map(permanent -> permanent.getCard())).doesNotContain(land);
     }
 
+    @Test
+    void tiedLandCountsDoNotSearch() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Island());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Island()));
+
+        triggerPlaneswalkTo();
+
+        assertThat(activeSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void playerMayStopSearchingBeforeReachingTheLandDifference() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        Card selected = new Forest();
+        Card remaining = new Island();
+        harness.setLibrary(player1, List.of(selected, remaining));
+
+        triggerPlaneswalkTo();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(activeSearch()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(selected);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void opponentWithFewerLandsSearchesTheirOwnLibrary() {
+        harness.addToBattlefield(player1, new Forest());
+        Card land = new Island();
+        harness.setLibrary(player2, List.of(land));
+
+        triggerPlaneswalkTo();
+
+        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(activeSearch()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(land);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void chaosCanPutTheLandItJustDrewOntoTheBattlefieldUntapped() {
+        Card drawn = new Island();
+        harness.setLibrary(player1, List.of(drawn));
+
+        triggerChaos();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(permanent -> {
+            assertThat(permanent.getCard()).isSameAs(drawn);
+            assertThat(permanent.isTapped()).isFalse();
+        });
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
     private void triggerPlaneswalkTo() {
         harness.inMutationScope(() -> planar.trigger(
                 gd, source, com.github.laxika.magicalvibes.model.EffectSlot.PLANESWALK_TO_TRIGGERED,

@@ -51,6 +51,12 @@ public class ExileTargetValidators {
             throw new IllegalStateException("Target card must be face up in exile");
         }
         Integer timeCounters = ctx.gameData().exiledCardTimeCounters.get(ctx.targetId());
+        if (timeCounters == null) {
+            timeCounters = ctx.gameData().suspendedSpellExiles.stream()
+                    .filter(pending -> pending.cardId().equals(ctx.targetId()))
+                    .map(com.github.laxika.magicalvibes.model.GameData.SuspendedSpellExile::counters)
+                    .findFirst().orElse(null);
+        }
         if (timeCounters == null || timeCounters <= 0
                 || ctx.gameData().exiledCardsWithNonSuspendTimeCounters.contains(ctx.targetId())) {
             throw new IllegalStateException("Target card must be suspended");

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.b.Badlands;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -19,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EvilPresence.class, Forest.class, GrizzlyBears.class, Mountain.class, Swamp.class})
+@CardUsed({EvilPresence.class, Forest.class, GrizzlyBears.class, Mountain.class, Swamp.class, Badlands.class, Disenchant.class})
 class EvilPresenceTest extends BaseCardTest {
 
     @Test
@@ -153,6 +155,42 @@ class EvilPresenceTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a land");
     }
 
+    @Test
+    @DisplayName("Enchanted dual land loses its other land type and produces only black mana")
+    void enchantedDualLandProducesOnlyBlackMana() {
+        Permanent badlands = harness.addToBattlefieldAndReturn(player1, new Badlands());
+        harness.setHand(player1, List.of(new EvilPresence()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castEnchantment(player1, 0, badlands.getId());
+        harness.passBothPriorities();
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, badlands)).containsExactly(CardSubtype.SWAMP);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Destroying Evil Presence restores a dual land's types and red mana ability")
+    void destroyingAuraRestoresDualLandAbilities() {
+        Permanent badlands = harness.addToBattlefieldAndReturn(player1, new Badlands());
+        harness.setHand(player1, List.of(new EvilPresence(), new Disenchant()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castEnchantment(player1, 0, badlands.getId());
+        harness.passBothPriorities();
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof EvilPresence).findFirst().orElseThrow();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertInGraveyard(player1, "Evil Presence");
+        assertThat(gqs.effectiveBasicLandTypes(gd, badlands))
+                .containsExactlyInAnyOrder(CardSubtype.SWAMP, CardSubtype.MOUNTAIN);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+    }
     private Permanent addEvilPresenceTo(Permanent land) {
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new EvilPresence());
         aura.setAttachedTo(land.getId());

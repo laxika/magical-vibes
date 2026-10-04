@@ -28,8 +28,7 @@ class EthrimikImaginedFiendTest extends BaseCardTest {
         addEthrimikMana();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.LibraryRevealChoice choice = gd.interaction
                 .activeInteraction(PendingInteraction.LibraryRevealChoice.class);
@@ -59,49 +58,69 @@ class EthrimikImaginedFiendTest extends BaseCardTest {
     }
 
     @Test
-    void cannotAttackWithoutAnotherCreatureYouControl() {
+    void canAttackWithoutAnotherCreatureYouControl() {
+        harness.setLife(player2, 20);
         addCreatureReady(player1, new EthrimikImaginedFiend());
+        harness.addToBattlefield(player1, new Forest());
+
+        declareAttackers(player1, List.of(0));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    void cannotAttackWithAnotherCreatureYouControl() {
+        addCreatureReady(player1, new EthrimikImaginedFiend());
+        addCreatureReady(player1, new GrizzlyBears());
 
         assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    void canAttackWithAnotherCreatureYouControl() {
-        harness.setLife(player2, 20);
-        addCreatureReady(player1, new EthrimikImaginedFiend());
-        addCreatureReady(player1, new GrizzlyBears());
-
-        declareAttackers(player1, List.of(0));
-
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isLessThan(20);
-    }
-
-    @Test
-    void cannotBlockWithoutAnotherCreatureYouControl() {
+    void canBlockWithoutAnotherCreatureYouControl() {
         addCreatureReady(player2, new GrizzlyBears());
         addCreatureReady(player1, new EthrimikImaginedFiend());
 
-        declareAttackers(player2, List.of(0));
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
 
-        harness.beginBlockerDeclarationInput();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isBlocking()).isTrue();
+    }
+
+    @Test
+    void cannotBlockWithAnotherCreatureYouControl() {
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new EthrimikImaginedFiend());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
                 List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
-    void canBlockWithAnotherCreatureYouControl() {
-        addCreatureReady(player2, new GrizzlyBears());
-        addCreatureReady(player1, new EthrimikImaginedFiend());
-        addCreatureReady(player1, new GrizzlyBears());
+    void manifestedLandIsBoostedAndPreventsEthrimikFromAttacking() {
+        Card land = new Forest();
+        harness.setHand(player1, List.of(new EthrimikImaginedFiend()));
+        harness.setLibrary(player1, List.of(land));
+        addEthrimikMana();
 
-        declareAttackers(player2, List.of(0));
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
 
-        harness.beginBlockerDeclarationInput();
-        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        Permanent manifested = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(Permanent::isManifested).findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, manifested)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, manifested)).isEqualTo(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        findPermanent(player1, "Ethrimik, Imagined Fiend").setSummoningSick(false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isBlocking()).isTrue();
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void addEthrimikMana() {

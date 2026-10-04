@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FlameblastDragon.class, GrizzlyBears.class, Mountain.class,
+        JaceBeleren.class, ChandraNalaar.class, ImprisonedInTheMoon.class})
 class FlameblastDragonTest extends BaseCardTest {
 
     @Test
@@ -50,7 +53,7 @@ class FlameblastDragonTest extends BaseCardTest {
                 () -> harness.handleXValueChosen(player1, 2));
 
         // Only the trigger damage has been dealt (combat damage awaits block declaration).
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -70,7 +73,7 @@ class FlameblastDragonTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Without enough mana for {X}{R} the ability does nothing")
+    @DisplayName("With only one red mana the ability cannot deal positive damage")
     void cannotPayDoesNothing() {
         addCreatureReady(player1, new FlameblastDragon());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
@@ -78,14 +81,14 @@ class FlameblastDragonTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0));
         harness.handlePermanentChosen(player1, bears.getId());
-        harness.passBothPriorities(); // trigger resolves, but no X can be paid
+        harness.passBothPriorities(); // no positive X can be paid
 
         assertThat(bears.getMarkedDamage()).isZero();
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
     @Test
-    @DisplayName("Attack trigger cannot target a land — any target is creature/planeswalker/player")
+    @DisplayName("Attack trigger cannot target a land")
     void cannotTargetLand() {
         addCreatureReady(player1, new FlameblastDragon());
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
@@ -148,5 +151,70 @@ class FlameblastDragonTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.maxValue()).isGreaterThanOrEqualTo(2);
         assertThat(choice.prompt()).containsIgnoringCase("you may pay");
+    }
+
+    @Test
+    @DisplayName("A single red mana still allows the optional payment with X=0")
+    void canChooseToPayWhenOnlyZeroIsAffordable() {
+        Permanent dragon = addCreatureReady(player1, new FlameblastDragon());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, dragon.getId());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+
+        PendingInteraction.XValueChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxValue()).isZero();
+    }
+
+    @Test
+    @DisplayName("Payment reserves the red mana and spends exactly X additional mana")
+    void paysGenericAndRedManaForDamageToOwnCreature() {
+        Permanent dragon = addCreatureReady(player1, new FlameblastDragon());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, dragon.getId());
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleXValueChosen(player1, 2));
+
+        assertThat(dragon.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Generic mana cannot replace the required red mana")
+    void cannotPayWithoutRedMana() {
+        Permanent dragon = addCreatureReady(player1, new FlameblastDragon());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, dragon.getId());
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(dragon.getMarkedDamage()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Ability damage removes loyalty from a planeswalker")
+    void damagesPlaneswalker() {
+        addCreatureReady(player1, new FlameblastDragon());
+        Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
+        jace.setCounterCount(CounterType.LOYALTY, 3);
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, jace.getId());
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleXValueChosen(player1, 2));
+
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
     }
 }

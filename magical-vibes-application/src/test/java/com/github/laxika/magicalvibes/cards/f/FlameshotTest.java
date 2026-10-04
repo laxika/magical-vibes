@@ -120,6 +120,66 @@ class FlameshotTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void cannotAssignZeroDamageToATarget() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Flameshot()));
+        addManaForManaCost();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(
+                first.getId(), 3, second.getId(), 0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotCastWithoutTargets() {
+        harness.setHand(player1, List.of(new Flameshot()));
+        addManaForManaCost();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.<UUID, Integer>of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetANoncreaturePermanent() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Mountain());
+        harness.setHand(player1, List.of(new Flameshot()));
+        addManaForManaCost();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of(target.getId(), 3)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotRedistributeDamageWhenOneTargetLeaves() {
+        Permanent removed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Flameshot()));
+        addManaForManaCost();
+
+        harness.castSorcery(player1, 0, Map.of(removed.getId(), 2, remaining.getId(), 1));
+        gd.playerBattlefields.get(player2.getId()).remove(removed);
+        gd.playerGraveyards.get(player2.getId()).add(removed.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(remaining);
+        assertThat(remaining.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Flameshot");
+    }
+
+    @Test
+    void canTargetItsControllersCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Flameshot()));
+        addManaForManaCost();
+
+        harness.castSorcery(player1, 0, Map.of(target.getId(), 3));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
     private void addManaForManaCost() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

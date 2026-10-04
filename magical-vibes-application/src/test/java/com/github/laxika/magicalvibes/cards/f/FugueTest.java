@@ -115,4 +115,27 @@ class FugueTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
     }
+    @Test
+    @DisplayName("Target chooses which three cards to discard and keeps the unchosen card")
+    void targetChoosesWhichCardsToKeep() {
+        Fugue kept = new Fugue();
+        Fugue firstDiscard = new Fugue();
+        Fugue secondDiscard = new Fugue();
+        Fugue thirdDiscard = new Fugue();
+        harness.setHand(player2, List.of(firstDiscard, kept, secondDiscard, thirdDiscard));
+        harness.setHand(player1, List.of(new Fugue()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.handleCardChosen(player2, 2);
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrder(firstDiscard, secondDiscard, thirdDiscard);
+    }
 }

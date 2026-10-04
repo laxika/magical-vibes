@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "ELD", collectorNumber = "182")
+@CardRegistration(set = "ELD", collectorNumber = "375")
 public class WildbornPreserver extends Card {
 
     public WildbornPreserver() {

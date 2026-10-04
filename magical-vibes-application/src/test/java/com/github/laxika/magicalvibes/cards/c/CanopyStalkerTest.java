@@ -74,7 +74,7 @@ class CanopyStalkerTest extends BaseCardTest {
     @DisplayName("A tapped creature does not have to block")
     void noBlockRequiredWhenOnlyDefenderIsTapped() {
         addCreatureReady(player1, new CanopyStalker()).setAttacking(true);
-        addCreatureReady(player2, new CanopyStalker()).setTapped(true);
+        addCreatureReady(player2, new CanopyStalker()).tap();
         prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of());

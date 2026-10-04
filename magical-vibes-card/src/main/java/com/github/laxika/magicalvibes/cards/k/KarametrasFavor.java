@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BNG", collectorNumber = "125")
+@CardRegistration(set = "SCD", collectorNumber = "195")
 public class KarametrasFavor extends Card {
 
     public KarametrasFavor() {

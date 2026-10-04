@@ -72,6 +72,75 @@ class FathomSeerTest extends BaseCardTest {
                 .contains(opponentIsland);
     }
 
+    @Test
+    void tappedIslandsAreReturnedImmediatelyButDrawingUsesTheStack() {
+        Permanent firstIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent secondIsland = harness.addToBattlefieldAndReturn(player1, new Island());
+        firstIsland.setTapped(true);
+        secondIsland.setTapped(true);
+        Card firstDraw = new FathomSeer();
+        Card secondDraw = new FathomSeer();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        Permanent fathomSeer = castFaceDown();
+
+        turnFaceUp(fathomSeer, List.of(firstIsland.getId(), secondIsland.getId()));
+
+        assertThat(fathomSeer.isFaceDown()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(firstIsland.getCard(), secondIsland.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .containsExactlyInAnyOrder(firstIsland.getCard(), secondIsland.getCard(), firstDraw, secondDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotReturnTheSameIslandTwice() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent fathomSeer = castFaceDown();
+
+        assertThatThrownBy(() -> turnFaceUp(fathomSeer, List.of(island.getId(), island.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(fathomSeer.isFaceDown()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(island, fathomSeer);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotTurnFaceUpByReturningOnlyOneIsland() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent fathomSeer = castFaceDown();
+
+        assertThatThrownBy(() -> turnFaceUp(fathomSeer, List.of(island.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(fathomSeer.isFaceDown()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(island, fathomSeer);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void castingFaceUpDoesNotDrawCards() {
+        Card firstDraw = new FathomSeer();
+        Card secondDraw = new FathomSeer();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+
+        harness.castFromHand(player1, new FathomSeer(), "{1}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent castFaceDown() {
         harness.setHand(player1, List.of(new FathomSeer()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

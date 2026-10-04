@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.b.BondBeetle;
 import com.github.laxika.magicalvibes.cards.f.FeralHydra;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.ServantOfTheScale;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({EnduringScalelord.class, BondBeetle.class, Efflorescence.class, FeralHydra.class,
-        GrizzlyBears.class})
+        GrizzlyBears.class, ServantOfTheScale.class})
 class EnduringScalelordTest extends BaseCardTest {
 
     @Test
@@ -28,7 +29,7 @@ class EnduringScalelordTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BondBeetle()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0, bears.getId());
-        resolveSpellAndTriggers();
+        resolveAllTriggers();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(scalelord.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -44,7 +45,7 @@ class EnduringScalelordTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BondBeetle()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0, hydra.getId());
-        resolveSpellAndTriggers();
+        resolveAllTriggers();
 
         assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(scalelord.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -60,7 +61,7 @@ class EnduringScalelordTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castInstant(player1, 0, bears.getId());
-        resolveSpellAndTriggers();
+        resolveAllTriggers();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(scalelord.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -74,14 +75,14 @@ class EnduringScalelordTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BondBeetle()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0, scalelord.getId());
-        resolveSpellAndTriggers();
+        resolveAllTriggers();
         assertThat(scalelord.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         Permanent opposingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new BondBeetle()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0, opposingBears.getId());
-        resolveSpellAndTriggers();
+        resolveAllTriggers();
 
         assertThat(opposingBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(scalelord.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -97,9 +98,43 @@ class EnduringScalelordTest extends BaseCardTest {
         return findPermanent(player1, "Enduring Scalelord");
     }
 
-    private void resolveSpellAndTriggers() {
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+    @Test
+    @DisplayName("Can decline the counter when another creature enters with a counter")
+    void canDeclineCounter() {
+        Permanent scalelord = castScalelord();
+        harness.setHand(player1, List.of(new ServantOfTheScale()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Servant of the Scale")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(scalelord.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(scalelord.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can accept the counter when another creature enters with a counter")
+    void canAcceptCounterForEnteringCreature() {
+        Permanent scalelord = castScalelord();
+        harness.setHand(player1, List.of(new ServantOfTheScale()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Servant of the Scale")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(scalelord.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 }

@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "PIP", collectorNumber = "686")
 @CardRegistration(set = "NEC", collectorNumber = "82")
 @CardRegistration(set = "VOC", collectorNumber = "81")
+@CardRegistration(set = "SCD", collectorNumber = "16")
 public class CrushContraband extends Card {
 
     public CrushContraband() {

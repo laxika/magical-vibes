@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 @CardRegistration(set = "M19", collectorNumber = "257")
 @CardRegistration(set = "OGW", collectorNumber = "178")
 @CardRegistration(set = "C18", collectorNumber = "283")
+@CardRegistration(set = "SCD", collectorNumber = "321")
 public class SubmergedBoneyard extends Card {
 
     public SubmergedBoneyard() {

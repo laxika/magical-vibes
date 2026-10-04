@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "59")
+@CardRegistration(set = "SCD", collectorNumber = "57")
 public class LazotepPlating extends Card {
 
     public LazotepPlating() {

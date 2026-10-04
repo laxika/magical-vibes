@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.ChanceEncounter;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.r.RalZarek;
 import com.github.laxika.magicalvibes.cards.s.SorcerersStrongbox;
+import com.github.laxika.magicalvibes.cards.w.WitnessProtection;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({EdgarKingOfFigaro.class, ChanceEncounter.class, Forest.class, RalZarek.class,
-        SorcerersStrongbox.class})
+        SorcerersStrongbox.class, WitnessProtection.class})
 class EdgarKingOfFigaroTest extends BaseCardTest {
 
     @Test
@@ -58,10 +59,8 @@ class EdgarKingOfFigaroTest extends BaseCardTest {
     @Test
     void allCoinsInFirstMultiCoinFlipAreHeadsAndWins() {
         harness.addToBattlefield(player1, new EdgarKingOfFigaro());
-        Permanent ral = new Permanent(new RalZarek());
+        Permanent ral = harness.addToBattlefieldAndReturn(player1, new RalZarek());
         ral.setCounterCount(CounterType.LOYALTY, 7);
-        ral.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(ral);
         Permanent chanceEncounter = harness.addToBattlefieldAndReturn(player1, new ChanceEncounter());
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -71,5 +70,72 @@ class EdgarKingOfFigaroTest extends BaseCardTest {
 
         assertThat(chanceEncounter.getCounterCount(CounterType.LUCK)).isEqualTo(5);
         assertThat(gd.extraTurns).hasSize(5);
+    }
+
+    @Test
+    void drawsNothingWhenOnlyOpponentControlsArtifacts() {
+        harness.addToBattlefield(player2, new SorcerersStrongbox());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new EdgarKingOfFigaro()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void countsArtifactsWhenEnterTriggerResolves() {
+        harness.addToBattlefield(player1, new SorcerersStrongbox());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new EdgarKingOfFigaro()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Sorcerer's Strongbox");
+    }
+
+    @Test
+    void doesNotReplaceSecondCoinFlipInSameTurn() {
+        harness.addToBattlefield(player1, new EdgarKingOfFigaro());
+        harness.addToBattlefield(player1, new SorcerersStrongbox());
+        harness.addToBattlefield(player1, new SorcerersStrongbox());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 1, null, null);
+        resolveAllTriggers();
+        harness.activateAbility(player1, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.gameLog.stream().filter(entry -> entry.plainText()
+                .contains("Edgar, King of Figaro made it come up heads")).count()).isEqualTo(1);
+    }
+
+    @Test
+    void losingAbilitiesDisablesGuaranteedCoinFlip() {
+        Permanent edgar = harness.addToBattlefieldAndReturn(player1, new EdgarKingOfFigaro());
+        harness.addToBattlefield(player1, new SorcerersStrongbox());
+        harness.setHand(player1, List.of(new WitnessProtection()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, edgar.getId());
+        resolveAllTriggers();
+        harness.activateAbility(player1, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("Edgar, King of Figaro made it come up heads")).isFalse();
     }
 }

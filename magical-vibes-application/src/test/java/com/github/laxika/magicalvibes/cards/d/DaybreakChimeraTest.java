@@ -91,7 +91,7 @@ class DaybreakChimeraTest extends BaseCardTest {
     @Test
     @DisplayName("Tapped permanents still contribute white devotion")
     void tappedPermanentsStillContributeDevotion() {
-        harness.addToBattlefieldAndReturn(player1, new DaybreakChimera()).setTapped(true);
+        harness.addToBattlefieldAndReturn(player1, new DaybreakChimera()).tap();
 
         harness.castFromHand(player1, new DaybreakChimera(), "{W}{W}{W}");
 

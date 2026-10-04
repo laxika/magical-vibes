@@ -26,8 +26,7 @@ class FanaticalStrengthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FanaticalStrength()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         assertThat(bear.getEffectivePower()).isEqualTo(5);
         assertThat(bear.getEffectiveToughness()).isEqualTo(5);
@@ -41,8 +40,7 @@ class FanaticalStrengthTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FanaticalStrength()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
@@ -61,5 +59,48 @@ class FanaticalStrengthTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canBoostOpponentsCreatureWithoutAffectingOtherCreatures() {
+        Permanent ownBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingBear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FanaticalStrength()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, opposingBear.getId());
+
+        assertThat(opposingBear.getEffectivePower()).isEqualTo(5);
+        assertThat(opposingBear.getEffectiveToughness()).isEqualTo(5);
+        assertThat(opposingBear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(ownBear.getEffectivePower()).isEqualTo(2);
+        assertThat(ownBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(ownBear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void repeatedCastsStackAndBothExpireAtCleanup() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FanaticalStrength(), new FanaticalStrength()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+        harness.castAndResolveInstant(player1, 0, bear.getId());
+
+        assertThat(bear.getEffectivePower()).isEqualTo(8);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(8);
+        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        assertThat(bear.getEffectivePower()).isEqualTo(8);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(8);
+        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(bear.hasKeyword(Keyword.TRAMPLE)).isFalse();
     }
 }

@@ -42,7 +42,7 @@ class DiscipleOfTheOldWaysTest extends BaseCardTest {
         Permanent other = harness.addToBattlefieldAndReturn(player1, new DiscipleOfTheOldWays());
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new DiscipleOfTheOldWays());
         disciple.setSummoningSick(true);
-        disciple.setTapped(true);
+        disciple.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

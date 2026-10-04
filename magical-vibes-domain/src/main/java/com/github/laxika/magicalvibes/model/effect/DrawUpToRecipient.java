@@ -9,5 +9,8 @@ public enum DrawUpToRecipient {
     CONTROLLER,
 
     /** An opponent of the controller of the resolving stack entry. */
-    OPPONENT
+    OPPONENT,
+
+    /** The player retained in the entry's recipient field. */
+    TARGET_PLAYER
 }

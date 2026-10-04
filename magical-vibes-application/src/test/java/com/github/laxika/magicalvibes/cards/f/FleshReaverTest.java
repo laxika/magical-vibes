@@ -128,4 +128,107 @@ class FleshReaverTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("Triggers for noncombat damage to a creature you control")
+    void triggersForDamageToOwnCreature() {
+        Permanent reaver = addCreatureReady(player1, new FleshReaver());
+        Permanent wurm = addCreatureReady(player1, new WindingWurm());
+        harness.setLife(player1, 20);
+
+        DamageSupport damageSupport = GameTestEngineContext.get().getBean(DamageSupport.class);
+        harness.inMutationScope(() -> damageSupport.dealDividedDamageToAnyTargets(
+                gd, reaver.getCard(), player1.getId(), Map.of(wurm.getId(), 2)));
+        resolveAllTriggers();
+
+        assertThat(wurm.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 18);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not trigger when it damages its own controller")
+    void doesNotTriggerForDamageToController() {
+        Permanent reaver = addCreatureReady(player1, new FleshReaver());
+        harness.setLife(player1, 20);
+
+        DamageSupport damageSupport = GameTestEngineContext.get().getBean(DamageSupport.class);
+        harness.inMutationScope(() -> damageSupport.dealDividedDamageToAnyTargets(
+                gd, reaver.getCard(), player1.getId(), Map.of(player1.getId(), 3)));
+
+        harness.assertLife(player1, 17);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the Flesh Reaver that dealt damage triggers")
+    void anotherFleshReaverDoesNotDuplicateTrigger() {
+        Permanent reaver = addCreatureReady(player1, new FleshReaver());
+        addCreatureReady(player1, new FleshReaver());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        DamageSupport damageSupport = GameTestEngineContext.get().getBean(DamageSupport.class);
+        harness.inMutationScope(() -> damageSupport.dealDividedDamageToAnyTargets(
+                gd, reaver.getCard(), player1.getId(), Map.of(player2.getId(), 2)));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Damage to multiple creatures is reflected in full")
+    void reflectsDamageToMultipleCreatures() {
+        Permanent reaver = addCreatureReady(player1, new FleshReaver());
+        Permanent first = addCreatureReady(player2, new WindingWurm());
+        Permanent second = addCreatureReady(player2, new WindingWurm());
+        harness.setLife(player1, 20);
+
+        DamageSupport damageSupport = GameTestEngineContext.get().getBean(DamageSupport.class);
+        harness.inMutationScope(() -> damageSupport.dealDividedDamageToAnyTargets(
+                gd, reaver.getCard(), player1.getId(), Map.of(first.getId(), 2, second.getId(), 3)));
+        resolveAllTriggers();
+
+        assertThat(first.getMarkedDamage()).isEqualTo(2);
+        assertThat(second.getMarkedDamage()).isEqualTo(3);
+        harness.assertLife(player1, 15);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Reflects only damage actually dealt after prevention")
+    void reflectsReducedDamageAfterPrevention() {
+        Permanent reaver = addCreatureReady(player1, new FleshReaver());
+        Permanent wurm = addCreatureReady(player2, new WindingWurm());
+        wurm.setDamagePreventionShield(2);
+        harness.setLife(player1, 20);
+
+        DamageSupport damageSupport = GameTestEngineContext.get().getBean(DamageSupport.class);
+        harness.inMutationScope(() -> damageSupport.dealDividedDamageToAnyTargets(
+                gd, reaver.getCard(), player1.getId(), Map.of(wurm.getId(), 3)));
+        resolveAllTriggers();
+
+        assertThat(wurm.getMarkedDamage()).isEqualTo(1);
+        harness.assertLife(player1, 19);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not trigger when all damage to a creature is prevented")
+    void doesNotTriggerForFullyPreventedDamage() {
+        Permanent reaver = addCreatureReady(player1, new FleshReaver());
+        Permanent wurm = addCreatureReady(player2, new WindingWurm());
+        wurm.setDamagePreventionShield(3);
+        harness.setLife(player1, 20);
+
+        DamageSupport damageSupport = GameTestEngineContext.get().getBean(DamageSupport.class);
+        harness.inMutationScope(() -> damageSupport.dealDividedDamageToAnyTargets(
+                gd, reaver.getCard(), player1.getId(), Map.of(wurm.getId(), 3)));
+
+        assertThat(wurm.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).isEmpty();
+    }
 }

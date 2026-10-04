@@ -138,6 +138,88 @@ class ErebosBleakHeartedTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("An opponent's creature dying does not trigger Erebos")
+    void opponentCreatureDeathDoesNotTrigger() {
+        addErebos();
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, victim.getId());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("The death trigger cannot draw when its controller has only one life")
+    void cannotPayTwoLifeWithOnlyOneLife() {
+        addErebos();
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLife(player1, 1);
+
+        killCreatureWithShock();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Erebos stops being a creature immediately when black devotion drops below five")
+    void losesCreatureTypeWhenDevotionDrops() {
+        Permanent erebos = addErebos();
+        addBlackPermanents(4);
+        assertThat(gqs.isCreature(gd, erebos)).isTrue();
+        UUID victimId = harness.getPermanentId(player1, "Walking Corpse");
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, victimId);
+
+        assertThat(gqs.isCreature(gd, erebos)).isFalse();
+        assertThat(gqs.isEnchantment(gd, erebos)).isTrue();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+    }
+
+    @Test
+    @DisplayName("Erebos can target the creature sacrificed to activate its ability")
+    void canTargetSacrificedCreature() {
+        addErebos();
+        Permanent victim = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, victim.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+        harness.assertLife(player1, 18);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addErebos() {
         return harness.addToBattlefieldAndReturn(player1, new ErebosBleakHearted());
     }
@@ -156,7 +238,6 @@ class ErebosBleakHeartedTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         UUID creatureId = harness.getPermanentId(player1, "Grizzly Bears");
 
-        harness.castInstant(player2, 0, creatureId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, creatureId);
     }
 }

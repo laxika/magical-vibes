@@ -160,8 +160,7 @@ class DuplicityTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Disenchant()));
         harness.addMana(player2, ManaColor.WHITE, 2);
-        harness.castInstant(player2, 0, permId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, permId);
         harness.runStateBasedActions();
         harness.passBothPriorities();
 
@@ -196,5 +195,61 @@ class DuplicityTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .extracting(Card::getId)
                 .containsAll(exiledCardIds);
+    }
+
+    @Test
+    @DisplayName("Destroying Duplicity before its entry trigger resolves leaves the later-exiled cards in exile")
+    void removalBeforeEntryTriggerDoesNotDiscardLaterExiledCards() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.castFromHand(player1, new Duplicity(), "{3}{U}{U}");
+        harness.passBothPriorities();
+        UUID permId = harness.getPermanentId(player1, "Duplicity");
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player2, 0, permId);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(permId)).hasSize(5);
+        assertThat(gd.exiledCards).filteredOn(e -> permId.equals(e.sourcePermanentId()))
+                .allMatch(ExiledCardEntry::faceDown);
+    }
+
+    @Test
+    @DisplayName("The new controller's exiled hand goes to their graveyard when Duplicity is destroyed")
+    void newControllerLosingControlClearsTheirExiledHand() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+        UUID permId = castDuplicity();
+
+        harness.setHand(player2, List.of(new StealEnchantment()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castEnchantment(player2, 0, permId);
+        harness.passBothPriorities();
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        Card newControllersCard = new Island();
+        harness.setHand(player2, List.of(newControllersCard));
+        gd.turnNumber = 2;
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        assertThat(gd.getCardsExiledByPermanent(permId))
+                .extracting(Card::getId).containsExactly(newControllersCard.getId());
+
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, permId);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(permId)).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getId).contains(newControllersCard.getId());
     }
 }

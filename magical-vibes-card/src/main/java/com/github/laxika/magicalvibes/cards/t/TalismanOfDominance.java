@@ -25,7 +25,9 @@ import java.util.List;
 @CardRegistration(set = "MKC", collectorNumber = "242")
 @CardRegistration(set = "MIC", collectorNumber = "164")
 @CardRegistration(set = "WOC", collectorNumber = "150")
+@CardRegistration(set = "FIC", collectorNumber = "364")
 @CardRegistration(set = "DRC", collectorNumber = "141")
+@CardRegistration(set = "SCD", collectorNumber = "280")
 public class TalismanOfDominance extends Card {
 
     public TalismanOfDominance() {

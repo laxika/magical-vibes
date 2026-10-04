@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +28,7 @@ class ForgottenCaveTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping produces one red mana")
     void tappingProducesRedMana() {
-        Permanent land = addCaveReady(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new ForgottenCave());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -66,9 +65,54 @@ class ForgottenCaveTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
-    private Permanent addCaveReady(Player player) {
-        Permanent land = harness.addToBattlefieldAndReturn(player, new ForgottenCave());
-        land.setSummoningSick(false);
-        return land;
+    @Test
+    @DisplayName("Cycling pays mana and discards immediately, then draws on resolution")
+    void cyclingPaysCostsBeforeDrawing() {
+        ForgottenCave cycled = new ForgottenCave();
+        ForgottenCave drawn = new ForgottenCave();
+        harness.setHand(player1, List.of(cycled));
+        harness.setLibrary(player1, List.of(drawn));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(cycled);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(cycled);
+    }
+
+    @Test
+    @DisplayName("A newly played tapped Cave cannot produce mana")
+    void tappedCaveCannotProduceMana() {
+        harness.setHand(player1, List.of(new ForgottenCave()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The mana ability resolves immediately and cannot be activated twice while tapped")
+    void manaAbilityResolvesImmediatelyAndRequiresUntappedLand() {
+        harness.addToBattlefield(player1, new ForgottenCave());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 }

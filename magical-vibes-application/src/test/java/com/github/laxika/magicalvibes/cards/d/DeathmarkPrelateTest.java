@@ -150,7 +150,7 @@ class DeathmarkPrelateTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent prelate = addCreatureReady(player1, new DeathmarkPrelate());
-        prelate.setTapped(true);
+        prelate.tap();
         harness.addToBattlefield(player1, new WitheredWretch());
         UUID targetId = harness.addToBattlefieldAndReturn(player2, new FugitiveWizard()).getId();
         addAbilityMana(player1);

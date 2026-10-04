@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.d.Dodecapod;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GuerrillaTactics;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Forget.class, GrizzlyBears.class, Island.class, Dodecapod.class})
+@CardUsed({Forget.class, GrizzlyBears.class, Island.class, Dodecapod.class, GuerrillaTactics.class})
 class ForgetTest extends BaseCardTest {
 
     @Test
@@ -44,8 +45,7 @@ class ForgetTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Forget()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Target player (not the caster) chooses which two to discard.
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
@@ -73,8 +73,7 @@ class ForgetTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Forget()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player2, 0); // discard the only card
 
@@ -97,8 +96,7 @@ class ForgetTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Forget()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         harness.handleCardChosen(player2, 0); // Dodecapod enters the battlefield instead.
         harness.handleCardChosen(player2, 0); // discard the remaining card
@@ -141,8 +139,7 @@ class ForgetTest extends BaseCardTest {
         harness.setLibrary(player1, new ArrayList<>(List.of(islandFirst, islandSecond)));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
                 .isEqualTo(player1.getId());
@@ -156,5 +153,30 @@ class ForgetTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId()))
                 .containsExactly(islandFirst, islandSecond);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Forget draws before an opponent-caused discard trigger goes on the stack")
+    void drawsBeforeDiscardTriggerIsPutOnStack() {
+        GuerrillaTactics discarded = new GuerrillaTactics();
+        Island drawn = new Island();
+        Island remaining = new Island();
+        harness.setHand(player2, List.of(discarded));
+        harness.setLibrary(player2, List.of(drawn, remaining));
+        harness.setHand(player1, List.of(new Forget()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(discarded);
+
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn);
+        harness.assertLife(player1, 16);
     }
 }

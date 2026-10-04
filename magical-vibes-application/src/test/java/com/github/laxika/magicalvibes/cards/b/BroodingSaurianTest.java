@@ -95,7 +95,7 @@ class BroodingSaurianTest extends BaseCardTest {
         Forest landCard = new Forest();
         landCard.setOwnerId(player1.getId());
         Permanent stolenLand = harness.addToBattlefieldAndReturn(player1, landCard);
-        stolenLand.setTapped(true);
+        stolenLand.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);

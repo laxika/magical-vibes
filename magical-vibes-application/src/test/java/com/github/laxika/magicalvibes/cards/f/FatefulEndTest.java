@@ -26,8 +26,7 @@ class FatefulEndTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         int lifeBefore = gd.getLife(player2.getId());
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 3);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
@@ -46,8 +45,7 @@ class FatefulEndTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         var target = findPermanent(player2, "Air Elemental");
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
@@ -57,5 +55,70 @@ class FatefulEndTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canPutScryCardOnBottomOfControllersLibrary() {
+        Card topCard = new GrizzlyBears();
+        Card nextCard = new GrizzlyBears();
+        Card opponentsTopCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setLibrary(player2, List.of(opponentsTopCard));
+        harness.setHand(player1, List.of(new FatefulEnd()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
+
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard, topCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentsTopCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Fateful End");
+    }
+
+    @Test
+    void resolvesWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new FatefulEnd()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Fateful End");
+    }
+
+    @Test
+    void doesNotScryWhenOnlyTargetLeavesBattlefieldBeforeResolution() {
+        Card topCard = new GrizzlyBears();
+        Card nextCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FatefulEnd()));
+        harness.setHand(player2, List.of(new FatefulEnd()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.addMana(player2, ManaColor.RED, 3);
+        var target = findPermanent(player2, "Grizzly Bears");
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Fateful End");
     }
 }

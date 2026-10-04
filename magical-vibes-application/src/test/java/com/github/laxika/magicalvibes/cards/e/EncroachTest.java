@@ -61,8 +61,7 @@ class EncroachTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Encroach(), new YavimayaHollow()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class))
                 .isNotNull();
@@ -71,12 +70,50 @@ class EncroachTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Yavimaya Hollow");
     }
 
+    @Test
+    @DisplayName("An empty hand resolves without a card choice")
+    void emptyHandResolvesWithoutChoice() {
+        castEncroachAt(List.of());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Encroach");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A hand containing only nonlands is revealed without discarding")
+    void nonlandOnlyHandDoesNotDiscard() {
+        castEncroachAt(List.of(new WallOfGlare()));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player2, "Wall of Glare");
+        harness.assertNotInGraveyard(player2, "Wall of Glare");
+        harness.assertInGraveyard(player1, "Encroach");
+    }
+
+    @Test
+    @DisplayName("The caster chooses exactly one of multiple eligible land cards")
+    void choosesExactlyOneNonbasicLand() {
+        YavimayaHollow first = new YavimayaHollow();
+        YavimayaHollow second = new YavimayaHollow();
+        castEncroachAt(List.of(first, second));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class)
+                .validIndices()).containsExactly(0, 1);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(second);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Encroach");
+    }
+
     private void castEncroachAt(List<com.github.laxika.magicalvibes.model.Card> targetHand) {
         harness.setHand(player2, targetHand);
         harness.setHand(player1, List.of(new Encroach()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 }

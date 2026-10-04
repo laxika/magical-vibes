@@ -23,8 +23,7 @@ class EarthbindTest extends BaseCardTest {
     @Test
     @DisplayName("Earthbind deals 2 damage and removes flying from a flying creature")
     void damagesAndRemovesFlying() {
-        Permanent angel = new Permanent(new SerraAngel());
-        gd.playerBattlefields.get(player1.getId()).add(angel);
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
 
         harness.setHand(player1, List.of(new Earthbind()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -38,8 +37,7 @@ class EarthbindTest extends BaseCardTest {
     @Test
     @DisplayName("Earthbind does nothing when the enchanted creature has no flying")
     void doesNothingToNonFlyingCreature() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Earthbind()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -53,8 +51,7 @@ class EarthbindTest extends BaseCardTest {
     @Test
     @DisplayName("A later flying grant applies after Earthbind's removal")
     void laterFlyingGrantApplies() {
-        Permanent angel = new Permanent(new SerraAngel());
-        gd.playerBattlefields.get(player1.getId()).add(angel);
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
 
         harness.setHand(player1, List.of(new Earthbind()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -64,8 +61,7 @@ class EarthbindTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Jump()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, angel.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, angel.getId());
 
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
     }
@@ -73,8 +69,7 @@ class EarthbindTest extends BaseCardTest {
     @Test
     @DisplayName("Earthbind's flying removal ends when Earthbind leaves the battlefield")
     void removalEndsWhenEarthbindLeavesBattlefield() {
-        Permanent angel = new Permanent(new SerraAngel());
-        gd.playerBattlefields.get(player1.getId()).add(angel);
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
 
         harness.setHand(player1, List.of(new Earthbind()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -92,10 +87,9 @@ class EarthbindTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Earthbind's trigger does nothing if Earthbind leaves before it resolves")
-    void triggerDoesNothingAfterEarthbindLeavesBattlefield() {
-        Permanent angel = new Permanent(new SerraAngel());
-        gd.playerBattlefields.get(player1.getId()).add(angel);
+    @DisplayName("Earthbind still deals damage if it leaves before its trigger resolves")
+    void triggerDealsDamageAfterEarthbindLeavesBattlefield() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player1, new SerraAngel());
 
         harness.setHand(player1, List.of(new Earthbind()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -109,7 +103,49 @@ class EarthbindTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, earthbindId);
         resolveAllTriggers();
 
-        assertThat(angel.getMarkedDamage()).isZero();
+        assertThat(angel.getMarkedDamage()).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature without flying on entry can gain flying without triggering Earthbind")
+    void nonFlyingCreatureCanGainFlyingLater() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.setHand(player1, List.of(new Earthbind()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castEnchantment(player1, 0, bears.getId());
+        resolveAllTriggers();
+        assertThat(gd.stack).isEmpty();
+
+        harness.setHand(player1, List.of(new Jump()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(bears.getMarkedDamage()).isZero();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+    }
+
+    @Test
+    @DisplayName("Earthbind removes flying granted in response to its entry trigger")
+    void removesFlyingGrantedBeforeTriggerResolves() {
+        Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+
+        harness.setHand(player1, List.of(new Earthbind()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castEnchantment(player1, 0, angel.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new Jump()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, angel.getId());
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isTrue();
+        resolveAllTriggers();
+
+        assertThat(angel.getMarkedDamage()).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, angel, Keyword.FLYING)).isFalse();
     }
 }

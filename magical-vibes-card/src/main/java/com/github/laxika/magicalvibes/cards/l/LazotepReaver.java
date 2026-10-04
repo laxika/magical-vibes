@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WAR", collectorNumber = "96")
+@CardRegistration(set = "SCD", collectorNumber = "83")
 public class LazotepReaver extends Card {
 
     public LazotepReaver() {

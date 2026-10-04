@@ -63,6 +63,57 @@ class FoolsTomeTest extends BaseCardTest {
         assertThat(tome.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Cannot activate without paying two mana")
+    void cannotActivateWithInsufficientMana() {
+        Permanent tome = addTome();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new HornedTurtle()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(tome.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate a tapped Tome even with an empty hand")
+    void cannotActivateWhenTapped() {
+        Permanent tome = addTome();
+        tome.setTapped(true);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new HornedTurtle()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The opponent's hand does not restrict activation or receive the draw")
+    void opponentHandDoesNotPreventDrawing() {
+        addTome();
+        harness.setHand(player1, List.of());
+        HornedTurtle drawnCard = new HornedTurtle();
+        HornedTurtle opponentCard = new HornedTurtle();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player2, List.of(opponentCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCard);
+    }
     private Permanent addTome() {
         return harness.addToBattlefieldAndReturn(player1, new FoolsTome());
     }

@@ -113,7 +113,7 @@ class CullingTheWeakTest extends BaseCardTest {
     void canSacrificeTappedCreatureWithoutSacrificingOtherCreatures() {
         Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new Carnophage());
         Permanent survivor = harness.addToBattlefieldAndReturn(player1, new Carnophage());
-        sacrifice.setTapped(true);
+        sacrifice.tap();
         harness.setHand(player1, List.of(new CullingTheWeak()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 

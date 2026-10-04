@@ -41,6 +41,9 @@ class ArsenalThresherTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, gd.playerHands.get(player1.getId()).stream()
+                .filter(card -> card.hasType(com.github.laxika.magicalvibes.model.CardType.ARTIFACT))
+                .map(com.github.laxika.magicalvibes.model.Card::getId).toList());
 
         Permanent thresher = findPermanent(player1, "Arsenal Thresher");
         assertThat(thresher).isNotNull();
@@ -56,6 +59,9 @@ class ArsenalThresherTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, gd.playerHands.get(player1.getId()).stream()
+                .filter(card -> card.hasType(com.github.laxika.magicalvibes.model.CardType.ARTIFACT))
+                .map(com.github.laxika.magicalvibes.model.Card::getId).toList());
 
         Permanent thresher = findPermanent(player1, "Arsenal Thresher");
         assertThat(thresher).isNotNull();

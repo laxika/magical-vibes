@@ -186,7 +186,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                     e.returnAtControllerNextStep() ? entry.getControllerId() : null, null, false,
                     e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn(),
                     Set.of(), e.counterTypeOnReturn(), e.counterAmountOnReturn(),
-                    e.countersOnReturn(), e.returnLandsTapped()));
+                    e.countersOnReturn(), e.returnLandsTapped())
+                    .withTriggerSource(entry.getCard(), entry.getControllerId()));
         }
     }
 
@@ -334,7 +335,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                     false, e.grantHaste(), false, false, null, null, false,
                     e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn(),
                     Set.of(), e.counterTypeOnReturn(), e.counterAmountOnReturn(),
-                    e.countersOnReturn(), e.returnLandsTapped()));
+                    e.countersOnReturn(), e.returnLandsTapped())
+                    .withTriggerSource(entry.getCard(), entry.getControllerId()));
         }
         log.info("Game {} - {} exiles {} permanents; they return at next {}",
                 gameData.id, entry.getCard().getName(), toExile.size(), e.returnStep());
@@ -368,7 +370,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                     e.returnAtControllerNextStep() ? controllerId : null, null, false,
                     e.plusOnePlusOneCountersOnlyOnCreatures(), e.loyaltyCountersOnPlaneswalkersOnReturn(),
                     Set.of(), e.counterTypeOnReturn(), e.counterAmountOnReturn(),
-                    e.countersOnReturn(), e.returnLandsTapped()));
+                    e.countersOnReturn(), e.returnLandsTapped())
+                    .withTriggerSource(entry.getCard(), entry.getControllerId()));
         }
         log.info("Game {} - {} exiles {} permanents; they return at next {}",
                 gameData.id, entry.getCard().getName(), toExile.size(), e.returnStep());
@@ -391,9 +394,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        for (FlickeredPermanent flickered : exiled) {
-            returnAfterImmediateExile(gameData, entry, e, flickered);
-        }
+        returnImmediateBatch(gameData, entry, e, exiled);
 
         if (e.addAdditionalEndStepIfFirst()
                 && gameData.currentStep == TurnStep.END_STEP
@@ -428,9 +429,7 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
-        for (FlickeredPermanent flickered : exiled) {
-            returnAfterImmediateExile(gameData, entry, effect, flickered);
-        }
+        returnImmediateBatch(gameData, entry, effect, exiled);
     }
 
     private void beginControllersPermanentsChoice(
@@ -513,13 +512,37 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
 
     private void returnAfterImmediateExile(
             GameData gameData, StackEntry entry, FlickerEffect e, FlickeredPermanent flickered) {
+        Runnable afterEntry = placeAfterImmediateExile(gameData, entry, e, flickered,
+                new Permanent(flickered.card()), battlefieldEntryService.snapshotEnterTappedTypes(gameData), List.of());
+        afterEntry.run();
+    }
+
+    private void returnImmediateBatch(GameData gameData, StackEntry entry, FlickerEffect effect,
+                                      List<FlickeredPermanent> exiled) {
+        List<FlickeredPermanent> returning = exiled.stream()
+                .filter(flickered -> !flickered.card().isToken()
+                        && gameData.findExiledCard(flickered.card().getId()) != null)
+                .toList();
+        List<Permanent> simultaneous = returning.stream().map(flickered -> new Permanent(flickered.card())).toList();
+        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        List<Runnable> afterEntry = new ArrayList<>();
+        for (int i = 0; i < returning.size(); i++) {
+            afterEntry.add(placeAfterImmediateExile(gameData, entry, effect, returning.get(i),
+                    simultaneous.get(i), enterTappedTypes, simultaneous));
+        }
+        afterEntry.forEach(Runnable::run);
+    }
+
+    private Runnable placeAfterImmediateExile(
+            GameData gameData, StackEntry entry, FlickerEffect e, FlickeredPermanent flickered,
+            Permanent returned, Set<CardType> enterTappedTypes, List<Permanent> simultaneous) {
         Card card = flickered.card();
         UUID ownerId = flickered.ownerId();
         UUID returnControllerId = flickered.returnControllerId();
         boolean hadBonusSubtype = flickered.hadBonusSubtype();
 
         if (card.isToken() || gameData.findExiledCard(card.getId()) == null) {
-            return;
+            return () -> {};
         }
 
         // Immediately return from exile as a new permanent
@@ -527,9 +550,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         if (e.scope() == com.github.laxika.magicalvibes.model.effect.FlickerScope.SELF
                 && cloneService.prepareCloneReplacementEffect(
                         gameData, returnControllerId, card, null, 0)) {
-            return;
+            return () -> {};
         }
-        Permanent returned = new Permanent(card);
         returned.setEnteredFromExile(true);
         if (e.tapOnImmediateReturn()) {
             returned.tap();
@@ -561,7 +583,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         if (e.returnTapped()) {
             returned.tap();
         }
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, returnControllerId, returned);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, returnControllerId, returned,
+                enterTappedTypes, simultaneous);
         if (e.returnUnderController() && !returnControllerId.equals(ownerId)) {
             graveyardReturnSupport.trackStolenCreature(gameData, returned.getId(), returnControllerId, ownerId);
         }
@@ -569,42 +592,44 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, GameLog.builder().card(card).text(" is exiled by ").card(entry.getCard()).text(" and returns to the battlefield under " + gameData.playerIdToName.get(returnControllerId) + "'s control.").build());
         log.info("Game {} - {} flickers {} (immediate return)", gameData.id, entry.getCard().getName(), card.getName());
 
-        if (e.returnFaceDown()) {
-            battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, returnControllerId, card);
-        } else {
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, returnControllerId, card, null, false);
-        }
-
-        if (e.addCounterIfReturnedUnderControllerOtherwiseTap()) {
-            if (returnControllerId.equals(entry.getControllerId())) {
-                if (!gameQueryService.cantHavePlusOnePlusOneCounters(gameData, returned, returnControllerId)) {
-                    int returnCounters = gameQueryService.doublePlusOnePlusOneCounters(
-                            gameData, returned, returnControllerId, 1);
-                    if (returnCounters > 0) {
-                        returned.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
-                                returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + returnCounters);
-                    }
-                }
+        return () -> {
+            if (e.returnFaceDown()) {
+                battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, returnControllerId, card);
             } else {
-                returned.tap();
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, returnControllerId, card, null, false);
             }
-        }
-        if (!e.grantedKeywordsOnReturn().isEmpty()) {
-            grantKeywordEffectHandler.grantToPermanent(gameData, entry, returned, e.grantedKeywordsOnReturn());
-        }
 
-        // Apply bonus if the exiled permanent had the required subtype
-        if (hadBonusSubtype && e.bonusEffect() instanceof DrawCardEffect drawEffect) {
-            int drawAmount = amountEvaluationService.evaluate(gameData, drawEffect.amount(),
-                    AmountContext.forStackEntry(entry, null));
-            for (int i = 0; i < drawAmount; i++) {
-                drawService.resolveDrawCard(gameData, entry.getControllerId());
+            if (e.addCounterIfReturnedUnderControllerOtherwiseTap()) {
+                if (returnControllerId.equals(entry.getControllerId())) {
+                    if (!gameQueryService.cantHavePlusOnePlusOneCounters(gameData, returned, returnControllerId)) {
+                        int returnCounters = gameQueryService.doublePlusOnePlusOneCounters(
+                                gameData, returned, returnControllerId, 1);
+                        if (returnCounters > 0) {
+                            returned.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                                    returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + returnCounters);
+                        }
+                    }
+                } else {
+                    returned.tap();
+                }
             }
-            String matchingSubtype = e.bonusSubtype() != null
-                    ? e.bonusSubtype().getDisplayName()
-                    : card.getSubtypes().stream().filter(e.bonusSubtypes()::contains)
-                            .findFirst().map(CardSubtype::getDisplayName).orElse("matching subtype");
-            gameLogService.append(gameData, GameLog.builder().text(gameData.playerIdToName.get(entry.getControllerId()) + " draws a card (").card(card).text(" was a " + matchingSubtype + ").").build());
-        }
+            if (!e.grantedKeywordsOnReturn().isEmpty()) {
+                grantKeywordEffectHandler.grantToPermanent(gameData, entry, returned, e.grantedKeywordsOnReturn());
+            }
+
+            // Apply bonus if the exiled permanent had the required subtype
+            if (hadBonusSubtype && e.bonusEffect() instanceof DrawCardEffect drawEffect) {
+                int drawAmount = amountEvaluationService.evaluate(gameData, drawEffect.amount(),
+                        AmountContext.forStackEntry(entry, null));
+                for (int i = 0; i < drawAmount; i++) {
+                    drawService.resolveDrawCard(gameData, entry.getControllerId());
+                }
+                String matchingSubtype = e.bonusSubtype() != null
+                        ? e.bonusSubtype().getDisplayName()
+                        : card.getSubtypes().stream().filter(e.bonusSubtypes()::contains)
+                                .findFirst().map(CardSubtype::getDisplayName).orElse("matching subtype");
+                gameLogService.append(gameData, GameLog.builder().text(gameData.playerIdToName.get(entry.getControllerId()) + " draws a card (").card(card).text(" was a " + matchingSubtype + ").").build());
+            }
+        };
     }
 }

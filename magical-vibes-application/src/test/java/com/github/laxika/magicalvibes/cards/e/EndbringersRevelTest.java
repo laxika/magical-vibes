@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({EndbringersRevel.class, DivingGriffin.class, RhysticCave.class})
@@ -124,6 +125,83 @@ class EndbringersRevelTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
                 player1, revelIndex, 0, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while another ability is on the stack")
+    void requiresEmptyStack() {
+        int revelIndex = addRevelIndex();
+        Card creature = new DivingGriffin();
+        harness.setGraveyard(player1, List.of(creature));
+        prepareForSorcerySpeedActivation(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        harness.activateAbilityWithGraveyardTargets(player1, revelIndex, 0, List.of(creature.getId()));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, revelIndex, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+    }
+
+    @Test
+    @DisplayName("Does not return a target that has left the graveyard")
+    void targetLeavingGraveyardIsNotReturned() {
+        int revelIndex = addRevelIndex();
+        Card creature = new DivingGriffin();
+        harness.setGraveyard(player2, List.of(creature));
+        prepareForSorcerySpeedActivation(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithGraveyardTargets(player1, revelIndex, 0, List.of(creature.getId()));
+        harness.setGraveyard(player2, List.of());
+        harness.setExile(player2, List.of(creature));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Diving Griffin");
+        harness.assertNotInHand(player2, "Diving Griffin");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .contains(creature);
+    }
+
+    @Test
+    @DisplayName("An activated ability resolves after the Revel leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        int revelIndex = addRevelIndex();
+        Card creature = new DivingGriffin();
+        harness.setGraveyard(player2, List.of(creature));
+        prepareForSorcerySpeedActivation(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithGraveyardTargets(player2, revelIndex, 0, List.of(creature.getId()));
+        Card revel = gd.playerBattlefields.get(player1.getId()).remove(revelIndex).getCard();
+        harness.setGraveyard(player1, List.of(revel));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Diving Griffin");
+        harness.assertNotInGraveyard(player2, "Diving Griffin");
+        harness.assertInGraveyard(player1, "Endbringer's Revel");
+    }
+
+    @Test
+    @DisplayName("Can activate repeatedly in the postcombat main phase with colored mana")
+    void repeatedPostcombatActivationsWithColoredMana() {
+        int revelIndex = addRevelIndex();
+        Card first = new DivingGriffin();
+        Card second = new DivingGriffin();
+        harness.setGraveyard(player2, List.of(first, second));
+        prepareForSorcerySpeedActivation(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.addMana(player2, ManaColor.WHITE, 8);
+
+        harness.activateAbilityWithGraveyardTargets(player2, revelIndex, 0, List.of(first.getId()));
+        harness.passBothPriorities();
+        harness.activateAbilityWithGraveyardTargets(player2, revelIndex, 0, List.of(second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .contains(first, second);
+        harness.assertNotInGraveyard(player2, "Diving Griffin");
     }
 
     private int addRevelIndex() {

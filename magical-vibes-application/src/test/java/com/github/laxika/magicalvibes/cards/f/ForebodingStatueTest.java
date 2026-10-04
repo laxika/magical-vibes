@@ -75,24 +75,82 @@ class ForebodingStatueTest extends BaseCardTest {
         assertThat(thresher.isTransformed()).isTrue();
     }
 
+    @Test
+    void endStepConditionIsRecheckedBeforeUntappingAndTransforming() {
+        Permanent statue = addReadyStatue(player1);
+        statue.setCounterCount(CounterType.OMEN, 3);
+        statue.tap();
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        statue.setCounterCount(CounterType.OMEN, 2);
+        harness.passBothPriorities();
+
+        assertThat(statue.isTransformed()).isFalse();
+        assertThat(statue.isTapped()).isTrue();
+    }
+
+    @Test
+    void gainingThirdCounterAfterEndStepBeginsDoesNotCreateTrigger() {
+        Permanent statue = addReadyStatue(player1);
+        statue.setCounterCount(CounterType.OMEN, 2);
+        statue.tap();
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).isEmpty();
+        statue.setCounterCount(CounterType.OMEN, 3);
+
+        assertThat(statue.isTransformed()).isFalse();
+        assertThat(statue.isTapped()).isTrue();
+    }
+
+    @Test
+    void doesNotTransformDuringOpponentsEndStep() {
+        Permanent statue = addReadyStatue(player1);
+        statue.setCounterCount(CounterType.OMEN, 4);
+        statue.tap();
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(statue.isTransformed()).isFalse();
+        assertThat(statue.isTapped()).isTrue();
+    }
+
+    @Test
+    void backFaceDoesNotProduceManaDuringOpponentsFirstMainPhase() {
+        addTransformedStatue(player1);
+
+        advanceToPrecombatMain(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void backFaceDoesNotProduceManaDuringSecondMainPhase() {
+        addTransformedStatue(player1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
     private Permanent addReadyStatue(Player player) {
-        return addReadyPermanent(player, new ForebodingStatue());
+        return addCreatureReady(player, new ForebodingStatue());
     }
 
     private Permanent addTransformedStatue(Player player) {
         ForebodingStatue card = new ForebodingStatue();
-        Permanent statue = new Permanent(card);
-        statue.setSummoningSick(false);
+        Permanent statue = addCreatureReady(player, card);
         statue.setCard(card.getBackFaceCard());
         statue.setTransformed(true);
-        gd.playerBattlefields.get(player.getId()).add(statue);
-        return statue;
-    }
-
-    private Permanent addReadyPermanent(Player player, ForebodingStatue card) {
-        Permanent statue = new Permanent(card);
-        statue.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(statue);
         return statue;
     }
 

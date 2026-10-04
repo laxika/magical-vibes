@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HulkingCyclops;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.MortalsResolve;
+import com.github.laxika.magicalvibes.cards.n.NyxbornRollicker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EyeGouge.class, GrizzlyBears.class, HulkingCyclops.class, Forest.class})
+@CardUsed({EyeGouge.class, GrizzlyBears.class, HulkingCyclops.class, Forest.class,
+        MortalsResolve.class, NyxbornRollicker.class})
 class EyeGougeTest extends BaseCardTest {
 
     @Test
@@ -73,10 +76,70 @@ class EyeGougeTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("A non-Cyclops with one toughness dies from the reduction")
+    void killsOneToughnessNonCyclops() {
+        harness.addToBattlefield(player2, new NyxbornRollicker());
+
+        castEyeGouge(harness.getPermanentId(player2, "Nyxborn Rollicker"));
+
+        harness.assertNotOnBattlefield(player2, "Nyxborn Rollicker");
+        harness.assertInGraveyard(player2, "Nyxborn Rollicker");
+    }
+
+    @Test
+    @DisplayName("Can target a creature controlled by its caster")
+    void canTargetOwnCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent target = findPermanent(player1, "Grizzly Bears");
+
+        castEyeGouge(target.getId());
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("Indestructible prevents destroying a Cyclops but not the reduction")
+    void indestructibleCyclopsSurvives() {
+        harness.addToBattlefield(player2, new HulkingCyclops());
+        Permanent target = findPermanent(player2, "Hulking Cyclops");
+        harness.setHand(player1, List.of(new MortalsResolve()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        castEyeGouge(target.getId());
+
+        harness.assertOnBattlefield(player2, "Hulking Cyclops");
+        harness.assertNotInGraveyard(player2, "Hulking Cyclops");
+        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(target.getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Does not resolve against a Cyclops already destroyed by another Eye Gouge")
+    void fizzlesWhenTargetLeavesBattlefield() {
+        harness.addToBattlefield(player2, new HulkingCyclops());
+        UUID targetId = harness.getPermanentId(player2, "Hulking Cyclops");
+        harness.setHand(player1, List.of(new EyeGouge(), new EyeGouge()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Hulking Cyclops");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Hulking Cyclops");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Eye Gouge"))
+                .hasSize(2);
+    }
+
     private void castEyeGouge(UUID targetId) {
         harness.setHand(player1, List.of(new EyeGouge()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 }

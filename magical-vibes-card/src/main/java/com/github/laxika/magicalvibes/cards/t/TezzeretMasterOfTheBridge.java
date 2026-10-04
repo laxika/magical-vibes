@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "1701")
+@CardRegistration(set = "WAR", collectorNumber = "275")
 public class TezzeretMasterOfTheBridge extends Card {
 
     public TezzeretMasterOfTheBridge() {

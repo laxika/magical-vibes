@@ -48,6 +48,7 @@ public class Permanent {
     @Setter private boolean entryCostResolved;
     /** Null until the controller has chosen the cards to reveal for Amplify. */
     @Setter private Integer amplifyRevealedCards;
+    @Setter private Boolean chosenTappedEntryState;
     private boolean attacking;
     /** The UUID of the player or planeswalker this creature is attacking. Null when not attacking. */
     private UUID attackTarget;
@@ -354,6 +355,8 @@ public class Permanent {
     /** An automatic Illusionary Mask turn-up whose engine triggers still need to be collected. */
     @Setter private boolean pendingAutomaticTurnFaceUp;
     private boolean cloaked;
+    /** Ward supplied by casting this permanent face down using disguise. */
+    private boolean faceDownWard;
     private int faceDownPower;
     private int faceDownToughness;
     private final Set<CardType> faceDownCardTypes = EnumSet.noneOf(CardType.class);
@@ -376,6 +379,7 @@ public class Permanent {
      *  New counter kinds require only a new {@link CounterType} value — never a new field here.
      *  Read/write via {@link #getCounterCount(CounterType)} / {@link #setCounterCount(CounterType, int)}. */
     private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
+    private final Map<CounterType, Long> lastCounterRemovalVersions = new EnumMap<>(CounterType.class);
     private int countersRemovedSinceTriggerCheck;
     private int loyaltyCountersRemovedSinceTriggerCheck;
     private int timeCountersRemovedSinceTriggerCheck;
@@ -578,6 +582,8 @@ public class Permanent {
     @Setter private Integer lastKnownPower;
     /** Colors immediately before this permanent left the battlefield. */
     @Setter private Set<CardColor> lastKnownColors;
+    /** Effective subtypes immediately before this permanent left the battlefield. */
+    @Setter private Set<CardSubtype> lastKnownSubtypes;
     /** When true, this permanent has lost all abilities until end of turn (e.g. Merfolk Trickster).
      *  Keywords, activated abilities, and triggered abilities are suppressed.
      *  Cleared by {@link #resetModifiers()}. */
@@ -782,6 +788,7 @@ public class Permanent {
         this.entryCostPaid = source.entryCostPaid;
         this.entryCostResolved = source.entryCostResolved;
         this.amplifyRevealedCards = source.amplifyRevealedCards;
+        this.chosenTappedEntryState = source.chosenTappedEntryState;
         this.attacking = source.attacking;
         this.attackTarget = source.attackTarget;
         this.attackedThisTurn = source.attackedThisTurn;
@@ -909,6 +916,7 @@ public class Permanent {
         this.faceDown = source.faceDown;
         this.pendingAutomaticTurnFaceUp = source.pendingAutomaticTurnFaceUp;
         this.cloaked = source.cloaked;
+        this.faceDownWard = source.faceDownWard;
         this.faceDownPower = source.faceDownPower;
         this.faceDownToughness = source.faceDownToughness;
         this.faceDownCardTypes.addAll(source.faceDownCardTypes);
@@ -923,6 +931,7 @@ public class Permanent {
         this.permanentAnimatedPower = source.permanentAnimatedPower;
         this.permanentAnimatedToughness = source.permanentAnimatedToughness;
         this.counters.putAll(source.counters);
+        this.lastCounterRemovalVersions.putAll(source.lastCounterRemovalVersions);
         this.countersRemovedSinceTriggerCheck = source.countersRemovedSinceTriggerCheck;
         this.loyaltyCountersRemovedSinceTriggerCheck = source.loyaltyCountersRemovedSinceTriggerCheck;
         this.timeCountersRemovedSinceTriggerCheck = source.timeCountersRemovedSinceTriggerCheck;
@@ -988,6 +997,7 @@ public class Permanent {
         this.lastKnownToughness = source.lastKnownToughness;
         this.lastKnownPower = source.lastKnownPower;
         this.lastKnownColors = source.lastKnownColors == null ? null : Set.copyOf(source.lastKnownColors);
+        this.lastKnownSubtypes = source.lastKnownSubtypes == null ? null : Set.copyOf(source.lastKnownSubtypes);
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
         this.losesAllAbilitiesUntilNextTurnControllers.addAll(
                 source.losesAllAbilitiesUntilNextTurnControllers);
@@ -1063,6 +1073,7 @@ public class Permanent {
                             Set<CardSubtype> subtypes) {
         this.faceDown = true;
         this.cloaked = false;
+        this.faceDownWard = false;
         this.faceDownPower = power;
         this.faceDownToughness = toughness;
         this.faceDownCardTypes.clear();
@@ -1076,9 +1087,15 @@ public class Permanent {
         this.cloaked = true;
     }
 
+    public void setFaceDownAsDisguised() {
+        setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        this.faceDownWard = true;
+    }
+
     public void turnFaceUp() {
         this.faceDown = false;
         this.cloaked = false;
+        this.faceDownWard = false;
         this.faceDownPower = 0;
         this.faceDownToughness = 0;
         this.faceDownCardTypes.clear();
@@ -1410,6 +1427,9 @@ public class Permanent {
         }
         int previousCount = counters.getOrDefault(counterType, 0);
         int newCount = Math.max(0, count);
+        if (previousCount > 0 && newCount == 0) {
+            lastCounterRemovalVersions.merge(counterType, 1L, Long::sum);
+        }
         if (newCount < previousCount) {
             countersRemovedSinceTriggerCheck += previousCount - newCount;
         }
@@ -1634,8 +1654,6 @@ public class Permanent {
     public boolean hasKeyword(Keyword keyword) {
         if (losesAllAbilitiesUntilEndOfTurn || !losesAllAbilitiesUntilNextTurnControllers.isEmpty()
                 || losesAllAbilitiesPermanently) return false;
-        // Changeling grants all creature types; losing all creature types nullifies that grant.
-        if (keyword == Keyword.CHANGELING && losesAllCreatureTypesUntilEndOfTurn) return false;
         if (removedKeywords.contains(keyword)) return false;
         CounterType keywordCounter = switch (keyword) {
             case HASTE -> CounterType.HASTE;

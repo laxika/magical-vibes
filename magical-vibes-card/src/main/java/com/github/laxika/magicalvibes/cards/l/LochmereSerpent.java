@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "195")
+@CardRegistration(set = "ELD", collectorNumber = "381")
 public class LochmereSerpent extends Card {
 
     public LochmereSerpent() {

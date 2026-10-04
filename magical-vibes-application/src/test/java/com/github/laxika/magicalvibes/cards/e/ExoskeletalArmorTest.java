@@ -19,6 +19,56 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ExoskeletalArmorTest extends BaseCardTest {
 
     @Test
+    void givesNoBonusWithoutCreatureCardsAndShrinksWhenTheyLeaveGraveyards() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DwarvenDriller());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        harness.setGraveyard(player1, List.of(new MentalNote()));
+        harness.setGraveyard(player2, List.of(new RiftstonePortal()));
+        harness.setHand(player1, List.of(new ExoskeletalArmor()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+
+        harness.setGraveyard(player1, List.of(new DwarvenDriller()));
+        harness.setGraveyard(player2, List.of(new SuntailHawk()));
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, otherCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, otherCreature)).isEqualTo(1);
+
+        harness.setGraveyard(player1, List.of());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+
+        harness.setGraveyard(player2, List.of());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    void usesCurrentGraveyardsWhenAuraResolves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DwarvenDriller());
+        harness.setGraveyard(player1, List.of(new DwarvenDriller()));
+        harness.setHand(player1, List.of(new ExoskeletalArmor()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new DwarvenDriller(), new SuntailHawk()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
     void boostsEnchantedCreatureByCreatureCardsInAllGraveyards() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new DwarvenDriller());
         harness.setGraveyard(player1, List.of(new DwarvenDriller(), new MentalNote()));

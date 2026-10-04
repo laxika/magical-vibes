@@ -23,9 +23,8 @@ class FinchFormationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FinchFormation()));
         addCastMana();
 
-        harness.castCreature(player1, 0, 0, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castCreature(player1, 0, bears.getId());
+        resolveAllTriggers();
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -38,9 +37,8 @@ class FinchFormationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FinchFormation()));
         addCastMana();
 
-        harness.castCreature(player1, 0, 0, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castCreature(player1, 0, bears.getId());
+        resolveAllTriggers();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -58,11 +56,9 @@ class FinchFormationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         harness.castKickedCreature(player1, 0, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handlePermanentChosen(player1, bears.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -75,11 +71,65 @@ class FinchFormationTest extends BaseCardTest {
     @Test
     void cannotTargetCreatureControlledByOpponent() {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new FinchFormation()));
-        addCastMana();
+        harness.enterBattlefieldAndReturn(player1, new FinchFormation());
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, opponentCreature.getId()))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, findPermanent(player1, "Finch Formation").getId());
+        resolveAllTriggers();
+    }
+
+    @Test
+    void offspringStillCreatesTokenWhenFlyingTargetLeaves() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FinchFormation()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castKickedCreature(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerGraveyards.get(player1.getId()).add(bears.getCard());
+        resolveAllTriggers();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, findPermanent(player1, "Finch Formation").getId());
+            resolveAllTriggers();
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList()).hasSize(1);
+    }
+
+    @Test
+    void offspringTokenCanGrantFlyingToADifferentCreature() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new FinchFormation()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castKickedCreature(player1, 0, first.getId());
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, second.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.FLYING)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList()).hasSize(1);
+    }
+
+    @Test
+    void canCastOnEmptyBattlefieldAndTargetItselfAfterEntering() {
+        harness.castFromHand(player1, new FinchFormation(), "{2}{U}");
+        harness.passBothPriorities();
+
+        Permanent finch = findPermanent(player1, "Finch Formation");
+        harness.handlePermanentChosen(player1, finch.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Finch Formation");
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addCastMana() {

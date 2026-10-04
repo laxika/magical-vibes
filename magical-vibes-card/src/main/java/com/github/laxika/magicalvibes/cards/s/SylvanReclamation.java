@@ -16,6 +16,7 @@ import java.util.List;
 
 @CardRegistration(set = "DMC", collectorNumber = "170")
 @CardRegistration(set = "C16", collectorNumber = "44")
+@CardRegistration(set = "SCD", collectorNumber = "248")
 public class SylvanReclamation extends Card {
 
     public SylvanReclamation() {

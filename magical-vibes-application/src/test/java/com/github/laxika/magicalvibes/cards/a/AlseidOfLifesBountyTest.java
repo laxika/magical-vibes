@@ -113,6 +113,7 @@ class AlseidOfLifesBountyTest extends BaseCardTest {
 
         assertThat(gqs.hasProtectionFrom(gd, target, CardColor.BLACK)).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, target, CardColor.RED)).isFalse();
+        declareAttackers(List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gqs.hasProtectionFrom(gd, target, CardColor.BLACK)).isFalse();
     }
