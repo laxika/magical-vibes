@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(IcatianStore.class)
+@CardUsed({IcatianStore.class})
 class IcatianStoreTest extends BaseCardTest {
 
     @Test
@@ -168,6 +168,54 @@ class IcatianStoreTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(whiteMana()).isZero();
         assertThat(store.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Icatian Store enters tapped even when it is not played as a land")
+    void entersTappedWithoutBeingPlayed() {
+        Permanent store = harness.enterBattlefieldAndReturn(player1, new IcatianStore());
+
+        assertThat(store.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Upkeep adds a storage counter to the counters already present")
+    void upkeepAccumulatesStorageCounters() {
+        Permanent store = addStoreWithCounters(2);
+        store.tap();
+
+        beginPlayer1UntapChoice();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        resolveAllTriggers();
+
+        assertThat(store.isTapped()).isTrue();
+        assertThat(store.getCounterCount(CounterType.STORAGE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Mana is produced without using the stack while the upkeep trigger is pending")
+    void manaAbilityResolvesWhileUpkeepTriggerIsPending() {
+        Permanent store = addStoreWithCounters(2);
+        store.tap();
+
+        beginPlayer1UntapChoice();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(gd.stack).hasSize(1);
+
+        store.untap();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "2");
+
+        assertThat(whiteMana()).isEqualTo(2);
+        assertThat(store.getCounterCount(CounterType.STORAGE)).isZero();
+        assertThat(store.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(store.getCounterCount(CounterType.STORAGE)).isEqualTo(1);
     }
 
     private void beginPlayer1UntapChoice() {
