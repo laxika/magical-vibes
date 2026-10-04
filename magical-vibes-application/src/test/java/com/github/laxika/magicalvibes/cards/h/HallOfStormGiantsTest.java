@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SylvanAwakening;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HallOfStormGiants.class, Mountain.class, Shock.class})
+@CardUsed({HallOfStormGiants.class, Mountain.class, Shock.class, SylvanAwakening.class})
 class HallOfStormGiantsTest extends BaseCardTest {
 
     @Test
@@ -96,6 +97,82 @@ class HallOfStormGiantsTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Shock");
     }
 
+    @Test
+    @DisplayName("Each resolved animation grants a separate ward instance")
+    void repeatedAnimationGrantsSeparateWardInstances() {
+        Permanent hall = animateHall();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        prepareOpponentTurn();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, hall.getId());
+
+        assertThat(gd.stack).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Animation by another spell does not grant Hall ward")
+    void externalAnimationDoesNotGrantWard() {
+        Permanent hall = addHallReady(player1);
+        harness.setHand(player1, List.of(new SylvanAwakening()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gqs.isCreature(gd, hall)).isTrue();
+        prepareOpponentTurn();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, hall.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(hall.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Hall's ward does not trigger for its controller's spell")
+    void ownSpellDoesNotTriggerWard() {
+        Permanent hall = animateHall();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, hall.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(hall.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Hall's animation expires at end of turn")
+    void animationExpiresAtEndOfTurn() {
+        Permanent hall = animateHall();
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.isCreature(gd, hall)).isFalse();
+        assertThat(gqs.isLand(gd, hall)).isTrue();
+        assertThat(gqs.getEffectiveColors(gd, hall)).isEmpty();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, hall)).doesNotContain(CardSubtype.GIANT);
+    }
+
+    @Test
+    @DisplayName("Opponent's lands do not make Hall enter tapped")
+    void opponentsLandsDoNotCount() {
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addToBattlefield(player2, new Mountain());
+
+        playHall();
+
+        assertThat(findHall().isTapped()).isFalse();
+    }
+
     private void playHall() {
         harness.setHand(player1, List.of(new HallOfStormGiants()));
         harness.forceActivePlayer(player1);
@@ -104,9 +181,8 @@ class HallOfStormGiantsTest extends BaseCardTest {
     }
 
     private Permanent addHallReady(Player player) {
-        Permanent hall = new Permanent(new HallOfStormGiants());
+        Permanent hall = harness.addToBattlefieldAndReturn(player, new HallOfStormGiants());
         hall.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(hall);
         return hall;
     }
 
