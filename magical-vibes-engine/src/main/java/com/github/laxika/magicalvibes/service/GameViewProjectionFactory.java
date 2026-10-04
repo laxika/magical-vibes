@@ -191,7 +191,9 @@ public class GameViewProjectionFactory {
                     gameData.planechase == null ? null : planarViews.create(gameData, playerId),
                     gameData.monarchPlayerId, commanderView(gameData, playerId),
                     gameData.exiledCards.stream()
-                            .filter(entry -> playerId.equals(gameData.exileLookPermissions.get(entry.card().getId())))
+                            .filter(entry -> playerId.equals(gameData.exileLookPermissions.get(entry.card().getId()))
+                                    || gameData.additionalExileLookPermissions
+                                    .getOrDefault(entry.card().getId(), java.util.Set.of()).contains(playerId))
                             .map(entry -> cardViewFactory.create(entry.card()))
                             .toList()
             ));
@@ -277,6 +279,13 @@ public class GameViewProjectionFactory {
                     UUID viewerId = entry.exilerId() != null ? entry.exilerId() : pid;
                     cardsByViewer.computeIfAbsent(viewerId, ignored -> new ArrayList<>())
                             .add(cardViewFactory.create(entry.card()));
+                    for (UUID additionalViewer : data.additionalExileLookPermissions
+                            .getOrDefault(entry.card().getId(), java.util.Set.of())) {
+                        if (!additionalViewer.equals(viewerId)) {
+                            cardsByViewer.computeIfAbsent(additionalViewer, ignored -> new ArrayList<>())
+                                    .add(cardViewFactory.create(entry.card()));
+                        }
+                    }
                 }
                 if (!cardsByViewer.isEmpty()) {
                     UUID legacyViewerId = cardsByViewer.size() == 1

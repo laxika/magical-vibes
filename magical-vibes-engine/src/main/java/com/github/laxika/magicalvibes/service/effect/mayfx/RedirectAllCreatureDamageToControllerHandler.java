@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 public class RedirectAllCreatureDamageToControllerHandler implements MayEffectHandlerBean {
 
     private final ObjectProvider<DamageSupport> damageSupportProvider;
+    private final ObjectProvider<com.github.laxika.magicalvibes.service.combat.CombatDamageService> combatDamageServiceProvider;
     private final GameQueryService gameQueryService;
     private final InputCompletionService inputCompletionService;
 
@@ -32,8 +33,14 @@ public class RedirectAllCreatureDamageToControllerHandler implements MayEffectHa
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        var effect = (RedirectAllCreatureDamageToControllerEffect) ability.effects().getFirst();
+        if (effect.combatDamage()) {
+            combatDamageServiceProvider.getObject().completeCreatureDamageRedirectChoice(gameData, ability, accepted);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         StackEntry damageEntry = new StackEntry(
-                StackEntryType.ACTIVATED_ABILITY, ability.sourceCard(), ability.sourceControllerId(),
+                effect.damageEntryType(), ability.sourceCard(), ability.sourceControllerId(),
                 ability.sourceCard().getName() + "'s ability", List.of(),
                 ability.targetCardId(), ability.sourcePermanentId());
         damageEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
@@ -42,6 +49,9 @@ public class RedirectAllCreatureDamageToControllerHandler implements MayEffectHa
         if (accepted) {
             damageSupport.dealDamageToPlayer(
                     gameData, damageEntry, ability.controllerId(), ability.eventValue());
+        } else if (!effect.remainingControllers().isEmpty()) {
+            damageSupport.queueCreatureDamageRedirectChoice(gameData, damageEntry, ability.targetCardId(),
+                    ability.eventValue(), effect.remainingControllers());
         } else {
             Permanent target = gameQueryService.findPermanentById(gameData, ability.targetCardId());
             if (target != null) {

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DyingPermanentWasCreatureConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "M20", collectorNumber = "8")
@@ -14,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 public class BishopOfWings extends Card {
 
     public BishopOfWings() {
-        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new TriggeringCardConditionalEffect(
+        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD, new TriggeringCardConditionalEffect(
                 new CardSubtypePredicate(CardSubtype.ANGEL),
                 new GainLifeEffect(4)
         ));
@@ -22,5 +23,8 @@ public class BishopOfWings extends Card {
                 new CardSubtypePredicate(CardSubtype.ANGEL),
                 CreateTokenEffect.whiteSpirit(1)
         ));
+        addEffect(EffectSlot.ON_DEATH, new DyingPermanentWasCreatureConditionalEffect(
+                new TriggeringCardConditionalEffect(new CardSubtypePredicate(CardSubtype.ANGEL),
+                        CreateTokenEffect.whiteSpirit(1))));
     }
 }

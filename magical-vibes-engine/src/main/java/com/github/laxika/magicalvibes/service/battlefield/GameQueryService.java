@@ -2622,9 +2622,8 @@ public class GameQueryService {
      * damage source consult it in addition to the global check.
      */
     public boolean damageCantBePreventedFromSource(GameData gameData, Permanent source) {
-        return source != null && (source.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(SourceDamageCantBePreventedEffect.class::isInstance)
-                || hasGrantedEffect(gameData, source, SourceDamageCantBePreventedEffect.class));
+        return source != null && hasActiveStaticEffectIncludingGranted(
+                gameData, source, SourceDamageCantBePreventedEffect.class);
     }
 
     /** Returns whether damage from the source can't be prevented for the current damage event. */
@@ -4185,9 +4184,24 @@ public class GameQueryService {
         if (cantHaveCountersForController(gameData, permanent, controllerId)) {
             return true;
         }
-        if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(CantHavePlusOnePlusOneCountersEffect.class::isInstance)) {
+        if (getActiveStaticEffects(gameData, permanent).stream()
+                .anyMatch(effect -> effect instanceof CantHavePlusOnePlusOneCountersEffect restriction
+                        && restriction.scope() == GrantScope.SELF)) {
             return true;
+        }
+        UUID recipientController = controllerId != null ? controllerId
+                : findPermanentController(gameData, permanent.getId());
+        if (recipientController != null && isCreature(gameData, permanent)) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                if (playerId.equals(recipientController)) continue;
+                for (Permanent source : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                    if (getActiveStaticEffects(gameData, source).stream()
+                            .anyMatch(effect -> effect instanceof CantHavePlusOnePlusOneCountersEffect restriction
+                                    && restriction.scope() == GrantScope.OPPONENT_CREATURES)) {
+                        return true;
+                    }
+                }
+            }
         }
         StaticBonus bonus = computeStaticBonusForController(gameData, permanent, controllerId);
         return bonus.grantedEffects().stream()
@@ -6935,6 +6949,17 @@ public class GameQueryService {
      */
     public boolean hasProtectionFromSource(GameData gameData, Permanent target, Permanent source) {
         return hasProtectionFromSource(gameData, target, source, getEffectiveColors(gameData, source));
+    }
+
+    /** Tests independent protection while honoring an Aura's exception for its own grant. */
+    public boolean hasProtectionFromAuraIgnoringOwnGrant(GameData gameData, Permanent target, Permanent aura) {
+        Set<CardColor> sourceColors = getEffectiveColors(gameData, aura);
+        LayerSystemService.Pass pass = layerSystemService.beginPassWithoutProtectionFrom(gameData, aura.getId());
+        try {
+            return hasProtectionFromSource(gameData, target, aura, sourceColors);
+        } finally {
+            layerSystemService.endPass(pass);
+        }
     }
 
     /**

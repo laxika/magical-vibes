@@ -27,6 +27,7 @@ class BattletideAlchemistTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
+        acceptAllPreventionChoices();
 
         // Shock deals 2; 1 is prevented, so player1 takes 1.
         assertThat(gd.getLife(player1.getId())).isEqualTo(19);
@@ -43,6 +44,7 @@ class BattletideAlchemistTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
+        acceptAllPreventionChoices();
 
         // Shock deals 2; all of it is prevented.
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
@@ -72,7 +74,9 @@ class BattletideAlchemistTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 2);
 
         harness.castAndResolveInstant(player2, 0, player1.getId());
+        acceptAllPreventionChoices();
         harness.castAndResolveInstant(player2, 0, player1.getId());
+        acceptAllPreventionChoices();
 
         // Each Shock is a separate source, so each deals 1 after prevention.
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
@@ -90,6 +94,7 @@ class BattletideAlchemistTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of());
         resolveCombat(player2);
+        acceptAllPreventionChoices();
 
         // War-Spike Changeling deals 3; 1 (X=1) is prevented, so player1 takes 2.
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
@@ -106,6 +111,7 @@ class BattletideAlchemistTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(player2, List.of(0, 1));
         gs.declareBlockers(gd, player1, List.of());
         resolveCombat(player2);
+        acceptAllPreventionChoices();
 
         // Each 3/3 is a separate source, so each has 1 damage prevented.
         assertThat(gd.getLife(player1.getId())).isEqualTo(16);
@@ -152,6 +158,7 @@ class BattletideAlchemistTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, sentinel.getId());
         harness.assertInGraveyard(player1, "Changeling Sentinel");
         harness.castAndResolveInstant(player2, 0, player1.getId());
+        acceptAllPreventionChoices();
 
         harness.assertLife(player1, 19);
     }
@@ -167,6 +174,7 @@ class BattletideAlchemistTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of());
         resolveCombat(player2);
+        acceptAllPreventionChoices();
 
         harness.assertLife(player1, 20);
     }
@@ -190,4 +198,11 @@ class BattletideAlchemistTest extends BaseCardTest {
 
         harness.assertLife(player1, 18);
     }
+    private void acceptAllPreventionChoices() {
+        while (gd.interaction.activeInteraction() instanceof
+                com.github.laxika.magicalvibes.model.PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+    }
+
 }

@@ -213,6 +213,7 @@ public class PermanentRemovalService {
         Map<UUID, UUID> oldCreatureControllers = new java.util.HashMap<>(gameData.simultaneousDyingControllers);
         Map<UUID, Integer> oldPowers = new java.util.HashMap<>(gameData.simultaneousDyingPowers);
         Map<UUID, List<CardEffect>> oldGranted = new java.util.HashMap<>(gameData.simultaneousDyingGrantedCreatureDeathEffects);
+        Map<UUID, List<CardEffect>> oldGrantedSelfDeath = new java.util.HashMap<>(gameData.simultaneousDyingGrantedSelfDeathEffects);
         try {
             for (Permanent permanent : permanents) {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
@@ -225,6 +226,9 @@ public class PermanentRemovalService {
                 snapshotEffectiveSubtypes(gameData, snapshot);
                 gameData.simultaneousDyingPermanents.put(permanent.getId(), snapshot);
                 gameData.simultaneousDyingPermanentControllers.put(permanent.getId(), controllerId);
+                gameData.simultaneousDyingGrantedSelfDeathEffects.put(permanent.getId(),
+                        List.copyOf(triggerCollectionService.grantedTriggeredEffects(
+                                gameData, permanent, EffectSlot.ON_DEATH)));
                 if (!gameQueryService.isCreature(gameData, permanent)) continue;
                 gameData.simultaneousDyingCreatures.put(permanent.getId(), snapshot);
                 gameData.simultaneousDyingControllers.put(permanent.getId(), controllerId);
@@ -249,6 +253,8 @@ public class PermanentRemovalService {
             gameData.simultaneousDyingPowers.putAll(oldPowers);
             gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
             gameData.simultaneousDyingGrantedCreatureDeathEffects.putAll(oldGranted);
+            gameData.simultaneousDyingGrantedSelfDeathEffects.clear();
+            gameData.simultaneousDyingGrantedSelfDeathEffects.putAll(oldGrantedSelfDeath);
         }
     }
 
@@ -363,9 +369,7 @@ public class PermanentRemovalService {
                 ? dyingSnapshot != null && dyingSnapshot.getLastKnownToughness() != null
                 ? dyingSnapshot.getLastKnownToughness() : gameQueryService.getEffectiveToughness(gameData, target)
                 : 0;
-        List<CardEffect> grantedDeathEffects = wasCreature
-                ? triggerCollectionService.grantedTriggeredEffects(gameData, target, EffectSlot.ON_DEATH)
-                : List.of();
+        List<CardEffect> grantedDeathEffects = grantedSelfDeathEffects(gameData, target);
         boolean wasArtifact = gameQueryService.isArtifact(target);
         boolean wasEnchantment = gameQueryService.isEnchantment(gameData, target);
         Set<CardSubtype> creatureSubtypesAtDeath = wasCreature
@@ -408,6 +412,13 @@ public class PermanentRemovalService {
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
         return true;
+    }
+
+    /** Uses the abilities present before the first member of a simultaneous event left the battlefield. */
+    private List<CardEffect> grantedSelfDeathEffects(GameData gameData, Permanent permanent) {
+        List<CardEffect> snapshot = gameData.simultaneousDyingGrantedSelfDeathEffects.get(permanent.getId());
+        return snapshot != null ? snapshot
+                : triggerCollectionService.grantedTriggeredEffects(gameData, permanent, EffectSlot.ON_DEATH);
     }
 
     private Set<CardSubtype> effectiveCreatureSubtypesAtDeath(GameData gameData, Permanent permanent) {
@@ -531,9 +542,7 @@ public class PermanentRemovalService {
         boolean wasLand = gameQueryService.isLand(gameData, target);
         int dyingPowerAtDeath = wasCreature ? gameQueryService.getEffectivePower(gameData, target) : 0;
         int dyingToughnessAtDeath = wasCreature ? gameQueryService.getEffectiveToughness(gameData, target) : 0;
-        List<CardEffect> grantedDeathEffects = wasCreature
-                ? triggerCollectionService.grantedTriggeredEffects(gameData, target, EffectSlot.ON_DEATH)
-                : List.of();
+        List<CardEffect> grantedDeathEffects = grantedSelfDeathEffects(gameData, target);
         boolean wasArtifact = gameQueryService.isArtifact(target);
         boolean wasEnchantment = gameQueryService.isEnchantment(gameData, target);
         Set<CardSubtype> creatureSubtypesAtDeath = wasCreature

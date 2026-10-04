@@ -17,6 +17,10 @@ public class CombatDamageState {
     public List<SourcePermanentAndControllerNextDamageRedirectShield> sharedRedirectShields = List.of();
     public List<SourceNextDamageToAnyTargetShield> sourceDamageShields = List.of();
 
+    /** Pending replacement choices must finish before simultaneous damage is applied. */
+    public int pendingOptionalDamageChoices;
+    public boolean awaitingOptionalDamageChoices;
+
     public int damageToDefendingPlayer;
     public int poisonDamageToDefendingPlayer;
     public int unpreventableDamageToDefendingPlayer;

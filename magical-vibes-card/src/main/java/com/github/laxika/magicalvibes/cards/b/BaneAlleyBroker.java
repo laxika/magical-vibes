@@ -23,7 +23,7 @@ public class BaneAlleyBroker extends Card {
 
         // {U}{B}, {T}: Return a card exiled with this creature to its owner's hand.
         addActivatedAbility(new ActivatedAbility(true, "{U}{B}",
-                List.of(new PutCardExiledWithSourceIntoHandEffect()),
+                List.of(PutCardExiledWithSourceIntoHandEffect.returningToOwner()),
                 "{U}{B}, {T}: Return a card exiled with this creature to its owner's hand."));
     }
 }

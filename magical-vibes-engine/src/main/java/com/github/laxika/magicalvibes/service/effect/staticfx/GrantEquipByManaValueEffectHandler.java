@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.SourceCardManaValue;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -31,12 +34,12 @@ public class GrantEquipByManaValueEffectHandler implements StaticEffectHandlerBe
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantEquipByManaValueEffect) effect;
         Permanent target = context.target();
-        GameData gameData = context.gameData();
-        boolean hasAnimateArtifacts = support.hasAnimateArtifactEffect(gameData);
 
         // Grant equip ability to matching permanents
         if (support.matchesStaticFilter(context, target, grant.filter())) {
             int manaValue = target.getCard().getManaValue();
+            accumulator.addGrantedEffect(new AttachedBoostEffect(
+                    new SourceCardManaValue(), new Fixed(0), GrantScope.EQUIPPED_CREATURE));
             String cost = "{" + manaValue + "}";
             accumulator.addActivatedAbility(new ActivatedAbility(
                     false,
@@ -53,15 +56,5 @@ public class GrantEquipByManaValueEffectHandler implements StaticEffectHandlerBe
             ));
         }
 
-        // Boost creatures with matching permanents attached
-        if (support.isEffectivelyCreature(gameData, target, hasAnimateArtifacts)) {
-            gameData.forEachPermanent((playerId, permanent) -> {
-                if (permanent.isAttached()
-                        && permanent.getAttachedTo().equals(target.getId())
-                        && support.matchesStaticFilter(context, permanent, grant.filter())) {
-                    accumulator.addPower(permanent.getCard().getManaValue());
-                }
-            });
-        }
     }
 }

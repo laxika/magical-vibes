@@ -233,6 +233,19 @@ public class CreatureControlService {
         gameData.playerBattlefields.get(derived).add(permanent);
         permanent.recordControlChange();
         permanent.setSummoningSick(true);
+        if (!permanent.isFaceDown() && !gameQueryService.hasLostAllAbilities(gameData, permanent)
+                && permanent.getCard().getActivatedAbilities().stream()
+                .flatMap(ability -> ability.getEffects().stream())
+                .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect
+                        .ExileCardFromHandFaceDownWithSourceEffect exile && !exile.toGraveyardOnControlLoss())) {
+            for (var exiled : gameData.getExiledWithPermanentEntries(permanent.getId(), permanent.getCard().getId())) {
+                if (!exiled.faceDown()) continue;
+                Set<UUID> viewers = gameData.additionalExileLookPermissions.computeIfAbsent(
+                        exiled.card().getId(), ignored -> new LinkedHashSet<>());
+                viewers.add(current);
+                viewers.add(derived);
+            }
+        }
         if (ascendEffectHandler != null) {
             ascendEffectHandler.checkPermanentAscend(gameData, derived);
         }

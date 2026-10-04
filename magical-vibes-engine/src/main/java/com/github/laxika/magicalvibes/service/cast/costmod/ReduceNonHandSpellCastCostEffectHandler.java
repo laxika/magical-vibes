@@ -19,7 +19,8 @@ public class ReduceNonHandSpellCastCostEffectHandler implements CostModification
 
     @Override
     public int modifyCost(CostModificationContext context, CardEffect effect, CostModificationSource source) {
-        if (context.sourceZone() == null || context.sourceZone() == Zone.HAND) {
+        if (context.sourceZone() == null || context.sourceZone() == Zone.HAND
+                || !source.controlledBy(context.castingPlayerId())) {
             return 0;
         }
         return -((ReduceNonHandSpellCastCostEffect) effect).amount();

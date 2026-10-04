@@ -1153,28 +1153,19 @@ public class AttackLegalityService {
      * display name and rejects a null one — legality must not depend on a permanent being nameable.
      */
     public Set<UUID> getValidAttackTargetIds(GameData gameData, UUID activePlayerId) {
-        UUID defenderId = gameQueryService.getOpponentId(gameData, activePlayerId);
         Set<UUID> validIds = new HashSet<>();
-        validIds.add(defenderId);
-        List<Permanent> defBf = gameData.playerBattlefields.get(defenderId);
-        if (defBf != null) {
-            for (Permanent p : defBf) {
-                if (p.getCard().hasType(CardType.PLANESWALKER)) {
-                    if (!isAttackTargetRestricted(gameData, p)) {
-                        validIds.add(p.getId());
-                    }
-                } else if (p.getCard().hasType(CardType.BATTLE)
-                        && !activePlayerId.equals(p.getProtectorPlayerId())) {
-                    validIds.add(p.getId());
-                }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(activePlayerId)) {
+                validIds.add(playerId);
             }
-        }
-        List<Permanent> ownBf = gameData.playerBattlefields.get(activePlayerId);
-        if (ownBf != null) {
-            for (Permanent p : ownBf) {
-                if (p.getCard().hasType(CardType.BATTLE)
-                        && !activePlayerId.equals(p.getProtectorPlayerId())) {
-                    validIds.add(p.getId());
+            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (!playerId.equals(activePlayerId) && gameQueryService.isPlaneswalker(gameData, permanent)
+                        && !isAttackTargetRestricted(gameData, permanent)) {
+                    validIds.add(permanent.getId());
+                } else if (gameQueryService.isBattle(gameData, permanent)
+                        && permanent.getProtectorPlayerId() != null
+                        && !activePlayerId.equals(permanent.getProtectorPlayerId())) {
+                    validIds.add(permanent.getId());
                 }
             }
         }

@@ -131,7 +131,7 @@ public class CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffectHandler
                         effect.removeLegendary())
                 : CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingCopy(
                         effect.removeLegendary(), effect.exileAtEndStep());
-        tokenCopySupport.createTokenCopies(
+        tokenCopySupport.createTokenCopiesChoosingOpponentAttackTargets(
                 gameData,
                 entry,
                 opponents.stream().map(ignored -> attacker.getCard()).toList(),

@@ -925,7 +925,18 @@ public sealed interface TriggerContext {
                              int totalDamage, Map<UUID, Integer> damageToPlayers,
                              UUID singleCreatureSpellTargetId,
                              Map<UUID, Integer> damageToPermanents,
-                             boolean combatDamage) implements TriggerContext {
+                             boolean combatDamage, Map<UUID, Permanent> damagedPermanentSnapshots) implements TriggerContext {
+        public SourceDealsDamage {
+            damagedPermanentSnapshots = Map.copyOf(damagedPermanentSnapshots);
+        }
+
+        public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId,
+                                 int totalDamage, Map<UUID, Integer> damageToPlayers,
+                                 UUID singleCreatureSpellTargetId, Map<UUID, Integer> damageToPermanents,
+                                 boolean combatDamage) {
+            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers,
+                    singleCreatureSpellTargetId, damageToPermanents, combatDamage, Map.of());
+        }
         public SourceDealsDamage(Card sourceCard, UUID sourceControllerId, int totalDamage) {
             this(sourceCard, sourceControllerId, null, totalDamage, Map.of(), null, Map.of(), false);
         }

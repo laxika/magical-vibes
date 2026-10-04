@@ -382,8 +382,9 @@ public class AuraAttachmentService {
             return null;
         }
 
-        if (!grantsSelfExemptProtection(attachment)
-                && gameQueryService.hasProtectionFromSource(gameData, host, attachment)) {
+        if (gameQueryService.hasProtectionFromSource(gameData, host, attachment)
+                && (!grantsSelfExemptProtection(attachment)
+                || gameQueryService.hasProtectionFromAuraIgnoringOwnGrant(gameData, host, attachment))) {
             String relation = isAura ? "enchanted" : isFortification ? "fortified" : "equipped";
             return relation + " permanent has protection from it";
         }

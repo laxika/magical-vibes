@@ -775,6 +775,10 @@ public class GameData {
     /** When true, all combat damage that would be dealt to players is prevented this turn (Defend the Hearth). */
     public boolean preventAllCombatDamageToPlayers;
     /** When true, all damage to all creatures (both players') is prevented this turn (Blinding Fog). */
+    /** Ability instances already collected during the current simultaneous creature-entry event. */
+    public final Map<UUID, Set<com.github.laxika.magicalvibes.model.effect.CardEffect>> simultaneousCreatureEntryTriggers = new HashMap<>();
+    public boolean collectingSimultaneousCreatureEntryTriggers;
+
     public boolean preventAllDamageToAllCreatures;
     /** When true, all damage that would be dealt by creatures is prevented this turn (Ethereal Haze). */
     public boolean preventAllDamageByCreatures;
@@ -1651,7 +1655,7 @@ public class GameData {
     /** Land subtype -&gt; extra mana colors added whenever a player taps a land of that subtype for mana
      *  this turn (Chaos Moon's odd branch: "whenever a player taps a Mountain for mana, that player
      *  adds an additional {R}"). Each resolved effect contributes separately. Cleared at end of turn. */
-    public final Map<CardSubtype, List<ManaColor>> extraManaOnLandSubtypeTapThisTurn = new ConcurrentHashMap<>();
+    public final Map<CardSubtype, List<TemporaryLandTapMana>> extraManaOnLandSubtypeTapThisTurn = new ConcurrentHashMap<>();
 
     /** Land subtype -&gt; the mana color lands of that subtype produce instead of any other type this
      *  turn (Chaos Moon's even branch: "that Mountain produces colorless mana instead of any other
@@ -2147,6 +2151,9 @@ public class GameData {
     public final Map<UUID, UUID> exilePlayPermissions = new ConcurrentHashMap<>();
     /** Face-down exiled cards a player may look at for as long as they remain exiled. */
     public final Map<UUID, UUID> exileLookPermissions = new ConcurrentHashMap<>();
+
+    /** Players who retain permission to look at a face-down card while it remains exiled. */
+    public final Map<UUID, Set<UUID>> additionalExileLookPermissions = new ConcurrentHashMap<>();
     /** Maps cards granted by one effect to their shared limited exile-play permission group. */
     public final Map<UUID, UUID> exilePlayPermissionGroups = new ConcurrentHashMap<>();
     /** Remaining plays for each shared limited exile-play permission group. */
@@ -2889,6 +2896,9 @@ public class GameData {
     public final Map<UUID, Integer> simultaneousDyingPowers = new ConcurrentHashMap<>();
     /** Last-known continuously granted ON_ANY_CREATURE_DIES effects for the current death event. */
     public final Map<UUID, List<CardEffect>> simultaneousDyingGrantedCreatureDeathEffects =
+            new ConcurrentHashMap<>();
+    /** Continuously granted ON_DEATH abilities before any permanent leaves a simultaneous death event. */
+    public final Map<UUID, List<CardEffect>> simultaneousDyingGrantedSelfDeathEffects =
             new ConcurrentHashMap<>();
 
     /** Tracks subtypes of creatures that dealt combat damage to players this turn.
@@ -5991,6 +6001,7 @@ public class GameData {
             plottedCardIds.remove(cardId);
             exilePlayPermissions.remove(cardId);
             exileLookPermissions.remove(cardId);
+            additionalExileLookPermissions.remove(cardId);
             clearExilePlayPermissionGroup(cardId);
             exilePlayPermissionConditions.remove(cardId);
             exilePlayForLifeEqualToManaValue.remove(cardId);
@@ -6201,6 +6212,7 @@ public class GameData {
             exilePlayPermissionSourcePermanents.remove(cardId);
             exilePlayPermissions.remove(cardId);
             exileLookPermissions.remove(cardId);
+            additionalExileLookPermissions.remove(cardId);
         });
     }
 
@@ -6490,6 +6502,8 @@ public class GameData {
         CombatDamageState copy = new CombatDamageState();
         copy.sharedRedirectShields = new ArrayList<>(source.sharedRedirectShields);
         copy.sourceDamageShields = new ArrayList<>(source.sourceDamageShields);
+        copy.pendingOptionalDamageChoices = source.pendingOptionalDamageChoices;
+        copy.awaitingOptionalDamageChoices = source.awaitingOptionalDamageChoices;
         copy.damageToDefendingPlayer = source.damageToDefendingPlayer;
         copy.poisonDamageToDefendingPlayer = source.poisonDamageToDefendingPlayer;
         copy.unpreventableDamageToDefendingPlayer = source.unpreventableDamageToDefendingPlayer;
@@ -6595,6 +6609,9 @@ public class GameData {
         copy.preventAllCombatDamage = this.preventAllCombatDamage;
         copy.preventAllCombatDamageByAttackingCreatures = this.preventAllCombatDamageByAttackingCreatures;
         copy.preventAllCombatDamageToPlayers = this.preventAllCombatDamageToPlayers;
+        copy.collectingSimultaneousCreatureEntryTriggers = this.collectingSimultaneousCreatureEntryTriggers;
+        this.simultaneousCreatureEntryTriggers.forEach((id, effects) ->
+                copy.simultaneousCreatureEntryTriggers.put(id, new HashSet<>(effects)));
         copy.preventAllDamageToAllCreatures = this.preventAllDamageToAllCreatures;
         copy.preventAllDamageByCreatures = this.preventAllDamageByCreatures;
         copy.preventAllDamageFromNonHumanSources = this.preventAllDamageFromNonHumanSources;
@@ -7463,6 +7480,8 @@ public class GameData {
         this.simultaneousDyingGrantedCreatureDeathEffects.forEach((permanentId, effects) ->
                 copy.simultaneousDyingGrantedCreatureDeathEffects.put(
                         permanentId, List.copyOf(effects)));
+        this.simultaneousDyingGrantedSelfDeathEffects.forEach((permanentId, effects) ->
+                copy.simultaneousDyingGrantedSelfDeathEffects.put(permanentId, List.copyOf(effects)));
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageSourceSubtypesThisTurn.put(k, new HashSet<>(v)));
         copy.combatDamageSourceNamesThisTurn.putAll(this.combatDamageSourceNamesThisTurn);
@@ -8097,6 +8116,8 @@ public class GameData {
         copy.libraryTopCardPermissionsUntilEndOfTurn.addAll(this.libraryTopCardPermissionsUntilEndOfTurn);
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.exileLookPermissions.putAll(this.exileLookPermissions);
+        this.additionalExileLookPermissions.forEach((cardId, viewers) ->
+                copy.additionalExileLookPermissions.put(cardId, new HashSet<>(viewers)));
         copy.outsideGamePlayPermissions.addAll(this.outsideGamePlayPermissions);
         copy.outsideGameAdditionalModalModePermissions.addAll(this.outsideGameAdditionalModalModePermissions);
         copy.playersAllowedToPlayFromLibraryTopUntilEndOfTurn

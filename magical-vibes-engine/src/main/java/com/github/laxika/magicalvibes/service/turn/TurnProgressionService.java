@@ -171,9 +171,11 @@ public class TurnProgressionService {
         gameData.interaction.clearAwaitingInput();
 
         if (gameData.currentStep == TurnStep.COMBAT_DAMAGE
-                && (gameData.combatDamageFirstestStrikeStepComplete
+                && ((gameData.pendingCombatDamageState != null
+                && gameData.pendingCombatDamageState.awaitingOptionalDamageChoices)
+                || ((gameData.combatDamageFirstestStrikeStepComplete
                 || gameData.combatDamageFirstStrikeStepComplete)
-                && !gameData.combatDamagePhase1Complete) {
+                && !gameData.combatDamagePhase1Complete))) {
             handleCombatResult(combatService.resolveCombatDamage(gameData), gameData);
             return;
         }

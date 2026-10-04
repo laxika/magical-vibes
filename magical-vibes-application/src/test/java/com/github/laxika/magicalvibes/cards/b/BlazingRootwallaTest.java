@@ -55,6 +55,9 @@ class BlazingRootwallaTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(rootwalla.getEffectivePower()).isEqualTo(3);
 
+        rootwalla.tap();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(rootwalla.getEffectivePower()).isEqualTo(1);
@@ -105,6 +108,9 @@ class BlazingRootwallaTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
+        rootwalla.tap();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(rootwalla.getEffectivePower()).isEqualTo(1);
         harness.addMana(player1, ManaColor.RED, 1);

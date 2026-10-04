@@ -1237,6 +1237,12 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handlePreparedOpponentTokenCopiesAttacking(GameData gameData, UUID attackTargetId,
+            PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking context) {
+        tokenCopySupport.completeOpponentAttackTargetChoice(gameData, attackTargetId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleCreateTokenCopiesAttacking(GameData gameData, UUID attackTargetId,
                                                   PermanentChoiceContext.CreateTokenCopiesAttacking context) {
         List<UUID> chosenTargets = new ArrayList<>(context.chosenAttackTargets());
@@ -2868,6 +2874,9 @@ public class PermanentChoiceTriggerHandlerService {
                         chosenId,
                         sct.sourcePermanentId()
                 );
+                if (!sct.targetFilters().isEmpty()) {
+                    entry.setTargetFilter(sct.targetFilters().getFirst());
+                }
                 pushTriggeredEntry(gameData, entry);
 
                 String targetName = getTargetDisplayName(gameData, chosenId);

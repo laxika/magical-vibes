@@ -245,6 +245,9 @@ class BalefireLiegeTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         gd.playerBattlefields.get(player1.getId()).remove(liege);
         harness.setGraveyard(player1, List.of(liege.getCard()));
+        while (gd.interaction.activeInteraction() instanceof PendingInteraction.ColorChoice order) {
+            harness.handleListChoice(player1, order.options().getFirst());
+        }
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);

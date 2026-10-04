@@ -299,6 +299,9 @@ public class DestructionSupport {
             snapshot.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, perm));
             gameData.simultaneousDyingPermanents.put(perm.getId(), snapshot);
             gameData.simultaneousDyingPermanentControllers.put(perm.getId(), controllerId);
+            gameData.simultaneousDyingGrantedSelfDeathEffects.put(perm.getId(),
+                    List.copyOf(triggerCollectionService.grantedTriggeredEffects(
+                            gameData, perm, EffectSlot.ON_DEATH)));
             if (!gameQueryService.isCreature(gameData, perm)) continue;
             gameData.simultaneousDyingCreatures.put(perm.getId(), snapshot);
             gameData.simultaneousDyingControllers.put(perm.getId(), controllerId);
@@ -316,6 +319,7 @@ public class DestructionSupport {
         gameData.simultaneousDyingPermanentControllers.clear();
         gameData.simultaneousDyingPowers.clear();
         gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
+        gameData.simultaneousDyingGrantedSelfDeathEffects.clear();
     }
 
     public boolean tryDestroyAndLog(GameData gameData, Permanent target, String sourceName) {

@@ -80,6 +80,10 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         }
         AmountContext context = AmountContext.forStackEntry(entry, source).withControllerId(controllerId);
         int amount = amountEvaluationService.evaluate(gameData, e.amount(), context);
+        int primaryAmount = amount;
+        for (CreateTokenEffect simultaneousToken : e.simultaneousTokens()) {
+            amount += amountEvaluationService.evaluate(gameData, simultaneousToken.amount(), context);
+        }
         if (amount <= 0) {
             return;
         }
@@ -162,6 +166,8 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                 return;
             }
         }
+
+        if (!e.simultaneousTokens().isEmpty()) amount = primaryAmount;
 
         UUID attackingOpponentId = null;
         if (e.tappedAndAttacking() && controllerId.equals(gameData.activePlayerId)

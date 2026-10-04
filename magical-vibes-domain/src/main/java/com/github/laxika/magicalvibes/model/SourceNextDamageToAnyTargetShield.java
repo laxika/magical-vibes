@@ -50,7 +50,30 @@ public record SourceNextDamageToAnyTargetShield(
         Integer combatPhase,
         CreateTokenEffect token,
         UUID tokenControllerId,
-        String tokenSourceSetCode) {
+        String tokenSourceSetCode,
+        int remainingDamage) {
+
+    /** Compatibility constructor for prevention of the whole next damage event. */
+    public SourceNextDamageToAnyTargetShield(UUID sourceId,
+            boolean damageRedSourceController,
+            Card passageCard,
+            UUID passageControllerId,
+            UUID recipientId,
+            int damageMultiplier,
+            UUID lifeGainPlayerId,
+            boolean combatOnly,
+            boolean playersOnly,
+            Integer combatPhase,
+            CreateTokenEffect token,
+            UUID tokenControllerId,
+            String tokenSourceSetCode) {
+        this(sourceId, damageRedSourceController, passageCard, passageControllerId, recipientId, damageMultiplier, lifeGainPlayerId, combatOnly, playersOnly, combatPhase, token, tokenControllerId, tokenSourceSetCode, Integer.MAX_VALUE);
+    }
+
+    /** Copy retaining the unspent amount of a fixed prevention shield. */
+    public SourceNextDamageToAnyTargetShield withRemainingDamage(int amount) {
+        return new SourceNextDamageToAnyTargetShield(sourceId, damageRedSourceController, passageCard, passageControllerId, recipientId, damageMultiplier, lifeGainPlayerId, combatOnly, playersOnly, combatPhase, token, tokenControllerId, tokenSourceSetCode, amount);
+    }
 
     public SourceNextDamageToAnyTargetShield(UUID sourceId, boolean damageRedSourceController, Card passageCard,
                                              UUID passageControllerId, UUID recipientId, int damageMultiplier,

@@ -6,5 +6,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>This is intentionally narrower than {@link CantHaveCountersEffect}; it is used for effects
  * such as Blightbeetle that leave other counter types unaffected.</p>
  */
-public record CantHavePlusOnePlusOneCountersEffect() implements CardEffect {
+public record CantHavePlusOnePlusOneCountersEffect(GrantScope scope) implements CardEffect {
+
+    public CantHavePlusOnePlusOneCountersEffect() {
+        this(GrantScope.SELF);
+    }
 }

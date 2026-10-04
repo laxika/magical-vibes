@@ -380,6 +380,7 @@ public class LayerSystemService {
     public static final class Pass {
         private final GameData gameData;
         private final Pass parent;
+        private UUID excludedProtectionSourceId;
         private LayeredBoardState board;
         private boolean boardReady;
         private final Map<UUID, GameQueryService.StaticBonus> bonusMemo = new HashMap<>();
@@ -476,12 +477,22 @@ public class LayerSystemService {
      * since the last computation, recomputed (and cached) otherwise.
      */
     public Pass beginPass(GameData gameData) {
+        return beginPass(gameData, null);
+    }
+
+    /** Computes attachment legality without the protection granted by the exempt Aura itself. */
+    public Pass beginPassWithoutProtectionFrom(GameData gameData, UUID sourcePermanentId) {
+        return beginPass(gameData, sourcePermanentId);
+    }
+
+    private Pass beginPass(GameData gameData, UUID excludedProtectionSourceId) {
         Pass pass = new Pass(gameData, ACTIVE_PASS.get());
+        pass.excludedProtectionSourceId = excludedProtectionSourceId;
         ACTIVE_PASS.set(pass);
         boolean computed = false;
         try {
             synchronizeFullTextCopies(gameData);
-            if (CACHE_DISABLED) {
+            if (CACHE_DISABLED || excludedProtectionSourceId != null) {
                 computeBoardState(gameData, pass);
             } else {
                 long fingerprint = computeBoardFingerprint(gameData);
@@ -1159,6 +1170,14 @@ public class LayerSystemService {
         return slots;
     }
 
+    private boolean isAttachmentProtectionGrant(CardEffect effect) {
+        return effect instanceof ProtectionFromColorsEffect
+                || effect instanceof com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenColorEffect
+                || effect instanceof com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsOfPermanentsYouControlEffect
+                || effect instanceof GrantEffectEffect grant
+                && grant.effect() instanceof com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
+    }
+
     /**
      * Collects every effect instance classified into the given layer from all STATIC slots and
      * floating effects, ordered per CR 613.2b/613.7: characteristic-defining instances first,
@@ -1176,6 +1195,11 @@ public class LayerSystemService {
                 continue;
             }
             for (CardEffect effect : slot.permanent().getCard().getEffects(EffectSlot.STATIC)) {
+                Pass active = activePass(gameData);
+                if (active != null && slot.permanent().getId().equals(active.excludedProtectionSourceId)
+                        && isAttachmentProtectionGrant(effect)) {
+                    continue;
+                }
                 if (effect instanceof GraveyardStaticEffect) {
                     continue;
                 }

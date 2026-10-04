@@ -460,6 +460,10 @@ public class EffectResolutionService {
     /** Uses departure controller information for a creature referenced by a nontargeting trigger. */
     private boolean isConditionMet(GameData gameData, StackEntry entry, Condition condition,
                                    ConditionContext context) {
+        if (condition instanceof com.github.laxika.magicalvibes.model.condition.AttackedOpponentHasMoreLifeThanAnotherOpponent) {
+            return conditionEvaluationService.isMet(gameData, condition,
+                    context.withTargetId(entry.getAttackedTargetId()), entry.getEventValue());
+        }
         if (condition instanceof NotCondition not) {
             return !isConditionMet(gameData, entry, not.inner(), context);
         }

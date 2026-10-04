@@ -1538,6 +1538,14 @@ public class CardChoiceHandlerService {
         // Add to player's exile zone, tracked with source permanent if available (e.g. Karn Liberated)
         if (sourcePermanentId != null && exileChoice.faceDown()) {
             exileService.exileCardFaceDown(gameData, playerId, card, sourcePermanentId);
+            Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+            if (source != null && source.getCard().getActivatedAbilities().stream()
+                    .flatMap(ability -> ability.getEffects().stream())
+                    .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect
+                            .ExileCardFromHandFaceDownWithSourceEffect exile && !exile.toGraveyardOnControlLoss())) {
+                gameData.additionalExileLookPermissions.computeIfAbsent(
+                        card.getId(), ignored -> new java.util.HashSet<>()).add(playerId);
+            }
         } else if (sourcePermanentId != null) {
             exileService.exileCard(gameData, playerId, card, sourcePermanentId);
         } else {

@@ -139,6 +139,8 @@ class BlitzwingCruelTormentorTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, blitzwing, gained)).isFalse();

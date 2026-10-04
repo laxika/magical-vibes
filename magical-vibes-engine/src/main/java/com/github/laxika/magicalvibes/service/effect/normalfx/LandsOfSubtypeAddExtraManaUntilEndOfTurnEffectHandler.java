@@ -29,7 +29,8 @@ public class LandsOfSubtypeAddExtraManaUntilEndOfTurnEffectHandler implements No
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (LandsOfSubtypeAddExtraManaUntilEndOfTurnEffect) effect;
         gameData.extraManaOnLandSubtypeTapThisTurn.computeIfAbsent(e.subtype(), ignored ->
-                Collections.synchronizedList(new ArrayList<>())).add(e.color());
+                Collections.synchronizedList(new ArrayList<>())).add(
+                new com.github.laxika.magicalvibes.model.TemporaryLandTapMana(e.color(), entry.getControllerId()));
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 ": until end of turn, tapping a " + e.subtype().name().toLowerCase()

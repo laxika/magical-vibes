@@ -3,8 +3,11 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
+import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,12 +28,15 @@ public class XValueChoiceInteractionHandler implements InteractionHandler<Pendin
 
     private final InputCompletionService inputCompletionService;
     private final AbilityActivationService abilityActivationService;
+    private final ObjectProvider<MayCastHandlerService> mayCastHandlerService;
 
     @Autowired
     public XValueChoiceInteractionHandler(InputCompletionService inputCompletionService,
-                                          AbilityActivationService abilityActivationService) {
+                                          AbilityActivationService abilityActivationService,
+                                          ObjectProvider<MayCastHandlerService> mayCastHandlerService) {
         this.inputCompletionService = inputCompletionService;
         this.abilityActivationService = abilityActivationService;
+        this.mayCastHandlerService = mayCastHandlerService;
     }
 
     @Override
@@ -59,6 +65,16 @@ public class XValueChoiceInteractionHandler implements InteractionHandler<Pendin
 
         if (gameData.pendingAbilityCounterCostActivation != null) {
             abilityActivationService.handleActivatedAbilityCounterCostChosen(gameData, player, chosenValue);
+            return;
+        }
+        if (interaction.graveyardCastAbility() != null) {
+            var ability = interaction.graveyardCastAbility();
+            CastCardFromGraveyardEffect castEffect = ability.effects().stream()
+                    .filter(CastCardFromGraveyardEffect.class::isInstance)
+                    .map(CastCardFromGraveyardEffect.class::cast).findFirst().orElseThrow();
+            gameData.interaction.clearAwaitingInput();
+            mayCastHandlerService.getObject().handleCastCardFromGraveyardChoice(
+                    gameData, player, true, ability, castEffect, chosenValue);
             return;
         }
 

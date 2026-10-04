@@ -2044,7 +2044,7 @@ public class TriggeredAbilityQueueService {
             int groupIndex = pending.currentGroupIndex();
             if (groupIndex >= pending.targetGroups().size()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class);
-                gameData.stack.add(new StackEntry(
+                StackEntry chapterEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         pending.sourceCard(),
                         pending.controllerId(),
@@ -2052,7 +2052,12 @@ public class TriggeredAbilityQueueService {
                         new ArrayList<>(pending.effects()),
                         pending.sourcePermanentId(),
                         new ArrayList<>(pending.chosenTargetsSoFar())
-                ));
+                );
+                if (pending.targetGroups().size() == 1) {
+                    chapterEntry.setTargetFilters(java.util.Collections.nCopies(
+                            pending.chosenTargetsSoFar().size(), pending.targetGroups().getFirst().filter()));
+                }
+                gameData.stack.add(chapterEntry);
                 continue;
             }
 

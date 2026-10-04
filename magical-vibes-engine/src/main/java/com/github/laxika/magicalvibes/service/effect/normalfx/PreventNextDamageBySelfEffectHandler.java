@@ -31,8 +31,10 @@ public class PreventNextDamageBySelfEffectHandler implements NormalEffectHandler
             return;
         }
 
-        gameData.sourceNextDamageToAnyTargetShields.add(new SourceNextDamageToAnyTargetShield(sourceId));
+        gameData.sourceNextDamageToAnyTargetShields.add(new SourceNextDamageToAnyTargetShield(sourceId)
+                .withRemainingDamage(((PreventNextDamageBySelfEffect) effect).amount()));
         gameLogService.append(gameData, GameLog.textCardText(
-                "The next time ", entry.getCard(), " would deal damage this turn, that damage is prevented."));
+                "The next damage dealt by ", entry.getCard(), " this turn is reduced by "
+                        + ((PreventNextDamageBySelfEffect) effect).amount() + "."));
     }
 }

@@ -1323,6 +1323,23 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        int tokenCount, List<UUID> chosenAttackTargets)
             implements PermanentChoiceContext {}
 
+    /** Prepared copies whose player or planeswalker attack targets are chosen before their simultaneous entry. */
+    record PreparedOpponentTokenCopiesAttacking(UUID controllerId, StackEntry entry,
+                                                CreateTokenCopyOfTargetPermanentEffect copyEffect,
+                                                List<Permanent> tokens, List<UUID> tokenOpponents,
+                                                List<UUID> chosenAttackTargets) implements PermanentChoiceContext {
+        public PreparedOpponentTokenCopiesAttacking {
+            tokens = List.copyOf(tokens);
+            tokenOpponents = List.copyOf(tokenOpponents);
+            chosenAttackTargets = List.copyOf(chosenAttackTargets);
+        }
+
+        public PreparedOpponentTokenCopiesAttacking deepCopy() {
+            return new PreparedOpponentTokenCopiesAttacking(controllerId, new StackEntry(entry), copyEffect,
+                    tokens.stream().map(Permanent::new).toList(), tokenOpponents, chosenAttackTargets);
+        }
+    }
+
     /** Redoubled Stormsinger: choose an attack target for each temporary token copy. */
     record CreateTokenCopiesOfEnteredThisTurnAttacking(
             UUID controllerId, Card sourceCard, UUID sourcePermanentId,
@@ -2050,9 +2067,20 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                     boolean restrictAdditionalSpellsThisTurn,
                                     boolean anyManaType,
                                     int copyCount,
-                                    boolean castWithAdventure,
-                                    CardEffect afterSuccessfulCastEffect,
-                                    UUID sourcePermanentId) implements PermanentChoiceContext {
+                                      boolean castWithAdventure,
+                                      CardEffect afterSuccessfulCastEffect,
+                                      UUID sourcePermanentId, int xValue) implements PermanentChoiceContext {
+
+        public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
+                                       StackEntryType spellType, boolean exileInsteadOfGraveyard,
+                                       boolean withoutPayingManaCost, UUID ownerId,
+                                       boolean restrictAdditionalSpellsThisTurn, boolean anyManaType,
+                                       int copyCount, boolean castWithAdventure,
+                                       CardEffect afterSuccessfulCastEffect, UUID sourcePermanentId) {
+            this(cardToCast, controllerId, spellEffects, spellType, exileInsteadOfGraveyard,
+                    withoutPayingManaCost, ownerId, restrictAdditionalSpellsThisTurn, anyManaType,
+                    copyCount, castWithAdventure, afterSuccessfulCastEffect, sourcePermanentId, 0);
+        }
 
         public GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                         StackEntryType spellType, boolean exileInsteadOfGraveyard,

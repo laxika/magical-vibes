@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardChosenColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardHasteGrantingManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfTypeLandsCouldProduceEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaColorLandScope;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaToChosenPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
@@ -21,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersForManaEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +31,8 @@ import java.util.EnumSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
+import java.util.HashSet;
 
 /**
  * Resolves the mana types a land could produce in the current game state. This includes all of the
@@ -38,11 +43,17 @@ import java.util.Set;
 public class LandManaTypeSupport {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     public Set<ManaColor> manaTypesCouldProduce(GameData gameData, Permanent land) {
+        return manaTypesCouldProduce(gameData, land, new HashSet<>());
+    }
+
+    private Set<ManaColor> manaTypesCouldProduce(GameData gameData, Permanent land, Set<UUID> visited) {
         if (land == null || !gameQueryService.isLand(gameData, land)) {
             return Set.of();
         }
+        if (!visited.add(land.getId())) return Set.of();
 
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, land);
         List<CardEffect> printedTapEffects = staticBonus.losesAllAbilities() || land.isLosesAllAbilitiesUntilEndOfTurn()
@@ -87,9 +98,9 @@ public class LandManaTypeSupport {
         for (CardSubtype subtype : basicLandTypes) {
             types.add(EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(subtype));
         }
-        addManaTypesFromEffects(gameData, printedTapEffects, land, types);
+        addManaTypesFromEffects(gameData, printedTapEffects, land, types, visited);
         for (ActivatedAbility ability : abilities) {
-            addManaTypesFromEffects(gameData, ability.getEffects(), land, types);
+            addManaTypesFromEffects(gameData, ability.getEffects(), land, types, visited);
         }
         return types;
     }
@@ -99,10 +110,23 @@ public class LandManaTypeSupport {
     }
 
     private void addManaTypesFromEffects(GameData gameData, List<CardEffect> effects,
-                                         Permanent source, Set<ManaColor> types) {
+                                         Permanent source, Set<ManaColor> types, Set<UUID> visited) {
         for (CardEffect effect : effects) {
             if (effect instanceof AwardManaEffect mana) {
                 addIfNonNull(types, mana.color());
+            } else if (effect instanceof AwardManaOfTypeLandsCouldProduceEffect mana) {
+                UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    boolean isController = playerId.equals(controllerId);
+                    if (mana.scope() == ManaColorLandScope.CONTROLLER ? !isController : isController) continue;
+                    for (Permanent land : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                        if (gameQueryService.isLand(gameData, land)
+                                && predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, land, mana.landPredicate())) {
+                            types.addAll(manaTypesCouldProduce(gameData, land, new HashSet<>(visited)));
+                        }
+                    }
+                }
             } else if (effect instanceof AwardAnyColorManaEffect mana) {
                 if (mana.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY
                         || mana.restriction() == ManaSpendRestriction.COMMANDER_COLOR_IDENTITY_WITH_CREATURE_TYPE_SCRY) {

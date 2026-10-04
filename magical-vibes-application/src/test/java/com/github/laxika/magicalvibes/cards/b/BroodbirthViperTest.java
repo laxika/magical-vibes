@@ -55,6 +55,7 @@ class BroodbirthViperTest extends BaseCardTest {
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(copy);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(viper);

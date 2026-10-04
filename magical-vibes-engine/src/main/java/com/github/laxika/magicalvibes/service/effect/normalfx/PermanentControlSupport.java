@@ -186,6 +186,22 @@ public class PermanentControlSupport {
         } else {
             tokenBlueprints.addAll(academyManufactorTokenBlueprints);
         }
+        for (CreateTokenEffect simultaneousToken : token.simultaneousTokens()) {
+            if (!(simultaneousToken.amount() instanceof Fixed fixedAmount)) {
+                throw new IllegalStateException("Simultaneous token counts must be evaluated");
+            }
+            int simultaneousCount = applyTokenMultiplier
+                    ? gameQueryService.getTokenCreationAmount(gameData, controllerId,
+                    fixedAmount.value(), simultaneousToken.subtypes(),
+                    simultaneousToken.primaryType() == CardType.CREATURE)
+                    : fixedAmount.value();
+            if (additionalSquirrel != null && simultaneousToken.primaryType() == CardType.CREATURE) {
+                additionalSquirrelTokenCount += simultaneousCount;
+            }
+            for (int tokenIndex = 0; tokenIndex < simultaneousCount; tokenIndex++) {
+                tokenBlueprints.add(simultaneousToken);
+            }
+        }
         CreateTokenEffect additionalTreasureToken = additionalTreasureTokenCount > 0
                 ? TokenCreationReplacementSupport.additionalTreasureToken(token)
                 : null;

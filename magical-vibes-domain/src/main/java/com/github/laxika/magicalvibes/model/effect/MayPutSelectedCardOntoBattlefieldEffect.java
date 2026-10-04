@@ -12,7 +12,7 @@ public record MayPutSelectedCardOntoBattlefieldEffect(
         boolean tapped,
         boolean grantHaste,
         Card chosenCard
-) implements ChosenCardAwareEffect {
+) implements CardEffect, ChosenCardAwareEffect {
 
     public MayPutSelectedCardOntoBattlefieldEffect(int manaValueAtMost, CardPredicate predicate,
                                                    boolean tapped, boolean grantHaste) {

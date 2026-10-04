@@ -112,6 +112,7 @@ class BringToLightTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(player1);
         harness.setLibrary(player1, List.of(new GrizzlyBears(), new EndlessOne()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new EndlessOne()));
         harness.setHand(player1, List.of(new BringToLight()));
         harness.setHand(player2, List.of(new Twincast()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

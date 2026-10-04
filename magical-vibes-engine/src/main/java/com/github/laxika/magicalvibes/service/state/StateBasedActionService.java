@@ -267,6 +267,7 @@ public class StateBasedActionService {
             gameData.exiledCardsWithCageCounters.remove(cardId);
             gameData.exilePlayPermissions.remove(cardId);
             gameData.exileLookPermissions.remove(cardId);
+            gameData.additionalExileLookPermissions.remove(cardId);
             gameData.exilePlayForLifeEqualToManaValue.remove(cardId);
             gameData.exilePlayPermissionSourcePermanents.remove(cardId);
             gameData.exilePlayCostModifiers.remove(cardId);
@@ -426,6 +427,9 @@ public class StateBasedActionService {
                 dyingSnapshot.setLastKnownPower(gameQueryService.getEffectivePower(gameData, entry.permanent()));
                 dyingSnapshot.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, entry.permanent()));
                 dyingSnapshot.setCard(permanentRemovalService.snapshotEffectivePermanentCard(gameData, entry.permanent()));
+                gameData.simultaneousDyingGrantedSelfDeathEffects.put(entry.permanent().getId(),
+                        List.copyOf(triggerCollectionService.grantedTriggeredEffects(
+                                gameData, entry.permanent(), EffectSlot.ON_DEATH)));
                 if (controllerId != null) {
                     gameData.simultaneousDyingPermanents.put(entry.permanent().getId(), dyingSnapshot);
                     gameData.simultaneousDyingPermanentControllers.put(entry.permanent().getId(), controllerId);
@@ -484,6 +488,7 @@ public class StateBasedActionService {
             gameData.simultaneousDyingPermanentControllers.clear();
             gameData.simultaneousDyingPowers.clear();
             gameData.simultaneousDyingGrantedCreatureDeathEffects.clear();
+            gameData.simultaneousDyingGrantedSelfDeathEffects.clear();
         }
 
         if (!toDie.isEmpty()) {

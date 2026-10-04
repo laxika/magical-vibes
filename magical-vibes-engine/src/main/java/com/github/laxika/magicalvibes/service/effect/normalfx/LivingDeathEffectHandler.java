@@ -95,10 +95,17 @@ public class LivingDeathEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
-        for (Map.Entry<Permanent, UUID> permanentEntry : controllerByPermanent.entrySet()) {
-            Permanent permanent = permanentEntry.getKey();
-            graveyardReturnSupport.handleCreatureEtbAndLegendRule(
-                    gameData, permanentEntry.getValue(), permanent, permanent.getCard());
+        gameData.collectingSimultaneousCreatureEntryTriggers = true;
+        gameData.simultaneousCreatureEntryTriggers.clear();
+        try {
+            for (Map.Entry<Permanent, UUID> permanentEntry : controllerByPermanent.entrySet()) {
+                Permanent permanent = permanentEntry.getKey();
+                graveyardReturnSupport.handleCreatureEtbAndLegendRule(
+                        gameData, permanentEntry.getValue(), permanent, permanent.getCard());
+            }
+        } finally {
+            gameData.collectingSimultaneousCreatureEntryTriggers = false;
+            gameData.simultaneousCreatureEntryTriggers.clear();
         }
     }
 

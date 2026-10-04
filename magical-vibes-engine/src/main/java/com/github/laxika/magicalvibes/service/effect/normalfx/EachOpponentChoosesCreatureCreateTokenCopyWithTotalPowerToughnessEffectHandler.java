@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -9,6 +12,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -127,7 +133,7 @@ public class EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEf
         }
         CreateTokenCopyOfTargetPermanentEffect profile = new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(), totalPower, totalToughness, java.util.Map.of());
-        tokenCopySupport.createTokenCopiesWithCopyException(gameData, entry, List.of(source.getCard()), null,
+        tokenCopySupport.createTokenCopiesWithCopyException(gameData, entry, List.of(copySource(source)), null,
                 entry.getControllerId(), profile, tokenCard -> {
                     tokenCard.setColor(null);
                     tokenCard.setColors(List.of());
@@ -135,6 +141,42 @@ public class EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEf
                     tokenCard.setAdditionalTypes(Set.of());
                     tokenCard.setSubtypes(List.of(CardSubtype.ELDRAZI));
                 });
+    }
+
+    /** Copies visible characteristics, omitting abilities that define the overridden color and types. */
+    private Card copySource(Permanent source) {
+        if (source.isFaceDown()) {
+            Card visible = new Card();
+            visible.setName("");
+            visible.setManaCost("");
+            visible.setType(CardType.CREATURE);
+            visible.setPower(2);
+            visible.setToughness(2);
+            return visible;
+        }
+        Card original = source.getCard();
+        Card copy = original.createRuntimeCopy();
+        copy.clearRulesTextAndAbilities();
+        copy.removeKeyword(Keyword.CHANGELING);
+        copy.removeKeyword(Keyword.DEVOID);
+        for (EffectSlot slot : EffectSlot.values()) {
+            for (var registration : original.getEffectRegistrations(slot)) {
+                CardEffect effect = registration.effect();
+                boolean definesColor = effect instanceof GrantColorEffect grant
+                        && grant.scope() == GrantScope.SELF && grant.filter() == null;
+                boolean definesTypes = effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
+                        && grant.scope() == GrantScope.SELF && grant.filter() == null;
+                if (slot != EffectSlot.STATIC || (!definesColor && !definesTypes)) {
+                    copy.addEffect(slot, effect, registration.triggerMode());
+                }
+            }
+        }
+        original.getActivatedAbilities().forEach(copy::addActivatedAbility);
+        original.getGraveyardActivatedAbilities().forEach(copy::addGraveyardActivatedAbility);
+        original.getHandActivatedAbilities().forEach(copy::addHandActivatedAbility);
+        original.getStackActivatedAbilities().forEach(copy::addStackActivatedAbility);
+        copy.copyTargetingFrom(original);
+        return copy;
     }
 
     private List<UUID> apnapOpponents(GameData gameData, UUID controllerId) {

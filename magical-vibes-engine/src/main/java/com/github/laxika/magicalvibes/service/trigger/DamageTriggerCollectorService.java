@@ -2119,7 +2119,23 @@ public class DamageTriggerCollectorService {
         GameData gameData = match.gameData();
         Card sourceCard = sd.sourceCard();
         // The source may have died dealing the damage; keep its last-known permanent id when present.
-        UUID sourcePermanentId = match.permanent() != null ? match.permanent().getId() : null;
+        UUID sourcePermanentId = sd.sourcePermanentId();
+        if (effect instanceof TriggeringPermanentConditionalEffect recipientCondition) {
+            FilterContext recipientContext = FilterContext.of(gameData)
+                    .withSourceControllerId(match.controllerId())
+                    .withSourceCardId(sourceCard.getId())
+                    .withSourcePermanentId(sourcePermanentId)
+                    .withSourcePermanentSnapshot(match.permanent());
+            boolean matchingRecipient = sd.damageToPermanents().entrySet().stream()
+                    .filter(damage -> damage.getValue() > 0)
+                    .map(damage -> sd.damagedPermanentSnapshots().get(damage.getKey()))
+                    .filter(java.util.Objects::nonNull)
+                    .anyMatch(recipient -> recipientCondition.predicate() == null
+                            || predicateEvaluationService.matchesPermanentPredicate(
+                            recipient, recipientCondition.predicate(), recipientContext));
+            if (!matchingRecipient) return false;
+            effect = recipientCondition.wrapped();
+        }
 
         if (effect instanceof ConditionalEffect conditional && conditional.interveningIf()) {
             ConditionContext conditionContext = match.permanent() != null

@@ -15,6 +15,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
@@ -39,11 +42,18 @@ public class MillControllerAndPutMilledCardOntoBattlefieldEffectHandler implemen
         List<Card> milled = graveyardService.resolveMillPlayerIncludingExiled(
                 gameData, controllerId, millEffect.count());
 
-        List<Card> matchingCards = milled.stream()
+        Set<UUID> matchingIds = milled.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, millEffect.filter(), entry.getCard().getId(), gameData, controllerId))
-                .toList();
-        List<Integer> validIndices = IntStream.range(0, matchingCards.size()).boxed().toList();
+                .map(Card::getId).collect(Collectors.toSet());
+        List<Card> cardPool = new ArrayList<>(gameData.playerGraveyards.getOrDefault(controllerId, List.of()));
+        for (Card card : milled) {
+            if (gameData.findExiledCard(card.getId()) != null) {
+                cardPool.add(card);
+            }
+        }
+        List<Integer> validIndices = IntStream.range(0, cardPool.size())
+                .filter(index -> matchingIds.contains(cardPool.get(index).getId())).boxed().toList();
 
         if (validIndices.isEmpty()) {
             return;
@@ -53,7 +63,7 @@ public class MillControllerAndPutMilledCardOntoBattlefieldEffectHandler implemen
         interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
                 .builder(controllerId, validIndices, GraveyardChoiceDestination.BATTLEFIELD,
                         "Choose a " + filterLabel + " milled this way to put onto the battlefield.")
-                .cardPool(matchingCards)
+                .cardPool(cardPool)
                 .fromMilledCards(true)
                 .mandatory(millEffect.mandatory())
                 .build());

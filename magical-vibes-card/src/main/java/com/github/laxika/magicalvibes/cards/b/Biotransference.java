@@ -22,10 +22,10 @@ public class Biotransference extends Card {
 
     public Biotransference() {
         addEffect(EffectSlot.STATIC,
-                new GrantCardTypeEffect(CardType.ARTIFACT, GrantScope.OWN_CREATURES));
+                new GrantCardTypeEffect(CardType.ARTIFACT, GrantScope.ALL_OWN_CREATURES));
         addEffect(EffectSlot.STATIC,
                 new GrantCardTypeToOwnCardsEffect(CardType.ARTIFACT,
-                        new CardTypePredicate(CardType.CREATURE)));
+                        new CardTypePredicate(CardType.CREATURE), false));
 
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardTypePredicate(CardType.ARTIFACT),

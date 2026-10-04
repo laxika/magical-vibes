@@ -65,6 +65,10 @@ Optional 1v1 Planechase state lives in `GameData.planechase`; face-up planar car
 
 ## Trigger and entry state
 
+Damage events retain snapshots of damaged permanents before state-based actions. On `ON_SELF_DEALS_DAMAGE`, `TriggeringPermanentConditionalEffect` filters these recipients and queues its wrapped effect once if at least one recipient matches, including when the damage source or recipient dies in that event.
+
+Simultaneous death batches snapshot continuously granted `ON_DEATH` abilities before moving any permanent. The snapshot preserves abilities supplied by a paired creature or another permanent dying in the same event and is cleared when that event ends.
+
 Delayed graveyard returns use stack entries and `CardIdSetPredicate` with graveyard entry versions.
 Divided damage assignments belong to the individual stack entry; copies retain their division
 while offering legal replacement targets. Additional ETB abilities on token copies can register

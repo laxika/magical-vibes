@@ -2562,7 +2562,6 @@ public class CombatAttackService {
             UUID permController = bf.getKey();
             for (Permanent perm : new ArrayList<>(bf.getValue())) {
                 List<CardEffect> playerAttackEffects = new ArrayList<>();
-                List<CardEffect> lifeComparisonAttackEffects = new ArrayList<>();
                 Map<UUID, List<CardEffect>> effectsByAttackedOpponent = new LinkedHashMap<>();
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ANY_PLAYER_ATTACKS)) {
                     if (effect instanceof ConditionalEffect conditional) {
@@ -2587,9 +2586,12 @@ public class CombatAttackService {
                             continue;
                         }
                         if (conditional.condition() instanceof AttackedOpponentHasMoreLifeThanAnotherOpponent) {
-                            if (hasMatchingAttackedOpponent(gameData, battlefield, attackerIndices,
-                                    perm, permController)) {
-                                lifeComparisonAttackEffects.add(conditional.wrapped());
+                            for (UUID attackedOpponentId : attackedOpponents(gameData, permController, resolvedTargets)) {
+                                if (conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                        ConditionContext.forPermanent(perm, permController).withTargetId(attackedOpponentId))) {
+                                    effectsByAttackedOpponent.computeIfAbsent(attackedOpponentId,
+                                            ignored -> new ArrayList<>()).add(conditional);
+                                }
                             }
                             continue;
                         }
@@ -2641,10 +2643,6 @@ public class CombatAttackService {
                     } else {
                         playerAttackEffects.add(effect);
                     }
-                }
-                if (!lifeComparisonAttackEffects.isEmpty()) {
-                    addPlayerAttackTrigger(gameData, permController, perm, lifeComparisonAttackEffects,
-                            attackerIndices.size(), playerId, null);
                 }
                 for (Map.Entry<UUID, List<CardEffect>> attackedOpponentEffects : effectsByAttackedOpponent.entrySet()) {
                     addPlayerAttackTrigger(gameData, permController, perm, attackedOpponentEffects.getValue(),
@@ -2948,19 +2946,6 @@ public class CombatAttackService {
         return gameData.beginTriggeredAbilityCopies(1 +
                 gameQueryService.countAdditionalTriggeredAbilityTriggers(
                         gameData, controllerId, source, true));
-    }
-
-    private boolean hasMatchingAttackedOpponent(GameData gameData, List<Permanent> battlefield,
-                                                List<Integer> attackerIndices, Permanent source,
-                                                UUID sourceControllerId) {
-        ConditionContext context = ConditionContext.forPermanent(source, sourceControllerId);
-        return attackerIndices.stream()
-                .map(index -> battlefield.get(index).getAttackTarget())
-                .filter(Objects::nonNull)
-                .distinct()
-                .anyMatch(attackedTargetId -> conditionEvaluationService.isMet(
-                        gameData, new AttackedOpponentHasMoreLifeThanAnotherOpponent(),
-                        context.withTargetId(attackedTargetId)));
     }
 
     private void addPlayerAttackTrigger(GameData gameData, UUID sourceControllerId, Permanent source,

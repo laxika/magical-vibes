@@ -91,6 +91,8 @@ class BlacksnagBuzzardTest extends BaseCardTest {
     @DisplayName("A plotted Buzzard can be cast without mana on a later turn")
     void castFromPlotOnLaterTurn() {
         BlacksnagBuzzard buzzard = plotBuzzard();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.DECLARE_ATTACKERS);
         harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player1, List.of());

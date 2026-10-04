@@ -23,7 +23,7 @@ public class GrantCardTypeToOwnCardsEffectHandler implements StaticEffectHandler
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantCardTypeToOwnCardsEffect) effect;
-        if (context.target().getCard().isToken()
+        if (!grant.includeBattlefield() || context.target().getCard().isToken()
                 || !Objects.equals(context.sourceControllerId(), context.target().getCard().getOwnerId())
                 || !support.matchesCardFilter(context, context.target().getCard(), grant.filter())) {
             return;

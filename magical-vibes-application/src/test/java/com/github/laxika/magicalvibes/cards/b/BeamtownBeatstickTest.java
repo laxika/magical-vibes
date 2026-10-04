@@ -86,8 +86,9 @@ class BeamtownBeatstickTest extends BaseCardTest {
         secondBlocker.addBlockingTarget(0);
 
         resolveCombat();
-        harness.handleCombatDamageAssigned(player1, 0,
-                Map.of(blocker.getId(), 2, secondBlocker.getId(), 1));
+        harness.withAutoStopAtStep(TurnStep.END_OF_COMBAT,
+                () -> harness.handleCombatDamageAssigned(player1, 0,
+                        Map.of(blocker.getId(), 2, secondBlocker.getId(), 1)));
         harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(treasuresFor(player1)).isEmpty();

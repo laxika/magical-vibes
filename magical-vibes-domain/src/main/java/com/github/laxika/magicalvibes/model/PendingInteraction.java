@@ -461,8 +461,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * the CR 605.3a window so the player may tap mana sources while the prompt is up.
      */
     record XValueChoice(UUID playerId, int minValue, int maxValue, String prompt, String cardName,
-                        boolean manaPayment, String manaCost)
+                        boolean manaPayment, String manaCost, PendingMayAbility graveyardCastAbility)
             implements PendingInteraction {
+
+        public XValueChoice(UUID playerId, int minValue, int maxValue, String prompt, String cardName,
+                            boolean manaPayment, String manaCost) {
+            this(playerId, minValue, maxValue, prompt, cardName, manaPayment, manaCost, null);
+        }
 
         /** Non-mana number pick (discard counts, life payments, bids). */
         public XValueChoice(UUID playerId, int maxValue, String prompt, String cardName) {

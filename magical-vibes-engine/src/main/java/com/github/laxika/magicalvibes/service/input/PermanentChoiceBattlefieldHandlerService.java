@@ -2114,10 +2114,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     public void handleRedirectCreatureDamageSourceChoice(GameData gameData, UUID permanentId,
                                                          PermanentChoiceContext.RedirectCreatureDamageSourceChoice redirectSource) {
-        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
-        StackEntry chosenSpell = gameQueryService.findStackEntryByCardId(gameData, permanentId);
-        Card chosenCard = chosenPermanent != null ? chosenPermanent.getCard()
-                : chosenSpell != null ? chosenSpell.getCard() : null;
+        Card chosenCard = findDamageSourceCard(gameData, permanentId);
         if (chosenCard == null) {
             throw new IllegalStateException("Chosen damage source no longer exists");
         }

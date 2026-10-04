@@ -35,6 +35,12 @@ public class PreventionSupport {
                         && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
                 .map(entry -> entry.getCard().getId())
                 .forEach(validIds::add);
+        gameData.stack.stream()
+                .filter(entry -> entry.getSourcePermanentId() != null
+                        && entry.getSourcePermanentSnapshot() != null)
+                .map(entry -> entry.getSourcePermanentId())
+                .filter(id -> !validIds.contains(id))
+                .forEach(validIds::add);
         return validIds;
     }
 

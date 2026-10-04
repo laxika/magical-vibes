@@ -56,6 +56,9 @@ public class InteractionState {
         if (this.permanentChoiceContext instanceof PermanentChoiceContext.FreeCastSacrificeCost sacrificeCost) {
             copy.permanentChoiceContext = sacrificeCost.deepCopy();
         }
+        if (this.permanentChoiceContext instanceof PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking copies) {
+            copy.permanentChoiceContext = copies.deepCopy();
+        }
         copy.pendingAuraCard = this.pendingAuraCard;
         copy.pendingAuraOriginalCard = this.pendingAuraOriginalCard;
         copy.pendingAuraOwnerId = this.pendingAuraOwnerId;

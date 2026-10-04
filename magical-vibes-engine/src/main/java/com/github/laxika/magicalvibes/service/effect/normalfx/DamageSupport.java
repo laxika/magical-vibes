@@ -314,18 +314,11 @@ public class DamageSupport {
             processSourceRedirectDamage(gameData, entry);
             if (!gameData.resolvingDeclinedAllCreatureDamageRedirect
                     && rawDamage > 0 && !gameData.playersRedirectingAllCreatureDamage.isEmpty()) {
-                UUID redirectControllerId = gameData.playersRedirectingAllCreatureDamage.stream()
-                        .filter(gameData.playerIds::contains)
-                        .findFirst()
-                        .orElse(null);
-                if (redirectControllerId != null) {
-                    gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                            entry.getCard(), redirectControllerId,
-                            List.of(new RedirectAllCreatureDamageToControllerEffect()),
-                            "Have " + rawDamage + " damage dealt to you instead?",
-                            target.getId(), null, sourcePermId, null, 0, 0,
-                            null, null, null, entry.getSourcePermanentSnapshot(),
-                            entry.getControllerId(), null, rawDamage));
+                List<UUID> redirectControllers = gameData.orderedPlayerIds.stream()
+                        .filter(gameData.playersRedirectingAllCreatureDamage::contains).toList();
+                if (!redirectControllers.isEmpty()) {
+                    queueCreatureDamageRedirectChoice(gameData, entry, target.getId(), rawDamage,
+                            redirectControllers);
                     return 0;
                 }
             }
@@ -1407,6 +1400,21 @@ public class DamageSupport {
         dealDamageToPlayerFromSource(gameData, entry, playerId, rawDamage);
     }
 
+    /** Queues the next player's independent choice for the same impending damage. */
+    public void queueCreatureDamageRedirectChoice(GameData gameData, StackEntry entry,
+                                                  UUID targetId, int amount, List<UUID> controllers) {
+        Permanent snapshot = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (snapshot == null) snapshot = entry.getSourcePermanentSnapshot();
+        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                entry.getCard(), controllers.getFirst(),
+                List.of(new RedirectAllCreatureDamageToControllerEffect(
+                        controllers.subList(1, controllers.size()), false, -1, false, false, entry.getEntryType())),
+                "Have " + amount + " damage dealt to you instead?", targetId, null,
+                entry.getSourcePermanentId(), null, 0, 0, null, null, null,
+                snapshot == null ? null : new Permanent(snapshot), entry.getControllerId(), null, amount));
+    }
+
     private void dealDamageToPlayerFromSource(GameData gameData, StackEntry entry, UUID playerId, int rawDamage) {
         Card source = entry.getEffectiveDamageSourceCard();
         if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
@@ -1627,233 +1635,11 @@ public class DamageSupport {
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(
                     gameData, playerId, effectiveDamage, cardName, false, entry.getSourcePermanentId(), source);
 
-            // Battletide Alchemist: the controller prevents up to (Clerics they control) of this source's damage.
-            int battletidePrevented = damagePreventionService.applyControllerPerClericDamagePrevention(gameData, playerId, effectiveDamage);
-            if (battletidePrevented > 0) {
-                effectiveDamage -= battletidePrevented;
-                gameLogService.append(gameData, GameLog.textCardText(battletidePrevented + " of ", source,
-                        "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+            if (damagePreventionService.queueClericPreventionChoice(gameData, entry, playerId,
+                    effectiveDamage, false, damagePreventionService.clericPreventionSources(gameData))) {
+                return;
             }
-
-            // Urza's Armor and Sphere of Purity: the controller prevents a fixed amount of this source's damage.
-            int fixedPrevented = damagePreventionService.applyControllerFixedPerSourceDamagePrevention(
-                    gameData,
-                    playerId,
-                    effectiveDamage,
-                    gameQueryService.isDamageSourceCreature(gameData, entry, sourcePermanent),
-                    gameQueryService.isDamageSourceArtifact(gameData, entry, sourcePermanent),
-                    gameQueryService.getDamageSourceColors(gameData, sourceColors),
-                    false);
-            if (fixedPrevented > 0) {
-                effectiveDamage -= fixedPrevented;
-                gameLogService.append(gameData, GameLog.textCardText(fixedPrevented + " of ", source,
-                        "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
-            }
-
-            int allButOnePrevented = damagePreventionService.applyAllButOneDamagePrevention(gameData, playerId, effectiveDamage);
-            if (allButOnePrevented > 0) {
-                effectiveDamage -= allButOnePrevented;
-                gameLogService.append(gameData, GameLog.textCardText(allButOnePrevented + " of ", source,
-                        "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
-            }
-
-            // Purity: prevent all remaining noncombat damage to the controller and gain that much life
-            int purityPrevented = damagePreventionService.applyControllerNoncombatDamagePrevention(gameData, playerId, effectiveDamage);
-            if (purityPrevented > 0) {
-                effectiveDamage -= purityPrevented;
-                gameLogService.append(gameData, GameLog.cardThen(source,
-                        "'s " + purityPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
-                lifeSupport.applyGainLife(gameData, playerId, purityPrevented, "prevented damage");
-            }
-
-            if (damagePreventionService.hasControllerOpponentDamageMillReplacement(
-                    gameData, sourceControllerId, playerId, effectiveDamage)) {
-                int replacedDamage = effectiveDamage;
-                effectiveDamage = 0;
-                gameLogService.append(gameData, GameLog.cardThen(source,
-                        "'s " + replacedDamage + " damage to " + gameData.playerIdToName.get(playerId)
-                                + " is prevented and replaced with milling."));
-                for (UUID opponentId : gameData.orderedPlayerIds) {
-                    if (!opponentId.equals(sourceControllerId)) {
-                        graveyardService.resolveMillPlayer(gameData, opponentId, replacedDamage);
-                    }
-                }
-            }
-
-            // Hostility: prevent all remaining damage a spell you control would deal to an opponent and
-            // create one token per 1 damage prevented (for the spell's controller).
-            var hostility = damagePreventionService.findSpellDamageToOpponentPrevention(gameData, entry, playerId, effectiveDamage);
-            if (hostility != null) {
-                int hostilityPrevented = effectiveDamage;
-                effectiveDamage = 0;
-                gameLogService.append(gameData, GameLog.cardThen(source,
-                        "'s " + hostilityPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
-                permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(),
-                        hostility.token(), hostilityPrevented, entry.getCard().getSetCode());
-            }
-
-            // Glacial Chasm: prevent all remaining damage that would be dealt to its controller.
-            int chasmPrevented = applyControllerAllDamagePrevention(gameData, playerId, effectiveDamage);
-            if (chasmPrevented > 0) {
-                effectiveDamage -= chasmPrevented;
-                gameLogService.append(gameData, GameLog.cardThen(source,
-                        "'s " + chasmPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
-            }
-
-            int angelPrevented = applyAngelOfSufferingReplacement(
-                    gameData, playerId, effectiveDamage, effectiveDamage);
-            if (angelPrevented > 0) {
-                effectiveDamage -= angelPrevented;
-                gameLogService.append(gameData, GameLog.cardThen(source,
-                        "'s " + angelPrevented + " damage to " + gameData.playerIdToName.get(playerId)
-                                + " is prevented by Angel of Suffering."));
-            }
-
-            int lichReplaced = applyNefariousLichReplacement(gameData, playerId, effectiveDamage);
-            if (lichReplaced > 0) {
-                effectiveDamage -= lichReplaced;
-                gameLogService.append(gameData, GameLog.cardThen(source,
-                        "'s " + lichReplaced + " damage to " + gameData.playerIdToName.get(playerId)
-                                + " is replaced by Nefarious Lich."));
-            }
-
-            int crumblingSanctuaryReplaced = applyCrumblingSanctuaryReplacement(gameData, playerId, effectiveDamage);
-            if (crumblingSanctuaryReplaced > 0) {
-                effectiveDamage -= crumblingSanctuaryReplaced;
-                gameLogService.append(gameData, GameLog.cardThen(source,
-                        "'s " + crumblingSanctuaryReplaced + " damage to " + gameData.playerIdToName.get(playerId)
-                                + " is replaced by Crumbling Sanctuary."));
-            }
-
-            // Immortal Coil: prevent all remaining damage to the controller and exile a card from
-            // their graveyard for each 1 damage prevented this way.
-            int coilPrevented = applyImmortalCoilPrevention(gameData, playerId, effectiveDamage);
-            if (coilPrevented > 0) {
-                effectiveDamage -= coilPrevented;
-                gameLogService.append(gameData, GameLog.cardThen(source,
-                        "'s " + coilPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
-            }
-
-            effectiveDamage -= applyDamageToControllerCounterReplacement(gameData, playerId, effectiveDamage);
-
-            // Soul Echo: each 1 damage removes an echo counter instead (replacement, not prevention).
-            effectiveDamage -= applySoulEchoCounterRemoval(gameData, playerId, effectiveDamage);
-
-            effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
-                    gameData, playerId, effectiveDamage);
-
-            boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.INFECT);
-            boolean treatAsInfect = sourceHasInfect || gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId);
-
-            if (treatAsInfect) {
-                if (effectiveDamage > 0) {
-                    lifeSupport.applyPoisonCounters(gameData, playerId, effectiveDamage,
-                            source != null ? source.getName() : entry.getCard().getName(),
-                            entry.getControllerId());
-                }
-            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
-                String playerName = gameData.playerIdToName.get(playerId);
-                gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
-            } else if (effectiveDamage > 0 && gameQueryService.damageDoesNotCauseLifeLoss(gameData, playerId)) {
-                String playerName = gameData.playerIdToName.get(playerId);
-                gameLogService.append(gameData, GameLog.textCardText(
-                        playerName + " takes " + effectiveDamage + " damage from ", source, "."));
-            } else {
-                int currentLife = gameData.getLife(playerId);
-                int lifeAfterDamage = currentLife - effectiveDamage;
-                // Worship / Elderscale Wurm: damage can't reduce the player's life total past an active floor.
-                // The full damage is still dealt (lifelink/damage triggers see the full amount); only the life
-                // total reduction is capped.
-                // 0 means no active floor — do not clamp (life may go negative).
-                int lifeFloor = gameQueryService.damageLifeFloor(gameData, playerId, currentLife);
-                if (lifeFloor > 0 && lifeAfterDamage < lifeFloor) {
-                    lifeAfterDamage = lifeFloor;
-                }
-                int lifeLoss = (currentLife - lifeAfterDamage)
-                        * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
-                int newLife = currentLife - lifeLoss;
-                gameData.playerLifeTotals.put(playerId, newLife);
-                int lifeLost = currentLife - newLife;
-
-                if (effectiveDamage > 0) {
-                    String playerName = gameData.playerIdToName.get(playerId);
-                    gameLogService.append(gameData, GameLog.textCardText(
-                            playerName + " takes " + effectiveDamage + " damage from ", source, "."));
-                    if (lifeLost > 0) {
-                        triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLost);
-                    }
-                }
-            }
-
-            if (effectiveDamage > 0) {
-                recordRedSourceNoncombatDamage(gameData, source, sourcePermanent, sourceControllerId,
-                        effectiveDamage);
-                accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(),
-                        entry.getSourcePermanentId(), effectiveDamage, playerId, null, null, entry);
-                Permanent sourceCreature = entry.getSourcePermanentId() == null
-                        ? null
-                        : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                triggerCollectionService.queueEnchantedCreatureDealsDamageTriggers(
-                        gameData, sourceCreature, effectiveDamage);
-                int artifactDamage = gameQueryService.isDamageSourceArtifact(gameData, entry, sourcePermanent)
-                        ? effectiveDamage : 0;
-                gameData.recordDamageToPlayer(playerId, effectiveDamage, artifactDamage);
-                gameData.recordNoncombatDamageToPlayer(playerId, effectiveDamage);
-                recordSorcerySpellDamage(gameData, entry, effectiveDamage);
-                gameData.recordDamageDealtBySource(damageSourceId, effectiveDamage);
-                gameData.recordDamageSourceControlledBy(damageSourceId, sourceControllerId);
-                gameData.recordDamageDealtBySourceToPlayer(
-                        entry.getSourcePermanentId(), playerId, effectiveDamage);
-                entry.recordPlayerDealtDamage(playerId);
-                gameData.recordNoncombatDamageSourceToPlayer(entry.getSourcePermanentId(), playerId);
-                String sourcePermanentName = sourcePermanent != null
-                        ? sourcePermanent.getCard().getName()
-                        : entry.getSourcePermanentSnapshot() == null
-                        ? null : entry.getSourcePermanentSnapshot().getCard().getName();
-                gameData.recordPermanentDamageSourceNameToPlayer(sourcePermanentName, playerId);
-                if (sourcePermanent != null && gameQueryService.isCreature(gameData, sourcePermanent)) {
-                    gameData.recordCreatureDamageSourceToPlayer(sourcePermanent.getId(), playerId);
-                }
-                recordRedSpellDamage(gameData, entry, source, playerId);
-                triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
-                        gameData, playerId, effectiveDamage);
-                triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
-                triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, playerId, entry.getSourcePermanentId(), effectiveDamage);
-                // The stack entry's controller is the damage source's controller (caster/activator);
-                // used to gate the opponent-only ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT slot.
-                triggerCollectionService.checkControllerDealtDamageTriggers(gameData, playerId, entry.getControllerId(), effectiveDamage);
-                // Night Dealings: "whenever a source you control deals damage to another player".
-                triggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers(
-                        gameData, playerId, entry.getControllerId(), entry.getSourcePermanentId(), effectiveDamage);
-                if (sourcePermanent != null && gameQueryService.isCreature(gameData, sourcePermanent)) {
-                    triggerCollectionService.checkAllyCreaturesDealDamageToPlayerTriggers(
-                            gameData, sourceControllerId, playerId, List.of(sourcePermanent));
-                    triggerCollectionService.checkAllyCreaturesDealDamageToOpponentTriggers(
-                            gameData, sourceControllerId, playerId, List.of(sourcePermanent));
-                }
-                triggerCollectionService.checkAllySourceDealtNoncombatDamageToOpponentTriggers(
-                        gameData, playerId, entry.getControllerId(), effectiveDamage);
-                triggerCollectionService.checkOpponentDealtDamageTriggers(
-                        gameData, playerId, entry.getSourcePermanentId(), effectiveDamage);
-                // Mangara's Equity: "whenever a creature of the chosen color deals damage to you"
-                triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(gameData, playerId, null,
-                        entry.getSourcePermanentId() != null
-                                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
-                                : null,
-                        effectiveDamage);
-                // Source's own ON_DAMAGE_TO_PLAYER (e.g. Niv-Mizzet, Dracogenius ping → may draw).
-                if (entry.getSourcePermanentId() != null) {
-                    Permanent triggerSourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                    if (triggerSourcePermanent != null) {
-                        triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(gameData, triggerSourcePermanent,
-                                entry.getControllerId(), playerId, effectiveDamage);
-                    }
-                }
-                triggerCollectionService.checkNoncombatDamageToOpponentTriggers(
-                        gameData, playerId, sourceControllerId, effectiveDamage);
-                triggerCollectionService.checkRedSpellOrPlaneswalkerDamageToOpponentTriggers(gameData, playerId, entry);
-                checkSpellLifelink(gameData, entry, effectiveDamage);
-            }
+            finishPlayerDamageAfterClericChoice(gameData, entry, playerId, effectiveDamage);
         }
         processEyeForAnEyeReflections(gameData);
     }
@@ -1880,6 +1666,243 @@ public class DamageSupport {
             }
         }
         return null;
+    }
+
+    /** Resumes the remaining replacements and damage results after an optional Cleric choice. */
+    public void finishPlayerDamageAfterClericChoice(GameData gameData, StackEntry entry, UUID playerId,
+                                                    int effectiveDamage) {
+        Card source = entry.getEffectiveDamageSourceCard();
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        UUID sourceControllerId = sourcePermanent == null ? entry.getControllerId()
+                : gameQueryService.findPermanentController(gameData, sourcePermanent.getId());
+        if (sourceControllerId == null) sourceControllerId = entry.getControllerId();
+        Set<CardColor> sourceColors = sourcePermanent == null
+                ? gameQueryService.getEffectiveCardColors(gameData, source)
+                : gameQueryService.getEffectiveColors(gameData, sourcePermanent);
+        UUID damageSourceId = entry.getSourcePermanentId() != null
+                ? entry.getSourcePermanentId() : source.getId();
+        // Urza's Armor and Sphere of Purity: the controller prevents a fixed amount of this source's damage.
+        int fixedPrevented = damagePreventionService.applyControllerFixedPerSourceDamagePrevention(
+                gameData,
+                playerId,
+                effectiveDamage,
+                gameQueryService.isDamageSourceCreature(gameData, entry, sourcePermanent),
+                gameQueryService.isDamageSourceArtifact(gameData, entry, sourcePermanent),
+                gameQueryService.getDamageSourceColors(gameData, sourceColors),
+                false);
+        if (fixedPrevented > 0) {
+            effectiveDamage -= fixedPrevented;
+            gameLogService.append(gameData, GameLog.textCardText(fixedPrevented + " of ", source,
+                    "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+        }
+
+        int allButOnePrevented = damagePreventionService.applyAllButOneDamagePrevention(gameData, playerId, effectiveDamage);
+        if (allButOnePrevented > 0) {
+            effectiveDamage -= allButOnePrevented;
+            gameLogService.append(gameData, GameLog.textCardText(allButOnePrevented + " of ", source,
+                    "'s damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+        }
+
+        // Purity: prevent all remaining noncombat damage to the controller and gain that much life
+        int purityPrevented = damagePreventionService.applyControllerNoncombatDamagePrevention(gameData, playerId, effectiveDamage);
+        if (purityPrevented > 0) {
+            effectiveDamage -= purityPrevented;
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s " + purityPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+            lifeSupport.applyGainLife(gameData, playerId, purityPrevented, "prevented damage");
+        }
+
+        if (damagePreventionService.hasControllerOpponentDamageMillReplacement(
+                gameData, sourceControllerId, playerId, effectiveDamage)) {
+            int replacedDamage = effectiveDamage;
+            effectiveDamage = 0;
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s " + replacedDamage + " damage to " + gameData.playerIdToName.get(playerId)
+                            + " is prevented and replaced with milling."));
+            for (UUID opponentId : gameData.orderedPlayerIds) {
+                if (!opponentId.equals(sourceControllerId)) {
+                    graveyardService.resolveMillPlayer(gameData, opponentId, replacedDamage);
+                }
+            }
+        }
+
+        // Hostility: prevent all remaining damage a spell you control would deal to an opponent and
+        // create one token per 1 damage prevented (for the spell's controller).
+        var hostility = damagePreventionService.findSpellDamageToOpponentPrevention(gameData, entry, playerId, effectiveDamage);
+        if (hostility != null) {
+            int hostilityPrevented = effectiveDamage;
+            effectiveDamage = 0;
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s " + hostilityPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+            permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(),
+                    hostility.token(), hostilityPrevented, entry.getCard().getSetCode());
+        }
+
+        // Glacial Chasm: prevent all remaining damage that would be dealt to its controller.
+        int chasmPrevented = applyControllerAllDamagePrevention(gameData, playerId, effectiveDamage);
+        if (chasmPrevented > 0) {
+            effectiveDamage -= chasmPrevented;
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s " + chasmPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+        }
+
+        int angelPrevented = applyAngelOfSufferingReplacement(
+                gameData, playerId, effectiveDamage, effectiveDamage);
+        if (angelPrevented > 0) {
+            effectiveDamage -= angelPrevented;
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s " + angelPrevented + " damage to " + gameData.playerIdToName.get(playerId)
+                            + " is prevented by Angel of Suffering."));
+        }
+
+        int lichReplaced = applyNefariousLichReplacement(gameData, playerId, effectiveDamage);
+        if (lichReplaced > 0) {
+            effectiveDamage -= lichReplaced;
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s " + lichReplaced + " damage to " + gameData.playerIdToName.get(playerId)
+                            + " is replaced by Nefarious Lich."));
+        }
+
+        int crumblingSanctuaryReplaced = applyCrumblingSanctuaryReplacement(gameData, playerId, effectiveDamage);
+        if (crumblingSanctuaryReplaced > 0) {
+            effectiveDamage -= crumblingSanctuaryReplaced;
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s " + crumblingSanctuaryReplaced + " damage to " + gameData.playerIdToName.get(playerId)
+                            + " is replaced by Crumbling Sanctuary."));
+        }
+
+        // Immortal Coil: prevent all remaining damage to the controller and exile a card from
+        // their graveyard for each 1 damage prevented this way.
+        int coilPrevented = applyImmortalCoilPrevention(gameData, playerId, effectiveDamage);
+        if (coilPrevented > 0) {
+            effectiveDamage -= coilPrevented;
+            gameLogService.append(gameData, GameLog.cardThen(source,
+                    "'s " + coilPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented."));
+        }
+
+        effectiveDamage -= applyDamageToControllerCounterReplacement(gameData, playerId, effectiveDamage);
+
+        // Soul Echo: each 1 damage removes an echo counter instead (replacement, not prevention).
+        effectiveDamage -= applySoulEchoCounterRemoval(gameData, playerId, effectiveDamage);
+
+        effectiveDamage -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
+                gameData, playerId, effectiveDamage);
+
+        boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.INFECT);
+        boolean treatAsInfect = sourceHasInfect || gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId);
+
+        if (treatAsInfect) {
+            if (effectiveDamage > 0) {
+                lifeSupport.applyPoisonCounters(gameData, playerId, effectiveDamage,
+                        source != null ? source.getName() : entry.getCard().getName(),
+                        entry.getControllerId());
+            }
+        } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLoseLife(gameData, playerId)) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameLogService.append(gameData, GameLog.text(playerName + "'s life total can't change."));
+        } else if (effectiveDamage > 0 && gameQueryService.damageDoesNotCauseLifeLoss(gameData, playerId)) {
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameLogService.append(gameData, GameLog.textCardText(
+                    playerName + " takes " + effectiveDamage + " damage from ", source, "."));
+        } else {
+            int currentLife = gameData.getLife(playerId);
+            int lifeAfterDamage = currentLife - effectiveDamage
+                    * gameQueryService.opponentLifeLossMultiplier(gameData, playerId);
+            // Worship / Elderscale Wurm: damage can't reduce the player's life total past an active floor.
+            // The full damage is still dealt (lifelink/damage triggers see the full amount); only the life
+            // total reduction is capped.
+            // 0 means no active floor — do not clamp (life may go negative).
+            int lifeFloor = gameQueryService.damageLifeFloor(gameData, playerId, currentLife);
+            if (lifeFloor > 0 && lifeAfterDamage < lifeFloor) {
+                lifeAfterDamage = lifeFloor;
+            }
+            int newLife = lifeAfterDamage;
+            gameData.playerLifeTotals.put(playerId, newLife);
+            int lifeLost = currentLife - newLife;
+
+            if (effectiveDamage > 0) {
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameLogService.append(gameData, GameLog.textCardText(
+                        playerName + " takes " + effectiveDamage + " damage from ", source, "."));
+                if (lifeLost > 0) {
+                    triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLost);
+                }
+            }
+        }
+
+        if (effectiveDamage > 0) {
+            recordRedSourceNoncombatDamage(gameData, source, sourcePermanent, sourceControllerId,
+                    effectiveDamage);
+            accumulateSourceDamageForReflection(gameData, source, entry.getControllerId(),
+                    entry.getSourcePermanentId(), effectiveDamage, playerId, null, null, entry);
+            Permanent sourceCreature = entry.getSourcePermanentId() == null
+                    ? null
+                    : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            triggerCollectionService.queueEnchantedCreatureDealsDamageTriggers(
+                    gameData, sourceCreature, effectiveDamage);
+            int artifactDamage = gameQueryService.isDamageSourceArtifact(gameData, entry, sourcePermanent)
+                    ? effectiveDamage : 0;
+            gameData.recordDamageToPlayer(playerId, effectiveDamage, artifactDamage);
+            gameData.recordNoncombatDamageToPlayer(playerId, effectiveDamage);
+            recordSorcerySpellDamage(gameData, entry, effectiveDamage);
+            gameData.recordDamageDealtBySource(damageSourceId, effectiveDamage);
+            gameData.recordDamageSourceControlledBy(damageSourceId, sourceControllerId);
+            gameData.recordDamageDealtBySourceToPlayer(
+                    entry.getSourcePermanentId(), playerId, effectiveDamage);
+            entry.recordPlayerDealtDamage(playerId);
+            gameData.recordNoncombatDamageSourceToPlayer(entry.getSourcePermanentId(), playerId);
+            String sourcePermanentName = sourcePermanent != null
+                    ? sourcePermanent.getCard().getName()
+                    : entry.getSourcePermanentSnapshot() == null
+                    ? null : entry.getSourcePermanentSnapshot().getCard().getName();
+            gameData.recordPermanentDamageSourceNameToPlayer(sourcePermanentName, playerId);
+            if (sourcePermanent != null && gameQueryService.isCreature(gameData, sourcePermanent)) {
+                gameData.recordCreatureDamageSourceToPlayer(sourcePermanent.getId(), playerId);
+            }
+            recordRedSpellDamage(gameData, entry, source, playerId);
+            triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
+                    gameData, playerId, effectiveDamage);
+            triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
+            triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, playerId, entry.getSourcePermanentId(), effectiveDamage);
+            // The stack entry's controller is the damage source's controller (caster/activator);
+            // used to gate the opponent-only ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT slot.
+            triggerCollectionService.checkControllerDealtDamageTriggers(gameData, playerId, entry.getControllerId(), effectiveDamage);
+            // Night Dealings: "whenever a source you control deals damage to another player".
+            triggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers(
+                    gameData, playerId, entry.getControllerId(), entry.getSourcePermanentId(), effectiveDamage);
+            Permanent triggeringDamageSource = sourcePermanent != null
+                    ? sourcePermanent : entry.getSourcePermanentSnapshot();
+            if (triggeringDamageSource != null && gameQueryService.isCreature(gameData, triggeringDamageSource)) {
+                triggerCollectionService.checkAllyCreaturesDealDamageToPlayerTriggers(
+                        gameData, sourceControllerId, playerId, List.of(triggeringDamageSource));
+                triggerCollectionService.checkAllyCreaturesDealDamageToOpponentTriggers(
+                        gameData, sourceControllerId, playerId, List.of(triggeringDamageSource));
+            }
+            triggerCollectionService.checkAllySourceDealtNoncombatDamageToOpponentTriggers(
+                    gameData, playerId, entry.getControllerId(), effectiveDamage);
+            triggerCollectionService.checkOpponentDealtDamageTriggers(
+                    gameData, playerId, entry.getSourcePermanentId(), effectiveDamage);
+            // Mangara's Equity: "whenever a creature of the chosen color deals damage to you"
+            triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(gameData, playerId, null,
+                    entry.getSourcePermanentId() != null
+                            ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                            : null,
+                    effectiveDamage);
+            // Source's own ON_DAMAGE_TO_PLAYER (e.g. Niv-Mizzet, Dracogenius ping → may draw).
+            if (entry.getSourcePermanentId() != null) {
+                Permanent triggerSourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+                if (triggerSourcePermanent != null) {
+                    triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(gameData, triggerSourcePermanent,
+                            entry.getControllerId(), playerId, effectiveDamage);
+                }
+            }
+            triggerCollectionService.checkNoncombatDamageToOpponentTriggers(
+                    gameData, playerId, sourceControllerId, effectiveDamage);
+            triggerCollectionService.checkRedSpellOrPlaneswalkerDamageToOpponentTriggers(gameData, playerId, entry);
+            checkSpellLifelink(gameData, entry, effectiveDamage);
+        }
+        processEyeForAnEyeReflections(gameData);
     }
 
     /**
@@ -2186,6 +2209,20 @@ public class DamageSupport {
             batch.rememberSingleCreatureSpellTarget(singleCreatureSpellTargetId);
             batch.add(damage, damagedPlayerId, damagedPermanentControllerId, damagedPermanentId);
         }
+        if (damagedPermanentId != null) {
+            Permanent recipient = gameQueryService.findPermanentById(gameData, damagedPermanentId);
+            if (recipient != null) {
+                Permanent snapshot = new Permanent(recipient);
+                Card characteristics = recipient.getCard().createRuntimeCopy();
+                Set<CardType> types = gameQueryService.getEffectiveCardTypes(gameData, recipient);
+                if (!types.isEmpty()) {
+                    characteristics.setType(types.iterator().next());
+                    characteristics.setAdditionalTypes(types);
+                }
+                snapshot.setCard(characteristics);
+                batch.rememberDamagedPermanent(snapshot);
+            }
+        }
         if (sourceEntry != null && (sourceEntry.getEntryType() == StackEntryType.INSTANT_SPELL
                 || sourceEntry.getEntryType() == StackEntryType.SORCERY_SPELL)) {
             if (damagedPlayerId != null && !damagedPlayerId.equals(sourceControllerId)) {
@@ -2233,7 +2270,8 @@ public class DamageSupport {
             triggerCollectionService.queueSourceDealsDamageReflections(gameData,
                     batch.getSourceCard(), batch.getControllerId(), batch.getSourcePermanentId(), batch.getAmount(),
                     batch.getDamageToPlayers(), batch.getSelfDealsDamageEffects(),
-                    batch.getSingleCreatureSpellTargetId(), batch.getDamageToPermanents());
+                    batch.getSingleCreatureSpellTargetId(), batch.getDamageToPermanents(), false,
+                    batch.getDamagedPermanentSnapshots());
             List<TriggerCollectionService.SourceDamageRecipient> damageRecipients = batch.getDamageRecipients()
                     .stream()
                     .map(recipient -> new TriggerCollectionService.SourceDamageRecipient(

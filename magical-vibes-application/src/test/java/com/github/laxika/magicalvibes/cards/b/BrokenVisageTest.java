@@ -193,8 +193,12 @@ class BrokenVisageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent spirit = findSpiritToken(player2);
-        gs.getCreatureControlService().gainControlOfPermanent(gd, null, spirit.getId(), player1.getId(),
-                com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT);
+        harness.inMutationScope(() -> com.github.laxika.magicalvibes.testutil.GameTestEngineContext.get()
+                .getBean(com.github.laxika.magicalvibes.service.battlefield.CreatureControlService.class)
+                .applyControlEffect(gd, player1.getId(), spirit,
+                        new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
+                                com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                        com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT, null, "Test setup"));
 
         harness.passUntilWithNoAttackers(TurnStep.END_STEP);
         resolveAllTriggers();

@@ -613,7 +613,7 @@ public class PermanentChoiceSpellHandlerService {
         if (target != null || isPlayerTarget) {
             if (!gct.withoutPayingManaCost()) {
                 try {
-                    spellCastingService.paySpellManaCostFromNonHandZone(gameData, gct.controllerId(), spellCard, 0,
+                    spellCastingService.paySpellManaCostFromNonHandZone(gameData, gct.controllerId(), spellCard, gct.xValue(),
                             Zone.GRAVEYARD, gct.anyManaType());
                 } catch (IllegalStateException ex) {
                     graveyardService.addCardToGraveyard(gameData, gct.controllerId(), gct.cardToCast());
@@ -633,7 +633,7 @@ public class PermanentChoiceSpellHandlerService {
                     gct.controllerId(),
                     spellCard.getName(),
                     new ArrayList<>(gct.spellEffects()),
-                    0,
+                    gct.xValue(),
                     permanentId,
                     null
             );

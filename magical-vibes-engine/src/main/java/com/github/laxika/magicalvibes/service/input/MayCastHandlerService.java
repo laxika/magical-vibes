@@ -793,6 +793,13 @@ public class MayCastHandlerService {
     public void handleCastCardFromGraveyardChoice(
             GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
             CastCardFromGraveyardEffect castEffect) {
+        handleCastCardFromGraveyardChoice(gameData, player, accepted, ability, castEffect, null);
+    }
+
+    /** Continues a graveyard cast after its mana-cost X has been announced. */
+    public void handleCastCardFromGraveyardChoice(
+            GameData gameData, Player player, boolean accepted, PendingMayAbility ability,
+            CastCardFromGraveyardEffect castEffect, Integer chosenX) {
         Card cardToCast = ability.sourceCard();
         String playerName = player.getUsername();
 
@@ -834,6 +841,25 @@ public class MayCastHandlerService {
         }
 
         Card spellCard = castAsAdventure ? adventureFace : cardToCast;
+        if (!additionalSpellCostService.satisfiableForGraveyardCast(gameData, player.getId(), spellCard)) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " can't be cast because its additional costs can't be paid."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (chosenX == null && !castEffect.withoutPayingManaCost()
+                && spellCard.getParsedManaCost() != null && spellCard.getParsedManaCost().hasX()) {
+            int tax = castingCostService.getCastCostModifier(
+                    gameData, player.getId(), spellCard, 0, Zone.GRAVEYARD);
+            int maxX = spellCard.getParsedManaCost().calculateMaxX(
+                    potentialManaService.buildVirtualManaPool(gameData, player.getId()), tax);
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(
+                    player.getId(), 0, Math.max(0, maxX), "Choose a value for X to cast "
+                    + spellCard.getName() + ".", spellCard.getName(), true,
+                    spellCard.getManaCost(), ability));
+            return;
+        }
+        int xValue = chosenX == null ? 0 : chosenX;
         StackEntryType spellType = mapCardTypeToSpellType(spellCard);
         boolean isPermanentSpell = spellCard.hasType(CardType.CREATURE)
                 || spellCard.hasType(CardType.ARTIFACT)
@@ -862,7 +888,7 @@ public class MayCastHandlerService {
                             exileInsteadOfGraveyard, castEffect.withoutPayingManaCost(), graveyardOwnerId,
                             false, false, 0,
                             castAsAdventure, castEffect.afterSuccessfulCastEffect(),
-                            ability.sourcePermanentId()));
+                            ability.sourcePermanentId(), xValue));
             playerInputService.beginPermanentChoice(gameData, player.getId(), validTargets,
                     "Choose a target for " + cardToCast.getName() + ".");
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
@@ -873,7 +899,7 @@ public class MayCastHandlerService {
         if (!castEffect.withoutPayingManaCost()) {
             try {
                 spellCastingService.paySpellManaCostFromNonHandZone(
-                        gameData, player.getId(), spellCard, 0, Zone.GRAVEYARD);
+                        gameData, player.getId(), spellCard, xValue, Zone.GRAVEYARD);
             } catch (IllegalStateException ex) {
                 gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                         " can't be cast because its mana cost can't be paid."));
@@ -890,7 +916,7 @@ public class MayCastHandlerService {
         permanentRemovalService.removeCardFromGraveyardById(gameData, cardToCast.getId());
         StackEntry stackEntry = new StackEntry(
                 spellType, cardToCast, player.getId(), spellCard.getName(), spellEffects,
-                0, (UUID) null, null);
+                xValue, (UUID) null, null);
         stackEntry.setCastWithAdventure(castAsAdventure);
         stackEntry.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
         stackEntry.setOwnerIdOverride(graveyardOwnerId);

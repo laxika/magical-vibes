@@ -142,13 +142,13 @@ class BindTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         RodOfRuin rod = new RodOfRuin();
-        harness.addToBattlefield(player2, rod);
+        Permanent rodPermanent = harness.addToBattlefieldAndReturn(player2, rod);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.forceActivePlayer(player2);
         harness.activateAbility(player2, 0, null, player1.getId());
         var activationId = gd.stack.getLast().getTargetableId();
         harness.passPriority(player2);
-        harness.castAndResolveInstant(player1, 0, rod.getId());
+        harness.castAndResolveInstant(player1, 0, rodPermanent.getId());
         harness.assertInGraveyard(player2, "Rod of Ruin");
         harness.passPriority(player2);
 

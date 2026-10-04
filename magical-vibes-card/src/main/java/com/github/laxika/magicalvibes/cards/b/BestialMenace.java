@@ -18,12 +18,11 @@ import java.util.Set;
 public class BestialMenace extends Card {
 
     public BestialMenace() {
-        // Create a 1/1 green Snake, a 2/2 green Wolf, and a 3/3 green Elephant token.
         addEffect(EffectSlot.SPELL, new CreateTokenEffect("Snake", 1, 1, CardColor.GREEN,
-                List.of(CardSubtype.SNAKE), Set.of(), Set.of()));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN,
-                List.of(CardSubtype.WOLF), Set.of(), Set.of()));
-        addEffect(EffectSlot.SPELL, new CreateTokenEffect("Elephant", 3, 3, CardColor.GREEN,
-                List.of(CardSubtype.ELEPHANT), Set.of(), Set.of()));
+                List.of(CardSubtype.SNAKE), Set.of(), Set.of()).withSimultaneousTokens(List.of(
+                new CreateTokenEffect("Wolf", 2, 2, CardColor.GREEN,
+                        List.of(CardSubtype.WOLF), Set.of(), Set.of()),
+                new CreateTokenEffect("Elephant", 3, 3, CardColor.GREEN,
+                        List.of(CardSubtype.ELEPHANT), Set.of(), Set.of()))));
     }
 }

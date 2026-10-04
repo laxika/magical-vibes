@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -22,6 +23,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -43,6 +45,7 @@ public class TokenCopySupport {
     private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final SagaChapterService sagaChapterService;
+    private final PlayerInputService playerInputService;
 
     public List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
                                         Permanent sourcePermanent,
@@ -82,6 +85,25 @@ public class TokenCopySupport {
                                          CreateTokenCopyOfTargetPermanentEffect effect,
                                          List<UUID> attackTargetIds,
                                          Consumer<Card> copyException) {
+        return createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId,
+                effect, attackTargetIds, copyException, false);
+    }
+
+    /** Prepares all per-opponent copies, including token replacements, before choosing their attack targets. */
+    public void createTokenCopiesChoosingOpponentAttackTargets(GameData gameData, StackEntry entry,
+                                                               List<Card> sourceCards, Permanent sourcePermanent,
+                                                               UUID tokenControllerId,
+                                                               CreateTokenCopyOfTargetPermanentEffect effect,
+                                                               List<UUID> opponentIds) {
+        createTokenCopies(gameData, entry, sourceCards, sourcePermanent, tokenControllerId, effect,
+                opponentIds, null, true);
+    }
+
+    private List<UUID> createTokenCopies(GameData gameData, StackEntry entry, List<Card> sourceCards,
+                                         Permanent sourcePermanent, UUID tokenControllerId,
+                                         CreateTokenCopyOfTargetPermanentEffect effect,
+                                         List<UUID> attackTargetIds,
+                                         Consumer<Card> copyException, boolean chooseOpponentAttackTargets) {
         if (sourceCards == null || sourceCards.isEmpty()) {
             return List.of();
         }
@@ -195,6 +217,65 @@ public class TokenCopySupport {
             tokens.add(new Permanent(treasureToken));
         }
 
+        if (chooseOpponentAttackTargets) {
+            continueOpponentAttackTargetChoices(gameData,
+                    new PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking(
+                            tokenControllerId, entry, effect, tokens, expandedAttackTargets, List.of()));
+            return List.of();
+        }
+        return putPreparedTokenCopiesOntoBattlefield(gameData, entry, tokens, sourcePermanent,
+                tokenControllerId, effect, expandedAttackTargets, attackTargetIds != null);
+    }
+
+    /** Continues a restricted player-or-planeswalker choice for each prepared myriad token. */
+    public void completeOpponentAttackTargetChoice(GameData gameData, UUID chosenTarget,
+                                                   PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking context) {
+        int index = context.chosenAttackTargets().size();
+        if (index >= context.tokenOpponents().size()) return;
+        UUID opponentId = context.tokenOpponents().get(index);
+        boolean legal = opponentId.equals(chosenTarget)
+                || gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
+                .anyMatch(permanent -> permanent.getId().equals(chosenTarget)
+                        && gameQueryService.isPlaneswalker(gameData, permanent));
+        if (!legal) throw new IllegalStateException("The token must attack that opponent or a planeswalker they control");
+        List<UUID> chosenTargets = new ArrayList<>(context.chosenAttackTargets());
+        chosenTargets.add(chosenTarget);
+        continueOpponentAttackTargetChoices(gameData,
+                new PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking(
+                        context.controllerId(), context.entry(), context.copyEffect(), context.tokens(),
+                        context.tokenOpponents(), chosenTargets));
+    }
+
+    private void continueOpponentAttackTargetChoices(GameData gameData,
+                                                      PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking context) {
+        List<UUID> chosenTargets = new ArrayList<>(context.chosenAttackTargets());
+        while (chosenTargets.size() < context.tokenOpponents().size()) {
+            UUID opponentId = context.tokenOpponents().get(chosenTargets.size());
+            List<UUID> planeswalkerIds = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
+                    .filter(permanent -> gameQueryService.isPlaneswalker(gameData, permanent))
+                    .map(Permanent::getId).toList();
+            if (planeswalkerIds.isEmpty()) {
+                chosenTargets.add(opponentId);
+                continue;
+            }
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking(
+                            context.controllerId(), context.entry(), context.copyEffect(), context.tokens(),
+                            context.tokenOpponents(), chosenTargets));
+            playerInputService.beginAnyTargetChoice(gameData, context.controllerId(), planeswalkerIds,
+                    List.of(opponentId), "Choose the player or planeswalker for the token to attack.");
+            return;
+        }
+        putPreparedTokenCopiesOntoBattlefield(gameData, context.entry(), context.tokens(), null,
+                context.controllerId(), context.copyEffect(), chosenTargets, true);
+    }
+
+    private List<UUID> putPreparedTokenCopiesOntoBattlefield(GameData gameData, StackEntry entry,
+                                                            List<Permanent> tokens, Permanent sourcePermanent,
+                                                            UUID tokenControllerId,
+                                                            CreateTokenCopyOfTargetPermanentEffect effect,
+                                                            List<UUID> expandedAttackTargets,
+                                                            boolean explicitAttackTargets) {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         List<Permanent> simultaneouslyEntered = tokens;
         List<UUID> createdIds = new ArrayList<>();
@@ -215,9 +296,9 @@ public class TokenCopySupport {
             }
             if (effect.tappedAndAttacking()) {
                 tokenPermanent.setAttacking(true);
-                if (attackTargetIds != null && tokenIndex < expandedAttackTargets.size()) {
+                if (explicitAttackTargets && tokenIndex < expandedAttackTargets.size()) {
                     tokenPermanent.setAttackTarget(expandedAttackTargets.get(tokenIndex));
-                } else if (attackTargetIds == null && sourcePermanent != null) {
+                } else if (!explicitAttackTargets && sourcePermanent != null) {
                     tokenPermanent.setAttackTarget(sourcePermanent.getAttackTarget());
                 }
             }

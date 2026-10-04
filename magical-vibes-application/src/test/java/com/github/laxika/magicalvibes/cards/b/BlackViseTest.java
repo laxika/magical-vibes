@@ -175,7 +175,8 @@ class BlackViseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        advanceToUpkeep(player2);
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.UPKEEP,
+                () -> advanceToUpkeep(player2));
         harness.castAndResolveInstant(player1, 0, blackVise.getId());
         harness.assertNotOnBattlefield(player1, "Black Vise");
         harness.passBothPriorities();

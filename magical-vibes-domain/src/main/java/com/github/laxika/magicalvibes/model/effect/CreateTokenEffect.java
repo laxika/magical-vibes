@@ -42,8 +42,44 @@ public record CreateTokenEffect(
         Set<Keyword> grantedKeywordsUntilEndOfTurn,
         Set<CardSupertype> supertypes,
         TargetFilter tokenTargetFilter,
-        boolean investigate
+        boolean investigate,
+        List<CreateTokenEffect> simultaneousTokens
 ) implements TokenCreatingEffect, CombatDamageAmountAwareEffect, CombatDamageTriggerContextEffect {
+
+    public CreateTokenEffect {
+        simultaneousTokens = List.copyOf(simultaneousTokens);
+    }
+
+    /** Compatibility constructor for a single token blueprint. */
+    public CreateTokenEffect(CardType primaryType,
+            DynamicAmount amount,
+            String tokenName,
+            DynamicAmount power,
+            DynamicAmount toughness,
+            CardColor color,
+            Set<CardColor> colors,
+            List<CardSubtype> subtypes,
+            Set<Keyword> keywords,
+            Set<CardType> additionalTypes,
+            boolean tappedAndAttacking,
+            boolean tapped,
+            Map<EffectSlot, CardEffect> tokenEffects,
+            List<ActivatedAbility> tokenAbilities,
+            boolean exileAtEndOfCombat,
+            boolean exileAtEndStep,
+            boolean legendary,
+            int initialPlusOnePlusOneCounters,
+            Set<Keyword> grantedKeywordsUntilEndOfTurn,
+            Set<CardSupertype> supertypes,
+            TargetFilter tokenTargetFilter,
+            boolean investigate) {
+        this(primaryType, amount, tokenName, power, toughness, color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, List.of());
+    }
+
+    /** Other token profiles created simultaneously by this same instruction. */
+    public CreateTokenEffect withSimultaneousTokens(List<CreateTokenEffect> otherTokens) {
+        return new CreateTokenEffect(primaryType, amount, tokenName, power, toughness, color, colors, subtypes, keywords, additionalTypes, tappedAndAttacking, tapped, tokenEffects, tokenAbilities, exileAtEndOfCombat, exileAtEndStep, legendary, initialPlusOnePlusOneCounters, grantedKeywordsUntilEndOfTurn, supertypes, tokenTargetFilter, investigate, otherTokens);
+    }
 
     @Override
     public DynamicAmount tokenAmount() {

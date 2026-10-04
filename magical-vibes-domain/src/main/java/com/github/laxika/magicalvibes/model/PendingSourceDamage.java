@@ -22,6 +22,7 @@ public final class PendingSourceDamage {
     private int amount;
     private final Map<UUID, Integer> damageToPlayers = new LinkedHashMap<>();
     private final Map<UUID, Integer> damageToPermanents = new LinkedHashMap<>();
+    private final Map<UUID, Permanent> damagedPermanentSnapshots = new LinkedHashMap<>();
     private final Set<UUID> damageToPermanentControllers = new LinkedHashSet<>();
     private final List<DamageRecipient> damageRecipients = new java.util.ArrayList<>();
     private final List<CardEffect> selfDealsDamageEffects;
@@ -95,6 +96,17 @@ public final class PendingSourceDamage {
 
     public Map<UUID, Integer> getDamageToPermanents() {
         return Map.copyOf(damageToPermanents);
+    }
+
+    /** Captures recipient characteristics before state-based actions can remove it. */
+    public void rememberDamagedPermanent(Permanent permanent) {
+        if (permanent != null) {
+            damagedPermanentSnapshots.putIfAbsent(permanent.getId(), new Permanent(permanent));
+        }
+    }
+
+    public Map<UUID, Permanent> getDamagedPermanentSnapshots() {
+        return Map.copyOf(damagedPermanentSnapshots);
     }
 
     public UUID getSingleCreatureSpellTargetId() {
@@ -175,6 +187,8 @@ public final class PendingSourceDamage {
                 null, null, null, selfDealsDamageEffects, singleCreatureSpellTargetId);
         damageToPlayers.forEach((playerId, playerDamage) -> copy.damageToPlayers.put(playerId, playerDamage));
         damageToPermanents.forEach((permanentId, permanentDamage) -> copy.damageToPermanents.put(permanentId, permanentDamage));
+        damagedPermanentSnapshots.forEach((id, snapshot) ->
+                copy.damagedPermanentSnapshots.put(id, new Permanent(snapshot)));
         copy.damageToPermanentControllers.addAll(damageToPermanentControllers);
         copy.damageRecipients.addAll(damageRecipients);
         copy.instantOrSorceryDamageRecipients.addAll(instantOrSorceryDamageRecipients);

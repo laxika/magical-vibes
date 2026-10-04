@@ -114,9 +114,9 @@ class BehemothsHeraldTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Godsire()));
 
         harness.activateAbility(player1, 0, null, null);
-        assertThat(herald.isTapped()).isTrue();
         harness.handlePermanentChosen(player1, redId);
         harness.handlePermanentChosen(player1, herald.getId());
+        assertThat(herald.isTapped()).isTrue();
 
         harness.assertInGraveyard(player1, "Behemoth's Herald");
         harness.assertInGraveyard(player1, "Bloodthorn Taunter");

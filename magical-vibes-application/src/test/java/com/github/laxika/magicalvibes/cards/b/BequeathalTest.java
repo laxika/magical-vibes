@@ -164,7 +164,8 @@ class BequeathalTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new RagingGoblin(), new RagingGoblin()));
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, creature);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, creature));
         harness.runStateBasedActions();
         harness.passBothPriorities();
 

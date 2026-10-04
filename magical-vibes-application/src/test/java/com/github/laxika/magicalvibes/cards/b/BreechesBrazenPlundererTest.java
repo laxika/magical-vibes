@@ -255,6 +255,7 @@ class BreechesBrazenPlundererTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveCombat();
         harness.handleCombatDamageAssigned(player1, 0,
                 Map.of(firstBlocker.getId(), 2, secondBlocker.getId(), 1));
         resolveAllTriggers();

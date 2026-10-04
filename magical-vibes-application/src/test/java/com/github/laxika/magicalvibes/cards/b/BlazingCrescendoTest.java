@@ -45,8 +45,7 @@ class BlazingCrescendoTest extends BaseCardTest {
                 .extracting(Card::getId)
                 .contains(topCard.getId());
         assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd.get(topCard.getId()))
-                .isEqualTo(gd.turnNumber + 2);
+        assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
     }
 
     @Test
@@ -149,6 +148,9 @@ class BlazingCrescendoTest extends BaseCardTest {
     void castingOnOpponentsTurnGrantsPermissionThroughNextOwnTurn() {
         Permanent creature = addCreatureReady(player2, new CopperLonglegs());
         harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        creature.tap();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         Card topCard = putOnTop(player1);
         harness.setHand(player1, List.of(new BlazingCrescendo()));
@@ -156,6 +158,10 @@ class BlazingCrescendoTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
+        harness.clearBattlefield(player1);
+        harness.clearBattlefield(player2);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         harness.passUntil(player1, TurnStep.END_STEP);
         assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());
         harness.passUntil(player2, TurnStep.UPKEEP);
@@ -174,6 +180,9 @@ class BlazingCrescendoTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         gd.queueExtraTurnFirst(player1.getId(), false);
+        harness.clearBattlefield(player1);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
 
         harness.passUntil(player1, TurnStep.UPKEEP);
         assertThat(gd.exilePlayPermissions).containsKey(topCard.getId());

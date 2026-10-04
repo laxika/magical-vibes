@@ -1716,9 +1716,11 @@ public class StepTriggerService {
                 if (opponentUpkeepEffects == null || opponentUpkeepEffects.isEmpty()) continue;
 
                 boolean hasChosenPlayer = perm.getCard().getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                        .anyMatch(RememberTargetPlayerEffect.class::isInstance);
+                        .anyMatch(effect -> effect instanceof RememberTargetPlayerEffect
+                                || effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect);
                 if (playerId.equals(activePlayerId) && !hasChosenPlayer) continue;
-                UUID chosenPlayerId = perm.getRememberedTargetPlayerId();
+                UUID chosenPlayerId = perm.getChosenPlayerIds().isEmpty()
+                        ? perm.getRememberedTargetPlayerId() : perm.getChosenPlayerIds().getFirst();
                 if (hasChosenPlayer && chosenPlayerId == null) {
                     UUID originalControllerId = gameData.stolenCreatures.getOrDefault(perm.getId(), playerId);
                     chosenPlayerId = gameQueryService.getOpponentId(gameData, originalControllerId);

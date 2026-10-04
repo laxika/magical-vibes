@@ -1669,6 +1669,11 @@ public class DamagePreventionService {
                 return damage;
             }
             it.remove();
+            int prevented = Math.min(damage, shield.remainingDamage());
+            if (prevented < shield.remainingDamage() && shield.remainingDamage() != Integer.MAX_VALUE) {
+                gameData.sourceNextDamageToAnyTargetShields.addLast(
+                        shield.withRemainingDamage(shield.remainingDamage() - prevented));
+            }
             if (shield.damageRedSourceController()) {
                 Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
@@ -1693,18 +1698,18 @@ public class DamagePreventionService {
                 if (sourceControllerId != null && redSource
                         && shield.passageCard() != null && shield.passageControllerId() != null) {
                     gameData.pendingEyeForAnEyeReflections.add(new EyeForAnEyeReflection(
-                            sourceControllerId, damage, shield.passageCard(), shield.passageControllerId()));
+                            sourceControllerId, prevented, shield.passageCard(), shield.passageControllerId()));
                 }
             }
             if (shield.lifeGainPlayerId() != null) {
-                lifeSupport.applyGainLife(gameData, shield.lifeGainPlayerId(), damage, "prevented damage");
+                lifeSupport.applyGainLife(gameData, shield.lifeGainPlayerId(), prevented, "prevented damage");
             }
             if (shield.token() != null && shield.tokenControllerId() != null) {
                 permanentControlSupportProvider.getObject().applyCreateToken(
-                        gameData, shield.tokenControllerId(), shield.token(), damage,
+                        gameData, shield.tokenControllerId(), shield.token(), prevented,
                         shield.tokenSourceSetCode());
             }
-            return 0;
+            return damage - prevented;
         }
         return damage;
     }
@@ -2562,6 +2567,51 @@ public class DamagePreventionService {
      * permanents they control (each is a separate "you may prevent X"). Returns the amount prevented
      * (the caller subtracts it); 0 when damage can't be prevented or no such permanent is present.
      */
+    /** Active optional-prevention sources for one player's impending damage. */
+    public List<UUID> clericPreventionSources(GameData gameData) {
+        List<UUID> result = new ArrayList<>();
+        gameData.forEachPermanent((controller, permanent) -> {
+            if (gameQueryService.hasActiveStaticEffectIncludingGranted(gameData, permanent,
+                    PreventDamageToControllerPerClericEffect.class)
+                    && clericPreventionAmount(gameData, controller) > 0) result.add(permanent.getId());
+        });
+        return result;
+    }
+
+    /** The number of Clerics currently controlled by the player making the choice. */
+    public int clericPreventionAmount(GameData gameData, UUID controllerId) {
+        return (int) gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .filter(permanent -> gameQueryService.isCreature(gameData, permanent)
+                        && gameQueryService.hasEffectiveSubtype(gameData, permanent, CardSubtype.CLERIC)).count();
+    }
+
+    /** Queues one independent optional prevention while preserving the actual damage source. */
+    public boolean queueClericPreventionChoice(GameData gameData, StackEntry entry, UUID playerId,
+                                               int damage, boolean combat, List<UUID> alchemistIds) {
+        if (damage <= 0 || !gameQueryService.isDamagePreventable(gameData, combat)) return false;
+        Permanent damageSource = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (damageSource == null) damageSource = entry.getSourcePermanentSnapshot();
+        if (damageSource != null && gameQueryService.damageCantBePreventedFromSource(gameData, damageSource, combat)) return false;
+        for (int index = 0; index < alchemistIds.size(); index++) {
+            Permanent alchemist = gameQueryService.findPermanentById(gameData, alchemistIds.get(index));
+            if (alchemist == null || !gameQueryService.hasActiveStaticEffectIncludingGranted(gameData,
+                    alchemist, PreventDamageToControllerPerClericEffect.class)) continue;
+            UUID controller = gameQueryService.findPermanentController(gameData, alchemist.getId());
+            if (controller == null || clericPreventionAmount(gameData, controller) == 0) continue;
+            gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                    entry.getCard(), controller, List.of(new PreventDamageToControllerPerClericEffect(
+                    playerId, alchemist.getId(), alchemistIds.subList(index + 1, alchemistIds.size()),
+                    combat, entry.getEntryType(), gameData.unpreventableDamageInProgress)),
+                    "Prevent up to " + clericPreventionAmount(gameData, controller) + " damage to "
+                            + gameData.playerIdToName.get(playerId) + "?", playerId, null,
+                    entry.getSourcePermanentId(), null, 0, 0, null, null, null,
+                    damageSource == null ? null : new Permanent(damageSource), entry.getControllerId(), null, damage));
+            return true;
+        }
+        return false;
+    }
+
     public int applyControllerPerClericDamagePrevention(GameData gameData, UUID playerId, int damage) {
         return applyControllerPerClericDamagePrevention(gameData, playerId, damage, false);
     }
