@@ -113,4 +113,34 @@ class ImaginaryPetTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, pet.getName());
         assertThat(gd.playerHands.get(player1.getId())).contains(pet);
     }
+    @Test
+    @DisplayName("Gaining a card after an empty-hand upkeep begins does not create a trigger")
+    void gainingCardAfterUpkeepDoesNotTrigger() {
+        ImaginaryPet pet = new ImaginaryPet();
+        harness.addToBattlefield(player1, pet);
+        harness.setHand(player1, List.of());
+
+        advanceToUpkeep(player1);
+        harness.setHand(player1, List.of(filler()));
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, pet.getName());
+    }
+
+    @Test
+    @DisplayName("Returns when the hand becomes empty and gains a card again before resolution")
+    void returnsWhenHandIsNonemptyAgainAtResolution() {
+        ImaginaryPet pet = new ImaginaryPet();
+        harness.addToBattlefield(player1, pet);
+        harness.setHand(player1, List.of(filler()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player1, List.of());
+        harness.setHand(player1, List.of(filler()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, pet.getName());
+        assertThat(gd.playerHands.get(player1.getId())).contains(pet);
+    }
 }
