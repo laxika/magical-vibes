@@ -61,4 +61,25 @@ class HavenwoodWurmTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
     }
+
+    @Test
+    @DisplayName("Trample permits assigning all combat damage to the blocker")
+    void trampleDoesNotRequireDamageToDefendingPlayer() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new HavenwoodWurm());
+        Permanent blocker = addCreatureReady(player2, new AshcoatBear());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 5));
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player2, "Ashcoat Bear");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+    }
 }
