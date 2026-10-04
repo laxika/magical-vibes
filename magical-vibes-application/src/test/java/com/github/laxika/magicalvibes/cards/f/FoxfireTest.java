@@ -78,8 +78,13 @@ class FoxfireTest extends BaseCardTest {
 
         castFoxfire(attacker);
 
-        assertThat(gd.creaturesWithCombatDamagePrevented).contains(attacker.getId());
-        assertThat(gd.creaturesWithAllDamagePrevented).doesNotContain(attacker.getId());
+        harness.setHand(player2, List.of(new Incinerate()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -92,8 +97,7 @@ class FoxfireTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Incinerate()));
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, attacker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
 
         assertThat(attacker.getMarkedDamage()).isEqualTo(3);
     }
@@ -156,12 +160,68 @@ class FoxfireTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Foxfire");
     }
 
+    @Test
+    @DisplayName("An untapped attacker remains attacking after Foxfire resolves")
+    void untappedAttackerRemainsAttacking() {
+        Permanent attacker = addAttacker(player1, player2, 2, 2);
+
+        castFoxfire(attacker);
+
+        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(attacker.isTapped()).isFalse();
+        resolveCombat();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Does not untap or draw if the target stops attacking before resolution")
+    void targetStopsAttackingBeforeResolution() {
+        Permanent attacker = addAttacker(player1, player2, 2, 2);
+        attacker.tap();
+        harness.setHand(player1, List.of(new Foxfire()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, attacker.getId());
+        attacker.setAttacking(false);
+
+        harness.passBothPriorities();
+
+        assertThat(attacker.isTapped()).isTrue();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+        harness.assertInGraveyard(player1, "Foxfire");
+    }
+
+    @Test
+    @DisplayName("The caster still draws after the opponent's attacker dies following resolution")
+    void delayedDrawSurvivesTargetLeavingAfterResolution() {
+        Permanent attacker = addAttacker(player2, player1, 2, 2);
+        castFoxfire(attacker);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, attacker.getId());
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
+    }
+
     private void castFoxfire(Permanent target) {
         harness.setHand(player1, List.of(new Foxfire()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private Permanent addAttacker(Player owner, Player defender, int power, int toughness) {
