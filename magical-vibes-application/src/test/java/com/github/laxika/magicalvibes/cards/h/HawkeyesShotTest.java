@@ -40,8 +40,7 @@ class HawkeyesShotTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, target.getId());
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
@@ -73,6 +72,71 @@ class HawkeyesShotTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature");
+    }
+
+    @Test
+    @DisplayName("Can exile a tapped creature controlled by the caster at the reduced cost")
+    void exilesOwnTappedCreatureAtReducedCost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.tap();
+
+        castHawkeyesShot(target, 3);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(target.getCard().getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Untapping the target after casting does not prevent exile or require more mana")
+    void untappingTargetAfterCastingDoesNotPreventExile() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.tap();
+        castHawkeyesShot(target, 3);
+
+        target.untap();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .anyMatch(card -> card.getId().equals(target.getCard().getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A different tapped creature does not reduce the cost for an untapped target")
+    void unrelatedTappedCreatureDoesNotReduceCost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        other.tap();
+        harness.setHand(player1, List.of(new HawkeyesShot()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Hawkeye's Shot");
+    }
+
+    @Test
+    @DisplayName("The cost reduction does not remove the white mana requirement")
+    void tappedTargetStillRequiresWhiteMana() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.tap();
+        harness.setHand(player1, List.of(new HawkeyesShot()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player1, "Hawkeye's Shot");
     }
 
     private void castHawkeyesShot(Permanent target, int mana) {
