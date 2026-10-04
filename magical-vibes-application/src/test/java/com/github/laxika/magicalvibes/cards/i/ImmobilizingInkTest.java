@@ -116,6 +116,74 @@ class ImmobilizingInkTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Cannot activate the untap ability without a card to discard")
+    void cannotActivateWithEmptyHand() {
+        Permanent creature = addTappedCreature();
+        addAura(creature);
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Must discard a card");
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick creature can activate the untap ability")
+    void summoningSickCreatureCanActivate() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new DuskImp());
+        creature.setSummoningSick(true);
+        creature.tap();
+        addAura(creature);
+        harness.setHand(player1, List.of(new DarkwaterCatacombs()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(creature.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Darkwater Catacombs");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The activated untap ability resolves after the Aura leaves")
+    void activatedAbilitySurvivesAuraRemoval() {
+        Permanent creature = addTappedCreature();
+        Permanent otherCreature = addTappedCreature();
+        Permanent aura = addAura(creature);
+        harness.setHand(player1, List.of(new DuskImp()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(otherCreature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing the Aura restores the creature's normal untap")
+    void untapLockEndsWhenAuraLeaves() {
+        Permanent creature = addTappedCreature();
+        Permanent aura = addAura(creature);
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+
+        advanceToUpkeep(player1);
+
+        assertThat(creature.isTapped()).isFalse();
+    }
+
     private Permanent addTappedCreature() {
         return addTappedCreature(player1);
     }
