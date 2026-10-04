@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NestInvader;
+import com.github.laxika.magicalvibes.cards.s.Staggershock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HarmlessAssault.class, NestInvader.class, Staggershock.class})
 class HarmlessAssaultTest extends BaseCardTest {
 
     @Test
@@ -37,7 +40,7 @@ class HarmlessAssaultTest extends BaseCardTest {
         castAndResolve();
 
         Permanent attacker = addAttacker();
-        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new NestInvader());
         blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
@@ -51,16 +54,46 @@ class HarmlessAssaultTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
     }
 
-    private void castAndResolve() {
-        harness.setHand(player1, List.of(new HarmlessAssault()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
+    @Test
+    @DisplayName("Does not prevent noncombat damage during combat")
+    void doesNotPreventNoncombatDamage() {
+        castAndResolve();
+        Permanent attacker = addAttacker();
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.setHand(player2, List.of(new Staggershock()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.castInstant(player2, 0, attacker.getId());
+        harness.passBothPriorities();
 
-        harness.castInstant(player1, 0);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+    }
+
+    @Test
+    @DisplayName("Prevention expires when the turn ends")
+    void preventionExpiresAtEndOfTurn() {
+        castAndResolve();
+        harness.setLibrary(player2, List.of(new NestInvader()));
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new NestInvader());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        harness.setLife(player1, 20);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+    }
+
+    private void castAndResolve() {
+        harness.castFromHand(player1, new HarmlessAssault(), "{2}{W}{W}");
+
         harness.passBothPriorities();
     }
 
     private Permanent addAttacker() {
-        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new NestInvader());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
         return attacker;
