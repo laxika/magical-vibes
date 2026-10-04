@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.a.ArmoredPegasus;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.Levitation;
 import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.cards.w.WindSpirit;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -19,8 +20,45 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ArmoredPegasus.class, ChandraNalaar.class, GrizzlyBears.class, Hurricane.class, WindDrake.class, WindSpirit.class})
+@CardUsed({ChandraNalaar.class, GrizzlyBears.class, Hurricane.class, Levitation.class, WindDrake.class, WindSpirit.class})
 class HurricaneTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Hurricane draws the game when its damage is lethal to both players")
+    void hurricaneCanKillBothPlayersSimultaneously() {
+        harness.setLife(player1, 3);
+        harness.setLife(player2, 3);
+        harness.setHand(player1, List.of(new Hurricane()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 3);
+
+        harness.assertLife(player1, 0);
+        harness.assertLife(player2, 0);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.gameResult).isEqualTo(GameEventFact.GameResult.DRAW);
+        assertThat(gd.winnerPlayerId).isNull();
+    }
+
+    @Test
+    @DisplayName("Hurricane damages creatures that gain flying from a continuous effect")
+    void hurricaneDamagesCreaturesWithGrantedFlying() {
+        harness.addToBattlefield(player1, new Levitation());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent groundedCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Hurricane()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 2);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Levitation");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(groundedCreature.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
+    }
 
     @Test
     @DisplayName("Casting Hurricane puts it on the stack as a sorcery spell")
