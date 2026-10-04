@@ -34,9 +34,8 @@ class HardHittingQuestionTest extends BaseCardTest {
     @DisplayName("Deals the controlled creature's power to an opposing planeswalker")
     void dealsPowerDamageToOpposingPlaneswalker() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent planeswalker = new Permanent(new ChandraNalaar());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, 4);
-        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
         cast(source, planeswalker);
 
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
@@ -58,10 +57,92 @@ class HardHittingQuestionTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private void cast(Permanent source, Permanent target) {
+    @Test
+    void usesPowerAtResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        castWithoutResolving(source, target);
+        source.setPowerModifier(1);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void dealsNoDamageWhenSourceLeavesBattlefield() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        castWithoutResolving(source, target);
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void dealsNoDamageWhenSourceChangesController() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        castWithoutResolving(source, target);
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerBattlefields.get(player2.getId()).add(source);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void dealsNoDamageWhenVictimChangesController() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        castWithoutResolving(source, target);
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void dealsNoDamageWithZeroPower() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        source.setPowerModifier(-2);
+
+        cast(source, target);
+
+        assertThat(target.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void rejectsOpposingCreatureAsDamageSource() {
+        Permanent source = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new HardHittingQuestion()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(source.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    private void castWithoutResolving(Permanent source, Permanent target) {
         harness.setHand(player1, List.of(new HardHittingQuestion()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castSorcery(player1, 0, List.of(source.getId(), target.getId()));
-        harness.passBothPriorities();
+    }
+
+    private void cast(Permanent source, Permanent target) {
+        harness.setHand(player1, List.of(new HardHittingQuestion()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveSorcery(player1, 0, List.of(source.getId(), target.getId()));
     }
 }
