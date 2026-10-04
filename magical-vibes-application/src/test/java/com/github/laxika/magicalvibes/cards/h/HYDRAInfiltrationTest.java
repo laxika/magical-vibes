@@ -91,6 +91,59 @@ class HYDRAInfiltrationTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("The opponent discards their only card when fewer than two are available")
+    void etbDiscardsOnlyAvailableCard() {
+        harness.setHand(player1, List.of(new HYDRAInfiltration()));
+        harness.setHand(player2, List.of(new HYDRAInfiltration()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The enter trigger resolves normally against an empty hand")
+    void etbResolvesWithEmptyOpponentHand() {
+        harness.setHand(player1, List.of(new HYDRAInfiltration()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's lone attacker does not trigger the drain")
+    void opponentAttackingAloneDoesNotTrigger() {
+        harness.addToBattlefield(player1, new HYDRAInfiltration());
+        addCreatureReady(player2);
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
+
     private Permanent addCreatureReady(com.github.laxika.magicalvibes.model.Player player) {
         return addCreatureReady(player, new GrizzlyBears());
     }
