@@ -75,7 +75,66 @@ class GiftOfCompleationTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
-        harness.castInstant(player2, 0, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+    }
+
+    @Test
+    void canKeepSurveilledCardOnTop() {
+        harness.addToBattlefield(player1, new GiftOfCompleation());
+        Permanent phyrexian = harness.addToBattlefieldAndReturn(player1, new PhyrexianBroodlings());
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+
+        killWithShock(phyrexian);
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(topCard);
+    }
+
+    @Test
+    void doesNotSurveilWhenOpponentsPhyrexianDies() {
+        harness.addToBattlefield(player1, new GiftOfCompleation());
+        Permanent phyrexian = harness.addToBattlefieldAndReturn(player2, new PhyrexianBroodlings());
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+
+        killWithShock(phyrexian);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void surveillingEmptyLibraryFinishesWithoutAChoice() {
+        harness.addToBattlefield(player1, new GiftOfCompleation());
+        Permanent phyrexian = harness.addToBattlefieldAndReturn(player1, new PhyrexianBroodlings());
+        harness.setLibrary(player1, List.of());
+
+        killWithShock(phyrexian);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void incubatorTransformsAndKeepsItsCounters() {
+        castGiftOfCompleation();
+        Permanent incubator = findPermanent(player1, "Incubator");
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(incubator), null, null);
+        harness.passBothPriorities();
+
+        assertThat(incubator.isTransformed()).isTrue();
+        assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(incubator.getEffectivePower()).isEqualTo(3);
+        assertThat(incubator.getEffectiveToughness()).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Phyrexian");
     }
 }
