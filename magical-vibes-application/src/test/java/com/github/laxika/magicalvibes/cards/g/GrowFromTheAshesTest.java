@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -8,18 +7,17 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.m.MemorialToFolly;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -27,22 +25,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GrowFromTheAshes.class, Plains.class, Forest.class, Island.class, Mountain.class, MemorialToFolly.class})
 class GrowFromTheAshesTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has KickerEffect with cost {2}")
-    void hasKickerEffect() {
-        GrowFromTheAshes card = new GrowFromTheAshes();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{2}"));
-    }
-
-    
-
-    // ===== Cast without kicker =====
 
     @Test
     @DisplayName("Casting puts it on the stack as a sorcery")
@@ -53,7 +37,7 @@ class GrowFromTheAshesTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Grow from the Ashes");
+        assertThat(entry.getCard()).isInstanceOf(GrowFromTheAshes.class);
     }
 
     @Test
@@ -82,7 +66,7 @@ class GrowFromTheAshesTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -99,12 +83,10 @@ class GrowFromTheAshesTest extends BaseCardTest {
         harness.passBothPriorities();
         GameData gd = harness.getGameData();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
-
-    // ===== Cast with kicker =====
 
     @Test
     @DisplayName("With kicker — initiates multi-pick search for two basic lands")
@@ -134,9 +116,9 @@ class GrowFromTheAshesTest extends BaseCardTest {
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
         // Choose first land
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         // Choose second land
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 2);
         long untappedLands = gd.playerBattlefields.get(player1.getId()).stream()
@@ -146,15 +128,11 @@ class GrowFromTheAshesTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    // ===== Edge cases =====
-
     @Test
     @DisplayName("Resolving with no basic lands in library does not prompt for library choice")
     void noBasicLandsNoPrompt() {
         setupAndCast();
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new GrowFromTheAshes(), new GrowFromTheAshes()));
+        harness.setLibrary(player1, List.of(new GrowFromTheAshes(), new GrowFromTheAshes()));
 
         harness.passBothPriorities();
 
@@ -167,7 +145,7 @@ class GrowFromTheAshesTest extends BaseCardTest {
     @DisplayName("Resolving with empty library does not prompt for library choice")
     void emptyLibraryNoPrompt() {
         setupAndCast();
-        harness.getGameData().playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.passBothPriorities();
 
@@ -176,7 +154,101 @@ class GrowFromTheAshesTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(entry -> entry.contains("it is empty"));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Kicker adds two mana to the normal casting cost")
+    void kickerPaysTwoAdditionalMana() {
+        setupAndCastKicked();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        setupLibrary();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+    }
+
+    @Test
+    @DisplayName("Search excludes nonbasic lands and nonland cards")
+    void excludesNonbasicLandsAndNonlands() {
+        setupAndCast();
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(new MemorialToFolly(), new GrowFromTheAshes(), forest));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
+                .containsExactly(forest);
+        harness.handleCardChosen(player1, 0);
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Kicked search puts both lands onto the battlefield only after both are selected")
+    void kickedLandsEnterTogether() {
+        setupAndCastKicked();
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.passBothPriorities();
+        int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Kicked search can stop after finding one basic land")
+    void kickedCanFindOnlyOneLand() {
+        setupAndCastKicked();
+        setupLibrary();
+        harness.passBothPriorities();
+        int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Kicked search completes when only one basic land is available")
+    void kickedWithOnlyOneAvailableLand() {
+        setupAndCastKicked();
+        harness.setLibrary(player1, List.of(new Forest(), new GrowFromTheAshes()));
+        harness.passBothPriorities();
+        int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Kicked search can fail to find both lands")
+    void kickedCanFailToFindAllLands() {
+        setupAndCastKicked();
+        setupLibrary();
+        harness.passBothPriorities();
+        int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 
     private void setupAndCast() {
         harness.setHand(player1, List.of(new GrowFromTheAshes()));
@@ -191,8 +263,6 @@ class GrowFromTheAshesTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Forest(), new Island(), new Mountain()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new Island(), new Mountain()));
     }
 }
