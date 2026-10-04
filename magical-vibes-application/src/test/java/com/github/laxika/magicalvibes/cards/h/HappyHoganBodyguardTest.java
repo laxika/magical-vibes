@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HappyHoganBodyguard.class, GrizzlyBears.class, Island.class})
+@CardUsed({HappyHoganBodyguard.class, GrizzlyBears.class, Island.class, DryadArbor.class})
 class HappyHoganBodyguardTest extends BaseCardTest {
 
     @Test
@@ -65,12 +66,70 @@ class HappyHoganBodyguardTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("ETB can put an opposing land creature into its owner's library")
+    void canTargetLandCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DryadArbor());
+        Card topCard = new Island();
+        harness.setLibrary(player2, List.of(topCard));
+
+        castHappyHogan(target);
+        harness.handleListChoice(player2, "Second from the top");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, target.getCard());
+        harness.assertNotOnBattlefield(player2, "Dryad Arbor");
+    }
+
+    @Test
+    @DisplayName("Second from the top puts the creature into an empty library")
+    void secondFromTopOfEmptyLibrary() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player2, List.of());
+
+        castHappyHogan(target);
+        harness.handleListChoice(player2, "Second from the top");
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(target.getCard());
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The owner chooses and receives a creature controlled by an opponent")
+    void ownerRatherThanControllerChoosesDestination() {
+        Card creature = new GrizzlyBears();
+        creature.setOwnerId(player1.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, creature);
+        Card topCard = new Island();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setLibrary(player2, List.of());
+
+        castHappyHogan(target);
+        assertThatThrownBy(() -> harness.handleListChoice(player2, "Bottom"))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleListChoice(player1, "Bottom");
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, creature);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Happy Hogan enters even when no opponent controls a creature")
+    void entersWithoutLegalTargets() {
+        harness.castFromHand(player1, new HappyHoganBodyguard(), "{5}{U}");
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Happy Hogan, Bodyguard");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castHappyHogan(Permanent target) {
         harness.setHand(player1, List.of(new HappyHoganBodyguard()));
         addHappyHoganMana();
         harness.castCreature(player1, 0, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void addHappyHoganMana() {
