@@ -77,6 +77,52 @@ class ImodanesRecruiterTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.HASTE)).isFalse();
     }
 
+    @Test
+    void creatureCanBeCastFromAdventureExileAndBoostsTheKnights() {
+        ImodanesRecruiter card = new ImodanesRecruiter();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromExile(player1, card.getId());
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3)
+                .allSatisfy(creature -> {
+                    assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+                    assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+                    assertThat(gqs.hasKeyword(gd, creature, Keyword.HASTE)).isTrue();
+                });
+        harness.assertOnBattlefield(player1, "Imodane's Recruiter");
+    }
+
+    @Test
+    void creaturesCreatedAfterTheTriggerResolvesDoNotReceiveItsBonus() {
+        castRecruiter();
+        harness.setHand(player1, List.of(new ImodanesRecruiter()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        List<Permanent> knights = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken())
+                .toList();
+        assertThat(knights).hasSize(2).allSatisfy(knight -> {
+            assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
+            assertThat(gqs.hasKeyword(gd, knight, Keyword.HASTE)).isFalse();
+            assertThat(gqs.hasKeyword(gd, knight, Keyword.VIGILANCE)).isTrue();
+        });
+    }
+
     private void castRecruiter() {
         harness.setHand(player1, List.of(new ImodanesRecruiter()));
         harness.addMana(player1, ManaColor.RED, 1);
