@@ -131,6 +131,7 @@ class ArmoryPaladinTest extends BaseCardTest {
     @Test
     @DisplayName("Play permission lasts through the next turn and then expires without moving the card")
     void permissionExpiresAfterNextTurn() {
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new ArmoryPaladin());
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard, new GrizzlyBears(), new GrizzlyBears()));
@@ -141,11 +142,12 @@ class ArmoryPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        finishTurnAndAdvanceToMain(player2);
         assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        finishTurnAndAdvanceToMain(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        finishTurnAndAdvanceToMain(player2);
 
         assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
@@ -172,6 +174,7 @@ class ArmoryPaladinTest extends BaseCardTest {
     @Test
     @DisplayName("Permission expires at the end of your next turn even when it is an extra turn")
     void permissionExpiresAfterExtraTurn() {
+        harness.setHand(player2, List.of());
         harness.addToBattlefield(player1, new ArmoryPaladin());
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard, new GrizzlyBears(), new GrizzlyBears()));
@@ -185,12 +188,17 @@ class ArmoryPaladinTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player1.getId());
         harness.passBothPriorities();
 
-        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        finishTurnAndAdvanceToMain(player1);
         assertThat(gd.exilePlayPermissions.get(topCard.getId())).isEqualTo(player1.getId());
-        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        finishTurnAndAdvanceToMain(player2);
 
         assertThat(gd.exilePlayPermissions).doesNotContainKey(topCard.getId());
         assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+    }
+
+    private void finishTurnAndAdvanceToMain(com.github.laxika.magicalvibes.model.Player nextPlayer) {
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(nextPlayer, TurnStep.PRECOMBAT_MAIN);
     }
 }

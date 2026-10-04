@@ -118,7 +118,7 @@ class FeralAnimistTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FeralAnimist());
         Permanent animist = findPermanent(player1, "Feral Animist");
         animist.setSummoningSick(true);
-        animist.setTapped(true);
+        animist.tap();
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.activateAbility(player1, 0, null, null);

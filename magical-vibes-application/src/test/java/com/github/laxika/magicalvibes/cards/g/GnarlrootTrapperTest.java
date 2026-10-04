@@ -6,15 +6,16 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GnarlrootTrapper.class, LlanowarElves.class, GrizzlyBears.class})
 class GnarlrootTrapperTest extends BaseCardTest {
 
     @Test
@@ -113,5 +114,53 @@ class GnarlrootTrapperTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, enemyElves.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+    @Test
+    @DisplayName("An attacking non-Elf is not a legal target")
+    void attackingNonElfIsIllegalTarget() {
+        addCreatureReady(player1, new GnarlrootTrapper());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setAttacking(true);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An Elf that stops attacking before resolution does not gain deathtouch")
+    void targetMustStillBeAttackingAtResolution() {
+        addCreatureReady(player1, new GnarlrootTrapper());
+        Permanent elves = addCreatureReady(player1, new LlanowarElves());
+        elves.setAttacking(true);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, 1, null, elves.getId());
+        elves.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(elves.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Both abilities require an untapped Trapper")
+    void cannotActivateAgainAfterProducingMana() {
+        Permanent trapper = addCreatureReady(player1, new GnarlrootTrapper());
+        Permanent elves = addCreatureReady(player1, new LlanowarElves());
+        elves.setAttacking(true);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(trapper.isTapped()).isTrue();
+        harness.assertLife(player1, 19);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, elves.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 19);
     }
 }

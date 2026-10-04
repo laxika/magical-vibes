@@ -69,7 +69,7 @@ class DrudgeReaversTest extends BaseCardTest {
     void regenerationCanBeActivatedWhileTappedAndSummoningSick() {
         Permanent reavers = harness.addToBattlefieldAndReturn(player1, new DrudgeReavers());
         reavers.setSummoningSick(true);
-        reavers.setTapped(true);
+        reavers.tap();
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         harness.activateAbility(player1, 0, null, null);

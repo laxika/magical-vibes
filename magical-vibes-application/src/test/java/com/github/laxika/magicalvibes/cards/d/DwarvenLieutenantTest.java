@@ -102,7 +102,7 @@ class DwarvenLieutenantTest extends BaseCardTest {
     void tappedSummoningSickSourceCanActivate() {
         Permanent dwarf = harness.addToBattlefieldAndReturn(player1, new DwarvenLieutenant());
         dwarf.setSummoningSick(true);
-        dwarf.setTapped(true);
+        dwarf.tap();
         int originalPower = gqs.getEffectivePower(gd, dwarf);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.RED, 1);

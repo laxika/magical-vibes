@@ -26,7 +26,7 @@ public class AttendedHealer extends Card {
 
     public AttendedHealer() {
         addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE,
-                new OncePerTurnTriggerEffect(new CreateTokenEffect(
+                OncePerTurnTriggerEffect.firstLifeGain(new CreateTokenEffect(
                         1, "Cat", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.CAT), Set.of(), Set.of())));
 

@@ -114,8 +114,9 @@ class AminatouTheFateshifterTest extends BaseCardTest {
     @Test
     void minusOneReturnsOwnedPermanentControlledByOpponent() {
         addReadyAminatou(player1, 3);
-        Permanent elves = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
-        elves.getCard().setOwnerId(player1.getId());
+        LlanowarElves ownedElves = new LlanowarElves();
+        ownedElves.setOwnerId(player1.getId());
+        Permanent elves = harness.addToBattlefieldAndReturn(player2, ownedElves);
         gd.stolenCreatures.put(elves.getId(), player1.getId());
 
         harness.activateAbility(player1, 0, 1, null, elves.getId());
@@ -129,8 +130,9 @@ class AminatouTheFateshifterTest extends BaseCardTest {
     @Test
     void minusOneCannotTargetOpponentOwnedPermanentUnderYourControl() {
         addReadyAminatou(player1, 3);
-        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
-        elves.getCard().setOwnerId(player2.getId());
+        LlanowarElves ownedElves = new LlanowarElves();
+        ownedElves.setOwnerId(player2.getId());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, ownedElves);
         gd.stolenCreatures.put(elves.getId(), player2.getId());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, elves.getId()))

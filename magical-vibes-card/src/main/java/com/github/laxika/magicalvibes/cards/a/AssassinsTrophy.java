@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -34,12 +35,12 @@ public class AssassinsTrophy extends Card {
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                 "Target must be a permanent an opponent controls"
         )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
-                new SearchLibraryEffect(
+                new MayEffect(new SearchLibraryEffect(
                         new CardAllOfPredicate(List.of(
                                 new CardSupertypePredicate(CardSupertype.BASIC),
                                 new CardTypePredicate(CardType.LAND)
                         )),
-                        LibrarySearchDestination.BATTLEFIELD),
+                        LibrarySearchDestination.BATTLEFIELD), "Search your library for a basic land card?"),
                 ThenEffectRecipient.TARGET_CONTROLLER));
     }
 }

@@ -56,7 +56,7 @@ class ElvenkingsHarperTest extends BaseCardTest {
     void tappedSummoningSickHarperCanTargetItselfAndActivateRepeatedly() {
         Permanent harper = harness.addToBattlefieldAndReturn(player1, new ElvenkingsHarper());
         harper.setSummoningSick(true);
-        harper.setTapped(true);
+        harper.tap();
         Permanent other = harness.addToBattlefieldAndReturn(player1, new ElvenkingsHarper());
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 8);

@@ -139,6 +139,48 @@ class GorgonRecluseTest extends BaseCardTest {
                 .anyMatch(card -> card.getId().equals(recluse.getId()));
     }
 
+    @Test
+    @DisplayName("A black attacker survives being blocked by Gorgon Recluse")
+    void doesNotDestroyBlackCreatureItBlocks() {
+        Permanent attacker = addCreatureReady(player1, new GorgonRecluse());
+        Permanent blocker = addCreatureReady(player2, new GorgonRecluse());
+
+        declareAttackers(player1, List.of(0));
+        declareBlockers(attacker, blocker);
+        resolveCombat();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+    }
+
+    @Test
+    @DisplayName("Delayed destruction still happens after Gorgon Recluse dies in combat")
+    void destroysBlockersAfterDyingInCombat() {
+        Permanent recluse = addCreatureReady(player1, new GorgonRecluse());
+        Permanent firstBlocker = addCreatureReady(player2, new PenumbraSpider());
+        Permanent secondBlocker = addCreatureReady(player2, new PenumbraSpider());
+
+        declareAttackers(player1, List.of(0));
+        declareBlockers(recluse, firstBlocker, secondBlocker);
+        resolveAllTriggers();
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstBlocker.getId(), 1,
+                secondBlocker.getId(), 1
+        ));
+
+        harness.assertInGraveyard(player1, "Gorgon Recluse");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(firstBlocker, secondBlocker);
+
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .contains(firstBlocker.getCard(), secondBlocker.getCard());
+    }
+
     private void declareBlockers(Permanent attacker, Permanent... blockers) {
         prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of(blockers).stream()

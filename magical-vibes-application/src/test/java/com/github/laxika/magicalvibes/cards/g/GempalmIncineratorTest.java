@@ -61,6 +61,75 @@ class GempalmIncineratorTest extends BaseCardTest {
         harness.assertInHand(player1, "Goblin Turncoat");
     }
 
+    @Test
+    @DisplayName("Cycling still draws when no creature can be targeted")
+    void cyclingWithoutCreaturesStillDraws() {
+        prepareCycle();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Gempalm Incinerator");
+        harness.assertInHand(player1, "Goblin Turncoat");
+    }
+
+    @Test
+    @DisplayName("Goblin count is evaluated when the damage trigger resolves")
+    void goblinSacrificedInResponseIsNotCounted() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FreneticRaptor());
+        harness.addToBattlefield(player1, new GoblinTurncoat());
+        prepareCycle();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Goblin Turncoat");
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInHand(player1, "Goblin Turncoat");
+    }
+
+    @Test
+    @DisplayName("Losing the damage target does not counter the separate cycling draw")
+    void targetSacrificedInResponseStillAllowsDraw() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GoblinTurncoat());
+        prepareCycle();
+
+        harness.activateHandAbility(player1, 0, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Goblin Turncoat");
+        harness.assertInGraveyard(player1, "Goblin Turncoat");
+        harness.assertInGraveyard(player1, "Gempalm Incinerator");
+        harness.assertInHand(player1, "Goblin Turncoat");
+    }
+
+    @Test
+    @DisplayName("The cycling trigger may target and kill a Goblin its controller owns")
+    void cyclingCanKillOwnGoblin() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GoblinTurncoat());
+        prepareCycle();
+
+        cycleAndChoose(target, true);
+
+        harness.assertNotOnBattlefield(player1, "Goblin Turncoat");
+        harness.assertInGraveyard(player1, "Goblin Turncoat");
+        harness.assertInHand(player1, "Goblin Turncoat");
+    }
+
     private void prepareCycle() {
         harness.setHand(player1, List.of(new GempalmIncinerator()));
         harness.setLibrary(player1, List.of(new GoblinTurncoat()));

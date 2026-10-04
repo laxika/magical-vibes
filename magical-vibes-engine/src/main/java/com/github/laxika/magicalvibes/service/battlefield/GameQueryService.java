@@ -9274,7 +9274,8 @@ public class GameQueryService {
     public int getGlobalBlockManaTax(GameData gameData, Permanent blocker) {
         int[] total = {0};
         gameData.forEachPermanent((playerId, source) -> {
-            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+            if (hasLostAllAbilities(gameData, source)) return;
+            for (CardEffect effect : getActiveStaticEffects(gameData, source)) {
                 if (effect instanceof RequirePaymentToBlockEffect tax
                         && (tax.activeCondition() == null || conditionEvaluationService.isMet(
                                 gameData, tax.activeCondition(), ConditionContext.forPermanent(source, playerId)))) {

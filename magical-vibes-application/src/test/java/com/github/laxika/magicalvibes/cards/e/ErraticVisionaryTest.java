@@ -108,7 +108,7 @@ class ErraticVisionaryTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent visionary = addCreatureReady(player1, new ErraticVisionary());
-        visionary.setTapped(true);
+        visionary.tap();
         addActivationMana();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))

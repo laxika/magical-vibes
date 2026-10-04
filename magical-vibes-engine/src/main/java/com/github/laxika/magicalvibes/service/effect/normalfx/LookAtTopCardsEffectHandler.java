@@ -161,7 +161,8 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 .filter(card -> card.getManaValue() <= chooseManaValueAtMost)
                 .filter(card -> card.getManaValue() <= chooseTotalManaValueAtMost)
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
-                        card, e.choosePredicate(), sourceCardId, gameData, controllerId))
+                        card, e.choosePredicate(), sourceCardId, gameData, controllerId,
+                        entry.getSourcePermanentId(), null, null, entry.getSourcePermanentSnapshot()))
                 .toList();
 
         boolean randomBottom = e.restDestination() == LookDestination.BOTTOM_OF_LIBRARY_RANDOM;
@@ -223,7 +224,6 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                         .destination(e.chosenDestination())
                         .grantHaste(e.grantHaste())
                         .returnToHandAtEndStep(e.returnToHandAtEndStep())
-                        .returnToHandAtControllerEndStepId(e.returnToHandAtEndStep() ? controllerId : null)
                         .enterWithCounters(e.battlefieldEntryReplacement())
                         .build(),
                         prompt,
@@ -241,7 +241,6 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                     .prompt("You may put one of these cards onto the battlefield.")
                     .grantHaste(e.grantHaste())
                     .returnToHandAtEndStep(e.returnToHandAtEndStep())
-                        .returnToHandAtControllerEndStepId(e.returnToHandAtEndStep() ? controllerId : null)
                     .enterWithCounters(e.battlefieldEntryReplacement())
                     .destination(e.chosenDestination())
                     .build(),

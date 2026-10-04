@@ -167,4 +167,23 @@ class AmyPondTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.findExiledCard(refrain.getId())).isNotNull();
     }
+
+    @Test
+    void removingLastGrantedSuspendCounterCreatesRespondableCastTrigger() {
+        addCreatureReady(player1, new AmyPond());
+        RoryWilliams rory = new RoryWilliams();
+        harness.setExile(player1, List.of(rory));
+        gd.suspendedSpellExiles.add(new GameData.SuspendedSpellExile(rory.getId(), player1.getId(), 1));
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(rory.getId()));
+
+        assertThat(gd.suspendedSpellExiles).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.findExiledCard(rory.getId())).isNotNull();
+    }
 }

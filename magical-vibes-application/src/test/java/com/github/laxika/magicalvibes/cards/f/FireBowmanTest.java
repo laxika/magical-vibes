@@ -103,7 +103,7 @@ class FireBowmanTest extends BaseCardTest {
     void canActivateWhileTappedDuringUpkeep() {
         setupOnMyTurn(TurnStep.UPKEEP);
         Permanent bowman = gd.playerBattlefields.get(player1.getId()).getFirst();
-        bowman.setTapped(true);
+        bowman.tap();
         bowman.setSummoningSick(true);
         harness.setLife(player2, 20);
 

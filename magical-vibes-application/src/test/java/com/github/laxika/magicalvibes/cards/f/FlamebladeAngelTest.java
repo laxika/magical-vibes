@@ -9,7 +9,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -112,7 +111,7 @@ class FlamebladeAngelTest extends BaseCardTest {
         harness.addToBattlefield(player2, new DevilthornFox());
 
         declareAttackersAndPrepareBlockers(player2, List.of(0));
-        gs.declareBlockers(gd, player1, Map.of());
+        gs.declareBlockers(gd, player1, List.of());
         resolveCombat(player2);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);

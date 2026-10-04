@@ -130,4 +130,47 @@ class GoblinClearcutterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Goblin Clearcutter");
     }
+
+    @Test
+    @DisplayName("Summoning sickness prevents activation without sacrificing the Forest")
+    void cannotActivateWhileSummoningSick() {
+        Permanent clearcutter = harness.addToBattlefieldAndReturn(player1, new GoblinClearcutter());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(clearcutter.isTapped()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(clearcutter, forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only red and green may be chosen for each of the three mana")
+    void rejectsOtherManaColorsWithoutConsumingAPick() {
+        addCreatureReady(player1, new GoblinClearcutter());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        for (String color : new String[]{"WHITE", "BLUE", "BLACK", "COLORLESS"}) {
+            assertThatThrownBy(() -> harness.handleListChoice(player1, color))
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+
+        harness.handleListChoice(player1, "RED");
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "BLUE"))
+                .isInstanceOf(IllegalArgumentException.class);
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Forest");
+    }
 }

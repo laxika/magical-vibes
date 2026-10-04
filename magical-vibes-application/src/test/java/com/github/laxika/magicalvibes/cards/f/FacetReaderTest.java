@@ -90,7 +90,7 @@ class FacetReaderTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent reader = addReadyReader(player1);
-        reader.setTapped(true);
+        reader.tap();
         prepareMainPhase();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 

@@ -129,7 +129,7 @@ class FlailingManticoreTest extends BaseCardTest {
     void abilitiesDoNotRequireTappingOrHaste() {
         Permanent manticore = harness.addToBattlefieldAndReturn(player1, new FlailingManticore());
         manticore.setSummoningSick(true);
-        manticore.setTapped(true);
+        manticore.tap();
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, null);

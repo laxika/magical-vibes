@@ -68,6 +68,7 @@ public class ArchangelElspeth extends Card {
                                 new CardMaxManaValuePredicate(3)
                         )))
                         .returnAll(true)
+                        .chooseAuraAttachment(true)
                         .build()),
                 "−6: Return all nonland permanent cards with mana value 3 or less from your graveyard to the battlefield."
         ));

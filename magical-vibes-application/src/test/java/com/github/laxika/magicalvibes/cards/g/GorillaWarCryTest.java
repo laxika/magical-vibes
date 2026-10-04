@@ -132,4 +132,50 @@ class GorillaWarCryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
+
+    @Test
+    @DisplayName("Casting during an opponent's beginning of combat with no creatures still draws once next turn")
+    void emptyBattlefieldStillSchedulesDrawForCaster() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.setHand(player1, List.of(new GorillaWarCry()));
+        GorillaShaman drawnCard = new GorillaShaman();
+        harness.setLibrary(player1, List.of(drawnCard, new GorillaShaman()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.UPKEEP);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("Creatures entering while the spell is on the stack gain menace on resolution")
+    void affectedCreaturesAreDeterminedAtResolution() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.setHand(player1, List.of(new GorillaWarCry()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0);
+        Permanent enteredBeforeResolution = addCreatureReady(player2, new GorillaShaman());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, enteredBeforeResolution, Keyword.MENACE)).isTrue();
+    }
 }

@@ -140,7 +140,7 @@ class ForcemageAdvocateTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent advocate = addReadyAdvocate();
-        advocate.setTapped(true);
+        advocate.tap();
         Card returnedCard = new KrosanReclamation();
         harness.setGraveyard(player2, List.of(returnedCard));
 

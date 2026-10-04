@@ -126,13 +126,13 @@ class AnthousaSetessanHeroTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, anthousa.getId());
         harness.handlePermanentChosen(player1, forest.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, forest)).isTrue();
         harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(forest));
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
 
+        declareAttackers(List.of());
         harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.isCreature(gd, forest)).isFalse();

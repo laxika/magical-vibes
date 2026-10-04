@@ -16,7 +16,9 @@ public class AstralDrift extends Card {
         target(TargetFilters.creature()).addEffect(EffectSlot.ON_CONTROLLER_DISCARDS,
                 new CyclingTriggerEffect(new MayEffect(
                         FlickerEffect.exileTargetReturnAtEndStep(),
-                        "Exile target creature?")));
+                        "Exile target creature?")))
+                .addEffect(EffectSlot.ON_SELF_CYCLED, new MayEffect(
+                        FlickerEffect.exileTargetReturnAtEndStep(), "Exile target creature?"));
         addCycling("{2}{W}");
     }
 }

@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLandDropEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -343,12 +342,6 @@ public class EffectResolutionService {
             // Sequence expansion: splice the steps into this entry's effect list so they resolve
             // in order through this same loop (pause/resume and nested wrappers work unchanged).
             if (effectToResolve instanceof SequenceEffect sequence) {
-                if (!sequence.steps().isEmpty()
-                        && sequence.steps().getFirst() instanceof ExileSourceCardFromGraveyardEffect
-                        && gameData.playerGraveyards.values().stream().noneMatch(graveyard -> graveyard.stream()
-                                .anyMatch(card -> card.getId().equals(entry.getCard().getId())))) {
-                    continue;
-                }
                 entry.insertEffectsToResolve(i + 1, sequence.steps());
                 effects = entry.getEffectsToResolve();
                 continue;

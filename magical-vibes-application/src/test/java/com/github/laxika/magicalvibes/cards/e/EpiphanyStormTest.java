@@ -116,7 +116,7 @@ class EpiphanyStormTest extends BaseCardTest {
     @Test
     void cannotActivateWhenCreatureIsTapped() {
         Permanent creature = addEnchantedCreature();
-        creature.setTapped(true);
+        creature.tap();
         harness.setHand(player1, List.of(new Forest()));
         harness.addMana(player1, ManaColor.RED, 1);
 

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(GodlessShrine.class)
 class GodlessShrineTest extends BaseCardTest {
@@ -81,6 +82,46 @@ class GodlessShrineTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(shrine.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Godless Shrine can produce mana immediately after paying life")
+    void paidShrineCanProduceManaImmediately() {
+        playShrine(20);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(findShrine(player1).isTapped()).isTrue();
+        harness.assertLife(player1, 18);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Godless Shrine cannot produce mana after declining the payment")
+    void declinedShrineCannotProduceMana() {
+        playShrine(20);
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(findShrine(player1).isTapped()).isTrue();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A player at exactly 2 life may decline Godless Shrine's payment")
+    void exactLifeTotalMayDeclinePayment() {
+        playShrine(2);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, 2);
+        assertThat(findShrine(player1).isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     private void playShrine(int life) {

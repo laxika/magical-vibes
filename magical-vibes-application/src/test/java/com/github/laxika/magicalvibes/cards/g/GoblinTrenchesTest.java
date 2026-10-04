@@ -96,4 +96,47 @@ class GoblinTrenchesTest extends BaseCardTest {
         assertThat(countPermanents(player1, "Mountain")).isEqualTo(1);
         assertThat(findPermanents(player1, "Goblin Soldier")).isEmpty();
     }
+
+    @Test
+    @DisplayName("A tapped land can be sacrificed on the opponent's turn, before tokens are created")
+    void activatesOnOpponentsTurnWithTappedLand() {
+        harness.addToBattlefield(player1, new GoblinTrenches());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        land.setTapped(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(countPermanents(player1, "Mountain")).isZero();
+        assertThat(countPermanents(player1, "Goblin Soldier")).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Goblin Soldier")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Goblin Soldier")).isZero();
+        assertThat(findPermanents(player1, "Goblin Soldier"))
+                .allSatisfy(token -> assertThat(token.isTapped()).isFalse());
+    }
+
+    @Test
+    @DisplayName("An opponent's land cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsLand() {
+        harness.addToBattlefield(player1, new GoblinTrenches());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Mountain");
+        harness.assertNotInGraveyard(player2, "Mountain");
+        assertThat(gd.stack).isEmpty();
+        assertThat(countPermanents(player1, "Goblin Soldier")).isZero();
+    }
 }

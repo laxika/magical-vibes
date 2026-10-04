@@ -2,11 +2,15 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
+import com.github.laxika.magicalvibes.cards.f.FlamebornViron;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.ShrineOfBurningRage;
+import com.github.laxika.magicalvibes.cards.s.SlashPanther;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Geosurge.class, AirElemental.class, CopperMyr.class, Shock.class,
+        GoblinEliteInfantry.class, FlamebornViron.class, ShrineOfBurningRage.class, SlashPanther.class})
 class GeosurgeTest extends BaseCardTest {
 
     
@@ -27,8 +33,7 @@ class GeosurgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Geosurge()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());
         assertThat(pool.getRestrictedRed()).isEqualTo(7);
@@ -43,8 +48,7 @@ class GeosurgeTest extends BaseCardTest {
         // Cast Geosurge first to get the restricted mana
         harness.setHand(player1, List.of(new Geosurge()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());
         assertThat(pool.getRestrictedRed()).isEqualTo(7);
@@ -68,8 +72,7 @@ class GeosurgeTest extends BaseCardTest {
         // Cast Geosurge first
         harness.setHand(player1, List.of(new Geosurge()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());
         assertThat(pool.getRestrictedRed()).isEqualTo(7);
@@ -91,8 +94,7 @@ class GeosurgeTest extends BaseCardTest {
         // Give player only restricted red mana (plus enough to cast Geosurge)
         harness.setHand(player1, List.of(new Geosurge()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         ManaPool pool = gd.playerManaPools.get(player1.getId());
         assertThat(pool.getRestrictedRed()).isEqualTo(7);
@@ -133,5 +135,74 @@ class GeosurgeTest extends BaseCardTest {
         pool.clear();
 
         assertThat(pool.getRestrictedRed()).isEqualTo(0);
+    }
+
+    @Test
+    void restrictedManaCanCastNoncreatureArtifacts() {
+        resolveGeosurge();
+        harness.setHand(player1, List.of(new ShrineOfBurningRage()));
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Shrine of Burning Rage");
+        assertThat(gd.playerManaPools.get(player1.getId()).getRestrictedRed()).isEqualTo(5);
+    }
+
+    @Test
+    void producedManaPaysBothGenericAndColoredCreatureCosts() {
+        resolveGeosurge();
+        harness.setHand(player1, List.of(new FlamebornViron()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Flameborn Viron");
+        assertThat(gd.playerManaPools.get(player1.getId()).getRestrictedRed()).isEqualTo(1);
+    }
+
+    @Test
+    void restrictedManaCannotPayArtifactActivatedAbilityCosts() {
+        resolveGeosurge();
+        harness.addToBattlefield(player1, new ShrineOfBurningRage());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Shrine of Burning Rage");
+        assertThat(gd.playerManaPools.get(player1.getId()).getRestrictedRed()).isEqualTo(7);
+    }
+
+    @Test
+    void restrictedManaCannotCastAnotherGeosurge() {
+        resolveGeosurge();
+        harness.setHand(player1, List.of(new Geosurge()));
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).getRestrictedRed()).isEqualTo(7);
+    }
+
+    private void resolveGeosurge() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Geosurge()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castAndResolveSorcery(player1, 0, 0);
+    }
+
+    @Test
+    void restrictedManaPaysRedPhyrexianSymbolWhenManaPaymentIsChosen() {
+        resolveGeosurge();
+        harness.setHand(player1, List.of(new SlashPanther()));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        harness.ensurePriority(player1);
+
+        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false, null, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Slash Panther");
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.playerManaPools.get(player1.getId()).getRestrictedRed()).isEqualTo(2);
     }
 }

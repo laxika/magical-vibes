@@ -7,11 +7,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(GoblinPatrol.class)
+@CardUsed({GoblinPatrol.class})
 class GoblinPatrolTest extends BaseCardTest {
 
     @Test
@@ -46,10 +44,38 @@ class GoblinPatrolTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Goblin Patrol");
     }
 
+    @Test
+    @DisplayName("Echo creates no enters-the-battlefield trigger")
+    void echoDoesNotTriggerOnEntry() {
+        harness.castFromHand(player1, new GoblinPatrol(), "{R}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Goblin Patrol");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not consume the pending echo obligation")
+    void echoWaitsForControllersUpkeep() {
+        castAndResolveGoblinPatrol();
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Goblin Patrol");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Goblin Patrol");
+        harness.assertInGraveyard(player1, "Goblin Patrol");
+    }
+
     private void castAndResolveGoblinPatrol() {
-        harness.setHand(player1, List.of(new GoblinPatrol()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.castCreature(player1, 0, 0);
+        harness.castFromHand(player1, new GoblinPatrol(), "{R}");
         resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Goblin Patrol");
     }

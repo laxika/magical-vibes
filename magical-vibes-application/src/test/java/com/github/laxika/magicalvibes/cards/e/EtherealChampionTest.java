@@ -182,7 +182,7 @@ class EtherealChampionTest extends BaseCardTest {
     @DisplayName("The life-only ability can be activated while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent champion = harness.addToBattlefieldAndReturn(player1, new EtherealChampion());
-        champion.setTapped(true);
+        champion.tap();
         int lifeBefore = gd.getLife(player1.getId());
 
         harness.activateAbility(player1, indexOf(player1, champion), null, null);

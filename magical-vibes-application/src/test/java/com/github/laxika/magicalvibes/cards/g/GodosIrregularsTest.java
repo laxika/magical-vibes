@@ -99,6 +99,49 @@ class GodosIrregularsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Two stacked activations kill a two-toughness blocker before combat damage")
+    void stackedActivationsKillBlocker() {
+        addCreatureReady(player1, new GodosIrregulars());
+        Permanent blocker = addCreatureReady(player2, new DeathmaskNezumi());
+
+        blockIrregulars();
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, 0, null, blocker.getId());
+        harness.activateAbility(player1, 0, 0, null, blocker.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Deathmask Nezumi");
+        harness.assertInGraveyard(player2, "Deathmask Nezumi");
+        harness.assertOnBattlefield(player1, "Godo's Irregulars");
+    }
+
+    @Test
+    @DisplayName("Cannot activate without red mana even with a legal blocker")
+    void cannotActivateWithoutMana() {
+        addCreatureReady(player1, new GodosIrregulars());
+        Permanent blocker = addCreatureReady(player2, new DeathmaskNezumi());
+
+        blockIrregulars();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, blocker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(blocker.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature outside combat")
+    void cannotTargetOutsideCombat() {
+        addCreatureReady(player1, new GodosIrregulars());
+        Permanent potentialBlocker = addCreatureReady(player2, new DeathmaskNezumi());
+
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, potentialBlocker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void blockIrregulars() {
         blockIrregulars(List.of(new BlockerAssignment(0, 0)));
     }

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Gelectrode.class, Pyromatics.class, TrainOfThought.class})
 class GelectrodeTest extends BaseCardTest {
@@ -60,12 +61,8 @@ class GelectrodeTest extends BaseCardTest {
     @DisplayName("Casting a sorcery may untap Gelectrode")
     void sorcerySpellMayUntap() {
         Permanent gelectrode = addTappedGelectrode();
-        harness.setHand(player1, List.of(new TrainOfThought()));
         harness.setLibrary(player1, List.of(new Gelectrode()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castSorcery(player1, 0);
+        harness.castFromHand(player1, new TrainOfThought(), "{1}{U}");
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 
@@ -112,6 +109,93 @@ class GelectrodeTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gelectrode.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The tap ability cannot be activated while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new Gelectrode());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sick");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("The tap ability cannot be activated while already tapped")
+    void cannotActivateWhileTapped() {
+        addTappedGelectrode();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Damage still resolves after Gelectrode dies in response")
+    void damageResolvesAfterSourceDies() {
+        Permanent gelectrode = addCreatureReady(player1, new Gelectrode());
+        addCreatureReady(player2, new Gelectrode());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player2, 0, null, gelectrode.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(gelectrode.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("An accepted untap trigger allows a second damage activation")
+    void canActivateAgainAfterUntap() {
+        Permanent gelectrode = addCreatureReady(player1, new Gelectrode());
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Pyromatics()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gelectrode.isTapped()).isFalse();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+        assertThat(gelectrode.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Casting while untapped still triggers an untap that can resolve after tapping")
+    void untappedGelectrodeStillTriggers() {
+        Permanent gelectrode = addCreatureReady(player1, new Gelectrode());
+        harness.setHand(player1, List.of(new Pyromatics()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gelectrode.isTapped()).isTrue();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+
+        harness.passBothPriorities();
+
+        assertThat(gelectrode.isTapped()).isFalse();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
 
     private Permanent addTappedGelectrode() {

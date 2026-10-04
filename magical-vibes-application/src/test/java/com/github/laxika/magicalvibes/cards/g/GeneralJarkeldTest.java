@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.b.BoggartBrute;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranWarrior;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GeneralJarkeld.class, KjeldoranWarrior.class})
+@CardUsed({GeneralJarkeld.class, KjeldoranWarrior.class, BoggartBrute.class})
 class GeneralJarkeldTest extends BaseCardTest {
 
     @Test
@@ -225,6 +226,77 @@ class GeneralJarkeldTest extends BaseCardTest {
         assertThat(blockerB.getBlockingTargets()).containsExactly(aIdx);
         assertThat(attackerA.isBlockedWithoutBlockers()).isFalse();
         assertThat(attackerB.isBlockedWithoutBlockers()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Swaps every exclusive blocker when attackers have different numbers of blockers")
+    void swapsAllExclusiveBlockers() {
+        Permanent jarkeld = addCreatureReady(player1, new GeneralJarkeld());
+        Permanent attackerA = addCreatureReady(player1, new KjeldoranWarrior());
+        Permanent attackerB = addCreatureReady(player1, new KjeldoranWarrior());
+        Permanent blockerA = addCreatureReady(player2, new KjeldoranWarrior());
+        Permanent blockerB = addCreatureReady(player2, new KjeldoranWarrior());
+        Permanent extraBlockerA = addCreatureReady(player2, new KjeldoranWarrior());
+        setupTwoBlockedAttackers(attackerA, attackerB, blockerA, blockerB);
+        assignBlocker(extraBlockerA, attackerA,
+                gd.playerBattlefields.get(player1.getId()).indexOf(attackerA));
+
+        harness.activateAbilityWithMultiTargets(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(jarkeld), 0,
+                List.of(attackerA.getId(), attackerB.getId()));
+        harness.passBothPriorities();
+
+        assertThat(blockerA.getBlockingTargetIds()).containsExactly(attackerB.getId());
+        assertThat(extraBlockerA.getBlockingTargetIds()).containsExactly(attackerB.getId());
+        assertThat(blockerB.getBlockingTargetIds()).containsExactly(attackerA.getId());
+    }
+
+    @Test
+    @DisplayName("Resolves after General Jarkeld leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent jarkeld = addCreatureReady(player1, new GeneralJarkeld());
+        Permanent attackerA = addCreatureReady(player1, new KjeldoranWarrior());
+        Permanent attackerB = addCreatureReady(player1, new KjeldoranWarrior());
+        Permanent blockerA = addCreatureReady(player2, new KjeldoranWarrior());
+        Permanent blockerB = addCreatureReady(player2, new KjeldoranWarrior());
+        setupTwoBlockedAttackers(attackerA, attackerB, blockerA, blockerB);
+
+        harness.activateAbilityWithMultiTargets(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(jarkeld), 0,
+                List.of(attackerA.getId(), attackerB.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(jarkeld);
+        gd.playerGraveyards.get(player1.getId()).add(jarkeld.getCard());
+        harness.passBothPriorities();
+
+        assertThat(blockerA.getBlockingTargetIds()).containsExactly(attackerB.getId());
+        assertThat(blockerB.getBlockingTargetIds()).containsExactly(attackerA.getId());
+        assertThat(blockerA.getBlockingTargets()).containsExactly(
+                gd.playerBattlefields.get(player1.getId()).indexOf(attackerB));
+        assertThat(blockerB.getBlockingTargets()).containsExactly(
+                gd.playerBattlefields.get(player1.getId()).indexOf(attackerA));
+    }
+
+    @Test
+    @DisplayName("Does not swap when the other attacker's blockers cannot satisfy menace")
+    void noSwapWhenIncomingBlockerGroupViolatesMenace() {
+        Permanent jarkeld = addCreatureReady(player1, new GeneralJarkeld());
+        Permanent attackerA = addCreatureReady(player1, new BoggartBrute());
+        Permanent attackerB = addCreatureReady(player1, new KjeldoranWarrior());
+        Permanent blockerA = addCreatureReady(player2, new KjeldoranWarrior());
+        Permanent blockerB = addCreatureReady(player2, new KjeldoranWarrior());
+        Permanent extraBlockerA = addCreatureReady(player2, new KjeldoranWarrior());
+        setupTwoBlockedAttackers(attackerA, attackerB, blockerA, blockerB);
+        assignBlocker(extraBlockerA, attackerA,
+                gd.playerBattlefields.get(player1.getId()).indexOf(attackerA));
+
+        harness.activateAbilityWithMultiTargets(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(jarkeld), 0,
+                List.of(attackerA.getId(), attackerB.getId()));
+        harness.passBothPriorities();
+
+        assertThat(blockerA.getBlockingTargetIds()).containsExactly(attackerA.getId());
+        assertThat(extraBlockerA.getBlockingTargetIds()).containsExactly(attackerA.getId());
+        assertThat(blockerB.getBlockingTargetIds()).containsExactly(attackerB.getId());
     }
 
     private void setupTwoBlockedAttackers(

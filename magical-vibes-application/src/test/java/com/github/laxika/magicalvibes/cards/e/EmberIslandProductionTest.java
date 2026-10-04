@@ -68,7 +68,7 @@ class EmberIslandProductionTest extends BaseCardTest {
     void doesNotCopyPermanentState() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
-        target.setTapped(true);
+        target.tap();
 
         cast(0, target);
 

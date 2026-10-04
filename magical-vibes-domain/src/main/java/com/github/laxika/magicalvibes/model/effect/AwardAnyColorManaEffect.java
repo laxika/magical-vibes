@@ -199,9 +199,8 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
 
     /** "Add one mana of any color in your commander's color identity." */
     public static AwardAnyColorManaEffect forCommanderColorIdentity() {
-        return new AwardAnyColorManaEffect(new Fixed(1), ManaSpendRestriction.NONE, null,
-                false, false, false, false, false, false, Set.of(), false,
-                ManaColor.COLORS, true, true);
+        return new AwardAnyColorManaEffect(new Fixed(1), ManaSpendRestriction.COMMANDER_COLOR_IDENTITY, null,
+                false, false, false, false, false, false, Set.of(), false);
     }
 
     /** "Add N mana of different colors." */

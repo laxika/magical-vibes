@@ -117,7 +117,7 @@ class ArnjlotsAscentTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(ascent.getCounterCount(CounterType.AGE)).isEqualTo(2);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(ascent);

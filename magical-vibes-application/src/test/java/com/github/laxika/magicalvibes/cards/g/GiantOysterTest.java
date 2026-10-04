@@ -7,10 +7,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -136,8 +134,9 @@ class GiantOysterTest extends BaseCardTest {
         advanceToDraw(player1);
         harness.performUntapStep(player1);
         harness.inMutationScope(() ->
-                GameTestEngineContext.get().getBean(PlayerInputService.class).processNextMayAbility(gd));
+                harness.getPlayerInputService().processNextMayAbility(gd));
         harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities(); // resolve the counter-removal trigger first
         harness.passBothPriorities();
 
         assertThat(oyster.isTapped()).isFalse();
@@ -152,6 +151,7 @@ class GiantOysterTest extends BaseCardTest {
 
         advanceToDraw(player1);
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, oyster));
+        harness.passBothPriorities(); // resolve the counter-removal trigger first
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
@@ -171,6 +171,7 @@ class GiantOysterTest extends BaseCardTest {
         advanceToNextTurnWithMayChoice(player2, true);
 
         assertThat(oyster.isTapped()).isFalse();
+        harness.passBothPriorities();
         assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 
@@ -205,6 +206,7 @@ class GiantOysterTest extends BaseCardTest {
         advanceToNextTurn(player1);
         advanceToNextTurnWithMayChoice(player2, true);
 
+        harness.passBothPriorities();
         assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 
@@ -219,6 +221,40 @@ class GiantOysterTest extends BaseCardTest {
         assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, oyster));
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The original controller's draw step still adds counters after control of Giant Oyster changes")
+    void originalControllerDrawStepStillAddsCountersAfterControlChanges() {
+        Permanent oyster = addOyster(player1);
+        Permanent creature = lockCreature(oyster);
+        harness.inMutationScope(() -> {
+            gd.playerBattlefields.get(player1.getId()).remove(oyster);
+            gd.playerBattlefields.get(player2.getId()).add(oyster);
+        });
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The new controller's draw step does not add counters for the original activation")
+    void newControllerDrawStepDoesNotAddCountersAfterControlChanges() {
+        Permanent oyster = addOyster(player1);
+        Permanent creature = lockCreature(oyster);
+        harness.inMutationScope(() -> {
+            gd.playerBattlefields.get(player1.getId()).remove(oyster);
+            gd.playerBattlefields.get(player2.getId()).add(oyster);
+        });
+
+        advanceToDraw(player2);
+        harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
@@ -276,14 +312,8 @@ class GiantOysterTest extends BaseCardTest {
     }
 
     private void advanceToNextTurnWithMayChoice(Player currentActivePlayer, boolean acceptUntap) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-
+        advanceToNextTurn(currentActivePlayer);
         Player newActivePlayer = currentActivePlayer == player1 ? player2 : player1;
-        harness.passUntil(newActivePlayer, TurnStep.UNTAP);
         harness.handleMayAbilityChosen(newActivePlayer, acceptUntap);
     }
 }

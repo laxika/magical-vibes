@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "CMM", collectorNumber = "705")
 @CardRegistration(set = "CMM", collectorNumber = "773")
@@ -52,7 +53,9 @@ public class AniktheaHandOfErebos extends Card {
                         false,
                         CardColor.BLACK,
                         3,
-                        3);
+                        3,
+                        Set.of(), false, false, null, false, false, false,
+                        Set.of(CardType.CREATURE), false, false, false);
         graveyardTarget.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, copyEffect);
         graveyardTarget.addEffect(EffectSlot.ON_ATTACK, copyEffect);
     }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.cards.c.CascadeBluffs;
 import com.github.laxika.magicalvibes.cards.d.DoubleCleave;
 import com.github.laxika.magicalvibes.cards.r.RiverfallMimic;
+import com.github.laxika.magicalvibes.cards.s.SoulReap;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
@@ -19,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Glamerdye.class, RiverfallMimic.class, DoubleCleave.class, CascadeBluffs.class})
+@CardUsed({Glamerdye.class, RiverfallMimic.class, DoubleCleave.class, CascadeBluffs.class, SoulReap.class})
 class GlamerdyeTest extends BaseCardTest {
 
     @Test
@@ -56,8 +57,7 @@ class GlamerdyeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DoubleCleave()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, mimic.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, mimic.getId());
 
         assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(3);
@@ -103,8 +103,7 @@ class GlamerdyeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DoubleCleave()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, mimic.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, mimic.getId());
 
         assertThat(gqs.getEffectivePower(gd, mimic)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, mimic)).isEqualTo(3);
@@ -163,4 +162,43 @@ class GlamerdyeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("fizzles"));
     }
+
+    @Test
+    @DisplayName("Changing nongreen to nonblue makes a blue creature target illegal")
+    void changesTargetRestrictionOnSpell() {
+        Permanent mimic = harness.addToBattlefieldAndReturn(player2, new RiverfallMimic());
+        harness.setHand(player1, List.of(new SoulReap(), new Glamerdye()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, mimic.getId());
+        UUID reapSpellId = gd.stack.getFirst().getCard().getId();
+        harness.castAndResolveInstant(player1, 0, reapSpellId);
+        harness.handleListChoice(player1, "GREEN");
+        harness.handleListChoice(player1, "BLUE");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Riverfall Mimic");
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Soul Reap");
+    }
+
+    @Test
+    @DisplayName("A permanent without color words is still a legal target")
+    void canTargetPermanentWithoutColorWords() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new CascadeBluffs());
+        harness.setHand(player1, List.of(new Glamerdye()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, land.getId());
+        harness.handleListChoice(player1, "BLUE");
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player2, "Cascade Bluffs");
+        harness.assertInGraveyard(player1, "Glamerdye");
+    }
+
 }

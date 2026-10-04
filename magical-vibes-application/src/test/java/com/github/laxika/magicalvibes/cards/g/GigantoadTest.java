@@ -43,6 +43,42 @@ class GigantoadTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, gigantoad)).isEqualTo(4);
     }
 
+    @Test
+    @DisplayName("Boost updates immediately when the land count crosses seven in either direction")
+    void boostTracksLandCountChanges() {
+        Permanent gigantoad = addGigantoad(player1);
+        addLands(player1, 6);
+
+        assertThat(gqs.getEffectivePower(gd, gigantoad)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, gigantoad)).isEqualTo(4);
+
+        Permanent seventhLand = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(gqs.getEffectivePower(gd, gigantoad)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, gigantoad)).isEqualTo(6);
+
+        gd.playerBattlefields.get(player1.getId()).remove(seventhLand);
+
+        assertThat(gqs.getEffectivePower(gd, gigantoad)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, gigantoad)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Multiple Gigantoads each receive only their own boost with more than seven lands")
+    void boostIsSelfOnlyAndDoesNotScaleWithLandCount() {
+        Permanent first = addGigantoad(player1);
+        Permanent second = addGigantoad(player1);
+        Permanent opponent = addGigantoad(player2);
+        addLands(player1, 8);
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(4);
+    }
+
     private Permanent addGigantoad(Player player) {
         return harness.addToBattlefieldAndReturn(player, new Gigantoad());
     }

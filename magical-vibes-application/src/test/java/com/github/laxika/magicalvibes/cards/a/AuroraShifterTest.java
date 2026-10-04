@@ -98,10 +98,12 @@ class AuroraShifterTest extends BaseCardTest {
         addCreatureReady(player1, new AuroraShifter());
         gd.playerEnergyCounters.put(player1.getId(), 2);
 
-        advanceToBeginningOfCombat(player1);
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> {
+            advanceToBeginningOfCombat(player1);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+            resolveAllTriggers();
+        });
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isZero();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -113,11 +115,13 @@ class AuroraShifterTest extends BaseCardTest {
         addCreatureReady(player1, new AirElemental());
         gd.playerEnergyCounters.put(player1.getId(), 2);
 
-        advanceToBeginningOfCombat(player1);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> {
+            advanceToBeginningOfCombat(player1);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+            resolveAllTriggers();
+        });
 
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, aurora, Keyword.FLYING)).isFalse();

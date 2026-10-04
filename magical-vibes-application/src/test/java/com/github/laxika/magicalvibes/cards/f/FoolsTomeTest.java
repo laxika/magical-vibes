@@ -84,7 +84,7 @@ class FoolsTomeTest extends BaseCardTest {
     @DisplayName("Cannot activate a tapped Tome even with an empty hand")
     void cannotActivateWhenTapped() {
         Permanent tome = addTome();
-        tome.setTapped(true);
+        tome.tap();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(new HornedTurtle()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);

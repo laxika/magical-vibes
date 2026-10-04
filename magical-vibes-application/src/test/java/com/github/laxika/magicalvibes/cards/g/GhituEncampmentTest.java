@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GhituEncampment.class)
+@CardUsed({GhituEncampment.class, GrizzlyBears.class})
 class GhituEncampmentTest extends BaseCardTest {
 
     // ===== Enters the battlefield tapped =====
@@ -195,5 +196,72 @@ class GhituEncampmentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Encampment can animate without untapping")
+    void tappedLandCanAnimate() {
+        harness.setHand(player1, List.of(new GhituEncampment()));
+        harness.playLand(player1, 0);
+        Permanent encampment = findPermanent(player1, "Ghitu Encampment");
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, encampment)).isTrue();
+        assertThat(encampment.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newly controlled land can animate but cannot tap for mana as a creature")
+    void newlyControlledAnimatedLandCannotTapForMana() {
+        Permanent encampment = harness.addToBattlefieldAndReturn(player1, new GhituEncampment());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, encampment)).isTrue();
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(encampment.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Repeated animation does not add power or toughness")
+    void repeatedAnimationKeepsBasePowerAndToughness() {
+        Permanent encampment = addCreatureReady(player1, new GhituEncampment());
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, encampment)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, encampment)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, encampment, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("First strike kills a blocking Bear before it can deal damage")
+    void firstStrikeKillsBlockerBeforeRegularDamage() {
+        Permanent encampment = addCreatureReady(player1, new GhituEncampment());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Ghitu Encampment");
+        assertThat(encampment.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 20);
     }
 }

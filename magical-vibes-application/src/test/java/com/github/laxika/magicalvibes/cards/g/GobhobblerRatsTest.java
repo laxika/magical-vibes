@@ -63,4 +63,57 @@ class GobhobblerRatsTest extends BaseCardTest {
 
         assertThat(rats.getRegenerationShield()).isEqualTo(1);
     }
+
+    @Test
+    void opponentsHandDoesNotPreventHellbent() {
+        Permanent rats = addCreatureReady(player1, new GobhobblerRats());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Drekavac()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThat(gqs.getEffectivePower(gd, rats)).isEqualTo(3);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(rats.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    void regenerationAbilityReturnsWhenHandBecomesEmptyAgain() {
+        Permanent rats = addCreatureReady(player1, new GobhobblerRats());
+        harness.setHand(player1, List.of(new Drekavac()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.setHand(player1, List.of());
+        rats.setTapped(true);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, rats)).isEqualTo(3);
+        assertThat(rats.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    void regenerationShieldStillPreventsDestructionAfterHellbentEnds() {
+        Permanent rats = addCreatureReady(player1, new GobhobblerRats());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Drekavac()));
+        rats.setMarkedDamage(1);
+        rats.setAttacking(true);
+
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().tryDestroyPermanent(gd, rats));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(rats);
+        assertThat(rats.getRegenerationShield()).isZero();
+        assertThat(rats.isTapped()).isTrue();
+        assertThat(rats.isAttacking()).isFalse();
+        assertThat(rats.getMarkedDamage()).isZero();
+    }
 }

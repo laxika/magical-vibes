@@ -1,48 +1,55 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.b.BattlefieldRaptor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GnottvoldRecluse.class, BattlefieldRaptor.class})
 class GnottvoldRecluseTest extends BaseCardTest {
 
     @Test
     void reachLetsGnottvoldRecluseBlockAcreatureWithFlying() {
-        Permanent flyer = addReadyAttacker(player1, new SuntailHawk());
-        Permanent recluse = addReadyBlocker(player2, new GnottvoldRecluse());
+        Permanent flyer = addCreatureReady(player1, new BattlefieldRaptor());
+        flyer.setAttacking(true);
+        Permanent recluse = addCreatureReady(player2, new GnottvoldRecluse());
 
         prepareDeclareBlockers();
-
-        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
-                indexOf(player2, recluse), indexOf(player1, flyer))));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(recluse.isBlocking()).isTrue();
     }
 
-    private Permanent addReadyAttacker(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        perm.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    void reachAllowsBlockingNonFlyingCreature() {
+        addCreatureReady(player1, new GnottvoldRecluse());
+        Permanent recluse = addCreatureReady(player2, new GnottvoldRecluse());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(recluse.isBlocking()).isTrue();
     }
 
-    private Permanent addReadyBlocker(Player player, Card card) {
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
-    }
+    @Test
+    void tappedRecluseCannotBlockFlyingCreature() {
+        addCreatureReady(player1, new BattlefieldRaptor());
+        Permanent recluse = addCreatureReady(player2, new GnottvoldRecluse());
 
-    private int indexOf(Player player, Permanent perm) {
-        return gd.playerBattlefields.get(player.getId()).indexOf(perm);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        recluse.setTapped(true);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid blocker index");
+        assertThat(recluse.isBlocking()).isFalse();
     }
 }

@@ -105,7 +105,7 @@ class FogwellsGymTest extends BaseCardTest {
         FogwellsGym card = new FogwellsGym();
         harness.setHand(player1, List.of(card));
         harness.addMana(player1, ManaColor.RED, 3);
-        land.setTapped(true);
+        land.tap();
         int lifeBefore = gd.getLife(player1.getId());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

@@ -108,12 +108,12 @@ class FeatherbrainedFilcherTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         var food = findPermanent(player1, "Food");
-        food.setTapped(true);
+        food.tap();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
         harness.assertOnBattlefield(player1, "Food");
 
-        food.setTapped(false);
+        food.untap();
         harness.activateAbility(player1, 0, null, null);
         harness.assertNotOnBattlefield(player1, "Food");
         harness.assertLife(player1, 20);

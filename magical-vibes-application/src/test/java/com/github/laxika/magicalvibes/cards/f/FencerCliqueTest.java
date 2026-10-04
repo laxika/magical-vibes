@@ -58,7 +58,7 @@ class FencerCliqueTest extends BaseCardTest {
     void tappedCreatureCanReturnToLibrary() {
         FencerClique clique = new FencerClique();
         var permanent = harness.addToBattlefieldAndReturn(player1, clique);
-        permanent.setTapped(true);
+        permanent.tap();
         permanent.setSummoningSick(true);
         harness.setLibrary(player1, List.of());
         harness.addMana(player1, ManaColor.BLUE, 1);

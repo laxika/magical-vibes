@@ -77,6 +77,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterOpponentFirstSpellEach
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEqualsSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfNoColoredManaSpentEffect;
+import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessOtherPlayerPaysManaCostOnSpellCastEffect;
@@ -3386,6 +3387,10 @@ public class SpellCastTriggerCollectorService {
         }
         if (effect instanceof DrawCardEffect draw
                 && amountEvaluationService.referencesXValue(draw.amount())) {
+            return true;
+        }
+        if (effect instanceof EnergyCountersEffect energy
+                && amountEvaluationService.referencesXValue(energy.amount())) {
             return true;
         }
         if (effect instanceof CreateTokenForTriggeringPlayerEffect createToken) {

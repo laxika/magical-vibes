@@ -79,7 +79,7 @@ class ExpendableTroopsTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped and does not sacrifice itself")
     void cannotActivateWhileTapped() {
         Permanent troops = addReadyTroops(player1);
-        troops.setTapped(true);
+        troops.tap();
         Permanent attacker = addCombatCreature(player2, true, false);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))

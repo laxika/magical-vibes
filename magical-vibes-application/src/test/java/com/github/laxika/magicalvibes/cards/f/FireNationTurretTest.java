@@ -148,7 +148,7 @@ class FireNationTurretTest extends BaseCardTest {
     @Test
     void chargeAbilityUsesTheStackAndDoesNotRequireTapping() {
         Permanent turret = harness.addToBattlefieldAndReturn(player1, new FireNationTurret());
-        turret.setTapped(true);
+        turret.tap();
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.activateAbility(player1, 0, null, null);

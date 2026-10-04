@@ -108,7 +108,7 @@ class ForiysianInterceptorTest extends BaseCardTest {
     @DisplayName("The additional-block ability does not allow a tapped Interceptor to block")
     void cannotBlockWhileTapped() {
         Permanent interceptor = addInterceptor();
-        interceptor.setTapped(true);
+        interceptor.tap();
         addAttackers(2);
         prepareDeclareBlockers();
 

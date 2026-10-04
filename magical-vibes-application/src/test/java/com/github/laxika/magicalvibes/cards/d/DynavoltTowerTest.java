@@ -168,7 +168,7 @@ class DynavoltTowerTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent tower = addReadyTower();
-        tower.setTapped(true);
+        tower.tap();
         gd.playerEnergyCounters.put(player1.getId(), 5);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))

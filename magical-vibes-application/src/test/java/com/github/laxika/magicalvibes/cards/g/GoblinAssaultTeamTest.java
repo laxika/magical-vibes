@@ -42,6 +42,46 @@ class GoblinAssaultTeamTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    void choosesOneFriendlyCreatureWithoutPuttingCountersOnOtherCreatures() {
+        UUID goblinId = harness.addToBattlefieldAndReturn(player1, new GoblinAssaultTeam()).getId();
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        killWithShock(goblinId);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(first.getId(), second.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void doesNotRetargetWhenChosenCreatureDiesBeforeResolution() {
+        UUID goblinId = harness.addToBattlefieldAndReturn(player1, new GoblinAssaultTeam()).getId();
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent survivor = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        killWithShock(goblinId);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
+        assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void killWithShock(UUID targetId) {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);

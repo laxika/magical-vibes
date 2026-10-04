@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({GoblinWarStrike.class, GoblinPiker.class, RagingGoblin.class, BearCub.class,
         GarrukWildspeaker.class})
@@ -112,5 +113,48 @@ class GoblinWarStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(before - 2);
+    }
+
+    @Test
+    @DisplayName("Does not count Goblins that leave before resolution")
+    void doesNotCountGoblinsThatLeaveBeforeResolution() {
+        harness.addToBattlefield(player1, new GoblinPiker());
+        prepareCast();
+        harness.castSorcery(player1, 0, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of(new GoblinPiker()));
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Goblin War Strike");
+    }
+
+    @Test
+    @DisplayName("Counts tapped Goblins but not Goblin cards in other zones")
+    void countsTappedGoblinsButNotCardsInOtherZones() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinPiker());
+        goblin.setTapped(true);
+        harness.setGraveyard(player1, List.of(new RagingGoblin()));
+        harness.setExile(player1, List.of(new GoblinPiker()));
+        harness.setLibrary(player1, List.of(new RagingGoblin()));
+
+        cast(player2.getId());
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature")
+    void cannotTargetCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BearCub());
+        harness.addToBattlefield(player1, new GoblinPiker());
+        prepareCast();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player2, 20);
+        harness.assertInHand(player1, "Goblin War Strike");
     }
 }

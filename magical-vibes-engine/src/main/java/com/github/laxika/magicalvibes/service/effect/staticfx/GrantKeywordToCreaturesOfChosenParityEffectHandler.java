@@ -34,7 +34,7 @@ public class GrantKeywordToCreaturesOfChosenParityEffectHandler implements Stati
         Permanent target = context.target();
         boolean hasAnimateArtifacts = support.hasAnimateArtifactEffect(context.gameData());
         if (!support.isEffectivelyCreature(context.gameData(), target, hasAnimateArtifacts)) return;
-        if (chosen.matches(target.getCard().getManaValue())) {
+        if (chosen.matches(target.isFaceDown() ? 0 : target.getCard().getManaValue())) {
             accumulator.addKeywords(grant.keywords());
         }
     }

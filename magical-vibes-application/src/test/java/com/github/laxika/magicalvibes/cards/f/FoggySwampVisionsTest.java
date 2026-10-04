@@ -103,7 +103,7 @@ class FoggySwampVisionsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().getCard().isToken()).isTrue();
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(unchosen, noncreature);
-        assertThat(gd.playerExiledCards.get(player2.getId())).contains(chosen);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(chosen);
     }
 
     @Test
@@ -122,7 +122,7 @@ class FoggySwampVisionsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerExiledCards.get(player1.getId())).contains(ownCreature);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(ownCreature);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(opposingCreature);
         harness.passUntil(player1, TurnStep.END_STEP);
         resolveAllTriggers();

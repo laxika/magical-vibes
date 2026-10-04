@@ -13,6 +13,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GorillaTitan.class, Forest.class})
 class GorillaTitanTest extends BaseCardTest {
+    @Test
+    @DisplayName("Casting Titan with an empty graveyard gives it the boost immediately")
+    void castTitanGetsBoostOnEnteringBattlefield() {
+        harness.castFromHand(player1, new GorillaTitan(), "{3}{G}{G}");
+        harness.passBothPriorities();
+
+        assertStats(8, 8);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
 
     @Test
     @DisplayName("Gets +4/+4 with an empty graveyard")

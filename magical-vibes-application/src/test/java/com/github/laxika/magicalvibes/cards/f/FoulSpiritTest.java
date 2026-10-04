@@ -98,7 +98,7 @@ class FoulSpiritTest extends BaseCardTest {
     @DisplayName("A tapped land can be sacrificed")
     void tappedLandCanBeSacrificed() {
         harness.addToBattlefield(player1, new Forest());
-        findPermanent(player1, "Forest").setTapped(true);
+        findPermanent(player1, "Forest").tap();
         harness.setHand(player1, List.of(new FoulSpirit()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 

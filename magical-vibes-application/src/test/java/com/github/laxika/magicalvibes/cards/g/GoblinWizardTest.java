@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(GoblinWizard.class)
+@CardUsed({GoblinWizard.class, GoblinHero.class, Squire.class, BoggartShenanigans.class})
 class GoblinWizardTest extends BaseCardTest {
 
     @Test
@@ -95,9 +95,7 @@ class GoblinWizardTest extends BaseCardTest {
 
         assertThat(goblin.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(goblin.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.WHITE);
     }
@@ -140,5 +138,91 @@ class GoblinWizardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(goblinPermanent.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+    }
+
+    @Test
+    @DisplayName("The tap ability cannot be activated while summoning sick")
+    void cannotTapWhileSummoningSick() {
+        Permanent wizard = harness.addToBattlefieldAndReturn(player1, new GoblinWizard());
+        harness.setHand(player1, List.of(new GoblinHero()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(wizard.isTapped()).isFalse();
+        harness.assertInHand(player1, "Goblin Hero");
+    }
+
+    @Test
+    @DisplayName("The tap ability cannot be activated while already tapped")
+    void cannotActivateTapAbilityWhileTapped() {
+        Permanent wizard = addCreatureReady(player1, new GoblinWizard());
+        wizard.setTapped(true);
+        harness.setHand(player1, List.of(new GoblinHero()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Goblin Hero");
+    }
+
+    @Test
+    @DisplayName("Accepting with no Goblin permanent in hand finishes without a card choice")
+    void acceptingWithoutEligibleCardFinishes() {
+        Permanent wizard = addCreatureReady(player1, new GoblinWizard());
+        harness.setHand(player1, List.of(new Squire()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(wizard.isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player1, "Squire");
+        harness.assertNotOnBattlefield(player1, "Squire");
+    }
+
+    @Test
+    @DisplayName("One activation puts only one Goblin permanent onto the battlefield")
+    void putsOnlyOneGoblinPermanent() {
+        addCreatureReady(player1, new GoblinWizard());
+        harness.setHand(player1, List.of(new GoblinHero(), new GoblinHero()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(countPermanents(player1, "Goblin Hero")).isEqualTo(1);
+        harness.assertInHand(player1, "Goblin Hero");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanent(player1, "Goblin Hero").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Goblin Wizard can give itself protection")
+    void grantsProtectionToSelfWhileTappedAndSummoningSick() {
+        Permanent wizard = harness.addToBattlefieldAndReturn(player1, new GoblinWizard());
+        wizard.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, wizard.getId());
+        harness.passBothPriorities();
+
+        assertThat(wizard.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+        assertThat(wizard.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The protection ability requires red mana")
+    void cannotGrantProtectionWithoutRedMana() {
+        Permanent wizard = addCreatureReady(player1, new GoblinWizard());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, wizard.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(wizard.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
     }
 }

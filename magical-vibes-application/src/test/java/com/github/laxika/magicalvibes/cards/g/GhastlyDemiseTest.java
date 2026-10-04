@@ -23,8 +23,7 @@ class GhastlyDemiseTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GhastlyDemise()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
     @Test
@@ -60,6 +59,68 @@ class GhastlyDemiseTest extends BaseCardTest {
         cast(List.of(), targetId);
 
         harness.assertOnBattlefield(player2, "Aven Flock");
+    }
+
+    @Test
+    @DisplayName("Uses the graveyard size at resolution when it increases")
+    void countsCardsAddedBeforeResolution() {
+        harness.addToBattlefield(player2, new AvenFlock());
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new GhastlyDemise()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Aven Flock"));
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Aven Flock");
+        harness.assertInGraveyard(player2, "Aven Flock");
+    }
+
+    @Test
+    @DisplayName("Uses the graveyard size at resolution when it decreases")
+    void countsCardsRemovedBeforeResolution() {
+        harness.addToBattlefield(player2, new AvenFlock());
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new GhastlyDemise()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Aven Flock"));
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Aven Flock");
+        harness.assertInGraveyard(player1, "Ghastly Demise");
+    }
+
+    @Test
+    @DisplayName("Uses increased toughness at resolution")
+    void toughnessIncreaseInResponsePreventsDestruction() {
+        harness.addToBattlefield(player2, new AvenFlock());
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new GhastlyDemise()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Aven Flock"));
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Aven Flock");
+        harness.assertInGraveyard(player1, "Ghastly Demise");
+    }
+
+    @Test
+    @DisplayName("Can destroy the caster's own nonblack creature")
+    void destroysOwnCreatureWithinThreshold() {
+        harness.addToBattlefield(player1, new AvenFlock());
+
+        cast(List.of(new Forest(), new Forest(), new Forest()),
+                harness.getPermanentId(player1, "Aven Flock"));
+
+        harness.assertNotOnBattlefield(player1, "Aven Flock");
+        harness.assertInGraveyard(player1, "Aven Flock");
     }
 
     @Test

@@ -125,7 +125,7 @@ class EmberwildeCaliphTest extends BaseCardTest {
     @DisplayName("A tapped Caliph is not required to attack")
     void tappedCaliphDoesNotHaveToAttack() {
         Permanent caliph = addCreatureReady(player1, new EmberwildeCaliph());
-        caliph.setTapped(true);
+        caliph.tap();
 
         declareAttackers(List.of());
 

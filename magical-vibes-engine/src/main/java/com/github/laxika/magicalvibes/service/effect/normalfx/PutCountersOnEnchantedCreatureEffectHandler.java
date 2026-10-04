@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +22,7 @@ public class PutCountersOnEnchantedCreatureEffectHandler implements NormalEffect
 
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,7 +34,8 @@ public class PutCountersOnEnchantedCreatureEffectHandler implements NormalEffect
         var e = (PutCountersOnEnchantedCreatureEffect) effect;
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        var enchantedId = source == null ? entry.getTargetId() : source.getAttachedTo();
+        Permanent sourceSnapshot = source == null ? entry.getSourcePermanentSnapshot() : source;
+        var enchantedId = sourceSnapshot == null ? entry.getTargetId() : sourceSnapshot.getAttachedTo();
         if (enchantedId == null) {
             return;
         }
@@ -39,6 +43,8 @@ public class PutCountersOnEnchantedCreatureEffectHandler implements NormalEffect
         if (creature == null) {
             return;
         }
-        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, creature, e.counterType(), e.amount());
+        int amount = amountEvaluationService.evaluate(gameData, e.amount(),
+                AmountContext.forStackEntry(entry, sourceSnapshot));
+        permanentCounterSupport.placeCounterOnPermanent(gameData, entry, creature, e.counterType(), amount);
     }
 }

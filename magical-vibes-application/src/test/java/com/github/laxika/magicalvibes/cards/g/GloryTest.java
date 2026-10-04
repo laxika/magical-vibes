@@ -73,9 +73,7 @@ class GloryTest extends BaseCardTest {
 
         assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.BLUE)).isTrue();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.BLUE)).isFalse();
     }
@@ -126,5 +124,57 @@ class GloryTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
 
         assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.GREEN)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Creatures entering before resolution gain protection, but later arrivals do not")
+    void affectsCreaturesPresentAtResolution() {
+        harness.setGraveyard(player1, List.of(new Glory()));
+        prepareAbilityMana();
+
+        harness.activateGraveyardAbility(player1, 0);
+        Permanent beforeResolution = addCreatureReady(player1, new SuntailHawk());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLACK");
+        Permanent afterResolution = addCreatureReady(player1, new SuntailHawk());
+
+        assertThat(gqs.hasProtectionFrom(gd, beforeResolution, CardColor.BLACK)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, afterResolution, CardColor.BLACK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeated activations grant protection from multiple colors")
+    void repeatedActivationsRetainBothChosenColors() {
+        Permanent ownCreature = addCreatureReady(player1, new SuntailHawk());
+        harness.setGraveyard(player1, List.of(new Glory()));
+        prepareAbilityMana();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.WHITE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.RED)).isTrue();
+        harness.assertInGraveyard(player1, "Glory");
+    }
+
+    @Test
+    @DisplayName("An activated ability still resolves after Glory leaves the graveyard")
+    void resolvesAfterSourceLeavesGraveyard() {
+        Permanent ownCreature = addCreatureReady(player1, new SuntailHawk());
+        harness.setGraveyard(player1, List.of(new Glory()));
+        prepareAbilityMana();
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BLUE");
+
+        assertThat(gqs.hasProtectionFrom(gd, ownCreature, CardColor.BLUE)).isTrue();
     }
 }

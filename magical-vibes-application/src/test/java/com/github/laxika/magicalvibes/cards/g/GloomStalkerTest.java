@@ -37,4 +37,43 @@ class GloomStalkerTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, stalker, Keyword.DOUBLE_STRIKE)).isFalse();
     }
+
+    @Test
+    @DisplayName("Gains double strike immediately when its controller completes a dungeon")
+    void gainsDoubleStrikeWhenDungeonIsCompleted() {
+        Permanent stalker = harness.addToBattlefieldAndReturn(player1, new GloomStalker());
+        Permanent opponentStalker = harness.addToBattlefieldAndReturn(player2, new GloomStalker());
+
+        assertThat(gqs.hasKeyword(gd, stalker, Keyword.DOUBLE_STRIKE)).isFalse();
+        gd.playersWhoCompletedDungeon.add(player1.getId());
+
+        assertThat(gqs.hasKeyword(gd, stalker, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentStalker, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Has double strike when entering after its controller completed a dungeon")
+    void hasDoubleStrikeWhenEnteringAfterDungeonCompletion() {
+        gd.playersWhoCompletedDungeon.add(player1.getId());
+        Permanent stalker = harness.enterBattlefieldAndReturn(player1, new GloomStalker());
+
+        assertThat(gqs.hasKeyword(gd, stalker, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Double strike follows the current controller's dungeon completion")
+    void doubleStrikeFollowsCurrentController() {
+        gd.playersWhoCompletedDungeon.add(player1.getId());
+        Permanent stalker = harness.addToBattlefieldAndReturn(player1, new GloomStalker());
+        assertThat(gqs.hasKeyword(gd, stalker, Keyword.DOUBLE_STRIKE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(stalker);
+        gd.playerBattlefields.get(player2.getId()).add(stalker);
+
+        assertThat(gqs.hasKeyword(gd, stalker, Keyword.DOUBLE_STRIKE)).isFalse();
+
+        gd.playersWhoCompletedDungeon.add(player2.getId());
+
+        assertThat(gqs.hasKeyword(gd, stalker, Keyword.DOUBLE_STRIKE)).isTrue();
+    }
 }

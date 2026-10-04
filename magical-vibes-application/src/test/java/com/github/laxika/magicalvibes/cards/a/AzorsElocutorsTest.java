@@ -72,9 +72,9 @@ class AzorsElocutorsTest extends BaseCardTest {
         Permanent elocutors = harness.addToBattlefieldAndReturn(player1, new AzorsElocutors());
         elocutors.setCounterCount(CounterType.FILIBUSTER, 4);
         harness.setHand(player2, List.of(new AnnihilatingFire()));
-        harness.addMana(player2, ManaColor.RED, 3);
 
         advanceToUpkeep(player1);
+        harness.addMana(player2, ManaColor.RED, 3);
         harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
         assertThat(elocutors.getCounterCount(CounterType.FILIBUSTER)).isEqualTo(3);

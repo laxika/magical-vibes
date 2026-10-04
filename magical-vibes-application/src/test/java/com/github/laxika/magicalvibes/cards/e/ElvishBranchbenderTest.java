@@ -184,7 +184,7 @@ class ElvishBranchbenderTest extends BaseCardTest {
     @DisplayName("A tapped Branchbender cannot activate again")
     void cannotActivateWhileTapped() {
         Permanent branchbender = addReadyBranchbender(player1);
-        branchbender.setTapped(true);
+        branchbender.tap();
         Permanent forest = addForest(player1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))

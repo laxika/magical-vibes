@@ -121,6 +121,6 @@ class EverettKRossHaplessAttacheTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 }

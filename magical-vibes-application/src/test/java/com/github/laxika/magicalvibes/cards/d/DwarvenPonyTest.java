@@ -85,7 +85,7 @@ class DwarvenPonyTest extends BaseCardTest {
     @DisplayName("Cannot activate while tapped")
     void cannotActivateWhileTapped() {
         Permanent pony = addPony();
-        pony.setTapped(true);
+        pony.tap();
         Permanent dwarf = addCreatureReady(player1, new DwarvenSeaClan());
         addManaForAbility();
 

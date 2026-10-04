@@ -115,6 +115,8 @@ class AtlanteanCavalryTest extends BaseCardTest {
     @Test
     @DisplayName("Can trigger again on the next turn after draw counts reset")
     void triggersAgainOnNextTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new AtlanteanCavalry());
         harness.setLibrary(player1, List.of(new AtlanteanCavalry(), new AtlanteanCavalry(),
                 new AtlanteanCavalry(), new AtlanteanCavalry()));

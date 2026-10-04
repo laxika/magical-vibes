@@ -93,6 +93,8 @@ class ArniMetalbrowTest extends BaseCardTest {
 
         declareAttackers(List.of(1));
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
         harness.handleCardChosen(player1, 0);
         harness.addMana(player1, ManaColor.COLORLESS, 1);

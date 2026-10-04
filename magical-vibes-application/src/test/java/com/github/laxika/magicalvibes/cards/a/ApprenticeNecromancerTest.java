@@ -34,10 +34,11 @@ class ApprenticeNecromancerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent reanimated = findPermanent(player1, "Plated Spider");
-        assertThat(reanimated.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, reanimated, Keyword.HASTE)).isTrue();
         harness.assertNotInGraveyard(player1, "Plated Spider");
         harness.assertNotOnBattlefield(player1, "Apprentice Necromancer");
 
+        declareAttackers(List.of());
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
@@ -152,6 +153,7 @@ class ApprenticeNecromancerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, creature.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
+        declareAttackers(List.of());
         harness.passUntil(TurnStep.END_STEP);
 
         harness.assertOnBattlefield(player1, "Plated Spider");
@@ -181,6 +183,7 @@ class ApprenticeNecromancerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Plated Spider");
 
+        declareAttackers(player2, List.of());
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
@@ -194,6 +197,7 @@ class ApprenticeNecromancerTest extends BaseCardTest {
         addCreatureReady(player1, new ApprenticeNecromancer());
         Card creature = new PlatedSpider();
         harness.setGraveyard(player1, List.of(creature));
+        declareAttackers(List.of());
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.addMana(player1, ManaColor.BLACK, 1);
 

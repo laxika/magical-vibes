@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -26,9 +27,10 @@ public class AvengersDisassembled extends Card {
                         "Destroy target land. Its controller may search their library for a basic land card, "
                                 + "put it onto the battlefield tapped, then shuffle",
                         new DestroyTargetPermanentThenEffect(
-                                new SearchLibraryEffect(
+                                new MayEffect(new SearchLibraryEffect(
                                         CardPredicateUtils.basicLand(),
                                         LibrarySearchDestination.BATTLEFIELD_TAPPED),
+                                        "Search your library for a basic land card?"),
                                 ThenEffectRecipient.TARGET_CONTROLLER),
                         TargetFilters.land())
         )));

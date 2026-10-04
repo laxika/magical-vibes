@@ -137,7 +137,7 @@ class DubiousDelicacyTest extends BaseCardTest {
     @Test
     void tappedArtifactCannotPayEitherTapCost() {
         Permanent delicacy = harness.addToBattlefieldAndReturn(player1, new DubiousDelicacy());
-        delicacy.setTapped(true);
+        delicacy.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

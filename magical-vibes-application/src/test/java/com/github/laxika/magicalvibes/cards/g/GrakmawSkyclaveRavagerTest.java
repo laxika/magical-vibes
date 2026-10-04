@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.Assassinate;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -80,6 +79,59 @@ class GrakmawSkyclaveRavagerTest extends BaseCardTest {
         assertThat(hydra.getCard().getSubtypes()).contains(CardSubtype.HYDRA);
     }
 
+    @Test
+    @DisplayName("Gains only one counter even when the dying creature had several")
+    void gainsOnlyOneCounterFromMultipleCounters() {
+        Permanent grakmaw = addReadyGrakmaw();
+        Permanent dyingCreature = addCreatureReady(player1, new GrizzlyBears());
+        dyingCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+
+        destroyWithAssassinate(dyingCreature);
+        resolveAllTriggers();
+
+        assertThat(grakmaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Does not gain a counter when an opponent's creature with a counter dies")
+    void ignoresOpponentsCreatureWithCounter() {
+        Permanent grakmaw = addReadyGrakmaw();
+        Permanent dyingCreature = addCreatureReady(player2, new GrizzlyBears());
+        dyingCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        destroyWithAssassinate(dyingCreature);
+        resolveAllTriggers();
+
+        assertThat(grakmaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Other counter types do not satisfy the ally death condition")
+    void ignoresCreatureWithOnlyChargeCounters() {
+        Permanent grakmaw = addReadyGrakmaw();
+        Permanent dyingCreature = addCreatureReady(player1, new GrizzlyBears());
+        dyingCreature.setCounterCount(CounterType.CHARGE, 2);
+
+        destroyWithAssassinate(dyingCreature);
+        resolveAllTriggers();
+
+        assertThat(grakmaw.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The zero-counter Hydra dies and Grakmaw does not count its own death")
+    void zeroCounterDeathLeavesNoHydra() {
+        Permanent grakmaw = addReadyGrakmaw();
+        grakmaw.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        grakmaw.setCounterCount(CounterType.CHARGE, 2);
+
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Grakmaw, Skyclave Ravager")).isEmpty();
+        assertThat(findPermanents(player1, "Hydra")).isEmpty();
+    }
+
     private Permanent addReadyGrakmaw() {
         Permanent grakmaw = addCreatureReady(player1, new GrakmawSkyclaveRavager());
         grakmaw.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
@@ -93,7 +145,6 @@ class GrakmawSkyclaveRavagerTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Assassinate()));
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.castInstant(player2, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, target.getId());
     }
 }

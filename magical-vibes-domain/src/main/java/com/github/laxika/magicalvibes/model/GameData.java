@@ -2122,6 +2122,8 @@ public class GameData {
 
     /** Maps exiled card UUID → player UUID who has permission to play it (e.g. Praetor's Grasp). */
     public final Map<UUID, UUID> exilePlayPermissions = new ConcurrentHashMap<>();
+    /** Face-down exiled cards a player may look at for as long as they remain exiled. */
+    public final Map<UUID, UUID> exileLookPermissions = new ConcurrentHashMap<>();
     /** Maps cards granted by one effect to their shared limited exile-play permission group. */
     public final Map<UUID, UUID> exilePlayPermissionGroups = new ConcurrentHashMap<>();
     /** Remaining plays for each shared limited exile-play permission group. */
@@ -2149,6 +2151,8 @@ public class GameData {
     /** Card UUIDs whose exile-play permission expires at end of the turn number stored as the value
      *  (e.g. Archaic's Agony: until end of your next turn). */
     public final Map<UUID, Integer> exilePlayPermissionsExpireAtTurnEnd = new ConcurrentHashMap<>();
+    /** Permissions waiting for the named player's next actual turn before their expiry is fixed. */
+    public final Map<UUID, UUID> exilePlayPermissionsAwaitNextTurnOfPlayer = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> exilePlayPermissionsExpireAtTurnBeginning = new ConcurrentHashMap<>();
     /** Exiled card UUIDs that may be cast spending mana of any type (e.g. Nita, Forum Conciliator's
      *  activated ability). Complements the battlefield-permanent any-mana grant used by Hostage Taker.
@@ -5947,12 +5951,14 @@ public class GameData {
             exilePlayAnyManaTypeWhileExiled.remove(cardId);
             plottedCardIds.remove(cardId);
             exilePlayPermissions.remove(cardId);
+            exileLookPermissions.remove(cardId);
             clearExilePlayPermissionGroup(cardId);
             exilePlayPermissionConditions.remove(cardId);
             exilePlayForLifeEqualToManaValue.remove(cardId);
             exilePlayCostModifiers.remove(cardId);
             exilePlayPermissionsExpireEndOfTurn.remove(cardId);
             exilePlayPermissionsExpireAtTurnEnd.remove(cardId);
+            exilePlayPermissionsAwaitNextTurnOfPlayer.remove(cardId);
             exilePlayPermissionsExpireAtTurnBeginning.remove(cardId);
             exilePlayAnyManaType.remove(cardId);
             exilePlayWithoutPayingManaCost.remove(cardId);
@@ -6155,6 +6161,7 @@ public class GameData {
         removedIds.forEach(cardId -> {
             exilePlayPermissionSourcePermanents.remove(cardId);
             exilePlayPermissions.remove(cardId);
+            exileLookPermissions.remove(cardId);
         });
     }
 
@@ -7619,7 +7626,8 @@ public class GameData {
         this.declinedDrawReplacementSources.forEach((playerId, sources) ->
                 copy.declinedDrawReplacementSources.put(playerId, new java.util.HashSet<>(sources)));
         copy.pendingDrawFirstDrawStepFlags.putAll(this.pendingDrawFirstDrawStepFlags);
-        copy.pendingDiscardToLibraryChoice = this.pendingDiscardToLibraryChoice;
+        copy.pendingDiscardToLibraryChoice = this.pendingDiscardToLibraryChoice == null
+                ? null : this.pendingDiscardToLibraryChoice.deepCopy();
         copy.pendingDiscardToLibraryCardIndex = this.pendingDiscardToLibraryCardIndex;
         copy.pendingDiscardToLibraryDecision = this.pendingDiscardToLibraryDecision;
         copy.destroyDamagersUnlessPaysRemaining.addAll(this.destroyDamagersUnlessPaysRemaining);
@@ -7880,7 +7888,9 @@ public class GameData {
 
         // --- Deques ---
         this.pendingInteractions.forEach(pending -> copy.pendingInteractions.add(
-                pending instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
+                pending instanceof PendingInteraction.ColorChoice choice
+                        ? choice.copyCardTypeOnEnterPermanent()
+                        : pending instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
                         ? trigger.copyPlanarSnapshot()
                         : pending instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger trigger
                         ? trigger.copyPlanarSnapshot() : pending));
@@ -8041,6 +8051,7 @@ public class GameData {
         copy.libraryTopCardFreePlayPermissionsUntilEndOfTurn.putAll(this.libraryTopCardFreePlayPermissionsUntilEndOfTurn);
         copy.libraryTopCardPermissionsUntilEndOfTurn.addAll(this.libraryTopCardPermissionsUntilEndOfTurn);
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
+        copy.exileLookPermissions.putAll(this.exileLookPermissions);
         copy.outsideGamePlayPermissions.addAll(this.outsideGamePlayPermissions);
         copy.outsideGameAdditionalModalModePermissions.addAll(this.outsideGameAdditionalModalModePermissions);
         copy.playersAllowedToPlayFromLibraryTopUntilEndOfTurn
@@ -8058,6 +8069,7 @@ public class GameData {
         copy.exilePlayCostModifiers.putAll(this.exilePlayCostModifiers);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
         copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);
+        copy.exilePlayPermissionsAwaitNextTurnOfPlayer.putAll(this.exilePlayPermissionsAwaitNextTurnOfPlayer);
         copy.exilePlayPermissionsExpireAtTurnBeginning.putAll(this.exilePlayPermissionsExpireAtTurnBeginning);
         copy.exilePlayAnyManaType.addAll(this.exilePlayAnyManaType);
         copy.exilePlayAnyManaTypeWhileExiled.addAll(this.exilePlayAnyManaTypeWhileExiled);

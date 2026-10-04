@@ -74,4 +74,81 @@ class GnollHuntingPartyTest extends BaseCardTest {
                 .orElseThrow();
         assertThat(copy.getKeywords()).doesNotContain(Keyword.DOUBLE_TEAM);
     }
+
+    @Test
+    @DisplayName("A creature attacking twice in one turn reduces the cost only once")
+    void repeatedAttackerCountsOnlyOnce() {
+        Permanent attacker = addCreatureReady(player1, new GnollHuntingParty());
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        attacker.setTapped(false);
+        attacker.setAttacking(false);
+        gd.declaredAttackerIdsThisCombat.clear();
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new GnollHuntingParty()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Reduction cannot remove the red mana requirement")
+    void reductionPreservesColoredCost() {
+        for (int i = 0; i < 6; i++) {
+            addCreatureReady(player1, new GnollHuntingParty());
+        }
+        declareAttackers(List.of(0, 1, 2, 3, 4, 5));
+        resolveAllTriggers();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new GnollHuntingParty()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A token with double team does not conjure a duplicate")
+    void tokenDoesNotConjureDuplicate() {
+        GnollHuntingParty token = new GnollHuntingParty();
+        token.setToken(true);
+        Permanent attacker = addCreatureReady(player1, token);
+        harness.setHand(player1, List.of());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.DOUBLE_TEAM)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Double team does not conjure again on a later attack")
+    void doubleTeamTriggersOnlyOnce() {
+        Permanent attacker = addCreatureReady(player1, new GnollHuntingParty());
+        harness.setHand(player1, List.of());
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        attacker.setTapped(false);
+        attacker.setAttacking(false);
+        gd.declaredAttackerIdsThisCombat.clear();
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
 }

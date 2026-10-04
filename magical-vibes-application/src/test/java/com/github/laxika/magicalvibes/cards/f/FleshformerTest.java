@@ -115,7 +115,7 @@ class FleshformerTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Fleshformer can activate during its controller's end step")
     void canActivateWhileTappedAndSummoningSickDuringEndStep() {
         Permanent fleshformer = harness.addToBattlefieldAndReturn(player1, new Fleshformer());
-        fleshformer.setTapped(true);
+        fleshformer.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Fleshformer());
         harness.forceStep(TurnStep.END_STEP);
         payFullCost();

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilLandToBattlefieldR
 public class AvengingDruid extends Card {
 
     public AvengingDruid() {
-        addEffect(EffectSlot.ON_DAMAGE_TO_PLAYER,
+        addEffect(EffectSlot.ON_DAMAGE_TO_OPPONENT,
                 new MayEffect(new RevealUntilLandToBattlefieldRestToGraveyardEffect(),
                         "Reveal cards until you reveal a land card?"));
     }

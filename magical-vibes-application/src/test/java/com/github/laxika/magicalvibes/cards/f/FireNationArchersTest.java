@@ -39,7 +39,7 @@ class FireNationArchersTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent archers = harness.addToBattlefieldAndReturn(player1, new FireNationArchers());
         archers.setSummoningSick(true);
-        archers.setTapped(true);
+        archers.tap();
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.COLORLESS, 5);

@@ -521,6 +521,8 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
                                       List<FlickeredPermanent> exiled) {
         List<FlickeredPermanent> returning = exiled.stream()
                 .filter(flickered -> !flickered.card().isToken()
+                        && (flickered.card().getType().isPermanentType()
+                        || flickered.card().getAdditionalTypes().stream().anyMatch(CardType::isPermanentType))
                         && gameData.findExiledCard(flickered.card().getId()) != null)
                 .toList();
         List<Permanent> simultaneous = returning.stream().map(flickered -> new Permanent(flickered.card())).toList();
@@ -541,7 +543,9 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         UUID returnControllerId = flickered.returnControllerId();
         boolean hadBonusSubtype = flickered.hadBonusSubtype();
 
-        if (card.isToken() || gameData.findExiledCard(card.getId()) == null) {
+        if (card.isToken() || (!card.getType().isPermanentType()
+                && card.getAdditionalTypes().stream().noneMatch(CardType::isPermanentType))
+                || gameData.findExiledCard(card.getId()) == null) {
             return () -> {};
         }
 

@@ -99,7 +99,7 @@ class ExcavatedWallTest extends BaseCardTest {
     @Test
     void cannotActivateTappedWall() {
         Permanent wall = addCreatureReady(player1, new ExcavatedWall());
-        wall.setTapped(true);
+        wall.tap();
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

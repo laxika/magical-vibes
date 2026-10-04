@@ -99,7 +99,7 @@ class ExcavationExplosionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         Permanent powerstone = findPermanent(player1, "Powerstone");
-        powerstone.setTapped(false);
+        powerstone.untap();
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(powerstone), null, null);
         assertThat(powerstone.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isEqualTo(1);
@@ -119,7 +119,7 @@ class ExcavationExplosionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         Permanent powerstone = findPermanent(player1, "Powerstone");
-        powerstone.setTapped(false);
+        powerstone.untap();
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(powerstone), null, null);
         harness.setHand(player1, List.of(new ExcavationExplosion()));
         harness.addMana(player1, ManaColor.RED, 1);

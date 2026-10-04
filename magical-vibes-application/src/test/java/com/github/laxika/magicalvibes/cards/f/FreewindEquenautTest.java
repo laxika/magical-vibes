@@ -153,7 +153,7 @@ class FreewindEquenautTest extends BaseCardTest {
     @DisplayName("Cannot activate the granted tap ability while already tapped")
     void cannotActivateWhileTapped() {
         Permanent equenaut = addEquenautWithAura();
-        equenaut.setTapped(true);
+        equenaut.tap();
         Permanent attacker = addCombatCreature(player2, true, false);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))

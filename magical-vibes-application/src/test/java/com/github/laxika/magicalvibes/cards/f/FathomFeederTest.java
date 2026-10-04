@@ -106,7 +106,7 @@ class FathomFeederTest extends BaseCardTest {
     @Test
     void tappedSummoningSickFeederCanActivateRepeatedly() {
         Permanent feeder = harness.addToBattlefieldAndReturn(player1, new FathomFeeder());
-        feeder.setTapped(true);
+        feeder.tap();
         feeder.setSummoningSick(true);
         Card firstDraw = new FathomFeeder();
         Card secondDraw = new FathomFeeder();

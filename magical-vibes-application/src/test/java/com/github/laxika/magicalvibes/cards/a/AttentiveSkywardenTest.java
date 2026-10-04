@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -91,7 +92,7 @@ class AttentiveSkywardenTest extends BaseCardTest {
         Permanent own = addIncubator(player1);
         Permanent opposing = addIncubator(player2);
         Permanent nonToken = addIncubator(player1);
-        nonToken.getCard().setToken(false);
+        TestCards.mutableCard(nonToken).setToken(false);
         Permanent attacker = addCreatureReady(player1, new AttentiveSkywarden());
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());

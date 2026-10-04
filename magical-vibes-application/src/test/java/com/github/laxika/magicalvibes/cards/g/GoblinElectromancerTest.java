@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AngelsMercy;
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.i.Inspiration;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +14,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GoblinElectromancer.class, AngelsMercy.class, Divination.class, GrizzlyBears.class,
+        Inspiration.class})
 class GoblinElectromancerTest extends BaseCardTest {
 
     @Test
@@ -94,5 +98,50 @@ class GoblinElectromancerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Excess generic reductions do not remove a colored mana requirement")
+    void excessReductionDoesNotPayColoredMana() {
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new GoblinElectromancer());
+        }
+        harness.setHand(player1, List.of(new Inspiration()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Inspiration");
+    }
+
+    @Test
+    @DisplayName("Excess generic reductions leave only the colored cost payable")
+    void excessReductionAllowsCastingForColoredCost() {
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new GoblinElectromancer());
+        }
+        harness.setHand(player1, List.of(new Inspiration()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotInHand(player1, "Inspiration");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Electromancers in hand and graveyard do not reduce spell costs")
+    void reductionRequiresBattlefieldSource() {
+        harness.setHand(player1, List.of(new Inspiration(), new GoblinElectromancer()));
+        harness.setGraveyard(player1, List.of(new GoblinElectromancer()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Inspiration");
     }
 }

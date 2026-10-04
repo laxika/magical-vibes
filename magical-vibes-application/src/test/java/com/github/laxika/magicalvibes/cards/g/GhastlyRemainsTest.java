@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.w.WitheredWretch;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.InteractionState;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GhastlyRemains.class, GempalmPolluter.class, GoblinTurncoat.class})
+@CardUsed({GhastlyRemains.class, GempalmPolluter.class, GoblinTurncoat.class, WitheredWretch.class})
 class GhastlyRemainsTest extends BaseCardTest {
 
     @Test
@@ -130,5 +132,48 @@ class GhastlyRemainsTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getId().equals(card.getId()));
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(c -> c.getId().equals(card.getId()));
+    }
+
+    @Test
+    void exilingRemainsInResponsePreventsTheUpkeepPaymentChoice() {
+        GhastlyRemains card = new GhastlyRemains();
+        harness.setGraveyard(player1, List.of(card));
+        harness.addToBattlefield(player1, new WitheredWretch());
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, card.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player1, "Ghastly Remains");
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.setGraveyard(player1, List.of(new GhastlyRemains()));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Ghastly Remains");
+    }
+
+    @Test
+    void entersWithoutCountersAndDiesWhenThereAreNoZombieCardsToReveal() {
+        harness.setHand(player1, List.of(new GhastlyRemains(), new GoblinTurncoat()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ghastly Remains");
+        harness.assertInGraveyard(player1, "Ghastly Remains");
+        harness.assertInHand(player1, "Goblin Turncoat");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

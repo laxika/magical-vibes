@@ -15,6 +15,48 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GoblinWarBuggyTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Entering the battlefield does not put an echo registration trigger on the stack")
+    void enteringDoesNotCreateATrigger() {
+        harness.castFromHand(player1, new GoblinWarBuggy(), "{1}{R}");
+
+        harness.withAutoStop(gd.currentStep, harness::passBothPriorities);
+
+        harness.assertOnBattlefield(player1, "Goblin War Buggy");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's upkeep does not consume the echo obligation")
+    void echoStillTriggersAfterOpponentsUpkeep() {
+        castAndResolveGoblinWarBuggy();
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).isEmpty();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Goblin War Buggy");
+        harness.assertInGraveyard(player1, "Goblin War Buggy");
+    }
+
+    @Test
+    @DisplayName("Accepting echo without enough mana sacrifices Goblin War Buggy")
+    void acceptingEchoWithoutEnoughManaSacrificesIt() {
+        castAndResolveGoblinWarBuggy();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Goblin War Buggy");
+        harness.assertInGraveyard(player1, "Goblin War Buggy");
+    }
+
+    @Test
     @DisplayName("Haste allows Goblin War Buggy to attack the turn it enters")
     void hasteAllowsAttackingTheTurnItEnters() {
         castAndResolveGoblinWarBuggy();
