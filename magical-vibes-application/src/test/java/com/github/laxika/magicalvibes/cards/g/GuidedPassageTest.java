@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.j.JadedResponse;
 import com.github.laxika.magicalvibes.cards.y.YavimayaCoast;
 import com.github.laxika.magicalvibes.model.Card;
@@ -81,6 +82,123 @@ class GuidedPassageTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Guided Passage");
+    }
+
+    @Test
+    @DisplayName("A library containing only creatures supplies exactly one creature")
+    void choosesFromCreatureOnlyLibrary() {
+        Card chosen = new GaeasSkyfolk();
+        Card remaining = new GaeasSkyfolk();
+        castGuidedPassage(List.of(chosen, remaining));
+
+        harness.handleMultipleCardsChosen(player2, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A library containing only lands supplies exactly one land")
+    void choosesFromLandOnlyLibrary() {
+        Card chosen = new YavimayaCoast();
+        Card remaining = new YavimayaCoast();
+        castGuidedPassage(List.of(chosen, remaining));
+
+        harness.handleMultipleCardsChosen(player2, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A library containing only noncreature nonland cards supplies exactly one card")
+    void choosesFromSpellOnlyLibrary() {
+        Card chosen = new JadedResponse();
+        Card remaining = new JadedResponse();
+        castGuidedPassage(List.of(chosen, remaining));
+
+        harness.handleMultipleCardsChosen(player2, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An opponent cannot decline to choose an available card")
+    void cannotFailToChooseAvailableCard() {
+        Card creature = new GaeasSkyfolk();
+        castGuidedPassage(List.of(creature));
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of()))
+                .hasMessageContaining("exactly one creature");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.handleMultipleCardsChosen(player2, List.of(creature.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Choosing two creatures is rejected without moving any cards")
+    void rejectsMultipleCardsOfSameCategory() {
+        Card creature = new GaeasSkyfolk();
+        Card otherCreature = new GaeasSkyfolk();
+        Card land = new YavimayaCoast();
+        castGuidedPassage(List.of(creature, otherCreature, land));
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2,
+                List.of(creature.getId(), otherCreature.getId(), land.getId())))
+                .hasMessageContaining("exactly one creature");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature, otherCreature, land);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.handleMultipleCardsChosen(player2, List.of(otherCreature.getId(), land.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(otherCreature, land);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @CardUsed(DryadArbor.class)
+    @DisplayName("A land creature can be the creature choice alongside a separate land")
+    void landCreatureCanBeChosenAsCreature() {
+        Card creature = new DryadArbor();
+        Card land = new YavimayaCoast();
+        Card spell = new JadedResponse();
+        castGuidedPassage(List.of(creature, land, spell));
+
+        harness.handleMultipleCardsChosen(player2,
+                List.of(creature.getId(), land.getId(), spell.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(creature, land, spell);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Guided Passage");
+    }
+
+    @Test
+    @CardUsed(DryadArbor.class)
+    @DisplayName("A land creature can be the land choice alongside a separate creature")
+    void landCreatureCanBeChosenAsLand() {
+        Card creature = new GaeasSkyfolk();
+        Card land = new DryadArbor();
+        Card spell = new JadedResponse();
+        castGuidedPassage(List.of(creature, land, spell));
+
+        harness.handleMultipleCardsChosen(player2,
+                List.of(creature.getId(), land.getId(), spell.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(creature, land, spell);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Guided Passage");
     }
 
