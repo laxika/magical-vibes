@@ -64,11 +64,58 @@ class HeavenlyQilinTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The attack trigger still resolves after Qilin leaves the battlefield")
+    void attackTriggerResolvesWithoutSource() {
+        Permanent qilin = addReadyCreature(player1, new HeavenlyQilin());
+        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(qilin);
+        gd.playerGraveyards.get(player1.getId()).add(qilin.getCard());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A target that changes controllers before resolution does not gain flying")
+    void attackTriggerDoesNotAffectTargetNowControlledByOpponent() {
+        addReadyCreature(player1, new HeavenlyQilin());
+        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing the target does not grant flying to a replacement creature")
+    void attackTriggerDoesNotAffectReplacementCreature() {
+        addReadyCreature(player1, new HeavenlyQilin());
+        Permanent bears = addReadyCreature(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerGraveyards.get(player1.getId()).add(bears.getCard());
+        Permanent replacement = addReadyCreature(player1, new GrizzlyBears());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, replacement, Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyCreature(com.github.laxika.magicalvibes.model.Player player,
                                        com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
