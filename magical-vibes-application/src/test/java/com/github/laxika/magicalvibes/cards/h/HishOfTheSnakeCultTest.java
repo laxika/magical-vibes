@@ -64,4 +64,80 @@ class HishOfTheSnakeCultTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(hish)))))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Serpents become Snakes instead of retaining their previous creature types")
+    void replacesSerpentCreatureType() {
+        addCreatureReady(player1, new HishOfTheSnakeCult());
+        Permanent serpent = addCreatureReady(player1, new KomaCosmosSerpent());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, serpent)).containsExactly(CardSubtype.SNAKE);
+    }
+
+    @Test
+    @DisplayName("Hish does not change opposing Serpents or grant abilities to opposing Snakes")
+    void doesNotAffectOpposingCreatures() {
+        addCreatureReady(player1, new HishOfTheSnakeCult());
+        Permanent serpent = addCreatureReady(player2, new KomaCosmosSerpent());
+        Permanent snake = addCreatureReady(player2, new NagaOracle());
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, serpent)).containsExactly(CardSubtype.SERPENT);
+        for (Permanent creature : List.of(serpent, snake)) {
+            assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isFalse();
+            assertThat(gqs.hasKeyword(gd, creature, Keyword.POISONOUS)).isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("Converted Serpents deal normal combat damage and exactly two poison counters")
+    void convertedSerpentHasPoisonousTwo() {
+        addCreatureReady(player1, new HishOfTheSnakeCult());
+        Permanent serpent = addCreatureReady(player1, new KomaCosmosSerpent());
+        serpent.setAttacking(true);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 14);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A larger creature can block Hish and dies to its deathtouch damage")
+    void largerBlockerDiesToDeathtouchWithoutPoisoningPlayer() {
+        Permanent hish = addCreatureReady(player1, new HishOfTheSnakeCult());
+        hish.setAttacking(true);
+        addCreatureReady(player2, new KomaCosmosSerpent());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Hish of the Snake Cult");
+        harness.assertInGraveyard(player2, "Koma, Cosmos Serpent");
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+    }
+
+    @Test
+    @DisplayName("Hish's continuous grants end when it leaves the battlefield")
+    void grantsEndWhenHishLeaves() {
+        Permanent hish = addCreatureReady(player1, new HishOfTheSnakeCult());
+        Permanent serpent = addCreatureReady(player1, new KomaCosmosSerpent());
+        Permanent snake = addCreatureReady(player1, new NagaOracle());
+        gd.playerBattlefields.get(player1.getId()).remove(hish);
+        snake.setAttacking(true);
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, serpent)).containsExactly(CardSubtype.SERPENT);
+        for (Permanent creature : List.of(serpent, snake)) {
+            assertThat(gqs.hasKeyword(gd, creature, Keyword.DEATHTOUCH)).isFalse();
+            assertThat(gqs.hasKeyword(gd, creature, Keyword.POISONOUS)).isFalse();
+        }
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
+    }
 }
