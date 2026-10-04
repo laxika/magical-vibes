@@ -75,15 +75,44 @@ class IlluminatedWingsTest extends BaseCardTest {
     @Test
     @DisplayName("Illuminated Wings cannot enchant a noncreature permanent")
     void cannotEnchantNonCreature() {
-        harness.addToBattlefield(player1, new ThranFoundry());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ThranFoundry());
         harness.setHand(player1, List.of(new IlluminatedWings()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        Permanent artifact = findPermanent(player1, "Thran Foundry");
-
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Sacrifice removes flying immediately and only the Aura controller draws on resolution")
+    void sacrificeRemovesFlyingBeforeControllerDraws() {
+        Permanent soldier = harness.addToBattlefieldAndReturn(player2, new MetathranSoldier());
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new IlluminatedWings());
+        wings.setAttachedTo(soldier.getId());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new MetathranSoldier(), new ThranFoundry()));
+        harness.setLibrary(player2, List.of(new ThranFoundry()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FLYING)).isTrue();
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Illuminated Wings");
+        harness.assertInGraveyard(player1, "Illuminated Wings");
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FLYING)).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Metathran Soldier");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        harness.assertOnBattlefield(player2, "Metathran Soldier");
     }
 }
