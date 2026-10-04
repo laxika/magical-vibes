@@ -78,8 +78,7 @@ class HaythamKenwayTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, haythamId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, haythamId);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
@@ -93,6 +92,84 @@ class HaythamKenwayTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotChooseTwoCreaturesControlledByTheSameOpponent() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareHaythamCast();
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotExileIfHaythamLeavesBeforeTheEntryTriggerResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareHaythamCast();
+        harness.castCreature(player1, 0, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        UUID haythamId = harness.getPermanentId(player1, "Haytham Kenway");
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, haythamId);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Haytham Kenway");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNotBoostOrProtectNonKnightsOrOpposingKnights() {
+        harness.addToBattlefield(player1, new HaythamKenway());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingKnight = harness.addToBattlefieldAndReturn(player2, new BlackKnight());
+        Permanent assassin = harness.addToBattlefieldAndReturn(player2, new RoyalAssassin());
+
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(2);
+        assertThat(gqs.hasProtectionFromSourceSubtypes(gd, bear, assassin)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, opposingKnight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingKnight)).isEqualTo(2);
+        assertThat(gqs.hasProtectionFromSourceSubtypes(gd, opposingKnight, assassin)).isFalse();
+    }
+
+    @Test
+    void grantedBoostAndProtectionEndWhenHaythamLeaves() {
+        Permanent haytham = harness.addToBattlefieldAndReturn(player1, new HaythamKenway());
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new BlackKnight());
+        Permanent assassin = harness.addToBattlefieldAndReturn(player2, new RoyalAssassin());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, haytham.getId());
+
+        harness.assertInHand(player1, "Haytham Kenway");
+        assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, knight)).isEqualTo(2);
+        assertThat(gqs.hasProtectionFromSourceSubtypes(gd, knight, assassin)).isFalse();
+    }
+
+    @Test
+    void assassinCannotTargetHaythamOrAProtectedKnight() {
+        Permanent haytham = harness.addToBattlefieldAndReturn(player1, new HaythamKenway());
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new BlackKnight());
+        Permanent assassin = harness.addToBattlefieldAndReturn(player2, new RoyalAssassin());
+        haytham.setTapped(true);
+        knight.setTapped(true);
+        assassin.setSummoningSick(false);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, haytham.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, knight.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(assassin.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Haytham Kenway");
+        harness.assertOnBattlefield(player1, "Black Knight");
     }
 
     private void castHaytham(List<UUID> targetIds) {
