@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GlazeFiend;
+import com.github.laxika.magicalvibes.cards.r.RedHerring;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,26 +14,26 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HotshotInvestigators.class, GrizzlyBears.class, Plains.class})
+@CardUsed({HotshotInvestigators.class, RedHerring.class, Plains.class, GlazeFiend.class})
 class HotshotInvestigatorsTest extends BaseCardTest {
 
     @Test
     void returnsCreatureYouControlAndInvestigates() {
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RedHerring());
         castHotshot(target.getId());
 
         assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(card -> card instanceof GrizzlyBears);
+                .anyMatch(card -> card instanceof RedHerring);
         assertThat(findPermanents(player1, "Clue")).hasSize(1);
     }
 
     @Test
     void returnsOpponentsCreatureWithoutInvestigating() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new RedHerring());
         castHotshot(target.getId());
 
         assertThat(gd.playerHands.get(player2.getId()))
-                .anyMatch(card -> card instanceof GrizzlyBears);
+                .anyMatch(card -> card instanceof RedHerring);
         assertThat(findPermanents(player1, "Clue")).isEmpty();
     }
 
@@ -42,11 +43,64 @@ class HotshotInvestigatorsTest extends BaseCardTest {
         addCastMana();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Hotshot Investigators")).hasSize(1);
         assertThat(findPermanents(player1, "Clue")).isEmpty();
+    }
+
+    @Test
+    void returnsCreatureBeforeCreatingClue() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GlazeFiend());
+        harness.setHand(player1, List.of(new HotshotInvestigators()));
+        addCastMana();
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Glaze Fiend");
+        harness.assertNotOnBattlefield(player1, "Glaze Fiend");
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotInvestigateWhenTargetIsSacrificedInResponse() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new RedHerring());
+        harness.setLibrary(player1, List.of(new Plains()));
+        harness.setHand(player1, List.of(new HotshotInvestigators()));
+        addCastMana();
+        harness.castCreature(player1, 0, 0, target.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Red Herring");
+        harness.assertNotInHand(player1, "Red Herring");
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+    }
+
+    @Test
+    void canDeclineTargetEvenWhenAnotherCreatureIsAvailable() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new RedHerring());
+        harness.setHand(player1, List.of(new HotshotInvestigators()));
+        addCastMana();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(other);
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+    }
+
+    @Test
+    void canReturnAnotherHotshotInvestigators() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new HotshotInvestigators());
+        castHotshot(other.getId());
+
+        harness.assertInHand(player1, "Hotshot Investigators");
+        assertThat(findPermanents(player1, "Hotshot Investigators")).hasSize(1);
+        assertThat(findPermanents(player1, "Clue")).hasSize(1);
     }
 
     @Test
@@ -64,8 +118,7 @@ class HotshotInvestigatorsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HotshotInvestigators()));
         addCastMana();
         harness.castCreature(player1, 0, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void addCastMana() {
