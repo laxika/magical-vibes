@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IcatianSkirmishers.class, FarrelitePriest.class, Heroism.class, RiverMerfolk.class})
+@CardUsed({IcatianSkirmishers.class, IcatianPhalanx.class, FarrelitePriest.class, Heroism.class, RiverMerfolk.class})
 class IcatianSkirmishersTest extends BaseCardTest {
 
     @Test
@@ -42,6 +42,24 @@ class IcatianSkirmishersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("All other members of this band gain first strike, but a separate band does not")
+    void grantsFirstStrikeOnlyToEveryMemberOfItsOwnBand() {
+        addCreatureReady(player1, new IcatianSkirmishers());
+        Permanent bandingMember = addCreatureReady(player1, new IcatianPhalanx());
+        Permanent nonbandingMember = addCreatureReady(player1, new FarrelitePriest());
+        Permanent otherBandLeader = addCreatureReady(player1, new IcatianPhalanx());
+        Permanent otherBandMember = addCreatureReady(player1, new FarrelitePriest());
+
+        declareAttackers(List.of(0, 1, 2, 3, 4), List.of(List.of(0, 1, 2), List.of(3, 4)));
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bandingMember, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonbandingMember, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherBandLeader, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherBandMember, Keyword.FIRST_STRIKE)).isFalse();
     }
 
     @Test
@@ -82,7 +100,7 @@ class IcatianSkirmishersTest extends BaseCardTest {
     }
 
     private void declareAttackersWithoutBand() {
-        declareAttackers(List.of(0, 1), null);
+        declareAttackers(List.of(0, 1));
     }
 
     private void declareAttackers(List<Integer> attackers, List<List<Integer>> bands) {
