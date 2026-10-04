@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GruulRagebeast.class, HillGiant.class, GrizzlyBears.class, Unsummon.class})
 class GruulRagebeastTest extends BaseCardTest {
 
     @Test
@@ -50,9 +53,7 @@ class GruulRagebeastTest extends BaseCardTest {
 
         // The 6/6 Ragebeast kills the 3/3 Giant and takes 3 damage itself.
         harness.assertInGraveyard(player2, "Hill Giant");
-        Permanent ragebeast = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Gruul Ragebeast"))
-                .findFirst().orElseThrow();
+        Permanent ragebeast = findPermanent(player1, "Gruul Ragebeast");
         assertThat(ragebeast.getMarkedDamage()).isEqualTo(3);
     }
 
@@ -81,8 +82,69 @@ class GruulRagebeastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An entering creature that leaves before resolution does not fight")
+    void enteringCreatureLeavesBeforeFight() {
+        harness.addToBattlefieldAndReturn(player1, new GruulRagebeast());
+        Permanent opponentGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        castGrizzlyBears(player1);
+        harness.passBothPriorities();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        harness.handlePermanentChosen(player1, opponentGiant.getId());
+
+        bounceInResponse(bears);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(opponentGiant.getMarkedDamage()).isZero();
+        assertThat(findPermanent(player1, "Gruul Ragebeast").getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("A target that leaves before resolution prevents the fight")
+    void targetLeavesBeforeFight() {
+        harness.addToBattlefieldAndReturn(player1, new GruulRagebeast());
+        Permanent opponentGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        castGrizzlyBears(player1);
+        harness.passBothPriorities();
+        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        harness.handlePermanentChosen(player1, opponentGiant.getId());
+
+        bounceInResponse(opponentGiant);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Hill Giant");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(bears.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Another creature still fights after Gruul Ragebeast leaves")
+    void sourceLeavesButEnteringCreatureStillFights() {
+        Permanent ragebeast = harness.addToBattlefieldAndReturn(player1, new GruulRagebeast());
+        Permanent opponentGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        castGrizzlyBears(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, opponentGiant.getId());
+
+        bounceInResponse(ragebeast);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Gruul Ragebeast");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(opponentGiant.getMarkedDamage()).isEqualTo(2);
+    }
+
+    private void bounceInResponse(Permanent target) {
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void castGrizzlyBears(com.github.laxika.magicalvibes.model.Player player) {
