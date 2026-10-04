@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.h.HangarbackWalker;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GollumRiddleMaster.class, Forest.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({GollumRiddleMaster.class, Forest.class, GrizzlyBears.class, LlanowarElves.class,
+        HangarbackWalker.class})
 class GollumRiddleMasterTest extends BaseCardTest {
 
     private static final String COUNTER = "Put a +1/+1 counter on Gollum";
@@ -110,6 +112,7 @@ class GollumRiddleMasterTest extends BaseCardTest {
     @Test
     @DisplayName("A chosen mode is not offered again")
     void chosenModeIsConsumed() {
+        harness.setLibrary(player1, List.of(new Forest()));
         castGollum(ManaValueParity.ODD);
         prepareOpponentMainPhase();
         harness.setHand(player2, List.of(new LlanowarElves(), new LlanowarElves()));
@@ -124,6 +127,91 @@ class GollumRiddleMasterTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .doesNotContain(DRAW);
+    }
+
+    @Test
+    void controllersMatchingSpellDoesNotTrigger() {
+        Permanent gollum = castGollum(ManaValueParity.ODD);
+        harness.setHand(player1, List.of(new LlanowarElves()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        assertThat(gollum.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @CardUsed(HangarbackWalker.class)
+    void eachXSymbolContributesToEvenManaValue() {
+        Permanent gollum = castGollum(ManaValueParity.EVEN);
+        prepareOpponentMainPhase();
+        harness.setHand(player2, List.of(new HangarbackWalker()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player2, 0, 1);
+        harness.handleListChoice(player1, COUNTER);
+        harness.passBothPriorities();
+
+        assertThat(gollum.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(HangarbackWalker.class)
+    void twoXSymbolsDoNotProduceOddManaValue() {
+        Permanent gollum = castGollum(ManaValueParity.ODD);
+        prepareOpponentMainPhase();
+        harness.setHand(player2, List.of(new HangarbackWalker()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player2, 0, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        assertThat(gollum.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @CardUsed(HangarbackWalker.class)
+    void zeroManaValueIsEven() {
+        Permanent gollum = castGollum(ManaValueParity.EVEN);
+        prepareOpponentMainPhase();
+        harness.setHand(player2, List.of(new HangarbackWalker()));
+
+        harness.castArtifact(player2, 0, 0);
+        harness.handleListChoice(player1, COUNTER);
+        harness.passBothPriorities();
+
+        assertThat(gollum.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void exhaustedModesHaveNoFurtherEffect() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent gollum = castGollum(ManaValueParity.ODD);
+        prepareOpponentMainPhase();
+        harness.setHand(player2, List.of(new LlanowarElves(), new LlanowarElves(),
+                new LlanowarElves(), new LlanowarElves()));
+        harness.addMana(player2, ManaColor.GREEN, 4);
+
+        for (String mode : List.of(COUNTER, LIFE, DRAW)) {
+            harness.castCreature(player2, 0);
+            harness.handleListChoice(player1, mode);
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        }
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.passBothPriorities();
+        assertThat(gollum.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Gollum, Riddle Master");
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 
     private Permanent castGollum(ManaValueParity parity) {
