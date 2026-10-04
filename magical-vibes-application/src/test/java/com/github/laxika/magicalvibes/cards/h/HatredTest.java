@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
+import com.github.laxika.magicalvibes.cards.s.Slaughter;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Hatred.class, RagingGoblin.class, Spellbook.class})
+@CardUsed({Hatred.class, RagingGoblin.class, Spellbook.class, Slaughter.class})
 class HatredTest extends BaseCardTest {
 
     @Test
@@ -95,7 +96,6 @@ class HatredTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(goblin.getPowerModifier()).isEqualTo(0);
@@ -111,5 +111,65 @@ class HatredTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, 1, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Life is paid when cast, before the creature gets the boost")
+    void paysLifeBeforeResolution() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        harness.setHand(player1, List.of(new Hatred()));
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castInstant(player1, 0, 7, goblin.getId());
+
+        harness.assertLife(player1, 13);
+        assertThat(goblin.getPowerModifier()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 13);
+        assertThat(goblin.getEffectivePower()).isEqualTo(8);
+        assertThat(goblin.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Life payment is not refunded when the target is destroyed in response")
+    void targetRemovedDoesNotRefundLife() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        harness.setHand(player1, List.of(new Hatred()));
+        harness.setHand(player2, List.of(new Slaughter()));
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.addMana(player2, ManaColor.BLACK, 4);
+
+        harness.castInstant(player1, 0, 6, goblin.getId());
+        harness.castAndResolveInstant(player2, 0, goblin.getId());
+        harness.assertInGraveyard(player1, "Raging Goblin");
+        harness.assertLife(player1, 14);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 14);
+        harness.assertInGraveyard(player1, "Hatred");
+        assertThat(gd.stack).isEmpty();
+        assertThat(goblin.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Negative X is rejected without paying life or consuming the card")
+    void cannotChooseNegativeX() {
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new RagingGoblin());
+        harness.setHand(player1, List.of(new Hatred()));
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, -1, goblin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 20);
+        harness.assertInHand(player1, "Hatred");
+        assertThat(gd.stack).isEmpty();
     }
 }
