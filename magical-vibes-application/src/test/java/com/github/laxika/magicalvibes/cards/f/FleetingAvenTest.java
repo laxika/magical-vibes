@@ -61,13 +61,55 @@ class FleetingAvenTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GlorySeeker()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Fleeting Aven");
+    }
+
+    @Test
+    @DisplayName("Fleeting Aven returns before the cycling ability draws a card")
+    void returnsBeforeCyclingDrawResolves() {
+        harness.addToBattlefield(player1, new FleetingAven());
+        harness.setHand(player1, List.of(new Backslide()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertOnBattlefield(player1, "Fleeting Aven");
+        harness.assertNotInHand(player1, "Glory Seeker");
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Fleeting Aven");
+        harness.assertInHand(player1, "Fleeting Aven");
+        harness.assertNotInHand(player1, "Glory Seeker");
+
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Glory Seeker");
+    }
+
+    @Test
+    @DisplayName("A single cycling activation returns each player's Fleeting Aven")
+    void cyclingReturnsAvensControlledByBothPlayers() {
+        harness.addToBattlefield(player1, new FleetingAven());
+        harness.addToBattlefield(player2, new FleetingAven());
+        harness.setHand(player1, List.of(new Backslide()));
+        harness.setLibrary(player1, List.of(new GlorySeeker()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Fleeting Aven");
+        harness.assertNotOnBattlefield(player2, "Fleeting Aven");
+        harness.assertInHand(player1, "Fleeting Aven");
+        harness.assertInHand(player2, "Fleeting Aven");
+        harness.assertInHand(player1, "Glory Seeker");
     }
 
     @Test
