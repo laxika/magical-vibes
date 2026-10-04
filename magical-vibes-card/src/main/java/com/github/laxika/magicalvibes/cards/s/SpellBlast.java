@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 @CardRegistration(set = "SUM", collectorNumber = "82")
 @CardRegistration(set = "3ED", collectorNumber = "82")
 @CardRegistration(set = "2ED", collectorNumber = "80")
+@CardRegistration(set = "LEB", collectorNumber = "80")
 public class SpellBlast extends Card {
 
     public SpellBlast() {

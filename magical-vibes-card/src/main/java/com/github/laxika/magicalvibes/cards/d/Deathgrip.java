@@ -17,6 +17,7 @@ import java.util.Set;
 @CardRegistration(set = "2ED", collectorNumber = "101")
 @CardRegistration(set = "SUM", collectorNumber = "101")
 @CardRegistration(set = "ME4", collectorNumber = "75")
+@CardRegistration(set = "LEB", collectorNumber = "101")
 public class Deathgrip extends Card {
 
     public Deathgrip() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 @CardRegistration(set = "ME2", collectorNumber = "225")
 @CardRegistration(set = "VMA", collectorNumber = "291")
 @CardRegistration(set = "ME4", collectorNumber = "241")
+@CardRegistration(set = "LEB", collectorNumber = "278")
 public class Badlands extends Card {
 
     public Badlands() {

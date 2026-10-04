@@ -14,6 +14,7 @@ import java.util.List;
 @CardRegistration(set = "SUM", collectorNumber = "182")
 @CardRegistration(set = "TSB", collectorNumber = "71")
 @CardRegistration(set = "3ED", collectorNumber = "182")
+@CardRegistration(set = "LEB", collectorNumber = "181")
 public class UthdenTroll extends Card {
 
     public UthdenTroll() {

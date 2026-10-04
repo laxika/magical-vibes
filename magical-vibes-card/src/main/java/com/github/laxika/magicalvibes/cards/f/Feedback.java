@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "ITP", collectorNumber = "9")
 @CardRegistration(set = "RQS", collectorNumber = "9")
 @CardRegistration(set = "SUM", collectorNumber = "58")
+@CardRegistration(set = "LEB", collectorNumber = "58")
 public class Feedback extends Card {
 
     public Feedback() {
