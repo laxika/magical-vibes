@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,10 +14,10 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
+@CardUsed({GalvanicJuggernaut.class, CruelEdict.class, GrizzlyBears.class})
 class GalvanicJuggernautTest extends BaseCardTest {
-
-    // ===== Doesn't untap during untap step =====
 
     @Test
     @DisplayName("Tapped Galvanic Juggernaut does not untap during its controller's untap step")
@@ -24,12 +25,10 @@ class GalvanicJuggernautTest extends BaseCardTest {
         Permanent juggernaut = addReadyJuggernaut(player1);
         juggernaut.tap();
 
-        advanceToNextTurn(player2);
+        harness.performUntapStep(player1);
 
         assertThat(juggernaut.isTapped()).isTrue();
     }
-
-    // ===== Untaps when another creature dies =====
 
     @Test
     @DisplayName("Galvanic Juggernaut untaps when another creature dies")
@@ -44,15 +43,14 @@ class GalvanicJuggernautTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CruelEdict()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities(); // resolve Cruel Edict → Grizzly Bears dies → trigger
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.passBothPriorities(); // resolve mandatory untap trigger
 
         assertThat(juggernaut.isTapped()).isFalse();
     }
 
     @Test
-    @DisplayName("Galvanic Juggernaut does not untap on its own death (only 'another creature')")
+    @DisplayName("Galvanic Juggernaut stays tapped when no creature dies")
     void staysTappedWhenNoOtherCreatureDies() {
         Permanent juggernaut = addReadyJuggernaut(player1);
         juggernaut.tap();
@@ -64,13 +62,10 @@ class GalvanicJuggernautTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         // Opponent controls no creatures, so nothing dies and no trigger fires.
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(juggernaut.isTapped()).isTrue();
     }
-
-    // ===== Attacks each combat if able =====
 
     @Test
     @DisplayName("Declaring no attackers while Galvanic Juggernaut can attack throws 'must attack'")
@@ -87,23 +82,51 @@ class GalvanicJuggernautTest extends BaseCardTest {
                 .hasMessageContaining("must attack");
     }
 
-    // ===== Helpers =====
+    @Test
+    void ownDeathDoesNotTriggerUntap() {
+        addReadyJuggernaut(player1).tap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new CruelEdict()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+
+        harness.assertNotOnBattlefield(player1, "Galvanic Juggernaut");
+        harness.assertInGraveyard(player1, "Galvanic Juggernaut");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedJuggernautDoesNotHaveToAttack() {
+        addReadyJuggernaut(player1).tap();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatCode(() -> gs.declareAttackers(gd, player1, List.of()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void summoningSickJuggernautDoesNotHaveToAttack() {
+        Permanent juggernaut = addReadyJuggernaut(player1);
+        juggernaut.setSummoningSick(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+
+        assertThatCode(() -> gs.declareAttackers(gd, player1, List.of()))
+                .doesNotThrowAnyException();
+    }
 
     private Permanent addReadyJuggernaut(Player player) {
-        Permanent perm = new Permanent(new GalvanicJuggernaut());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new GalvanicJuggernaut());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-    }
 }
