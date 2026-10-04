@@ -67,4 +67,42 @@ class HungrySprigganTest extends BaseCardTest {
         assertThat(spriggan.getPowerModifier()).isEqualTo(0);
         assertThat(spriggan.getToughnessModifier()).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("Only the attacking Spriggan gets the boost, after its trigger resolves")
+    void onlyAttackingCopyGetsBoost() {
+        Permanent attacker = addCreatureReady(player1, new HungrySpriggan());
+        Permanent other = addCreatureReady(player1, new HungrySpriggan());
+
+        declareAttackers(List.of(0));
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(3);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(3);
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Blocking does not trigger the attack boost")
+    void blockingDoesNotBoost() {
+        addCreatureReady(player1, new KithkinShielddare());
+        Permanent spriggan = addCreatureReady(player2, new HungrySpriggan());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(spriggan.getPowerModifier()).isZero();
+        assertThat(spriggan.getToughnessModifier()).isZero();
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(spriggan);
+        harness.assertLife(player2, 20);
+    }
 }
