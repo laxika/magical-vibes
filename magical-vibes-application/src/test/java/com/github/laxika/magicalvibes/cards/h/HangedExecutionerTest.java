@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HangedExecutioner.class, GreenwoodSentinel.class})
 class HangedExecutionerTest extends BaseCardTest {
 
     @Test
@@ -42,8 +44,8 @@ class HangedExecutionerTest extends BaseCardTest {
     @Test
     @DisplayName("Exiles itself as the activation cost and exiles the target creature")
     void activationExilesSelfAndTarget() {
-        addReadyExecutioner(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new HangedExecutioner());
+        Permanent target = addCreatureReady(player2, new GreenwoodSentinel());
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -54,16 +56,16 @@ class HangedExecutionerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Greenwood Sentinel");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
-                .anyMatch(card -> card.getName().equals("Grizzly Bears"));
+                .anyMatch(card -> card.getName().equals("Greenwood Sentinel"));
     }
 
     @Test
-    @DisplayName("Keeps the target creature when it leaves before resolution")
+    @DisplayName("Does not exile the target after it leaves the battlefield before resolution")
     void targetLeavingBeforeResolutionFizzles() {
-        addReadyExecutioner(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player1, new HangedExecutioner());
+        Permanent target = addCreatureReady(player2, new GreenwoodSentinel());
         addActivationMana();
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -75,11 +77,58 @@ class HangedExecutionerTest extends BaseCardTest {
                 .anyMatch(card -> card.getName().equals("Hanged Executioner"));
     }
 
-    private Permanent addReadyExecutioner(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent permanent = new Permanent(new HangedExecutioner());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick to exile another own creature")
+    void activatesWhileTappedAndSummoningSick() {
+        Permanent executioner = harness.addToBattlefieldAndReturn(player1, new HangedExecutioner());
+        executioner.setSummoningSick(true);
+        executioner.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new HangedExecutioner());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(target);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(executioner.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .containsExactlyInAnyOrder(executioner.getCard(), target.getCard());
+    }
+
+    @Test
+    @DisplayName("Can target itself and remains exiled when the ability has no legal target")
+    void canTargetItself() {
+        Permanent executioner = harness.addToBattlefieldAndReturn(player1, new HangedExecutioner());
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, executioner.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hanged Executioner");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(executioner.getCard());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The entry trigger creates exactly one Spirit even after Executioner is exiled")
+    void entryTriggerSurvivesSourceExile() {
+        harness.setHand(player1, List.of(new HangedExecutioner()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent executioner = findPermanent(player1, "Hanged Executioner");
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, executioner.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Hanged Executioner");
+        assertThat(findPermanents(player1, "Spirit")).hasSize(1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(executioner.getCard());
     }
 
     private void addActivationMana() {
