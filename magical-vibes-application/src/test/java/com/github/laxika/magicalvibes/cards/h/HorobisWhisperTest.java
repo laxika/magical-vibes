@@ -172,4 +172,66 @@ class HorobisWhisperTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castWithSplice(player1, 0, bearId, List.of(1)))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can destroy a nonblack creature you control")
+    void destroysOwnCreature() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HorobisWhisper()));
+        giveCastingMana();
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+
+        assertThat(findPermanent(player1, "Grizzly Bears")).isNull();
+        assertThat(findPermanent(player1, "Swamp")).isNotNull();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName)
+                .contains("Grizzly Bears", "Horobi's Whisper");
+    }
+
+    @Test
+    @DisplayName("Splice pays its cost without a Swamp but does not destroy the target")
+    void splicesWithoutSwamp() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new VitalSurge(), new HorobisWhisper()));
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castWithSplice(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"), List.of(1));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Grizzly Bears")).isNotNull();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Horobi's Whisper");
+    }
+
+    @Test
+    @DisplayName("An illegal sole splice target prevents the host spell from gaining life")
+    void illegalSpliceTargetStopsHostSpell() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new VitalSurge(), new HorobisWhisper()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        harness.castWithSplice(player1, 0, bearId, List.of(1));
+        harness.castAndResolveInstant(player2, 0, bearId);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(4);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Vital Surge");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getName).containsExactly("Horobi's Whisper");
+    }
 }
