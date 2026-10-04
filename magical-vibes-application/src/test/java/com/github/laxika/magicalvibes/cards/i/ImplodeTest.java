@@ -16,6 +16,27 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Implode.class, MeteorCrater.class, CalderaKavu.class})
 class ImplodeTest extends BaseCardTest {
+    @Test
+    @DisplayName("Can destroy your own land and draws exactly one card")
+    void destroysOwnLandAndDrawsExactlyOneCard() {
+        harness.addToBattlefield(player1, new MeteorCrater());
+        harness.setHand(player1, List.of(new Implode()));
+        harness.setLibrary(player1, List.of(new CalderaKavu(), new MeteorCrater()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        UUID targetId = harness.getPermanentId(player1, "Meteor Crater");
+        harness.castAndResolveSorcery(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player1, "Meteor Crater");
+        harness.assertInGraveyard(player1, "Meteor Crater");
+        harness.assertInGraveyard(player1, "Implode");
+        harness.assertInHand(player1, "Caldera Kavu");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
 
     @Test
     @DisplayName("Destroys target land and draws a card")
