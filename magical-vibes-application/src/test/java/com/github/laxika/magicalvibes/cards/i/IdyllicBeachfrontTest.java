@@ -11,8 +11,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(IdyllicBeachfront.class)
+@CardUsed({IdyllicBeachfront.class})
 class IdyllicBeachfrontTest extends BaseCardTest {
 
     @Test
@@ -39,10 +40,55 @@ class IdyllicBeachfrontTest extends BaseCardTest {
         tapFor(ManaColor.BLUE, 1);
     }
 
+    @Test
+    @DisplayName("Neither mana ability can be activated while the land is tapped")
+    void cannotProduceManaWhileTapped() {
+        harness.setHand(player1, List.of(new IdyllicBeachfront()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+
+        for (int abilityIndex = 0; abilityIndex < 2; abilityIndex++) {
+            int index = abilityIndex;
+            assertThatThrownBy(() -> harness.activateAbility(player1, 0, index, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("tapped");
+        }
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("After untapping, the land can produce either color immediately")
+    void canProduceEachColorAfterUntapping() {
+        harness.setHand(player1, List.of(new IdyllicBeachfront()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+        Permanent land = findPermanent(player1, "Idyllic Beachfront");
+
+        harness.performUntapStep(player1);
+        assertThat(land.isTapped()).isFalse();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.stack).isEmpty();
+
+        harness.performUntapStep(player1);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void tapFor(ManaColor color, int abilityIndex) {
-        Permanent land = new Permanent(new IdyllicBeachfront());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new IdyllicBeachfront());
         land.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(land);
 
         harness.activateAbility(player1, 0, abilityIndex, null, null);
 
