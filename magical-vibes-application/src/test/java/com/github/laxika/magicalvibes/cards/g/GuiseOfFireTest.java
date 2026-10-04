@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.s.ScaldingDevil;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,13 +14,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GuiseOfFire.class, GrizzlyBears.class, FountainOfYouth.class, ScaldingDevil.class})
 class GuiseOfFireTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Guise of Fire attaches it and gives the creature +1/-1")
     void resolvingAttachesAndBoosts() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new GuiseOfFire()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -37,19 +38,11 @@ class GuiseOfFireTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature must attack each combat if able")
     void enchantedCreatureMustAttackWhenAble() {
-        Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(bears);
-        Permanent aura = new Permanent(new GuiseOfFire());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new GuiseOfFire());
         aura.setAttachedTo(bears.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of()))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
     }
@@ -67,5 +60,62 @@ class GuiseOfFireTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void tappedEnchantedCreatureDoesNotHaveToAttack() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setTapped(true);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new GuiseOfFire());
+        aura.setAttachedTo(bears.getId());
+
+        declareAttackers(player1, List.of());
+
+        assertThat(bears.isAttacking()).isFalse();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void summoningSickEnchantedCreatureDoesNotHaveToAttack() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setSummoningSick(true);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new GuiseOfFire());
+        aura.setAttachedTo(bears.getId());
+
+        declareAttackers(player1, List.of());
+
+        assertThat(bears.isAttacking()).isFalse();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void opponentCreatureGetsBoostAndMustAttackItsControllersCombat() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GuiseOfFire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Guise of Fire").getAttachedTo()).isEqualTo(bears.getId());
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must attack");
+    }
+
+    @Test
+    void toughnessReductionKillsCreatureAndPutsAuraInOwnersGraveyard() {
+        Permanent devil = harness.addToBattlefieldAndReturn(player2, new ScaldingDevil());
+        harness.setHand(player1, List.of(new GuiseOfFire()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, devil.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Scalding Devil");
+        harness.assertInGraveyard(player2, "Scalding Devil");
+        harness.assertNotOnBattlefield(player1, "Guise of Fire");
+        harness.assertInGraveyard(player1, "Guise of Fire");
     }
 }
