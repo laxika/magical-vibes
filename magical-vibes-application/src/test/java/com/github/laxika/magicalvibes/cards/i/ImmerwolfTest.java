@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.cards.h.HinterlandHermit;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.cards.y.YoungWolf;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,9 +17,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Immerwolf.class, HinterlandHermit.class, GrizzlyBears.class, TurnToFrog.class, YoungWolf.class})
 class ImmerwolfTest extends BaseCardTest {
 
-    // ===== Static effect: buffs Wolves and Werewolves you control =====
 
     @Test
     @DisplayName("Other Werewolves you control get +1/+1")
@@ -95,7 +98,6 @@ class ImmerwolfTest extends BaseCardTest {
         }
     }
 
-    // ===== Static effect: Non-Human Werewolves you control can't transform =====
 
     @Test
     @DisplayName("Front-face Human Werewolf you control can still transform to its night side")
@@ -152,11 +154,45 @@ class ImmerwolfTest extends BaseCardTest {
         assertThat(hermit.getCard().getName()).isEqualTo("Hinterland Hermit");
     }
 
-    private void advanceFromUntapToResolveUpkeepTrigger(Player activePlayer) {
-        harness.forceActivePlayer(activePlayer);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
+    @Test
+    @DisplayName("A real Wolf receives the bonus only once even when it is also a Werewolf")
+    void wolfAndWerewolfReceivesOnlyOneBonus() {
+        harness.addToBattlefield(player1, new Immerwolf());
+        harness.addToBattlefield(player1, new YoungWolf());
+        Permanent wolf = findPermanent(player1, "Young Wolf");
+        wolf.getGrantedSubtypes().add(CardSubtype.WEREWOLF);
+
+        assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Removing Immerwolf's abilities in response allows a Werewolf to transform back")
+    void abilityRemovalStopsTransformRestriction() {
+        harness.addToBattlefield(player1, new Immerwolf());
+        harness.addToBattlefield(player1, new HinterlandHermit());
+        Permanent immerwolf = findPermanent(player1, "Immerwolf");
+        Permanent hermit = findPermanent(player1, "Hinterland Hermit");
+        gd.spellsCastLastTurn.clear();
+        advanceFromUntapToResolveUpkeepTrigger(player1);
+        assertThat(hermit.isTransformed()).isTrue();
+
+        gd.spellsCastLastTurn.clear();
+        gd.spellsCastLastTurn.put(player2.getId(), 2);
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, immerwolf.getId());
         harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(hermit.isTransformed()).isFalse();
+        assertThat(hermit.getCard().getName()).isEqualTo("Hinterland Hermit");
+    }
+
+    private void advanceFromUntapToResolveUpkeepTrigger(Player activePlayer) {
+        advanceToUpkeep(activePlayer);
         harness.passBothPriorities();
     }
 }
