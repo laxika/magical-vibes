@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.i.IronfistCrusher;
+import com.github.laxika.magicalvibes.cards.w.WirewoodLodge;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EvergloveCourier.class, ElvishWarrior.class, IronfistCrusher.class})
+@CardUsed({EvergloveCourier.class, ElvishWarrior.class, IronfistCrusher.class, WirewoodLodge.class})
 class EvergloveCourierTest extends BaseCardTest {
 
     @Test
@@ -122,10 +123,56 @@ class EvergloveCourierTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an Elf creature");
     }
 
+    @Test
+    @DisplayName("Untapping the Courier before resolution prevents the boost and trample")
+    void untappingCourierBeforeResolutionPreventsBoost() {
+        Permanent courier = addReadyCourier(player1);
+        Permanent elf = addCreatureReady(player1, new ElvishWarrior());
+        harness.addToBattlefield(player1, new WirewoodLodge());
+        int basePower = gqs.getEffectivePower(gd, elf);
+        int baseToughness = gqs.getEffectiveToughness(gd, elf);
+        addAbilityMana();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, elf.getId());
+        harness.activateAbility(player1, 2, 1, null, courier.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(courier.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(baseToughness);
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Untapping the Courier ends another Elf's boost immediately")
+    void untappingCourierEndsOtherElfsBoost() {
+        Permanent courier = addReadyCourier(player1);
+        Permanent elf = addCreatureReady(player1, new ElvishWarrior());
+        harness.addToBattlefield(player1, new WirewoodLodge());
+        int basePower = gqs.getEffectivePower(gd, elf);
+        int baseToughness = gqs.getEffectiveToughness(gd, elf);
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, elf.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(baseToughness + 2);
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.TRAMPLE)).isTrue();
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 2, 1, null, courier.getId());
+        harness.passBothPriorities();
+
+        assertThat(courier.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(baseToughness);
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.TRAMPLE)).isFalse();
+    }
+
     private Permanent addReadyCourier(Player player) {
-        Permanent perm = harness.addToBattlefieldAndReturn(player, new EvergloveCourier());
-        perm.setSummoningSick(false);
-        return perm;
+        return addCreatureReady(player, new EvergloveCourier());
     }
 
     private void addAbilityMana() {
