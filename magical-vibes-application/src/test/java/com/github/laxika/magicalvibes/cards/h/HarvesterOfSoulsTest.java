@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.a.AngelicWall;
+import com.github.laxika.magicalvibes.cards.b.BarterInBlood;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SmiteTheMonstrous;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HarvesterOfSouls.class, DoomBlade.class, GrizzlyBears.class, SmiteTheMonstrous.class,
+        AngelicWall.class, BarterInBlood.class})
 class HarvesterOfSoulsTest extends BaseCardTest {
 
     @Test
@@ -64,19 +69,59 @@ class HarvesterOfSoulsTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new SmiteTheMonstrous()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.castInstant(player1, 0, harvester.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, harvester.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Harvester of Souls");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Harvester sees another creature sacrificed simultaneously with itself")
+    void drawsForCreatureDyingSimultaneouslyWithHarvester() {
+        harness.addToBattlefield(player1, new HarvesterOfSouls());
+        harness.addToBattlefield(player1, new AngelicWall());
+        harness.setLibrary(player1, List.of(new AngelicWall()));
+
+        harness.castFromHand(player1, new BarterInBlood(), "{2}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Harvester of Souls");
+        harness.assertInGraveyard(player1, "Angelic Wall");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertInHand(player1, "Angelic Wall");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each other nontoken creature dying simultaneously triggers independently")
+    void simultaneousDeathsOfferIndependentChoices() {
+        harness.addToBattlefield(player1, new HarvesterOfSouls());
+        harness.addToBattlefield(player2, new AngelicWall());
+        harness.addToBattlefield(player2, new AngelicWall());
+        harness.setLibrary(player1, List.of(new AngelicWall(), new AngelicWall()));
+
+        harness.castFromHand(player2, new BarterInBlood(), "{2}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Harvester of Souls");
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Angelic Wall");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void killWithDoomBlade(Permanent target) {
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities(); // resolve Doom Blade -> creature dies, trigger goes on the stack
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities(); // resolve the triggered ability -> may prompt
     }
 
