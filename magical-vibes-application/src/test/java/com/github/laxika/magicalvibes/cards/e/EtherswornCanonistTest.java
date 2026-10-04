@@ -1,11 +1,15 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.cards.v.VoidSnare;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,20 +18,19 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({EtherswornCanonist.class, GrizzlyBears.class, Ornithopter.class,
+        TurnToFrog.class, VoidSnare.class, EncroachingMycosynth.class, Naturalize.class})
 class EtherswornCanonistTest extends BaseCardTest {
 
     @Test
     @DisplayName("First nonartifact spell is still castable")
     void allowsFirstNonartifactSpell() {
         harness.addToBattlefield(player1, new EtherswornCanonist());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
@@ -129,6 +132,114 @@ class EtherswornCanonistTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Casting Canonist after a nonartifact spell still restricts subsequent nonartifact spells")
+    void castingCanonistDoesNotResetSpellHistory() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new EtherswornCanonist(), "{1}{W}");
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Removing Canonist allows another nonartifact spell in the same turn")
+    void restrictionEndsWhenCanonistLeaves() {
+        var canonist = harness.addToBattlefieldAndReturn(player1, new EtherswornCanonist());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new VoidSnare()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castSorcery(player1, 0, canonist.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Ethersworn Canonist");
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("Canonist that loses all abilities no longer restricts casting")
+    void restrictionEndsWhenCanonistLosesAbilities() {
+        var canonist = harness.addToBattlefieldAndReturn(player1, new EtherswornCanonist());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, canonist.getId());
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("Artifact type grants do not erase an earlier nonartifact cast")
+    void gainingArtifactTypeDoesNotRewriteSpellHistory() {
+        var canonist = harness.addToBattlefieldAndReturn(player1, new EtherswornCanonist());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new EncroachingMycosynth(), "{3}{U}");
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, canonist.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Losing an artifact type grant does not turn an earlier artifact cast into a nonartifact cast")
+    void losingArtifactTypeDoesNotRewriteSpellHistory() {
+        harness.addToBattlefield(player1, new EtherswornCanonist());
+        var mycosynth = harness.addToBattlefieldAndReturn(player1, new EncroachingMycosynth());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castInstant(player2, 0, mycosynth.getId());
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Encroaching Mycosynth");
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("A new turn permits another nonartifact spell")
+    void spellLimitResetsEachTurn() {
+        harness.addToBattlefield(player1, new EtherswornCanonist());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
 
     @Test
