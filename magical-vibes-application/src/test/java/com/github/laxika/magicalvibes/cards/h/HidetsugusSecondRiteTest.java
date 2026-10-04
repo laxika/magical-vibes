@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.a.ArabaMothrider;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +13,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HidetsugusSecondRite.class, ArabaMothrider.class})
+@CardUsed({HidetsugusSecondRite.class, LlanowarElves.class})
 class HidetsugusSecondRiteTest extends BaseCardTest {
 
     @Test
@@ -56,8 +56,7 @@ class HidetsugusSecondRiteTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HidetsugusSecondRite()));
         addMana();
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
@@ -65,12 +64,50 @@ class HidetsugusSecondRiteTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a creature")
     void cannotTargetCreature() {
-        var creature = harness.addToBattlefieldAndReturn(player2, new ArabaMothrider());
+        var creature = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
         harness.setHand(player1, List.of(new HidetsugusSecondRite()));
         addMana();
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Deals damage when the target reaches 10 life before resolution")
+    void dealsDamageWhenLifeChangesToTen() {
+        harness.setLife(player2, 11);
+        castRite(player2.getId());
+        harness.setLife(player2, 10);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Does nothing below 10 life even if the controller has exactly 10 life")
+    void doesNothingBelowTenLife() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 9);
+        castRite(player2.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(9);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("Can deal lethal damage to its controller")
+    void dealsDamageToControllerAtTenLife() {
+        harness.setLife(player1, 10);
+        castRite(player1.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isZero();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
     private void castRite(UUID targetId) {
