@@ -53,6 +53,37 @@ class HuntedPhantasmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The opponent of the casting player receives the Goblins")
+    void opponentCastingCreatesTokensForPlayerOne() {
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new HuntedPhantasm()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castCreature(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Goblin")).hasSize(5);
+        assertThat(findPermanents(player2, "Goblin")).isEmpty();
+        assertThat(findPermanents(player2, "Hunted Phantasm")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Deals combat damage to the defending player despite an available creature")
+    void dealsUnblockedCombatDamage() {
+        addCreatureReady(player1, new HuntedPhantasm());
+        addCreatureReady(player2, new HuntedPhantasm());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 16);
+        assertThat(findPermanents(player1, "Hunted Phantasm")).hasSize(1);
+        assertThat(findPermanents(player2, "Hunted Phantasm")).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Is unblockable")
     void isUnblockable() {
         harness.addToBattlefield(player1, new HuntedPhantasm());
