@@ -118,8 +118,7 @@ class GripOfChaosTest extends BaseCardTest {
         gd.playerBattlefields.get(player2.getId()).removeIf(permanent ->
                 permanent.getId().equals(originalTarget.getId()));
         harness.passBothPriorities();
-        assertThat(returnToDust.getTargetId()).isEqualTo(alternateTarget.getId());
-        assertThat(returnToDust.getTargetIds()).containsExactly(originalTarget.getId());
+        assertThat(returnToDust.getTargetIds()).containsExactly(alternateTarget.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -167,7 +166,7 @@ class GripOfChaosTest extends BaseCardTest {
         StackEntry ability = gd.stack.stream()
                 .filter(entry -> entry.getCard().getName().equals("Joraga Auxiliary"))
                 .findFirst().orElseThrow();
-        assertThat(ability.getTargetId()).isEqualTo(replacement.getId());
+        assertThat(ability.getTargetIds()).containsExactly(replacement.getId());
         harness.passBothPriorities();
         assertThat(replacement.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -194,5 +193,85 @@ class GripOfChaosTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(peelFromReality.getTargetIds()).containsExactlyElementsOf(originalTargets);
+    }
+
+    @Test
+    void doesNotTriggerForSpellWithMultipleTargets() {
+        harness.addToBattlefield(player1, new GripOfChaos());
+        var ownTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        var opposingTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PeelFromReality()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, List.of(ownTarget.getId(), opposingTarget.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void doesNotTriggerForAbilityWithMultipleTargets() {
+        harness.addToBattlefield(player1, new GripOfChaos());
+        addCreatureReady(player1, new JoragaAuxiliary());
+        var firstTarget = addCreatureReady(player1, new GrizzlyBears());
+        var secondTarget = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithMultiTargets(player1, 1, 0,
+                List.of(firstTarget.getId(), secondTarget.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(firstTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(secondTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void doesNotTriggerForUntargetedAbility() {
+        harness.addToBattlefield(player1, new GripOfChaos());
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 1, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    void doesNotTriggerWhenSupportChoosesNoTargets() {
+        harness.addToBattlefield(player1, new GripOfChaos());
+        addCreatureReady(player1, new JoragaAuxiliary());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbilityWithMultiTargets(player1, 1, 0, List.of());
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void keepsOriginalTargetWhenItIsTheOnlyLegalTarget() {
+        harness.addToBattlefield(player1, new GripOfChaos());
+        var target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Murder()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castInstant(player1, 0, target.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(target.getId());
+        resolveAllTriggers();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }
