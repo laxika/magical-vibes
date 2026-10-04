@@ -1,14 +1,18 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.c.Colossapede;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.Ovinize;
 import com.github.laxika.magicalvibes.cards.s.Skinrender;
+import com.github.laxika.magicalvibes.cards.s.SplendidAgony;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,16 +21,12 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HapatraVizierOfPoisons.class, AirElemental.class, GrizzlyBears.class,
+        Skinrender.class, Colossapede.class, SplendidAgony.class, Ovinize.class})
 class HapatraVizierOfPoisonsTest extends BaseCardTest {
 
     private long snakeCount(Player player) {
         return countPermanents(player, "Snake");
-    }
-
-    private void resolveStack() {
-        for (int guard = 0; guard < 40 && !gd.stack.isEmpty() && !gd.interaction.isAwaitingInput(); guard++) {
-            harness.passBothPriorities();
-        }
     }
 
     private Permanent attackWithHapatra(Player player) {
@@ -53,7 +53,7 @@ class HapatraVizierOfPoisonsTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        resolveStack();
+        resolveAllTriggers();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
@@ -74,7 +74,7 @@ class HapatraVizierOfPoisonsTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
-        resolveStack();
+        resolveAllTriggers();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
         assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
@@ -93,8 +93,8 @@ class HapatraVizierOfPoisonsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 4);
 
         // player1 casts Skinrender → player1 puts three -1/-1 counters in one instance.
-        harness.getGameService().playCard(gd, player1, 0, 0, targetId, null);
-        resolveStack();
+        harness.castCreature(player1, 0, targetId);
+        resolveAllTriggers();
 
         Permanent airElemental = findPermanent(player2, "Air Elemental");
         assertThat(airElemental.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
@@ -114,9 +114,55 @@ class HapatraVizierOfPoisonsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 4);
 
         harness.forceActivePlayer(player2);
-        harness.getGameService().playCard(gd, player2, 0, 0, targetId, null);
-        resolveStack();
+        harness.castCreature(player2, 0, targetId);
+        resolveAllTriggers();
 
+        assertThat(snakeCount(player1)).isZero();
+    }
+
+    @Test
+    void countersOnTwoCreaturesCreateTwoSnakes() {
+        harness.addToBattlefield(player1, new HapatraVizierOfPoisons());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new Colossapede());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new Colossapede());
+        harness.setHand(player1, List.of(new SplendidAgony()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, List.of(ownCreature.getId(), opposingCreature.getId()));
+        resolveAllTriggers();
+
+        assertThat(ownCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(opposingCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(snakeCount(player1)).isEqualTo(2);
+        assertThat(snakeCount(player2)).isZero();
+    }
+
+    @Test
+    void lethalCountersOnHapatraStillCreateOneSnake() {
+        Permanent hapatra = harness.addToBattlefieldAndReturn(player1, new HapatraVizierOfPoisons());
+        harness.setHand(player1, List.of(new SplendidAgony()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, List.of(hapatra.getId()));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Hapatra, Vizier of Poisons")).isZero();
+        assertThat(snakeCount(player1)).isEqualTo(1);
+    }
+
+    @Test
+    void losingAbilitiesPreventsCounterPlacementTrigger() {
+        Permanent hapatra = harness.addToBattlefieldAndReturn(player1, new HapatraVizierOfPoisons());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Colossapede());
+        harness.setHand(player1, List.of(new Ovinize(), new SplendidAgony()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, hapatra.getId());
+        harness.castAndResolveInstant(player1, 0, List.of(creature.getId()));
+        resolveAllTriggers();
+
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
         assertThat(snakeCount(player1)).isZero();
     }
 }
