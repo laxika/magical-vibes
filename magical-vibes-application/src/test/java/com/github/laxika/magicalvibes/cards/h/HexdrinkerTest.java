@@ -64,10 +64,7 @@ class HexdrinkerTest extends BaseCardTest {
 
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         hexdrinker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(hexdrinker);
@@ -75,6 +72,102 @@ class HexdrinkerTest extends BaseCardTest {
                 List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
+    }
+
+    @Test
+    void levelUpRequiresAnEmptyStack() {
+        Permanent hexdrinker = addCreatureReady(player1, new Hexdrinker());
+        prepareForLeveling(player1, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(hexdrinker.getCounterCount(CounterType.LEVEL)).isZero();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.passBothPriorities();
+        assertThat(hexdrinker.getCounterCount(CounterType.LEVEL)).isEqualTo(1);
+    }
+
+    @Test
+    void levelUpCannotBeActivatedDuringCombat() {
+        Permanent hexdrinker = addCreatureReady(player1, new Hexdrinker());
+        prepareForLeveling(player1, 1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(hexdrinker.getCounterCount(CounterType.LEVEL)).isZero();
+    }
+
+    @Test
+    void levelUpCannotBeActivatedOnAnOpponentsTurn() {
+        Permanent hexdrinker = addCreatureReady(player1, new Hexdrinker());
+        prepareForLeveling(player1, 1);
+        harness.forceActivePlayer(player2);
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(hexdrinker.getCounterCount(CounterType.LEVEL)).isZero();
+    }
+
+    @Test
+    void levelEightProtectionAlsoStopsItsControllersSpells() {
+        Permanent hexdrinker = addCreatureReady(player1, new Hexdrinker());
+        prepareForLeveling(player1, 8);
+        levelUp(player1, 8);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, hexdrinker.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    void levelTwoCanStillBeTargetedByInstants() {
+        Permanent hexdrinker = addCreatureReady(player1, new Hexdrinker());
+        prepareForLeveling(player1, 2);
+        levelUp(player1, 2);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.passPriority(player1);
+
+        harness.castAndResolveInstant(player2, 0, hexdrinker.getId());
+
+        harness.assertInGraveyard(player1, "Hexdrinker");
+    }
+
+    @Test
+    void levelSevenCanStillBeBlockedByCreatures() {
+        Permanent hexdrinker = addCreatureReady(player1, new Hexdrinker());
+        prepareForLeveling(player1, 7);
+        levelUp(player1, 7);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        hexdrinker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(hexdrinker);
+    }
+
+    @Test
+    void levelEightPreventsCombatDamageWhileBlocking() {
+        Permanent hexdrinker = addCreatureReady(player1, new Hexdrinker());
+        prepareForLeveling(player1, 8);
+        levelUp(player1, 8);
+        addCreatureReady(player2, new GrizzlyBears());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        assertThat(hexdrinker.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Hexdrinker");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
     private void prepareForLeveling(Player player, int mana) {
