@@ -55,6 +55,49 @@ class HeadlongRushTest extends BaseCardTest {
         assertThat(attacker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Granted first strike persists after a creature stops attacking")
+    void firstStrikePersistsAfterLeavingCombat() {
+        Permanent attacker = addCreatureReady(player1, new GorillaWarrior());
+        attacker.setAttacking(true);
+
+        castHeadlongRush();
+        attacker.setAttacking(false);
+
+        assertThat(attacker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only creatures attacking when Headlong Rush resolves gain first strike")
+    void checksAttackingStatusAtResolution() {
+        Permanent removedAttacker = addCreatureReady(player1, new GorillaWarrior());
+        removedAttacker.setAttacking(true);
+        Permanent newAttacker = addCreatureReady(player1, new GorillaWarrior());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.castFromHand(player1, new HeadlongRush(), "{1}{R}");
+
+        removedAttacker.setAttacking(false);
+        newAttacker.setAttacking(true);
+        harness.passBothPriorities();
+
+        assertThat(removedAttacker.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(newAttacker.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Headlong Rush resolves with no attackers and does not affect later attackers")
+    void resolvesWithoutAttackers() {
+        Permanent creature = addCreatureReady(player1, new GorillaWarrior());
+
+        castHeadlongRush();
+        creature.setAttacking(true);
+
+        assertThat(creature.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Headlong Rush");
+    }
+
     private void castHeadlongRush() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
