@@ -14,6 +14,48 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ImpendingDisasterTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Seven lands controlled entirely by the opponent still cause the disaster")
+    void triggersWhenOpponentControlsAllSevenLands() {
+        harness.addToBattlefield(player1, new ImpendingDisaster());
+        for (int i = 0; i < 7; i++) {
+            harness.addToBattlefield(player2, new TreetopVillage());
+        }
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Impending Disaster");
+        harness.assertInGraveyard(player1, "Impending Disaster");
+        assertThat(countPermanents(player2, "Treetop Village")).isZero();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(7);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("With two disasters, the second trigger does nothing after the first destroys the lands")
+    void secondDisasterRemainsAfterFirstDestroysLands() {
+        harness.addToBattlefield(player1, new ImpendingDisaster());
+        harness.addToBattlefield(player1, new ImpendingDisaster());
+        for (int i = 0; i < 7; i++) {
+            harness.addToBattlefield(player2, new TreetopVillage());
+        }
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Impending Disaster")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Treetop Village")).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Impending Disaster")).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Seven lands on the battlefield sacrifice Impending Disaster and destroy all lands")
     void sevenLandsSacrificeAndDestroyAllLands() {
         Permanent disaster = harness.addToBattlefieldAndReturn(player1, new ImpendingDisaster());
