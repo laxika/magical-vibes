@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "DDT", collectorNumber = "26")
 @CardRegistration(set = "C21", collectorNumber = "279")
+@CardRegistration(set = "BFZ", collectorNumber = "229")
 public class BlightedCataract extends Card {
 
     public BlightedCataract() {

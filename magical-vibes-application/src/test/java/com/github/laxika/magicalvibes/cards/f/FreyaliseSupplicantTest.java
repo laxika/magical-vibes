@@ -135,4 +135,68 @@ class FreyaliseSupplicantTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A one-power sacrifice deals zero damage but still pays the costs")
+    void onePowerSacrificeDealsZeroDamage() {
+        Permanent supplicant = addCreatureReady(player1, new FreyaliseSupplicant());
+        Permanent giant = addCreatureReady(player1, new HillGiant());
+        giant.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(supplicant.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's red or white creature")
+    void cannotSacrificeOpponentsCreature() {
+        Permanent supplicant = addCreatureReady(player1, new FreyaliseSupplicant());
+        addCreatureReady(player2, new SerraAngel());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(supplicant.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void cannotActivateWhileSummoningSick() {
+        Permanent supplicant = addCreatureReady(player1, new FreyaliseSupplicant());
+        supplicant.setSummoningSick(true);
+        addCreatureReady(player1, new SerraAngel());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(supplicant.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Serra Angel");
+    }
+
+    @Test
+    @DisplayName("A newly entered creature can be sacrificed and damage can target the controller")
+    void sacrificesSummoningSickCreatureToDamageController() {
+        addCreatureReady(player1, new FreyaliseSupplicant());
+        harness.addToBattlefield(player1, new HillGiant());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+
+        harness.assertInGraveyard(player1, "Hill Giant");
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
 }

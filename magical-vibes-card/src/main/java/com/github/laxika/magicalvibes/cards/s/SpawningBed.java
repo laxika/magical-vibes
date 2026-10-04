@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "PIO", collectorNumber = "277")
+@CardRegistration(set = "BFZ", collectorNumber = "248")
 public class SpawningBed extends Card {
 
     private static final CreateTokenEffect ELDRAZI_SCION = new CreateTokenEffect(

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "PA1", collectorNumber = "11")
+@CardRegistration(set = "BFZ", collectorNumber = "242")
 public class SanctumOfUgin extends Card {
 
     public SanctumOfUgin() {

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FreestriderCommando.class, AvenInterrupter.class, BondOfRevival.class})
 class FreestriderCommandoTest extends BaseCardTest {
@@ -83,6 +84,44 @@ class FreestriderCommandoTest extends BaseCardTest {
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("A plotted Commando cannot be cast during the turn it was plotted")
+    void cannotCastOnTurnItWasPlotted() {
+        FreestriderCommando commando = plotCommando(player1);
+
+        harness.assertNotInHand(player1, "Freestrider Commando");
+        harness.assertNotOnBattlefield(player1, "Freestrider Commando");
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.castFromExile(player1, commando.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("turn it became plotted");
+    }
+
+    @Test
+    @DisplayName("A normally cast Commando gets counters when later reanimated")
+    void reanimationDoesNotReuseManaSpentOnAnEarlierCast() {
+        harness.setHand(player1, List.of(new FreestriderCommando(), new BondOfRevival()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent commando = findPermanent(player1, "Freestrider Commando");
+        assertThat(commando.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        commando.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Freestrider Commando");
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castSorcery(player1, 0, commando.getCard().getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Freestrider Commando")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertNotInGraveyard(player1, "Freestrider Commando");
+    }
+
     private FreestriderCommando plotCommando(Player player) {
         FreestriderCommando commando = new FreestriderCommando();
         harness.forceActivePlayer(player);
@@ -99,12 +138,10 @@ class FreestriderCommandoTest extends BaseCardTest {
         Player otherPlayer = player.equals(player1) ? player2 : player1;
         harness.setHand(otherPlayer, List.of());
         harness.passUntil(player, TurnStep.DECLARE_ATTACKERS);
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, player, List.of());
+        declareAttackers(player, List.of());
         harness.passUntil(otherPlayer, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(otherPlayer, TurnStep.DECLARE_ATTACKERS);
-        harness.beginAttackerDeclarationInput();
-        gs.declareAttackers(gd, otherPlayer, List.of());
+        declareAttackers(otherPlayer, List.of());
         harness.passUntil(player, TurnStep.PRECOMBAT_MAIN);
     }
 }

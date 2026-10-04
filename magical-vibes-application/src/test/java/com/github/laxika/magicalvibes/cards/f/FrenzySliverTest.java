@@ -71,13 +71,52 @@ class FrenzySliverTest extends BaseCardTest {
 
         declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of());
-        harness.castInstant(player1, 0, frenzySliver.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, frenzySliver.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Frenzy Sliver");
         assertThat(unblockedSliver.getPowerModifier()).isEqualTo(1);
         assertThat(unblockedSliver.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple instances of frenzy trigger separately")
+    void multipleFrenzyInstancesTriggerSeparately() {
+        addCreatureReady(player1, new FrenzySliver());
+        addCreatureReady(player1, new FrenzySliver());
+        Permanent attacker = addCreatureReady(player1, new HomingSliver());
+
+        declareAttackersAndPrepareBlockers(List.of(2));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
+
+        assertThat(gd.stack).hasSize(2);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> harness.passBothPriorities());
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        resolveAllTriggers();
+        assertThat(attacker.getPowerModifier()).isEqualTo(2);
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing the granting Sliver before blockers prevents frenzy from triggering")
+    void removingGrantBeforeBlockersPreventsFrenzy() {
+        Permanent frenzySliver = addCreatureReady(player1, new FrenzySliver());
+        Permanent attacker = addCreatureReady(player1, new HomingSliver());
+        harness.setHand(player1, List.of(new Ghostfire()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(1));
+            harness.castAndResolveInstant(player1, 0, frenzySliver.getId());
+        });
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Frenzy Sliver");
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
     }
 
     @Test
