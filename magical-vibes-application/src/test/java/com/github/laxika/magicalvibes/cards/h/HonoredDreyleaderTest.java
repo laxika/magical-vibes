@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,10 +12,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(HonoredDreyleader.class)
+@CardUsed({HonoredDreyleader.class})
 class HonoredDreyleaderTest extends BaseCardTest {
 
     @Test
@@ -24,12 +24,8 @@ class HonoredDreyleaderTest extends BaseCardTest {
     void entersWithCountersForOtherSquirrelsAndFood() {
         addToken(player1, "Squirrel", CardType.CREATURE, CardSubtype.SQUIRREL);
         addToken(player1, "Food", CardType.ARTIFACT, CardSubtype.FOOD);
-        harness.setHand(player1, List.of(new HonoredDreyleader()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castFromHand(player1, new HonoredDreyleader(), "{2}{G}");
+        resolveAllTriggers();
 
         Permanent dreyleader = gd.playerBattlefields.get(player1.getId()).getLast();
 
@@ -62,11 +58,94 @@ class HonoredDreyleaderTest extends BaseCardTest {
         assertThat(dreyleader.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    private Permanent addToken(Player player, String name, CardType type, CardSubtype subtype) {
+    @Test
+    @DisplayName("Does not count itself or opponents' permanents on entry")
+    void excludesItselfAndOpponentsPermanents() {
+        harness.addToBattlefield(player2, new HonoredDreyleader());
+        addToken(player2, "Food", CardType.ARTIFACT, CardSubtype.FOOD);
+
+        Permanent dreyleader = harness.enterBattlefieldAndReturn(player1, new HonoredDreyleader());
+        resolveAllTriggers();
+
+        assertThat(dreyleader.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Another Dreyleader receives its entry counters and triggers the existing one")
+    void anotherDreyleaderTriggersExistingDreyleader() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new HonoredDreyleader());
+
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new HonoredDreyleader());
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Entry counts permanents remaining when the ability resolves")
+    void entryCountsPermanentsAtResolution() {
+        Permanent squirrel = harness.addToBattlefieldAndReturn(player1, new HonoredDreyleader());
+        Permanent dreyleader = harness.enterBattlefieldAndReturn(player1, new HonoredDreyleader());
+        gd.playerBattlefields.get(player1.getId()).remove(squirrel);
+        gd.playerGraveyards.get(player1.getId()).add(squirrel.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(dreyleader.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A permanent that is both Squirrel and Food is counted only once")
+    void countsSquirrelFoodOnce() {
+        addToken(player1, "Squirrel Food", CardType.CREATURE, CardSubtype.SQUIRREL, CardSubtype.FOOD);
+        Permanent dreyleader = harness.enterBattlefieldAndReturn(player1, new HonoredDreyleader());
+        resolveAllTriggers();
+
+        assertThat(dreyleader.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        Permanent anotherSquirrelFood = addToken(player1, "Squirrel Food", CardType.CREATURE,
+                CardSubtype.SQUIRREL, CardSubtype.FOOD);
+        triggerPermanentEntry(player1, anotherSquirrelFood);
+
+        assertThat(dreyleader.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The counter trigger still resolves after the entering Squirrel leaves")
+    void counterTriggerSurvivesEnteringSquirrelLeaving() {
+        Permanent dreyleader = harness.addToBattlefieldAndReturn(player1, new HonoredDreyleader());
+        Permanent squirrel = harness.enterBattlefieldAndReturn(player1, new HonoredDreyleader());
+        gd.playerBattlefields.get(player1.getId()).remove(squirrel);
+        gd.playerGraveyards.get(player1.getId()).add(squirrel.getCard());
+
+        resolveAllTriggers();
+
+        assertThat(dreyleader.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An entry ability cannot put counters on a new permanent represented by the same card")
+    void entryTriggerDoesNotFollowSourceReturning() {
+        harness.addToBattlefield(player1, new HonoredDreyleader());
+        HonoredDreyleader card = new HonoredDreyleader();
+        Permanent original = harness.enterBattlefieldAndReturn(player1, card);
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, card);
+
+        resolveAllTriggers();
+
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    private Permanent addToken(Player player, String name, CardType type, CardSubtype... subtypes) {
         Card card = new Card();
         card.setName(name);
         card.setType(type);
-        card.setSubtypes(List.of(subtype));
+        card.setSubtypes(List.of(subtypes));
+        if (type == CardType.CREATURE && List.of(subtypes).contains(CardSubtype.FOOD)) {
+            card.setAdditionalTypes(Set.of(CardType.ARTIFACT));
+        }
         card.setToken(true);
         if (type == CardType.CREATURE) {
             card.setPower(1);
@@ -82,12 +161,6 @@ class HonoredDreyleaderTest extends BaseCardTest {
     private void triggerPermanentEntry(Player controller, Permanent enteringPermanent) {
         harness.inMutationScope(() -> harness.getTriggerCollectionService()
                 .checkAnyPermanentEntersTriggers(gd, controller.getId(), enteringPermanent.getCard()));
-        resolveAllStackEntries();
-    }
-
-    private void resolveAllStackEntries() {
-        while (!gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
     }
 }
