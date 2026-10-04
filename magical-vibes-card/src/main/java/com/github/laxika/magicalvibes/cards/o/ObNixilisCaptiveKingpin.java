@@ -9,6 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "MAT", collectorNumber = "41")
+@CardRegistration(set = "MAT", collectorNumber = "91")
+@CardRegistration(set = "MAT", collectorNumber = "141")
+@CardRegistration(set = "MAT", collectorNumber = "176")
+@CardRegistration(set = "MAT", collectorNumber = "220")
 public class ObNixilisCaptiveKingpin extends Card {
 
     public ObNixilisCaptiveKingpin() {

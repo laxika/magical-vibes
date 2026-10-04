@@ -12,6 +12,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "7")
+@CardRegistration(set = "MAT", collectorNumber = "57")
+@CardRegistration(set = "MAT", collectorNumber = "107")
+@CardRegistration(set = "MAT", collectorNumber = "191")
 public class FilterOut extends Card {
 
     public FilterOut() {

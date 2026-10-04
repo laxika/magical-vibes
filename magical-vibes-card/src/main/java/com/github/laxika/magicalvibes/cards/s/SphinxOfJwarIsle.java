@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffe
 @CardRegistration(set = "ZEN", collectorNumber = "68")
 @CardRegistration(set = "C14", collectorNumber = "126")
 @CardRegistration(set = "C18", collectorNumber = "103")
+@CardRegistration(set = "E01", collectorNumber = "28")
 public class SphinxOfJwarIsle extends Card {
 
     public SphinxOfJwarIsle() {

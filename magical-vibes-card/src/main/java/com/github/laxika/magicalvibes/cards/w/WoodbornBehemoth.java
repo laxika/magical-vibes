@@ -14,6 +14,7 @@ import java.util.Set;
 
 @CardRegistration(set = "M14", collectorNumber = "203")
 @CardRegistration(set = "DDR", collectorNumber = "26")
+@CardRegistration(set = "E01", collectorNumber = "79")
 public class WoodbornBehemoth extends Card {
 
     public WoodbornBehemoth() {

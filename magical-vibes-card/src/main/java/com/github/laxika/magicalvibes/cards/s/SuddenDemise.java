@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenSpellColorPredicate;
 
 @CardRegistration(set = "C13", collectorNumber = "124")
+@CardRegistration(set = "E01", collectorNumber = "59")
 public class SuddenDemise extends Card {
 
     public SuddenDemise() {

@@ -18,6 +18,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "50")
+@CardRegistration(set = "MAT", collectorNumber = "100")
+@CardRegistration(set = "MAT", collectorNumber = "150")
+@CardRegistration(set = "MAT", collectorNumber = "185")
+@CardRegistration(set = "MAT", collectorNumber = "228")
 public class DrannithRuins extends Card {
 
     public DrannithRuins() {

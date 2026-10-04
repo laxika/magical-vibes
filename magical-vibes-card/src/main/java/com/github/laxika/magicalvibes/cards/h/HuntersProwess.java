@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BNG", collectorNumber = "124")
 @CardRegistration(set = "E02", collectorNumber = "33")
+@CardRegistration(set = "E01", collectorNumber = "66")
 @CardRegistration(set = "PIO", collectorNumber = "381")
 @CardRegistration(set = "C17", collectorNumber = "152")
 @CardRegistration(set = "SCD", collectorNumber = "192")

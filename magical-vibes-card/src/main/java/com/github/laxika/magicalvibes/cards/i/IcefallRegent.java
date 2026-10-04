@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DTK", collectorNumber = "58")
+@CardRegistration(set = "E01", collectorNumber = "24")
 public class IcefallRegent extends Card {
 
     public IcefallRegent() {

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 @CardRegistration(set = "RVR", collectorNumber = "311")
 @CardRegistration(set = "C14", collectorNumber = "102")
 @CardRegistration(set = "TDC", collectorNumber = "147")
+@CardRegistration(set = "E01", collectorNumber = "23")
 public class CompulsiveResearch extends Card {
 
     public CompulsiveResearch() {

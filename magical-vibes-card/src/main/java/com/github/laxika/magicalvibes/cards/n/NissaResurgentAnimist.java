@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "22")
+@CardRegistration(set = "MAT", collectorNumber = "72")
+@CardRegistration(set = "MAT", collectorNumber = "122")
+@CardRegistration(set = "MAT", collectorNumber = "162")
 public class NissaResurgentAnimist extends Card {
 
     public NissaResurgentAnimist() {

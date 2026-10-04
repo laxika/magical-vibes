@@ -19,6 +19,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "8")
+@CardRegistration(set = "MAT", collectorNumber = "58")
+@CardRegistration(set = "MAT", collectorNumber = "108")
+@CardRegistration(set = "MAT", collectorNumber = "192")
 public class TolarianContempt extends Card {
 
     public TolarianContempt() {

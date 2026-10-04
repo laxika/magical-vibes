@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DTK", collectorNumber = "196")
+@CardRegistration(set = "E01", collectorNumber = "70")
 public class PressTheAdvantage extends Card {
 
     public PressTheAdvantage() {

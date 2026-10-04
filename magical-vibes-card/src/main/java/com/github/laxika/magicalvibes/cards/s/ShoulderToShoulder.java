@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "OGW", collectorNumber = "34")
 @CardRegistration(set = "PIO", collectorNumber = "362")
+@CardRegistration(set = "E01", collectorNumber = "20")
 public class ShoulderToShoulder extends Card {
 
     public ShoulderToShoulder() {

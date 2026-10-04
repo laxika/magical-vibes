@@ -14,6 +14,10 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.Set;
 
 @CardRegistration(set = "MAT", collectorNumber = "46")
+@CardRegistration(set = "MAT", collectorNumber = "96")
+@CardRegistration(set = "MAT", collectorNumber = "146")
+@CardRegistration(set = "MAT", collectorNumber = "181")
+@CardRegistration(set = "MAT", collectorNumber = "225")
 @CardRegistration(set = "TDC", collectorNumber = "301")
 public class SarkhanSoulAflame extends Card {
 

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import java.util.Set;
 
 @CardRegistration(set = "M10", collectorNumber = "19")
+@CardRegistration(set = "E01", collectorNumber = "14")
 public class LightwielderPaladin extends Card {
 
     public LightwielderPaladin() {

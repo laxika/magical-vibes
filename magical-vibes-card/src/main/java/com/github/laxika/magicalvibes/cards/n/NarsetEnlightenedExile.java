@@ -19,6 +19,10 @@ import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetF
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "38")
+@CardRegistration(set = "MAT", collectorNumber = "88")
+@CardRegistration(set = "MAT", collectorNumber = "138")
+@CardRegistration(set = "MAT", collectorNumber = "173")
+@CardRegistration(set = "MAT", collectorNumber = "217")
 public class NarsetEnlightenedExile extends Card {
 
     private static final CardAllOfPredicate NONCREATURE_NONLAND_BELOW_POWER = new CardAllOfPredicate(List.of(
