@@ -88,6 +88,39 @@ class ImperialHellkiteTest extends BaseCardTest {
     }
 
     @Test
+    void acceptingSearchMayFailToFindEvenWhenDragonIsAvailable() {
+        Permanent hellkite = castFaceDown();
+        Card dragon = new KilnmouthDragon();
+        Card nonDragon = new FugitiveWizard();
+        harness.setLibrary(player1, List.of(dragon, nonDragon));
+        List<Card> hand = new ArrayList<>(gd.playerHands.get(player1.getId()));
+
+        turnFaceUp(hellkite);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(hand);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(dragon, nonDragon);
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    void acceptingSearchWithEmptyLibraryFinishesNormally() {
+        Permanent hellkite = castFaceDown();
+        harness.setLibrary(player1, List.of());
+        List<Card> hand = new ArrayList<>(gd.playerHands.get(player1.getId()));
+
+        turnFaceUp(hellkite);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(hand);
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
     void castingFaceUpDoesNotCreateTurnedFaceUpTrigger() {
         ImperialHellkite card = new ImperialHellkite();
         Card libraryCard = new FugitiveWizard();
