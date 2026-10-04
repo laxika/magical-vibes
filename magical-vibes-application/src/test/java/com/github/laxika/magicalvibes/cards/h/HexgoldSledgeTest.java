@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GoblinGaveleer;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -22,8 +23,7 @@ class HexgoldSledgeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent gaveleer = findPermanent(player1, "Goblin Gaveleer");
         assertThat(gaveleer.getCard().isToken()).isFalse();
@@ -43,5 +43,52 @@ class HexgoldSledgeTest extends BaseCardTest {
         assertThat(sledge.getAttachedTo()).isEqualTo(creature.getId());
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+    }
+
+    @Test
+    void forMirrodinCreatesARebelAndAttachesTheSledge() {
+        harness.setHand(player1, List.of(new HexgoldSledge()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken()
+                        && p.getCard().getSubtypes().contains(CardSubtype.REBEL))
+                .hasSize(1);
+        Permanent rebel = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken()
+                        && p.getCard().getSubtypes().contains(CardSubtype.REBEL))
+                .findFirst().orElseThrow();
+        Permanent sledge = findPermanent(player1, "Hexgold Sledge");
+
+        assertThat(sledge.getAttachedTo()).isEqualTo(rebel.getId());
+        assertThat(gqs.getEffectivePower(gd, rebel)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, rebel)).isEqualTo(2);
+        assertThat(countPermanents(player1, "Goblin Gaveleer")).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void equipsTheConjuredGaveleerAndCombinesBothPowerBonuses() {
+        harness.setHand(player1, List.of(new HexgoldSledge()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
+
+        Permanent gaveleer = findPermanent(player1, "Goblin Gaveleer");
+        Permanent sledge = findPermanent(player1, "Hexgold Sledge");
+        int sledgeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(sledge);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, sledgeIndex, null, gaveleer.getId());
+        resolveAllTriggers();
+
+        assertThat(sledge.getAttachedTo()).isEqualTo(gaveleer.getId());
+        assertThat(gqs.getEffectivePower(gd, gaveleer)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, gaveleer)).isEqualTo(1);
     }
 }
