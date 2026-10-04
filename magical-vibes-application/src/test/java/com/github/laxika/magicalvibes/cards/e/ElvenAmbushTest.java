@@ -26,8 +26,7 @@ class ElvenAmbushTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ElvenAmbush()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
@@ -49,10 +48,44 @@ class ElvenAmbushTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ElvenAmbush()));
         harness.addMana(player1, ManaColor.GREEN, 4);
 
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    void countsElfTokensCreatedWhileSpellIsOnTheStack() {
+        harness.addToBattlefield(player1, new LlanowarElves());
+        harness.setHand(player1, List.of(new ElvenAmbush(), new ElvenAmbush()));
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        harness.castInstant(player1, 0);
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(3);
+    }
+
+    @Test
+    void opposingElvesDoNotCreateTokensWhenControllerHasNone() {
+        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.setHand(player1, List.of(new ElvenAmbush()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .hasSize(1)
                 .noneMatch(permanent -> permanent.getCard().isToken());
     }
 }

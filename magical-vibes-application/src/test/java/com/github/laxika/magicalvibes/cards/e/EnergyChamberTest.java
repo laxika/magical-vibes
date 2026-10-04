@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.c.ConjurersBauble;
 import com.github.laxika.magicalvibes.cards.t.TangleAsp;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -152,5 +153,70 @@ class EnergyChamberTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(artifactCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The charge mode can target Energy Chamber itself")
+    void canPutChargeCounterOnItself() {
+        Permanent chamber = harness.addToBattlefieldAndReturn(player1, new EnergyChamber());
+
+        advanceToUpkeep(player1);
+        harness.handleListChoice(player1, CHARGE_MODE);
+        harness.handlePermanentChosen(player1, chamber.getId());
+        harness.passBothPriorities();
+
+        assertThat(chamber.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A mode with no legal targets is not offered")
+    void cannotChooseCreatureModeWithoutArtifactCreatures() {
+        Permanent chamber = harness.addToBattlefieldAndReturn(player1, new EnergyChamber());
+
+        advanceToUpkeep(player1);
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options().stream().filter(option -> !choice.disabledOptions().contains(option)))
+                .containsExactly(CHARGE_MODE);
+        harness.handleListChoice(player1, CHARGE_MODE);
+        harness.handlePermanentChosen(player1, chamber.getId());
+        harness.passBothPriorities();
+
+        assertThat(chamber.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Removing Energy Chamber does not stop its triggered ability")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        Permanent chamber = harness.addToBattlefieldAndReturn(player1, new EnergyChamber());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new Arachnoid());
+
+        advanceToUpkeep(player1);
+        harness.handleListChoice(player1, PLUS_ONE_MODE);
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, chamber));
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A target that leaves the battlefield receives no counter")
+    void removedTargetReceivesNoCounter() {
+        Permanent chamber = harness.addToBattlefieldAndReturn(player1, new EnergyChamber());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new ConjurersBauble());
+
+        advanceToUpkeep(player1);
+        harness.handleListChoice(player1, CHARGE_MODE);
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, artifact));
+        harness.passBothPriorities();
+
+        assertThat(artifact.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(chamber.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 }

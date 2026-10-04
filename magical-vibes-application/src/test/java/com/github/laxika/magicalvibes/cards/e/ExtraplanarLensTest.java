@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.a.ArixmethesSlumberingIsle;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.Glimmervoid;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.p.PullFromEternity;
+import com.github.laxika.magicalvibes.cards.w.WordOfSeizing;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,18 +19,16 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArixmethesSlumberingIsle.class, ExtraplanarLens.class, Forest.class, Glimmervoid.class, Mountain.class})
+@CardUsed({ArixmethesSlumberingIsle.class, ExtraplanarLens.class, Forest.class, Glimmervoid.class,
+        Mountain.class, PullFromEternity.class, WordOfSeizing.class})
 class ExtraplanarLensTest extends BaseCardTest {
 
     @Test
     @DisplayName("Accepting the ETB ability exiles the targeted land and imprints it")
     void acceptsImprint() {
         harness.addToBattlefield(player1, new Forest());
-        harness.setHand(player1, List.of(new ExtraplanarLens()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
         UUID forestId = harness.getPermanentId(player1, "Forest");
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new ExtraplanarLens(), "{3}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, forestId);
         harness.passBothPriorities();
@@ -43,11 +43,8 @@ class ExtraplanarLensTest extends BaseCardTest {
     @DisplayName("Declining the ETB ability leaves the targeted land on the battlefield")
     void declinesImprint() {
         harness.addToBattlefield(player1, new Forest());
-        harness.setHand(player1, List.of(new ExtraplanarLens()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
         UUID forestId = harness.getPermanentId(player1, "Forest");
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new ExtraplanarLens(), "{3}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, forestId);
         harness.passBothPriorities();
@@ -62,10 +59,7 @@ class ExtraplanarLensTest extends BaseCardTest {
     @DisplayName("The ETB ability is skipped when its controller controls no land")
     void skipsImprintWhenControllerHasNoLand() {
         harness.addToBattlefield(player2, new Forest());
-        harness.setHand(player1, List.of(new ExtraplanarLens()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, new ExtraplanarLens(), "{3}");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Extraplanar Lens");
@@ -102,7 +96,9 @@ class ExtraplanarLensTest extends BaseCardTest {
     void addsManaOfColorProducedByMatchingLand() {
         ExtraplanarLens lens = new ExtraplanarLens();
         harness.addToBattlefield(player1, lens);
-        gd.setImprintedCard(lens, new Glimmervoid());
+        Glimmervoid imprintedLand = new Glimmervoid();
+        harness.setExile(player1, List.of(imprintedLand));
+        gd.setImprintedCard(lens, imprintedLand);
         harness.addToBattlefield(player1, new Glimmervoid());
 
         harness.activateAbility(player1, 1, null, null);
@@ -117,7 +113,9 @@ class ExtraplanarLensTest extends BaseCardTest {
     void addsOnlyOneManaWhenMatchingLandProducesMultipleColors() {
         ExtraplanarLens lens = new ExtraplanarLens();
         harness.addToBattlefield(player1, lens);
-        gd.setImprintedCard(lens, new ArixmethesSlumberingIsle());
+        ArixmethesSlumberingIsle imprintedLand = new ArixmethesSlumberingIsle();
+        harness.setExile(player1, List.of(imprintedLand));
+        gd.setImprintedCard(lens, imprintedLand);
 
         Permanent arixmethes = addCreatureReady(player1, new ArixmethesSlumberingIsle());
         arixmethes.setCounterCount(CounterType.SLUMBER, 1);
@@ -150,10 +148,60 @@ class ExtraplanarLensTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
     }
 
-    private ExtraplanarLens addLensWithImprintedForest() {
+    @Test
+    @DisplayName("The mana bonus stops when the imprinted land leaves exile")
+    void stopsAddingManaAfterImprintedLandLeavesExile() {
+        Forest imprintedForest = new Forest();
+        harness.addToBattlefield(player1, imprintedForest);
+        UUID forestId = harness.getPermanentId(player1, "Forest");
+        harness.castFromHand(player1, new ExtraplanarLens(), "{3}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, forestId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.setHand(player1, List.of(new PullFromEternity()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, imprintedForest.getId());
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.findExiledCard(imprintedForest.getId())).isNull();
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Changing control of the Lens before its ETB resolves preserves the imprint")
+    void imprintsEvenIfLensChangesControllerBeforeResolution() {
+        harness.addToBattlefield(player1, new Forest());
+        UUID forestId = harness.getPermanentId(player1, "Forest");
+        harness.castFromHand(player1, new ExtraplanarLens(), "{3}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, forestId);
+
+        harness.setHand(player2, List.of(new WordOfSeizing()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Extraplanar Lens"));
+        harness.assertOnBattlefield(player2, "Extraplanar Lens");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    private void addLensWithImprintedForest() {
         ExtraplanarLens lens = new ExtraplanarLens();
         harness.addToBattlefield(player1, lens);
-        gd.setImprintedCard(lens, new Forest());
-        return lens;
+        Forest imprintedLand = new Forest();
+        harness.setExile(player1, List.of(imprintedLand));
+        gd.setImprintedCard(lens, imprintedLand);
     }
 }

@@ -140,4 +140,69 @@ class ForgottenHarvestTest extends BaseCardTest {
                 .containsExactly(land.getId());
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("Choosing among lands exiles only the chosen land and counters your own creature")
+    void choosingLandCompletesCounterPlacement() {
+        harness.addToBattlefield(player1, new ForgottenHarvest());
+        Permanent creature = addCreatureReady(player1, new DivingGriffin());
+        RhysticCave firstLand = new RhysticCave();
+        RhysticCave chosenLand = new RhysticCave();
+        Abolish nonland = new Abolish();
+        harness.setGraveyard(player1, List.of(firstLand, nonland, chosenLand));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(chosenLand.getId()));
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting("id")
+                .containsExactly(firstLand.getId(), nonland.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting("id")
+                .containsExactly(chosenLand.getId());
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Lands in an opponent's graveyard cannot pay for the counter")
+    void opponentsLandCannotBeExiled() {
+        harness.addToBattlefield(player1, new ForgottenHarvest());
+        Permanent creature = addCreatureReady(player1, new DivingGriffin());
+        RhysticCave opponentsLand = new RhysticCave();
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(opponentsLand));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting("id")
+                .containsExactly(opponentsLand.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("If the creature target leaves before resolution, no land is exiled")
+    void removedTargetPreventsLandExile() {
+        harness.addToBattlefield(player1, new ForgottenHarvest());
+        Permanent creature = addCreatureReady(player2, new DivingGriffin());
+        RhysticCave land = new RhysticCave();
+        harness.setGraveyard(player1, List.of(land));
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, creature.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting("id")
+                .containsExactly(land.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }

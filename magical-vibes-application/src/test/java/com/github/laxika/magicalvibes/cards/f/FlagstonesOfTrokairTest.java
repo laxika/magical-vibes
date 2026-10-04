@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -44,7 +43,7 @@ class FlagstonesOfTrokairTest extends BaseCardTest {
         assertThat(search.params().cards()).containsExactly(plains);
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == plains && permanent.isTapped());
@@ -63,5 +62,70 @@ class FlagstonesOfTrokairTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(permanent -> permanent.getCard() == plains);
+    }
+
+    @Test
+    void controllerAtDepartureSearchesTheirOwnLibraryRatherThanOwnersLibrary() {
+        Permanent flagstones = harness.addToBattlefieldAndReturn(player2, new FlagstonesOfTrokair());
+        gd.stolenCreatures.put(flagstones.getId(), player1.getId());
+        Plains ownersPlains = new Plains();
+        Plains controllersPlains = new Plains();
+        harness.setLibrary(player1, List.of(ownersPlains));
+        harness.setLibrary(player2, List.of(controllersPlains));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, flagstones));
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(flagstones.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getCard() == controllersPlains && permanent.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownersPlains);
+    }
+
+    @Test
+    void mayFailToFindEvenWhenAPlainsIsAvailable() {
+        Permanent flagstones = harness.addToBattlefieldAndReturn(player1, new FlagstonesOfTrokair());
+        Plains plains = new Plains();
+        harness.setLibrary(player1, List.of(plains));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, flagstones));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    void acceptingSearchWithAnEmptyLibraryCompletesNormally() {
+        Permanent flagstones = harness.addToBattlefieldAndReturn(player1, new FlagstonesOfTrokair());
+        harness.setLibrary(player1, List.of());
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, flagstones));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    void exileDoesNotTriggerTheSearch() {
+        Permanent flagstones = harness.addToBattlefieldAndReturn(player1, new FlagstonesOfTrokair());
+        Plains plains = new Plains();
+        harness.setLibrary(player1, List.of(plains));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, flagstones));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains);
     }
 }

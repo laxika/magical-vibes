@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +13,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EmeritusOfIdeationAncestralRecall.class, GrizzlyBears.class})
+@CardUsed({EmeritusOfIdeationAncestralRecall.class})
 class EmeritusOfIdeationAncestralRecallTest extends BaseCardTest {
 
     @Test
@@ -38,8 +37,8 @@ class EmeritusOfIdeationAncestralRecallTest extends BaseCardTest {
         Permanent emeritus = castEmeritus();
         UUID copyId = emeritus.getPreparedSpellCardId();
         List<Card> graveyard = List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+                new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(),
+                new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall());
         harness.setGraveyard(player1, graveyard);
         emeritus.setSummoningSick(false);
 
@@ -69,7 +68,7 @@ class EmeritusOfIdeationAncestralRecallTest extends BaseCardTest {
     void castingPreparedCopyDrawsAndUnprepares() {
         Permanent emeritus = castEmeritus();
         UUID copyId = emeritus.getPreparedSpellCardId();
-        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall()));
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castFromExile(player1, copyId, player2.getId());
@@ -85,14 +84,14 @@ class EmeritusOfIdeationAncestralRecallTest extends BaseCardTest {
     void attackingWithEightGraveyardCardsPreparesAgain() {
         Permanent emeritus = castEmeritus();
         UUID copyId = emeritus.getPreparedSpellCardId();
-        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castFromExile(player1, copyId, player2.getId());
         harness.passBothPriorities();
 
         List<Card> graveyard = List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+                new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(),
+                new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall());
         harness.setGraveyard(player1, graveyard);
         emeritus.setSummoningSick(false);
 
@@ -113,14 +112,14 @@ class EmeritusOfIdeationAncestralRecallTest extends BaseCardTest {
     void attackingWithFewerThanEightGraveyardCardsDoesNotPrepare() {
         Permanent emeritus = castEmeritus();
         UUID copyId = emeritus.getPreparedSpellCardId();
-        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castFromExile(player1, copyId, player2.getId());
         harness.passBothPriorities();
 
         harness.setGraveyard(player1, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(),
+                new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall()));
         emeritus.setSummoningSick(false);
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(emeritus)));
@@ -128,6 +127,65 @@ class EmeritusOfIdeationAncestralRecallTest extends BaseCardTest {
 
         assertThat(emeritus.isPrepared()).isFalse();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7);
+    }
+
+    @Test
+    @DisplayName("Paying the attack cost while already prepared preserves the existing copy")
+    void payingWhilePreparedDoesNotCreateAnotherCopy() {
+        Permanent emeritus = castEmeritus();
+        UUID copyId = emeritus.getPreparedSpellCardId();
+        List<Card> graveyard = List.of(
+                new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(),
+                new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall());
+        harness.setGraveyard(player1, graveyard);
+        emeritus.setSummoningSick(false);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(emeritus)));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(emeritus.isPrepared()).isTrue();
+        assertThat(emeritus.getPreparedSpellCardId()).isEqualTo(copyId);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .filteredOn(card -> !card.getId().equals(copyId))
+                .containsExactlyElementsOf(graveyard);
+    }
+
+    @Test
+    @DisplayName("With nine graveyard cards, preparation waits for all eight chosen cards to be exiled")
+    void choosesExactlyEightCardsBeforePreparing() {
+        Permanent emeritus = castEmeritus();
+        harness.setLibrary(player2, List.of(new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castFromExile(player1, emeritus.getPreparedSpellCardId(), player2.getId());
+        harness.passBothPriorities();
+        List<Card> graveyard = List.of(
+                new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(),
+                new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(), new EmeritusOfIdeationAncestralRecall(),
+                new EmeritusOfIdeationAncestralRecall());
+        harness.setGraveyard(player1, graveyard);
+        emeritus.setSummoningSick(false);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(emeritus)));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(emeritus.isPrepared()).isFalse();
+        for (int i = 0; i < 7; i++) {
+            harness.handleGraveyardCardChosen(player1, 1);
+            assertThat(emeritus.isPrepared()).isFalse();
+        }
+        harness.handleGraveyardCardChosen(player1, 1);
+        resolveAllTriggers();
+
+        assertThat(emeritus.isPrepared()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyard.getFirst());
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .filteredOn(card -> !card.getId().equals(emeritus.getPreparedSpellCardId()))
+                .containsExactlyElementsOf(graveyard.subList(1, 9));
     }
 
     private Permanent castEmeritus() {

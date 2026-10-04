@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.AjanisMantra;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FlamespeakersWill.class, GrizzlyBears.class, FountainOfYouth.class, AjanisMantra.class})
 class FlamespeakersWillTest extends BaseCardTest {
 
     @Test
@@ -31,7 +32,6 @@ class FlamespeakersWillTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot enchant a creature an opponent controls")
     void cannotEnchantOpponentCreature() {
-        addCreatureReady(player1, new GrizzlyBears());
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new FlamespeakersWill()));
@@ -47,8 +47,8 @@ class FlamespeakersWillTest extends BaseCardTest {
     void combatDamageSacrificesAuraAndDestroysTargetArtifact() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = attachFlamespeakersWill(player1, creature);
-        Permanent artifact = addPermanent(player2, new FountainOfYouth());
-        Permanent enchantment = addPermanent(player2, new AjanisMantra());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new AjanisMantra());
         creature.setAttacking(true);
 
         resolveCombat();
@@ -72,7 +72,7 @@ class FlamespeakersWillTest extends BaseCardTest {
     void decliningTriggerKeepsPermanents() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = attachFlamespeakersWill(player1, creature);
-        Permanent artifact = addPermanent(player2, new FountainOfYouth());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         creature.setAttacking(true);
 
         resolveCombat();
@@ -114,16 +114,47 @@ class FlamespeakersWillTest extends BaseCardTest {
     }
 
     private Permanent attachFlamespeakersWill(Player controller, Permanent creature) {
-        Permanent aura = new Permanent(new FlamespeakersWill());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new FlamespeakersWill());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
         return aura;
     }
 
-    private Permanent addPermanent(Player controller, Card card) {
-        Permanent permanent = new Permanent(card);
-        gd.playerBattlefields.get(controller.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("An artifact that leaves before resolution prevents sacrificing the Aura")
+    void missingArtifactPreventsSacrifice() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = attachFlamespeakersWill(player1, creature);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        creature.setAttacking(true);
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, artifact);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An Aura that leaves before resolution cannot pay for destroying the artifact")
+    void missingAuraPreventsDestruction() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = attachFlamespeakersWill(player1, creature);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        creature.setAttacking(true);
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, aura);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
     }
 
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TurtleSeals;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,11 +15,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FireNationTurret.class, GrizzlyBears.class})
+@CardUsed({FireNationTurret.class, GrizzlyBears.class, TurtleSeals.class})
 class FireNationTurretTest extends BaseCardTest {
 
     @Test
@@ -84,7 +86,78 @@ class FireNationTurretTest extends BaseCardTest {
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
+    }
+
+    @Test
+    void grantedFirebendingProducesTwoRedManaUntilCombatEnds() {
+        harness.addToBattlefield(player1, new FireNationTurret());
+        Permanent creature = addCreatureReady(player1, new TurtleSeals());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
+        declareAttackers(List.of(1));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+    }
+
+    @Test
+    void combatTriggerDoesNotRequireACreature() {
+        harness.addToBattlefield(player1, new FireNationTurret());
+
+        advanceToCombat(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsCombat() {
+        harness.addToBattlefield(player1, new FireNationTurret());
+        Permanent creature = addCreatureReady(player2, new TurtleSeals());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIREBENDING)).isFalse();
+    }
+
+    @Test
+    void damageAbilityPaysCountersImmediatelyAndCanDestroyACreature() {
+        Permanent turret = harness.addToBattlefieldAndReturn(player1, new FireNationTurret());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new TurtleSeals());
+        turret.setCounterCount(CounterType.CHARGE, 51);
+
+        harness.activateAbility(player1, 0, 1, null, creature.getId());
+
+        assertThat(turret.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player2, "Turtle-Seals");
+        harness.assertInGraveyard(player2, "Turtle-Seals");
+    }
+
+    @Test
+    void chargeAbilityUsesTheStackAndDoesNotRequireTapping() {
+        Permanent turret = harness.addToBattlefieldAndReturn(player1, new FireNationTurret());
+        turret.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(turret.getCounterCount(CounterType.CHARGE)).isZero();
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(turret.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(turret.isTapped()).isTrue();
     }
 }

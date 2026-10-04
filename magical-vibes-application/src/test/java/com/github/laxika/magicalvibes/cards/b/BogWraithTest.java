@@ -69,7 +69,7 @@ class BogWraithTest extends BaseCardTest {
     @DisplayName("Bog Wraith cannot be blocked when the defending player's only Swamp is tapped")
     void cannotBeBlockedWhenDefendersSwampIsTapped() {
         Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
-        swamp.setTapped(true);
+        swamp.tap();
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent attacker = addCreatureReady(player1, new BogWraith());
         attacker.setAttacking(true);

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -164,11 +163,7 @@ class FieldMarshalTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat();
 
         harness.assertOnBattlefield(player1, "Kjeldoran Outrider");
         harness.assertInGraveyard(player2, "Stalking Yeti");
@@ -185,6 +180,39 @@ class FieldMarshalTest extends BaseCardTest {
 
         soldier.resetModifiers();
 
+        assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, soldier, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opposing Field Marshals buff each other and stack for both players")
+    void opposingMarshalsBuffBothBattlefields() {
+        Permanent firstMarshal = harness.addToBattlefieldAndReturn(player1, new FieldMarshal());
+        Permanent secondMarshal = harness.addToBattlefieldAndReturn(player2, new FieldMarshal());
+        Permanent firstSoldier = harness.addToBattlefieldAndReturn(player1, new KjeldoranOutrider());
+        Permanent secondSoldier = harness.addToBattlefieldAndReturn(player2, new KjeldoranOutrider());
+
+        for (Permanent marshal : List.of(firstMarshal, secondMarshal)) {
+            assertThat(gqs.getEffectivePower(gd, marshal)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, marshal)).isEqualTo(3);
+            assertThat(gqs.hasKeyword(gd, marshal, Keyword.FIRST_STRIKE)).isTrue();
+        }
+        for (Permanent soldier : List.of(firstSoldier, secondSoldier)) {
+            assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(4);
+            assertThat(gqs.hasKeyword(gd, soldier, Keyword.FIRST_STRIKE)).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("A Soldier resolving after Field Marshal immediately receives the bonus")
+    void bonusAppliesToLaterSoldier() {
+        harness.addToBattlefield(player1, new FieldMarshal());
+        harness.castFromHand(player1, new KjeldoranOutrider(), "{1}{W}");
+        harness.passBothPriorities();
+
+        Permanent soldier = findPermanent(player1, "Kjeldoran Outrider");
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, soldier, Keyword.FIRST_STRIKE)).isTrue();

@@ -114,7 +114,7 @@ class BoarUmbraTest extends BaseCardTest {
     void preservesCombatStatusAndClearsDeathtouch() {
         Permanent creature = addReadyCreature(player1);
         attachUmbra(creature);
-        creature.setTapped(true);
+        creature.tap();
         creature.setAttacking(true);
         creature.setMarkedDamage(1);
         creature.setDamagedByDeathtouch(true);

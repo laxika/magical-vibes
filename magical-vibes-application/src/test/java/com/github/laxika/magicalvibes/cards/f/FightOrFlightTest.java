@@ -123,6 +123,44 @@ class FightOrFlightTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("creatures entering after an empty split cannot attack")
+    void creatureEnteringAfterEmptySplitCannotAttack() {
+        harness.addToBattlefield(player1, new FightOrFlight());
+
+        advanceToOpponentCombat();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MultiPermanentChoice) {
+            harness.handleMultiplePermanentsChosen(player1, List.of());
+            harness.handleMayAbilityChosen(player2, true);
+        }
+
+        Permanent laterCreature = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
+        beginDeclareAttackers();
+
+        assertThat(harness.getCombatAttackService().getAttackableCreatureIndices(gd, player2.getId()))
+                .isEmpty();
+        assertThat(harness.getAttackLegalityService().canAttack(gd, laterCreature, player2.getId()))
+                .isFalse();
+    }
+
+    @Test
+    @DisplayName("the chosen pile restriction persists after Fight or Flight leaves the battlefield")
+    void restrictionPersistsAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new FightOrFlight());
+        Permanent kavu = addCreatureReady(player2, new RagingKavu());
+        Permanent griffin = addCreatureReady(player2, new RazorfootGriffin());
+
+        advanceToOpponentCombat();
+        harness.handleMultiplePermanentsChosen(player1, List.of(kavu.getId()));
+        harness.handleMayAbilityChosen(player2, true);
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        beginDeclareAttackers();
+
+        assertThat(harness.getCombatAttackService().getAttackableCreatureIndices(gd, player2.getId()))
+                .containsExactly(0);
+        assertThat(harness.getAttackLegalityService().canAttack(gd, griffin, player2.getId())).isFalse();
+    }
+    @Test
     @DisplayName("does not prompt when the active opponent controls no creatures")
     void doesNotPromptWithoutCreatures() {
         harness.addToBattlefield(player1, new FightOrFlight());

@@ -43,4 +43,43 @@ class ExpeditionSkulkerTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, skulker, Keyword.DEATHTOUCH)).isFalse();
     }
+
+    @Test
+    void opponentsRogueDoesNotEnableDeathtouch() {
+        Permanent skulker = harness.addToBattlefieldAndReturn(player1, new ExpeditionSkulker());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new ExpeditionSkulker());
+
+        assertThat(gqs.hasKeyword(gd, skulker, Keyword.DEATHTOUCH)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    void twoSkulkersEnableEachOthersDeathtouch() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ExpeditionSkulker());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new ExpeditionSkulker());
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.DEATHTOUCH)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.DEATHTOUCH)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    void retainsDeathtouchWhileAtLeastOneOtherRogueRemains() {
+        Permanent skulker = harness.addToBattlefieldAndReturn(player1, new ExpeditionSkulker());
+        Permanent firstSupport = harness.addToBattlefieldAndReturn(player1, new ExpeditionSkulker());
+        Permanent secondSupport = harness.addToBattlefieldAndReturn(player1, new ExpeditionSkulker());
+
+        assertThat(gqs.hasKeyword(gd, skulker, Keyword.DEATHTOUCH)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstSupport);
+
+        assertThat(gqs.hasKeyword(gd, skulker, Keyword.DEATHTOUCH)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(secondSupport);
+
+        assertThat(gqs.hasKeyword(gd, skulker, Keyword.DEATHTOUCH)).isFalse();
+    }
 }

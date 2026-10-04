@@ -94,7 +94,7 @@ class ChartoothCougarTest extends BaseCardTest {
     void redAbilityStacksOnItsSource() {
         Permanent cougar = harness.addToBattlefieldAndReturn(player1, new ChartoothCougar());
         cougar.setSummoningSick(true);
-        cougar.setTapped(true);
+        cougar.tap();
         Permanent otherCougar = addCreatureReady(player1, new ChartoothCougar());
         harness.addMana(player1, ManaColor.RED, 2);
 

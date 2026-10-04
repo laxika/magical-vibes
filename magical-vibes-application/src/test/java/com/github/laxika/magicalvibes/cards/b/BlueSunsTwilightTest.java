@@ -98,7 +98,7 @@ class BlueSunsTwilightTest extends BaseCardTest {
     @DisplayName("Control preserves counters and tapping but the copy does not inherit them")
     void copyDoesNotInheritCountersOrTappedState() {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
-        target.setTapped(true);
+        target.tap();
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
         castAndResolve(5, target.getId());

@@ -21,8 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({ArdentMilitia.class, Avizoa.class, FogElemental.class})
 class FogElementalTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
-
     @Test
     @DisplayName("Casting Fog Elemental puts it on the stack")
     void castingPutsOnStack() {
@@ -41,8 +39,7 @@ class FogElementalTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard() instanceof FogElemental);
+        harness.assertOnBattlefield(player1, "Fog Elemental");
     }
 
     @Test
@@ -67,8 +64,6 @@ class FogElementalTest extends BaseCardTest {
                 .satisfies(permanent -> assertThat(permanent.isSummoningSick()).isTrue());
     }
 
-    // ===== Attack trigger pushes onto stack =====
-
     @Test
     @DisplayName("Declaring Fog Elemental as attacker pushes a triggered ability onto the stack")
     void attackTriggerPushesOntoStack() {
@@ -81,8 +76,6 @@ class FogElementalTest extends BaseCardTest {
         assertThat(entry.getCard()).isInstanceOf(FogElemental.class);
         assertThat(entry.getSourcePermanentId()).isEqualTo(fogPerm.getId());
     }
-
-    // ===== Block trigger pushes onto stack =====
 
     @Test
     @DisplayName("Declaring Fog Elemental as blocker pushes a triggered ability onto the stack")
@@ -101,8 +94,6 @@ class FogElementalTest extends BaseCardTest {
         assertThat(entry.getSourcePermanentId()).isEqualTo(fogPerm.getId());
     }
 
-    // ===== Sacrificed at end of combat when attacking =====
-
     @Test
     @DisplayName("Fog Elemental is sacrificed at end of combat after attacking")
     void sacrificedAtEndOfCombatWhenAttacking() {
@@ -112,10 +103,8 @@ class FogElementalTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard() instanceof FogElemental);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card instanceof FogElemental);
+        harness.assertNotOnBattlefield(player1, "Fog Elemental");
+        harness.assertInGraveyard(player1, "Fog Elemental");
     }
 
     @Test
@@ -127,12 +116,9 @@ class FogElementalTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card instanceof FogElemental);
+        harness.assertLife(player2, 16);
+        harness.assertInGraveyard(player1, "Fog Elemental");
     }
-
-    // ===== Sacrificed at end of combat when blocking =====
 
     @Test
     @DisplayName("Fog Elemental is sacrificed at end of combat after blocking")
@@ -153,8 +139,6 @@ class FogElementalTest extends BaseCardTest {
         // Avizoa should also be dead from combat damage (4 power vs 2 toughness)
         harness.assertInGraveyard(player1, "Avizoa");
     }
-
-    // ===== Not sacrificed if removed before end of combat =====
 
     @Test
     @DisplayName("Fog Elemental is not sacrificed if removed from battlefield before trigger resolves")
@@ -188,8 +172,6 @@ class FogElementalTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(card -> card == fogPerm.getCard());
     }
-
-    // ===== Normal creatures don't trigger on attack =====
 
     @Test
     @DisplayName("Normal creature attacking does not push any trigger onto the stack")
@@ -243,8 +225,6 @@ class FogElementalTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Fog Elemental");
     }
 
-    // ===== Game log =====
-
     @Test
     @DisplayName("Attack trigger generates appropriate game log entries")
     void attackTriggerGeneratesLogEntries() {
@@ -253,9 +233,54 @@ class FogElementalTest extends BaseCardTest {
 
         assertThat(gameLogContains("'s attack ability triggers.")).isTrue();
 
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, harness::passBothPriorities);
 
-        assertThat(gameLogContains(" is sacrificed.")).isTrue();
+        assertThat(gameLogContains(" will be sacrificed at end of combat.")).isTrue();
+        harness.assertOnBattlefield(player1, "Fog Elemental");
+    }
+
+    @Test
+    @DisplayName("Attacking Fog Elemental's delayed sacrifice uses the stack at end of combat")
+    void attackingDelayedSacrificeUsesStack() {
+        Permanent fogPerm = addCreatureReady(player1, new FogElemental());
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            declareAttackers(List.of(0));
+            harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+
+            harness.assertOnBattlefield(player1, "Fog Elemental");
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+                assertThat(entry.getSourcePermanentId()).isEqualTo(fogPerm.getId());
+            });
+
+            harness.passBothPriorities();
+            harness.assertNotOnBattlefield(player1, "Fog Elemental");
+            harness.assertInGraveyard(player1, "Fog Elemental");
+        });
+    }
+
+    @Test
+    @DisplayName("Blocking Fog Elemental's delayed sacrifice uses the stack at end of combat")
+    void blockingDelayedSacrificeUsesStack() {
+        Permanent fogPerm = addCreatureReady(player2, new FogElemental());
+        Permanent attacker = addCreatureReady(player1, new Avizoa());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player1);
+
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+
+            harness.assertOnBattlefield(player2, "Fog Elemental");
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+                assertThat(entry.getSourcePermanentId()).isEqualTo(fogPerm.getId());
+            });
+
+            harness.passBothPriorities();
+            harness.assertNotOnBattlefield(player2, "Fog Elemental");
+            harness.assertInGraveyard(player2, "Fog Elemental");
+        });
     }
 }
 

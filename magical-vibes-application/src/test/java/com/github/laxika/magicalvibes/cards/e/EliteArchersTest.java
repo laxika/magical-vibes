@@ -97,6 +97,61 @@ class EliteArchersTest extends BaseCardTest {
         assertThat(attacker.getMarkedDamage()).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent archers = addReadyArchers(player1);
+        Permanent attacker = addAttacker(player2);
+        archers.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot activate with summoning sickness")
+    void cannotActivateWithSummoningSickness() {
+        Permanent archers = addReadyArchers(player1);
+        Permanent attacker = addAttacker(player2);
+        archers.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, attacker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(archers.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ability still deals damage after Elite Archers leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent archers = addReadyArchers(player1);
+        Permanent attacker = addAttacker(player2, new AirElemental());
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(archers);
+        gd.playerGraveyards.get(player1.getId()).add(archers.getCard());
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(3);
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Lethal damage destroys a blocking creature")
+    void destroysBlockingCreatureWithLethalDamage() {
+        addReadyArchers(player1);
+        Permanent blocker = addBlocker(player2);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addReadyArchers(Player player) {
         return addCreatureReady(player, new EliteArchers());
     }

@@ -118,7 +118,7 @@ class BloodflowConnoisseurTest extends BaseCardTest {
     @DisplayName("A tapped, summoning-sick Connoisseur can activate its ability")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new BloodflowConnoisseur());
-        source.setTapped(true);
+        source.tap();
         source.setSummoningSick(true);
         Permanent fodder = harness.addToBattlefieldAndReturn(player1, new BloodflowConnoisseur());
 

@@ -69,8 +69,7 @@ class EmberwildeCaliphTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
@@ -92,8 +91,7 @@ class EmberwildeCaliphTest extends BaseCardTest {
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
         harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 4));
@@ -121,5 +119,31 @@ class EmberwildeCaliphTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertLife(player2, 12); // 4 damage plus 4 life lost from Emberwilde Caliph
+    }
+
+    @Test
+    @DisplayName("A tapped Caliph is not required to attack")
+    void tappedCaliphDoesNotHaveToAttack() {
+        Permanent caliph = addCreatureReady(player1, new EmberwildeCaliph());
+        caliph.setTapped(true);
+
+        declareAttackers(List.of());
+
+        assertThat(caliph.isAttacking()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Caliph is not required to attack")
+    void summoningSickCaliphDoesNotHaveToAttack() {
+        Permanent caliph = harness.addToBattlefieldAndReturn(player1, new EmberwildeCaliph());
+        caliph.setSummoningSick(true);
+
+        declareAttackers(List.of());
+
+        assertThat(caliph.isAttacking()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
     }
 }

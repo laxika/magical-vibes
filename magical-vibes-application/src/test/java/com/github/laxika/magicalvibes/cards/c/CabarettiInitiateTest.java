@@ -71,7 +71,7 @@ class CabarettiInitiateTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent initiate = harness.addToBattlefieldAndReturn(player1, new CabarettiInitiate());
         initiate.setSummoningSick(true);
-        initiate.setTapped(true);
+        initiate.tap();
         addActivationMana(player1, ManaColor.WHITE);
 
         harness.activateAbility(player1, 0, null, null);

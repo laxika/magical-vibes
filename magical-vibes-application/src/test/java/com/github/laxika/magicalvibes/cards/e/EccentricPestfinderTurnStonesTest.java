@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({EccentricPestfinderTurnStones.class, TurnStones.class, Shock.class})
 class EccentricPestfinderTurnStonesTest extends BaseCardTest {
@@ -66,6 +67,8 @@ class EccentricPestfinderTurnStonesTest extends BaseCardTest {
         UUID preparedSpellId = pestfinder.getPreparedSpellCardId();
 
         harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castFromExile(player1, preparedSpellId);
@@ -74,6 +77,93 @@ class EccentricPestfinderTurnStonesTest extends BaseCardTest {
         assertThat(findPestTokens(player1)).hasSize(1);
         assertThat(pestfinder.isPrepared()).isFalse();
         assertThat(pestfinder.getPreparedSpellCardId()).isNull();
+    }
+
+    @Test
+    @DisplayName("A Pest's death gains exactly one life for its controller")
+    void pestDeathGainsLifeForController() {
+        castTurnStones();
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+
+        destroyPestWithShock();
+
+        assertThat(findPestTokens(player1)).isEmpty();
+        harness.assertLife(player1, 11);
+        harness.assertLife(player2, 10);
+    }
+
+    @Test
+    @DisplayName("Life gained during an opponent's turn prepares Pestfinder at that turn's end step")
+    void becomesPreparedAtOpponentsEndStep() {
+        Permanent pestfinder = addCreatureReady(player1, new EccentricPestfinderTurnStones());
+        castTurnStones();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        destroyPestWithShock();
+
+        advanceToEndStep(player2);
+
+        assertThat(pestfinder.isPrepared()).isTrue();
+        assertThat(pestfinder.getPreparedSpellCardId()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("An opponent gaining life does not prepare Pestfinder")
+    void opponentsLifeGainDoesNotPrepare() {
+        Permanent pestfinder = addCreatureReady(player2, new EccentricPestfinderTurnStones());
+        castTurnStones();
+        destroyPestWithShock();
+
+        advanceToEndStep(player1);
+
+        assertThat(pestfinder.isPrepared()).isFalse();
+        assertThat(pestfinder.getPreparedSpellCardId()).isNull();
+    }
+
+    @Test
+    @DisplayName("Becoming prepared again while already prepared preserves the same spell copy")
+    void repeatedPreparationDoesNotCreateAnotherCopy() {
+        Permanent pestfinder = addCreatureReady(player1, new EccentricPestfinderTurnStones());
+        preparePestfinder(pestfinder);
+        UUID preparedSpellId = pestfinder.getPreparedSpellCardId();
+
+        advanceToEndStep(player1);
+
+        assertThat(pestfinder.isPrepared()).isTrue();
+        assertThat(pestfinder.getPreparedSpellCardId()).isEqualTo(preparedSpellId);
+    }
+
+    @Test
+    @DisplayName("Life gained after the end step begins does not trigger preparation retroactively")
+    void lifeGainedDuringEndStepDoesNotPrepare() {
+        Permanent pestfinder = addCreatureReady(player1, new EccentricPestfinderTurnStones());
+        castTurnStones();
+        advanceToEndStep(player1);
+
+        destroyPestWithShock();
+
+        harness.assertLife(player1, 21);
+        assertThat(pestfinder.isPrepared()).isFalse();
+        assertThat(pestfinder.getPreparedSpellCardId()).isNull();
+    }
+
+    @Test
+    @DisplayName("Preparation does not let Turn Stones be cast during the end step")
+    void preparedSorceryRetainsNormalTiming() {
+        Permanent pestfinder = addCreatureReady(player1, new EccentricPestfinderTurnStones());
+        preparePestfinder(pestfinder);
+        UUID preparedSpellId = pestfinder.getPreparedSpellCardId();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, preparedSpellId))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(pestfinder.isPrepared()).isTrue();
+        assertThat(pestfinder.getPreparedSpellCardId()).isEqualTo(preparedSpellId);
+        assertThat(findPestTokens(player1)).isEmpty();
     }
 
     private void castTurnStones() {
@@ -110,7 +200,7 @@ class EccentricPestfinderTurnStonesTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
         resolveAllTriggers();
     }
 }

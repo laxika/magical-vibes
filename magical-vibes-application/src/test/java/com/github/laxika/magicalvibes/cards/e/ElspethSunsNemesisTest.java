@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,8 +15,9 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ElspethSunsNemesis.class, GrizzlyBears.class})
+@CardUsed({ElspethSunsNemesis.class, GrizzlyBears.class, Cancel.class})
 class ElspethSunsNemesisTest extends BaseCardTest {
 
     @Test
@@ -100,20 +102,80 @@ class ElspethSunsNemesisTest extends BaseCardTest {
                 assertThat(permanent.getCard()).isSameAs(elspeth));
     }
 
+    @Test
+    void minusOneCanChooseNoTargets() {
+        Permanent elspeth = addReadyElspeth(4);
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+        assertThat(elspeth.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void minusOneCanChooseOneTarget() {
+        addReadyElspeth(4);
+        Permanent bear = addReadyBear(player1);
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(bear.getId()));
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
+    }
+
+    @Test
+    void counteredEscapeReturnsElspethToGraveyard() {
+        ElspethSunsNemesis elspeth = new ElspethSunsNemesis();
+        harness.setGraveyard(player1, List.of(elspeth, new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castFromGraveyard(player1, 0, List.of(1, 2, 3, 4));
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, elspeth.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(elspeth);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(elspeth);
+    }
+
+    @Test
+    void minusOneCannotTargetOpponentsCreature() {
+        Permanent elspeth = addReadyElspeth(4);
+        Permanent bear = addReadyBear(player2);
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
+                player1, 0, 0, List.of(bear.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(elspeth.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void escapeCannotExileElspethItself() {
+        ElspethSunsNemesis elspeth = new ElspethSunsNemesis();
+        harness.setGraveyard(player1, List.of(elspeth, new GrizzlyBears(), new GrizzlyBears(),
+                new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0, List.of(0, 1, 2, 3)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5).contains(elspeth);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyElspeth(int loyalty) {
-        Permanent permanent = new Permanent(new ElspethSunsNemesis());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player1, new ElspethSunsNemesis());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;
     }
 
     private Permanent addReadyBear(com.github.laxika.magicalvibes.model.Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new GrizzlyBears());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }

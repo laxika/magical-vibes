@@ -56,20 +56,113 @@ class ElephantMandrillTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, elephantMandrill)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Food can be sacrificed immediately to gain three life")
+    void foodAbilityPaysCostsAndGainsLife() {
+        castElephantMandrill();
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+
+        for (Player player : List.of(player1, player2)) {
+            Permanent food = findPermanent(player, "Food");
+            harness.addMana(player, ManaColor.COLORLESS, 2);
+            int index = gd.playerBattlefields.get(player.getId()).indexOf(food);
+            harness.activateAbility(player, index, null, null);
+
+            assertThat(findPermanents(player, "Food")).isEmpty();
+            assertThat(gd.playerLifeTotals.get(player.getId())).isEqualTo(10);
+            resolveAllTriggers();
+
+            assertThat(gd.playerLifeTotals.get(player.getId())).isEqualTo(13);
+        }
+    }
+
+    @Test
+    @DisplayName("The opponent's Food counts, but your own Food does not")
+    void countsOpponentFoodOnly() {
+        castElephantMandrill();
+        Permanent elephantMandrill = findPermanent(player1, "Elephant-Mandrill");
+
+        advanceToCombatAndResolve(player1);
+
+        assertThat(gqs.getEffectivePower(gd, elephantMandrill)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elephantMandrill)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("There is no boost when opponents control only nonartifact creatures")
+    void doesNotCountOpponentNonartifacts() {
+        Permanent elephantMandrill = harness.addToBattlefieldAndReturn(player1, new ElephantMandrill());
+        harness.addToBattlefield(player2, new ElephantMandrill());
+
+        advanceToCombatAndResolve(player1);
+
+        assertThat(gqs.getEffectivePower(gd, elephantMandrill)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elephantMandrill)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The combat ability does not trigger on an opponent's turn")
+    void doesNotBoostDuringOpponentsCombat() {
+        castElephantMandrill();
+        Permanent elephantMandrill = findPermanent(player1, "Elephant-Mandrill");
+
+        advanceToCombatAndResolve(player2);
+
+        assertThat(gqs.getEffectivePower(gd, elephantMandrill)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elephantMandrill)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Artifacts are counted when the combat ability resolves")
+    void countsArtifactsAtResolution() {
+        castElephantMandrill();
+        Permanent elephantMandrill = findPermanent(player1, "Elephant-Mandrill");
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        assertThat(gd.stack).hasSize(1);
+
+        Permanent food = findPermanent(player2, "Food");
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(food), null, null);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, elephantMandrill)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elephantMandrill)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The resolved boost stays after an opponent sacrifices their artifact")
+    void resolvedBoostDoesNotRecountArtifacts() {
+        castElephantMandrill();
+        Permanent elephantMandrill = findPermanent(player1, "Elephant-Mandrill");
+        advanceToCombatAndResolve(player1);
+
+        Permanent food = findPermanent(player2, "Food");
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(food), null, null);
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player2, "Food")).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, elephantMandrill)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, elephantMandrill)).isEqualTo(3);
+    }
+
     private void castElephantMandrill() {
         harness.setHand(player1, List.of(new ElephantMandrill()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private void advanceToCombatAndResolve(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
+        resolveAllTriggers();
     }
 }

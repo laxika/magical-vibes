@@ -197,7 +197,7 @@ class BrionStoutarmTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent brion = addReadyBrion(player1);
-        brion.setTapped(true);
+        brion.tap();
         addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 1);
 

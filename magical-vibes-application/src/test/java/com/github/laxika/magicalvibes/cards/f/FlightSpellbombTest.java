@@ -1,29 +1,31 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FlightSpellbomb.class, CarapaceForger.class})
 class FlightSpellbombTest extends BaseCardTest {
-
-    // ===== Activated ability: grant flying =====
 
     @Test
     @DisplayName("Activating ability sacrifices spellbomb and prompts death trigger")
     void activateAbilitySacrificesAndPromptsMayAbility() {
         harness.addToBattlefield(player1, new FlightSpellbomb());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = findPermanent(player1, "Grizzly Bears").getId();
+        UUID bearsId = harness.addToBattlefieldAndReturn(player1, new CarapaceForger()).getId();
 
         harness.activateAbility(player1, 0, null, bearsId);
 
@@ -42,8 +44,7 @@ class FlightSpellbombTest extends BaseCardTest {
     @DisplayName("Target creature gains flying after ability resolves")
     void targetCreatureGainsFlying() {
         harness.addToBattlefield(player1, new FlightSpellbomb());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        UUID bearsId = findPermanent(player1, "Grizzly Bears").getId();
+        UUID bearsId = harness.addToBattlefieldAndReturn(player1, new CarapaceForger()).getId();
 
         harness.activateAbility(player1, 0, null, bearsId);
 
@@ -56,7 +57,7 @@ class FlightSpellbombTest extends BaseCardTest {
         // Resolve flying ability
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = findPermanent(player1, "Carapace Forger");
         assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
     }
 
@@ -64,8 +65,7 @@ class FlightSpellbombTest extends BaseCardTest {
     @DisplayName("Can target opponent's creature with flying")
     void canTargetOpponentCreature() {
         harness.addToBattlefield(player1, new FlightSpellbomb());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        UUID bearsId = findPermanent(player2, "Grizzly Bears").getId();
+        UUID bearsId = harness.addToBattlefieldAndReturn(player2, new CarapaceForger()).getId();
 
         harness.activateAbility(player1, 0, null, bearsId);
 
@@ -78,19 +78,17 @@ class FlightSpellbombTest extends BaseCardTest {
         // Resolve flying ability
         harness.passBothPriorities();
 
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = findPermanent(player2, "Carapace Forger");
         assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
     }
-
-    // ===== Death trigger: may pay {U} to draw =====
 
     @Test
     @DisplayName("Accepting death trigger and paying {U} draws a card")
     void acceptDeathTriggerDrawsCard() {
         harness.addToBattlefield(player1, new FlightSpellbomb());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new CarapaceForger());
         harness.addMana(player1, ManaColor.BLUE, 1);
-        UUID bearsId = findPermanent(player1, "Grizzly Bears").getId();
+        UUID bearsId = harness.getPermanentId(player1, "Carapace Forger");
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -115,9 +113,9 @@ class FlightSpellbombTest extends BaseCardTest {
     @DisplayName("Declining death trigger does not draw a card")
     void declineDeathTriggerNoCard() {
         harness.addToBattlefield(player1, new FlightSpellbomb());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new CarapaceForger());
         harness.addMana(player1, ManaColor.BLUE, 1);
-        UUID bearsId = findPermanent(player1, "Grizzly Bears").getId();
+        UUID bearsId = harness.getPermanentId(player1, "Carapace Forger");
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -143,9 +141,9 @@ class FlightSpellbombTest extends BaseCardTest {
     @DisplayName("Accepting death trigger without enough mana treats as decline")
     void acceptWithoutManaNoCard() {
         harness.addToBattlefield(player1, new FlightSpellbomb());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new CarapaceForger());
         // No blue mana added
-        UUID bearsId = findPermanent(player1, "Grizzly Bears").getId();
+        UUID bearsId = harness.getPermanentId(player1, "Carapace Forger");
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -164,15 +162,13 @@ class FlightSpellbombTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Both abilities interact correctly =====
-
     @Test
     @DisplayName("Both abilities work: creature gains flying AND controller draws a card")
     void bothAbilitiesWork() {
         harness.addToBattlefield(player1, new FlightSpellbomb());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new CarapaceForger());
         harness.addMana(player1, ManaColor.BLUE, 1);
-        UUID bearsId = findPermanent(player1, "Grizzly Bears").getId();
+        UUID bearsId = harness.getPermanentId(player1, "Carapace Forger");
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -191,8 +187,48 @@ class FlightSpellbombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Creature has flying
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = findPermanent(player1, "Carapace Forger");
         assertThat(bears.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Flying expires at end of turn after the source is sacrificed")
+    void flyingExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player1, new FlightSpellbomb());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new CarapaceForger());
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @CardUsed({Shatter.class})
+    @DisplayName("Destruction triggers the draw without activating the Spellbomb")
+    void destructionTriggersDraw() {
+        harness.addToBattlefield(player1, new FlightSpellbomb());
+        UUID spellbombId = harness.getPermanentId(player1, "Flight Spellbomb");
+        harness.setLibrary(player1, List.of(new CarapaceForger()));
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player2, 0, spellbombId);
+        harness.assertInGraveyard(player1, "Flight Spellbomb");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Carapace Forger");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 
 }

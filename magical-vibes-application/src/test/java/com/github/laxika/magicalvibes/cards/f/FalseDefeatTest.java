@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.a.AlertShuInfantry;
 import com.github.laxika.magicalvibes.cards.e.EmptyCityRuse;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -29,13 +28,9 @@ class FalseDefeatTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 0, creature.getId());
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getId().equals(creature.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getId().equals(creature.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(spell.getId()));
+        harness.assertOnBattlefield(player1, "Alert Shu Infantry");
+        harness.assertNotInGraveyard(player1, "Alert Shu Infantry");
+        harness.assertInGraveyard(player1, "False Defeat");
     }
 
     @Test
@@ -75,7 +70,28 @@ class FalseDefeatTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
 
+        harness.assertNotOnBattlefield(player1, "Alert Shu Infantry");
+    }
+
+    @Test
+    @DisplayName("Returns only the selected creature when multiple creatures are in the graveyard")
+    void returnsOnlySelectedCreature() {
+        Card selected = new AlertShuInfantry();
+        Card other = new AlertShuInfantry();
+        harness.setGraveyard(player1, List.of(other, selected));
+        harness.setHand(player1, List.of(new FalseDefeat()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, selected.getId());
+
         assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getId().equals(creature.getId()));
+                .singleElement().satisfies(permanent -> {
+                    assertThat(permanent.getCard().getId()).isEqualTo(selected.getId());
+                    assertThat(permanent.isTapped()).isFalse();
+                });
+        assertThat(harness.getGameData().playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(other.getId()))
+                .noneMatch(card -> card.getId().equals(selected.getId()));
+        harness.assertNotOnBattlefield(player2, "Alert Shu Infantry");
     }
 }

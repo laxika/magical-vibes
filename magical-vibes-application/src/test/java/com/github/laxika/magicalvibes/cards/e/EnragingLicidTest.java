@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.s.StealEnchantment;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,10 +12,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EnragingLicid.class, TrainedArmodon.class, Forest.class})
+@CardUsed({EnragingLicid.class, TrainedArmodon.class, Forest.class, StealEnchantment.class})
 class EnragingLicidTest extends BaseCardTest {
 
     @Test
@@ -145,5 +148,73 @@ class EnragingLicidTest extends BaseCardTest {
 
     private Permanent addReadyLicid(Player player) {
         return addCreatureReady(player, new EnragingLicid());
+    }
+
+    @Test
+    @DisplayName("A newly entered enchanted creature can attack using the granted haste")
+    void grantedHasteAllowsSummoningSickCreatureToAttack() {
+        addReadyLicid(player1);
+        Permanent host = harness.addToBattlefieldAndReturn(player1, new TrainedArmodon());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+        declareAttackers(List.of(1));
+
+        assertThat(host.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Targeting itself leaves the Licid an illegal Aura that goes to the graveyard")
+    void targetingItselfPutsLicidInGraveyard() {
+        Permanent licid = addReadyLicid(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, licid.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Enraging Licid");
+        harness.assertInGraveyard(player1, "Enraging Licid");
+    }
+
+    @Test
+    @DisplayName("Ending the Aura effect does not untap the Licid")
+    void endingEffectPreservesTappedStatus() {
+        Permanent licid = addReadyLicid(player1);
+        Permanent host = addCreatureReady(player1, new TrainedArmodon());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, host.getId());
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(licid.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, host.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Stealing the Licid does not give the new controller permission to end its effect")
+    void newControllerCannotPayToEndOriginalControllersEffect() {
+        Permanent licid = addReadyLicid(player2);
+        Permanent host = addCreatureReady(player2, new TrainedArmodon());
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.activateAbility(player2, 0, null, host.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new StealEnchantment()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, licid.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(licid);
+        int licidIndex = gd.playerBattlefields.get(player1.getId()).indexOf(licid);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, licidIndex, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(licid.getAttachedTo()).isEqualTo(host.getId());
+        assertThat(gqs.isCreature(gd, licid)).isFalse();
     }
 }

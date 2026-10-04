@@ -36,7 +36,7 @@ class AinokStrikeLeaderTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(goblin.isTapped()).isTrue();
-        assertThat(goblin.isAttackedThisTurn()).isTrue();
+        assertThat(goblin.isAttacking()).isTrue();
     }
 
     @Test

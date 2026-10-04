@@ -100,7 +100,7 @@ class DreadRiderTest extends BaseCardTest {
     @Test
     void cannotActivateWhileTapped() {
         Permanent rider = addCreatureReady(player1, new DreadRider());
-        rider.setTapped(true);
+        rider.tap();
         harness.setGraveyard(player1, List.of(new DreadRider()));
         harness.addMana(player1, ManaColor.BLACK, 2);
 

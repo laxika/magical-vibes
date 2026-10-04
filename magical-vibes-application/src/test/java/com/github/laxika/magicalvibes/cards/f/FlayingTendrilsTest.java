@@ -22,7 +22,7 @@ class FlayingTendrilsTest extends BaseCardTest {
     @Test
     @DisplayName("Gives all creatures -2/-2 and exiles creatures that die this turn")
     void weakensCreaturesAndExilesThoseThatDie() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent angel = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
 
         castTendrils();
@@ -72,11 +72,50 @@ class FlayingTendrilsTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(card);
     }
 
+    @Test
+    @DisplayName("Creatures entering later are not weakened but are still exiled instead of dying")
+    void laterEnteringCreatureIsOnlyAffectedByExileReplacement() {
+        castTendrils();
+
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+
+        Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Grizzly Bears"))
+                .findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(bears.getCard());
+    }
+
+    @Test
+    @DisplayName("Zero-toughness creatures on both sides are exiled after resolution")
+    void exilesZeroToughnessCreaturesForBothPlayers() {
+        Card ownBears = new GrizzlyBears();
+        Card opposingBears = new GrizzlyBears();
+        harness.addToBattlefield(player1, ownBears);
+        harness.addToBattlefield(player2, opposingBears);
+
+        castTendrils();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(ownBears);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(opposingBears);
+    }
+
     private void castTendrils() {
-        harness.setHand(player1, List.of(new FlayingTendrils()));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new FlayingTendrils(), "{1}{B}{B}");
         harness.passBothPriorities();
     }
 }

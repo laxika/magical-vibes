@@ -124,7 +124,7 @@ class CuriousColossusTest extends BaseCardTest {
     @DisplayName("Affected creatures cannot activate their printed abilities")
     void removesActivatedAbilities() {
         Permanent crab = harness.addToBattlefieldAndReturn(player2, new HorseshoeCrab());
-        crab.setTapped(true);
+        crab.tap();
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         castCuriousColossus(player2.getId());

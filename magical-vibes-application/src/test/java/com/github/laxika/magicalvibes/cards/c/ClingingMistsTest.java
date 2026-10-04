@@ -185,7 +185,7 @@ class ClingingMistsTest extends BaseCardTest {
         void freezesAlreadyTappedAttackersUntilTheirControllersNextUntap() {
             Permanent attacker = addCreatureReady(player2, new DawntreaderElk());
             attacker.setAttacking(true);
-            attacker.setTapped(true);
+            attacker.tap();
             harness.setLife(player1, 5);
             harness.setHand(player1, List.of(new ClingingMists()));
             harness.addMana(player1, ManaColor.GREEN, 3);

@@ -130,7 +130,7 @@ class DaiLiCensorTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent censor = harness.addToBattlefieldAndReturn(player1, new DaiLiCensor());
         censor.setSummoningSick(true);
-        censor.setTapped(true);
+        censor.tap();
         harness.addToBattlefield(player1, new DaiLiCensor());
         harness.addMana(player1, ManaColor.BLACK, 1);
 

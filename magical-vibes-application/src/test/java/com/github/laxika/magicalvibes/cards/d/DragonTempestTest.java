@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Flatten;
 import com.github.laxika.magicalvibes.cards.s.ScionOfUgin;
+import com.github.laxika.magicalvibes.cards.s.StormwingDragon;
 import com.github.laxika.magicalvibes.cards.w.WelkinTern;
 import com.github.laxika.magicalvibes.cards.x.Xenograft;
 import com.github.laxika.magicalvibes.model.CardSubtype;

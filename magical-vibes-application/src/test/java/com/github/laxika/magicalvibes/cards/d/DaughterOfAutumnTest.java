@@ -37,7 +37,7 @@ class DaughterOfAutumnTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SerraAngel());
         addPyromancerReady();
 
-        findPermanent(player1, "Daughter of Autumn").setTapped(true);
+        findPermanent(player1, "Daughter of Autumn").tap();
         UUID angelId = harness.getPermanentId(player1, "Serra Angel");
 
         harness.addMana(player1, ManaColor.WHITE, 1);

@@ -81,20 +81,101 @@ class FaithboundJudgeTest extends BaseCardTest {
     void enchantedPlayerLosesAtThreeCounters() {
         Permanent judgment = transformedJudgmentWithCounters(2);
 
-        advanceToUpkeep(player2);
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
 
         assertThat(judgment.getCounterCount(CounterType.JUDGMENT)).isEqualTo(3);
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
     }
 
+    @Test
+    void judgmentDoesNotTriggerDuringEnchantedOpponentsUpkeep() {
+        Permanent judgment = transformedJudgmentWithCounters(2);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(judgment.getCounterCount(CounterType.JUDGMENT)).isEqualTo(2);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void judgmentAddsCounterWithoutEndingGameBelowThree() {
+        Permanent judgment = transformedJudgmentWithCounters(0);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(judgment.getCounterCount(CounterType.JUDGMENT)).isEqualTo(1);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void judgmentCanEnchantItsControllerAndMakeThemLose() {
+        Permanent judgment = transformedJudgmentWithCounters(2);
+        judgment.setAttachedTo(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(judgment.getCounterCount(CounterType.JUDGMENT)).isEqualTo(3);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player2.getId());
+    }
+
+    @Test
+    void judgeDoesNotTriggerAtThreeCounters() {
+        Permanent judge = addCreatureReady(player1, new FaithboundJudge());
+        judge.setCounterCount(CounterType.JUDGMENT, 3);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void judgeRechecksCounterLimitWhenUpkeepAbilityResolves() {
+        Permanent judge = addCreatureReady(player1, new FaithboundJudge());
+        judge.setCounterCount(CounterType.JUDGMENT, 2);
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        judge.setCounterCount(CounterType.JUDGMENT, 3);
+        harness.passBothPriorities();
+
+        assertThat(judge.getCounterCount(CounterType.JUDGMENT)).isEqualTo(3);
+    }
+
+    @Test
+    void judgeDoesNotGainCountersDuringOpponentsUpkeep() {
+        Permanent judge = addCreatureReady(player1, new FaithboundJudge());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(judge.getCounterCount(CounterType.JUDGMENT)).isZero();
+    }
+
+    @Test
+    void disturbCannotBePaidWithFrontFaceManaCost() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player1, List.of(new FaithboundJudge()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
     private Permanent transformedJudgmentWithCounters(int counterCount) {
-        Permanent judgment = new Permanent(new FaithboundJudge());
+        Permanent judgment = harness.addToBattlefieldAndReturn(player1, new FaithboundJudge());
         judgment.setCard(judgment.getOriginalCard().getBackFaceCard());
         judgment.setTransformed(true);
         judgment.setAttachedTo(player2.getId());
         judgment.setCounterCount(CounterType.JUDGMENT, counterCount);
-        gd.playerBattlefields.get(player1.getId()).add(judgment);
         return judgment;
     }
 }

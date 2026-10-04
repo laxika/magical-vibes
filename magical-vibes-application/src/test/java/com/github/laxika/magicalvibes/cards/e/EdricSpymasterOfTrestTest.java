@@ -72,6 +72,68 @@ class EdricSpymasterOfTrestTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Edric's own combat damage allows one draw")
+    void edricsOwnCombatDamageAllowsOneDraw() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        addAttackingCreature(player1, new EdricSpymasterOfTrest());
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Each damaging creature gives a separate optional draw")
+    void eachCreatureGivesAnIndependentDrawChoice() {
+        harness.addToBattlefield(player1, new EdricSpymasterOfTrest());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        addAttackingCreature(player1, new GrizzlyBears());
+        addAttackingCreature(player1, new GrizzlyBears());
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("The creature's current controller both chooses and draws at resolution")
+    void newControllerDrawsAfterControlChangesBeforeResolution() {
+        harness.addToBattlefield(player1, new EdricSpymasterOfTrest());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        Permanent attacker = addAttackingCreature(player1, new GrizzlyBears());
+
+        harness.resolveCombatDamage();
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        gd.playerBattlefields.get(player2.getId()).add(attacker);
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
     private Permanent addAttackingCreature(Player player, Card card) {
         Permanent permanent = addCreatureReady(player, card);
         permanent.setAttacking(true);

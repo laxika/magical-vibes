@@ -103,7 +103,7 @@ class CloudboundMoogleTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Cloudbound Moogle");
         harness.assertNotInHand(player1, "Plains");
-        assertThat(gd.playerLibraries.get(player1.getId())).extracting(Card::getName)
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName)
                 .containsExactly("Plains");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
@@ -119,7 +119,7 @@ class CloudboundMoogleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerLibraries.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         harness.assertInGraveyard(player1, "Cloudbound Moogle");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();

@@ -71,6 +71,41 @@ class EladamrisCallTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Resolves normally with an empty library")
+    void resolvesWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        cast();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Eladamri's Call");
+    }
+
+    @Test
+    @DisplayName("Chooses exactly one creature from multiple matches in the caster's library")
+    void choosesOneCreatureFromOwnLibrary() {
+        AncientSpider first = new AncientSpider();
+        AncientSpider second = new AncientSpider();
+        AncientSpider opposingCreature = new AncientSpider();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setLibrary(player2, List.of(opposingCreature));
+        cast();
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(first, second);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingCreature);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Eladamri's Call");
+    }
     private void cast() {
         harness.castFromHand(player1, new EladamrisCall(), "{G}{W}");
     }

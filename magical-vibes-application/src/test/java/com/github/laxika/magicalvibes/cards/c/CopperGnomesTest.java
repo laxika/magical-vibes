@@ -124,7 +124,7 @@ class CopperGnomesTest extends BaseCardTest {
     @DisplayName("Tapped summoning-sick Gnomes can activate and put an artifact creature onto the battlefield")
     void canActivateWhileTappedAndSummoningSick() {
         var gnomes = harness.addToBattlefieldAndReturn(player1, new CopperGnomes());
-        gnomes.setTapped(true);
+        gnomes.tap();
         gnomes.setSummoningSick(true);
         harness.setHand(player1, List.of(new CopperGnomes(), new BarrinsCodex()));
         harness.addMana(player1, ManaColor.COLORLESS, 4);

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.cards.d.DreamThrush;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.t.Twiddle;
@@ -14,6 +13,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -170,5 +171,47 @@ class FertileGroundTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("The bonus can be any color and resolves without using the stack")
+    void bonusManaCanBeAnyColor(String colorName) {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new FertileGround());
+        aura.setAttachedTo(forest.getId());
+
+        harness.tapPermanent(player1, 0);
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, colorName);
+
+        ManaColor chosenColor = ManaColor.valueOf(colorName);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(chosenColor))
+                .isEqualTo(chosenColor == ManaColor.GREEN ? 2 : 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Fertile Ground can resolve attached to an opponent's land")
+    void canEnchantOpponentsLand() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new FertileGround()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard() instanceof FertileGround
+                        && forest.getId().equals(p.getAttachedTo()));
+        harness.tapPermanent(player2, 0);
+        harness.handleListChoice(player2, "BLACK");
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 }

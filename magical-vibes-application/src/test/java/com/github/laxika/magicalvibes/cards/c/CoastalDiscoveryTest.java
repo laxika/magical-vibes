@@ -155,7 +155,7 @@ class CoastalDiscoveryTest extends BaseCardTest {
     @Test
     void awakeningAnAlreadyAwakenedLandAddsCountersAndDoesNotUntapIt() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
-        land.setTapped(true);
+        land.tap();
         harness.setHand(player1, List.of(new CoastalDiscovery(), new CoastalDiscovery()));
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.BLUE, 2);

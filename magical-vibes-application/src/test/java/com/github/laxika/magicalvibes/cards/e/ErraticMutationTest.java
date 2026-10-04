@@ -33,8 +33,7 @@ class ErraticMutationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ErraticMutation()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(-1);
@@ -59,8 +58,7 @@ class ErraticMutationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ErraticMutation()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
@@ -83,8 +81,7 @@ class ErraticMutationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ErraticMutation()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getPowerModifier()).isEqualTo(3);
         assertThat(target.getToughnessModifier()).isEqualTo(-3);
@@ -107,8 +104,7 @@ class ErraticMutationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ErraticMutation()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getPowerModifier()).isZero();
         assertThat(target.getToughnessModifier()).isZero();
@@ -123,8 +119,7 @@ class ErraticMutationTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ErraticMutation()));
         harness.addMana(player1, ManaColor.BLUE, 3);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(target.getPowerModifier()).isEqualTo(1);
         assertThat(target.getToughnessModifier()).isEqualTo(-1);
@@ -146,5 +141,85 @@ class ErraticMutationTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void stopsAtFirstNonlandAndBottomsRevealedCardsBelowUnrevealedCards() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Card forest = new Forest();
+        Card shock = new Shock();
+        Card unrevealed = new AirElemental();
+        Card island = new Island();
+        harness.setLibrary(player1, List.of(forest, shock, unrevealed, island));
+        harness.setHand(player1, List.of(new ErraticMutation()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+                .containsExactly(forest, shock);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealed, island, shock, forest);
+    }
+
+    @Test
+    void zeroManaValueNonlandStopsRevealWithoutChangingCreatureStats() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card zeroCost = new FountainOfYouth();
+        Card unrevealed = new AirElemental();
+        harness.setLibrary(player1, List.of(zeroCost, unrevealed));
+        harness.setHand(player1, List.of(new ErraticMutation()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealed, zeroCost);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void creatureWithZeroToughnessDiesAfterRevealedCardsAreBottomed() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card forest = new Forest();
+        Card revealed = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(forest, revealed));
+        harness.setHand(player1, List.of(new ErraticMutation()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(target.getCard());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(revealed, forest);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+    }
+
+    @Test
+    void revealsNothingWhenTargetDiesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card forest = new Forest();
+        Card revealed = new AirElemental();
+        harness.setLibrary(player1, List.of(forest, revealed));
+        harness.setHand(player1, List.of(new ErraticMutation()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest, revealed);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Erratic Mutation");
     }
 }

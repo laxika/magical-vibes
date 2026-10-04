@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({FoggyBottomSwamp.class, Forest.class})
 class FoggyBottomSwampTest extends BaseCardTest {
@@ -67,10 +68,40 @@ class FoggyBottomSwampTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(draw);
     }
 
+    @Test
+    @DisplayName("Neither ability can be activated while the land is tapped")
+    void tappedLandCannotActivateAbilities() {
+        harness.setHand(player1, List.of(new FoggyBottomSwamp()));
+        harness.playLand(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Foggy Bottom Swamp");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Insufficient mana does not tap or sacrifice the land")
+    void insufficientManaDoesNotPayCosts() {
+        Permanent land = addReadyLand();
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(land.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Foggy Bottom Swamp");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyLand() {
-        Permanent land = new Permanent(new FoggyBottomSwamp());
-        land.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(land);
-        return land;
+        return harness.addToBattlefieldAndReturn(player1, new FoggyBottomSwamp());
     }
 }

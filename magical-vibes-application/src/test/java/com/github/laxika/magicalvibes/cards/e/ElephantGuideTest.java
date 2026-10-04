@@ -36,7 +36,7 @@ class ElephantGuideTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("When the enchanted creature dies, its controller creates a 3/3 green Elephant")
+    @DisplayName("When the enchanted creature dies, the Aura's controller creates a 3/3 green Elephant")
     void createsElephantWhenEnchantedCreatureDies() {
         Permanent trainee = addCreatureReady(player1, new CabalTrainee());
         castElephantGuide(trainee);
@@ -103,13 +103,12 @@ class ElephantGuideTest extends BaseCardTest {
         harness.setHand(caster, List.of(new LightningSurge()));
         harness.addMana(caster, ManaColor.RED, 2);
         harness.addMana(caster, ManaColor.COLORLESS, 3);
-        harness.castSorcery(caster, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(caster, 0, target.getId());
         harness.passBothPriorities();
     }
 
     @Test
-    @DisplayName("When the enchanted creature dies, its controller creates a 3/3 green Elephant")
+    @DisplayName("When the enchanted creature dies, the Aura's controller creates a 3/3 green Elephant")
     void createsElephantWhenEnchantedCreatureDiesJudReview() {
         Permanent bodyguard = addCreatureReady(player1, new BenevolentBodyguard());
         castElephantGuide(bodyguard);
@@ -146,5 +145,42 @@ class ElephantGuideTest extends BaseCardTest {
         harness.addMana(caster, ManaColor.COLORLESS, 3);
         harness.castInstant(caster, 0, target.getId());
         resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Sacrificing the enchanted creature creates exactly one Elephant after the Aura leaves")
+    void createsElephantWhenEnchantedCreatureIsSacrificed() {
+        Permanent trainee = addCreatureReady(player1, new CabalTrainee());
+        Permanent other = addCreatureReady(player1, new CabalTrainee());
+        castElephantGuide(trainee);
+
+        harness.activateAbility(player1, 0, null, other.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Cabal Trainee");
+        harness.assertInGraveyard(player1, "Elephant Guide");
+        harness.assertNotOnBattlefield(player1, "Elephant Guide");
+        assertThat(countPermanents(player1, "Elephant")).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Elephant"))).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, findPermanent(player1, "Elephant"))).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A creature dying before Elephant Guide resolves does not create an Elephant")
+    void doesNotCreateTokenWhenTargetDiesBeforeAuraResolves() {
+        Permanent trainee = addCreatureReady(player1, new CabalTrainee());
+        Permanent other = addCreatureReady(player1, new CabalTrainee());
+        harness.setHand(player1, List.of(new ElephantGuide()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, trainee.getId());
+
+        harness.activateAbility(player1, 0, null, other.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Elephant Guide");
+        harness.assertNotOnBattlefield(player1, "Elephant Guide");
+        assertThat(countPermanents(player1, "Elephant")).isZero();
+        assertThat(countPermanents(player2, "Elephant")).isZero();
     }
 }

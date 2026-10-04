@@ -15,7 +15,17 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * <p>Companion to {@link SearchLibraryForCardsToExileWithSourceEffect}. Used by Endless Horizons's
  * upkeep trigger.
  */
-public record PutCardExiledWithSourceIntoHandEffect(String requiredName, CardPredicate filter) implements CardEffect {
+public record PutCardExiledWithSourceIntoHandEffect(String requiredName, CardPredicate filter,
+                                                   boolean toOwnersHand) implements CardEffect {
+
+    public PutCardExiledWithSourceIntoHandEffect(String requiredName, CardPredicate filter) {
+        this(requiredName, filter, false);
+    }
+
+    /** The source's controller chooses a resource, which returns to its owner. */
+    public static PutCardExiledWithSourceIntoHandEffect returningToOwner() {
+        return new PutCardExiledWithSourceIntoHandEffect(null, null, true);
+    }
 
     /** "Put a card exiled with this permanent into your hand" — no name restriction. */
     public PutCardExiledWithSourceIntoHandEffect() {

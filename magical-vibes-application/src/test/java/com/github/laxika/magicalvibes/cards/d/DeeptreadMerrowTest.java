@@ -137,7 +137,7 @@ class DeeptreadMerrowTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent merrow = harness.addToBattlefieldAndReturn(player1, new DeeptreadMerrow());
         merrow.setSummoningSick(true);
-        merrow.setTapped(true);
+        merrow.tap();
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

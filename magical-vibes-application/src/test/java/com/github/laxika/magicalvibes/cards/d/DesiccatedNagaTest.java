@@ -101,7 +101,7 @@ class DesiccatedNagaTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent naga = addReadyNaga(player1);
         naga.setSummoningSick(true);
-        naga.setTapped(true);
+        naga.tap();
         addReadyLiliana(player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

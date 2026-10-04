@@ -64,6 +64,57 @@ class FlintGolemTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("A library with fewer than three cards is milled completely")
+    void shortLibraryIsMilledCompletely() {
+        addAttackingFlintGolem(player1, player2);
+        addCreatureReady(player2, new Mossdog());
+        List<Card> cards = library(2);
+        harness.setLibrary(player2, cards);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrderElementsOf(cards);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Becoming blocked with an empty defending library mills no cards")
+    void emptyLibraryMillsNothing() {
+        addAttackingFlintGolem(player1, player2);
+        addCreatureReady(player2, new Mossdog());
+        harness.setLibrary(player2, List.of());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Player two's attacking Flint Golem mills player one")
+    void oppositeControllerMillsDefender() {
+        addAttackingFlintGolem(player2, player1);
+        addCreatureReady(player1, new Mossdog());
+        List<Card> cards = library(5);
+        harness.setLibrary(player1, cards);
+        int attackerLibrarySize = gd.playerDecks.get(player2.getId()).size();
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrderElementsOf(cards.subList(0, 3));
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(cards.subList(3, 5));
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(attackerLibrarySize);
+    }
+
     private Permanent addAttackingFlintGolem(Player attacker, Player defender) {
         Permanent perm = addCreatureReady(attacker, new FlintGolem());
         perm.setAttacking(true);

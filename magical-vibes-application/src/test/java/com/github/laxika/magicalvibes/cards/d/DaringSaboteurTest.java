@@ -189,7 +189,7 @@ class DaringSaboteurTest extends BaseCardTest {
     @DisplayName("Unblockable ability can be activated while tapped and summoning sick")
     void canActivateWhileTappedAndSummoningSick() {
         Permanent saboteur = harness.addToBattlefieldAndReturn(player1, new DaringSaboteur());
-        saboteur.setTapped(true);
+        saboteur.tap();
         saboteur.setSummoningSick(true);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

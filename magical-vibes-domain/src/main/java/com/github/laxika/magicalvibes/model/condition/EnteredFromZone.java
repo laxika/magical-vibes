@@ -3,7 +3,11 @@ package com.github.laxika.magicalvibes.model.condition;
 import com.github.laxika.magicalvibes.model.Zone;
 
 /** The source permanent entered the battlefield from the given zone. */
-public record EnteredFromZone(Zone sourceZone) implements Condition {
+public record EnteredFromZone(Zone sourceZone, boolean fromControllersGraveyard) implements Condition {
+
+    public EnteredFromZone(Zone sourceZone) {
+        this(sourceZone, false);
+    }
 
     @Override
     public boolean isEtbTriggerGate() {

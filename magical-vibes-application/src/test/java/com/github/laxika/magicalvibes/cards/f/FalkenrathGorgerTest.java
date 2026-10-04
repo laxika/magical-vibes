@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.c.CaptivatingVampire;
 import com.github.laxika.magicalvibes.cards.r.RavensCrime;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.StromkirkOccultist;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,10 +18,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FalkenrathGorger.class, CaptivatingVampire.class, RavensCrime.class, SerraAngel.class,
+        StromkirkOccultist.class, TurnToFrog.class})
 class FalkenrathGorgerTest extends BaseCardTest {
 
     private void putGorgerOnBattlefield() {
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new FalkenrathGorger()));
+        harness.addToBattlefield(player1, new FalkenrathGorger());
     }
 
     /** Force player1 to discard {@code card} via Raven's Crime from player2. */
@@ -29,8 +34,7 @@ class FalkenrathGorgerTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
         harness.handleCardChosen(player1, 0);
         return card;
     }
@@ -109,8 +113,7 @@ class FalkenrathGorgerTest extends BaseCardTest {
     @Test
     @DisplayName("Madness cast still works if Gorger leaves before the trigger resolves")
     void madnessSurvivesGorgerLeaving() {
-        Permanent gorger = new Permanent(new FalkenrathGorger());
-        gd.playerBattlefields.get(player1.getId()).add(gorger);
+        Permanent gorger = harness.addToBattlefieldAndReturn(player1, new FalkenrathGorger());
 
         CaptivatingVampire vampire = discardViaRavensCrime(new CaptivatingVampire());
         assertThat(gd.stack.getLast().getDescription()).contains("madness");
@@ -126,5 +129,61 @@ class FalkenrathGorgerTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getId().equals(vampire.getId()));
+    }
+
+    @Test
+    @DisplayName("Gorger controlled by the opponent does not grant madness to your Vampire")
+    void opponentsGorgerDoesNotGrantMadness() {
+        harness.addToBattlefield(player2, new FalkenrathGorger());
+        CaptivatingVampire vampire = discardViaRavensCrime(new CaptivatingVampire());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(vampire);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A second Gorger on the battlefield grants madness to a discarded Gorger")
+    void anotherGorgerGrantsMadness() {
+        putGorgerOnBattlefield();
+        FalkenrathGorger discarded = discardViaRavensCrime(new FalkenrathGorger());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(discarded.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Gorger stops granting madness after losing its abilities")
+    void losingAbilitiesStopsGrantingMadness() {
+        Permanent gorger = harness.addToBattlefieldAndReturn(player1, new FalkenrathGorger());
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, gorger.getId());
+
+        CaptivatingVampire vampire = discardViaRavensCrime(new CaptivatingVampire());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(vampire);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Vampire with native madness requires a choice of discard replacement")
+    void nativeAndGrantedMadnessOfferAChoice() {
+        putGorgerOnBattlefield();
+        discardViaRavensCrime(new StromkirkOccultist());
+
+        // The owner must choose between the native {1}{R} and granted {2}{R} abilities
+        // before the chosen ability exiles the discarded card.
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 }

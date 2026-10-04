@@ -1,10 +1,14 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.c.CloudSprite;
+import com.github.laxika.magicalvibes.cards.f.FatedRetribution;
+import com.github.laxika.magicalvibes.cards.g.GreatHart;
+import com.github.laxika.magicalvibes.cards.k.KarametraGodOfHarvests;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EpharaGodOfThePolis.class, GrizzlyBears.class, GlorySeeker.class, CloudSprite.class})
+@CardUsed({EpharaGodOfThePolis.class, GrizzlyBears.class, GlorySeeker.class, CloudSprite.class,
+        GreatHart.class, KarametraGodOfHarvests.class, FatedRetribution.class})
 class EpharaGodOfThePolisTest extends BaseCardTest {
 
     @Test
@@ -77,6 +82,91 @@ class EpharaGodOfThePolisTest extends BaseCardTest {
         advanceToUpkeep(player1);
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotCountGodThatEnteredAsNoncreature() {
+        addEphara();
+        Permanent karametra = harness.enterBattlefieldAndReturn(player1, new KarametraGodOfHarvests());
+        assertThat(gqs.isCreature(gd, karametra)).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void drawsOnlyOnceForMultipleCreaturesThatHaveLeft() {
+        addEphara();
+        Card drawn = new GreatHart();
+        harness.setLibrary(player1, List.of(drawn, new GreatHart()));
+        Permanent first = harness.enterBattlefieldAndReturn(player1, new GreatHart());
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new GreatHart());
+        gd.playerBattlefields.get(player1.getId()).removeAll(List.of(first, second));
+        gd.playerGraveyards.get(player1.getId()).addAll(List.of(first.getCard(), second.getCard()));
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    void doesNotCountOpponentsCreatureEntry() {
+        addEphara();
+        harness.enterBattlefieldAndReturn(player2, new GreatHart());
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void drawsOnOwnUpkeepAfterCreatureEnteredOnOpponentsTurn() {
+        addEphara();
+        Card drawn = new GreatHart();
+        harness.setLibrary(player1, List.of(drawn));
+        harness.forceActivePlayer(player2);
+        harness.enterBattlefieldAndReturn(player1, new GreatHart());
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    void losesCreatureTypeWhenDevotionDrops() {
+        Permanent ephara = addEphara();
+        addWhiteAndBluePermanents(5);
+        assertThat(gqs.isCreature(gd, ephara)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(1);
+
+        assertThat(gqs.isCreature(gd, ephara)).isFalse();
+        assertThat(gqs.isEnchantment(gd, ephara)).isTrue();
+    }
+
+    @Test
+    void survivesDestructionWhileCreatureAndThenLosesCreatureType() {
+        Permanent ephara = addEphara();
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new GreatHart());
+        }
+        assertThat(gqs.isCreature(gd, ephara)).isTrue();
+
+        harness.castFromHand(player2, new FatedRetribution(), "{4}{W}{W}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(ephara);
+        assertThat(gqs.isCreature(gd, ephara)).isFalse();
     }
 
     private Permanent addEphara() {

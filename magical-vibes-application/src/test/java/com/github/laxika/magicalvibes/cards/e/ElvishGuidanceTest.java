@@ -101,4 +101,41 @@ class ElvishGuidanceTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }
+
+    @Test
+    @DisplayName("Multiple Guidance Auras each add mana immediately for all Elves")
+    void multipleAurasEachAddManaWithoutUsingStack() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new ElvishPioneer());
+        harness.addToBattlefield(player2, new ElvishPioneer());
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new ElvishGuidance());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player2, new ElvishGuidance());
+        firstAura.setAttachedTo(forest.getId());
+        secondAura.setAttachedTo(forest.getId());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(5);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Bonus uses the current Elf count each time the land is tapped for mana")
+    void bonusUpdatesWhenElvesLeaveBattlefield() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent elf = harness.addToBattlefieldAndReturn(player2, new ElvishPioneer());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ElvishGuidance());
+        aura.setAttachedTo(forest.getId());
+
+        harness.tapPermanent(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player2.getId()).remove(elf);
+        gd.playerGraveyards.get(player2.getId()).add(elf.getCard());
+        forest.setTapped(false);
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+    }
 }

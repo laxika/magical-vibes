@@ -64,7 +64,7 @@ class BrokersInitiateTest extends BaseCardTest {
     void activatesRepeatedlyWhileTappedAndSummoningSick() {
         Permanent initiate = harness.addToBattlefieldAndReturn(player1, new BrokersInitiate());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new BrokersInitiate());
-        initiate.setTapped(true);
+        initiate.tap();
         initiate.setSummoningSick(true);
         harness.addMana(player1, ManaColor.COLORLESS, 8);
         harness.addMana(player1, ManaColor.GREEN, 2);

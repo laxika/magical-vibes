@@ -110,7 +110,7 @@ class CorpseBlockadeTest extends BaseCardTest {
     void tappedSummoningSickBlockadeCanActivateRepeatedly() {
         Permanent blockade = harness.addToBattlefieldAndReturn(player1, new CorpseBlockade());
         blockade.setSummoningSick(true);
-        blockade.setTapped(true);
+        blockade.tap();
         harness.addToBattlefield(player1, new MillennialGargoyle());
 
         harness.activateAbility(player1, 0, null, null);

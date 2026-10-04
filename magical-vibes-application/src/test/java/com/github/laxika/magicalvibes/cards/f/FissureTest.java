@@ -11,9 +11,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Fissure.class, WaterWurm.class, MazeOfIth.class, BloodMoon.class, Drowned.class})
 class FissureTest extends BaseCardTest {
@@ -26,12 +26,11 @@ class FissureTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving destroys target creature")
     void resolvesAndDestroysCreature() {
-        harness.addToBattlefield(player2, new WaterWurm());
+        var creature = harness.addToBattlefieldAndReturn(player2, new WaterWurm());
         harness.setHand(player1, List.of(new Fissure()));
         addFissureMana();
 
-        UUID targetId = harness.getPermanentId(player2, "Water Wurm");
-        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         harness.assertNotOnBattlefield(player2, "Water Wurm");
         harness.assertInGraveyard(player2, "Water Wurm");
@@ -40,12 +39,11 @@ class FissureTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving destroys target land")
     void resolvesAndDestroysLand() {
-        harness.addToBattlefield(player2, new MazeOfIth());
+        var land = harness.addToBattlefieldAndReturn(player2, new MazeOfIth());
         harness.setHand(player1, List.of(new Fissure()));
         addFissureMana();
 
-        UUID targetId = harness.getPermanentId(player2, "Maze of Ith");
-        harness.castAndResolveInstant(player1, 0, targetId);
+        harness.castAndResolveInstant(player1, 0, land.getId());
 
         harness.assertNotOnBattlefield(player2, "Maze of Ith");
         harness.assertInGraveyard(player2, "Maze of Ith");
@@ -54,12 +52,11 @@ class FissureTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a noncreature, nonland permanent")
     void cannotTargetNonCreatureNonLandPermanent() {
-        harness.addToBattlefield(player2, new BloodMoon());
+        var enchantment = harness.addToBattlefieldAndReturn(player2, new BloodMoon());
         harness.setHand(player1, List.of(new Fissure()));
         addFissureMana();
 
-        UUID enchantmentId = harness.getPermanentId(player2, "Blood Moon");
-        assertThatThrownBy(() -> harness.castInstant(player1, 0, enchantmentId))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, enchantment.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -75,5 +72,41 @@ class FissureTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Drowned");
         harness.assertInGraveyard(player2, "Drowned");
+    }
+
+    @Test
+    @DisplayName("Can destroy a creature controlled by its caster")
+    void destroysOwnCreature() {
+        var creature = harness.addToBattlefieldAndReturn(player1, new WaterWurm());
+        harness.setHand(player1, List.of(new Fissure()));
+        addFissureMana();
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Water Wurm");
+        harness.assertInGraveyard(player1, "Water Wurm");
+        harness.assertInGraveyard(player1, "Fissure");
+    }
+
+    @Test
+    @DisplayName("Regeneration activated in response cannot save the target")
+    void destroysCreatureRegeneratedInResponse() {
+        var drowned = harness.addToBattlefieldAndReturn(player2, new Drowned());
+        harness.setHand(player1, List.of(new Fissure()));
+        addFissureMana();
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, drowned.getId());
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Drowned");
+        assertThat(drowned.getRegenerationShield()).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Drowned");
+        harness.assertInGraveyard(player2, "Drowned");
+        harness.assertInGraveyard(player1, "Fissure");
     }
 }

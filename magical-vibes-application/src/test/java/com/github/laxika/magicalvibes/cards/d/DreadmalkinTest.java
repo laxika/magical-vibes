@@ -95,7 +95,7 @@ class DreadmalkinTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent dreadmalkin = addReadyDreadmalkin(player1);
         dreadmalkin.setSummoningSick(true);
-        dreadmalkin.setTapped(true);
+        dreadmalkin.tap();
         harness.addToBattlefield(player1, new AjanisPridemate());
         addAbilityMana(player1);
 

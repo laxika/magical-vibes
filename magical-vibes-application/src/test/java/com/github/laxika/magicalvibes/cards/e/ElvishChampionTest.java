@@ -111,6 +111,31 @@ class ElvishChampionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opposing Champions buff each other and only the departing source's bonus is lost")
+    void opposingChampionsAndSourceRemoval() {
+        Permanent firstChampion = harness.addToBattlefieldAndReturn(player1, new ElvishChampion());
+        Permanent secondChampion = harness.addToBattlefieldAndReturn(player2, new ElvishChampion());
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+
+        for (Permanent champion : List.of(firstChampion, secondChampion)) {
+            assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(3);
+            assertThat(gqs.hasKeyword(gd, champion, Keyword.FORESTWALK)).isTrue();
+        }
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(3);
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstChampion);
+
+        assertThat(gqs.getEffectivePower(gd, secondChampion)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondChampion)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, secondChampion, Keyword.FORESTWALK)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, elf)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elf)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, elf, Keyword.FORESTWALK)).isTrue();
+    }
+
+    @Test
     @DisplayName("Bonus is removed when Elvish Champion leaves the battlefield")
     void bonusRemovedWhenSourceLeaves() {
         Permanent champion = harness.addToBattlefieldAndReturn(player1, new ElvishChampion());

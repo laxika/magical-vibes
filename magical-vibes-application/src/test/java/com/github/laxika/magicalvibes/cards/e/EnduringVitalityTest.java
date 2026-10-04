@@ -42,15 +42,13 @@ class EnduringVitalityTest extends BaseCardTest {
     @Test
     @DisplayName("Returns from the graveyard as an enchantment and not a creature")
     void returnsAsEnchantmentOnly() {
-        harness.addToBattlefield(player1, new EnduringVitality());
-        Permanent vitality = findPermanent(player1, "Enduring Vitality");
+        Permanent vitality = harness.addToBattlefieldAndReturn(player1, new EnduringVitality());
 
         harness.setHand(player2, java.util.List.of(new DoomBlade()));
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.forceActivePlayer(player2);
-        harness.castInstant(player2, 0, vitality.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, vitality.getId());
+        resolveAllTriggers();
 
         Permanent returned = findPermanent(player1, "Enduring Vitality");
         assertThat(gqs.getEffectiveCardTypes(gd, returned)).containsExactly(CardType.ENCHANTMENT);
@@ -62,8 +60,7 @@ class EnduringVitalityTest extends BaseCardTest {
     @Test
     @DisplayName("Does not return when it dies as a noncreature")
     void doesNotReturnWhenItWasNotACreature() {
-        harness.addToBattlefield(player1, new EnduringVitality());
-        Permanent vitality = findPermanent(player1, "Enduring Vitality");
+        Permanent vitality = harness.addToBattlefieldAndReturn(player1, new EnduringVitality());
 
         harness.setHand(player1, List.of(new OneWithTheStars()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -75,11 +72,47 @@ class EnduringVitalityTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Disenchant()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, vitality.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, vitality.getId());
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Enduring Vitality");
         harness.assertNotOnBattlefield(player1, "Enduring Vitality");
+    }
+
+    @Test
+    @DisplayName("Returned enchantment still grants mana abilities and stops granting them after destruction")
+    void returnedEnchantmentGrantsManaUntilDestroyed() {
+        Permanent vitality = harness.addToBattlefieldAndReturn(player1, new EnduringVitality());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new DoomBlade(), new Disenchant()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.forceActivePlayer(player2);
+        harness.castAndResolveInstant(player2, 0, vitality.getId());
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player1, "Enduring Vitality");
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+
+        harness.castAndResolveInstant(player2, 0, returned.getId());
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Enduring Vitality");
+        harness.assertNotOnBattlefield(player1, "Enduring Vitality");
+        assertThat(gs.getEffectiveActivatedAbilities(gd, bears)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not grant mana abilities to opposing creatures")
+    void doesNotGrantManaToOpponents() {
+        addCreatureReady(player1, new EnduringVitality());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        assertThat(org.assertj.core.api.Assertions.catchThrowable(
+                () -> harness.activateAbility(player2, 0, null, null)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanent(player2, "Grizzly Bears").isTapped()).isFalse();
     }
 }

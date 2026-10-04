@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.k.KrenkosCommand;
 import com.github.laxika.magicalvibes.cards.p.PygmyRazorback;
+import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 
 
-@CardUsed({FaerieArtisans.class, PygmyRazorback.class, KrenkosCommand.class})
+@CardUsed({FaerieArtisans.class, PygmyRazorback.class, KrenkosCommand.class, SoulWarden.class})
 class FaerieArtisansTest extends BaseCardTest {
 
     @Test
@@ -55,25 +55,17 @@ class FaerieArtisansTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FaerieArtisans());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player2, List.of(new KrenkosCommand()));
-        harness.addMana(player2, ManaColor.RED, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
-
-        harness.castSorcery(player2, 0);
+        harness.castFromHand(player2, new KrenkosCommand(), "{1}{R}");
         harness.passBothPriorities();
 
         assertThat(findPermanents(player2, "Goblin")).hasSize(2);
         assertThat(findPermanents(player1, "Goblin")).isEmpty();
     }
 
-    private void castPygmyRazorback(com.github.laxika.magicalvibes.model.Player player) {
+    private void castPygmyRazorback(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player, List.of(new PygmyRazorback()));
-        harness.addMana(player, ManaColor.GREEN, 1);
-        harness.addMana(player, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new PygmyRazorback(), "{1}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
@@ -111,8 +103,8 @@ class FaerieArtisansTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Leaving Faerie Artisans exiles its current token copy")
-    void leavingArtisansExilesCurrentCopy() {
+    @DisplayName("Leaving Faerie Artisans preserves its current token copy")
+    void leavingArtisansPreservesCurrentCopy() {
         Permanent artisans = harness.addToBattlefieldAndReturn(player1, new FaerieArtisans());
         castPygmyRazorback(player2);
         Permanent token = findPermanents(player1, "Pygmy Razorback").stream()
@@ -124,7 +116,77 @@ class FaerieArtisansTest extends BaseCardTest {
                 .removePermanentToGraveyard(gd, artisans));
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
+    }
+
+
+    @Test
+    @DisplayName("Does not copy its controller's creatures")
+    void ignoresOwnCreatures() {
+        harness.addToBattlefield(player1, new FaerieArtisans());
+
+        castPygmyRazorback(player1);
+
+        assertThat(findPermanents(player1, "Pygmy Razorback")).singleElement()
+                .satisfies(creature -> assertThat(creature.getCard().isToken()).isFalse());
+    }
+
+    @Test
+    @DisplayName("Each Artisans retains its own copy independently")
+    void multipleArtisansTrackCopiesIndependently() {
+        harness.addToBattlefield(player1, new FaerieArtisans());
+        harness.addToBattlefield(player1, new FaerieArtisans());
+        castPygmyRazorback(player2);
+        harness.passBothPriorities();
+        List<Permanent> firstCopies = List.copyOf(findPermanents(player1, "Pygmy Razorback"));
+        assertThat(firstCopies).hasSize(2);
+
+        castPygmyRazorback(player2);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Pygmy Razorback")).hasSize(2)
+                .doesNotContainAnyElementsOf(firstCopies);
+    }
+
+    @Test
+    @DisplayName("Copies the entering creature using last known information after it leaves")
+    void copiesCreatureThatLeavesBeforeResolution() {
+        harness.addToBattlefield(player1, new FaerieArtisans());
+        Permanent creature = harness.enterBattlefieldAndReturn(player2, new PygmyRazorback());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, creature));
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Pygmy Razorback")).singleElement()
+                .satisfies(token -> {
+                    assertThat(token.getCard().isToken()).isTrue();
+                    assertThat(token.getCard().hasType(CardType.ARTIFACT)).isTrue();
+                });
+    }
+
+
+    @Test
+    @DisplayName("Creates the new copy before exiling the old Soul Warden copy")
+    void oldCopySeesNewCopyEnterBeforeExile() {
+        harness.addToBattlefield(player1, new FaerieArtisans());
+        harness.enterBattlefieldAndReturn(player2, new SoulWarden());
+        resolvePendingTriggers();
+        assertThat(findPermanents(player1, "Soul Warden")).hasSize(1);
+        harness.setLife(player1, 20);
+
+        harness.enterBattlefieldAndReturn(player2, new SoulWarden());
+        resolvePendingTriggers();
+
+        harness.assertLife(player1, 22);
+        assertThat(findPermanents(player1, "Soul Warden")).hasSize(1);
+    }
+
+    private void resolvePendingTriggers() {
+        for (int i = 0; i < 10 && !gd.stack.isEmpty(); i++) {
+            harness.passBothPriorities();
+        }
+        assertThat(gd.stack).isEmpty();
     }
 
 }

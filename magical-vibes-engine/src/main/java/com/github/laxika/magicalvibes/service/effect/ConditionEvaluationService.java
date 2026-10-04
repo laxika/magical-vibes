@@ -396,6 +396,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.condition.SourceHasColor;
 import com.github.laxika.magicalvibes.model.condition.SourceHasDealtDamage;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
+import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttached;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttackingOrBlocking;
@@ -1115,8 +1116,12 @@ public class ConditionEvaluationService {
                             && gameData.playerRadCounters.getOrDefault(ctx.targetId(), 0) > 0;
             case CastFromZone c ->
                     !ctx.copiedSpell() && c.sourceZone() == ctx.sourceZone();
-            case EnteredFromZone c ->
-                    ctx.sourcePermanent() != null && c.sourceZone() == ctx.sourcePermanent().getEnteredFromZone();
+            case EnteredFromZone c -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && c.sourceZone() == source.getEnteredFromZone()
+                        && (!c.fromControllersGraveyard() || java.util.Objects.equals(ctx.controllerId(),
+                        source.getEnteredFromGraveyardOwnerId()));
+            }
             case CastNotFromHand ignored ->
                     !ctx.copiedSpell() && ctx.sourceZone() != null && ctx.sourceZone() != Zone.HAND;
             case NoManaSpentToCast ignored -> {
@@ -1612,6 +1617,10 @@ public class ConditionEvaluationService {
                     targetSpellWouldDestroyLandYouControl(gameData, ctx);
             case TargetSpellSharesColorWithControlledCreature ignored ->
                     targetSpellSharesColorWithControlledCreature(gameData, ctx);
+            case SourceMatchesPermanentPredicate c -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                yield source != null && matchesPermanent(gameData, source, c.predicate(), ctx);
+            }
             case SourceHasSubtype c ->
                     sourceHasSubtype(gameData, ctx, c.subtype());
             case SourceWasCrewedBySubtypeThisTurn c ->
@@ -2517,6 +2526,7 @@ public class ConditionEvaluationService {
 
     /** True when the stack entry's source card object is still in its controller's command zone. */
     private boolean isSourceCardInCommandZone(GameData gameData, ConditionContext ctx) {
+        if (ctx.sourcePermanentId() != null) return false;
         if (ctx.controllerId() == null || ctx.sourceCard() == null) return false;
         List<Card> commandZone = gameData.playerCommandZones.get(ctx.controllerId());
         return commandZone != null && commandZone.contains(ctx.sourceCard());
@@ -2524,11 +2534,8 @@ public class ConditionEvaluationService {
 
     /** True when the source card is represented by a permanent on a battlefield. */
     private boolean isSourceCardOnBattlefield(GameData gameData, ConditionContext ctx) {
-        if (ctx.sourceCard() == null) return false;
-        UUID sourceCardId = ctx.sourceCard().getId();
-        return gameData.playerBattlefields.values().stream()
-                .flatMap(List::stream)
-                .anyMatch(permanent -> permanent.getCard().getId().equals(sourceCardId));
+        return ctx.sourcePermanentId() != null
+                && gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId()) != null;
     }
 
     /** True when the stack entry's source card object is still in its controller's graveyard. */
@@ -4117,8 +4124,7 @@ public class ConditionEvaluationService {
     private boolean sourceHasSubtype(GameData gameData, ConditionContext ctx, CardSubtype subtype) {
         Permanent source = sourcePermanent(gameData, ctx);
         if (source != null) {
-            return source.getCard().getSubtypes().contains(subtype)
-                    || source.getGrantedSubtypes().contains(subtype);
+            return gameQueryService.hasEffectiveSubtype(gameData, source, subtype);
         }
         return ctx.sourceCard() != null && ctx.sourceCard().getSubtypes().contains(subtype);
     }

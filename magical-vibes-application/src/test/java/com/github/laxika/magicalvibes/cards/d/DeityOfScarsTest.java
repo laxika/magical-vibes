@@ -122,7 +122,7 @@ class DeityOfScarsTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent deity = addReadyDeity(player1);
         deity.setSummoningSick(true);
-        deity.setTapped(true);
+        deity.tap();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addMana(player1, ManaColor.BLACK, 1);

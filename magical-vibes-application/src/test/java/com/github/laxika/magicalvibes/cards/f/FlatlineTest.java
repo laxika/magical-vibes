@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -40,11 +41,63 @@ class FlatlineTest extends BaseCardTest {
         assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(opponentCreature.getEffectivePower()).isEqualTo(2);
         assertThat(opponentCreature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Sets every opposing creature's base stats")
+    void affectsMultipleOpposingCreatures() {
+        Permanent first = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castFlatline();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, second)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counters still modify the new base stats")
+    void preservesCounterBonuses() {
+        Permanent creature = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        castFlatline();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution are unaffected")
+    void doesNotAffectLaterCreatures() {
+        Permanent existing = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castFlatline();
+        Permanent newcomer = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, existing)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, existing)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, newcomer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, newcomer)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Resolves without opposing creatures or targets")
+    void resolvesWithoutOpposingCreatures() {
+        Permanent ownCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castFlatline();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Flatline");
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
     }
 
     private void castFlatline() {

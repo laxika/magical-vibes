@@ -119,4 +119,51 @@ class FlowOfMaggotsTest extends BaseCardTest {
 
         assertThat(wall.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Cumulative upkeep does not trigger during the opponent's upkeep")
+    void opponentUpkeepDoesNotAddAgeCounter() {
+        Permanent maggots = harness.addToBattlefieldAndReturn(player1, new FlowOfMaggots());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(maggots.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(maggots);
+    }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic cumulative upkeep cost")
+    void coloredManaPaysUpkeep() {
+        Permanent maggots = harness.addToBattlefieldAndReturn(player1, new FlowOfMaggots());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(maggots);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("One mana cannot pay the second cumulative upkeep")
+    void underfundedSecondUpkeepSacrifices() {
+        Permanent maggots = harness.addToBattlefieldAndReturn(player1, new FlowOfMaggots());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(maggots.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(maggots);
+        harness.assertInGraveyard(player1, "Flow of Maggots");
+    }
 }

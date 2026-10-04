@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.cards.e;
+﻿package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -35,10 +35,7 @@ class ExpendableLackeyTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        Permanent fish = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getName().equals("Fish"))
-                .findFirst()
-                .orElseThrow();
+        Permanent fish = findPermanent(player1, "Fish");
         assertThat(fish.getCard().getColor()).isEqualTo(CardColor.BLUE);
         assertThat(fish.getCard().getSubtypes()).containsExactly(CardSubtype.FISH);
         assertThat(gqs.getEffectivePower(gd, fish)).isEqualTo(1);
@@ -57,5 +54,72 @@ class ExpendableLackeyTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateOutsideMainPhase() {
+        ExpendableLackey lackey = new ExpendableLackey();
+        harness.setGraveyard(player1, List.of(lackey));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(lackey);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(lackey);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithNonemptyStack() {
+        ExpendableLackey lackey = new ExpendableLackey();
+        harness.setGraveyard(player1, List.of(lackey));
+        harness.setHand(player1, List.of(new ExpendableLackey()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(lackey);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(lackey);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void cannotActivateWithoutEnoughMana() {
+        ExpendableLackey lackey = new ExpendableLackey();
+        harness.setGraveyard(player1, List.of(lackey));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(lackey);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(lackey);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canActivateDuringPostcombatMainPhase() {
+        harness.setGraveyard(player1, List.of(new ExpendableLackey()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateGraveyardAbility(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        harness.assertOnBattlefield(player1, "Fish");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 }

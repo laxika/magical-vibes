@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.b.BorealDruid;
-import com.github.laxika.magicalvibes.cards.f.FrostRaptor;
+import com.github.laxika.magicalvibes.cards.j.JuniperOrderRanger;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianIronfoot;
 import com.github.laxika.magicalvibes.cards.r.Resize;
 import com.github.laxika.magicalvibes.cards.r.RiteOfFlame;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
@@ -21,7 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Flashfreeze.class, BorealDruid.class, FrostRaptor.class, Resize.class, RiteOfFlame.class, RagingGoblin.class})
+@CardUsed({Flashfreeze.class, BorealDruid.class, FrostRaptor.class, Resize.class, RiteOfFlame.class,
+        RagingGoblin.class, JuniperOrderRanger.class, PhyrexianIronfoot.class})
 class FlashfreezeTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -42,7 +44,7 @@ class FlashfreezeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
         StackEntry flashfreezeEntry = gd.stack.getLast();
         assertThat(flashfreezeEntry.getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
-        assertThat(flashfreezeEntry.getCard().getName()).isEqualTo("Flashfreeze");
+        assertThat(flashfreezeEntry.getCard()).isInstanceOf(Flashfreeze.class);
         assertThat(flashfreezeEntry.getTargetId()).isEqualTo(druid.getId());
     }
 
@@ -73,8 +75,7 @@ class FlashfreezeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, druid.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, druid.getId());
 
         // Countered spell goes to owner's graveyard
         harness.assertInGraveyard(player1, "Boreal Druid");
@@ -92,8 +93,7 @@ class FlashfreezeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, rite.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, rite.getId());
 
         harness.assertInGraveyard(player1, "Rite of Flame");
     }
@@ -114,8 +114,7 @@ class FlashfreezeTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, harness.getPermanentId(player1, "Boreal Druid"));
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, resize.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, resize.getId());
 
         // Resize countered and in graveyard
         harness.assertInGraveyard(player1, "Resize");
@@ -131,8 +130,7 @@ class FlashfreezeTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
 
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, druid.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, druid.getId());
 
         GameData gd = harness.getGameData();
         harness.assertInGraveyard(player2, "Flashfreeze");
@@ -143,18 +141,62 @@ class FlashfreezeTest extends BaseCardTest {
     @DisplayName("Resolving counters a red creature spell")
     void countersRedCreatureSpell() {
         RagingGoblin goblin = new RagingGoblin();
-        harness.setHand(player1, List.of(goblin));
-        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castFromHand(player1, goblin, "{R}");
 
         harness.setHand(player2, List.of(new Flashfreeze()));
         harness.addMana(player2, ManaColor.BLUE, 2);
 
-        harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 0, goblin.getId());
 
         harness.assertInGraveyard(player1, "Raging Goblin");
         harness.assertNotOnBattlefield(player1, "Raging Goblin");
+    }
+
+    @Test
+    @DisplayName("Counters a multicolored spell with green among its colors")
+    void countersGreenWhiteSpell() {
+        JuniperOrderRanger ranger = new JuniperOrderRanger();
+        harness.castFromHand(player1, ranger, "{3}{G}{W}");
+        harness.setHand(player2, List.of(new Flashfreeze()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+
+        harness.castAndResolveInstant(player2, 0, ranger.getId());
+
+        harness.assertInGraveyard(player1, "Juniper Order Ranger");
+        harness.assertNotOnBattlefield(player1, "Juniper Order Ranger");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot target a colorless spell")
+    void cannotTargetColorlessSpell() {
+        PhyrexianIronfoot ironfoot = new PhyrexianIronfoot();
+        harness.castFromHand(player1, ironfoot, "{3}");
+        harness.setHand(player2, List.of(new Flashfreeze()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, ironfoot.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's own green spell")
+    void countersOwnGreenSpell() {
+        BorealDruid druid = new BorealDruid();
+        harness.castFromHand(player1, druid, "{G}");
+        harness.setHand(player1, List.of(new Flashfreeze()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, druid.getId());
+
+        harness.assertInGraveyard(player1, "Boreal Druid");
+        harness.assertInGraveyard(player1, "Flashfreeze");
+        harness.assertNotOnBattlefield(player1, "Boreal Druid");
+        assertThat(gd.stack).isEmpty();
     }
 
     // ===== Fizzle =====

@@ -1941,94 +1941,16 @@ public class DamageSupport {
 
         for (DamageRedirectShield redirect : toProcess) {
             UUID targetId = redirect.redirectTargetId();
-            int damage = redirect.remainingAmount();
-            if (!gameData.playerIds.contains(targetId)) {
-                dealRedirectDamageToPermanent(gameData, redirect, targetId, damage);
-                continue;
-            }
-            String targetName = gameData.playerIdToName.get(targetId);
-            String protectedName = protectedRecipientName(gameData, redirect);
-
-            gameLogService.append(gameData, GameLog.cardThen(redirect.sourceCard(),
-                    " prevents " + damage + " damage to " + protectedName + "."));
-            gameLogService.append(gameData, GameLog.cardThen(redirect.sourceCard(),
-                    " deals " + damage + " damage to " + targetName + "."));
-
-            // Apply prevention shields on the redirect target (they may also have shields)
-            Permanent sourcePermanent = redirect.sourcePermanentId() == null
-                    ? null
-                    : gameQueryService.findPermanentById(gameData, redirect.sourcePermanentId());
-            UUID sourceControllerId = redirect.sourcePermanentId() == null
-                    ? null
-                    : gameQueryService.findPermanentController(gameData, redirect.sourcePermanentId());
-            int redirectEffective = damagePreventionService.applyJudgmentOfAlexanderPrevention(
-                    gameData, targetId, damage, redirect.sourceCard(), sourcePermanent,
-                    sourceControllerId, false);
-            if (redirectEffective > 0) {
-                redirectEffective = damagePreventionService.applyPlayerPreventionShield(
-                        gameData, targetId, redirectEffective);
-            }
-            // Recursively process any redirects triggered by the target's shields
+            if (targetId == null) continue;
+            StackEntry damageEntry = new StackEntry(
+                    redirect.sourcePermanentId() == null ? StackEntryType.INSTANT_SPELL
+                            : StackEntryType.ACTIVATED_ABILITY,
+                    redirect.sourceCard(), redirect.protectedPlayerId(),
+                    redirect.sourceCard().getName(), List.of(), targetId, redirect.sourcePermanentId());
+            resolveAnyTargetDamage(gameData, damageEntry, targetId, redirect.remainingAmount(), false);
             processPendingRedirectDamage(gameData);
-            redirectEffective -= damagePreventionService.applyDamageToControllerAndPutCounterOnSelf(
-                    gameData, targetId, redirectEffective);
-
-            if (redirectEffective > 0) {
-                if (gameQueryService.canPlayerLoseLife(gameData, targetId)) {
-                    int lifeLoss = redirectEffective
-                            * gameQueryService.opponentLifeLossMultiplier(gameData, targetId);
-                    gameData.playerLifeTotals.put(targetId,
-                            gameQueryService.lifeAfterDamage(gameData, targetId, lifeLoss));
-                }
-                boolean artifactSource = sourcePermanent != null
-                        ? gameQueryService.isArtifact(gameData, sourcePermanent)
-                        : redirect.sourceCard() != null && redirect.sourceCard().hasType(CardType.ARTIFACT);
-                gameData.recordDamageToPlayer(targetId, redirectEffective, artifactSource ? redirectEffective : 0);
-                gameData.recordDamageDealtBySourceToPlayer(
-                        redirect.sourcePermanentId(), targetId, redirectEffective);
-                gameData.recordDamageRecipientBySource(redirect.sourcePermanentId(), targetId);
-                triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
-                        gameData, targetId, redirectEffective);
-                triggerCollectionService.checkOpponentDealtDamageTriggers(
-                        gameData, targetId, redirect.sourcePermanentId(), redirectEffective);
-            }
         }
-    }
-
-    /**
-     * Deals a redirect shield's prevented damage to a permanent target (Divine Deflection's "any
-     * target" can be a creature or planeswalker). Routed through the normal creature damage path so
-     * prevention, protection and damage triggers all apply. Nothing happens when the target has
-     * left the battlefield.
-     */
-    private void dealRedirectDamageToPermanent(GameData gameData, DamageRedirectShield redirect,
-                                               UUID targetId, int damage) {
-        Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
-        if (targetPermanent == null) return;
-
-        String protectedName = protectedRecipientName(gameData, redirect);
-        gameLogService.append(gameData, GameLog.cardThen(redirect.sourceCard(),
-                " prevents " + damage + " damage to " + protectedName + "."));
-
-        StackEntry tempEntry = new StackEntry(
-                StackEntryType.INSTANT_SPELL,
-                redirect.sourceCard(),
-                redirect.protectedPlayerId(),
-                redirect.sourceCard().getName(),
-                List.of(),
-                targetId,
-                redirect.sourcePermanentId());
-        dealCreatureDamage(gameData, tempEntry, targetPermanent, damage);
-        processPendingRedirectDamage(gameData);
-    }
-
-    private String protectedRecipientName(GameData gameData, DamageRedirectShield redirect) {
-        if (redirect.protectedPermanentId() != null) {
-            Permanent protectedPermanent = gameQueryService.findPermanentById(
-                    gameData, redirect.protectedPermanentId());
-            return protectedPermanent == null ? "the target creature" : protectedPermanent.getCard().getName();
-        }
-        return gameData.playerIdToName.get(redirect.protectedPlayerId());
+        flushSourceDamageReflections(gameData);
     }
 
     /**

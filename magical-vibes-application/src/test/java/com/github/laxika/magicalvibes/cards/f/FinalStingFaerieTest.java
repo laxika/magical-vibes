@@ -91,8 +91,8 @@ class FinalStingFaerieTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB does not trigger when cast without a target")
-    void etbDoesNotTriggerWithoutTarget() {
+    @DisplayName("Creature resolves without a destruction ability on the stack when no legal targets exist")
+    void creatureResolvesWhenNoLegalTargetsExist() {
         harness.setHand(player1, List.of(new FinalStingFaerie()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
@@ -100,6 +100,58 @@ class FinalStingFaerieTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Final-Sting Faerie");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still requires choosing a damaged creature")
+    void enteringWithoutCastingDestroysDamagedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IndomitableAncients());
+        gd.permanentsDealtDamageThisTurn.add(target.getId());
+
+        harness.enterBattlefieldAndReturn(player1, new FinalStingFaerie());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Final-Sting Faerie");
+        harness.assertInGraveyard(player2, "Indomitable Ancients");
+        harness.assertNotOnBattlefield(player2, "Indomitable Ancients");
+    }
+
+    @Test
+    @DisplayName("Removing marked damage does not erase having been dealt damage this turn")
+    void removingMarkedDamageDoesNotMakeTargetIllegal() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IndomitableAncients());
+        target.setMarkedDamage(1);
+        gd.permanentsDealtDamageThisTurn.add(target.getId());
+        harness.setHand(player1, List.of(new FinalStingFaerie()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        target.setMarkedDamage(0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Indomitable Ancients");
+        harness.assertNotOnBattlefield(player2, "Indomitable Ancients");
+    }
+
+    @Test
+    @DisplayName("Target gaining shroud before resolution survives the destruction ability")
+    void targetGainingShroudSurvives() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IndomitableAncients());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new CloakAndDagger());
+        gd.permanentsDealtDamageThisTurn.add(target.getId());
+        harness.setHand(player1, List.of(new FinalStingFaerie()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        equipment.setAttachedTo(target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Indomitable Ancients");
+        harness.assertNotInGraveyard(player2, "Indomitable Ancients");
         assertThat(gd.stack).isEmpty();
     }
 }

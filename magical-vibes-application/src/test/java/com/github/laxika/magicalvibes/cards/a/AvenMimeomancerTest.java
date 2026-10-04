@@ -191,7 +191,7 @@ class AvenMimeomancerTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve Aven spell → enters
-        harness.passBothPriorities(); // resolve ETB rule-establishing trigger
+
         return leotau;
     }
 

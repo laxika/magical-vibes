@@ -80,4 +80,38 @@ class FirescreamerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
     }
+
+    @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent firescreamer = harness.addToBattlefieldAndReturn(player1, new Firescreamer());
+        firescreamer.setSummoningSick(true);
+        firescreamer.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(firescreamer.getPowerModifier()).isEqualTo(1);
+        assertThat(firescreamer.getToughnessModifier()).isEqualTo(0);
+        assertThat(firescreamer.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The boost applies only to the Firescreamer whose ability was activated")
+    void boostsOnlyItsSource() {
+        Permanent other = addCreatureReady(player1, new Firescreamer());
+        Permanent source = addCreatureReady(player1, new Firescreamer());
+        Permanent opponent = addCreatureReady(player2, new Firescreamer());
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        assertThat(source.getPowerModifier()).isEqualTo(0);
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isEqualTo(1);
+        assertThat(source.getToughnessModifier()).isEqualTo(0);
+        assertThat(other.getPowerModifier()).isEqualTo(0);
+        assertThat(opponent.getPowerModifier()).isEqualTo(0);
+    }
 }

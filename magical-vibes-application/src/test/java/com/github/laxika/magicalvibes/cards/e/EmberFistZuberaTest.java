@@ -13,7 +13,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -65,6 +64,24 @@ class EmberFistZuberaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counts Zubera that die in response to the death trigger")
+    void countsDeathsAtResolution() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new EmberFistZubera());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new EmberFistZubera());
+        harness.setLife(player2, 20);
+        startMainPhase(new RendSpirit(), new RendSpirit());
+
+        harness.castAndResolveInstant(player1, 0, first.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.castAndResolveInstant(player1, 0, second.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
     @DisplayName("Counts Zubera deaths under either player's control")
     void countsZuberaDeathsAcrossPlayers() {
         Permanent ownZubera = harness.addToBattlefieldAndReturn(player1, new EmberFistZubera());
@@ -106,8 +123,7 @@ class EmberFistZuberaTest extends BaseCardTest {
     void damageCanKillCreature() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new EmberFistZubera());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new EmberFistZubera());
-        harness.addToBattlefield(player2, new IsamaruHoundOfKonda());
-        UUID isamaruId = harness.getPermanentId(player2, "Isamaru, Hound of Konda");
+        var isamaruId = harness.addToBattlefieldAndReturn(player2, new IsamaruHoundOfKonda()).getId();
         startMainPhase(new RendSpirit(), new RendSpirit());
 
         harness.castAndResolveInstant(player1, 0, first.getId());
@@ -120,5 +136,25 @@ class EmberFistZuberaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Isamaru, Hound of Konda");
+    }
+
+    @Test
+    @DisplayName("A death trigger does not deal damage when its creature target leaves the battlefield")
+    void removedTargetDoesNotReceiveDamage() {
+        Permanent zubera = harness.addToBattlefieldAndReturn(player1, new EmberFistZubera());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new IsamaruHoundOfKonda());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        startMainPhase(new RendSpirit(), new RendFlesh());
+
+        harness.castAndResolveInstant(player1, 0, zubera.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Isamaru, Hound of Konda");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
     }
 }

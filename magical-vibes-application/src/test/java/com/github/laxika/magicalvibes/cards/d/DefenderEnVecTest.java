@@ -186,7 +186,7 @@ class DefenderEnVecTest extends BaseCardTest {
     @Test
     void tappedNewlyEnteredDefenderCanActivate() {
         Permanent defender = harness.enterBattlefieldAndReturn(player1, new DefenderEnVec());
-        defender.setTapped(true);
+        defender.tap();
         harness.addToBattlefield(player1, new SealOfFire());
 
         harness.activateAbility(player1, 0, null, player2.getId());

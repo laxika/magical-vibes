@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EutropiaTheTwiceFavored.class, GloriousAnthem.class, GrizzlyBears.class})
+@CardUsed({EutropiaTheTwiceFavored.class, GloriousAnthem.class, GrizzlyBears.class, Unsummon.class})
 class EutropiaTheTwiceFavoredTest extends BaseCardTest {
 
     @Test
@@ -85,6 +86,73 @@ class EutropiaTheTwiceFavoredTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Eutropia can target itself with its constellation ability")
+    void canTargetItself() {
+        Permanent eutropia = harness.addToBattlefieldAndReturn(player1, new EutropiaTheTwiceFavored());
+        castGloriousAnthem();
+
+        harness.handlePermanentChosen(player1, eutropia.getId());
+        harness.passBothPriorities();
+
+        assertThat(eutropia.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, eutropia, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each enchantment entry adds another counter to the chosen creature")
+    void repeatedEntriesAccumulateCounters() {
+        harness.addToBattlefield(player1, new EutropiaTheTwiceFavored());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        for (int i = 0; i < 2; i++) {
+            castGloriousAnthem();
+            harness.handlePermanentChosen(player1, bears.getId());
+            harness.passBothPriorities();
+        }
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A pending constellation ability resolves after Eutropia leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent eutropia = harness.addToBattlefieldAndReturn(player1, new EutropiaTheTwiceFavored());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castGloriousAnthem();
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, eutropia.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(eutropia);
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A constellation ability does not affect a creature that leaves and returns before resolution")
+    void returnedCreatureIsANewTarget() {
+        harness.addToBattlefield(player1, new EutropiaTheTwiceFavored());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castGloriousAnthem();
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        Permanent returnedBears = harness.addToBattlefieldAndReturn(
+                player1, gd.playerHands.get(player1.getId()).removeFirst());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(returnedBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, returnedBears, Keyword.FLYING)).isFalse();
     }
 
     private void castGloriousAnthem() {

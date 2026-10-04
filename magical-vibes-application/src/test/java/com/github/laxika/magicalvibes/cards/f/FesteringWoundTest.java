@@ -132,6 +132,52 @@ class FesteringWoundTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 
+    @Test
+    @DisplayName("Only infection counters contribute to Festering Wound's damage")
+    void ignoresOtherCounterTypes() {
+        Permanent aura = attachWoundToCreature();
+        aura.setCounterCount(CounterType.INFECTION, 2);
+        aura.setCounterCount(CounterType.CHARGE, 5);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(aura.getCounterCount(CounterType.INFECTION)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("The damage trigger survives removal and uses the Aura's counters immediately before removal")
+    void damageUsesLastKnownCountersAfterAuraLeaves() {
+        Permanent aura = attachWoundToCreature();
+        aura.setCounterCount(CounterType.INFECTION, 1);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player2);
+        aura.setCounterCount(CounterType.INFECTION, 4);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura);
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
+        harness.assertInGraveyard(player1, "Festering Wound");
+    }
+
+    @Test
+    @DisplayName("An infection counter cannot be added to an Aura that left before its upkeep trigger resolved")
+    void cannotAddCounterAfterAuraLeaves() {
+        Permanent aura = attachWoundToCreature();
+
+        advanceToUpkeep(player1);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(aura.getCounterCount(CounterType.INFECTION)).isZero();
+        harness.assertInGraveyard(player1, "Festering Wound");
+    }
+
     private Permanent attachWoundToCreature() {
         return attachWoundToCreature(player2);
     }

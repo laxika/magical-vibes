@@ -52,8 +52,8 @@ class CosmicLarvaTest extends BaseCardTest {
         Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
 
         advanceToUpkeep(player1);
-        forest.setTapped(true);
-        mountain.setTapped(true);
+        forest.tap();
+        mountain.tap();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 

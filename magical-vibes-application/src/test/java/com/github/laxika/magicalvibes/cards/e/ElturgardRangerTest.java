@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.b.BurningHands;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,8 +22,7 @@ class ElturgardRangerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Elturgard Ranger");
         List<Permanent> wolves = findPermanents(player1, "Wolf");
@@ -32,5 +32,29 @@ class ElturgardRangerTest extends BaseCardTest {
         assertThat(wolf.getCard().getSubtypes()).contains(CardSubtype.WOLF);
         assertThat(gqs.getEffectivePower(gd, wolf)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, wolf)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed(BurningHands.class)
+    void entryTriggerCreatesWolfEvenIfRangerDiesBeforeItResolves() {
+        harness.setHand(player1, List.of(new ElturgardRanger()));
+        harness.setHand(player2, List.of(new BurningHands()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Elturgard Ranger");
+        assertThat(countPermanents(player1, "Wolf")).isZero();
+
+        harness.castAndResolveInstant(player2, 0,
+                harness.getPermanentId(player1, "Elturgard Ranger"));
+
+        harness.assertInGraveyard(player1, "Elturgard Ranger");
+        harness.assertNotOnBattlefield(player1, "Elturgard Ranger");
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Wolf")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Wolf")).isZero();
     }
 }

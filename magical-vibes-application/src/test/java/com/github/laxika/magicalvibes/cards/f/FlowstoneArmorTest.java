@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.s.SealOfCleansing;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FlowstoneArmor.class, FlowstoneCrusher.class})
+@CardUsed({FlowstoneArmor.class, FlowstoneCrusher.class, SealOfCleansing.class})
 class FlowstoneArmorTest extends BaseCardTest {
 
     @Test
@@ -74,6 +75,27 @@ class FlowstoneArmorTest extends BaseCardTest {
     }
 
     @Test
+    void reactivatingAfterUntappingDoesNotRestoreTheExpiredBoost() {
+        addReadyArmor(player1);
+        Permanent crusher = addCreatureReady(player1, new FlowstoneCrusher());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, crusher.getId());
+        harness.passBothPriorities();
+        advanceToNextTurnWithMayChoice(player2, true);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, crusher.getId());
+        assertThat(gqs.getEffectivePower(gd, crusher)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, crusher)).isEqualTo(4);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, crusher)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, crusher)).isEqualTo(3);
+    }
+
+    @Test
     void cannotTargetNonCreaturePermanent() {
         addReadyArmor(player1);
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FlowstoneArmor());
@@ -82,6 +104,55 @@ class FlowstoneArmorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void abilityCanWeakenAnOpponentsCreature() {
+        addReadyArmor(player1);
+        Permanent crusher = addCreatureReady(player2, new FlowstoneCrusher());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, crusher.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, crusher)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, crusher)).isEqualTo(3);
+    }
+
+    @Test
+    void boostEndsWhenArmorLeavesTheBattlefield() {
+        Permanent armor = addReadyArmor(player1);
+        Permanent crusher = addCreatureReady(player1, new FlowstoneCrusher());
+        harness.addToBattlefield(player2, new SealOfCleansing());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, crusher.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, crusher)).isEqualTo(5);
+
+        harness.activateAbility(player2, 0, null, armor.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(armor);
+        assertThat(gqs.getEffectivePower(gd, crusher)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, crusher)).isEqualTo(4);
+    }
+
+    @Test
+    void abilityDoesNothingWhenArmorLeavesBeforeResolution() {
+        Permanent armor = addReadyArmor(player1);
+        Permanent crusher = addCreatureReady(player1, new FlowstoneCrusher());
+        harness.addToBattlefield(player2, new SealOfCleansing());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, crusher.getId());
+        harness.activateAbility(player2, 0, null, armor.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(armor);
+        assertThat(gqs.getEffectivePower(gd, crusher)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, crusher)).isEqualTo(4);
     }
 
     private Permanent addReadyArmor(Player player) {

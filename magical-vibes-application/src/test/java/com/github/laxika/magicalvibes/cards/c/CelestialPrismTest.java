@@ -85,7 +85,7 @@ class CelestialPrismTest extends BaseCardTest {
     @DisplayName("A tapped Prism cannot activate or spend the activation mana")
     void tappedPrismCannotActivate() {
         Permanent prism = harness.addToBattlefieldAndReturn(player1, new CelestialPrism());
-        prism.setTapped(true);
+        prism.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

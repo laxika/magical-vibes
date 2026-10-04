@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,18 +8,13 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({EarthOriginYak.class, GrizzlyBears.class})
 class EarthOriginYakTest extends BaseCardTest {
 
     private void castYak() {
-        harness.setHand(player1, List.of(new EarthOriginYak()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new EarthOriginYak(), "{3}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
@@ -64,5 +58,41 @@ class EarthOriginYakTest extends BaseCardTest {
 
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Creatures entering after the trigger resolves are not boosted")
+    void laterCreaturesAreNotBoosted() {
+        castYak();
+
+        Permanent laterYak = harness.enterBattlefieldAndReturn(player1, new EarthOriginYak());
+
+        assertThat(laterYak.getPowerModifier()).isZero();
+        assertThat(laterYak.getToughnessModifier()).isZero();
+        assertThat(findPermanent(player1, "Earth-Origin Yak").getPowerModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The trigger boosts creatures present at resolution and stacks with another Yak")
+    void boostsCreaturesPresentAtResolution() {
+        Permanent firstYak = harness.enterBattlefieldAndReturn(player1, new EarthOriginYak());
+        Permanent secondYak = harness.enterBattlefieldAndReturn(player1, new EarthOriginYak());
+
+        assertThat(firstYak.getPowerModifier()).isZero();
+        assertThat(secondYak.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(firstYak.getPowerModifier()).isEqualTo(1);
+        assertThat(firstYak.getToughnessModifier()).isEqualTo(1);
+        assertThat(secondYak.getPowerModifier()).isEqualTo(1);
+        assertThat(secondYak.getToughnessModifier()).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(firstYak.getPowerModifier()).isEqualTo(2);
+        assertThat(firstYak.getToughnessModifier()).isEqualTo(2);
+        assertThat(secondYak.getPowerModifier()).isEqualTo(2);
+        assertThat(secondYak.getToughnessModifier()).isEqualTo(2);
     }
 }

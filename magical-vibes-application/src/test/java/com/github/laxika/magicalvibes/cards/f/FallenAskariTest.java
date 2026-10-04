@@ -75,7 +75,7 @@ class FallenAskariTest extends BaseCardTest {
     @DisplayName("Fallen Askari cannot be declared as a blocker")
     void cannotBeDeclaredAsBlocker() {
         addCreatureReady(player2, new FallenAskari());
-        Permanent attacker = addCreatureReady(player1, new DarajaGriffin());
+        Permanent attacker = addCreatureReady(player1, new ZhalfirinCrusader());
         attacker.setAttacking(true);
 
         prepareDeclareBlockers();
@@ -83,5 +83,29 @@ class FallenAskariTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid blocker index");
+    }
+
+    @Test
+    @DisplayName("Flanking weakens each nonflanking blocker separately")
+    void flankingHitsEachBlocker() {
+        Permanent askari = addCreatureReady(player1, new FallenAskari());
+        askari.setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new DarajaGriffin());
+        Permanent secondBlocker = addCreatureReady(player2, new DarajaGriffin());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(2);
+
+        resolveAllTriggers();
+
+        assertThat(firstBlocker.getEffectivePower()).isEqualTo(1);
+        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(1);
+        assertThat(secondBlocker.getEffectivePower()).isEqualTo(1);
+        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(1);
     }
 }

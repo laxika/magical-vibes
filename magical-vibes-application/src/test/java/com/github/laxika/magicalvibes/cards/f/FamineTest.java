@@ -64,4 +64,40 @@ class FamineTest extends BaseCardTest {
         assertThat(forest.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Forest");
     }
+
+    @Test
+    @DisplayName("Famine damages both players even when there are no creatures")
+    void damagesPlayersOnEmptyBattlefield() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 12);
+
+        harness.castFromHand(player1, new Famine(), "{3}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 7);
+        harness.assertLife(player2, 9);
+        harness.assertInGraveyard(player1, "Famine");
+    }
+
+    @Test
+    @DisplayName("Damage from successive Famines accumulates on surviving creatures")
+    void damageAccumulatesAcrossResolutions() {
+        Permanent elephant = harness.addToBattlefieldAndReturn(player2, new SouthernElephant());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new Famine(), "{3}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Southern Elephant");
+        assertThat(elephant.getMarkedDamage()).isEqualTo(3);
+
+        harness.castFromHand(player1, new Famine(), "{3}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Southern Elephant");
+        harness.assertInGraveyard(player2, "Southern Elephant");
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 14);
+    }
 }

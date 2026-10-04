@@ -122,4 +122,46 @@ class ErtaiTheCorruptedTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, merfolk.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Cannot activate without paying blue mana")
+    void cannotActivateWithoutBlueMana() {
+        Permanent ertai = addCreatureReady(player1, new ErtaiTheCorrupted());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        ArcticMerfolk merfolk = new ArcticMerfolk();
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, merfolk, "{1}{U}");
+        harness.passPriority(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, merfolk.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(ertai.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Ertai, the Corrupted");
+        harness.assertNotInGraveyard(player1, "Ertai, the Corrupted");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's spell and sacrifices itself before resolution")
+    void countersOwnSpellAndPaysSacrificeBeforeResolution() {
+        addCreatureReady(player1, new ErtaiTheCorrupted());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        ArcticMerfolk merfolk = new ArcticMerfolk();
+        harness.castFromHand(player1, merfolk, "{1}{U}");
+        harness.activateAbility(player1, 0, null, merfolk.getId());
+
+        harness.assertNotOnBattlefield(player1, "Ertai, the Corrupted");
+        harness.assertInGraveyard(player1, "Ertai, the Corrupted");
+        harness.assertNotInGraveyard(player1, "Arctic Merfolk");
+        assertThat(gd.stack).hasSize(2);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Arctic Merfolk");
+        harness.assertNotOnBattlefield(player1, "Arctic Merfolk");
+        assertThat(gd.stack).isEmpty();
+    }
 }

@@ -56,7 +56,6 @@ class FesteringEvilTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Festering Evil");
@@ -80,6 +79,61 @@ class FesteringEvilTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Phantom Warrior");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Sacrifice and mana are paid before the activated ability resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new FesteringEvil());
+        harness.addToBattlefield(player1, new PhantomWarrior());
+        harness.addToBattlefield(player2, new PhantomWarrior());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Festering Evil");
+        harness.assertInGraveyard(player1, "Festering Evil");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.assertOnBattlefield(player1, "Phantom Warrior");
+        harness.assertOnBattlefield(player2, "Phantom Warrior");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Phantom Warrior");
+        harness.assertInGraveyard(player2, "Phantom Warrior");
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Two upkeep triggers accumulate damage on creatures on both battlefields")
+    void multipleUpkeepTriggersAccumulateDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new FesteringEvil());
+        harness.addToBattlefield(player1, new FesteringEvil());
+        harness.addToBattlefield(player1, new PhantomWarrior());
+        harness.addToBattlefield(player2, new PhantomWarrior());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Phantom Warrior");
+        harness.assertOnBattlefield(player2, "Phantom Warrior");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Phantom Warrior");
+        harness.assertInGraveyard(player2, "Phantom Warrior");
+        harness.assertOnBattlefield(player1, "Festering Evil");
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 18);
     }
 
     @Test

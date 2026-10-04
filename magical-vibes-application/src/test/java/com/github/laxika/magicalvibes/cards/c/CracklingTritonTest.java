@@ -68,7 +68,7 @@ class CracklingTritonTest extends BaseCardTest {
     void activatesWhileTappedAndSummoningSick() {
         Permanent triton = harness.addToBattlefieldAndReturn(player1, new CracklingTriton());
         triton.setSummoningSick(true);
-        triton.setTapped(true);
+        triton.tap();
         harness.addMana(player1, ManaColor.RED, 3);
 
         harness.activateAbility(player1, 0, null, player1.getId());

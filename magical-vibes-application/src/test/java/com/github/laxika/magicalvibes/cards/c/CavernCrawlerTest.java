@@ -89,7 +89,7 @@ class CavernCrawlerTest extends BaseCardTest {
         Permanent crawler = addCrawlerReady(player1);
         Permanent otherCrawler = addCrawlerReady(player1);
         Permanent opposingCrawler = addCrawlerReady(player2);
-        crawler.setTapped(true);
+        crawler.tap();
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);

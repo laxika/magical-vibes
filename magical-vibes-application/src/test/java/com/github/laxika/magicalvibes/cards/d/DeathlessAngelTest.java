@@ -60,7 +60,7 @@ class DeathlessAngelTest extends BaseCardTest {
     void canTargetItselfWhileSummoningSickAndTapped() {
         Permanent angel = harness.addToBattlefieldAndReturn(player1, new DeathlessAngel());
         angel.setSummoningSick(true);
-        angel.setTapped(true);
+        angel.tap();
 
         activateAbility(angel.getId());
 

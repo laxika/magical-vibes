@@ -72,7 +72,7 @@ class ConiferWurmTest extends BaseCardTest {
     void repeatedActivationsWhileSummoningSickAndTapped() {
         Permanent wurm = harness.addToBattlefieldAndReturn(player1, new ConiferWurm());
         wurm.setSummoningSick(true);
-        wurm.setTapped(true);
+        wurm.tap();
         addManaForAbility();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EvilReawakened.class, GrizzlyBears.class, HolyDay.class})
+@CardUsed({EvilReawakened.class, GrizzlyBears.class, HolyDay.class, ElementalBond.class})
 class EvilReawakenedTest extends BaseCardTest {
 
     @Test
@@ -26,8 +26,7 @@ class EvilReawakenedTest extends BaseCardTest {
         harness.setHand(player1, List.of(new EvilReawakened()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         GameData gd = harness.getGameData();
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
@@ -58,5 +57,43 @@ class EvilReawakenedTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void countersArePresentWhenEntryTriggersCheckPower() {
+        harness.addToBattlefield(player1, new ElementalBond());
+        Card creature = new GrizzlyBears();
+        Card drawnCard = new EvilReawakened();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new EvilReawakened()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotReturnAnotherCreatureWhenTargetLeavesGraveyard() {
+        Card target = new GrizzlyBears();
+        Card otherCreature = new GrizzlyBears();
+        Card spell = new EvilReawakened();
+        harness.setGraveyard(player1, List.of(target, otherCreature));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, target.getId());
+        harness.setGraveyard(player1, List.of(otherCreature));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(otherCreature, spell);
+        assertThat(gd.stack).isEmpty();
     }
 }

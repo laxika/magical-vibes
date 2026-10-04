@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ForebodingSteamboat.class, GrizzlyBears.class})
 class ForebodingSteamboatTest extends BaseCardTest {
@@ -97,6 +97,8 @@ class ForebodingSteamboatTest extends BaseCardTest {
 
         steamboat.setSummoningSick(false);
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(steamboat)));
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.passBothPriorities();
         harness.handlePermanentChosen(player1, cardToPutIntoGraveyard.getId());
         harness.passBothPriorities();
 
@@ -106,14 +108,102 @@ class ForebodingSteamboatTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(steamboat.getId())).hasSize(3);
     }
 
+    @Test
+    void playerWithOnlyOneEligibleCreatureMustExileIt() {
+        Permanent bear = addBears(player2, 1).getFirst();
+        ForebodingSteamboat card = castSteamboat();
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.validIds()).containsExactly(bear.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultiplePermanentsChosen(player2, List.of(bear.getId()));
+
+        assertThat(gd.getCardsExiledByPermanent(findSteamboat(card).getId()))
+                .containsExactly(bear.getOriginalCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void playerCannotChooseFewerThanTwoWhenTwoAreAvailable() {
+        List<Permanent> bears = addBears(player1, 2);
+        ForebodingSteamboat card = castSteamboat();
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(bears.getFirst().getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultiplePermanentsChosen(player1,
+                bears.stream().map(Permanent::getId).toList());
+
+        assertThat(gd.getCardsExiledByPermanent(findSteamboat(card).getId())).hasSize(2);
+    }
+
+    @Test
+    void tokenCreaturesAndCrewedVehiclesAreNotEligible() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        Permanent oldSteamboat = harness.addToBattlefieldAndReturn(player1, new ForebodingSteamboat());
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(oldSteamboat), null, null);
+        harness.passBothPriorities();
+        GrizzlyBears tokenCopy = new GrizzlyBears();
+        tokenCopy.setToken(true);
+        Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCopy);
+
+        ForebodingSteamboat card = castSteamboat();
+        harness.passBothPriorities();
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(bear.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .containsExactlyInAnyOrder(oldSteamboat, token, findSteamboat(card));
+        assertThat(gd.getCardsExiledByPermanent(findSteamboat(card).getId()))
+                .containsExactly(bear.getOriginalCard());
+    }
+
+    @Test
+    void sourceLeavingBeforeEntryTriggerResolvesDoesNotExileCreatures() {
+        List<Permanent> bears = addBears(player2, 2);
+        ForebodingSteamboat card = castSteamboat();
+        Permanent steamboat = findSteamboat(card);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, steamboat));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactlyElementsOf(bears);
+        assertThat(gd.getCardsExiledByPermanent(steamboat.getId())).isEmpty();
+    }
+
+    @Test
+    void attackWithNoExiledCardsDoesNotInvestigate() {
+        ForebodingSteamboat card = castSteamboat();
+        harness.passBothPriorities();
+        Permanent steamboat = findSteamboat(card);
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(steamboat), null, null);
+        harness.passBothPriorities();
+        steamboat.setSummoningSick(false);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(steamboat)));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+    }
+
     private ForebodingSteamboat castSteamboat() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         ForebodingSteamboat card = new ForebodingSteamboat();
-        harness.setHand(player1, List.of(card));
-        harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castArtifact(player1, 0);
+        harness.castFromHand(player1, card, "{3}{B}{B}");
         harness.passBothPriorities();
         return card;
     }

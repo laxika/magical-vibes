@@ -106,7 +106,7 @@ class BoneyardDesecratorTest extends BaseCardTest {
     void canActivateWhileTappedAndSummoningSick() {
         Permanent desecrator = harness.addToBattlefieldAndReturn(player1, new BoneyardDesecrator());
         desecrator.setSummoningSick(true);
-        desecrator.setTapped(true);
+        desecrator.tap();
         harness.addToBattlefield(player1, new BoneyardDesecrator());
         addAbilityMana();
 

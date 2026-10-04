@@ -7,8 +7,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 @CardUsed({EumidianTerrabotanist.class, Forest.class})
 class EumidianTerrabotanistTest extends BaseCardTest {
 
@@ -33,5 +31,48 @@ class EumidianTerrabotanistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void gainsLifeForEachLandEnteringWithoutBeingPlayed() {
+        harness.addToBattlefield(player1, new EumidianTerrabotanist());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void eachCopyTriggersForItsControllersLand() {
+        harness.addToBattlefield(player1, new EumidianTerrabotanist());
+        harness.addToBattlefield(player1, new EumidianTerrabotanist());
+        harness.addToBattlefield(player2, new EumidianTerrabotanist());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void triggerResolvesAfterTerrabotanistDies() {
+        var terrabotanist = harness.addToBattlefieldAndReturn(player1, new EumidianTerrabotanist());
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        terrabotanist.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
     }
 }

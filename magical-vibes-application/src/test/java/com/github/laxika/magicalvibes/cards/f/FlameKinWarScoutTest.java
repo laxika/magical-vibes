@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.a.AzoriusSignet;
 import com.github.laxika.magicalvibes.cards.s.SilkwingScout;
 import com.github.laxika.magicalvibes.cards.s.SimicSkySwallower;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -64,5 +67,33 @@ class FlameKinWarScoutTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Flame-Kin War Scout");
         harness.assertInGraveyard(player2, "Silkwing Scout");
+    }
+
+    @Test
+    void laterTriggerCannotDealDamageAfterScoutHasAlreadyBeenSacrificed() {
+        harness.addToBattlefield(player1, new FlameKinWarScout());
+        Permanent skySwallower = harness.enterBattlefieldAndReturn(player1, new SimicSkySwallower());
+        harness.enterBattlefieldAndReturn(player1, new SilkwingScout());
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Flame-Kin War Scout");
+        harness.assertInGraveyard(player1, "Silkwing Scout");
+        harness.assertOnBattlefield(player1, "Simic Sky Swallower");
+        assertThat(skySwallower.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void stillSacrificesScoutWhenEnteringCreatureLeavesBeforeResolution() {
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player1, new FlameKinWarScout());
+        harness.enterBattlefieldAndReturn(player1, new SilkwingScout());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 1, null, null);
+
+        harness.assertInGraveyard(player1, "Silkwing Scout");
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Flame-Kin War Scout");
     }
 }

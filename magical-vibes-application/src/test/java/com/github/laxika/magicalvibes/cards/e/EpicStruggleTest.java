@@ -94,6 +94,38 @@ class EpicStruggleTest extends BaseCardTest {
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 
+    @Test
+    @DisplayName("Trigger still wins after Epic Struggle leaves the battlefield")
+    void winsAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new EpicStruggle());
+        addCreatures(player1, 20);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Epic Struggle"));
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
+        assertThat(gd.winnerPlayerId).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Reaching twenty creatures after upkeep begins does not create a trigger")
+    void doesNotTriggerWhenTwentiethCreatureArrivesDuringUpkeep() {
+        harness.addToBattlefield(player1, new EpicStruggle());
+        addCreatures(player1, 19);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+
+        addCreatures(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void addCreatures(Player player, int count) {
         for (int i = 0; i < count; i++) {
             addCreatureReady(player, new GiantWarthog());

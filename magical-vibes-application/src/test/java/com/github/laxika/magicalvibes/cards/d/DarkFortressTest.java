@@ -99,7 +99,7 @@ class DarkFortressTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.handleListChoice(player1, "RED");
-        fortress.setTapped(false);
+        fortress.untap();
         gd.playerBattlefields.get(player1.getId()).remove(swamp);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))

@@ -97,6 +97,71 @@ class FinalActTest extends BaseCardTest {
         assertThat(gd.playerPoisonCounters).doesNotContainKey(player2.getId());
     }
 
+    @Test
+    @DisplayName("Removes opponents' rad counters while preserving the controller's")
+    void removesOpponentsRadCounters() {
+        gd.playerRadCounters.put(player1.getId(), 2);
+        gd.playerRadCounters.put(player2.getId(), 3);
+
+        cast(new int[]{4});
+
+        assertThat(gd.playerRadCounters.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerRadCounters).containsEntry(player1.getId(), 2);
+    }
+
+    @Test
+    @DisplayName("Removes opponents' spark counters while preserving the controller's")
+    void removesOpponentsSparkCounters() {
+        gd.playerSparkCounters.put(player1.getId(), 2);
+        gd.playerSparkCounters.put(player2.getId(), 3);
+
+        cast(new int[]{4});
+
+        assertThat(gd.playerSparkCounters.getOrDefault(player2.getId(), 0)).isZero();
+        assertThat(gd.playerSparkCounters).containsEntry(player1.getId(), 2);
+    }
+
+    @Test
+    @DisplayName("Destruction precedes graveyard exile even when modes are selected in reverse order")
+    void exilesCreaturesDestroyedDuringResolution() {
+        Card ownCreature = new GrizzlyBears();
+        Card opponentCreature = new GrizzlyBears();
+        harness.addToBattlefield(player1, ownCreature);
+        harness.addToBattlefield(player2, opponentCreature);
+
+        cast(new int[]{3, 0});
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(ownCreature);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(opponentCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName)
+                .containsExactly("Final Act");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Selecting only creature destruction leaves other permanent types and player counters alone")
+    void leavesUnselectedModesUnresolved() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new AjaniSteadfast());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 4);
+        Permanent battle = harness.addToBattlefieldAndReturn(player2, new InvasionOfInnistrad());
+        battle.setCounterCount(CounterType.DEFENSE, 5);
+        Card graveyardCard = new LlanowarElves();
+        harness.setGraveyard(player2, List.of(graveyardCard));
+        gd.playerPoisonCounters.put(player2.getId(), 2);
+
+        cast(new int[]{0});
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(planeswalker, battle);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(graveyardCard);
+        assertThat(gd.playerPoisonCounters).containsEntry(player2.getId(), 2);
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(5);
+    }
+
     private void cast(int[] modes) {
         harness.setHand(player1, List.of(new FinalAct()));
         harness.addMana(player1, ManaColor.BLACK, 6);

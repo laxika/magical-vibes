@@ -89,7 +89,7 @@ class CryoshatterTest extends BaseCardTest {
     @DisplayName("Attaching Cryoshatter to an already tapped creature does not destroy it")
     void attachingToTappedCreatureDoesNotTrigger() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        bears.setTapped(true);
+        bears.tap();
         harness.setHand(player1, List.of(new Cryoshatter()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castEnchantment(player1, 0, bears.getId());

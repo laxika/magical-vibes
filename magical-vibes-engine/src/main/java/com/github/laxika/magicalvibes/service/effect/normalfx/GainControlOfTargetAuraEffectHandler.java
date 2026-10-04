@@ -46,21 +46,13 @@ public class GainControlOfTargetAuraEffectHandler implements NormalEffectHandler
                 Permanent aura = gameQueryService.findPermanentById(gameData, entry.getTargetId());
                 if (aura == null) return;
 
-                UUID currentControllerId = gameQueryService.findPermanentController(gameData, aura.getId());
-                if (currentControllerId != null && !currentControllerId.equals(casterId)) {
-                    gameData.playerBattlefields.get(currentControllerId).remove(aura);
-                    gameData.playerBattlefields.get(casterId).add(aura);
-                    String casterName = gameData.playerIdToName.get(casterId);
-                    gameLogService.append(gameData, GameLog.textCardText(casterName + " gains control of " , aura.getCard(), "."));
-                    log.info("Game {} - {} gains control of {}", gameData.id, casterName, aura.getCard().getName());
-
-                    // A control Aura (e.g. In Bolas's Clutches) grants control to whoever controls
-                    // the Aura — its enchanted permanent follows the Aura's new controller.
-                    Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
-                    if (enchanted != null) {
-                        creatureControlService.recomputeControl(gameData, enchanted);
-                    }
-                }
+                creatureControlService.applyControlEffect(gameData, casterId, aura,
+                        new com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect(
+                                com.github.laxika.magicalvibes.model.effect.ControlDuration.PERMANENT),
+                        com.github.laxika.magicalvibes.model.effect.EffectDuration.PERMANENT,
+                        null, entry.getCard().getName());
+                Permanent enchanted = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+                if (enchanted != null) creatureControlService.recomputeControl(gameData, enchanted);
 
                 TargetFilter auraFilter = aura.getCard().getTargetFilter();
                 FilterContext filterContext = FilterContext.of(gameData)

@@ -39,7 +39,7 @@ class AcademyAtTolariaWestTest extends BaseCardTest {
 
         StepTriggerService steps = GameTestEngineContext.get().getBean(StepTriggerService.class);
         harness.inMutationScope(() -> steps.handleEndStepTriggers(gd));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(before + 7);
     }
@@ -59,7 +59,7 @@ class AcademyAtTolariaWestTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Island(), new Island()));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
@@ -75,7 +75,7 @@ class AcademyAtTolariaWestTest extends BaseCardTest {
         harness.setHand(player1, List.of(drawnInResponse));
         int librarySize = gd.playerDecks.get(player1.getId()).size();
 
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnInResponse);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(librarySize);
@@ -90,7 +90,7 @@ class AcademyAtTolariaWestTest extends BaseCardTest {
         StepTriggerService steps = GameTestEngineContext.get().getBean(StepTriggerService.class);
 
         harness.inMutationScope(() -> steps.handleEndStepTriggers(gd));
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(otherPlayersCard);
@@ -106,7 +106,7 @@ class AcademyAtTolariaWestTest extends BaseCardTest {
         Island gainedInResponse = new Island();
         harness.setHand(player1, List.of(gainedInResponse));
 
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(gainedInResponse);
@@ -122,7 +122,7 @@ class AcademyAtTolariaWestTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         gd.planechase.faceUp.clear();
 
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
     }

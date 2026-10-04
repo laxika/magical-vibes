@@ -120,7 +120,7 @@ class CompulsoryRestTest extends BaseCardTest {
     void opponentCanActivateBeforeUntappingOrLosingSummoningSickness() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new Colossapede());
         creature.setSummoningSick(true);
-        creature.setTapped(true);
+        creature.tap();
         Permanent rest = harness.addToBattlefieldAndReturn(player1, new CompulsoryRest());
         rest.setAttachedTo(creature.getId());
         harness.setLife(player1, 20);

@@ -198,7 +198,7 @@ class BoldwyrIntimidatorTest extends BaseCardTest {
     void abilitiesDoNotRequireTappingOrHaste() {
         Permanent boldwyr = harness.addToBattlefieldAndReturn(player1, new BoldwyrIntimidator());
         boldwyr.setSummoningSick(true);
-        boldwyr.setTapped(true);
+        boldwyr.tap();
         Permanent target = harness.addToBattlefieldAndReturn(player2, new MosquitoGuard());
         harness.addMana(player1, ManaColor.RED, 4);
 

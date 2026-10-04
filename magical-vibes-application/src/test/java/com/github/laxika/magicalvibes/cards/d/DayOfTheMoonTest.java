@@ -58,7 +58,7 @@ class DayOfTheMoonTest extends BaseCardTest {
 
         advanceToNextChapter();
         harness.handleListChoice(player1, "Grizzly Bears");
-        originalBear.setTapped(true);
+        originalBear.tap();
         for (int nextChapter = 2; nextChapter < chapter; nextChapter++) {
             advanceToNextChapter();
             harness.handleListChoice(player1, "Air Elemental");

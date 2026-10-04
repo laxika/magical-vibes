@@ -33,8 +33,7 @@ class ErsatzGnomesTest extends BaseCardTest {
         UUID scoutsSpellId = gd.stack.getFirst().getCard().getId();
 
         harness.activateAbility(player1, 0, 0, null, scoutsSpellId, Zone.STACK);
-        harness.passBothPriorities(); // resolve the ability
-        harness.passBothPriorities(); // resolve the Femeref Scouts spell
+        resolveAllTriggers();
 
         Permanent scouts = findPermanent(player1, "Femeref Scouts");
         assertThat(gqs.getEffectiveColors(gd, scouts)).isEmpty();
@@ -106,5 +105,84 @@ class ErsatzGnomesTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, scouts.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A permanent made colorless as a spell remains colorless after cleanup")
+    void spellColorlessPersistsAfterCleanup() {
+        Permanent gnomes = addCreatureReady(player1, new ErsatzGnomes());
+        harness.setHand(player1, List.of(new FemerefScouts()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castCreature(player1, 0);
+        UUID spellId = gd.stack.getFirst().getCard().getId();
+
+        harness.activateAbility(player1, 0, 0, null, spellId, Zone.STACK);
+        assertThat(gnomes.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectiveCardColors(gd, gd.stack.getFirst().getCard())).isEmpty();
+        resolveAllTriggers();
+
+        Permanent scouts = findPermanent(player1, "Femeref Scouts");
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectiveColors(gd, scouts)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The spell ability can target an opponent's spell")
+    void opponentSpellBecomesColorless() {
+        addCreatureReady(player1, new ErsatzGnomes());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new FemerefScouts()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.castCreature(player2, 0);
+        UUID spellId = gd.stack.getFirst().getCard().getId();
+
+        harness.activateAbility(player1, 0, 0, null, spellId, Zone.STACK);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectiveColors(gd, findPermanent(player2, "Femeref Scouts"))).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The permanent ability cannot target a spell on the stack")
+    void permanentAbilityRejectsSpellTarget() {
+        addCreatureReady(player1, new ErsatzGnomes());
+        harness.setHand(player1, List.of(new FemerefScouts()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castCreature(player1, 0);
+        UUID spellId = gd.stack.getFirst().getCard().getId();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, spellId, Zone.STACK))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Activating the permanent ability taps the Gnomes and prevents another activation")
+    void permanentAbilityRequiresUntappedSource() {
+        Permanent gnomes = addCreatureReady(player1, new ErsatzGnomes());
+        harness.addToBattlefield(player2, new FemerefScouts());
+        Permanent scouts = findPermanent(player2, "Femeref Scouts");
+
+        harness.activateAbility(player1, 0, 1, null, scouts.getId());
+        assertThat(gnomes.isTapped()).isTrue();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, scouts.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectiveColors(gd, scouts)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents activating the tap ability")
+    void summoningSicknessPreventsActivation() {
+        harness.addToBattlefield(player1, new ErsatzGnomes());
+        harness.addToBattlefield(player2, new FemerefScouts());
+        Permanent scouts = findPermanent(player2, "Femeref Scouts");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, scouts.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.getEffectiveColors(gd, scouts)).containsExactly(CardColor.WHITE);
     }
 }

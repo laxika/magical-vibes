@@ -1,21 +1,23 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FontOfMythos.class})
 class FontOfMythosTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip
         harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances from UPKEEP to DRAW
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 
     @Test
@@ -78,8 +80,73 @@ class FontOfMythosTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances from UPKEEP to DRAW — but entire step is skipped
 
-        // No draws at all — entire draw step skipped per rule 103.7a
+        // The starting player skips the entire first draw step.
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore);
+    }
+
+    @Test
+    @DisplayName("The normal draw happens before the additional draw trigger resolves")
+    void additionalDrawsWaitForResolution() {
+        harness.addToBattlefield(player1, new FontOfMythos());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+
+        advanceToDraw(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Font still gives the active player two additional cards")
+    void tappedFontStillTriggers() {
+        Permanent font = harness.addToBattlefieldAndReturn(player1, new FontOfMythos());
+        font.tap();
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+
+        advanceToDraw(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 3);
+    }
+
+    @Test
+    @DisplayName("Each Font gives two additional cards regardless of its controller")
+    void multipleFontsAddTheirDraws() {
+        harness.addToBattlefield(player1, new FontOfMythos());
+        harness.addToBattlefield(player2, new FontOfMythos());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 5);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 5);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
+    }
+
+    @Test
+    @DisplayName("The draw trigger still resolves after the Font leaves the battlefield")
+    void triggerSurvivesSourceRemoval() {
+        Permanent font = harness.addToBattlefieldAndReturn(player1, new FontOfMythos());
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+
+        advanceToDraw(player2);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, font));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 3);
     }
 }

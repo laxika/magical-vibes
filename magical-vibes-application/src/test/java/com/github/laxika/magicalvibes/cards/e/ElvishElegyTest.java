@@ -29,8 +29,7 @@ class ElvishElegyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ElvishElegy()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .contains(existingCreature, elf, forest);
@@ -53,11 +52,85 @@ class ElvishElegyTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ElvishElegy()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest);
+    }
+
+    @Test
+    void canDeclineTheElfAndReturnOnlyTheMilledLand() {
+        LlanowarElves elf = new LlanowarElves();
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(elf, forest, new Shock()));
+        harness.setHand(player1, List.of(new ElvishElegy()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(elf).doesNotContain(forest);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void returnedElfRetainsItsBoostWhenCast() {
+        LlanowarElves elf = new LlanowarElves();
+        harness.setLibrary(player1, List.of(elf, new Shock(), new Shock()));
+        harness.setHand(player1, List.of(new ElvishElegy()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        var permanent = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getId().equals(elf.getId()))
+                .findFirst().orElseThrow();
+        assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(2);
+    }
+
+    @Test
+    void boostsExistingCreaturesWithAnEmptyLibraryWithoutOfferingAnOldElf() {
+        LlanowarElves elf = new LlanowarElves();
+        LlanowarElves opposingElf = new LlanowarElves();
+        harness.setGraveyard(player1, List.of(elf));
+        harness.setGraveyard(player2, List.of(opposingElf));
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new ElvishElegy()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(elf);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.perpetualPowerToughnessModifiers)
+                .containsEntry(elf.getId(), new PerpetualPowerToughnessModifier(1, 1))
+                .doesNotContainKey(opposingElf.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void millsOnlyAvailableCardsAndDoesNotOfferANonElfCreature() {
+        GrizzlyBears bear = new GrizzlyBears();
+        Shock shock = new Shock();
+        harness.setLibrary(player1, List.of(bear, shock));
+        harness.setHand(player1, List.of(new ElvishElegy()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bear, shock);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.perpetualPowerToughnessModifiers)
+                .containsEntry(bear.getId(), new PerpetualPowerToughnessModifier(1, 1))
+                .doesNotContainKey(shock.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }

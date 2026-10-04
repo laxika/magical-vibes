@@ -60,12 +60,76 @@ class EnduringVictoryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Chooses one creature when several share the least toughness")
+    void choosesAmongTiedCreatures() {
+        Permanent attacker = addAttacker(player2);
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        Permanent larger = addCreatureReady(player1, new GiantSpider());
+
+        cast(attacker.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(larger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Enduring Victory");
+    }
+
+    @Test
+    @DisplayName("Bolster uses current toughness including existing counters")
+    void bolstersUsingModifiedToughness() {
+        Permanent attacker = addAttacker(player2);
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Permanent spider = addCreatureReady(player1, new GiantSpider());
+
+        cast(attacker.getId());
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Can destroy your own blocker and bolster a remaining creature")
+    void destroysOwnCreatureBeforeBolstering() {
+        Permanent blocker = addBlocker(player1);
+        Permanent survivor = addCreatureReady(player1, new GiantSpider());
+
+        cast(blocker.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(blocker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(survivor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Does not bolster if the target stops being a combat creature before resolution")
+    void illegalTargetPreventsBolster() {
+        Permanent attacker = addAttacker(player2);
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new EnduringVictory()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castInstant(player1, 0, attacker.getId());
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Enduring Victory");
+    }
+
     private void cast(UUID targetId) {
         harness.setHand(player1, List.of(new EnduringVictory()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
     }
 
     private Permanent addAttacker(Player owner) {

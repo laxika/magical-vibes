@@ -49,10 +49,12 @@ class AdmiralBrassUnsinkableTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(pirate.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         Permanent returned = findPermanent(player1, "Talas Scout");
         assertThat(returned.getCounterCount(CounterType.FINALITY)).isEqualTo(1);
-        assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
+        assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, returned)).isEqualTo(4);
     }
@@ -135,6 +137,8 @@ class AdmiralBrassUnsinkableTest extends BaseCardTest {
         Permanent returned = findPermanent(player1, "Siren Stormtamer");
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isTrue();
 
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gd.interaction.clearAwaitingInput();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(gqs.hasKeyword(gd, returned, Keyword.HASTE)).isFalse();
@@ -172,8 +176,8 @@ class AdmiralBrassUnsinkableTest extends BaseCardTest {
             resolveAllTriggers();
         }
 
-        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(
-                gd, findPermanent(player1, "Siren Stormtamer"));
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().sacrificePermanentToGraveyard(
+                gd, findPermanent(player1, "Siren Stormtamer")));
 
         harness.assertNotOnBattlefield(player1, "Siren Stormtamer");
         harness.assertNotInGraveyard(player1, "Siren Stormtamer");

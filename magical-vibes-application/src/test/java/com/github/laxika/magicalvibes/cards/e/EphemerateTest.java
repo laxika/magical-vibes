@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.ReboundAtNextUpkeep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -46,9 +45,6 @@ class EphemerateTest extends BaseCardTest {
         var bearId = harness.getPermanentId(player1, "Grizzly Bears");
         harness.castInstant(player1, 0, bearId);
         harness.passBothPriorities();
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
@@ -76,8 +72,61 @@ class EphemerateTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature you control");
     }
+
+    @Test
+    void returnsBorrowedCreatureUnderItsOwnersControl() {
+        GrizzlyBears bear = new GrizzlyBears();
+        bear.setOwnerId(player2.getId());
+        var original = harness.addToBattlefieldAndReturn(player1, bear);
+        gd.stolenCreatures.put(original.getId(), player2.getId());
+        harness.setHand(player1, List.of(new Ephemerate()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, original.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(harness.getPermanentId(player2, "Grizzly Bears")).isNotEqualTo(original.getId());
+    }
+
+    @Test
+    void returnsCreatureUntappedWithoutItsOldCounters() {
+        var original = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        original.tap();
+        original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new Ephemerate()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player1, 0, original.getId());
+        harness.passBothPriorities();
+
+        var returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getId()).isNotEqualTo(original.getId());
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void targetLeavingBattlefieldPreventsRebound() {
+        var original = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Ephemerate card = new Ephemerate();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, original.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        gd.playerGraveyards.get(player1.getId()).add(original.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Ephemerate");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.delayedActions).noneMatch(action -> action instanceof ReboundAtNextUpkeep);
+    }
 }
 
+@CardUsed({Ephemerate.class, GrizzlyBears.class})
 class Mh1EphemerateTest extends BaseCardTest {
 
     @Test
