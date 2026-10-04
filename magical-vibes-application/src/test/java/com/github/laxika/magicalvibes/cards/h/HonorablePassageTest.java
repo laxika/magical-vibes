@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.e.EmberHauler;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({HonorablePassage.class, ProdigalPyromancer.class, RuneclawBear.class, GiantSpider.class,
-        LightningBolt.class, ChandraNalaar.class})
+        LightningBolt.class, ChandraNalaar.class, EmberHauler.class})
 class HonorablePassageTest extends BaseCardTest {
 
     @Test
@@ -134,8 +135,6 @@ class HonorablePassageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.performUntapStep(player2);
-        harness.forceActivePlayer(player2);
-        harness.clearPriorityPassed();
         harness.activateAbility(player2, indexOf(player2, pyromancer), null, player1.getId());
         harness.passBothPriorities();
 
@@ -226,6 +225,91 @@ class HonorablePassageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.sourceNextDamageToAnyTargetShields).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A sacrificed red source still causes damage to its controller after player damage is prevented")
+    void sacrificedRedSourceDamagesControllerAfterPlayerDamageIsPrevented() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent hauler = addCreatureReady(player2, new EmberHauler());
+        castPassage(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hauler.getId());
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, indexOf(player2, hauler), null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player2, "Ember Hauler");
+    }
+
+    @Test
+    @DisplayName("A sacrificed red source still causes damage to its controller after creature damage is prevented")
+    void sacrificedRedSourceDamagesControllerAfterCreatureDamageIsPrevented() {
+        harness.setLife(player2, 20);
+        Permanent hauler = addCreatureReady(player2, new EmberHauler());
+        Permanent victim = addCreatureReady(player1, new GiantSpider());
+        castPassage(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hauler.getId());
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player2, indexOf(player2, hauler), null, victim.getId());
+        harness.passBothPriorities();
+
+        assertThat(victim.getMarkedDamage()).isZero();
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player2, "Ember Hauler");
+    }
+
+    @Test
+    @DisplayName("Prevents all simultaneous damage from the chosen source and deals the total to its controller")
+    void preventsSimultaneousNoncombatDamageToPlayerAndCreature() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 50);
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        chandra.setCounterCount(CounterType.LOYALTY, 9);
+        Permanent victim = addCreatureReady(player1, new GiantSpider());
+        castPassage(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, chandra.getId());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player2, indexOf(player2, chandra), 2, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 30);
+        harness.assertOnBattlefield(player1, "Giant Spider");
+        assertThat(victim.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Choosing a creature spell prevents damage from the permanent it becomes")
+    void shieldFollowsChosenCreatureSpellOntoBattlefield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        ProdigalPyromancer pyromancerCard = new ProdigalPyromancer();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player2, pyromancerCard, "{2}{R}");
+        harness.passPriority(player2);
+        castPassage(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, pyromancerCard.getId());
+        harness.passBothPriorities();
+
+        Permanent pyromancer = findPermanent(player2, "Prodigal Pyromancer");
+        pyromancer.setSummoningSick(false);
+        harness.activateAbility(player2, indexOf(player2, pyromancer), null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
     }
 
     private void castPassage(Player player) {
