@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "258")
+@CardRegistration(set = "ELD", collectorNumber = "313")
 @CardRegistration(set = "KTK", collectorNumber = "244")
 @CardRegistration(set = "FDN", collectorNumber = "269")
 @CardRegistration(set = "M21", collectorNumber = "257")

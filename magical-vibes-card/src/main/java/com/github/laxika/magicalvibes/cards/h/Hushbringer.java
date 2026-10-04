@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CreatureDyingDontCauseTrigger
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "18")
+@CardRegistration(set = "ELD", collectorNumber = "339")
 public class Hushbringer extends Card {
 
     public Hushbringer() {

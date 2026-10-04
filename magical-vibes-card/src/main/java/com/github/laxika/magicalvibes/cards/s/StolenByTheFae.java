@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "66")
+@CardRegistration(set = "ELD", collectorNumber = "348")
 @CardRegistration(set = "BLC", collectorNumber = "176")
 public class StolenByTheFae extends Card {
 

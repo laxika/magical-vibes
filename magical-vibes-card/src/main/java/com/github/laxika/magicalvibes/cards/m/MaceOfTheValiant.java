@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 @CardRegistration(set = "CMM", collectorNumber = "41")
 @CardRegistration(set = "ONC", collectorNumber = "78")
+@CardRegistration(set = "ELD", collectorNumber = "314")
 public class MaceOfTheValiant extends Card {
 
     public MaceOfTheValiant() {

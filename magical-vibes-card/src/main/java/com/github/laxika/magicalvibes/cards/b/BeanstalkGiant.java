@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "ELD", collectorNumber = "149")
+@CardRegistration(set = "ELD", collectorNumber = "295")
 @CardRegistration(set = "CMM", collectorNumber = "275")
 @CardRegistration(set = "DSC", collectorNumber = "172")
 public class BeanstalkGiant extends Card {
