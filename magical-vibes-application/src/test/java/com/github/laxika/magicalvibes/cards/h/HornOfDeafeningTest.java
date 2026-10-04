@@ -83,6 +83,60 @@ class HornOfDeafeningTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Prevents a friendly blocker's damage without protecting it from the attacker")
+    void preventsBlockerDamage() {
+        addHorn(player1);
+        addAttacker(player2, player1);
+        addBlocker(player1);
+
+        activateHorn(findPermanent(player1, "Durkwood Boars"));
+        resolveCombat(player2);
+
+        harness.assertNotOnBattlefield(player1, "Durkwood Boars");
+        harness.assertOnBattlefield(player2, "Durkwood Boars");
+    }
+
+    @Test
+    @DisplayName("Other attacking creatures still deal combat damage")
+    void doesNotPreventOtherAttackersDamage() {
+        harness.setLife(player1, 20);
+        addHorn(player1);
+        Permanent target = addAttacker(player2, player1);
+        addAttacker(player2, player1);
+
+        activateHorn(target);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @DisplayName("Activation taps the Horn and prevents a second activation while tapped")
+    void activationRequiresUntappedHorn() {
+        Permanent horn = addHorn(player1);
+        Permanent target = addCreature(player2);
+
+        activateHorn(target);
+
+        assertThat(horn.isTapped()).isTrue();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Activation requires two mana")
+    void cannotActivateWithOnlyOneMana() {
+        Permanent horn = addHorn(player1);
+        Permanent target = addCreature(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(horn.isTapped()).isFalse();
+    }
+
     private void activateHorn(Permanent target) {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.activateAbility(player1, 0, null, target.getId());
