@@ -131,8 +131,7 @@ class IllusionaryPresenceTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
 
         resolveUpkeepChoosing(presence, Keyword.ISLANDWALK);
-        declareAttackers(List.of(indexOf(player1, presence)));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(indexOf(player1, presence)));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 indexOf(player2, blocker), indexOf(player1, presence))));
@@ -162,6 +161,47 @@ class IllusionaryPresenceTest extends BaseCardTest {
 
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice.options()).contains("CAVE");
+    }
+
+    @Test
+    @DisplayName("Landwalk choice offers every nonbasic land type")
+    void offersEveryNonbasicLandType() {
+        harness.addToBattlefield(player1, new IllusionaryPresence());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).contains(
+                "CAVE", "DESERT", "GATE", "LAIR", "LOCUS", "MINE", "PLANET",
+                "POWER_PLANT", "SPHERE", "TOWER", "TOWN", "URZAS");
+    }
+
+    @Test
+    @DisplayName("Neither ability triggers during the opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent presence = harness.addToBattlefieldAndReturn(player1, new IllusionaryPresence());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(presence.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gqs.hasKeyword(gd, presence, Keyword.ISLANDWALK)).isFalse();
+        harness.assertOnBattlefield(player1, "Illusionary Presence");
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep counts age counters already on the permanent")
+    void cumulativeUpkeepCountsExistingAgeCounters() {
+        Permanent presence = harness.addToBattlefieldAndReturn(player1, new IllusionaryPresence());
+        presence.setCounterCount(CounterType.AGE, 2);
+
+        resolveUpkeepChoosing(presence, Keyword.ISLANDWALK, 3);
+
+        assertThat(presence.getCounterCount(CounterType.AGE)).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Illusionary Presence");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 
     private int indexOf(Player player, Permanent permanent) {
