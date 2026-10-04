@@ -17,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HauntingMisery.class, BenalishInfantry.class, FamiliarGround.class})
+@CardUsed({HauntingMisery.class, BenalishInfantry.class, FamiliarGround.class, NicolBolasPlaneswalker.class})
 class HauntingMiseryTest extends BaseCardTest {
 
     private void giveMana() {
@@ -115,5 +115,60 @@ class HauntingMiseryTest extends BaseCardTest {
         assertThatThrownBy(() ->
                 harness.castInstantWithMultipleGraveyardExile(player1, 0, player2.getId(), List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can exile a subset of creatures from a mixed graveyard")
+    void exilesOnlySelectedCreatures() {
+        BenalishInfantry first = new BenalishInfantry();
+        FamiliarGround enchantment = new FamiliarGround();
+        BenalishInfantry unselected = new BenalishInfantry();
+        BenalishInfantry last = new BenalishInfantry();
+        harness.setGraveyard(player1, List.of(first, enchantment, unselected, last));
+        harness.setHand(player1, List.of(new HauntingMisery()));
+        giveMana();
+
+        harness.castInstantWithMultipleGraveyardExile(player1, 0, player2.getId(), List.of(0, 3));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(enchantment, unselected);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(first, last);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertInGraveyard(player1, "Haunting Misery");
+    }
+
+    @Test
+    @DisplayName("Can target its controller")
+    void canDamageItsController() {
+        harness.setGraveyard(player1, List.of(new BenalishInfantry()));
+        harness.setHand(player1, List.of(new HauntingMisery()));
+        giveMana();
+
+        harness.castInstantWithMultipleGraveyardExile(player1, 0, player1.getId(), List.of(0));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature and does not pay the exile cost for an illegal target")
+    void cannotTargetCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new BenalishInfantry());
+        BenalishInfantry payment = new BenalishInfantry();
+        harness.setGraveyard(player1, List.of(payment));
+        harness.setHand(player1, List.of(new HauntingMisery()));
+        giveMana();
+
+        assertThatThrownBy(() -> harness.castInstantWithMultipleGraveyardExile(
+                player1, 0, creature.getId(), List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(payment);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        harness.assertInHand(player1, "Haunting Misery");
+        assertThat(gd.stack).isEmpty();
     }
 }
