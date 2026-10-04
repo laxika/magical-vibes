@@ -29,7 +29,7 @@ class BanishIntoFableTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertInHand(player2, "Grizzly Bears");
-        assertThat(findPermanents(player1, "Knight Token")).hasSize(1);
+        assertThat(findPermanents(player1, "Knight")).hasSize(1);
     }
 
     @Test
@@ -46,7 +46,7 @@ class BanishIntoFableTest extends BaseCardTest {
         resolveCopyTo(secondCopyTarget);
         harness.passBothPriorities();
 
-        assertThat(findPermanents(player1, "Knight Token")).hasSize(3);
+        assertThat(findPermanents(player1, "Knight")).hasSize(3);
         assertThat(findPermanents(player2, "Grizzly Bears")).isEmpty();
         assertThat(gd.playerHands.get(player2.getId()))
                 .filteredOn(card -> card.getName().equals("Grizzly Bears"))
@@ -63,7 +63,7 @@ class BanishIntoFableTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(artifact);
         resolveAllTriggers();
 
-        assertThat(findPermanents(player1, "Knight Token")).hasSize(1);
+        assertThat(findPermanents(player1, "Knight")).hasSize(1);
     }
 
     @Test

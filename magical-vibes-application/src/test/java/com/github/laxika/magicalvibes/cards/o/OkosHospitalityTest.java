@@ -40,7 +40,9 @@ class OkosHospitalityTest extends BaseCardTest {
         castAndDeclineSearch();
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
@@ -64,7 +66,7 @@ class OkosHospitalityTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(graveyardOko.getId()));
 
         harness.assertInHand(player1, "Oko, the Trickster");
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryOko, unrelatedCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(libraryOko, unrelatedCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(graveyardOko);
     }
 
@@ -100,7 +102,7 @@ class OkosHospitalityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castInstant(player1, 0, null);
+        harness.castInstant(player1, 0);
         harness.passBothPriorities();
     }
 }

@@ -141,4 +141,49 @@ class FreyalisesCharmTest extends BaseCardTest {
         harness.assertInHand(player1, "Freyalise's Charm");
         harness.assertNotOnBattlefield(player1, "Freyalise's Charm");
     }
+
+    @Test
+    @DisplayName("Black spell payment requires two green mana")
+    void wrongColorManaCannotPayForDraw() {
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setHand(player2, List.of(new MoorFiend()));
+        harness.addMana(player2, ManaColor.BLACK, 4);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    @DisplayName("Black spell trigger still draws after the Charm returns to hand")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        setUpOpponentTurn();
+        harness.setLibrary(player1, List.of(new BalduvianBears()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.setHand(player2, List.of(new MoorFiend()));
+        harness.addMana(player2, ManaColor.BLACK, 4);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.castCreature(player2, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Freyalise's Charm");
+        harness.assertNotOnBattlefield(player1, "Freyalise's Charm");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Balduvian Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
 }
