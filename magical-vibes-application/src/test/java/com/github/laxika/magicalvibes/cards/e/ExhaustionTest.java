@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class ExhaustionTest extends BaseCardTest {
 
     @Nested
+    @CardUsed({Exhaustion.class, Forest.class, CoralMerfolk.class, Whetstone.class})
     @DisplayName("Spell resolution")
     class SpellResolution {
 
@@ -122,6 +123,7 @@ class ExhaustionTest extends BaseCardTest {
     }
 
     @Nested
+    @CardUsed({Exhaustion.class, Forest.class, CoralMerfolk.class})
     @DisplayName("Untap step behavior")
     class UntapStepBehavior {
 
@@ -156,13 +158,74 @@ class ExhaustionTest extends BaseCardTest {
             advanceToUpkeep(player2);
             assertThat(bears.isTapped()).isFalse();
         }
+
+        @Test
+        @DisplayName("Two Exhaustions before the same untap step do not extend the restriction")
+        void overlappingExhaustionsExpireTogether() {
+            Permanent creature = addCreatureReady(player2, new CoralMerfolk());
+            Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+            creature.tap();
+            land.tap();
+
+            castAndResolveExhaustion(player2.getId());
+            castAndResolveExhaustion(player2.getId());
+
+            advanceToUpkeep(player2);
+            assertThat(creature.isTapped()).isTrue();
+            assertThat(land.isTapped()).isTrue();
+
+            advanceToUpkeep(player1);
+            advanceToUpkeep(player2);
+            assertThat(creature.isTapped()).isFalse();
+            assertThat(land.isTapped()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Restriction expires even when the opponent has no tapped permanents")
+        void restrictionExpiresWithoutTappedPermanents() {
+            Permanent creature = addCreatureReady(player2, new CoralMerfolk());
+            Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+            castAndResolveExhaustion(player2.getId());
+            advanceToUpkeep(player2);
+            assertThat(creature.isTapped()).isFalse();
+            assertThat(land.isTapped()).isFalse();
+
+            creature.tap();
+            land.tap();
+            advanceToUpkeep(player1);
+            advanceToUpkeep(player2);
+            assertThat(creature.isTapped()).isFalse();
+            assertThat(land.isTapped()).isFalse();
+        }
+
+        @Test
+        @DisplayName("A creature acquired after resolution is affected at the opponent's untap step")
+        void affectsCreatureAcquiredAfterResolution() {
+            Permanent creature = addCreatureReady(player1, new CoralMerfolk());
+            creature.tap();
+
+            castAndResolveExhaustion(player2.getId());
+            harness.inMutationScope(() -> {
+                gd.playerBattlefields.get(player1.getId()).remove(creature);
+                gd.playerBattlefields.get(player2.getId()).add(creature);
+                creature.recordControlChange();
+                creature.setSummoningSick(true);
+            });
+
+            advanceToUpkeep(player2);
+            assertThat(creature.isTapped()).isTrue();
+
+            advanceToUpkeep(player1);
+            advanceToUpkeep(player2);
+            assertThat(creature.isTapped()).isFalse();
+        }
     }
 
     private void castAndResolveExhaustion(java.util.UUID targetPlayerId) {
         harness.setHand(player1, List.of(new Exhaustion()));
         harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castSorcery(player1, 0, targetPlayerId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetPlayerId);
     }
 
 }
