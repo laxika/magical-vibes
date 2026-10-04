@@ -34,4 +34,43 @@ class HeadOfTheHomesteadTest extends BaseCardTest {
                     assertThat(permanent.getEffectiveToughness()).isEqualTo(1);
                 });
     }
+
+    @Test
+    void enteringWithoutBeingCastCreatesTokensOnlyWhenTheTriggerResolves() {
+        harness.enterBattlefieldAndReturn(player2, new HeadOfTheHomestead());
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(2)
+                .allSatisfy(permanent -> {
+                    assertThat(permanent.getCard().getColor()).isEqualTo(CardColor.WHITE);
+                    assertThat(permanent.getCard().getSubtypes()).containsExactly(CardSubtype.RABBIT);
+                    assertThat(permanent.getEffectivePower()).isEqualTo(1);
+                    assertThat(permanent.getEffectiveToughness()).isEqualTo(1);
+                    assertThat(permanent.isTapped()).isFalse();
+                });
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void eachControllerReceivesTokensFromTheirOwnCreatureEntering() {
+        harness.enterBattlefieldAndReturn(player1, new HeadOfTheHomestead());
+        harness.passBothPriorities();
+
+        harness.enterBattlefieldAndReturn(player2, new HeadOfTheHomestead());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(2);
+    }
 }
