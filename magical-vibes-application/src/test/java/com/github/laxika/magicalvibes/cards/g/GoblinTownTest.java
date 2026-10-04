@@ -1,9 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BoggartShenanigans;
+import com.github.laxika.magicalvibes.cards.o.OrdinaryBear;
 import com.github.laxika.magicalvibes.cards.o.OrcishVeteran;
-import com.github.laxika.magicalvibes.cards.z.ZhurTaaGoblin;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +15,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GoblinTown.class, ZhurTaaGoblin.class, OrcishVeteran.class, GrizzlyBears.class})
+@CardUsed({GoblinTown.class, GoblinTownFlunkies.class, OrcishVeteran.class, OrdinaryBear.class,
+        BoggartShenanigans.class})
 class GoblinTownTest extends BaseCardTest {
 
     @Test
@@ -43,7 +43,7 @@ class GoblinTownTest extends BaseCardTest {
     @DisplayName("Sacrifice ability puts two counters on a Goblin")
     void sacrificeAbilityBoostsGoblin() {
         Permanent town = addReadyTown();
-        Permanent goblin = addReadyPermanent(player1, new ZhurTaaGoblin());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinTownFlunkies());
         addManaForSacrificeAbility();
         readyMainPhase();
 
@@ -59,7 +59,7 @@ class GoblinTownTest extends BaseCardTest {
     @DisplayName("Sacrifice ability also targets an Orc")
     void sacrificeAbilityBoostsOrc() {
         Permanent town = addReadyTown();
-        Permanent orc = addReadyPermanent(player1, new OrcishVeteran());
+        Permanent orc = harness.addToBattlefieldAndReturn(player1, new OrcishVeteran());
         addManaForSacrificeAbility();
         readyMainPhase();
 
@@ -73,7 +73,7 @@ class GoblinTownTest extends BaseCardTest {
     @DisplayName("Sacrifice ability cannot target a non-Goblin or non-Orc")
     void sacrificeAbilityRejectsOtherCreature() {
         Permanent town = addReadyTown();
-        Permanent bear = addReadyPermanent(player1, new GrizzlyBears());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new OrdinaryBear());
         addManaForSacrificeAbility();
         readyMainPhase();
 
@@ -86,7 +86,7 @@ class GoblinTownTest extends BaseCardTest {
     @DisplayName("Sacrifice ability can only be activated as a sorcery")
     void sacrificeAbilityIsSorcerySpeedOnly() {
         Permanent town = addReadyTown();
-        Permanent goblin = addReadyPermanent(player1, new ZhurTaaGoblin());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinTownFlunkies());
         addManaForSacrificeAbility();
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -97,18 +97,135 @@ class GoblinTownTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private Permanent addReadyTown() {
-        Permanent town = new Permanent(new GoblinTown());
-        town.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(town);
-        return town;
+    @Test
+    void manaAbilityAddsBlackWithoutUsingStack() {
+        Permanent town = addReadyTown();
+
+        harness.activateAbility(player1, battlefieldIndex(town), 0, null, null);
+        harness.handleListChoice(player1, "BLACK");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(town.isTapped()).isTrue();
     }
 
-    private Permanent addReadyPermanent(com.github.laxika.magicalvibes.model.Player player, Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    void sacrificeAbilityRejectsOpponentsGoblin() {
+        Permanent town = addReadyTown();
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new GoblinTownFlunkies());
+        addManaForSacrificeAbility();
+        readyMainPhase();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(town), 1, null, goblin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(town);
+        assertThat(town.isTapped()).isFalse();
+        assertThat(goblin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void sacrificeAbilityRejectsCombatPhase() {
+        Permanent town = addReadyTown();
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinTownFlunkies());
+        addManaForSacrificeAbility();
+        readyMainPhase();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(town), 1, null, goblin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(town);
+    }
+
+    @Test
+    void sacrificeAbilityRejectsNonemptyStack() {
+        Permanent town = addReadyTown();
+        Permanent secondTown = addReadyTown();
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinTownFlunkies());
+        addManaForSacrificeAbility();
+        addManaForSacrificeAbility();
+        readyMainPhase();
+        harness.activateAbility(player1, battlefieldIndex(town), 1, null, goblin.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(secondTown), 1, null, goblin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(secondTown);
+        harness.passBothPriorities();
+        assertThat(goblin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void tappedTownCannotPaySacrificeAbilityCost() {
+        Permanent town = harness.enterBattlefieldAndReturn(player1, new GoblinTown());
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinTownFlunkies());
+        addManaForSacrificeAbility();
+        readyMainPhase();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(town), 1, null, goblin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(town);
+    }
+
+    @Test
+    void sacrificeIsPaidBeforeResolutionAndCountersWaitForResolution() {
+        Permanent town = addReadyTown();
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinTownFlunkies());
+        addManaForSacrificeAbility();
+        readyMainPhase();
+
+        harness.activateAbility(player1, battlefieldIndex(town), 1, null, goblin.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(town);
+        harness.assertInGraveyard(player1, "Goblin-town");
+        assertThat(goblin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(goblin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void targetChangingControllersDoesNotReceiveCounters() {
+        Permanent town = addReadyTown();
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new GoblinTownFlunkies());
+        addManaForSacrificeAbility();
+        readyMainPhase();
+        harness.activateAbility(player1, battlefieldIndex(town), 1, null, goblin.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(goblin);
+        gd.playerBattlefields.get(player2.getId()).add(goblin);
+        gd.stolenCreatures.put(goblin.getId(), player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(goblin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.assertInGraveyard(player1, "Goblin-town");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void sacrificeAbilityCanPutCountersOnNoncreatureGoblin() {
+        Permanent town = addReadyTown();
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new BoggartShenanigans());
+        addManaForSacrificeAbility();
+        readyMainPhase();
+
+        harness.activateAbility(player1, battlefieldIndex(town), 1, null, enchantment.getId());
+        harness.passBothPriorities();
+
+        assertThat(enchantment.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Goblin-town");
+    }
+
+    private Permanent addReadyTown() {
+        return harness.addToBattlefieldAndReturn(player1, new GoblinTown());
     }
 
     private void addManaForSacrificeAbility() {
