@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "169")
+@CardRegistration(set = "WOE", collectorNumber = "356")
 public class FeralEncounter extends Card {
 
     public FeralEncounter() {

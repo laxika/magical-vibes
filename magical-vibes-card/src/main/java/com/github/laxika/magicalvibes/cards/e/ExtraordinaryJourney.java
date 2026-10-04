@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.OncePerTurnTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WOE", collectorNumber = "48")
+@CardRegistration(set = "WOE", collectorNumber = "331")
 public class ExtraordinaryJourney extends Card {
 
     public ExtraordinaryJourney() {

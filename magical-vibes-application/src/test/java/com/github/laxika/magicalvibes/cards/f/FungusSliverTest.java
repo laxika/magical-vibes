@@ -59,11 +59,10 @@ class FungusSliverTest extends BaseCardTest {
     @Test
     @DisplayName("The granted damage trigger resolves for a surviving Sliver even if Fungus Sliver dies")
     void combatDamageTriggerIsSnapshottedBeforeSourceDies() {
-        Permanent fungusSliver = addCreatureReady(player1, new FungusSliver());
+        addCreatureReady(player1, new FungusSliver());
         Permanent blocker = addCreatureReady(player2, new PlagueSliver());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
         resolveAllTriggers();
@@ -96,6 +95,35 @@ class FungusSliverTest extends BaseCardTest {
 
         assertThat(fungusSliver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.assertInGraveyard(player1, "Fungus Sliver");
+    }
+
+    @Test
+    @DisplayName("A single event dealing two damage gives a Sliver only one counter")
+    void damageAmountDoesNotMultiplyCounters() {
+        addCreatureReady(player1, new FungusSliver());
+        Permanent sliver = addCreatureReady(player2, new PlagueSliver());
+        harness.setHand(player1, List.of(new SuddenShock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, sliver.getId());
+        resolveAllTriggers();
+
+        assertThat(sliver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Plague Sliver");
+    }
+
+    @Test
+    @DisplayName("Separate damage events each give the same Sliver a counter")
+    void separateDamageEventsGiveSeparateCounters() {
+        Permanent sliver = addCreatureReady(player1, new FungusSliver());
+        Permanent firstPinger = addCreatureReady(player1, new FledglingMawcor());
+        Permanent secondPinger = addCreatureReady(player1, new FledglingMawcor());
+
+        ping(firstPinger, sliver);
+        ping(secondPinger, sliver);
+
+        assertThat(sliver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Fungus Sliver");
     }
 
     private void ping(Permanent pinger, Permanent target) {

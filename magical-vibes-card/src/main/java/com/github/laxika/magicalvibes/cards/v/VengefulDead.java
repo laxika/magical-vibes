@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "SCG", collectorNumber = "80")
+@CardRegistration(set = "SCD", collectorNumber = "117")
 public class VengefulDead extends Card {
 
     public VengefulDead() {

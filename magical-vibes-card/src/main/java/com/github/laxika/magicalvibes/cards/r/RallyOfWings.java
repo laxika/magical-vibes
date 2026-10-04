@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "WAR", collectorNumber = "27")
+@CardRegistration(set = "SCD", collectorNumber = "30")
 public class RallyOfWings extends Card {
 
     public RallyOfWings() {

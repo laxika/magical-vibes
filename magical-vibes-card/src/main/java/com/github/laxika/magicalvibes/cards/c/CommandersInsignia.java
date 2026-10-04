@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 @CardRegistration(set = "TDC", collectorNumber = "111")
 @CardRegistration(set = "C19", collectorNumber = "2")
+@CardRegistration(set = "SCD", collectorNumber = "13")
 public class CommandersInsignia extends Card {
 
     public CommandersInsignia() {

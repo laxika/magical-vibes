@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 @CardRegistration(set = "NCC", collectorNumber = "305")
 @CardRegistration(set = "BLC", collectorNumber = "235")
 @CardRegistration(set = "NEC", collectorNumber = "126")
+@CardRegistration(set = "SCD", collectorNumber = "207")
 public class RishkarPeemaRenegade extends Card {
 
     public RishkarPeemaRenegade() {

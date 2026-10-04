@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "155")
+@CardRegistration(set = "ELD", collectorNumber = "297")
 public class FlaxenIntruder extends Card {
 
     public FlaxenIntruder() {

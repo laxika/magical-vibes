@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringSpellControllerEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "115")
+@CardRegistration(set = "ELD", collectorNumber = "291")
 public class BonecrusherGiant extends Card {
 
     public BonecrusherGiant() {

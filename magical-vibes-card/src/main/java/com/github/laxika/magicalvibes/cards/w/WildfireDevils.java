@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.RandomPlayerExilesInstantOrSo
 
 @CardRegistration(set = "C21", collectorNumber = "183")
 @CardRegistration(set = "C19", collectorNumber = "30")
+@CardRegistration(set = "SCD", collectorNumber = "170")
 public class WildfireDevils extends Card {
 
     public WildfireDevils() {

@@ -99,6 +99,50 @@ class FuneralMarchTest extends BaseCardTest {
     }
 
     @Test
+    void controllerSacrificesWhenEnchantedCreatureIsPutIntoLibrary() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        attachFuneralMarch(player1, enchanted);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToLibraryTop(gd, enchanted));
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player2.getId())).contains(enchanted.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(victim.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(enchanted, victim);
+    }
+
+    @Test
+    void triggerSacrificesCreatureThatEnteredAfterEnchantedCreatureLeft() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        attachFuneralMarch(player1, enchanted);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, enchanted));
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(victim.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(victim);
+    }
+
+    @Test
+    void triggerStillResolvesAfterAuraLeavesBattlefield() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent victim = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent aura = attachFuneralMarch(player1, enchanted);
+
+        harness.inMutationScope(() -> {
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, enchanted);
+            harness.getPermanentRemovalService().removePermanentToGraveyard(gd, aura);
+        });
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(enchanted.getCard(), aura.getCard(), victim.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(victim);
+    }
+
+    @Test
     @DisplayName("When the enchanted creature leaves, its controller sacrifices a creature of their choice")
     void controllerSacrificesWhenEnchantedCreatureLeaves() {
         Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());

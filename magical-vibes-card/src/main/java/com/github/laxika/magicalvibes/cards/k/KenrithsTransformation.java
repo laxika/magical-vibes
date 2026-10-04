@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "164")
+@CardRegistration(set = "ELD", collectorNumber = "395")
 @CardRegistration(set = "AFC", collectorNumber = "162")
 @CardRegistration(set = "WOC", collectorNumber = "128")
 public class KenrithsTransformation extends Card {

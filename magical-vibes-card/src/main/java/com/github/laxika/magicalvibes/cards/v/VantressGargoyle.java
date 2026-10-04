@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "71")
+@CardRegistration(set = "ELD", collectorNumber = "349")
 public class VantressGargoyle extends Card {
 
     public VantressGargoyle() {

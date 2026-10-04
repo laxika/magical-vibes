@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "257")
+@CardRegistration(set = "WOE", collectorNumber = "303")
 public class RestlessBivouac extends Card {
 
     public RestlessBivouac() {

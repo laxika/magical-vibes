@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({FrostboilSnarl.class, Island.class, Mountain.class})
 class FrostboilSnarlTest extends BaseCardTest {
 
     @Test
@@ -58,7 +59,7 @@ class FrostboilSnarlTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for blue mana produces one blue")
     void tappingProducesBlueMana() {
-        addLandReady(player1);
+        harness.addToBattlefield(player1, new FrostboilSnarl());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -69,7 +70,7 @@ class FrostboilSnarlTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for red mana produces one red")
     void tappingProducesRedMana() {
-        addLandReady(player1);
+        harness.addToBattlefield(player1, new FrostboilSnarl());
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -77,16 +78,53 @@ class FrostboilSnarlTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Another Frostboil Snarl in hand cannot be revealed as an Island or Mountain")
+    void entersTappedWithOnlyAnotherSnarlInHand() {
+        harness.setHand(player1, List.of(new FrostboilSnarl(), new FrostboilSnarl()));
+        playLand();
+
+        assertThat(findLand().isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An Island in an opponent's hand does not let it enter untapped")
+    void entersTappedWithIslandInOpponentsHand() {
+        harness.setHand(player1, List.of(new FrostboilSnarl()));
+        harness.setHand(player2, List.of(new Island()));
+        playLand();
+
+        assertThat(findLand().isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An Island on the battlefield cannot be revealed from hand")
+    void entersTappedWithIslandOnlyOnBattlefield() {
+        harness.setHand(player1, List.of(new FrostboilSnarl()));
+        harness.addToBattlefield(player1, new Island());
+        playLand();
+
+        assertThat(findLand().isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Revealing leaves the same Island card in hand and adds no stack entry")
+    void revealingKeepsCardInHand() {
+        Island island = new Island();
+        harness.setHand(player1, List.of(new FrostboilSnarl(), island));
+        playLand();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findLand().isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(island);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void playLand() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.playLand(player1, 0);
-    }
-
-    private void addLandReady(Player player) {
-        Permanent permanent = new Permanent(new FrostboilSnarl());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
     }
 
     private Permanent findLand() {

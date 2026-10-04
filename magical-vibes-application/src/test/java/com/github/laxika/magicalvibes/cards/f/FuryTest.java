@@ -52,6 +52,7 @@ class FuryTest extends BaseCardTest {
                 List.of(target.getId()), List.of(), false, null, null, List.of(), null, List.of(), false, 1);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.passBothPriorities();
 
         assertThat(target.getMarkedDamage()).isEqualTo(4);
         harness.assertNotOnBattlefield(player1, "Fury");
@@ -69,5 +70,60 @@ class FuryTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(player2.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Damage division is chosen before opponents can respond to the ETB trigger")
+    void divisionIsChosenWhenTriggerGoesOnStack() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new Fury());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new Fury());
+        harness.setHand(player1, List.of(new Fury()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castCreature(player1, 0, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(second.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Fury may enter with no damage targets")
+    void mayChooseNoTargets() {
+        harness.setHand(player1, List.of(new Fury()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castCreature(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Fury");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Evoke cannot exile a nonred card")
+    void evokeRejectsNonredCard() {
+        harness.setHand(player1, List.of(new Fury(), new GrizzlyBears()));
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null,
+                List.of(), List.of(), false, null, null, List.of(), null, List.of(), false, 1))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertNotOnBattlefield(player1, "Fury");
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Fury cannot exile itself to pay its evoke cost")
+    void evokeRejectsExilingSpellItself() {
+        harness.setHand(player1, List.of(new Fury()));
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, null, null,
+                List.of(), List.of(), false, null, null, List.of(), null, List.of(), false, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertNotOnBattlefield(player1, "Fury");
+        assertThat(gd.exiledCards).isEmpty();
     }
 }

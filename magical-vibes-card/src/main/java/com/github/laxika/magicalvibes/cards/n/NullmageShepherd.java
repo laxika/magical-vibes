@@ -16,6 +16,7 @@ import java.util.List;
 @CardRegistration(set = "RAV", collectorNumber = "174")
 @CardRegistration(set = "SLD", collectorNumber = "774")
 @CardRegistration(set = "KHC", collectorNumber = "70")
+@CardRegistration(set = "SCD", collectorNumber = "200")
 public class NullmageShepherd extends Card {
 
     public NullmageShepherd() {

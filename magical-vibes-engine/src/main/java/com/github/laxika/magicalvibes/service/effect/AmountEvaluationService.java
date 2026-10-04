@@ -2931,12 +2931,14 @@ public class AmountEvaluationService {
     private int opponentsControllingReturnedPermanents(GameData gameData, AmountContext ctx) {
         if (ctx.controllerId() == null || ctx.stackEntry() == null) return 0;
         Set<UUID> returnedPermanentIds = ctx.stackEntry().getReturnedPermanentIds();
-        if (returnedPermanentIds.isEmpty()) return 0;
+        Map<UUID, UUID> removedPermanentControllers = ctx.stackEntry().getRemovedPermanentControllers();
+        if (returnedPermanentIds.isEmpty() && removedPermanentControllers.isEmpty()) return 0;
         int qualifyingOpponents = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(ctx.controllerId())
-                    && gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                    .anyMatch(permanent -> returnedPermanentIds.contains(permanent.getId()))) {
+                    && (gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                            .anyMatch(permanent -> returnedPermanentIds.contains(permanent.getId()))
+                    || removedPermanentControllers.containsValue(playerId))) {
                 qualifyingOpponents++;
             }
         }

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "252")
+@CardRegistration(set = "WOE", collectorNumber = "369")
 public class SyrGingerTheMealEnder extends Card {
 
     public SyrGingerTheMealEnder() {

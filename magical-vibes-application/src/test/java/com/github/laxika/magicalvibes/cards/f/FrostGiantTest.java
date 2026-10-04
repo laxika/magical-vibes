@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.z.ZephyrFalcon;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FrostGiant.class, ZephyrFalcon.class})
+@CardUsed({FrostGiant.class, ZephyrFalcon.class, Boomerang.class})
 class FrostGiantTest extends BaseCardTest {
 
     @Test
@@ -79,6 +81,50 @@ class FrostGiantTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(giant.getPowerModifier()).isZero();
         assertThat(giant.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Rampage counts the blockers remaining when its trigger resolves")
+    void blockerReturnedBeforeResolutionReducesBonus() {
+        Permanent giant = addCreatureReady(player1, new FrostGiant());
+        Permanent blocker = addCreatureReady(player2, new ZephyrFalcon());
+        addCreatureReady(player2, new ZephyrFalcon());
+        harness.setHand(player1, List.of(new Boomerang()));
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        resolveAllTriggers();
+
+        assertThat(giant.getPowerModifier()).isZero();
+        assertThat(giant.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing a blocker after rampage resolves does not reduce the bonus")
+    void blockerReturnedAfterResolutionDoesNotChangeBonus() {
+        Permanent giant = addCreatureReady(player1, new FrostGiant());
+        Permanent blocker = addCreatureReady(player2, new ZephyrFalcon());
+        addCreatureReady(player2, new ZephyrFalcon());
+        harness.setHand(player1, List.of(new Boomerang()));
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+        assertThat(giant.getPowerModifier()).isEqualTo(2);
+        assertThat(giant.getToughnessModifier()).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(giant.getPowerModifier()).isEqualTo(2);
+        assertThat(giant.getToughnessModifier()).isEqualTo(2);
     }
 
     @Test

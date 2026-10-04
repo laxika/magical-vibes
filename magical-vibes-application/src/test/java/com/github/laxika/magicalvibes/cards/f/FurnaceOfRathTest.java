@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.c.CircleOfFlame;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.m.MinimusContainment;
+import com.github.laxika.magicalvibes.cards.s.SamiteHealer;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SkyhunterSkirmisher;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -25,9 +26,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import com.github.laxika.magicalvibes.model.Player;
 
-@CardUsed({FurnaceOfRath.class, BenalishKnight.class, Blaze.class, CircleOfFlame.class, FlamewaveInvoker.class, GrizzlyBears.class, JaceBeleren.class, MinimusContainment.class, SerraAngel.class, SkyhunterSkirmisher.class})
+@CardUsed({FurnaceOfRath.class, BenalishKnight.class, Blaze.class, CircleOfFlame.class, FlamewaveInvoker.class, GrizzlyBears.class, JaceBeleren.class, MinimusContainment.class, SamiteHealer.class, SerraAngel.class, SkyhunterSkirmisher.class})
 class FurnaceOfRathTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -175,13 +175,12 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FurnaceOfRath());
 
         // 2/2 attacker
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new GrizzlyBears());
 
         // 4/4 blocker — base 2 damage wouldn't kill it, but doubled 4 does
         addCreatureReady(player2, new SerraAngel());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
@@ -214,8 +213,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FurnaceOfRath());
 
         // 2/2 first strike attacker
-        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new BenalishKnight());
 
         // 3/3 blocker — base 2 first-strike damage < 3, but doubled 4 >= 3
         GrizzlyBears creature3_3 = new GrizzlyBears();
@@ -223,7 +221,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         creature3_3.setToughness(3);
         addCreatureReady(player2, creature3_3);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
@@ -240,8 +238,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FurnaceOfRath());
 
         // 2/2 first strike attacker
-        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new BenalishKnight());
 
         // 3/5 blocker — doubled first strike deals 4 < 5, survives
         GrizzlyBears creature3_5 = new GrizzlyBears();
@@ -249,7 +246,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         creature3_5.setToughness(5);
         addCreatureReady(player2, creature3_5);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
@@ -282,8 +279,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FurnaceOfRath());
 
         // 1/1 double strike flying attacker
-        Permanent attacker = addCreatureReady(player1, new SkyhunterSkirmisher());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new SkyhunterSkirmisher());
 
         // 3/3 with reach — without Furnace: 1+1=2 < 3, survives. With Furnace: 2+2=4 >= 3, dies.
         GrizzlyBears creature3_3 = new GrizzlyBears();
@@ -292,7 +288,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         creature3_3.setKeywords(Set.of(Keyword.REACH));
         addCreatureReady(player2, creature3_3);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
@@ -307,8 +303,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         harness.addToBattlefield(player1, new FurnaceOfRath());
 
         // 1/1 double strike flying attacker
-        Permanent attacker = addCreatureReady(player1, new SkyhunterSkirmisher());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new SkyhunterSkirmisher());
 
         // 3/5 with reach — total doubled damage 2+2=4 < 5, survives
         GrizzlyBears creature3_5 = new GrizzlyBears();
@@ -317,7 +312,7 @@ class FurnaceOfRathTest extends BaseCardTest {
         creature3_5.setKeywords(Set.of(Keyword.REACH));
         addCreatureReady(player2, creature3_5);
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
         harness.passBothPriorities();
@@ -461,7 +456,24 @@ class FurnaceOfRathTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
-    private void addReadyInvoker(Player player) {
-        addCreatureReady(player, new FlamewaveInvoker());
+    @Test
+    @DisplayName("Affected player chooses the order of doubling and partial prevention")
+    @CardUsed({FurnaceOfRath.class, Blaze.class, SamiteHealer.class})
+    void affectedPlayerChoosesDoublingAndPreventionOrder() {
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        addCreatureReady(player2, new SamiteHealer());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Blaze()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castSorcery(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+
+        // Prevention first yields 2 damage; doubling first yields 3. The player must choose.
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertLife(player2, 20);
     }
 }

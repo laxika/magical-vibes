@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "WOE", collectorNumber = "108")
+@CardRegistration(set = "WOE", collectorNumber = "343")
 public class SpitefulHexmage extends Card {
 
     public SpitefulHexmage() {

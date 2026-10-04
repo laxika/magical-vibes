@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ScytheSpecterEffect;
 
 @CardRegistration(set = "CMD", collectorNumber = "97")
+@CardRegistration(set = "SCD", collectorNumber = "105")
 public class ScytheSpecter extends Card {
 
     public ScytheSpecter() {

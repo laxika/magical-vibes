@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ELD", collectorNumber = "194")
+@CardRegistration(set = "ELD", collectorNumber = "397")
 public class InspiringVeteran extends Card {
 
     public InspiringVeteran() {

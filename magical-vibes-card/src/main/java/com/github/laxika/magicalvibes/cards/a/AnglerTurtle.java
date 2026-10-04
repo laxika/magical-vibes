@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "GN3", collectorNumber = "23")
+@CardRegistration(set = "SCD", collectorNumber = "43")
 public class AnglerTurtle extends Card {
 
     public AnglerTurtle() {

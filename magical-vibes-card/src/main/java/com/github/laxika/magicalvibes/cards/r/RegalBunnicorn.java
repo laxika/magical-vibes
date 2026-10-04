@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "WOE", collectorNumber = "25")
+@CardRegistration(set = "WOE", collectorNumber = "326")
 public class RegalBunnicorn extends Card {
 
     public RegalBunnicorn() {

@@ -1084,6 +1084,8 @@ public class GameData {
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
     /** Players who have begun activating an exhaust ability this turn. */
     public final Set<UUID> playersWhoActivatedExhaustAbilityThisTurn = ConcurrentHashMap.newKeySet();
+    /** Players who activated an ability of a card in a graveyard this turn. */
+    public final Set<UUID> playersWhoActivatedAbilityOfGraveyardCardThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who have activated an equip ability this turn. */
     public final Set<UUID> playersWhoActivatedEquipAbilityThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who have activated a Power-up ability this turn. */
@@ -4270,6 +4272,11 @@ public class GameData {
                 .merge(sourceZone, 1, Integer::sum);
     }
 
+    /** Records that a player activated an ability of a card in a graveyard this turn. */
+    public void recordActivatedAbilityOfGraveyardCard(UUID playerId) {
+        if (playerId != null) playersWhoActivatedAbilityOfGraveyardCardThisTurn.add(playerId);
+    }
+
     public int getSpellsCastThisTurnCount(UUID playerId, Zone sourceZone) {
         if (playerId == null || sourceZone == null) return 0;
         return spellCastCountsByZoneThisTurn.getOrDefault(playerId, Map.of())
@@ -6945,6 +6952,8 @@ public class GameData {
         copy.playersDealtCombatDamageSinceTheirLastTurn.addAll(this.playersDealtCombatDamageSinceTheirLastTurn);
         copy.playersDealtCombatDamageLastTurn.addAll(this.playersDealtCombatDamageLastTurn);
         copy.playersWhoActivatedExhaustAbilityThisTurn.addAll(this.playersWhoActivatedExhaustAbilityThisTurn);
+        copy.playersWhoActivatedAbilityOfGraveyardCardThisTurn
+                .addAll(this.playersWhoActivatedAbilityOfGraveyardCardThisTurn);
         copy.playersWhoActivatedEquipAbilityThisTurn.addAll(this.playersWhoActivatedEquipAbilityThisTurn);
         copy.playersWhoActivatedPowerUpAbilityThisTurn.addAll(this.playersWhoActivatedPowerUpAbilityThisTurn);
         copy.creaturesWithAllDamagePrevented.addAll(this.creaturesWithAllDamagePrevented);

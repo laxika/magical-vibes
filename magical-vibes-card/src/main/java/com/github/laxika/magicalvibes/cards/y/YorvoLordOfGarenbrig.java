@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "ELD", collectorNumber = "185")
+@CardRegistration(set = "ELD", collectorNumber = "376")
 public class YorvoLordOfGarenbrig extends Card {
 
     public YorvoLordOfGarenbrig() {

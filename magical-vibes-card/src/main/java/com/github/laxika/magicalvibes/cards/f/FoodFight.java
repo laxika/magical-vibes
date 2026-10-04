@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "129")
+@CardRegistration(set = "WOE", collectorNumber = "346")
 public class FoodFight extends Card {
 
     public FoodFight() {

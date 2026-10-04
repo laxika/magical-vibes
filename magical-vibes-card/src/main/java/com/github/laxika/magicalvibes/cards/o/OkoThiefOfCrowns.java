@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "ELD", collectorNumber = "197")
+@CardRegistration(set = "ELD", collectorNumber = "271")
 @CardRegistration(set = "OTP", collectorNumber = "50")
 @CardRegistration(set = "OTP", collectorNumber = "77")
 public class OkoThiefOfCrowns extends Card {

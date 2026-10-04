@@ -87,6 +87,43 @@ class FylamaridTest extends BaseCardTest {
         assertThat(gqs.getEffectiveColors(gd, giant)).containsExactly(CardColor.RED);
     }
 
+    @Test
+    @DisplayName("A red flying creature made blue cannot block Fylamarid")
+    void newlyBlueCreatureCannotBlock() {
+        harness.addToBattlefield(player1, new Fylamarid());
+        Permanent blocker = addCreatureReady(player2, new Firefly());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        findPermanent(player1, "Fylamarid").setAttacking(true);
+        prepareDeclareBlockers(player1);
+        int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+
+        assertThat(gqs.getEffectiveColors(gd, blocker)).containsExactly(CardColor.BLUE);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIdx, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The color change resolves even if Fylamarid leaves the battlefield")
+    void abilityResolvesWithoutSource() {
+        harness.addToBattlefield(player1, new Fylamarid());
+        harness.addToBattlefield(player2, new FlowstoneGiant());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        Permanent source = findPermanent(player1, "Fylamarid");
+        Permanent giant = findPermanent(player2, "Flowstone Giant");
+        harness.activateAbility(player1, 0, 0, null, giant.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerGraveyards.get(player1.getId()).add(source.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectiveColors(gd, giant)).containsExactly(CardColor.BLUE);
+    }
+
     /**
      * Puts an attacking Fylamarid on player1's battlefield and the given blocker on player2's,
      * then advances to the declare-blockers input state. Returns the blocker permanent.

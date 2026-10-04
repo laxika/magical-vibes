@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "224")
+@CardRegistration(set = "WOE", collectorNumber = "288")
 public class DevouringSugarmaw extends Card {
 
     public DevouringSugarmaw() {

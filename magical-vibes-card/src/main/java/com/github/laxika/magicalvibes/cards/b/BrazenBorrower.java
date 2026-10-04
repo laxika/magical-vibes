@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatches
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 
 @CardRegistration(set = "ELD", collectorNumber = "39")
+@CardRegistration(set = "ELD", collectorNumber = "281")
 @CardRegistration(set = "SLD", collectorNumber = "234")
 @CardRegistration(set = "SLD", collectorNumber = "265")
 @CardRegistration(set = "SPG", collectorNumber = "30")

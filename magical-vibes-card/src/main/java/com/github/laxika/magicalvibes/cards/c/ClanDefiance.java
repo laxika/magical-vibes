@@ -22,6 +22,7 @@ import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "151")
 @CardRegistration(set = "C16", collectorNumber = "187")
+@CardRegistration(set = "SCD", collectorNumber = "220")
 public class ClanDefiance extends Card {
 
     public ClanDefiance() {

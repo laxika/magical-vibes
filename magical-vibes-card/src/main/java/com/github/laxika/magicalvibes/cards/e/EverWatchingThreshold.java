@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 @CardRegistration(set = "C18", collectorNumber = "9")
+@CardRegistration(set = "SCD", collectorNumber = "50")
 public class EverWatchingThreshold extends Card {
 
     public EverWatchingThreshold() {

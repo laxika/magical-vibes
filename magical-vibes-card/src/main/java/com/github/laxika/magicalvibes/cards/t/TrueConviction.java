@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 @CardRegistration(set = "SLD", collectorNumber = "1082")
 @CardRegistration(set = "SS2", collectorNumber = "6")
 @CardRegistration(set = "C14", collectorNumber = "93")
+@CardRegistration(set = "SCD", collectorNumber = "38")
 public class TrueConviction extends Card {
 
     public TrueConviction() {

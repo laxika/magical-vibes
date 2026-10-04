@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SpellLimitScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "ELD", collectorNumber = "125")
+@CardRegistration(set = "ELD", collectorNumber = "361")
 public class FiresOfInvention extends Card {
 
     public FiresOfInvention() {

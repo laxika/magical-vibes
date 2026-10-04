@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WOE", collectorNumber = "143")
+@CardRegistration(set = "WOE", collectorNumber = "349")
 public class RagingBattleMouse extends Card {
 
     public RagingBattleMouse() {

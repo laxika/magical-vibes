@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "143")
+@CardRegistration(set = "ELD", collectorNumber = "394")
 public class SlayingFire extends Card {
 
     public SlayingFire() {

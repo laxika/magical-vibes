@@ -93,6 +93,64 @@ class FullBoreTest extends BaseCardTest {
                 .hasMessageContaining("creature you control");
     }
 
+    @Test
+    @DisplayName("Multiple Full Bores stack their bonuses on a warp-cast creature")
+    void multipleBonusesStack() {
+        castKnightLuminaryWithWarp();
+        Permanent knight = findPermanent(player1, "Knight Luminary");
+
+        castFullBore(knight);
+        castFullBore(knight);
+
+        assertThat(knight.getPowerModifier()).isEqualTo(6);
+        assertThat(knight.getToughnessModifier()).isEqualTo(4);
+        assertThat(knight.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(knight.hasKeyword(Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Warp keywords and the bonus expire during cleanup")
+    void warpKeywordsWearOffAtEndOfTurn() {
+        castKnightLuminaryWithWarp();
+        Permanent knight = findPermanent(player1, "Knight Luminary");
+        castFullBore(knight);
+
+        assertThat(knight.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(knight.hasKeyword(Keyword.HASTE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(knight.getPowerModifier()).isEqualTo(0);
+        assertThat(knight.getToughnessModifier()).isEqualTo(0);
+        assertThat(knight.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(knight.hasKeyword(Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Does not affect another creature when the target leaves before resolution")
+    void absentTargetDoesNotReceiveEffects() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new KnightLuminary());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new KnightLuminary());
+        harness.setHand(player1, List.of(new FullBore()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerGraveyards.get(player1.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.getPowerModifier()).isEqualTo(0);
+        assertThat(target.getToughnessModifier()).isEqualTo(0);
+        assertThat(other.getPowerModifier()).isEqualTo(0);
+        assertThat(other.getToughnessModifier()).isEqualTo(0);
+        assertThat(other.hasKeyword(Keyword.TRAMPLE)).isFalse();
+        assertThat(other.hasKeyword(Keyword.HASTE)).isFalse();
+        harness.assertInGraveyard(player1, "Full Bore");
+    }
+
     private void castKnightLuminaryWithWarp() {
         harness.setHand(player1, List.of(new KnightLuminary()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -105,7 +163,6 @@ class FullBoreTest extends BaseCardTest {
     private void castFullBore(Permanent target) {
         harness.setHand(player1, List.of(new FullBore()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }

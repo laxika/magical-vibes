@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import java.util.List;
 
 @CardRegistration(set = "WOE", collectorNumber = "211")
+@CardRegistration(set = "WOE", collectorNumber = "300")
 public class RowanScionOfWar extends Card {
 
     public RowanScionOfWar() {

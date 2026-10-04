@@ -22,6 +22,7 @@ import java.util.Set;
 @CardRegistration(set = "SLD", collectorNumber = "1630")
 @CardRegistration(set = "NCC", collectorNumber = "325")
 @CardRegistration(set = "BRC", collectorNumber = "119")
+@CardRegistration(set = "ELD", collectorNumber = "324")
 public class AlelaArtfulProvocateur extends Card {
 
     public AlelaArtfulProvocateur() {

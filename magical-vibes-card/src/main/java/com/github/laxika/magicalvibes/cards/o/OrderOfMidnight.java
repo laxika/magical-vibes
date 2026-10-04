@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 @CardRegistration(set = "ELD", collectorNumber = "99")
+@CardRegistration(set = "ELD", collectorNumber = "288")
 @CardRegistration(set = "MOC", collectorNumber = "261")
 public class OrderOfMidnight extends Card {
 

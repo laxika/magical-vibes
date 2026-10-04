@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "FRF", collectorNumber = "62")
 @CardRegistration(set = "FIC", collectorNumber = "273")
+@CardRegistration(set = "SCD", collectorNumber = "67")
 public class ArchfiendOfDepravity extends Card {
 
     public ArchfiendOfDepravity() {
