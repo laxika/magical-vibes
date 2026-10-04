@@ -146,4 +146,72 @@ class HinderingTouchTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("spell on the stack");
     }
+
+    @Test
+    @DisplayName("Paying for the storm copy does not pay for the original spell")
+    void mustPaySeparatelyForCopyAndOriginal() {
+        BrainFreeze brainFreeze = new BrainFreeze();
+        harness.setLibrary(player2, List.of(new BrainFreeze(), new BrainFreeze(), new BrainFreeze()));
+        harness.setHand(player1, List.of(brainFreeze));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.setHand(player2, List.of(new HinderingTouch()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, brainFreeze.getId());
+        resolveStack(true);
+
+        harness.assertInGraveyard(player1, "Brain Freeze");
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A storm copy can counter the original Hindering Touch")
+    void stormCopyCanChooseOriginalAsNewTarget() {
+        BrainFreeze brainFreeze = new BrainFreeze();
+        HinderingTouch hinderingTouch = new HinderingTouch();
+        harness.setLibrary(player2, List.of(new BrainFreeze(), new BrainFreeze(), new BrainFreeze()));
+        harness.setHand(player1, List.of(brainFreeze));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setHand(player2, List.of(hinderingTouch));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, brainFreeze.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, hinderingTouch.getId());
+        resolveStack(false);
+
+        harness.assertInGraveyard(player2, "Hindering Touch");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(card -> card.getName().equals("Hindering Touch")).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Storm counts a creature spell and the copy can counter that spell")
+    void canCounterCreatureSpellWithStormCopy() {
+        ScornfulEgotist egotist = new ScornfulEgotist();
+        harness.setHand(player1, List.of(egotist));
+        harness.addMana(player1, ManaColor.BLUE, 8);
+        harness.setHand(player2, List.of(new HinderingTouch()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, egotist.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(1);
+        harness.handleMayAbilityChosen(player2, false);
+        resolveStack(false);
+
+        harness.assertInGraveyard(player1, "Scornful Egotist");
+        harness.assertNotOnBattlefield(player1, "Scornful Egotist");
+        assertThat(gd.stack).isEmpty();
+    }
 }
