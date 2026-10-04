@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SanctuaryCat;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +18,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HollowhengeSpirit.class, SanctuaryCat.class})
 class HollowhengeSpiritTest extends BaseCardTest {
-
-    // ===== Removing an attacker =====
 
     @Test
     @DisplayName("ETB removes target attacking creature from combat")
@@ -27,7 +28,7 @@ class HollowhengeSpiritTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HollowhengeSpirit()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, attacker.getId(), null);
+        harness.castCreature(player1, 0, attacker.getId());
 
         // Resolve creature spell -> ETB triggers
         harness.passBothPriorities();
@@ -40,8 +41,6 @@ class HollowhengeSpiritTest extends BaseCardTest {
         assertThat(attacker.getAttackTarget()).isNull();
     }
 
-    // ===== Removing a blocker =====
-
     @Test
     @DisplayName("ETB removes target blocking creature from combat")
     void etbRemovesBlocker() {
@@ -49,7 +48,7 @@ class HollowhengeSpiritTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HollowhengeSpirit()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, blocker.getId(), null);
+        harness.castCreature(player1, 0, blocker.getId());
 
         harness.passBothPriorities(); // resolve creature -> ETB triggers
         harness.passBothPriorities(); // resolve ETB
@@ -60,8 +59,6 @@ class HollowhengeSpiritTest extends BaseCardTest {
         assertThat(blocker.getBlockingTargetIds()).isEmpty();
     }
 
-    // ===== ETB goes on stack with target =====
-
     @Test
     @DisplayName("ETB triggered ability goes on stack targeting the attacker")
     void etbGoesOnStackWithTarget() {
@@ -69,7 +66,7 @@ class HollowhengeSpiritTest extends BaseCardTest {
         harness.setHand(player1, List.of(new HollowhengeSpirit()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, attacker.getId(), null);
+        harness.castCreature(player1, 0, attacker.getId());
         harness.passBothPriorities(); // resolve creature spell
 
         GameData gd = harness.getGameData();
@@ -81,22 +78,18 @@ class HollowhengeSpiritTest extends BaseCardTest {
         assertThat(trigger.getTargetId()).isEqualTo(attacker.getId());
     }
 
-    // ===== Target restrictions =====
-
     @Test
     @DisplayName("Cannot target a creature that is not attacking or blocking")
     void cannotTargetNonCombatCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new SanctuaryCat());
         harness.setHand(player1, List.of(new HollowhengeSpirit()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Sanctuary Cat");
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null))
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== No target scenarios =====
 
     @Test
     @DisplayName("Can cast without a target when no creature is in combat")
@@ -112,8 +105,8 @@ class HollowhengeSpiritTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB does not trigger when cast without a target")
-    void etbDoesNotTriggerWithoutTarget() {
+    @DisplayName("ETB is not put on the stack when no legal target exists")
+    void etbIsNotPutOnStackWithoutLegalTargets() {
         harness.setHand(player1, List.of(new HollowhengeSpirit()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -125,23 +118,94 @@ class HollowhengeSpiritTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Can flash in during the opponent's combat and remove an attacker")
+    void canFlashInDuringOpponentsCombat() {
+        Permanent attacker = addAttacker(player2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.setHand(player1, List.of(new HollowhengeSpirit()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Hollowhenge Spirit");
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(attacker.getAttackTarget()).isNull();
+    }
+
+    @Test
+    @DisplayName("Can remove its controller's own attacking creature")
+    void canRemoveOwnAttacker() {
+        Permanent attacker = addAttacker(player1);
+        attacker.setTapped(true);
+        harness.setHand(player1, List.of(new HollowhengeSpirit()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(attacker.isAttacking()).isFalse();
+        assertThat(attacker.getAttackTarget()).isNull();
+        assertThat(attacker.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Sanctuary Cat");
+    }
+
+    @Test
+    @DisplayName("Removing the sole blocker leaves the attacker blocked")
+    void removingSoleBlockerLeavesAttackerBlocked() {
+        Permanent attacker = addAttacker(player2);
+        Permanent blocker = addCreatureReady(player1, new SanctuaryCat());
+        blocker.setBlocking(true);
+        blocker.addBlockingTargetId(attacker.getId());
+        harness.setHand(player1, List.of(new HollowhengeSpirit()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0, blocker.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(blocker.isBlocking()).isFalse();
+        assertThat(blocker.getBlockingTargetIds()).isEmpty();
+        assertThat(attacker.isAttacking()).isTrue();
+        assertThat(attacker.isBlockedWithoutBlockers()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A target that leaves combat before resolution remains on the battlefield")
+    void targetLeavesCombatBeforeResolution() {
+        Permanent attacker = addAttacker(player2);
+        attacker.setTapped(true);
+        harness.setHand(player1, List.of(new HollowhengeSpirit()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+        attacker.setAttacking(false);
+        attacker.setAttackTarget(null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Hollowhenge Spirit");
+        harness.assertOnBattlefield(player2, "Sanctuary Cat");
+        assertThat(attacker.isTapped()).isTrue();
+    }
 
     private Permanent addAttacker(com.github.laxika.magicalvibes.model.Player owner) {
-        harness.addToBattlefield(owner, new GrizzlyBears());
-        Permanent attacker = findPermanent(owner, "Grizzly Bears");
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(owner, new SanctuaryCat());
         attacker.setAttacking(true);
-        attacker.setAttackTarget(player1.getId());
+        attacker.setAttackTarget(owner.equals(player1) ? player2.getId() : player1.getId());
         return attacker;
     }
 
     private Permanent addBlocker(com.github.laxika.magicalvibes.model.Player owner) {
-        harness.addToBattlefield(owner, new GrizzlyBears());
-        Permanent blocker = findPermanent(owner, "Grizzly Bears");
-        blocker.setSummoningSick(false);
+        Permanent attacker = addAttacker(owner.equals(player1) ? player2 : player1);
+        Permanent blocker = addCreatureReady(owner, new SanctuaryCat());
         blocker.setBlocking(true);
-        blocker.addBlockingTargetId(UUID.randomUUID());
+        blocker.addBlockingTargetId(attacker.getId());
         return blocker;
     }
 }
