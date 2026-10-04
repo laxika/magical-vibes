@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({GuildscornWard.class, GrizzlyBears.class, NivixGuildmage.class,
+        BituminousBlast.class, FountainOfYouth.class, GiftOfOrzhova.class})
 class GuildscornWardTest extends BaseCardTest {
 
     @Test
@@ -81,21 +85,87 @@ class GuildscornWardTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void multicoloredCreatureCannotBlockEnchantedAttacker() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        castWard(bears);
+        addCreatureReady(player2, new NivixGuildmage());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void monocoloredCreatureCanBlockEnchantedAttacker() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        castWard(bears);
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(bears);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void enchantedBlockerPreventsMulticoloredCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new NivixGuildmage());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        castWard(bears);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void existingMulticoloredAuraFallsOffWhenWardResolves() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GiftOfOrzhova()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Gift of Orzhova")).isEqualTo(1);
+
+        castWard(bears);
+
+        assertThat(countPermanents(player1, "Gift of Orzhova")).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof GiftOfOrzhova);
+        assertThat(findPermanent(player1, "Guildscorn Ward").getAttachedTo()).isEqualTo(bears.getId());
+    }
+
+    @Test
+    void multicoloredAuraCannotTargetEnchantedCreature() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        castWard(bears);
+        harness.setHand(player1, List.of(new GiftOfOrzhova()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private Permanent castWard(Permanent host) {
         harness.setHand(player1, List.of(new GuildscornWard()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castEnchantment(player1, 0, host.getId());
         harness.passBothPriorities();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getClass() == GuildscornWard.class)
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Guildscorn Ward");
     }
 
     private Permanent attachWard(Permanent host) {
-        Permanent aura = new Permanent(new GuildscornWard());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new GuildscornWard());
         aura.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 }
