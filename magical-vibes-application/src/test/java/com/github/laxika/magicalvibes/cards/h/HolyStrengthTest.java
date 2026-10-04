@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HolyStrength.class, GrizzlyBears.class, HowlingMine.class})
+@CardUsed({HolyStrength.class, GrizzlyBears.class, HowlingMine.class, Disenchant.class})
 class HolyStrengthTest extends BaseCardTest {
 
     @Test
@@ -137,5 +138,45 @@ class HolyStrengthTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Multiple Holy Strength Auras stack their bonuses on the same creature")
+    void multipleAurasStack() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HolyStrength(), new HolyStrength()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Holy Strength")).hasSize(2)
+                .allSatisfy(aura -> assertThat(aura.getAttachedTo()).isEqualTo(bears.getId()));
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Destroying Holy Strength removes its bonus without destroying the creature")
+    void disenchantRemovesBoost() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HolyStrength(), new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        Permanent aura = findPermanent(player1, "Holy Strength");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+
+        harness.castAndResolveInstant(player1, 0, aura.getId());
+
+        harness.assertInGraveyard(player1, "Holy Strength");
+        harness.assertNotOnBattlefield(player1, "Holy Strength");
+        assertThat(findPermanent(player1, "Grizzly Bears")).isSameAs(bears);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 }
