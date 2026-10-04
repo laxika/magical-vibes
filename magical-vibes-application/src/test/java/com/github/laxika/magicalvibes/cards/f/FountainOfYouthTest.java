@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.GameData;
@@ -12,10 +13,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FountainOfYouth.class})
+@CardUsed({FountainOfYouth.class, Naturalize.class})
 class FountainOfYouthTest extends BaseCardTest {
 
     // ===== Activation =====
@@ -117,8 +120,8 @@ class FountainOfYouthTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot activate twice in a turn because it requires tap")
-    void cannotActivateTwice() {
+    @DisplayName("Cannot activate again while Fountain of Youth is tapped")
+    void cannotActivateWhileTapped() {
         harness.addToBattlefield(player1, new FountainOfYouth());
         harness.addMana(player1, ManaColor.WHITE, 4);
 
@@ -141,6 +144,57 @@ class FountainOfYouthTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Fountain of Youth");
         harness.assertNotInGraveyard(player1, "Fountain of Youth");
+    }
+
+    @Test
+    @DisplayName("Life is gained on resolution, not when paying the activation cost")
+    void lifeGainWaitsForResolution() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new FountainOfYouth());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("Untapping permits another activation in the same turn")
+    void canActivateAgainAfterUntapping() {
+        harness.setLife(player1, 20);
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        fountain.untap();
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        harness.assertLife(player1, 22);
+        assertThat(fountain.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Destroying the Fountain in response does not stop the life gain")
+    @CardUsed({FountainOfYouth.class, Naturalize.class})
+    void abilityResolvesAfterSourceIsDestroyed() {
+        harness.setLife(player1, 20);
+        Permanent fountain = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.castInstant(player2, 0, fountain.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fountain of Youth");
+        harness.assertLife(player1, 20);
+        resolveAllTriggers();
+        harness.assertLife(player1, 21);
     }
 }
 
