@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.p.PithingNeedle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HeroesRemembered.class})
+@CardUsed({HeroesRemembered.class, PithingNeedle.class})
 class HeroesRememberedTest extends BaseCardTest {
 
     @Test
@@ -63,6 +64,49 @@ class HeroesRememberedTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
         harness.assertLife(player1, 5);
         harness.assertNotInGraveyard(player1, "Heroes Remembered");
+    }
+
+    @Test
+    @DisplayName("Opponent upkeeps do not remove suspend counters")
+    void opponentUpkeepDoesNotRemoveTimeCounter() {
+        HeroesRemembered card = suspendCard();
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 10);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        harness.assertLife(player1, 5);
+    }
+
+    @Test
+    @DisplayName("Nine owner upkeeps leave one counter and do not cast the spell")
+    void nineUpkeepsDoNotCastSpellEarly() {
+        HeroesRemembered card = suspendCard();
+
+        for (int i = 0; i < 9; i++) {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+        }
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 5);
+    }
+
+    @Test
+    @DisplayName("Pithing Needle does not prevent the suspend special action")
+    void pithingNeedleDoesNotPreventSuspend() {
+        harness.addToBattlefieldAndReturn(player2, new PithingNeedle())
+                .setChosenName("Heroes Remembered");
+
+        HeroesRemembered card = suspendCard();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 10);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 5);
     }
 
     private HeroesRemembered suspendCard() {
