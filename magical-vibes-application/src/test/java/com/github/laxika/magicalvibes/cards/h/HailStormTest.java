@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.p.PhantomTiger;
 import com.github.laxika.magicalvibes.cards.s.SpittingSlug;
 import com.github.laxika.magicalvibes.cards.t.Thallid;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HailStorm.class, SpittingSlug.class, Thallid.class})
+@CardUsed({HailStorm.class, PhantomTiger.class, SpittingSlug.class, Thallid.class})
 class HailStormTest extends BaseCardTest {
 
     @Test
@@ -79,6 +81,42 @@ class HailStormTest extends BaseCardTest {
         castHailStorm();
 
         assertThat(attacker.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Damage to the caster's attacking creature is one simultaneous event")
+    void casterAttackerPreventsDamageAndRemovesOnlyOneCounter() {
+        harness.forceActivePlayer(player2);
+        Permanent attacker = harness.enterBattlefieldAndReturn(player2, new PhantomTiger());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player1.getId());
+
+        castHailStorm();
+
+        harness.assertOnBattlefield(player2, "Phantom Tiger");
+        assertThat(attacker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Without attackers, still damages the caster and all their creatures")
+    void damagesCasterAndCreaturesWithoutAttackers() {
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player2, new Thallid());
+        harness.addToBattlefield(player2, new SpittingSlug());
+        harness.addToBattlefield(player1, new Thallid());
+        int casterLifeBefore = gd.getLife(player2.getId());
+        int opponentLifeBefore = gd.getLife(player1.getId());
+
+        castHailStorm();
+
+        harness.assertInGraveyard(player2, "Thallid");
+        harness.assertNotOnBattlefield(player2, "Thallid");
+        assertThat(findPermanent(player2, "Spitting Slug").getMarkedDamage()).isEqualTo(1);
+        assertThat(findPermanent(player1, "Thallid").getMarkedDamage()).isZero();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(casterLifeBefore - 1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(opponentLifeBefore);
     }
 
     private void castHailStorm() {
