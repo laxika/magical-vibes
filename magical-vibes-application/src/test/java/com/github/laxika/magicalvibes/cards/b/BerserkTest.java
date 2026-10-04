@@ -152,6 +152,24 @@ class BerserkTest extends BaseCardTest {
     }
 
     @Test
+    void cannotCastInAnAdditionalCombatAfterTheFirstCombatWasSkipped() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        gd.skipNextCombatPhaseCount.put(player1.getId(), 1);
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+        harness.castFromHand(player1, new RelentlessAssault(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.setHand(player1, List.of(new Berserk()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
     void usesPowerAtResolutionForEachBerserk() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
@@ -10,12 +11,16 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToOwnCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Set;
 
 @CardRegistration(set = "ACR", collectorNumber = "51")
 public class BleedingEffect extends Card {
@@ -38,10 +43,20 @@ public class BleedingEffect extends Card {
         // At the beginning of combat on your turn, creatures you control gain each watched
         // keyword until end of turn if a creature card in your graveyard has that keyword.
         // These trailing "if" clauses are resolution-time conditions, not intervening-if gates.
-        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, SequenceEffect.of(
-                SHARED_KEYWORDS.stream()
-                        .map(BleedingEffect::grantKeywordFromGraveyard)
-                        .toArray(CardEffect[]::new)));
+        List<CardEffect> grants = new ArrayList<>(SHARED_KEYWORDS.stream()
+                .map(BleedingEffect::grantKeywordFromGraveyard).toList());
+        for (CardColor color : CardColor.values()) {
+            grants.add(grantRestrictedHexproofFromGraveyard(
+                    TargetingRestrictionEffect.hexproofFromColors(Set.of(color))));
+        }
+        grants.add(grantRestrictedHexproofFromGraveyard(TargetingRestrictionEffect.hexproofFromMonocolored()));
+        for (CardType type : List.of(CardType.ARTIFACT, CardType.CREATURE, CardType.ENCHANTMENT,
+                CardType.INSTANT, CardType.SORCERY, CardType.LAND, CardType.PLANESWALKER, CardType.BATTLE,
+                CardType.KINDRED)) {
+            grants.add(grantRestrictedHexproofFromGraveyard(
+                    TargetingRestrictionEffect.hexproofFromCardTypes(Set.of(type))));
+        }
+        addEffect(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED, SequenceEffect.of(grants.toArray(CardEffect[]::new)));
     }
 
     private static CardEffect grantKeywordFromGraveyard(Keyword keyword) {
@@ -51,5 +66,13 @@ public class BleedingEffect extends Card {
                         new CardKeywordPredicate(keyword)
                 ))),
                 new GrantKeywordEffect(keyword, GrantScope.ALL_OWN_CREATURES));
+    }
+
+    private static CardEffect grantRestrictedHexproofFromGraveyard(TargetingRestrictionEffect restriction) {
+        return ConditionalEffect.unless(
+                new GraveyardCardThreshold(1, new CardAllOfPredicate(List.of(
+                        new CardTypePredicate(CardType.CREATURE),
+                        new CardKeywordPredicate(Keyword.HEXPROOF, restriction)))),
+                new GrantStaticEffectToOwnCreaturesUntilEndOfTurnEffect(restriction));
     }
 }

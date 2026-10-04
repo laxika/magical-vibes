@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.AllCardNamesEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForTargetCreatureNameToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -36,7 +37,9 @@ public class SearchLibraryForTargetCreatureNameToBattlefieldEffectHandler implem
             return;
         }
 
-        String targetName = target.getCard().getName();
+        String targetName = gameQueryService.getEffectiveName(gameData, target);
+        boolean allNames = gameQueryService.hasActiveStaticEffectIncludingGranted(
+                gameData, target, AllCardNamesEffect.class);
         UUID controllerId = entry.getControllerId();
         String cardType = searchEffect.creatureCardOnly()
                 ? "creature card"
@@ -50,7 +53,7 @@ public class SearchLibraryForTargetCreatureNameToBattlefieldEffectHandler implem
         librarySearchSupport.performLibrarySearch(
                 gameData,
                 controllerId,
-                card -> targetName.equals(card.getName())
+                card -> (allNames || card.hasAllCardNames() || targetName.equals(card.getName()))
                         && (!searchEffect.permanentCardOnly() || card.getType().isPermanentType())
                         && (!searchEffect.creatureCardOnly()
                         || card.hasType(com.github.laxika.magicalvibes.model.CardType.CREATURE)),

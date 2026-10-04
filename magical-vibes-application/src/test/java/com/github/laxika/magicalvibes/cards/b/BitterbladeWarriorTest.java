@@ -78,7 +78,7 @@ class BitterbladeWarriorTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+        harness.withAutoStop(gd.currentStep,
                 () -> harness.handleMayAbilityChosen(player1, true));
 
         assertThat(gd.stack).hasSize(1);

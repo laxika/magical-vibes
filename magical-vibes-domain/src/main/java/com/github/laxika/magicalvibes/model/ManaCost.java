@@ -826,7 +826,10 @@ public class ManaCost {
         for (ManaColor color : ManaColor.values()) {
             availableMana.put(color, pool.get(color));
         }
+        availableMana.put(ManaColor.COLORLESS, Math.max(0,
+                pool.get(ManaColor.COLORLESS) - coloredCosts.getOrDefault(ManaColor.COLORLESS, 0)));
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            if (entry.getKey() == ManaColor.COLORLESS) continue;
             convertAnyManaTo(pool, entry.getKey(), entry.getValue(), availableMana);
         }
         for (HybridSymbol hybrid : hybridCosts) {

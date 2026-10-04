@@ -184,7 +184,8 @@ public class GraveyardTargetValidators {
                     + effect.manaValueXOffset() + " or less (" + requiredManaValue + ")");
         }
         if (effect.maxManaValueEqualsLifeGainedThisTurn()) {
-            UUID sourceControllerId = tvs.findSourcePermanentController(ctx);
+            UUID sourceControllerId = ctx.sourceControllerId() != null
+                    ? ctx.sourceControllerId() : tvs.findSourcePermanentController(ctx);
             int lifeGained = sourceControllerId == null
                     ? 0 : ctx.gameData().getLifeGainedThisTurn(sourceControllerId);
             if (graveyardCard.getManaValue() > lifeGained) {
@@ -193,7 +194,8 @@ public class GraveyardTargetValidators {
             }
         }
         if (effect.maxManaValueEqualsLifeLostThisTurn()) {
-            UUID sourceControllerId = tvs.findSourcePermanentController(ctx);
+            UUID sourceControllerId = ctx.sourceControllerId() != null
+                    ? ctx.sourceControllerId() : tvs.findSourcePermanentController(ctx);
             int lifeLost = sourceControllerId == null
                     ? 0 : ctx.gameData().lifeLostThisTurn.getOrDefault(sourceControllerId, 0);
             if (graveyardCard.getManaValue() > lifeLost) {

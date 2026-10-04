@@ -202,6 +202,48 @@ class BrainInAJarTest extends BaseCardTest {
     }
 
     @Test
+    void freeSpellStillPaysItsAdditionalManaCost() {
+        harness.addToBattlefield(player1, new BrainInAJar());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DevilthornFox());
+        LightningAxe spell = new LightningAxe();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Lightning Axe");
+        harness.assertNotOnBattlefield(player2, "Devilthorn Fox");
+    }
+
+    @Test
+    void freeSpellCanDiscardForItsAdditionalCost() {
+        harness.addToBattlefield(player1, new BrainInAJar());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DevilthornFox());
+        LightningAxe spell = new LightningAxe();
+        NaggingThoughts discarded = new NaggingThoughts();
+        harness.setHand(player1, List.of(spell, discarded));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Lightning Axe");
+        harness.assertNotOnBattlefield(player2, "Devilthorn Fox");
+    }
+
+    @Test
     void cannotRemoveMoreCountersThanPresent() {
         Permanent jar = harness.addToBattlefieldAndReturn(player1, new BrainInAJar());
         jar.setCounterCount(CounterType.CHARGE, 1);

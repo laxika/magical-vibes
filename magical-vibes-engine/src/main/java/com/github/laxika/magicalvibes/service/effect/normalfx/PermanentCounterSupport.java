@@ -1895,6 +1895,10 @@ public class PermanentCounterSupport {
 
     public void recordPlusOnePlusOneCounterPlacedOnCreature(GameData gameData, Permanent target,
                                                             UUID placingPlayerId) {
+        if (placingPlayerId != null && target != null) {
+            gameData.permanentsWithPlusOneCountersPutByPlayerThisTurn
+                    .computeIfAbsent(placingPlayerId, ignored -> ConcurrentHashMap.newKeySet()).add(target.getId());
+        }
         if (placingPlayerId != null && target != null && gameQueryService.isCreature(gameData, target)) {
             gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.add(placingPlayerId);
         }
@@ -1938,6 +1942,10 @@ public class PermanentCounterSupport {
 
     private void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
             GameData gameData, Permanent target, UUID controllerId, int count, UUID placingPlayerId) {
+        if (target != null && count > 0 && placingPlayerId != null) {
+            gameData.permanentsWithPlusOneCountersPutByPlayerThisTurn
+                    .computeIfAbsent(placingPlayerId, ignored -> ConcurrentHashMap.newKeySet()).add(target.getId());
+        }
         if (target != null && controllerId != null) {
             recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
                     gameData, target, controllerId, count, placingPlayerId);

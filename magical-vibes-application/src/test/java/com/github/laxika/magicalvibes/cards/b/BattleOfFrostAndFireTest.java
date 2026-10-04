@@ -188,6 +188,7 @@ class BattleOfFrostAndFireTest extends BaseCardTest {
     @Test
     @DisplayName("Chapter III ignores qualifying spells cast by the opponent")
     void chapterIIIIgnoresOpponentSpells() {
+        harness.setHand(player1, List.of());
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new BattleOfFrostAndFire());
         saga.setCounterCount(CounterType.LORE, 2);
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
@@ -206,6 +207,8 @@ class BattleOfFrostAndFireTest extends BaseCardTest {
     @Test
     @DisplayName("Chapter III stops triggering after the turn ends")
     void chapterIIIExpiresAtEndOfTurn() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         Permanent saga = harness.addToBattlefieldAndReturn(player1, new BattleOfFrostAndFire());
         saga.setCounterCount(CounterType.LORE, 2);
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
@@ -215,6 +218,7 @@ class BattleOfFrostAndFireTest extends BaseCardTest {
 
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of());
         harness.castFromHand(player1, new ColossalDreadmaw(), "{4}{G}{G}");
 
         assertThat(gd.stack).hasSize(1);

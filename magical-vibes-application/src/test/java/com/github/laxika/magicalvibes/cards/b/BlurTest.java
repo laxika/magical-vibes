@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.s.SteadfastPaladin;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Blur.class, GrizzlyBears.class, SteadfastPaladin.class})
+@CardUsed({Blur.class, GrizzlyBears.class, SteadfastPaladin.class, ControlMagic.class})
 class BlurTest extends BaseCardTest {
 
     @Test
@@ -66,8 +67,10 @@ class BlurTest extends BaseCardTest {
 
     @Test
     void returnsStolenCreatureToOwnerAndDrawsForCaster() {
-        Permanent paladin = harness.addToBattlefieldAndReturn(player1, new SteadfastPaladin());
-        gd.stolenCreatures.put(paladin.getId(), player2.getId());
+        Permanent paladin = harness.addToBattlefieldAndReturn(player2, new SteadfastPaladin());
+        Permanent control = harness.addToBattlefieldAndReturn(player1, new ControlMagic());
+        control.setAttachedTo(paladin.getId());
+        harness.runStateBasedActions();
         harness.setHand(player1, List.of(new Blur()));
         SteadfastPaladin draw = new SteadfastPaladin();
         harness.setLibrary(player1, List.of(draw));
@@ -94,9 +97,9 @@ class BlurTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castInstant(player1, 0, paladin.getId());
-        gd.playerBattlefields.get(player1.getId()).remove(paladin);
-        gd.playerBattlefields.get(player2.getId()).add(paladin);
-        gd.stolenCreatures.put(paladin.getId(), player1.getId());
+        Permanent control = harness.addToBattlefieldAndReturn(player2, new ControlMagic());
+        control.setAttachedTo(paladin.getId());
+        harness.runStateBasedActions();
         harness.passBothPriorities();
 
         assertThat(harness.getPermanentId(player2, "Steadfast Paladin")).isEqualTo(paladin.getId());

@@ -121,6 +121,9 @@ class BanebladeScoundrelTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, blocker2)).isEqualTo(1);
 
         resolveCombat();
+        harness.handleCombatDamageAssigned(player1, gd.playerBattlefields.get(player1.getId()).indexOf(marauder),
+                java.util.Map.of(blocker1.getId(), 1,
+                        blocker2.getId(), gqs.getEffectivePower(gd, marauder) - 1));
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker1, blocker2);

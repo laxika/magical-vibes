@@ -632,7 +632,9 @@ public class DrawService {
                         .card(notionThief)
                         .text(" makes " + gameData.playerIdToName.get(thiefController) + " draw a card instead.")
                         .build());
-                performDrawCard(gameData, thiefController);
+                if (!performEmptyHandReplacementDraw(gameData, thiefController)) {
+                    performDrawCard(gameData, thiefController);
+                }
                 return;
             }
 
@@ -683,11 +685,7 @@ public class DrawService {
         // Blood Scrivener: if you would draw a card while you have no cards in hand, instead you
         // draw two cards and you lose 1 life. The hand is checked as the draw would happen, so only
         // the first draw of a multi-card draw sees an empty hand.
-        Card bloodScrivenerSource = findEmptyHandDrawExtraSourceCard(gameData, playerId);
-        if (bloodScrivenerSource != null && isHandEmpty(gameData, playerId)) {
-            performDrawCard(gameData, playerId);
-            performDrawCard(gameData, playerId);
-            lifeSupport.applyLifeLoss(gameData, playerId, 1, bloodScrivenerSource.getName());
+        if (performEmptyHandReplacementDraw(gameData, playerId)) {
             return;
         }
 
@@ -1230,20 +1228,26 @@ public class DrawService {
                 ConditionContext.forPermanent(permanent, controllerId));
     }
 
-    private Card findEmptyHandDrawExtraSourceCard(GameData gameData, UUID playerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null) {
-            return null;
+    private boolean performEmptyHandReplacementDraw(GameData gameData, UUID playerId) {
+        if (!isHandEmpty(gameData, playerId)) {
+            return false;
         }
-
-        for (Permanent permanent : battlefield) {
-            boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(effect -> effect instanceof EmptyHandDrawExtraCardAndLoseLifeEffect);
-            if (hasEffect) {
-                return permanent.getCard();
-            }
+        List<Card> sources = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> gameQueryService.hasActiveStaticEffect(
+                        gameData, permanent, EmptyHandDrawExtraCardAndLoseLifeEffect.class))
+                .map(Permanent::getCard)
+                .toList();
+        if (sources.isEmpty()) {
+            return false;
         }
-        return null;
+        // Each unused replacement adds one draw to the first still-empty-hand draw.
+        for (int i = 0; i <= sources.size(); i++) {
+            performDrawCard(gameData, playerId);
+        }
+        for (Card source : sources) {
+            lifeSupport.applyLifeLoss(gameData, playerId, 1, source.getName());
+        }
+        return true;
     }
 
     /**

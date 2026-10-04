@@ -155,7 +155,7 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
                         return;
                     }
                 }
-                opponentCaused = true;
+                opponentCaused = !playerId.equals(entry.getControllerId());
             }
             case DEFENDING_PLAYER -> {
                 // The attacked player/planeswalker was baked onto the combat trigger as

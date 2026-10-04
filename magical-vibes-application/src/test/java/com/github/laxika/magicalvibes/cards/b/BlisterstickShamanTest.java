@@ -178,11 +178,11 @@ class BlisterstickShamanTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A supplied cast-time target must not become the ETB target")
-    void castTimeTargetDoesNotBindEtbTarget() {
+    @DisplayName("The creature spell is untargeted and its ETB target is chosen on entry")
+    void creatureSpellIsUntargetedAndEtbChoosesTargetOnEntry() {
         harness.setHand(player1, List.of(new BlisterstickShaman()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.castCreature(player1, 0, player2.getId());
+        harness.castCreature(player1, 0);
 
         assertThat(harness.getGameData().stack.getFirst().getTargetId()).isNull();
         harness.passBothPriorities();

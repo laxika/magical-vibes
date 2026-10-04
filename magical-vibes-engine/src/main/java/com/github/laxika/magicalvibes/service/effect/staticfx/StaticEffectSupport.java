@@ -286,9 +286,7 @@ public class StaticEffectSupport {
                 }
             }
         } else if (wrapped instanceof GrantActivatedAbilityEffect grant) {
-            if (grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
-                    || grant.scope() == GrantScope.ALL_OWN_CREATURES
-                    || grant.scope() == GrantScope.OWN_PERMANENTS) {
+            if (selfInScope(context, grant.scope(), grant.filter())) {
                 accumulator.addActivatedAbility(grant.ability().withGrantSource(context.sourceId()));
             }
         } else if (wrapped instanceof GrantColorEffect grant) {

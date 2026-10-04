@@ -125,8 +125,10 @@ class BoneShredderTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BoneShredder()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castCreature(player1, 0);
-        resolveAllTriggers();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castCreature(player1, 0);
+            resolveAllTriggers();
+        });
         harness.assertOnBattlefield(player1, "Bone Shredder");
 
         advanceToUpkeep(player1);
@@ -150,8 +152,10 @@ class BoneShredderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castAndResolveInstant(player1, 0, targetId);
-        resolveAllTriggers();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castAndResolveInstant(player1, 0, targetId);
+            resolveAllTriggers();
+        });
         harness.assertInHand(player2, "Bouncing Beebles");
 
         advanceToUpkeep(player1);

@@ -51,6 +51,8 @@ import java.util.UUID;
 @Slf4j
 @Service
 public class PermanentChoiceSpellHandlerService {
+    @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
 
     private final GameQueryService gameQueryService;
     private final GraveyardService graveyardService;
@@ -397,7 +399,10 @@ public class PermanentChoiceSpellHandlerService {
             );
             entry.setCopy(ect.copy());
             entry.setPhysicalCard(ect.physicalCard());
-            entry.setCastWithAdventure(ect.physicalCard() != null && ect.physicalCard() != ect.cardToCast());
+            entry.setCastWithAdventure(ect.physicalCard() != null
+                    && ect.physicalCard().getCastingOption(com.github.laxika.magicalvibes.model.AdventureCast.class).isPresent()
+                    && ect.physicalCard().getBackFaceCard() != null
+                    && ect.physicalCard().getBackFaceCard().getName().equals(ect.cardToCast().getName()));
             entry.setSourceZone(Zone.EXILE);
             entry.setExileInsteadOfGraveyard(gameData.exileInsteadOfGraveyard.remove(ect.cardToCast().getId()));
             if (gameData.spellsGrantedHasteOnEntry.remove(ect.cardToCast().getId())) {
@@ -568,7 +573,10 @@ public class PermanentChoiceSpellHandlerService {
         );
         entry.setCopy(ect.copy());
         entry.setPhysicalCard(ect.physicalCard());
-        entry.setCastWithAdventure(ect.physicalCard() != null && ect.physicalCard() != card);
+        entry.setCastWithAdventure(ect.physicalCard() != null
+                && ect.physicalCard().getCastingOption(com.github.laxika.magicalvibes.model.AdventureCast.class).isPresent()
+                && ect.physicalCard().getBackFaceCard() != null
+                && ect.physicalCard().getBackFaceCard().getName().equals(card.getName()));
         entry.setSourceZone(Zone.EXILE);
         entry.setExileInsteadOfGraveyard(gameData.exileInsteadOfGraveyard.remove(card.getId()));
         if (gameData.spellsGrantedHasteOnEntry.remove(card.getId())) {
@@ -731,6 +739,18 @@ public class PermanentChoiceSpellHandlerService {
                 hct.controllerId(), hct.xValue());
 
         if (isPermanentOrPlayerTarget || isGraveyardTarget || isSpellTarget) {
+            var distribution = hct.spellEffects().stream()
+                    .filter(com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect.class::isInstance)
+                    .map(com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect.class::cast)
+                    .filter(effect -> effect.mode() == com.github.laxika.magicalvibes.model.effect.DivisionMode.CHOSEN)
+                    .findFirst().orElse(null);
+            if (distribution != null) {
+                int total = amountEvaluationService.evaluate(gameData, distribution.total(),
+                        com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(
+                                hct.controllerId(), hct.xValue(), hct.cardToCast()));
+                completeHandCastDistribution(gameData, hct, List.of(permanentId), Map.of(permanentId, total));
+                return;
+            }
             Map<UUID, Integer> damageAssignments = hct.castForMadnessCost()
                     && EffectResolution.needsDamageDistribution(hct.spellEffects())
                     ? Map.of(permanentId, dealDividedDamageSupport.damageAssignedToSingleTarget(
@@ -753,6 +773,7 @@ public class PermanentChoiceSpellHandlerService {
             entry.setMadness(hct.castForMadnessCost());
             entry.setExileInsteadOfGraveyard(hct.exileInsteadOfGraveyard());
             entry.setSourceZone(hct.sourceZone());
+            if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, entry)) return;
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(hct.controllerId(), hct.cardToCast());
@@ -837,6 +858,30 @@ public class PermanentChoiceSpellHandlerService {
             gameData.wordOfCommandCastingCard = false;
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
+    }
+
+    /** Completes announced counter division while preserving the alternative cast's spell identity. */
+    public void completeHandCastDistribution(GameData gameData, PermanentChoiceContext.HandCastSpellTarget context,
+                                             List<UUID> targetIds, Map<UUID, Integer> assignments) {
+        StackEntry entry = new StackEntry(context.spellType(), context.cardToCast(), context.controllerId(),
+                context.cardToCast().getName(), new ArrayList<>(context.spellEffects()), context.xValue(),
+                null, null, assignments, null, List.of(), targetIds);
+        entry.setMadness(context.castForMadnessCost());
+        entry.setExileInsteadOfGraveyard(context.exileInsteadOfGraveyard());
+        entry.setSourceZone(context.sourceZone());
+        if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, entry)) return;
+        gameData.stack.add(entry);
+        gameData.recordSpellCast(context.controllerId(), context.cardToCast());
+        if (context.sourceZone() == Zone.COMMAND) {
+            gameData.commanderTaxByCardId.merge(context.cardToCast().getId(), 2, Integer::sum);
+        }
+        gameData.priorityPassedBy.clear();
+        triggerCollectionService.checkSpellCastTriggers(gameData, context.cardToCast(), context.controllerId(),
+                context.castForMadnessCost() ? Zone.EXILE : context.sourceZone());
+        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        exileCastTargetSupport.queueAfterSuccessfulCast(gameData, context.cardToCast(), context.controllerId(),
+                context.sourcePermanentId(), context.afterSuccessfulCastEffect());
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleOpponentChosenSpellTarget(GameData gameData, UUID chosenId,

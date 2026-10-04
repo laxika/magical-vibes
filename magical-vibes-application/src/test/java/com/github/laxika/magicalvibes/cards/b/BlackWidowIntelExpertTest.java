@@ -99,9 +99,7 @@ class BlackWidowIntelExpertTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(opponentFirstDraw, opponentSecondDraw));
         Permanent widow = addCreatureReady(player1, new BlackWidowIntelExpert());
 
-        declareAttackersAndPrepareBlockers(List.of(0));
-        harness.forceStep(TurnStep.COMBAT_DAMAGE);
-        harness.resolveCombatDamage();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> declareAttackers(List.of(0)));
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();

@@ -113,9 +113,12 @@ class BasrisLieutenantTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, lieutenant.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("protection");
+        harness.addToBattlefield(player1, new AlpineWatchdog());
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, lieutenant.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

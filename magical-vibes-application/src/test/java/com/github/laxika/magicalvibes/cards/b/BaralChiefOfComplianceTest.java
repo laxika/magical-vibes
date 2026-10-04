@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.n.NarsetParterOfVeils;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SirenStormtamer;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -279,7 +280,8 @@ class BaralChiefOfComplianceTest extends BaseCardTest {
     @DisplayName("A prohibited optional draw cannot be chosen and does not cause a discard")
     void drawRestrictionPreventsOptionalDrawAndDiscard() {
         harness.addToBattlefield(player1, new BaralChiefOfCompliance());
-        harness.addToBattlefield(player2, new NarsetParterOfVeils());
+        harness.addToBattlefieldAndReturn(player2, new NarsetParterOfVeils())
+                .setCounterCount(CounterType.LOYALTY, 5);
         Shock shock = new Shock();
         Shock firstDraw = new Shock();
         Shock blockedDraw = new Shock();

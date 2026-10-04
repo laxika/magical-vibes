@@ -41,14 +41,13 @@ class BestialMenaceTest extends BaseCardTest {
     @DisplayName("Esix replaces all three tokens from the single creation event")
     void esixReplacesAllThreeTokens() {
         harness.addToBattlefield(player1, new EsixFractalBloom());
-        Permanent baloth = harness.addToBattlefieldAndReturn(player2, new LeatherbackBaloth());
+        harness.addToBattlefield(player2, new LeatherbackBaloth());
         harness.setHand(player1, List.of(new BestialMenace()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, baloth.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())

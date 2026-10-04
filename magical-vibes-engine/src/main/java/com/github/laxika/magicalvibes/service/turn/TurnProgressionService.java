@@ -368,6 +368,9 @@ public class TurnProgressionService {
         }
 
         if (next != null) {
+            if (next == TurnStep.COMBAT_DAMAGE || next == TurnStep.END_OF_COMBAT) {
+                gameData.firstCombatDamageTimingClosed = true;
+            }
             gameData.currentStep = next;
             gameData.currentUpkeepIsAdditional = next == TurnStep.UPKEEP
                     && (nextUpkeepIsAdditional || additionalBeginningPhaseUpkeep);
@@ -751,6 +754,7 @@ public class TurnProgressionService {
             // phase brought us here without ever entering PRECOMBAT_MAIN.
             if (next == TurnStep.BEGINNING_OF_COMBAT
                     && gameData.skipNextCombatPhaseCount.getOrDefault(gameData.activePlayerId, 0) > 0) {
+                gameData.firstCombatDamageTimingClosed = true;
                 gameData.skipCombatPhaseExpirationsThisTurn.computeIfPresent(gameData.activePlayerId,
                         (playerId, count) -> count > 1 ? count - 1 : null);
                 gameData.skipNextCombatPhaseCount.computeIfPresent(gameData.activePlayerId,
@@ -766,6 +770,7 @@ public class TurnProgressionService {
             }
             if ((next == TurnStep.BEGINNING_OF_COMBAT || next == TurnStep.END_OF_COMBAT)
                     && skipped.contains(SkipStepOrPhaseKind.COMBAT_PHASE)) {
+                gameData.firstCombatDamageTimingClosed = true;
                 logSkippedPhase(gameData, "combat phase");
                 if (gameData.additionalCombatPhasesOnly > 0) {
                     gameData.additionalCombatPhasesOnly--;
@@ -1197,6 +1202,7 @@ public class TurnProgressionService {
         gameData.combatDamageSourceNamesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
         gameData.combatDamageSourcesWithLegendaryThisTurn.clear();
+        gameData.legendaryCreatureCombatDamageToPlayersThisTurn.clear();
         gameData.combatDamageToPlayerControllerSubtypesThisTurn.clear();
         gameData.controllersDealtCombatDamageWithChangelingThisTurn.clear();
         gameData.combatDamageSourcesThatWereCommandersThisTurn.clear();
@@ -1241,6 +1247,7 @@ public class TurnProgressionService {
         gameData.permanentsThatAddedManaWithAbilityThisTurn.clear();
         gameData.firstResolutionTriggerKeysThisTurn.clear();
         gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.clear();
+        gameData.permanentsWithPlusOneCountersPutByPlayerThisTurn.clear();
         gameData.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn.clear();
         gameData.onceEachTurnAttackTriggersFiredThisTurn.clear();
         gameData.bendingTypesCompletedThisTurn.clear();
@@ -1272,6 +1279,7 @@ public class TurnProgressionService {
         gameData.additionalBeginningPhaseUntapInProgress = false;
         gameData.cardsGrantedFlashbackWithoutPayingManaCostUntilEndOfTurn.clear();
         gameData.combatPhasesThisTurn = 0;
+        gameData.firstCombatDamageTimingClosed = false;
         gameData.endStepsThisTurn = 0;
         gameData.additionalEndStepsPending = 0;
         gameData.cleanupDiscardPending = false;

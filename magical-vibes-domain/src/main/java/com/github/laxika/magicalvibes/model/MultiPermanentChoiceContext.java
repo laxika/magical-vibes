@@ -143,8 +143,14 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     record CounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                UUID sourcePermanentId, CounterType counterType, int total)
+                                UUID sourcePermanentId, CounterType counterType, int total,
+                                PermanentChoiceContext.HandCastSpellTarget spellCast)
             implements MultiPermanentChoiceContext {
+
+        public CounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, CounterType counterType, int total) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, counterType, total, null);
+        }
 
         public CounterDistribution {
             effects = List.copyOf(effects);

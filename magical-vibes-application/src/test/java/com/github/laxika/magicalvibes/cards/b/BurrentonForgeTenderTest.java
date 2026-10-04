@@ -94,7 +94,7 @@ class BurrentonForgeTenderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, redAttacker.getId());
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(redAttacker.getId());
+        assertThat(gqs.isPreventedFromDealingDamage(gd, redAttacker)).isTrue();
         assertThat(gd.playerSourceDamagePreventionIds.getOrDefault(player1.getId(), java.util.Set.of()))
                 .doesNotContain(redAttacker.getId());
     }
@@ -145,13 +145,13 @@ class BurrentonForgeTenderTest extends BaseCardTest {
     @DisplayName("Non-red creatures are not valid source choices")
     void nonRedSourceNotRecordedWhenOnlyGreenOnBattlefield() {
         addCreatureReady(player1, new BurrentonForgeTender());
-        addCreatureReady(player2, new GrizzlyBears());
+        Permanent greenCreature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.permanentsPreventedFromDealingDamage).isEmpty();
+        assertThat(gqs.isPreventedFromDealingDamage(gd, greenCreature)).isFalse();
         assertThat(gameLogContains("No permanents on the battlefield")).isTrue();
     }
 
@@ -165,14 +165,14 @@ class BurrentonForgeTenderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, redAttacker.getId());
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(redAttacker.getId());
+        assertThat(gqs.isPreventedFromDealingDamage(gd, redAttacker)).isTrue();
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).isEmpty();
+        assertThat(gqs.isPreventedFromDealingDamage(gd, redAttacker)).isFalse();
     }
 
     @Test

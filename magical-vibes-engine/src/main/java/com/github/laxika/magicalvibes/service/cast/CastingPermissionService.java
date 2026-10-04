@@ -1343,6 +1343,7 @@ public class CastingPermissionService {
                     gameData.currentStep == TurnStep.UPKEEP
                             && !playerId.equals(gameData.activePlayerId);
             case BEFORE_COMBAT_DAMAGE -> gameData.currentStep.isBeforeCombatDamage()
+                    && !gameData.firstCombatDamageTimingClosed
                     && gameData.combatPhasesThisTurn <= 1;
             case AFTER_COMBAT ->
                     gameData.currentStep.ordinal() > TurnStep.END_OF_COMBAT.ordinal();

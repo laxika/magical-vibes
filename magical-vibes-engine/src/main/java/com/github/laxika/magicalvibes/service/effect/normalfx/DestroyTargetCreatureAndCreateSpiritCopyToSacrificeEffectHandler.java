@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.action.SacrificeSelfAtNextEndStepTrigger;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -57,7 +56,8 @@ public class DestroyTargetCreatureAndCreateSpiritCopyToSacrificeEffectHandler im
                 gameData, entry.getControllerId(), spirit, 1, entry.getCard().getSetCode());
 
         for (UUID id : createdIds) {
-            gameData.queueDelayedAction(new DelayedPermanentAction(id, DelayedPermanentActionKind.SACRIFICE_AT_END_STEP));
+            gameData.queueDelayedAction(new SacrificeSelfAtNextEndStepTrigger(
+                    id, entry.getControllerId(), entry.getCard()));
         }
     }
 }

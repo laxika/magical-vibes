@@ -29,7 +29,7 @@ public class BladeSplicer extends Card {
 
         // Golems you control have first strike.
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
-                Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES,
+                Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasSubtypePredicate(CardSubtype.GOLEM)));
     }
 }

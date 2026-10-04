@@ -68,6 +68,10 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class MayCastHandlerService {
+    @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
+    @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport exileFreeCastQueueSupport;
     private final AdditionalSpellCostService additionalSpellCostService;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DealDividedDamageSupport dealDividedDamageSupport;
@@ -1327,6 +1331,15 @@ public class MayCastHandlerService {
         ManaCost cost = new ManaCost(costStr);
         ManaPool pool = gameData.playerManaPools.get(player.getId());
 
+        List<CardEffect> miracleSpellEffects = cardToCast.getEffects(EffectSlot.SPELL);
+        if (!cost.hasX()
+                && (EffectResolution.needsSpellCastTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast))
+                && buildValidSpellTargets(gameData, cardToCast, miracleSpellEffects, player.getId(), 0, false)
+                .isEmpty()) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         // An {X} in the alternative cost still has to be announced (CR 601.2b), so the actual
         // payment waits for the X prompt. Entreat the Angels' miracle cost {X}{W}{W}.
         if (cost.hasX()) {
@@ -1535,7 +1548,8 @@ public class MayCastHandlerService {
         }
         List<CardEffect> madnessEffects = cardToCast.hasType(CardType.INSTANT) || cardToCast.hasType(CardType.SORCERY)
                 ? cardToCast.getEffects(EffectSlot.SPELL) : List.of();
-        if ((EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast))
+        if ((cardToCast.hasType(CardType.INSTANT) || cardToCast.hasType(CardType.SORCERY) || cardToCast.isAura())
+                && (EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast))
                 && buildValidSpellTargets(gameData, cardToCast, madnessEffects, player.getId(), 0, true).isEmpty()) {
             gameData.removeFromExile(cardToCast.getId());
             graveyardService.addCardToGraveyard(gameData, player.getId(), cardToCast);
@@ -1920,6 +1934,15 @@ public class MayCastHandlerService {
             return;
         }
 
+        if (!additionalSpellCostService.satisfiableWithoutManaCost(gameData, player.getId(), cardToCast)) {
+            queueDeclineEffect(gameData, ability);
+            if (scryIfDeclined) queueScryFallback(gameData);
+            gameLogService.append(gameData, GameLog.text(playerName
+                    + " cannot cast the chosen card because its additional cost cannot be paid."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         if ((EffectResolution.needsTarget(cardToCast) || EffectResolution.needsSpellTarget(cardToCast))
                 && buildValidSpellTargets(gameData, cardToCast, cardToCast.getEffects(EffectSlot.SPELL),
                 player.getId(), 0, false).isEmpty()) {
@@ -2094,7 +2117,8 @@ public class MayCastHandlerService {
         boolean zeroDividedDamage = "madness".equals(costLabel)
                 && EffectResolution.needsDamageDistribution(spellEffects)
                 && dealDividedDamageSupport.damageAssignedToSingleTarget(gameData, spellEffects, playerId, xValue, true) == 0;
-        if (!zeroDividedDamage && (EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card))) {
+        if (!zeroDividedDamage && (!isPermanentSpell || card.isAura())
+                && (EffectResolution.needsTarget(card) || EffectResolution.needsSpellTarget(card))) {
             boolean castForMadnessCost = "madness".equals(costLabel);
             List<UUID> validTargets = buildValidSpellTargets(gameData, card, spellEffects, player.getId(),
                     xValue, castForMadnessCost);
@@ -2119,10 +2143,27 @@ public class MayCastHandlerService {
                 return;
             }
 
-            gameData.interaction.setPermanentChoiceContext(
+            PermanentChoiceContext.HandCastSpellTarget spellCast =
                     new PermanentChoiceContext.HandCastSpellTarget(card, playerId, spellEffects, spellType, xValue,
                             castForMadnessCost, exileInsteadOfGraveyard, sourceZone,
-                            afterSuccessfulCastEffect, afterCastSourcePermanentId));
+                            afterSuccessfulCastEffect, afterCastSourcePermanentId);
+            com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect distribution =
+                    spellEffects.stream()
+                            .filter(com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect.class::isInstance)
+                            .map(com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect.class::cast)
+                            .filter(effect -> effect.mode() == com.github.laxika.magicalvibes.model.effect.DivisionMode.CHOSEN)
+                            .findFirst().orElse(null);
+            if (distribution != null && validTargets.size() > 1) {
+                int total = amountEvaluationService.evaluate(gameData, distribution.total(),
+                        com.github.laxika.magicalvibes.service.effect.AmountContext.forCasting(playerId, xValue, card));
+                playerInputService.beginMultiPermanentChoice(gameData, playerId, validTargets,
+                        Math.min(total, validTargets.size()),
+                        new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.CounterDistribution(
+                                card, playerId, spellEffects, null, distribution.counterType(), total, spellCast),
+                        "Choose creatures for " + card.getName() + ".");
+                return;
+            }
+            gameData.interaction.setPermanentChoiceContext(spellCast);
             playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
                     "Choose a target for " + card.getName() + ".");
 
@@ -2140,6 +2181,7 @@ public class MayCastHandlerService {
         entry.setMadness("madness".equals(costLabel));
         entry.setExileInsteadOfGraveyard(exileInsteadOfGraveyard);
         entry.setSourceZone(sourceZone);
+        if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, entry)) return;
         gameData.stack.add(entry);
 
         gameData.recordSpellCast(playerId, card);

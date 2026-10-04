@@ -29,7 +29,7 @@ public class ExileTopUntilNonlandMayCastOrPutIntoHandEffectHandler implements Ma
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         if (accepted && ability.targetCardId() != null) {
-            exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, ability.targetCardId());
+            exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, ability.targetCardId(), false, true);
             return;
         }
 

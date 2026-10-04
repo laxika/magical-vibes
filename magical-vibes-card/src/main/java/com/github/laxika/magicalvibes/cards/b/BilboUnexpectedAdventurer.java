@@ -35,6 +35,7 @@ public class BilboUnexpectedAdventurer extends Card {
                         .targetGraveyard(true)
                         .upTo(true)
                         .underOwnersControl(true)
+                        .chooseAuraAttachment(true)
                         .build());
     }
 }

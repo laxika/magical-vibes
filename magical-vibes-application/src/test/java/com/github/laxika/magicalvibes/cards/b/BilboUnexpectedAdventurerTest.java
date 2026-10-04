@@ -113,9 +113,10 @@ class BilboUnexpectedAdventurerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(chosen, other));
         addBilboAttacking();
 
-        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE,
+                () -> harness.handleMultipleCardsChosen(player1, List.of(chosen.getId())));
         harness.setGraveyard(player1, List.of(other));
-        gd.getPlayerExiledCards(player1.getId()).add(chosen);
+        harness.setExile(player1, List.of(chosen));
         resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);

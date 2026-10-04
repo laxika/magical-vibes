@@ -5972,7 +5972,8 @@ public class StepTriggerService {
                         && controllerEndStepEffects.stream().allMatch(perm.getCard()::hasEffectTargetIndex)
                         && controllerEndStepEffects.stream().allMatch(effect ->
                         effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
+                                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                                || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                             perm.getCard(), activePlayerId, new ArrayList<>(controllerEndStepEffects),
                             perm.getId(), List.of(), 0, 0));

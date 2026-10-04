@@ -169,7 +169,8 @@ public class GrantedAbilityViewFactory {
         return switch (effect) {
             case CantBeBlockedEffect ignored -> "Can't be blocked";
             case TargetingRestrictionEffect restriction -> formatTargetingRestriction(restriction);
-            case CantBeEnchantedByOtherAurasEffect ignored -> "Can't be enchanted by other Auras";
+            case CantBeEnchantedByOtherAurasEffect restriction -> restriction.auraSpellsOnly()
+                    ? "Can't be the target of Aura spells" : "Can't be enchanted by other Auras";
             case CantHaveMinusOneMinusOneCountersEffect ignored ->
                     "Can't have \u22121/\u22121 counters put on it";
             case CantHavePlusOnePlusOneCountersEffect ignored ->

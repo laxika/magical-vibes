@@ -167,6 +167,31 @@ class BriarhornTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Briarhorn");
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        var order = gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class);
+        assertThat(order).isNotNull();
+        assertThat(gd.stack).hasSize(2);
+        harness.handleListChoice(player1, order.options().getLast());
+        harness.passBothPriorities();
+        assertThat(findPermanent(player2, "Woodland Changeling").getEffectivePower()).isEqualTo(5);
+        harness.assertOnBattlefield(player1, "Briarhorn");
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Briarhorn");
     }
+    @Override
+    protected void resolveAllTriggers() {
+        while (!gd.stack.isEmpty()) {
+            var choice = gd.interaction.activeInteraction(
+                    com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class);
+            if (choice != null && choice.context()
+                    instanceof com.github.laxika.magicalvibes.model.ChoiceContext.SpellCastTriggerOrder) {
+                harness.handleListChoice(player1, choice.options().getFirst());
+            } else if (gd.interaction.isAwaitingInput()) {
+                break;
+            } else {
+                harness.passBothPriorities();
+            }
+        }
+    }
+
 }

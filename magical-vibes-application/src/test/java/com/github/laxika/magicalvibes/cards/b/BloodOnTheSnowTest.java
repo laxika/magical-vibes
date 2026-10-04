@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.t.TyvarKell;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -107,7 +108,7 @@ class BloodOnTheSnowTest extends BaseCardTest {
 
     @Test
     void creatureModeCanReturnPlaneswalkerAndLeavesExistingPlaneswalker() {
-        harness.addToBattlefield(player2, new TyvarKell());
+        harness.addToBattlefieldAndReturn(player2, new TyvarKell()).setCounterCount(CounterType.LOYALTY, 4);
         harness.addToBattlefield(player1, new GrizzlyBears());
         TyvarKell eligible = new TyvarKell();
         harness.setGraveyard(player1, List.of(eligible));

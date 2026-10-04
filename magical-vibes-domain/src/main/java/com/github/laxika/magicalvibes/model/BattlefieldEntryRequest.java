@@ -24,7 +24,46 @@ public record BattlefieldEntryRequest(UUID controllerId,
                                       EnterBattlefieldOnDiscardEffect discardReplacement,
                                       EnterWithCountersEffect enterWithCounters,
                                       Zone landPlayZone,
-                                      StackEntry sourceStackEntry) {
+                                      StackEntry sourceStackEntry,
+                                      Boolean unleashChoice,
+                                      Integer riotCounters,
+                                      boolean riotHaste) {
+
+    public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
+                                   List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
+                                   List<String> repeatedAdditionalCosts, int convokeCreatureCount,
+                                   EnterBattlefieldOnDiscardEffect discardReplacement,
+                                   EnterWithCountersEffect enterWithCounters, Zone landPlayZone,
+                                   StackEntry sourceStackEntry, Boolean unleashChoice) {
+        this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
+                repeatedAdditionalCosts, convokeCreatureCount, discardReplacement, enterWithCounters,
+                landPlayZone, sourceStackEntry, unleashChoice, null, false);
+    }
+
+    public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
+                                   List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
+                                   List<String> repeatedAdditionalCosts, int convokeCreatureCount,
+                                   EnterBattlefieldOnDiscardEffect discardReplacement,
+                                   EnterWithCountersEffect enterWithCounters, Zone landPlayZone,
+                                   StackEntry sourceStackEntry) {
+        this(controllerId, permanent, enterTappedTypes, simultaneouslyEntered, xValue, kicked,
+                repeatedAdditionalCosts, convokeCreatureCount, discardReplacement, enterWithCounters,
+                landPlayZone, sourceStackEntry, null);
+    }
+
+    /** Resumes entry after the controller answers the unleash replacement choice. */
+    public BattlefieldEntryRequest withUnleashChoice(boolean accepted) {
+        return new BattlefieldEntryRequest(controllerId, permanent, enterTappedTypes, simultaneouslyEntered,
+                xValue, kicked, repeatedAdditionalCosts, convokeCreatureCount, discardReplacement,
+                enterWithCounters, landPlayZone, sourceStackEntry, accepted, riotCounters, riotHaste);
+    }
+
+    /** Resumes entry after all separate riot choices have been answered. */
+    public BattlefieldEntryRequest withRiotChoices(int counters, boolean haste) {
+        return new BattlefieldEntryRequest(controllerId, permanent, enterTappedTypes, simultaneouslyEntered,
+                xValue, kicked, repeatedAdditionalCosts, convokeCreatureCount, discardReplacement,
+                enterWithCounters, landPlayZone, sourceStackEntry, unleashChoice, counters, haste);
+    }
 
     public BattlefieldEntryRequest(UUID controllerId, Permanent permanent, Set<CardType> enterTappedTypes,
                                    List<Permanent> simultaneouslyEntered, int xValue, boolean kicked,
@@ -79,6 +118,7 @@ public record BattlefieldEntryRequest(UUID controllerId,
         return new BattlefieldEntryRequest(controllerId, new Permanent(permanent), enterTappedTypes,
                 simultaneouslyEntered.stream().map(Permanent::new).toList(), xValue, kicked,
                 repeatedAdditionalCosts, convokeCreatureCount, discardReplacement, enterWithCounters,
-                landPlayZone, sourceStackEntry == null ? null : new StackEntry(sourceStackEntry));
+                landPlayZone, sourceStackEntry == null ? null : new StackEntry(sourceStackEntry), unleashChoice,
+                riotCounters, riotHaste);
     }
 }

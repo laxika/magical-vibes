@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -66,6 +67,12 @@ public class GrantEffectToTargetUntilEndOfTurnEffectHandler implements NormalEff
     }
 
     private void grantTo(GameData gameData, StackEntry entry, GrantEffectToTargetUntilEndOfTurnEffect e, Permanent target) {
+        if (e.delayedTrigger()) {
+            gameData.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
+                    entry.getControllerId(), entry.getCard(), e.slot(), e.grantedEffect(),
+                    null, false, false, gameData.turnNumber, null, target.getId()));
+            return;
+        }
         target.addTemporaryTriggeredEffect(e.slot(), e.grantedEffect());
 
         

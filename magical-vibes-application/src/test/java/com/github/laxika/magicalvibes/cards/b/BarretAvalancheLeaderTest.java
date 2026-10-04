@@ -120,7 +120,7 @@ class BarretAvalancheLeaderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(equipment.getAttachedTo()).isNull();
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     @Test
@@ -134,7 +134,7 @@ class BarretAvalancheLeaderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, barret.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(barret);
     }
 

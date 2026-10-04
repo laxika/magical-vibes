@@ -22,6 +22,8 @@ import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -44,7 +46,8 @@ public class BladeOfTheOni extends Card {
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
-                new PermanentControlledBySourceControllerPredicate())));
+                new PermanentControlledBySourceControllerPredicate(),
+                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))));
         addActivatedAbility(new ActivatedAbility(false, "{2}{B}{B}",
                 List.of(EquipEffect.reconfigure(reconfigureTarget)),
                 "Reconfigure {2}{B}{B}", TargetFilters.creatureYouControl(), null, null,

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DisturbCast;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.ForetellCast;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
@@ -442,6 +444,27 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class PredicateEvaluationService {
 
+    private static boolean hasPrintedKeyword(Permanent permanent, Keyword keyword) {
+        if (permanent.isFaceDown()) {
+            return false;
+        }
+        Card printed = !permanent.getCard().isToken() && permanent.getOriginalCard() != null
+                ? permanent.getOriginalCard() : permanent.getCard();
+        return printed.getKeywords().contains(keyword);
+    }
+
+    private boolean receivedPlusOneCountersThisTurn(GameData gameData, Permanent permanent,
+            PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate predicate, UUID controllerId) {
+        if (gameData == null) return false;
+        if (!predicate.byController()) {
+            return gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.contains(permanent.getId());
+        }
+        UUID placingPlayerId = controllerId != null ? controllerId
+                : gameQueryService.findPermanentController(gameData, permanent.getId());
+        return placingPlayerId != null && gameData.permanentsWithPlusOneCountersPutByPlayerThisTurn
+                .getOrDefault(placingPlayerId, Set.of()).contains(permanent.getId());
+    }
+
     private static final Pattern AWAKEN_ABILITY_PATTERN = Pattern.compile("(?m)^Awaken\\s+\\d+\\s*\\u2014");
 
     private final GameQueryService gameQueryService;
@@ -592,6 +615,17 @@ public class PredicateEvaluationService {
                 yield chosenColor != null && card.getColors().contains(chosenColor);
             }
             case CardKeywordPredicate p -> {
+                if (p.restriction() != null) {
+                    yield card.getEffects(EffectSlot.STATIC).stream()
+                            .filter(TargetingRestrictionEffect.class::isInstance)
+                            .map(TargetingRestrictionEffect.class::cast)
+                            .anyMatch(restriction -> restriction.hexproofLike()
+                                    && restriction.kind() == p.restriction().kind()
+                                    && restriction.opponentOnly() == p.restriction().opponentOnly()
+                                    && restriction.mode() == p.restriction().mode()
+                                    && restriction.colors().containsAll(p.restriction().colors())
+                                    && restriction.sourceCardTypes().containsAll(p.restriction().sourceCardTypes()));
+                }
                 boolean removed = gameData != null
                         && gameData.perpetualCardRemovedKeywords
                         .getOrDefault(card.getId(), java.util.Set.of())
@@ -1138,6 +1172,9 @@ public class PredicateEvaluationService {
             case PermanentActivatedThisTurnPredicate ignored ->
                     gameData != null && gameData.activatedAbilityUsesThisTurn.containsKey(permanent.getId());
             case PermanentHasKeywordPredicate hasKeywordPredicate -> {
+                if (hasKeywordPredicate.printedOnly()) {
+                    yield hasPrintedKeyword(permanent, hasKeywordPredicate.keyword());
+                }
                 if (gameData == null) {
                     yield permanent.hasKeyword(hasKeywordPredicate.keyword());
                 }
@@ -2307,6 +2344,8 @@ public class PredicateEvaluationService {
                 UUID defendingPlayerId = filterContext == null ? null : filterContext.defendingPlayerId();
                 yield controllerId != null && (defendingPlayerId != null
                         ? defendingPlayerId.equals(controllerId)
+                        : gameData.currentStep == TurnStep.BEGINNING_OF_COMBAT
+                        ? !controllerId.equals(gameData.activePlayerId)
                         : gameQueryService.isPlayerBeingAttacked(gameData, controllerId));
             }
             case PermanentControlledContinuouslySinceBeginningOfTurnPredicate ignored ->
@@ -2747,10 +2786,9 @@ public class PredicateEvaluationService {
                         || hasCountersPredicate.expectedLastRemovalVersion().equals(permanent.getLastCounterRemovalVersions()
                         .getOrDefault(hasCountersPredicate.counterType(), 0L)));
             }
-            case PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate ignored ->
-                    gameData != null
-                            && gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn
-                            .contains(permanent.getId());
+            case PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate receivedPredicate ->
+                    receivedPlusOneCountersThisTurn(gameData, permanent, receivedPredicate,
+                            context == null ? null : context.sourceControllerId());
             case PermanentHasAtLeastCountersPredicate atLeastCountersPredicate ->
                     permanent.getCounterCount(atLeastCountersPredicate.counterType())
                             >= atLeastCountersPredicate.minimum();
@@ -3305,11 +3343,10 @@ public class PredicateEvaluationService {
             case PermanentColorInPredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasAnySubtypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentHasCountersPredicate ignored -> matchesStaticLeaf(permanent, predicate);
-            case PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate ignored -> {
+            case PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate counterPredicate -> {
                 GameData gameData = context == null ? null : context.gameData();
-                yield gameData != null
-                        && gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn
-                        .contains(permanent.getId());
+                yield receivedPlusOneCountersThisTurn(gameData, permanent, counterPredicate,
+                        context == null ? null : context.sourceControllerId());
             }
             case PermanentEnteredBattlefieldThisTurnPredicate ignored ->
                     enteredBattlefieldThisTurn(context == null ? null : context.gameData(), permanent);
@@ -4461,7 +4498,7 @@ public class PredicateEvaluationService {
             case PermanentIsKindredPredicate ignored ->
                     state.hasCardType(CardType.KINDRED);
             case PermanentHasKeywordPredicate p ->
-                    state.hasKeyword(p.keyword());
+                    p.printedOnly() ? hasPrintedKeyword(permanent, p.keyword()) : state.hasKeyword(p.keyword());
             case PermanentNamedPredicate p ->
                     namesMatch(state.getName(), p.cardName());
             case PermanentNameInPredicate p ->

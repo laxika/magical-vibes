@@ -19,6 +19,10 @@ public final class OpponentChoiceOnEnterSupport {
                 .stream().anyMatch(ChooseOpponentOnEnterEffect.class::isInstance)) {
             permanent.setRememberedTargetPlayerId(gameData.playerIds.stream()
                     .filter(playerId -> !playerId.equals(controllerId)).findFirst().orElse(null));
+            if (permanent.getChosenPlayerIds().isEmpty() && gameData.playerIds.size() == 2
+                    && permanent.getRememberedTargetPlayerId() != null) {
+                permanent.getChosenPlayerIds().add(permanent.getRememberedTargetPlayerId());
+            }
         }
     }
 }

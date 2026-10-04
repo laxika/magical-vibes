@@ -72,6 +72,8 @@ class BattleOfHooverDamTest extends BaseCardTest {
 
         advanceToEndStep(player1);
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.ensurePriority(player2);
         harness.castInstant(player2, 0, battle.getId());
         harness.passBothPriorities();
@@ -167,6 +169,7 @@ class BattleOfHooverDamTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         resolveAllTriggers();
         Permanent returned = findPermanent(player1, "Grizzly Bears");
+        harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         castAndChoose("Legion");

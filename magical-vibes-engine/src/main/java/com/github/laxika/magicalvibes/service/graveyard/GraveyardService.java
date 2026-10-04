@@ -551,7 +551,18 @@ public class GraveyardService {
             return false;
         }
 
-        if (hasShuffleIntoLibraryReplacementEffect(card)) {
+        if (hasShuffleIntoLibraryReplacementEffect(card)
+                && (sourceZone != Zone.BATTLEFIELD || battlefieldSnapshot == null
+                || !battlefieldSnapshot.isFaceDown() && !battlefieldSnapshot.isLosesAllAbilitiesUntilEndOfTurn())) {
+            if (opponentHasCreatureCardExileReplacement(gameData, ownerId, card, sourceZone)
+                    || shouldExileOwnCardInsteadOfGraveyard(
+                    gameData, ownerId, card, battlefieldControllerId, battlefieldSnapshot)) {
+                gameData.pendingInteractions.addLast(new PendingInteraction.ColorChoice(
+                        ownerId, null, null,
+                        new ChoiceContext.GraveyardShuffleOrExileReplacementChoice(ownerId, card),
+                        List.of("SHUFFLE", "EXILE"), "Choose whether to shuffle this card into its owner's library or exile it."));
+                return false;
+            }
             List<Card> deck = gameData.playerDecks.get(ownerId);
             deck.add(card);
             LibraryShuffleHelper.shuffleLibrary(gameData, ownerId);
@@ -1449,6 +1460,18 @@ public class GraveyardService {
     private boolean hasShuffleIntoLibraryReplacementEffect(Card card) {
         return card.getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof ShuffleIntoLibraryReplacementEffect);
+    }
+
+    /** Applies the graveyard destination replacement chosen by the card's owner. */
+    public void resolveShuffleOrExileReplacement(GameData gameData,
+                                                ChoiceContext.GraveyardShuffleOrExileReplacementChoice choice,
+                                                boolean shuffle) {
+        if (shuffle) {
+            gameData.playerDecks.get(choice.ownerId()).add(choice.card());
+            LibraryShuffleHelper.shuffleLibrary(gameData, choice.ownerId());
+        } else {
+            exileService.exileCard(gameData, choice.ownerId(), choice.card());
+        }
     }
 
     private boolean hasExileAndTakeExtraTurnReplacementEffect(Card card) {

@@ -14,7 +14,7 @@ public class BattlefieldScavenger extends Card {
 
     public BattlefieldScavenger() {
         addEffect(EffectSlot.ON_ATTACK, new MayEffect(
-                new SkipNextUntapEffect(TapUntapScope.SELF),
+                new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
                 "Exert Battlefield Scavenger as it attacks?"
         ));
         addEffect(EffectSlot.ON_CONTROLLER_EXERTS,

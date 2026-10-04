@@ -65,7 +65,7 @@ class BlacklanceParagonTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent paragon = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Blacklance Paragon"));
         harness.handlePermanentChosen(player1, paragon.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
 
         assertThat(gqs.hasKeyword(gd, paragon, Keyword.DEATHTOUCH)).isTrue();
         assertThat(gqs.hasKeyword(gd, paragon, Keyword.LIFELINK)).isTrue();

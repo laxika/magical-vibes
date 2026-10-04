@@ -71,6 +71,9 @@ public class CopySpellForEachOtherControlledCreatureEffectHandler implements Nor
         }
 
         List<Permanent> eligibleTargets = eligibleTargets(gameData, spellCard, castingPlayerId, originalTargetId);
+        if (eligibleTargets.isEmpty()) {
+            return;
+        }
 
         if (e.chooseOne()) {
             if (eligibleTargets.size() == 1) {
@@ -129,6 +132,8 @@ public class CopySpellForEachOtherControlledCreatureEffectHandler implements Nor
         Card spellCard = spellSnapshot.getCard();
         Card copyCard = copySupport.createCopyCard(spellCard);
         StackEntry copyEntry = copySupport.createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, target.getId());
+        copyEntry.setDeclaredTargetIds(spellSnapshot.getDeclaredTargetIds().stream()
+                .map(ignored -> target.getId()).toList());
 
         copySupport.addCopyToStack(gameData, copyEntry);
 

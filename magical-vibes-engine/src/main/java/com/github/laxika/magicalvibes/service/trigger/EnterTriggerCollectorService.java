@@ -665,6 +665,8 @@ public class EnterTriggerCollectorService {
             slot = EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     @CollectsTrigger(value = ChooseOneAtTriggerTimeEffect.class,
             slot = EffectSlot.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD)
+    @CollectsTrigger(value = ChooseOneAtTriggerTimeEffect.class,
+            slot = EffectSlot.ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAllyCreatureEnterModalAtTriggerTime(TriggerMatchContext match,
                                                                ChooseOneAtTriggerTimeEffect effect,
                                                                TriggerContext ctx) {
@@ -945,7 +947,8 @@ public class EnterTriggerCollectorService {
             logTriggered(match);
             return true;
         }
-        enqueue(match, effect, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount());
+        enqueue(match, effect, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount(),
+                findEnteringPermanentId(match, pe.enteringCard()));
         logTriggered(match);
         return true;
     }

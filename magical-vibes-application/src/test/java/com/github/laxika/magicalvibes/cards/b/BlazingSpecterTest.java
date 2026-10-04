@@ -91,7 +91,8 @@ class BlazingSpecterTest extends BaseCardTest {
         Permanent specter = addAttackingSpecter(player1);
         harness.setHand(player2, List.of(new Forest(), new RazorfootGriffin()));
 
-        resolveCombat();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE,
+                this::resolveCombat);
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(specter);
         gd.playerGraveyards.get(player1.getId()).add(specter.getCard());

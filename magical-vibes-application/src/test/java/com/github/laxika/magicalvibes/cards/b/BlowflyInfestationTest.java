@@ -145,7 +145,7 @@ class BlowflyInfestationTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, next.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2)).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, survivor.getId());
         harness.passBothPriorities();
@@ -171,7 +171,7 @@ class BlowflyInfestationTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player2)).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(survivor.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();

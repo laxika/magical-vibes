@@ -77,6 +77,7 @@ public class PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffectHand
         }
 
         Card modified = selected.createRuntimeCopy();
+        modified.setOwnerId(targetPlayerId);
         modified.setPower(powerAndToughness);
         modified.setToughness(powerAndToughness);
         EnumSet<Keyword> keywords = modified.getKeywords().isEmpty()
@@ -85,6 +86,9 @@ public class PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffectHand
         keywords.add(Keyword.WARD);
         modified.setKeywords(keywords);
         modified.freeze();
+        gameData.perpetualCardBasePowerToughness.put(modified.getId(),
+                new GameData.PerpetualBasePowerToughness(powerAndToughness, powerAndToughness,
+                        gameData.nextTimestamp()));
 
         CounterUnlessPaysEffect ward = new CounterUnlessPaysEffect(1);
         rememberPerpetualWard(gameData, modified.getId(), ward);

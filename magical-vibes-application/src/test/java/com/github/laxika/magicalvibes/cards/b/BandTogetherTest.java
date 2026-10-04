@@ -156,7 +156,8 @@ class BandTogetherTest extends BaseCardTest {
 
     @Test
     void redCreatureDamageReceivesJayasBonus() {
-        harness.addToBattlefield(player1, new JayaVeneratedFiremage());
+        harness.addToBattlefieldAndReturn(player1, new JayaVeneratedFiremage())
+                .setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 5);
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GoblinAssailant());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new CentaurNurturer());
         harness.setHand(player1, List.of(new BandTogether()));

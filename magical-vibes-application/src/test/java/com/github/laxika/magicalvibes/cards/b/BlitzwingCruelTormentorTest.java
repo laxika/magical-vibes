@@ -138,10 +138,10 @@ class BlitzwingCruelTormentorTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, blitzwing, gained)).isTrue();
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of());
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, blitzwing, gained)).isFalse();
     }
@@ -150,9 +150,10 @@ class BlitzwingCruelTormentorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BlitzwingCruelTormentor()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castWithAlternateCost(player1, 0, List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castWithAlternateCost(player1, 0, List.of());
+            harness.passBothPriorities();
+        });
         return findPermanent(player1, "Blitzwing, Adaptive Assailant");
     }
 

@@ -124,4 +124,27 @@ class BreakingWaveTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castFlashback(player1, 0, (UUID) null))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void flashbackCanPayTheFlashSurcharge() {
+        BreakingWave wave = new BreakingWave();
+        harness.setGraveyard(player1, List.of(wave));
+        harness.setHand(player1, List.of(new SnapcasterMage()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(wave.getId()));
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castFlashback(player1, 0, (UUID) null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+        harness.passBothPriorities();
+        assertThat(gd.findExiledCard(wave.getId())).isNotNull();
+    }
 }

@@ -153,6 +153,7 @@ class BloodfrayGiantTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Bloodfray Giant");
         harness.handleMayAbilityChosen(player1, unleash);
     }
 }

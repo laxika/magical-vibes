@@ -1133,10 +1133,16 @@ public class ConditionEvaluationService {
                 yield castPermanent == null || !castPermanent.isCast()
                         || castPermanent.getManaSpentToCast() == 0;
             }
-            case WasCast ignored -> {
+            case WasCast condition -> {
                 if (ctx.copiedSpell()) yield false;
                 Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
                         ? null : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
+                if (condition.byController()) {
+                    Permanent castPermanent = triggeringPermanent != null
+                            ? triggeringPermanent : ctx.sourcePermanent();
+                    yield castPermanent != null && castPermanent.isCast()
+                            && java.util.Objects.equals(castPermanent.getCastControllerId(), ctx.controllerId());
+                }
                 yield triggeringPermanent != null
                         ? triggeringPermanent.isCast()
                         : ctx.sourcePermanent() != null
@@ -2837,7 +2843,7 @@ public class ConditionEvaluationService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 if (perm.isAttached()
-                        && perm.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
+                        && gameQueryService.hasEffectiveSubtype(gameData, perm, CardSubtype.EQUIPMENT)
                         && sourcePermanentId.equals(perm.getAttachedTo())) {
                     count++;
                 }
@@ -3990,10 +3996,8 @@ public class ConditionEvaluationService {
         if (controllerId == null) return false;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) continue;
-            boolean legendarySourceDealtDamage = gameData.combatDamageSourcesWithLegendaryThisTurn.stream()
-                    .anyMatch(sourceId -> gameData.combatDamageToPlayersThisTurn
-                            .getOrDefault(sourceId, Set.of())
-                            .contains(playerId));
+            boolean legendarySourceDealtDamage = gameData.legendaryCreatureCombatDamageToPlayersThisTurn.values()
+                    .stream().anyMatch(damagedPlayers -> damagedPlayers.contains(playerId));
             if (legendarySourceDealtDamage) return true;
         }
         return false;

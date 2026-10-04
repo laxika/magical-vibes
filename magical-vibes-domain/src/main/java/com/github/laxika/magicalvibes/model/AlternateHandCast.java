@@ -33,7 +33,28 @@ public record AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlD
                                 boolean reduceManaBySacrificedManaCost,
                                 CardColor prototypeColor, Integer prototypePower,
                                 Integer prototypeToughness, boolean spectacle, boolean sneak, TargetFilter alternateTargetFilter,
-                                boolean castTransformed, boolean blitz) implements CastingOption {
+                                boolean castTransformed, boolean blitz,
+                                Integer flashAdditionalGenericCost) implements CastingOption {
+
+    public AlternateHandCast(List<CastingCost> costs, Set<CardSubtype> prowlDamageSubtypes,
+                             Condition availabilityCondition, boolean grantsFlash,
+                             boolean reduceManaBySacrificedManaValue, boolean reduceManaBySacrificedManaCost,
+                             CardColor prototypeColor, Integer prototypePower, Integer prototypeToughness,
+                             boolean spectacle, boolean sneak, TargetFilter alternateTargetFilter,
+                             boolean castTransformed, boolean blitz) {
+        this(costs, prowlDamageSubtypes, availabilityCondition, grantsFlash,
+                reduceManaBySacrificedManaValue, reduceManaBySacrificedManaCost, prototypeColor,
+                prototypePower, prototypeToughness, spectacle, sneak, alternateTargetFilter,
+                castTransformed, blitz, null);
+    }
+
+    /** Identifies a flash surcharge that can also be paid alongside a graveyard casting cost. */
+    public AlternateHandCast withFlashAdditionalGenericCost(int amount) {
+        return new AlternateHandCast(costs, prowlDamageSubtypes, availabilityCondition, grantsFlash,
+                reduceManaBySacrificedManaValue, reduceManaBySacrificedManaCost, prototypeColor,
+                prototypePower, prototypeToughness, spectacle, sneak, alternateTargetFilter,
+                castTransformed, blitz, amount);
+    }
 
     public AlternateHandCast(List<CastingCost> costs) {
         this(costs, Set.of(), null, false, false, false, null, null, null, false, false, null, false, false);

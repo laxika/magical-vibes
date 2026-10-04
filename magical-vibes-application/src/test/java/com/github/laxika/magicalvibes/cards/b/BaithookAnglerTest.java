@@ -75,6 +75,7 @@ class BaithookAnglerTest extends BaseCardTest {
     @Test
     void bouncedDrifterReturnsToHandAndCanBeCastAsFrontFace() {
         Permanent drifter = castWithDisturb();
+        harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new Geistwave()));
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);

@@ -14,6 +14,6 @@ public class BloodSeeker extends Card {
 
     public BloodSeeker() {
         addEffect(EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,
-                new MayEffect(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER), "Have that player lose 1 life?"));
+                new MayEffect(new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER), "Have that player lose 1 life?"));
     }
 }

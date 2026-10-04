@@ -4,9 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.ManaAbilities;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 
@@ -21,9 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 public class YavimayaCradleOfGrowth extends Card {
 
     public YavimayaCradleOfGrowth() {
-        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.FOREST, GrantScope.ALL_LANDS));
-        addEffect(EffectSlot.STATIC, new GrantActivatedAbilityEffect(
-                ManaAbilities.tapFor(ManaColor.GREEN),
-                GrantScope.ALL_LANDS));
+        addEffect(EffectSlot.STATIC, new GrantSubtypeEffect(CardSubtype.FOREST, GrantScope.ALL_LANDS_INCLUDING_SELF));
+
     }
 }

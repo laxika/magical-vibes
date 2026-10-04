@@ -129,8 +129,7 @@ class BerserkersFrenzyTest extends BaseCardTest {
         castDuringDeclareAttackers();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(blocker.getId()));
-        advanceToBlockerDeclaration();
-        gs.declareBlockers(gd, player2, List.of());
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, this::advanceToBlockerDeclaration);
 
         assertThat(blocker.isBlocking()).isFalse();
     }
@@ -168,7 +167,19 @@ class BerserkersFrenzyTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
         assertThat(blocker.isBlocking()).isFalse();
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(1);
+        assertThat(blocker.isBlocking()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class).chooserId())
+                .isEqualTo(player1.getId());
+
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> harness.handleMayAbilityChosen(player2, true));
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(blocker.isBlocking()).isTrue();
     }
 
     @Test

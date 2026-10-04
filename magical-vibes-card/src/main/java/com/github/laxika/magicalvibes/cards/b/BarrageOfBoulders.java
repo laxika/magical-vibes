@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
@@ -19,7 +21,8 @@ public class BarrageOfBoulders extends Card {
         addEffect(EffectSlot.SPELL, new MassDamageEffect(1, false, false,
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(
-                new ControlsPermanent(new PermanentPowerAtLeastPredicate(4)),
+                new ControlsPermanent(new PermanentAllOfPredicate(java.util.List.of(
+                        new PermanentIsCreaturePredicate(), new PermanentPowerAtLeastPredicate(4)))),
                 new CantBlockThisTurnEffect(TapUntapScope.ALL_CREATURES)));
     }
 }

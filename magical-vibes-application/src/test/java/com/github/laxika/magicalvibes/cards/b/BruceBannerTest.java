@@ -234,7 +234,7 @@ class BruceBannerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.castInstant(player1, 0, hulk.getId());
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, this::resolveAllTriggers);
 
         harness.assertNotOnBattlefield(player1, "The Incredible Hulk");
         harness.assertInGraveyard(player1, "Bruce Banner");
@@ -252,11 +252,13 @@ class BruceBannerTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
         resolveCombat();
-        harness.handleCombatDamageAssigned(player1, 0, Map.of(
-                firstBlocker.getId(), 2,
-                secondBlocker.getId(), 2,
-                player2.getId(), 4));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                    firstBlocker.getId(), 2,
+                    secondBlocker.getId(), 2,
+                    player2.getId(), 4));
+            resolveAllTriggers();
+        });
 
         assertThat(hulk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(hulk.isTapped()).isFalse();
@@ -271,8 +273,10 @@ class BruceBannerTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
-        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 8));
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 8));
+            resolveAllTriggers();
+        });
 
         harness.assertNotOnBattlefield(player1, "The Incredible Hulk");
         harness.assertNotOnBattlefield(player2, "The Incredible Hulk");

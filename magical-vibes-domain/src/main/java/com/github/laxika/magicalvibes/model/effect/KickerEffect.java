@@ -27,6 +27,7 @@ import java.util.Set;
  * @param xColorRestrictions colors that may be spent on a kicker X cost
  * @param xUsesEachColorAtMostOnce whether each restricted color may pay at most one X
  * @param forageCost the forage cost for a forage kicker, or null otherwise
+ * @param countsAsKicker whether paying this optional cost counts as kicking the spell for cast triggers
  */
 public record KickerEffect(String cost, PermanentPredicate sacrificePredicate, String sacrificeDescription,
                            PermanentPredicate tapPredicate, String tapDescription,
@@ -34,7 +35,25 @@ public record KickerEffect(String cost, PermanentPredicate sacrificePredicate, S
                            CardPredicate discardPredicate, String discardDescription,
                            int sacrificeCount, PayLifeCost lifeCost,
                            Set<ManaColor> xColorRestrictions, boolean xUsesEachColorAtMostOnce,
-                           ForageOrPayManaCost forageCost) implements CardEffect {
+                           ForageOrPayManaCost forageCost, boolean countsAsKicker) implements CardEffect {
+
+    public KickerEffect(String cost, PermanentPredicate sacrificePredicate, String sacrificeDescription,
+                        PermanentPredicate tapPredicate, String tapDescription,
+                        PermanentPredicate returnPredicate, String returnDescription,
+                        CardPredicate discardPredicate, String discardDescription,
+                        int sacrificeCount, PayLifeCost lifeCost,
+                        Set<ManaColor> xColorRestrictions, boolean xUsesEachColorAtMostOnce,
+                        ForageOrPayManaCost forageCost) {
+        this(cost, sacrificePredicate, sacrificeDescription, tapPredicate, tapDescription,
+                returnPredicate, returnDescription, discardPredicate, discardDescription, sacrificeCount,
+                lifeCost, xColorRestrictions, xUsesEachColorAtMostOnce, forageCost, true);
+    }
+
+    /** An optional additional mana cost whose paid state can gate entry effects without being kicker. */
+    public KickerEffect(String cost, boolean countsAsKicker) {
+        this(cost, null, null, null, null, null, null, null, null, 0, null, null, false, null,
+                countsAsKicker);
+    }
 
     public KickerEffect {
         xColorRestrictions = xColorRestrictions == null || xColorRestrictions.isEmpty()

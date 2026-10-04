@@ -88,6 +88,7 @@ class BoomerangBasicsTest extends BaseCardTest {
     @DisplayName("Returns a stolen permanent to its owner but draws for its controller")
     void returnsStolenPermanentToOwnerAndDrawsForCaster() {
         harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
         var permanent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         changeControl(permanent, player1);
         harness.setLibrary(player1, List.of(new Island()));

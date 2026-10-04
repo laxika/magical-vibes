@@ -87,6 +87,7 @@ class BasaltGolemTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player2, "Giant Mantis");
         harness.assertInGraveyard(player2, "Giant Mantis");
@@ -113,6 +114,7 @@ class BasaltGolemTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Feral Shadow");
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -135,6 +137,7 @@ class BasaltGolemTest extends BaseCardTest {
         resolveCombat();
         harness.handleCombatDamageAssigned(player1, 0, Map.of(firstBlocker.getId(), 2));
         harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player2, "Wall")).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId()))

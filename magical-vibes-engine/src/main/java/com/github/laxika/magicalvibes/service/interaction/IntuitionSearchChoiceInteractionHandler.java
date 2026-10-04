@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingOpponentChoosesCardToHandRestToGraveyard;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +33,7 @@ public class IntuitionSearchChoiceInteractionHandler
 
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final InputCompletionService inputCompletionService;
 
     @Override
     public Class<PendingInteraction.IntuitionSearchChoice> handledType() {
@@ -53,7 +56,8 @@ public class IntuitionSearchChoiceInteractionHandler
         if (cardIds == null) {
             cardIds = List.of();
         }
-        if (cardIds.size() != interaction.count()) {
+        if (cardIds.size() > interaction.count()
+                || !interaction.requireDifferentNames() && cardIds.size() != interaction.count()) {
             throw new IllegalStateException("Must choose exactly " + interaction.count() + " cards");
         }
 
@@ -89,6 +93,11 @@ public class IntuitionSearchChoiceInteractionHandler
         }
 
         gameData.interaction.clearAwaitingInput();
+        if (chosen.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
         deck.removeIf(card -> chosenIds.contains(card.getId()));

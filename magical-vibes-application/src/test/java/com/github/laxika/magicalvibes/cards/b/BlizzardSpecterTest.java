@@ -28,6 +28,7 @@ class BlizzardSpecterTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
         harness.handleListChoice(player1, RETURN_MODE);
+        harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -50,6 +51,7 @@ class BlizzardSpecterTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
         harness.handleListChoice(player1, DISCARD_MODE);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
@@ -144,6 +146,7 @@ class BlizzardSpecterTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
         harness.handleListChoice(player1, RETURN_MODE);
+        harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

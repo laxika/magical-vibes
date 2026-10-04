@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreaturesThenRe
 public class BringerOfTheLastGift extends Card {
 
     public BringerOfTheLastGift() {
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(),
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new WasCast(true),
                 new SacrificeOtherCreaturesThenReturnCreatureCardsEffect()));
     }
 }

@@ -34,11 +34,18 @@ public class ExileSelfManaAbilityEffectHandler implements ManaAbilityEffectHandl
     @Override
     public void resolve(GameData gameData, UUID playerId, Player player, Permanent permanent,
                         CardEffect effect, int manaMultiplier, boolean creatureSource) {
-        if (permanent == null || !permanentRemovalService.removePermanentToExile(gameData, permanent)) {
+        if (permanent == null) {
             return;
         }
-
-        gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is exiled."));
+        if (((ExileSelfEffect) effect).outsideGame()) {
+            permanentRemovalService.removePermanentToOutsideGame(gameData, permanent);
+            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is removed from the game."));
+        } else {
+            if (!permanentRemovalService.removePermanentToExile(gameData, permanent)) {
+                return;
+            }
+            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is exiled."));
+        }
         permanentRemovalService.removeOrphanedAuras(gameData);
         log.info("Game {} - {} exiles itself", gameData.id, permanent.getCard().getName());
     }

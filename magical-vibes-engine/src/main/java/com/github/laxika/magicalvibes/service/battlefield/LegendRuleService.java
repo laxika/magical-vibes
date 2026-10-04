@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ControlledSubtypeLegendRuleEx
 import com.github.laxika.magicalvibes.model.effect.ControlledTokensLegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledNameCountLegendRuleExemptionEffect;
 import com.github.laxika.magicalvibes.model.effect.LegendRuleExemptionEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleWhenExactlyTwoSameNameEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -96,14 +97,20 @@ public class LegendRuleService {
     }
 
     /**
-     * Whether every permanent with {@code name} on this battlefield carries a currently-active
-     * {@link LegendRuleExemptionEffect} (Brothers Yamazaki). The count handed to the exemption spans
-     * all players' battlefields, because the wordings that grant it ("if there are exactly two
-     * permanents named ~ on the battlefield") are not controller-scoped.
+     * Whether active exemptions protect the same-named permanents. The exactly-two exemption
+     * protects both permanents while either one retains the ability, and counts across all
+     * players' battlefields. Other exemptions are evaluated on each affected permanent.
      */
     private boolean allExempt(GameData gameData, List<Permanent> battlefield, String name,
                               UUID controllerId) {
         int totalWithName = countOnBattlefield(gameData, name);
+        if (gameData.playerBattlefields.values().stream().flatMap(List::stream)
+                .filter(permanent -> name.equals(gameQueryService.getEffectiveName(gameData, permanent)))
+                .flatMap(permanent -> gameQueryService.getActiveStaticEffects(gameData, permanent).stream())
+                .anyMatch(effect -> effect instanceof IgnoreLegendRuleWhenExactlyTwoSameNameEffect exemption
+                        && exemption.exemptFromLegendRule(totalWithName))) {
+            return true;
+        }
         return battlefield.stream()
                 .filter(perm -> name.equals(gameQueryService.getEffectiveName(gameData, perm)))
                 .allMatch(perm -> hasLegendRuleExemption(gameData, perm, name, totalWithName,

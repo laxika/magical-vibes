@@ -134,7 +134,7 @@ class BasriTomorrowsChampionTest extends BaseCardTest {
         assertThat(cat.hasKeyword(Keyword.HEXPROOF)).isTrue();
         assertThat(cat.hasKeyword(Keyword.INDESTRUCTIBLE)).isTrue();
 
-        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(cat.hasKeyword(Keyword.HEXPROOF)).isFalse();
         assertThat(cat.hasKeyword(Keyword.INDESTRUCTIBLE)).isFalse();

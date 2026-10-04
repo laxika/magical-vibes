@@ -65,6 +65,8 @@ Optional 1v1 Planechase state lives in `GameData.planechase`; face-up planar car
 
 ## Trigger and entry state
 
+Perpetual base power and toughness setters use `GameData.perpetualCardBasePowerToughness`, keyed by physical card identity with the original effect timestamp. Layer 7b applies them after characteristic-defining abilities and before additive modifiers; non-battlefield power/toughness queries also honor them. Both game-copy paths retain this immutable state.
+
 Damage events retain snapshots of damaged permanents before state-based actions. On `ON_SELF_DEALS_DAMAGE`, `TriggeringPermanentConditionalEffect` filters these recipients and queues its wrapped effect once if at least one recipient matches, including when the damage source or recipient dies in that event.
 
 Simultaneous death batches snapshot continuously granted `ON_DEATH` abilities before moving any permanent. The snapshot preserves abilities supplied by a paired creature or another permanent dying in the same event and is cleared when that event ends.
@@ -118,3 +120,11 @@ Persistent face-down exile access keeps separate play and look permissions, each
 Bane Alley Broker-style implicit look abilities grant additional persistent face-down exile viewers as source control changes. GameData.additionalExileLookPermissions retains each granted viewer until the card leaves exile and is independently copied for simulations. The view projection exposes those cards only to permitted viewers, including after the source leaves.
 
 Aura attachment legality checks independent protection in a fresh layer pass excluding that Aura's protection grant, preserving other abilities and the normal board cache.
+
+Controller end-step abilities with explicitly bound target groups use the existing mixed-target trigger continuation for permanent, player, and graveyard groups. Graveyard candidates pass both the group's card predicate and the bound effects' shared target validators before being offered. Life gained or lost restrictions use the triggered ability's controller even if its source changes control or leaves before resolution.
+
+Permanent.castControllerId retains the controller of the resolving creature spell independently from the permanent's entering controller and survives permanent snapshots. WasCast(true) compares that stored caster with the ability's controller; WasCast() retains its existing any-caster behavior.
+
+GameData.permanentsWithPlusOneCountersPutByPlayerThisTurn records permanent identities by placing player for controller-qualified counter predicates. PermanentCounterSupport records actual placements, the layer-system fingerprint includes the tracker, simulations copy each nested set, and advancing the turn clears it. Removing counters later does not erase the placement history.
+
+Riot and Unleash may pause a BattlefieldEntryRequest before physical battlefield placement. Riot records every applicable instance's counter-or-haste choice, applies the final counters and persistent haste before entry, and resumes entry-trigger collection with the original spell metadata. Copy request-bearing pending choices explicitly for simulations.

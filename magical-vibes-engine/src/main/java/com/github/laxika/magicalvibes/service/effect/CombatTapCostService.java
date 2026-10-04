@@ -84,6 +84,11 @@ public class CombatTapCostService {
         }
     }
 
+    /** Whether the proposed blockers have a cost requiring another permanent to tap. */
+    public boolean hasBlockTapCosts(GameData gameData, Collection<Permanent> blockers) {
+        return uniquePermanents(blockers).stream().anyMatch(blocker -> requiredTapCount(gameData, blocker) > 0);
+    }
+
     public void payBlockCosts(GameData gameData, UUID playerId, List<Permanent> attackingPermanents,
                               Collection<Permanent> blockers) {
         Set<UUID> declaredIds = idsOf(attackingPermanents);

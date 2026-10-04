@@ -113,6 +113,7 @@ class BetterOfferTest extends BaseCardTest {
 
     @Test
     void perpetualStatsAndWardSurviveReturningToTheOwnersHandAndRecasting() {
+        harness.setHand(player2, List.of());
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
         harness.setHand(player1, List.of(new BetterOffer()));
         addBetterOfferMana();

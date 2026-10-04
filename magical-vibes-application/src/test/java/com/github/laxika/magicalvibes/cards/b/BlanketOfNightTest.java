@@ -134,10 +134,8 @@ class BlanketOfNightTest extends BaseCardTest {
 
         assertThat(gqs.hasEffectiveSubtype(gd, land, CardSubtype.SWAMP)).isFalse();
         assertThat(gqs.hasEffectiveSubtype(gd, land, CardSubtype.MOUNTAIN)).isTrue();
-        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
-                .isInstanceOf(IllegalStateException.class);
+        harness.activateAbility(player1, 0, 0, null, null);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
-        harness.tapPermanent(player1, 0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 

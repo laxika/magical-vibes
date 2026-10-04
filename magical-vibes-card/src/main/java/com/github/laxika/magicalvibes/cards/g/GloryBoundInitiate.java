@@ -24,7 +24,7 @@ public class GloryBoundInitiate extends Card {
                 SequenceEffect.of(
                         new BoostSelfEffect(1, 3),
                         new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF),
-                        new SkipNextUntapEffect(TapUntapScope.SELF)
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
                 ),
                 "Exert Glory-Bound Initiate as it attacks? (It gets +1/+3 and gains lifelink until end of turn.)"
         ));

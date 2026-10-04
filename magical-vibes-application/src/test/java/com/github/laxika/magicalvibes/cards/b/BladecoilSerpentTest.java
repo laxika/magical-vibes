@@ -26,8 +26,7 @@ class BladecoilSerpentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
@@ -42,8 +41,7 @@ class BladecoilSerpentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -126,7 +124,7 @@ class BladecoilSerpentTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 8);
 
         harness.castArtifact(player1, 0, 2);
-        harness.passUntil(TurnStep.BEGINNING_OF_COMBAT);
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);

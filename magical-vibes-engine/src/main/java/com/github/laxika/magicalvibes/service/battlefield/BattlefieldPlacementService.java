@@ -223,6 +223,8 @@ public class BattlefieldPlacementService {
 
     public void place(GameData gameData, BattlefieldEntryRequest request) {
         if (beginAmplifyChoice(gameData, request)) return;
+        if (beginUnleashChoice(gameData, request)) return;
+        if (beginRiotChoices(gameData, request)) return;
         UUID puttingPlayerId = request.controllerId();
         UUID controllerId = request.controllerId();
         Permanent permanent = request.permanent();
@@ -282,7 +284,7 @@ public class BattlefieldPlacementService {
             conditionalRevealWithCountersEffect = findActiveConditionalRevealWithCountersEffect(
                     gameData, controllerId, permanent);
             applyEnterTappedEffects(permanent, enterTappedTypes);
-            applySelfEnterTapped(permanent);
+            applySelfEnterTapped(gameData, controllerId, permanent);
             applyConditionalEnterTapped(gameData, controllerId, permanent, xValue);
             applyAllPermanentsEnterTapped(gameData, permanent);
             applyGlobalFilteredEnterTappedEffects(gameData, permanent);
@@ -326,6 +328,20 @@ public class BattlefieldPlacementService {
             applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked,
                     repeatedAdditionalCosts, request.convokeCreatureCount(), request.enterWithCounters(),
                     request.sourceStackEntry());
+            if (Boolean.TRUE.equals(request.unleashChoice())) {
+                int counters = gameQueryService.replaceCounters(gameData, permanent, controllerId,
+                        CounterType.PLUS_ONE_PLUS_ONE, 1, controllerId);
+                permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                        permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
+            }
+            if (request.riotCounters() != null && request.riotCounters() > 0) {
+                applyEntryCounters(gameData, controllerId, permanent,
+                        CounterType.PLUS_ONE_PLUS_ONE, request.riotCounters());
+            }
+            if (request.riotHaste()) {
+                permanent.getGrantedKeywords().add(Keyword.HASTE);
+                permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
+            }
             applySpellEntryCounters(gameData, controllerId, permanent);
             applySpellGrantedSubtypes(gameData, permanent);
             applySpellCastCharacteristics(gameData, permanent, request.sourceStackEntry());
@@ -371,6 +387,8 @@ public class BattlefieldPlacementService {
             permanent.setPersistentPowerModifier(perpetualPowerModifier);
         }
         gameData.playerBattlefields.get(controllerId).add(permanent);
+        permanentCounterSupport.fireLoyaltyCountersPutOnPlaneswalkerTriggers(
+                gameData, permanent, permanent.getCounterCount(CounterType.LOYALTY));
         synchronized (gameData.targetSpellDamagePreventionShields) {
             gameData.targetSpellDamagePreventionShields.replaceAll(shield ->
                     shield.sourcePermanentId() == null && !shield.requiredColors().isEmpty()
@@ -474,8 +492,6 @@ public class BattlefieldPlacementService {
         applyRevealSubtypeOrEntersWithCounters(gameData, controllerId, permanent,
                 conditionalRevealWithCountersEffect);
         applyMayPayLifeOrEntersTapped(gameData, controllerId, permanent);
-        applyUnleash(gameData, controllerId, permanent);
-        applyRiot(gameData, controllerId, permanent, simultaneouslyEntered);
         if (landEquilibriumSupport != null) {
             landEquilibriumSupport.applyPlan(gameData, controllerId, permanent,
                     landEquilibriumPlan, request.landPlayZone());
@@ -542,82 +558,81 @@ public class BattlefieldPlacementService {
         }
     }
 
-    /**
-     * Unleash, as-enters half (CR 702.98a): "You may have this permanent enter with an additional
-     * +1/+1 counter on it." The choice needs a player answer, so — like the Lorwyn reveal above —
-     * it runs through the pending-may-ability pipeline once the permanent is on the battlefield;
-     * {@code UnleashHandler} puts the counter on when the controller accepts. Skipped entirely when
-     * the permanent can't have counters (Solemnity), since accepting could do nothing.
-     */
-    private void applyUnleash(GameData gameData, UUID controllerId, Permanent permanent) {
-        if (permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
-            return;
+    /** Obtains the unleash replacement choice before entry costs or battlefield triggers run. */
+    private boolean beginUnleashChoice(GameData gameData, BattlefieldEntryRequest request) {
+        Permanent permanent = request.permanent();
+        UUID controllerId = request.controllerId();
+        if (request.unleashChoice() != null || permanent.isFaceDown()) {
+            return false;
         }
         boolean unleash = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof UnleashEffect)
                 || gameQueryService.getGrantedEffects(gameData, permanent).stream()
                 .anyMatch(e -> e instanceof UnleashEffect);
-        if (!unleash || gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) {
-            return;
+        if (!unleash || gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, permanent)
+                || gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) {
+            return false;
         }
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 permanent.getCard(),
                 controllerId,
-                List.of(new UnleashEffect()),
+                List.of(new UnleashEffect(request)),
                 permanent.getCard().getName() + " — Unleash: have it enter with a +1/+1 counter?"
                         + " (It can't block as long as it has one.)",
                 null,
                 null,
                 permanent.getId()));
         playerInputService.processNextMayAbility(gameData);
+        return true;
     }
 
-    private void applyRiot(GameData gameData, UUID controllerId, Permanent permanent,
-                           List<Permanent> simultaneouslyEntered) {
+    private boolean beginRiotChoices(GameData gameData, BattlefieldEntryRequest request) {
+        if (request.riotCounters() != null) return false;
+        Permanent permanent = request.permanent();
+        UUID controllerId = request.controllerId();
+        List<Permanent> simultaneouslyEntered = request.simultaneouslyEntered();
         boolean grantedRiot = gameData.spellsGrantedRiotOnEntry.remove(permanent.getCard().getId());
-        boolean creature = gameQueryService.isCreature(gameData, permanent);
-        boolean ownRiot = creature && !permanent.isLosesAllAbilitiesUntilEndOfTurn()
-                && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(RiotEffect.class::isInstance);
-        boolean battlefieldRiot = creature && !permanent.getCard().isToken()
-                && gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+        boolean creature = permanent.getCard().hasType(CardType.CREATURE) && !permanent.isFaceDown();
+        int ownRiot = creature
+                && !gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, permanent)
+                ? (int) permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                .filter(RiotEffect.class::isInstance).count() : 0;
+        int battlefieldRiot = creature && !permanent.getCard().isToken()
+                ? (int) gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(source -> !source.getId().equals(permanent.getId()))
                 .filter(source -> simultaneouslyEntered.stream()
                         .noneMatch(batchMember -> batchMember.getId().equals(source.getId())))
-                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream())
-                .anyMatch(ControlledCreaturesHaveRiotEffect.class::isInstance);
-        boolean filteredBattlefieldRiot = creature
-                && gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
+                .flatMap(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream())
+                .filter(ControlledCreaturesHaveRiotEffect.class::isInstance).count() : 0;
+        int filteredBattlefieldRiot = creature
+                ? (int) gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(source -> !source.getId().equals(permanent.getId()))
                 .filter(source -> simultaneouslyEntered.stream()
                         .noneMatch(batchMember -> batchMember.getId().equals(source.getId())))
-                .flatMap(source -> source.getCard().getEffects(EffectSlot.STATIC).stream())
+                .flatMap(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream())
                 .filter(GrantKeywordEffect.class::isInstance)
                 .map(GrantKeywordEffect.class::cast)
-                .anyMatch(grant -> grant.keywords().contains(Keyword.RIOT)
+                .filter(grant -> grant.keywords().contains(Keyword.RIOT)
                         && (grant.scope() == GrantScope.OWN_CREATURES
                         || grant.scope() == GrantScope.ALL_OWN_CREATURES)
                         && (grant.filter() == null
                         || predicateEvaluationService.matchesPermanentPredicate(
-                                gameData, permanent, grant.filter())));
-        if (!ownRiot && !grantedRiot && !battlefieldRiot && !filteredBattlefieldRiot) {
-            return;
-        }
-        if (gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)) {
-            permanent.getGrantedKeywords().add(Keyword.HASTE);
-            permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
-            return;
+                                gameData, permanent, grant.filter()))).count() : 0;
+        int choices = ownRiot + (grantedRiot ? 1 : 0) + battlefieldRiot + filteredBattlefieldRiot;
+        if (choices == 0) {
+            return false;
         }
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 permanent.getCard(),
                 controllerId,
-                List.of(new RiotEffect()),
+                List.of(new RiotEffect(request, choices, 0, false)),
                 permanent.getCard().getName() + " — Riot: have it enter with a +1/+1 counter?"
                         + " (Otherwise it gains haste.)",
                 null,
                 null,
                 permanent.getId()));
         playerInputService.processNextMayAbility(gameData);
+        return true;
     }
 
     /**
@@ -1486,9 +1501,9 @@ public class BattlefieldPlacementService {
                 effect == null ? "declined" : "no " + effect.description());
     }
 
-    private void applySelfEnterTapped(Permanent enteringPermanent) {
+    private void applySelfEnterTapped(GameData gameData, UUID controllerId, Permanent enteringPermanent) {
         if (enteringPermanent.isFaceDown()) return;
-        if (enteringPermanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, enteringPermanent)) {
             return;
         }
         boolean entersTapped = enteringPermanent.getCard().getEffects(EffectSlot.STATIC).stream()
@@ -1507,7 +1522,7 @@ public class BattlefieldPlacementService {
      * after this method), "other lands" / "matching permanents" counts naturally exclude it.
      */
     private void applyConditionalEnterTapped(GameData gameData, UUID controllerId, Permanent enteringPermanent, int xValue) {
-        if (enteringPermanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, enteringPermanent)) {
             return;
         }
         for (CardEffect effect : enteringPermanent.getCard().getEffects(EffectSlot.STATIC)) {
@@ -1552,7 +1567,7 @@ public class BattlefieldPlacementService {
         // Solemnity and Tatterkite/Melira's Keepers-style locks also replace "enters with N counters".
         if (gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) return;
 
-        if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+        if (!gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, permanent)) {
             List<CardEffect> entryEffects = new ArrayList<>(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD));
             // A perpetual "this creature enters with ..." grant is stored as a static effect on
             // the runtime card so it survives zone changes.

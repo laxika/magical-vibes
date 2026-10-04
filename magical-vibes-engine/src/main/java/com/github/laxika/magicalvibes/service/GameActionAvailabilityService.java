@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.AlternateHandCast;
+
 import com.github.laxika.magicalvibes.model.*;
 import com.github.laxika.magicalvibes.model.effect.*;
 import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
@@ -1247,7 +1249,9 @@ public class GameActionAvailabilityService {
             }
         } else if (stackTargetReduce != null
                 && castingCostService.stackHasMatchingSpell(gameData, playerId, stackTargetReduce.predicate())) {
-            if (cost.canPay(paymentPool, additionalCost - stackTargetReduce.amount())) {
+            ManaCost reducedCost = stackTargetReduce.coloredManaReduction() == null ? cost
+                    : cost.reducedBy(new ManaCost(stackTargetReduce.coloredManaReduction()));
+            if (reducedCost.canPay(paymentPool, additionalCost - stackTargetReduce.amount())) {
                 return true;
             }
         }
@@ -1793,8 +1797,15 @@ public class GameActionAvailabilityService {
                     gameData, playerId, card, new ManaCost(manaCostStr), cardHasFlashback);
             ManaCost cost = gameQueryService.canPayBlackManaWithLife(gameData, playerId)
                     ? reducedCost.withBlackManaAsPhyrexian() : reducedCost;
-            int additionalCost = castingCostService.getCastCostModifier(
+            int baseAdditionalCost = castingCostService.getCastCostModifier(
                     gameData, playerId, card, cardHasFlashback, 0, Zone.GRAVEYARD);
+            int flashSurcharge = 0;
+            if (castingPermissionService.flashTimingRequiresAlternateCast(gameData, playerId, card)) {
+                AlternateHandCast flashOption = card.getCastingOption(AlternateHandCast.class).orElse(null);
+                if (flashOption == null || flashOption.flashAdditionalGenericCost() == null) continue;
+                flashSurcharge = flashOption.flashAdditionalGenericCost();
+            }
+            int additionalCost = baseAdditionalCost + flashSurcharge;
             boolean paysLifeEqualToManaValue = isGrantedCyclingGraveyardCast
                     && filteredGraveyardPermission.get().permission().alternateCost()
                     instanceof PayLifeEqualToSpellManaValueCost;

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
@@ -45,8 +45,8 @@ public class Blink extends Card {
                 Map.of(EffectSlot.ON_OPPONENT_CASTS_SPELL,
                         new SpellCastTriggerEffect(
                                 new CardTypePredicate(CardType.CREATURE),
-                                List.of(new SetCardTypesUntilEndOfTurnEffect(
-                                        Set.of(CardType.ARTIFACT), GrantScope.SELF)))));
+                                List.of(new RemoveCardTypeFromTargetPermanentEffect(
+                                        CardType.CREATURE, GrantScope.SELF)))));
         addEffect(EffectSlot.SAGA_CHAPTER_II, alienAngel);
         addEffect(EffectSlot.SAGA_CHAPTER_IV, alienAngel);
     }

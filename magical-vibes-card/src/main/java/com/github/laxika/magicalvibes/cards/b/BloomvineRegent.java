@@ -16,7 +16,8 @@ public class BloomvineRegent extends Card {
     public BloomvineRegent() {
         setBackFaceCard(new ClaimTerritory());
         addCastingOption(new OmenCast());
-        addEffect(EffectSlot.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new GainLifeEffect(3));
+        addEffect(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.DRAGON),
                         new GainLifeEffect(3)));

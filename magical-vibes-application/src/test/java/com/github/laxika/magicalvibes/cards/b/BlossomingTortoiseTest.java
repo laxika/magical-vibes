@@ -37,7 +37,7 @@ class BlossomingTortoiseTest extends BaseCardTest {
         PendingInteraction.GraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
         assertThat(choice.validIndices()).containsExactly(0);
-        assertThat(choice.mandatory()).isTrue();
+        assertThat(choice.mandatory()).isFalse();
         assertThat(choice.enterTapped()).isTrue();
 
         harness.handleGraveyardCardChosen(player1, 0);

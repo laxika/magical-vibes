@@ -16,11 +16,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 public class BlatantThievery extends Card {
 
     public BlatantThievery() {
-        setMultiTargetConstraint(MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE);
+        setMultiTargetConstraint(MultiTargetConstraint.ONE_PER_OPPONENT);
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                 "Target must be a permanent an opponent controls"
-        ), 0, 99).addEffect(EffectSlot.SPELL,
+        ), 1, 99).addEffect(EffectSlot.SPELL,
                 new GainControlOfTargetEffect(ControlDuration.PERMANENT));
     }
 }

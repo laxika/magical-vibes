@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
-/** Pays a dynamic amount of energy and, if payment succeeds, destroys the target nonland permanent. */
+/** Pays dynamic energy for a target nonland permanent, then queues non-targeting reflexive destruction. */
 public record PayEnergyThenDestroyTargetPermanentEffect(DynamicAmount energyAmount)
         implements RemovalEffect {
 

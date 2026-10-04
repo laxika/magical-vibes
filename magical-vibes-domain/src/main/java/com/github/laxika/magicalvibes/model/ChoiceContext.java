@@ -17,6 +17,16 @@ import java.util.UUID;
 
 public sealed interface ChoiceContext {
 
+    /** Chooses whether to discard or pay mana for a prepared spell cast without its mana cost. */
+    record FreeCastAdditionalCostChoice(StackEntry entry) implements ChoiceContext {
+        public FreeCastAdditionalCostChoice {
+            entry = new StackEntry(entry);
+        }
+    }
+
+    /** Chooses between a card's shuffle replacement and an applicable graveyard exile replacement. */
+    record GraveyardShuffleOrExileReplacementChoice(UUID ownerId, Card card) implements ChoiceContext {}
+
     /** Chooses a legal front or Adventure spell face for a cast granted during resolution. */
     record ExileFreeCastFaceChoice(UUID exileCardId, Map<String, Integer> faces,
                                   boolean grantHaste, boolean returnToHandIfUnable,
@@ -92,11 +102,20 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /** Division before a triggered ability is stacked; a null counter type denotes damage. */
+    /** Division before a spell or triggered ability is stacked; a null counter type denotes damage. */
     record CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, CounterType counterType,
                                           List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
-                                          int nextTargetIndex, boolean allowsPartialDistribution) implements ChoiceContext {
+                                          int nextTargetIndex, boolean allowsPartialDistribution,
+                                          PermanentChoiceContext.HandCastSpellTarget spellCast) implements ChoiceContext {
+
+        public CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                              UUID sourcePermanentId, CounterType counterType,
+                                              List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
+                                              int nextTargetIndex, boolean allowsPartialDistribution) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, counterType, targetIds, assignments,
+                    total, nextTargetIndex, allowsPartialDistribution, null);
+        }
 
         public CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                               UUID sourcePermanentId, CounterType counterType,

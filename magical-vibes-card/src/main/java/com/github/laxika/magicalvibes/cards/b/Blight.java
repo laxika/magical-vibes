@@ -17,6 +17,6 @@ public class Blight extends Card {
     public Blight() {
         target(TargetFilters.land());
         // When enchanted land becomes tapped, destroy it.
-        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
+        addEffect(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
     }
 }

@@ -80,16 +80,15 @@ class BorborygmosTest extends BaseCardTest {
         Permanent opposingCreature = addCreatureReady(player2, new GruulScrapper());
         harness.setHand(player1, List.of(new Repeal()));
         harness.setLibrary(player1, List.of(new GruulScrapper()));
-        harness.addMana(player1, ManaColor.BLUE, 8);
 
         harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE, () -> {
             declareAttackersAndPrepareBlockers(List.of(0));
             gs.declareBlockers(gd, player2, List.of());
-            harness.passBothPriorities();
         });
 
         assertThat(gd.stack).hasSize(1);
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.addMana(player1, ManaColor.BLUE, 8);
         harness.castInstant(player1, 0, 7, borborygmos.getId());
         harness.passBothPriorities();
         harness.assertInHand(player1, "Borborygmos");

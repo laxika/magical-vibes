@@ -933,6 +933,12 @@ public class EtbTriggerService {
                     etbEntry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
                 }
                 etbEntry.setConvokeCreatureIds(convokeCreatureIds);
+                if (enteringPermanent != null && enteringPermanent.isEvoked()
+                        && card.getEffectRegistrations(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .anyMatch(registration -> registration.triggerMode()
+                                == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT)) {
+                    etbEntry.setTriggeringCardId(card.getId());
+                }
                 if (card.isAura() && !etbNeedsTarget
                         && otherEffects.stream().noneMatch(effect -> effect.targetSpec().declaredTarget() != null
                         || EffectResolution.targetsSpellOnStack(effect))) {
@@ -980,6 +986,7 @@ public class EtbTriggerService {
                         extraEtbEntry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
                     }
                     extraEtbEntry.setConvokeCreatureIds(convokeCreatureIds);
+                    extraEtbEntry.setTriggeringCardId(etbEntry.getTriggeringCardId());
                     extraEtbEntry.setNonTargeting(etbEntry.isNonTargeting());
                     extraEtbEntry.setTargetZone(etbEntry.getTargetZone());
                     if (modeTargetFilter != null) {

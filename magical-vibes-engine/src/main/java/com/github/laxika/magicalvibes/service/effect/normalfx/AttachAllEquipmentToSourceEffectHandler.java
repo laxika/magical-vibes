@@ -42,7 +42,7 @@ public class AttachAllEquipmentToSourceEffectHandler implements NormalEffectHand
         gameData.forEachPermanent((playerId, permanent) -> {
             if ((!((AttachAllEquipmentToSourceEffect) effect).controlledOnly()
                     || playerId.equals(entry.getControllerId()))
-                    && GameQueryService.permanentHasSubtype(permanent, CardSubtype.EQUIPMENT)) {
+                    && gameQueryService.hasEffectiveSubtype(gameData, permanent, CardSubtype.EQUIPMENT)) {
                 equipmentPermanents.add(permanent);
             }
         });

@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.cards.d.DualStrike;
+import com.github.laxika.magicalvibes.cards.d.DoubleVision;
 import com.github.laxika.magicalvibes.cards.r.RavenousLindwurm;
 import com.github.laxika.magicalvibes.cards.s.SculptorOfWinter;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BlessingOfFrost.class, SculptorOfWinter.class, RavenousLindwurm.class, DualStrike.class,
+@CardUsed({BlessingOfFrost.class, SculptorOfWinter.class, RavenousLindwurm.class, DoubleVision.class,
         SnowCoveredForest.class, com.github.laxika.magicalvibes.cards.f.Forest.class})
 class BlessingOfFrostTest extends BaseCardTest {
 
@@ -183,8 +183,7 @@ class BlessingOfFrostTest extends BaseCardTest {
 
     @Test
     void copyDrawsCardsButDoesNotInheritSnowManaSpentOnOriginal() {
-        harness.castFromHand(player1, new DualStrike(), "{R}{R}");
-        harness.passBothPriorities();
+        harness.addToBattlefield(player1, new DoubleVision());
         addSnowManaSources(4);
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new RavenousLindwurm());
         harness.setHand(player1, List.of(new BlessingOfFrost()));

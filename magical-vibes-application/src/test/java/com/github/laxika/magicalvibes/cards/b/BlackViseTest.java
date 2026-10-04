@@ -92,7 +92,7 @@ class BlackViseTest extends BaseCardTest {
 
     @Test
     void chosenOpponentStaysFixedWhenControlChanges() {
-        var blackVise = harness.addToBattlefieldAndReturn(player1, new BlackVise());
+        var blackVise = harness.enterBattlefieldAndReturn(player1, new BlackVise());
         harness.addToBattlefield(player2, new AvariceTotem());
         harness.addMana(player2, ManaColor.COLORLESS, 5);
 
@@ -172,11 +172,11 @@ class BlackViseTest extends BaseCardTest {
         var blackVise = harness.addToBattlefieldAndReturn(player1, new BlackVise());
         harness.setHand(player2, bears(6));
         harness.setHand(player1, List.of(new Disenchant()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
 
         harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.UPKEEP,
                 () -> advanceToUpkeep(player2));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
         harness.castAndResolveInstant(player1, 0, blackVise.getId());
         harness.assertNotOnBattlefield(player1, "Black Vise");
         harness.passBothPriorities();

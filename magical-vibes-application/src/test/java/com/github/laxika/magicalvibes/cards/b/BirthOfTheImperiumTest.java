@@ -115,7 +115,7 @@ class BirthOfTheImperiumTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         advanceToNextChapter();
-        harness.handlePermanentChosen(player2, chosen.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(kept).doesNotContain(chosen);
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -193,10 +193,10 @@ class BirthOfTheImperiumTest extends BaseCardTest {
         Permanent thirdKept = harness.addToBattlefieldAndReturn(player3, new GrizzlyBears());
 
         resolveChapter();
-        harness.handlePermanentChosen(player2, chosen.getId());
+        harness.handleMultiplePermanentsChosen(player2, List.of(chosen.getId()));
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(chosen, kept);
         assertThat(gd.playerBattlefields.get(player3.getId())).contains(thirdChosen, thirdKept);
-        harness.handlePermanentChosen(player3, thirdChosen.getId());
+        harness.handleMultiplePermanentsChosen(player3, List.of(thirdChosen.getId()));
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(kept);
         assertThat(gd.playerBattlefields.get(player3.getId())).containsExactly(thirdKept);

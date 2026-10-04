@@ -164,9 +164,9 @@ class BlindingAngelTest extends BaseCardTest {
         Permanent angel = addCreatureReady(player1, new BlindingAngel());
         angel.setAttacking(true);
         harness.setHand(player1, List.of(new Shock(), new Shock()));
-        harness.addMana(player1, ManaColor.RED, 2);
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
+        harness.addMana(player1, ManaColor.RED, 2);
         assertThat(gd.skipNextCombatPhaseCount.getOrDefault(player2.getId(), 0)).isZero();
         harness.castInstant(player1, 0, angel.getId());
         harness.castInstant(player1, 0, angel.getId());

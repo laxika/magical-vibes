@@ -58,7 +58,7 @@ public class SagaChapterService {
             return;
         }
         int maximumChapter = maximumChapter(card);
-        if (maximumChapter > 0 && hasReadAhead(gameData, controllerId)) {
+        if (maximumChapter > 0 && hasReadAhead(gameData, controllerId, sagaPermanent)) {
             playerInputService.beginNumberChoice(gameData, controllerId, sagaPermanent.getId(), 1, maximumChapter);
             return;
         }
@@ -72,7 +72,7 @@ public class SagaChapterService {
             return;
         }
         UUID controllerId = gameQueryService.findPermanentController(gameData, sagaPermanent.getId());
-        if (controllerId == null || !hasReadAhead(gameData, controllerId)) {
+        if (controllerId == null || !hasReadAhead(gameData, controllerId, sagaPermanent)) {
             return;
         }
 
@@ -91,10 +91,12 @@ public class SagaChapterService {
         triggerSagaChapter(gameData, sagaPermanent, card, controllerId, loreCounters);
     }
 
-    private boolean hasReadAhead(GameData gameData, UUID controllerId) {
+    private boolean hasReadAhead(GameData gameData, UUID controllerId, Permanent sagaPermanent) {
         return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
-                .anyMatch(source -> gameQueryService.hasActiveStaticEffect(
-                        gameData, source, ReadAheadEffect.class));
+                .anyMatch(source -> gameQueryService.getActiveStaticEffects(gameData, source).stream()
+                        .anyMatch(effect -> effect instanceof ReadAheadEffect readAhead
+                                && (readAhead.appliesToAllControlledSagas()
+                                || sagaPermanent != null && source.getId().equals(sagaPermanent.getId()))));
     }
 
     private int maximumChapter(Card card) {
@@ -138,8 +140,7 @@ public class SagaChapterService {
         if (!copied && sagaPermanent != null && loreCount != sagaPermanent.getCounterCount(CounterType.LORE)
                 && gameData.permanentsEnteredBattlefieldThisTurn.values().stream()
                 .flatMap(List::stream).anyMatch(entered -> entered.getId().equals(card.getId()))
-                && (hasReadAhead(gameData, controllerId)
-                || gameQueryService.hasActiveStaticEffect(gameData, sagaPermanent, ReadAheadEffect.class))) {
+                && hasReadAhead(gameData, controllerId, sagaPermanent)) {
             return;
         }
         EffectSlot chapterSlot = switch (loreCount) {

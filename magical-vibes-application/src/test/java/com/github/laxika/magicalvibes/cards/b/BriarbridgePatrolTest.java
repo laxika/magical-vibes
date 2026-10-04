@@ -204,11 +204,13 @@ class BriarbridgePatrolTest extends BaseCardTest {
         sacrificeClues(3);
         harness.setHand(player1, List.of());
         harness.setHand(player2, List.of(new BriarbridgePatrol()));
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.END_STEP, () -> {
+            harness.forceActivePlayer(player1);
+            harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+            harness.clearPriorityPassed();
+            harness.passBothPriorities();
+            resolveAllTriggers();
+        });
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);

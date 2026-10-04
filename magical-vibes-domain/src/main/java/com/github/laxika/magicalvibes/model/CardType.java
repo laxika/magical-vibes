@@ -18,7 +18,10 @@ public enum CardType {
     EMBLEM("Emblem"),
     PLANE("Plane"),
     PHENOMENON("Phenomenon"),
-    SCHEME("Scheme");
+    SCHEME("Scheme"),
+    CONSPIRACY("Conspiracy"),
+    DUNGEON("Dungeon"),
+    VANGUARD("Vanguard");
 
     @Getter
     private final String displayName;

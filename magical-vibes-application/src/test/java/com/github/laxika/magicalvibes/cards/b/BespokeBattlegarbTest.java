@@ -171,7 +171,7 @@ class BespokeBattlegarbTest extends BaseCardTest {
     private Permanent castCreature() {
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
-        return findPermanent(player1, "Grizzly Bears");
+        return gd.playerBattlefields.get(player1.getId()).getLast();
     }
 
     private Permanent addCreatureReady(Player player) {

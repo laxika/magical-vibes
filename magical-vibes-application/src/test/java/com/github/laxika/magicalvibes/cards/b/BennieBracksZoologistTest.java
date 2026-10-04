@@ -139,8 +139,11 @@ class BennieBracksZoologistTest extends BaseCardTest {
         int handSize = gd.playerHands.get(player1.getId()).size();
 
         harness.passUntil(player2, TurnStep.UPKEEP);
-        advanceToEndStep(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
     }
 

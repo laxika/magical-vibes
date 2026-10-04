@@ -15,7 +15,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * @param scope  which graveyards the target may be drawn from
  */
 public record ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
-        CardPredicate filter, GraveyardSearchScope scope) implements CardEffect {
+        CardPredicate filter, GraveyardSearchScope scope, boolean upToOne) implements CardEffect {
+
+    public ExileTargetCardFromGraveyardAndImprintOnSourceEffect(CardPredicate filter, GraveyardSearchScope scope) {
+        this(filter, scope, false);
+    }
 
     @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.graveyardCard(scope)); }
 }

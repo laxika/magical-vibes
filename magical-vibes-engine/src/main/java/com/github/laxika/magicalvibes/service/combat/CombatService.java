@@ -207,6 +207,17 @@ public class CombatService {
         for (SacrificeAtEndOfCombat action : actions) {
             Permanent perm = gameQueryService.findPermanentById(gameData, action.permanentId());
             Card source = action.sourceCard() != null ? action.sourceCard() : perm == null ? null : perm.getCard();
+            if (action.tokenForSacrificingPlayer() != null && source != null
+                    && action.controllerId() != null) {
+                StackEntry delayed = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        source, action.controllerId(), source.getName() + "'s delayed ability",
+                        List.of(new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect(
+                                true, action.tokenForSacrificingPlayer())),
+                        (UUID) null, action.permanentId());
+                delayed.setNonTargeting(true);
+                gameData.enqueueTrigger(delayed);
+                continue;
+            }
             if (action.damageToController() > 0 && action.controllerId() != null && source != null) {
                 StackEntry delayed = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                         source, action.controllerId(), source.getName() + "'s delayed ability",

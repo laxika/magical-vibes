@@ -141,6 +141,7 @@ class BasimIbnIshaqTest extends BaseCardTest {
     @Test
     @DisplayName("Unblockability expires and the historic trigger resets on the next turn")
     void triggerResetsAndUnblockabilityExpires() {
+        harness.setHand(player2, List.of());
         Permanent basim = harness.addToBattlefieldAndReturn(player1, new BasimIbnIshaq());
         Permanent opposingBasim = harness.addToBattlefieldAndReturn(player2, new BasimIbnIshaq());
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));

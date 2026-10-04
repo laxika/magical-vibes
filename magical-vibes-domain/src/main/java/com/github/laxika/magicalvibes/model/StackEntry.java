@@ -1454,7 +1454,8 @@ public class StackEntry {
         if (card == null) {
             return null;
         }
-        if ((castWithOmen || castWithAdventure) && card.getBackFaceCard() != null) {
+        if ((castWithOmen || castWithAdventure || castWithDisturb || castTransformed)
+                && card.getBackFaceCard() != null) {
             return card.getBackFaceCard();
         }
         Card effectiveCard = getCard();

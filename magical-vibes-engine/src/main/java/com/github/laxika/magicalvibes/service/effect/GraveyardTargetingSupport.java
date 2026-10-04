@@ -165,7 +165,7 @@ public class GraveyardTargetingSupport {
                     GraveyardSearchScope.ALL_GRAVEYARDS, "to exile", 1, 0);
         }
         if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint) {
-            return new Target(imprint.filter(), imprint.scope(), "to exile", 1, 1);
+            return new Target(imprint.filter(), imprint.scope(), "to exile", 1, imprint.upToOne() ? 0 : 1);
         }
         if (effect instanceof ExileTargetCardFromGraveyardAndTrackWithSourceThenEffect exileThen) {
             return new Target(exileThen.filter(), exileThen.scope(), "to exile", 1, 0);

@@ -52,11 +52,11 @@ class BetorAncestorsVoiceTest extends BaseCardTest {
 
         advanceToEndStep(player1);
 
-        PendingInteraction.MultiGraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice.validCardIds()).containsExactly(eligible.getId());
 
-        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(eligible.getId()));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -74,7 +74,7 @@ class BetorAncestorsVoiceTest extends BaseCardTest {
 
         advanceToEndStep(player1);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
         harness.assertInGraveyard(player1, "Thundering Giant");
     }
 
@@ -90,7 +90,7 @@ class BetorAncestorsVoiceTest extends BaseCardTest {
 
         advanceToEndStep(player1);
         harness.handlePermanentChosen(player1, target.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(graveyardTarget.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(graveyardTarget.getId()));
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -113,6 +113,24 @@ class BetorAncestorsVoiceTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Reanimation uses the trigger controller's life loss after Betor changes control")
+    void reanimationKeepsTriggerControllersLifeLoss() {
+        Permanent betor = addCreatureReady(player1, new BetorAncestorsVoice());
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        gd.lifeLostThisTurn.put(player1.getId(), 2);
+
+        advanceToEndStep(player1);
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(betor);
+        gd.playerBattlefields.get(player2.getId()).add(betor);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
     @Test
@@ -140,7 +158,7 @@ class BetorAncestorsVoiceTest extends BaseCardTest {
         gd.lifeLostThisTurn.put(player1.getId(), 2);
 
         advanceToEndStep(player1);
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");

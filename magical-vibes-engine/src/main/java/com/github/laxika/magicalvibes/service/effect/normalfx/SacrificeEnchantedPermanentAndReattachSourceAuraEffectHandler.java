@@ -54,7 +54,8 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
         UUID enchantedPermanentId = originalAura.getAttachedTo() != null
                 ? originalAura.getAttachedTo() : originalAura.getLastAttachedTo();
         Permanent enchanted = gameQueryService.findPermanentById(gameData, enchantedPermanentId);
-        if (enchanted == null || gameQueryService.cantBeSacrificed(gameData, enchanted)) {
+        if (enchanted == null || gameQueryService.cantBeSacrificed(gameData, enchanted)
+                || !gameQueryService.triggeredAbilityCanMoveCreatureToken(gameData, enchanted)) {
             return;
         }
 
@@ -94,7 +95,9 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
         }
 
         // Sacrifice the enchanted permanent.
-        permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchanted);
+        if (!permanentRemovalService.sacrificePermanentToGraveyard(gameData, enchanted)) {
+            return;
+        }
         entry.setSacrificedCard(enchanted.getCard());
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.textCardText(playerName + " sacrifices ", enchanted.getCard(), "."));

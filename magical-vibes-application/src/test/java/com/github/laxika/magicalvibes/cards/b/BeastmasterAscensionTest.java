@@ -114,7 +114,7 @@ class BeastmasterAscensionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(ascension.getCounterCount(CounterType.QUEST)).isZero();
-        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
     }
 

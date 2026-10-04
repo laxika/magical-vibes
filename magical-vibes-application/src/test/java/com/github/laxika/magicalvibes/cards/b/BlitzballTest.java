@@ -174,5 +174,8 @@ class BlitzballTest extends BaseCardTest {
                 .computeIfAbsent(source.getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
                 .add(player.getId());
         gd.combatDamageSourcesWithLegendaryThisTurn.add(source.getId());
+        gd.legendaryCreatureCombatDamageToPlayersThisTurn
+                .computeIfAbsent(source.getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                .add(player.getId());
     }
 }

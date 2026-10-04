@@ -2592,6 +2592,10 @@ public class DamagePreventionService {
         Permanent damageSource = entry.getSourcePermanentId() == null ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (damageSource == null) damageSource = entry.getSourcePermanentSnapshot();
+        UUID sourceControllerId = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentController(gameData, entry.getSourcePermanentId());
+        if (sourceControllerId == null) sourceControllerId = entry.getDamageSourceControllerId();
+        if (sourceControllerId == null) sourceControllerId = entry.getControllerId();
         if (damageSource != null && gameQueryService.damageCantBePreventedFromSource(gameData, damageSource, combat)) return false;
         for (int index = 0; index < alchemistIds.size(); index++) {
             Permanent alchemist = gameQueryService.findPermanentById(gameData, alchemistIds.get(index));
@@ -2600,13 +2604,13 @@ public class DamagePreventionService {
             UUID controller = gameQueryService.findPermanentController(gameData, alchemist.getId());
             if (controller == null || clericPreventionAmount(gameData, controller) == 0) continue;
             gameData.pendingMayAbilities.addFirst(new com.github.laxika.magicalvibes.model.PendingMayAbility(
-                    entry.getCard(), controller, List.of(new PreventDamageToControllerPerClericEffect(
+                    entry.getEffectiveDamageSourceCard(), controller, List.of(new PreventDamageToControllerPerClericEffect(
                     playerId, alchemist.getId(), alchemistIds.subList(index + 1, alchemistIds.size()),
                     combat, entry.getEntryType(), gameData.unpreventableDamageInProgress)),
                     "Prevent up to " + clericPreventionAmount(gameData, controller) + " damage to "
                             + gameData.playerIdToName.get(playerId) + "?", playerId, null,
                     entry.getSourcePermanentId(), null, 0, 0, null, null, null,
-                    damageSource == null ? null : new Permanent(damageSource), entry.getControllerId(), null, damage));
+                    damageSource == null ? null : new Permanent(damageSource), sourceControllerId, null, damage));
             return true;
         }
         return false;

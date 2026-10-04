@@ -31,10 +31,10 @@ public class CounterUnlessSacrificesEffectHandler implements NormalEffectHandler
         UUID targetCardId = entry.getTargetId();
         StackEntry targetEntry;
         if (targetCardId != null) {
-            targetEntry = counterSupport.findCounterTarget(gameData, targetCardId, entry);
+            targetEntry = counterSupport.findCounterTargetIgnoringCounterability(gameData, targetCardId, entry);
         } else if (entry.getTriggeringCardId() != null) {
             targetCardId = entry.getTriggeringCardId();
-            targetEntry = counterSupport.findCounterTargetExcludingSource(gameData, targetCardId, entry);
+            targetEntry = counterSupport.findCounterTargetIgnoringCounterability(gameData, targetCardId, entry);
         } else {
             return;
         }
@@ -49,7 +49,9 @@ public class CounterUnlessSacrificesEffectHandler implements NormalEffectHandler
                                 gameData, permanent, sacrificeEffect.filter()))
                         .toList();
         if (matchingPermanents.size() < sacrificeEffect.requiredCount()) {
-            counterSupport.counterSpell(gameData, entry, targetEntry);
+            if (counterSupport.findCounterTarget(gameData, targetCardId, entry) != null) {
+                counterSupport.counterSpell(gameData, entry, targetEntry);
+            }
             return;
         }
 

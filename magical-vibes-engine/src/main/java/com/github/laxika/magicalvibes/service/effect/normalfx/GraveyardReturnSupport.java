@@ -251,6 +251,8 @@ public class GraveyardReturnSupport {
 
         if (effect.chooseAuraAttachment() && effect.destination() == GraveyardChoiceDestination.BATTLEFIELD
                 && targetCard.isAura()) {
+            UUID auraControllerId = effect.underOwnersControl() && targetOwnerId != null
+                    ? targetOwnerId : controllerId;
             List<UUID> attachTargetIds = new ArrayList<>();
             for (UUID battlefieldPlayerId : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(battlefieldPlayerId);
@@ -258,7 +260,7 @@ public class GraveyardReturnSupport {
                     continue;
                 }
                 for (Permanent permanent : battlefield) {
-                    if (auraAttachmentService.canEnchant(gameData, targetCard, controllerId, permanent)) {
+                    if (auraAttachmentService.canEnchant(gameData, targetCard, auraControllerId, permanent)) {
                         attachTargetIds.add(permanent.getId());
                     }
                 }
@@ -267,7 +269,7 @@ public class GraveyardReturnSupport {
             List<UUID> attachPlayerIds = new ArrayList<>();
             if (targetCard.isEnchantPlayer()) {
                 for (UUID playerId : gameData.orderedPlayerIds) {
-                    if (auraAttachmentService.canEnchantPlayer(gameData, targetCard, controllerId, playerId)) {
+                    if (auraAttachmentService.canEnchantPlayer(gameData, targetCard, auraControllerId, playerId)) {
                         attachPlayerIds.add(playerId);
                     }
                 }
@@ -281,8 +283,8 @@ public class GraveyardReturnSupport {
 
             permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
             gameData.interaction.setPendingAuraCard(targetCard);
-            gameData.interaction.setPendingAuraOwnerId(controllerId);
-            playerInputService.beginAnyTargetChoice(gameData, controllerId, attachTargetIds, attachPlayerIds,
+            gameData.interaction.setPendingAuraOwnerId(auraControllerId);
+            playerInputService.beginAnyTargetChoice(gameData, auraControllerId, attachTargetIds, attachPlayerIds,
                     "Choose a permanent or player for " + targetCard.getName() + " to enchant.");
             return;
         }
@@ -602,8 +604,12 @@ public class GraveyardReturnSupport {
             }
             if (enterWithCounters) {
                 for (CounterType counterType : effect.enterWithCounters()) {
-                    p.setCounterCount(counterType, p.getCounterCount(counterType) + 1);
-                    p.setCounterTimestamp(counterType, gameData.nextTimestamp());
+                    int placed = gameQueryService.replaceCounters(
+                            gameData, p, controllerId, counterType, 1, entry == null ? controllerId : entry.getControllerId());
+                    if (placed > 0) {
+                        p.setCounterCount(counterType, p.getCounterCount(counterType) + placed);
+                        p.setCounterTimestamp(counterType, gameData.nextTimestamp());
+                    }
                 }
             }
             if (effect.exileIfLeavesBattlefield()) {
@@ -1755,7 +1761,6 @@ public class GraveyardReturnSupport {
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
-        initializePlaneswalkerLoyalty(permanent, card);
         applyPermanentGrants(permanent, grantColor, grantSubtype, grantIndestructible);
         permanent.setLosesAllAbilitiesPermanently(losesAllAbilities);
         if (enterWithCounter != null && enterWithCounterAmount > 0) {
@@ -1846,8 +1851,7 @@ public class GraveyardReturnSupport {
                 }
 
                 Permanent permanent = new Permanent(card);
-                initializePlaneswalkerLoyalty(permanent, card);
-                if (enterWithCounter != null) {
+                        if (enterWithCounter != null) {
                     permanent.setCounterCount(enterWithCounter, 1);
                 }
                 if (enterTapped) {
@@ -1880,8 +1884,7 @@ public class GraveyardReturnSupport {
             }
 
             Permanent permanent = new Permanent(card);
-            initializePlaneswalkerLoyalty(permanent, card);
-            applyPermanentGrants(permanent, batch.grantColor(), batch.grantSubtype());
+                applyPermanentGrants(permanent, batch.grantColor(), batch.grantSubtype());
             permanent.getPersistentGrantedKeywords().addAll(batch.grantKeywords());
             permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
             if (batch.enterTapped()) {
@@ -1918,8 +1921,7 @@ public class GraveyardReturnSupport {
                 continue;
             }
             Permanent permanent = new Permanent(card);
-            initializePlaneswalkerLoyalty(permanent, card);
-            permanent.setEnteredFromGraveyardOwnerId(controllerId);
+                permanent.setEnteredFromGraveyardOwnerId(controllerId);
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
             simultaneouslyEntered.add(permanent);
@@ -1932,8 +1934,7 @@ public class GraveyardReturnSupport {
                 continue;
             }
             Permanent permanent = new Permanent(card);
-            initializePlaneswalkerLoyalty(permanent, card);
-            battlefieldEntryService.putPermanentOntoBattlefield(
+                battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
             simultaneouslyEntered.add(permanent);
             enteredPermanents.add(new ReturnedPermanent(controllerId, permanent, card));
@@ -2024,12 +2025,6 @@ public class GraveyardReturnSupport {
         }
     }
 
-    private void initializePlaneswalkerLoyalty(Permanent permanent, Card card) {
-        if (card.hasType(CardType.PLANESWALKER)) {
-            permanent.setCounterCount(CounterType.LOYALTY, card.getLoyalty() != null ? card.getLoyalty() : 0);
-        }
-    }
-
     public Permanent putCardOntoBattlefieldWithHasteAndExile(GameData gameData, UUID controllerId, Card card,
                                                               boolean grantHaste, boolean exileAtEndStep,
                                                               boolean sacrificeAtEndStep,
@@ -2077,7 +2072,6 @@ public class GraveyardReturnSupport {
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
-        initializePlaneswalkerLoyalty(permanent, card);
         permanent.setLosesAllAbilitiesPermanently(losesAllAbilities);
         if (grantHaste) {
             permanent.getPersistentGrantedKeywords().add(Keyword.HASTE);
@@ -3038,8 +3032,7 @@ public class GraveyardReturnSupport {
             if (card != null) {
                 Permanent permanent = new Permanent(card);
                 permanent.setEnteredFromExile(true);
-                initializePlaneswalkerLoyalty(permanent, card);
-                battlefieldEntryService.putPermanentOntoBattlefield(
+                        battlefieldEntryService.putPermanentOntoBattlefield(
                         gameData, controllerId, permanent, enterTappedTypes, simultaneouslyEntered);
                 simultaneouslyEntered.add(permanent);
                 enteredPermanents.add(new ReturnedPermanent(controllerId, permanent, card));
@@ -3322,7 +3315,6 @@ public class GraveyardReturnSupport {
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
         permanent.setEnteredFromExile(true);
-        initializePlaneswalkerLoyalty(permanent, card);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
 
         String playerName = gameData.playerIdToName.get(controllerId);

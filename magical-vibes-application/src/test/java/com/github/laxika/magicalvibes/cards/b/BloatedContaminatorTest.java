@@ -105,6 +105,8 @@ class BloatedContaminatorTest extends BaseCardTest {
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(0), List.of(0));
         resolveCombat();
         resolveAllTriggers();
         harness.handleMultiplePermanentsChosen(player1, List.of());

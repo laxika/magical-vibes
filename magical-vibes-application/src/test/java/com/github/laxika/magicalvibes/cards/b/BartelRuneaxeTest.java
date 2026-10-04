@@ -67,7 +67,6 @@ class BartelRuneaxeTest extends BaseCardTest {
 
         harness.castFromHand(player1, new Replenish(), "{3}{W}");
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, bartel.getId());
 
         harness.assertOnBattlefield(player1, "Giant Strength");
         assertThat(findPermanent(player1, "Giant Strength").getAttachedTo()).isEqualTo(bartel.getId());

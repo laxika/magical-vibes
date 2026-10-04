@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -408,7 +409,7 @@ public class PermanentRemovalService {
                 wasLand, creatureSubtypesAtDeath, hadUndying, persistInstances, controllerId, ownerId,
                 destroyedBySpellOrAbility, grantedDeathEffects, dyingPowerAtDeath,
                 dyingToughnessAtDeath, selfGraveyardTriggerSuppressed, creatureDeathTriggersSuppressed,
-                wasSacrificed);
+                wasSacrificed, removed.get().hadPrintedAbilities());
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target, controllerId, removed.get().hadPrintedAbilities());
         return true;
@@ -575,7 +576,7 @@ public class PermanentRemovalService {
         processGraveyardAndTriggers(gameData, target, wasCreature, modifiedAtDeath, wasArtifact, wasEnchantment,
                 wasLand, creatureSubtypesAtDeath, hadUndying, persistInstances, info.controllerId(), info.ownerId(), false,
                 grantedDeathEffects, dyingPowerAtDeath, dyingToughnessAtDeath, selfGraveyardTriggerSuppressed,
-                creatureDeathTriggersSuppressed, false);
+                creatureDeathTriggersSuppressed, false, info.hadPrintedAbilities());
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target, info.controllerId(), info.hadPrintedAbilities());
     }
@@ -1645,7 +1646,9 @@ public class PermanentRemovalService {
     private boolean tryApplyExileReplacementEffect(GameData gameData, Permanent target,
                                                    boolean checkExileInsteadOfDie, String destinationDescription) {
         boolean permanentGraveyardReplacement = checkExileInsteadOfDie
-                && GraveyardService.hasExilePermanentsInsteadOfGraveyardReplacementEffect(target.getCard());
+                && !gameQueryService.hasLostPrintedAbilities(gameData, target)
+                && (GraveyardService.hasExilePermanentsInsteadOfGraveyardReplacementEffect(target.getCard())
+                        || GraveyardService.hasExileInsteadOfGraveyardReplacementEffect(target.getCard()));
         boolean perpetualGraveyardReplacement = !gameQueryService.hasLostAllAbilities(gameData, target)
                 && checkExileInsteadOfDie
                 && target.getOriginalCard() != null
@@ -1694,7 +1697,9 @@ public class PermanentRemovalService {
             }
         }
         lastKnownCard.setSubtypes(lastKnownSubtypes);
-        lastKnownCard.setColors(List.copyOf(gameQueryService.getEffectiveColors(gameData, permanent)));
+        List<CardColor> lastKnownColors = List.copyOf(gameQueryService.getEffectiveColors(gameData, permanent));
+        lastKnownCard.setColors(lastKnownColors);
+        lastKnownCard.setColor(lastKnownColors.isEmpty() ? null : lastKnownColors.getFirst());
         var bonus = gameQueryService.computeStaticBonus(gameData, permanent);
         java.util.EnumSet<Keyword> keywords = java.util.EnumSet.noneOf(Keyword.class);
         for (Keyword keyword : Keyword.values()) {
@@ -2175,7 +2180,10 @@ public class PermanentRemovalService {
                                               int dyingToughnessAtDeath,
                                               boolean selfGraveyardTriggerSuppressed,
                                               boolean creatureDeathTriggersSuppressed,
-                                              boolean wasSacrificed) {
+                                              boolean wasSacrificed,
+                                              boolean hadPrintedAbilitiesAtDeparture) {
+        Permanent graveyardSnapshot = new Permanent(target);
+        graveyardSnapshot.setLosesAllAbilitiesUntilEndOfTurn(!hadPrintedAbilitiesAtDeparture);
         boolean wentToGraveyard = false;
         int exiledFromBattlefield = 0;
         List<Card> exiledCreatureCards = new ArrayList<>();
@@ -2254,7 +2262,7 @@ public class PermanentRemovalService {
                 }
                 } else {
                     boolean enteredGraveyard = graveyardService.addCardToGraveyard(
-                            gameData, leavingOwnerId, leaving, Zone.BATTLEFIELD, controllerId, target,
+                            gameData, leavingOwnerId, leaving, Zone.BATTLEFIELD, controllerId, graveyardSnapshot,
                             selfGraveyardTriggerSuppressed, creatureDeathTriggersSuppressed);
                 if (enteredGraveyard) {
                     wentToGraveyard = true;

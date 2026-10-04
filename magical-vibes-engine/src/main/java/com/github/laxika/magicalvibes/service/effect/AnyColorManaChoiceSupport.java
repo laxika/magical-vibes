@@ -495,7 +495,7 @@ public final class AnyColorManaChoiceSupport {
             case PLANESWALKER_SPELLS ->
                     ChoiceContext.ManaColorChoice.planeswalkerSpellOnly(playerId, amount);
             case SUBTYPE_SPELL -> effect.spellOnlySubtypes().isEmpty()
-                    ? new ChoiceContext.ManaColorChoice(playerId, fromCreature, amount, effect.subtype())
+                    ? new ChoiceContext.ManaColorSpellChoice(playerId, amount, Set.of(effect.subtype()))
                     : new ChoiceContext.ManaColorSpellChoice(playerId, amount, effect.spellOnlySubtypes());
             case CHOSEN_SUBTYPE_CREATURE -> chosenSubtype == null
                     ? null

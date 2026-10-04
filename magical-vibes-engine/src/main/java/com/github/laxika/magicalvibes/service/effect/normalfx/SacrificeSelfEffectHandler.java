@@ -21,6 +21,7 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
+    private final PermanentControlSupport permanentControlSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -54,6 +55,10 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean {
                     gameData, currentControllerId, self.getCard());
             gameLogService.append(gameData, GameLog.cardThen(self.getCard(), " is sacrificed."));
             permanentRemovalService.removeOrphanedAuras(gameData);
+            if (sacrifice.tokenForSacrificingPlayer() != null) {
+                permanentControlSupport.applyCreateToken(gameData, currentControllerId,
+                        sacrifice.tokenForSacrificingPlayer(), entry.getCard().getSetCode());
+            }
         }
     }
 }

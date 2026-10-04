@@ -155,6 +155,6 @@ class BasaltMonolithTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passUntil(player1, TurnStep.UNTAP);
+        harness.passUntil(player1, TurnStep.UPKEEP);
     }
 }

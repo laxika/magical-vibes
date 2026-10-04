@@ -43,8 +43,8 @@ class BloodmistInfiltratorTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, hybrid.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handlePermanentChosen(player1, hybrid.getId()));
 
         assertThat(infiltrator.isCantBeBlocked()).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(hybrid.getCard());
@@ -73,8 +73,8 @@ class BloodmistInfiltratorTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, hybrid.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handlePermanentChosen(player1, hybrid.getId()));
 
         assertThat(infiltrator.isCantBeBlocked()).isTrue();
 

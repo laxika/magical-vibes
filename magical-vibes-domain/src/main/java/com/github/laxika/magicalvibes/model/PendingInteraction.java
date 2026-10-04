@@ -2196,7 +2196,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), count, count);
+            return new InteractionOptions.MultiCardPick(validCardIds(), requireDifferentNames ? 0 : count, count);
         }
     }
 
@@ -2863,6 +2863,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         /** Isolates a prepared as-entry permanent when this choice is copied for simulation. */
         public ColorChoice copyCardTypeOnEnterPermanent() {
+            if (context instanceof ChoiceContext.FreeCastAdditionalCostChoice costChoice) {
+                return new ColorChoice(playerId, permanentId, etbTargetId,
+                        new ChoiceContext.FreeCastAdditionalCostChoice(costChoice.entry()), options, prompt, disabledOptions);
+            }
             if (!(context instanceof ChoiceContext.CardTypeOnEnterChoice typeChoice)
                     || typeChoice.preparedPermanent() == null) {
                 return this;

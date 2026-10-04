@@ -212,4 +212,26 @@ class BlessingsOfNatureTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Blessings of Nature");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
+
+    @Test
+    void miracleCanDivideCountersAmongSeveralCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MoorlandInquisitor());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new MoorlandInquisitor());
+        harness.setLibrary(player1, List.of(new BlessingsOfNature()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceStep(TurnStep.DRAW);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.handleListChoice(player1, "3");
+        harness.handleListChoice(player1, "1");
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Blessings of Nature");
+    }
 }

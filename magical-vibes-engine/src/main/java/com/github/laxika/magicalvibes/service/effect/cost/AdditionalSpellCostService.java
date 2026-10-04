@@ -728,6 +728,16 @@ public class AdditionalSpellCostService {
 
     private boolean satisfiable(GameData gameData, UUID playerId, Card card,
                                 boolean includeFlashbackOnlyCosts) {
+        return satisfiable(gameData, playerId, card, includeFlashbackOnlyCosts, false);
+    }
+
+    /** Checks required additional costs when the spell's printed mana cost will not be paid. */
+    public boolean satisfiableWithoutManaCost(GameData gameData, UUID playerId, Card card) {
+        return satisfiable(gameData, playerId, card, false, true);
+    }
+
+    private boolean satisfiable(GameData gameData, UUID playerId, Card card,
+                                boolean includeFlashbackOnlyCosts, boolean withoutManaCost) {
         List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
         List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
@@ -796,7 +806,10 @@ public class AdditionalSpellCostService {
                 case DiscardCardOrPayManaCost cost -> {
                     boolean hasDiscard = !discardCostIndices(gameData, playerId, card,
                             new DiscardCardTypeCost(null, null)).isEmpty();
-                    if (!hasDiscard && !canAffordDiscardOrPayManaOption(gameData, playerId, card, cost)) {
+                    boolean canPayMana = withoutManaCost
+                            ? new ManaCost(cost.manaCost()).canPay(gameData.playerManaPools.get(playerId))
+                            : canAffordDiscardOrPayManaOption(gameData, playerId, card, cost);
+                    if (!hasDiscard && !canPayMana) {
                         return false;
                     }
                 }

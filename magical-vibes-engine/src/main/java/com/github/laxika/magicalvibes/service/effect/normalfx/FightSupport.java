@@ -46,8 +46,10 @@ public class FightSupport {
         UUID secondControllerId = gameQueryService.findPermanentController(gameData, second.getId());
         gameData.permanentsThatFoughtThisTurn.add(first.getId());
         gameData.permanentsThatFoughtThisTurn.add(second.getId());
-        dealMutualDamage(gameData, entry, first, second, true);
-        dealMutualDamage(gameData, entry, second, first, true);
+        int firstPower = gameQueryService.getPowerBasedDamage(gameData, first);
+        int secondPower = gameQueryService.getPowerBasedDamage(gameData, second);
+        dealMutualDamage(gameData, entry, first, second, firstPower);
+        dealMutualDamage(gameData, entry, second, first, secondPower);
         triggerCollectionService.checkAllyCreatureFightsTriggers(gameData, first, firstControllerId);
         triggerCollectionService.checkAllyCreatureFightsTriggers(gameData, second, secondControllerId);
     }
@@ -66,6 +68,11 @@ public class FightSupport {
         int baseDamage = usePower
                 ? gameQueryService.getPowerBasedDamage(gameData, source)
                 : Math.max(0, gameQueryService.getEffectiveToughness(gameData, source));
+        dealMutualDamage(gameData, entry, source, recipient, baseDamage);
+    }
+
+    private void dealMutualDamage(GameData gameData, StackEntry entry, Permanent source,
+                                   Permanent recipient, int baseDamage) {
         if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isPreventedFromDealingDamage(gameData, source)) {
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s damage is prevented."));
             return;

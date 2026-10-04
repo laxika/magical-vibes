@@ -10,15 +10,19 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldPlacementService;
+import com.github.laxika.magicalvibes.service.battlefield.AsEntersInteractionService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 
 /**
- * Unleash (CR 702.98a): "You may have this permanent enter with an additional +1/+1 counter on it."
- * Accepting puts one +1/+1 counter on the just-entered permanent; declining leaves it alone.
+ * Unleash: "You may have this permanent enter with an additional +1/+1 counter on it."
+ * Resumes entry after the choice so entry triggers see the chosen counters.
  */
 @Slf4j
 @Component
@@ -30,6 +34,12 @@ public class UnleashHandler implements MayEffectHandlerBean {
     private final InputCompletionService inputCompletionService;
     private final PermanentCounterSupport permanentCounterSupport;
 
+    @Autowired @Lazy
+    private BattlefieldPlacementService battlefieldPlacementService;
+
+    @Autowired @Lazy
+    private AsEntersInteractionService asEntersInteractionService;
+
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return UnleashEffect.class;
@@ -37,6 +47,24 @@ public class UnleashHandler implements MayEffectHandlerBean {
 
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        UnleashEffect unleash = ability.effects().stream().filter(UnleashEffect.class::isInstance)
+                .map(UnleashEffect.class::cast).findFirst().orElse(null);
+        if (unleash != null && unleash.entryRequest() != null) {
+            var request = unleash.entryRequest().withUnleashChoice(accepted);
+            battlefieldPlacementService.place(gameData, request);
+            var spell = request.sourceStackEntry();
+            asEntersInteractionService.handleCreatureEnteredBattlefield(gameData, request.controllerId(),
+                    request.permanent().getCard(), spell == null ? null : spell.getTargetId(),
+                    request.permanent().getCastFromZone() == com.github.laxika.magicalvibes.model.Zone.HAND,
+                    spell != null && spell.getEtbMode() != null ? spell.getEtbMode() : request.xValue(),
+                    request.xValue(), request.kicked(), spell == null ? java.util.List.of() : spell.getTargetIds(),
+                    request.repeatedAdditionalCosts(),
+                    spell == null ? java.util.List.of() : spell.getConvokeCreatureIds());
+            gameLogService.append(gameData, GameLog.textCardText(player.getUsername()
+                    + (accepted ? " unleashes " : " declines unleash for "), ability.sourceCard(), "."));
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (accepted) {
             Permanent source = ability.sourcePermanentId() != null
                     ? gameQueryService.findPermanentById(gameData, ability.sourcePermanentId()) : null;

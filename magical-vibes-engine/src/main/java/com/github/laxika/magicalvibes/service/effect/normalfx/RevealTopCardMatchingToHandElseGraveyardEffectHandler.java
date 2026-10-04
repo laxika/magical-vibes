@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMatchingToHandElseGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -21,6 +23,7 @@ public class RevealTopCardMatchingToHandElseGraveyardEffectHandler implements No
 
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,7 +56,7 @@ public class RevealTopCardMatchingToHandElseGraveyardEffectHandler implements No
             gameLogService.append(gameData, GameLog.builder().text(playerName + " puts ").card(topCard)
                     .text(" into their hand (" + sourceName + ").").build());
         } else {
-            gameData.playerGraveyards.get(controllerId).add(topCard);
+            graveyardService.addCardToGraveyard(gameData, controllerId, topCard, Zone.LIBRARY);
             gameLogService.append(gameData, GameLog.builder().text(playerName + " puts ").card(topCard)
                     .text(" into their graveyard (" + sourceName + ").").build());
         }

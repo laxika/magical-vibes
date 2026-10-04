@@ -47,8 +47,9 @@ class BlasterHulkTest extends BaseCardTest {
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(10);
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.playerEnergyCounters.get(player1.getId())).isEqualTo(2);
-        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
-        harness.handleXValueChosen(player1, 8);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleListChoice(player1, "8");
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Blaster Hulk");

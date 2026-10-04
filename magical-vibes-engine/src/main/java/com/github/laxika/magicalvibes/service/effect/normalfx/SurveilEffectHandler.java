@@ -86,7 +86,6 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
             String logEntry = playerName + " surveils " + cardsToSurveil + " (" + sourceName + ").";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} surveils {} ({})", gameData.id, playerName, cardsToSurveil, sourceName);
-            triggerCollectionService.checkSurveilTriggers(gameData, controllerId);
 
             interactionHandlerRegistry.begin(gameData,
                     new PendingInteraction.Scry(controllerId, topCards, true));
@@ -98,7 +97,6 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
         String logEntry = playerName + " surveils 1 (" + sourceName + ").";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} surveils 1, top card: {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
-        triggerCollectionService.checkSurveilTriggers(gameData, controllerId);
 
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(),

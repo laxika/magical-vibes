@@ -24,7 +24,7 @@ public class BitterbladeWarrior extends Card {
                 SequenceEffect.of(
                         new BoostSelfEffect(1, 0),
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF),
-                        new SkipNextUntapEffect(TapUntapScope.SELF)
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
                 ),
                 "Exert Bitterblade Warrior as it attacks? (It gets +1/+0 and gains deathtouch until end of turn.)"
         ));

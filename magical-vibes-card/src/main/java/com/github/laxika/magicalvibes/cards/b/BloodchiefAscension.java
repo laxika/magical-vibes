@@ -27,7 +27,7 @@ public class BloodchiefAscension extends Card {
         addEffect(EffectSlot.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
                 new ConditionalEffect(
                         new SourceCounterThreshold(3, CounterType.QUEST),
-                        new MayEffect(new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER, true),
+                        new MayEffect(new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PLAYER, true),
                                 "Have that player lose 2 life?")));
     }
 }

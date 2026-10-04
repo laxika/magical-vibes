@@ -15,7 +15,7 @@ public class BerserkersFrenzy extends Card {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.BEFORE_BLOCKERS_DECLARED);
         addEffect(EffectSlot.SPELL, new RollTwoD20IgnoreLowerEffect(
                 new ChooseCreaturesToBlockThisTurnIfAbleEffect(),
-                new ChooseBlockersThisCombatEffect(),
+                new ChooseBlockersThisCombatEffect(true),
                 14));
     }
 }

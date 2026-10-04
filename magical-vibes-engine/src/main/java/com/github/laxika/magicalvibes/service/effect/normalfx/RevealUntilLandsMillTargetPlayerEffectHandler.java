@@ -66,8 +66,8 @@ public class RevealUntilLandsMillTargetPlayerEffectHandler implements NormalEffe
         List<Card> revealedCards = new ArrayList<>();
         int landsRevealed = 0;
 
-        while (deck != null && !deck.isEmpty() && landsRevealed < landCount) {
-            Card card = deck.removeFirst();
+        while (deck != null && revealedCards.size() < deck.size() && landsRevealed < landCount) {
+            Card card = deck.get(revealedCards.size());
             revealedCards.add(card);
             if (card.hasType(CardType.LAND)) {
                 landsRevealed++;
@@ -83,9 +83,7 @@ public class RevealUntilLandsMillTargetPlayerEffectHandler implements NormalEffe
         gameLogService.append(gameData, GameLog.text(targetName + " reveals " + revealedNames + "."));
 
         // All revealed cards go to the target player's graveyard.
-        for (Card card : revealedCards) {
-            graveyardService.addCardToGraveyard(gameData, targetPlayerId, card, Zone.LIBRARY);
-        }
+        graveyardService.resolvePutTopCardsIntoGraveyard(gameData, targetPlayerId, revealedCards.size());
 
         log.info("Game {} - {} reveals {} cards ({} lands) to their graveyard from Mind Funeral-style mill",
                 gameData.id, targetName, revealedCards.size(), landsRevealed);

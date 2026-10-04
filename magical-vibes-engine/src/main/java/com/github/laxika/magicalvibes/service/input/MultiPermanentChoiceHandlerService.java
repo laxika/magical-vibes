@@ -1388,7 +1388,7 @@ public class MultiPermanentChoiceHandlerService {
                 new ChoiceContext.CounterDistributionAssignment(
                         context.sourceCard(), context.controllerId(), context.effects(),
                         context.sourcePermanentId(), context.counterType(), permanentIds,
-                        java.util.Map.of(), context.total(), 0);
+                        java.util.Map.of(), context.total(), 0, false, context.spellCast());
         playerInputService.beginCounterDistributionAssignmentChoice(
                 gameData, context.controllerId(), assignment);
     }

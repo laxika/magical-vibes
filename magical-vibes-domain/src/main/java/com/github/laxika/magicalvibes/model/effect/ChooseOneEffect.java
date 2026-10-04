@@ -378,7 +378,7 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
             chosen.add((int) digit - 1);
             encoded /= base;
         }
-        java.util.Collections.reverse(chosen);
+        java.util.Collections.sort(chosen);
         if (chosen.size() < choicesRequired || chosen.size() > choicesMax) {
             throw new IllegalStateException(
                     "Expected between " + choicesRequired + " and " + choicesMax + " modes, got " + chosen.size());

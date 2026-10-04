@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Card;
+
 /**
  * "Enchanted creature is a copy of the chosen creature." (Metamorphic Alteration)
  *
@@ -9,5 +11,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * becomes unattached. Place in {@code EffectSlot.STATIC} together with a
  * {@link ChooseCreatureOnEnterEffect} in {@code EffectSlot.ON_ENTER_BATTLEFIELD}.
  */
-public record EnchantedCreatureIsCopyOfChosenCreatureEffect() implements CardEffect {
+public record EnchantedCreatureIsCopyOfChosenCreatureEffect(Card copiedCard) implements CardEffect {
+
+    public EnchantedCreatureIsCopyOfChosenCreatureEffect() {
+        this(null);
+    }
 }

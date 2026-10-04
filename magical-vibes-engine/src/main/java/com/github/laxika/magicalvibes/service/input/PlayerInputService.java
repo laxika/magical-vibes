@@ -450,10 +450,12 @@ public class PlayerInputService {
         int remainingTargets = context.targetIds().size() - context.nextTargetIndex();
         List<String> options = counterAssignmentOptions(remaining, remainingTargets,
                 context.allowsPartialDistribution());
-        String counterLabel = context.counterType().name().toLowerCase().replace('_', ' ');
+        String prompt = context.counterType() == null
+                ? "Choose how much damage to deal to this target."
+                : "Choose how many " + context.counterType().name().toLowerCase().replace('_', ' ')
+                + " counters to put on the target creature.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, context, options,
-                "Choose how many " + counterLabel + " counters to put on the target creature."));
+                playerId, null, null, context, options, prompt));
     }
 
     private static List<String> counterAssignmentOptions(int remaining, int remainingTargets,

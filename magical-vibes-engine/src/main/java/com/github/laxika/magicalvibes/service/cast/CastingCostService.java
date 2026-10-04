@@ -33,6 +33,8 @@ import com.github.laxika.magicalvibes.model.RemoveCountersFromControlledCreature
 import com.github.laxika.magicalvibes.model.RemoveXCountersFromControlledPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.SacrificeXPermanentsCastingCost;
 import com.github.laxika.magicalvibes.model.ReturnPermanentsCost;
 import com.github.laxika.magicalvibes.model.RevealCardsFromHandCastingCost;
@@ -702,6 +704,14 @@ public class CastingCostService {
         ManaCost effectiveCost = cost.increasedBy(
                 gameData.perpetualManaCostIncreases.get(card.getId()));
         for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof ReduceOwnCastCostIfTargetingStackEntryEffect stackReduction
+                    && stackReduction.coloredManaReduction() != null && !targetIds.isEmpty()) {
+                StackEntry target = gameQueryService.findStackEntryByCardId(gameData, targetIds.getFirst());
+                if (target != null && targetLegalityService.matchesStackEntryPredicate(
+                        gameData, target, stackReduction.predicate(), playerId)) {
+                    effectiveCost = effectiveCost.reducedBy(new ManaCost(stackReduction.coloredManaReduction()));
+                }
+            }
             CostModificationHandlerBean handler = costModificationHandlerRegistry.getSpellSelfHandler(effect);
             if (handler != null) {
                 ManaCost increase = handler.coloredManaCostIncrease(
@@ -1247,7 +1257,23 @@ public class CastingCostService {
                 }
             }
         }
-        return costs;
+        List<CostEffect> combined = new ArrayList<>();
+        for (int i = 0; i < costs.size(); i++) {
+            CostEffect cost = costs.get(i);
+            if (cost instanceof SacrificePermanentCost sacrifice
+                    && !sacrifice.excludeSource() && !sacrifice.optional()
+                    && !sacrifice.trackSacrificedPower() && !sacrifice.trackSacrificedManaValue()
+                    && !sacrifice.trackSacrificedToughness()
+                    && !sacrifice.recordsSacrificedPermanentSnapshot()) {
+                if (costs.indexOf(cost) != i) continue;
+                int count = (int) costs.stream().filter(cost::equals).count();
+                combined.add(count > 1
+                        ? new SacrificeMultiplePermanentsCost(count, sacrifice.filter()) : cost);
+            } else {
+                combined.add(cost);
+            }
+        }
+        return combined;
     }
 
     /**

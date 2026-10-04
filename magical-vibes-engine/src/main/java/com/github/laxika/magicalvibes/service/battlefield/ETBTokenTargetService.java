@@ -442,7 +442,7 @@ public class ETBTokenTargetService {
             }
 
             List<UUID> validGraveyardCardTargets = validGraveyardCardTargets(
-                    gameData, card, pending, groupFilter, canTargetGraveyardCard);
+                    gameData, card, pending, groupFilter, canTargetGraveyardCard, groupEffects);
 
             List<UUID> validSpellTargets = validMixedEtbSpellTargets(
                     gameData, groupEffects, pending.controllerId());
@@ -594,7 +594,8 @@ public class ETBTokenTargetService {
             Card card,
             PermanentChoiceContext.ETBTokenMultiTargetTrigger pending,
             TargetFilter targetFilter,
-            boolean canTargetGraveyardCard) {
+            boolean canTargetGraveyardCard,
+            List<CardEffect> groupEffects) {
         if (!canTargetGraveyardCard
                 || !(targetFilter instanceof GraveyardCardPredicateTargetFilter graveyardFilter)
                 || !gameQueryService.canGraveyardCardsBeTargeted(gameData)) {
@@ -616,7 +617,10 @@ public class ETBTokenTargetService {
                     .getOrDefault(graveyardOwnerId, List.of())) {
                 if (targetAlreadyChosen(pending, graveyardCard.getId())
                         || gameQueryService.isLandCardTargetRestricted(
-                        gameData, graveyardCard, pending.controllerId())) {
+                        gameData, graveyardCard, pending.controllerId())
+                        || targetLegalityService.checkTriggeredGraveyardTarget(
+                        gameData, card, groupEffects, graveyardCard.getId(), pending.controllerId(),
+                        pending.sourcePermanentId(), pending.xValue()).isPresent()) {
                     continue;
                 }
                 if (graveyardFilter.predicate() == null
@@ -796,8 +800,7 @@ public class ETBTokenTargetService {
         }
         com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect dividedDamage = pending.effects().stream()
                 .filter(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect divided
-                        && divided.etbAssignments()
-                        && divided.targetRestriction() instanceof com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate)
+                        && divided.etbAssignments())
                 .map(effect -> (com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect) effect)
                 .findFirst().orElse(null);
         if (dividedDamage != null && !pending.chosenTargetsSoFar().isEmpty()) {

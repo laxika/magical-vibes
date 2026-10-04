@@ -182,7 +182,7 @@ public class MayAbilityHandlerService {
         gameData.interaction.clearAwaitingInput();
 
         boolean exertChoice = !gameData.resolvingMayEffectFromStack && ability.effects().stream().anyMatch(effect ->
-                effect instanceof SequenceEffect sequence && sequence.steps().stream().anyMatch(step ->
+                (effect instanceof SequenceEffect sequence ? sequence.steps() : List.of(effect)).stream().anyMatch(step ->
                         step instanceof com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect skip
                                 && skip.controllerStepOnly()));
         if (exertChoice) {
@@ -202,8 +202,18 @@ public class MayAbilityHandlerService {
                         ability.sourceCard(), ability.controllerId(), ability.sourceCard().getName() + " is exerted",
                         exertCosts, null, ability.sourcePermanentId());
                 exert.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
-                exert.getEffectsToResolve().addAll(triggeredEffects);
                 effectResolutionService.resolveEffects(gameData, exert);
+                triggerCollectionService.checkExertTriggers(
+                        gameData, ability.controllerId(), ability.sourcePermanentId());
+                if (!triggeredEffects.isEmpty()) {
+                    StackEntry triggered = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                            ability.sourceCard(), ability.controllerId(), ability.sourceCard().getName() + "'s exert ability",
+                            triggeredEffects, null, ability.sourcePermanentId());
+                    triggered.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+                    triggered.setTargetId(ability.targetCardId());
+                    triggered.setAttackedTargetId(ability.attackedTargetId());
+                    gameData.stack.add(triggered);
+                }
 
             }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

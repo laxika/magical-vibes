@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BoomBust.class, UrborgTombOfYawgmoth.class, AetherMembrane.class})
@@ -151,13 +153,14 @@ class BoomBustTest extends BaseCardTest {
     @Test
     void bustCanResolveWithoutAnyLands() {
         harness.addToBattlefield(player2, new AetherMembrane());
-        harness.setHand(player1, List.of(new BoomBust()));
+        BoomBust spell = new BoomBust();
+        harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.RED, 6);
 
         harness.castModalSorcery(player1, 0, 1, List.of());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Aether Membrane");
-        harness.assertInGraveyard(player1, "Boom // Bust");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
     }
 }

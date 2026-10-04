@@ -2299,7 +2299,8 @@ public class TargetLegalityService {
 
         validateGraveyardChoicePowerLimit(gameData, card, targetIds, selectedEffects, targetGroups);
         validateMultiTargetConstraint(gameData, card.getMultiTargetConstraint(), targetIds);
-        if (card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE) {
+        if (card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE
+                || card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_OPPONENT) {
             Set<UUID> targetedControllers = targetIds.stream()
                     .map(id -> gameQueryService.findPermanentController(gameData, id))
                     .collect(java.util.stream.Collectors.toSet());
@@ -2308,7 +2309,7 @@ public class TargetLegalityService {
                 boolean hasLegalTarget = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
                         .anyMatch(permanent -> checkSpellTargeting(
                                 gameData, card, permanent.getId(), null, controllerId).isEmpty());
-                if (hasLegalTarget) {
+                if (hasLegalTarget || card.getMultiTargetConstraint() == MultiTargetConstraint.ONE_PER_OPPONENT) {
                     throw new IllegalStateException("Must target a permanent controlled by each opponent if able");
                 }
             }
@@ -2538,6 +2539,18 @@ public class TargetLegalityService {
      * Validates one target of a graveyard target group: the card must still be in a graveyard the
      * group's scope allows and match the group's card filter.
      */
+    /** Checks restrictions carried by the effects bound to one triggered graveyard target group. */
+    public Optional<String> checkTriggeredGraveyardTarget(GameData gameData, Card sourceCard,
+                                                         List<CardEffect> effects, UUID targetId,
+                                                         UUID controllerId, UUID sourcePermanentId,
+                                                         int xValue) {
+        Permanent source = sourcePermanentId == null ? null
+                : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        return targetValidationService.checkEffectTargets(effects,
+                new TargetValidationContext(gameData, targetId, Zone.GRAVEYARD,
+                        sourceCard, xValue, controllerId, source, sourcePermanentId, null));
+    }
+
     private void validateGraveyardCardTarget(GameData gameData, Card card,
                                              GraveyardCardPredicateTargetFilter filter,
                                              UUID targetId, UUID controllerId) {
@@ -2672,7 +2685,8 @@ public class TargetLegalityService {
             return;
         }
         if (constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
-                || constraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE) {
+                || constraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE
+                || constraint == MultiTargetConstraint.ONE_PER_OPPONENT) {
             validateAtMostOnePerController(gameData, targetIds);
             return;
         }
@@ -2745,7 +2759,7 @@ public class TargetLegalityService {
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_AND_ONE_LAND,
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_AND_ONE_PLANESWALKER,
                          AT_MOST_ONE_ARTIFACT_ONE_CREATURE_ONE_ENCHANTMENT_ONE_PLANESWALKER_AND_ONE_LAND,
-                         AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE,
+                         AT_MOST_ONE_PER_CONTROLLER, ONE_PER_CONTROLLER_IF_ABLE, ONE_PER_OPPONENT,
                          AT_MOST_ONE_INSTANT_AND_ONE_SORCERY, AT_MOST_ONE_CREATURE_AND_ONE_LAND,
                          DIFFERENT_MANA_VALUES, SAME_CREATURE_OR_LAND_TYPE_AS_FIRST_AURA_HOST -> {
                         // Handled by early returns above.
@@ -4548,7 +4562,7 @@ public class TargetLegalityService {
         if (gameQueryService.cantBeTargetedByNonColorSources(gameData, target, card, sourcePlayerId)) {
             return nonColorSourceRestrictionMessage(target);
         }
-        if (card.isAura() && gameQueryService.cantBeEnchantedByOtherAuras(gameData, target)) {
+        if (card.isAura() && gameQueryService.cantBeTargetedByAuraSpells(gameData, target)) {
             return target.getCard().getName() + " can't be enchanted by other Auras";
         }
         return null;

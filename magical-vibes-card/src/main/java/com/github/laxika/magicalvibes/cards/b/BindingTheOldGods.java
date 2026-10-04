@@ -52,6 +52,6 @@ public class BindingTheOldGods extends Card {
                         LibrarySearchDestination.BATTLEFIELD_TAPPED));
 
         addEffect(EffectSlot.SAGA_CHAPTER_III,
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES));
     }
 }

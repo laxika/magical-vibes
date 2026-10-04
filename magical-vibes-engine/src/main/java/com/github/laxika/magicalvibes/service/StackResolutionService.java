@@ -404,6 +404,7 @@ public class StackResolutionService {
         // CR 707.10: a copy of a spell put onto the stack was never cast, so the permanent it
         // resolves into didn't enter as the result of a cast spell either.
         perm.setCast(!entry.isCopy());
+        perm.setCastControllerId(entry.isCopy() ? null : entry.getControllerId());
         perm.setManaSpentToCast(entry.getManaSpentToCast());
         perm.setRevealCardFromHandCostPaid(entry.isRevealCardFromHandCostPaid());
         perm.setWaterbendCostPaid(entry.isWaterbendCostPaid());
@@ -1300,8 +1301,6 @@ public class StackResolutionService {
         if (gameQueryService.findPermanentById(gameData, perm.getId()) != null) {
             permanentCounterSupport.notifyCountersPlaced(gameData, entry, perm, startingLoyalty, CounterType.LOYALTY);
         }
-        permanentCounterSupport.fireLoyaltyCountersPutOnControlledPlaneswalkersTriggers(
-                gameData, controllerId, startingLoyalty);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameLogService.append(gameData, GameLog.entersBattlefieldWithUnder(
@@ -1554,9 +1553,18 @@ public class StackResolutionService {
                 .findFirst()
                 .orElse(null);
 
+        if (exileSpellEffect != null && entry.getSourceZone() == Zone.HAND
+                && (entry.getCard().hasType(CardType.INSTANT) || entry.getCard().hasType(CardType.SORCERY))
+                && gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount
+                .getOrDefault(entry.getControllerId(), 0) > 0) {
+            gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.compute(
+                    entry.getControllerId(), (ignored, count) -> count == null || count <= 1 ? null : count - 1);
+        }
+
         // Feather's replacement is chosen first when it is available; otherwise flashback's
         // replacement exiles the spell instead of letting it go anywhere else.
         if (entry.isExileAndReturnToHandAtNextEndStep()
+                && exileSpellEffect == null
                 && !entry.isReturnToHandAfterResolving()
                 && entry.getPutIntoLibraryPositionAfterResolving() == null
                 && gameData.pendingReturnToHandOnDiscardType == null) {
@@ -1586,6 +1594,7 @@ public class StackResolutionService {
             gameLogService.append(gameData, GameLog.cardThen(physicalCard,
                     " is exiled with permission to cast its creature face."));
         } else if (entry.getSourceZone() == Zone.HAND
+                && exileSpellEffect == null
                 && (entry.getCard().hasType(CardType.INSTANT) || entry.getCard().hasType(CardType.SORCERY))
                 && gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount
                 .getOrDefault(entry.getControllerId(), 0) > 0) {
@@ -1595,7 +1604,7 @@ public class StackResolutionService {
             gameData.addCardToHand(ownerId, physicalCard);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     " is returned to its owner's hand instead of going to the graveyard."));
-        } else if (entry.isReturnToHandAfterResolving()) {
+        } else if (entry.isReturnToHandAfterResolving() && exileSpellEffect == null) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addCardToHand(ownerId, physicalCard);
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is returned to its owner's hand."));

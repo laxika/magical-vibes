@@ -105,7 +105,7 @@ class BiolumeEggTest extends BaseCardTest {
     @DisplayName("Delayed return uses the stack before the Egg returns")
     void delayedReturnUsesStack() {
         Permanent egg = harness.addToBattlefieldAndReturn(player1, new BiolumeEgg());
-        sacrificeEgg(egg);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> sacrificeEgg(egg));
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
 

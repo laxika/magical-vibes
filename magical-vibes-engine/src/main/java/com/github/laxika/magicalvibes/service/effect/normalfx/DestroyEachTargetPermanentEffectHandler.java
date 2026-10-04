@@ -73,7 +73,10 @@ public class DestroyEachTargetPermanentEffectHandler implements NormalEffectHand
         }
 
         List<Permanent> actuallyDestroyed = destructionSupport.destroyBatchCollecting(
-                gameData, toDestroy, entry.getCard().getName(), destroy.cannotBeRegenerated());
+                gameData, toDestroy, entry.getCard().getName(), destroy.cannotBeRegenerated()).stream()
+                .filter(permanent -> gameData.playerGraveyards.values().stream().flatMap(List::stream)
+                        .anyMatch(card -> card.getId().equals(permanent.getOriginalCard().getId())))
+                .toList();
 
         List<UUID> destroyedControllerIds = new ArrayList<>();
         List<UUID> destroyedNontokenControllerIds = new ArrayList<>();

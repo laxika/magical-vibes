@@ -213,11 +213,15 @@ class BrokenVisageTest extends BaseCardTest {
         card.setKeywords(Set.of(Keyword.INDESTRUCTIBLE));
         Permanent attacker = addAttacker(player1, card);
         castBrokenVisage(attacker.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> harness.passBothPriorities());
 
         Permanent spirit = findSpiritToken(player2);
         assertThat(gqs.hasKeyword(gd, spirit, Keyword.INDESTRUCTIBLE)).isFalse();
         spirit.setRegenerationShield(1);
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            harness.passBothPriorities();
+            gs.declareBlockers(gd, player2, List.of());
+        });
 
         harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         resolveAllTriggers();

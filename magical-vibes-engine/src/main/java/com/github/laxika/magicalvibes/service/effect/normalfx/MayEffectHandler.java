@@ -46,10 +46,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                     && gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)
                     || counters.powerModifier() < 0
                     && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, source)) {
-                if (e.elseEffect() != null) {
-                    EffectHandler elseHandler = effectHandlerRegistry.getHandler(e.elseEffect());
-                    if (elseHandler != null) elseHandler.resolve(gameData, entry, e.elseEffect());
-                }
+                insertElseEffect(entry, e);
                 return;
             }
         }
@@ -135,12 +132,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         }
         if (cannotSacrifice) {
             gameData.resolvingMayEffectFromStack = false;
-            if (e.elseEffect() != null) {
-                EffectHandler elseHandler = effectHandlerRegistry.getHandler(e.elseEffect());
-                if (elseHandler != null) {
-                    elseHandler.resolve(gameData, entry, e.elseEffect());
-                }
-            }
+            insertElseEffect(entry, e);
             return;
         }
 
@@ -169,6 +161,12 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 null,
                 entry.getTriggeringPermanentToughnessAtTrigger()
         ));
+    }
+
+    private void insertElseEffect(StackEntry entry, MayEffect may) {
+        if (may.elseEffect() != null) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(may.elseEffect()));
+        }
     }
 
     private boolean canSacrificeEnchantedPermanent(GameData gameData, StackEntry entry, UUID choicePlayerId) {

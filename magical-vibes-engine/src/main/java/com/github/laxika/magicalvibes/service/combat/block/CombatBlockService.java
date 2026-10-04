@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.effect.PayBlockCostsEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -126,6 +128,9 @@ public class CombatBlockService {
 
     @Autowired @Lazy
     private LifeSupport lifeSupport;
+
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.input.InputCompletionService inputCompletionService;
 
     /**
      * Returns the battlefield indices of creatures the given player can legally declare as blockers.
@@ -387,6 +392,19 @@ public class CombatBlockService {
         return processBlockerDeclaration(gameData, activeId, defenderId, player.getUsername(), blockerAssignments);
     }
 
+    /** Resumes a proposed declaration after its defending player accepts or declines block costs. */
+    public CombatResult completeBlockCostPayment(GameData gameData, PayBlockCostsEffect payment,
+                                                 boolean accepted) {
+        interactionHandlerRegistry.begin(gameData, payment.declaration());
+        if (!accepted) return CombatResult.DONE;
+        List<BlockerAssignment> assignments = new ArrayList<>();
+        for (int i = 0; i < payment.blockerIndices().size(); i++) {
+            assignments.add(new BlockerAssignment(payment.blockerIndices().get(i), payment.attackerIndices().get(i)));
+        }
+        return processBlockerDeclaration(gameData, gameData.activePlayerId, payment.declaration().defenderId(),
+                payment.declaringPlayerName(), assignments, true);
+    }
+
     /** Processes Camouflage's randomly assigned blocks through the normal blocker pipeline. */
     public CombatResult declareCamouflageBlockers(GameData gameData, List<BlockerAssignment> blockerAssignments) {
         UUID activeId = gameData.activePlayerId;
@@ -398,6 +416,13 @@ public class CombatBlockService {
     private CombatResult processBlockerDeclaration(GameData gameData, UUID activeId, UUID defenderId,
                                                     String playerName,
                                                     List<BlockerAssignment> blockerAssignments) {
+        return processBlockerDeclaration(gameData, activeId, defenderId, playerName, blockerAssignments, false);
+    }
+
+    private CombatResult processBlockerDeclaration(GameData gameData, UUID activeId, UUID defenderId,
+                                                    String playerName,
+                                                    List<BlockerAssignment> blockerAssignments,
+                                                    boolean defenderAcceptedCosts) {
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
         List<Integer> blockable = getBlockableCreatureIndices(gameData, defenderId);
@@ -545,6 +570,25 @@ public class CombatBlockService {
                 throw new IllegalStateException("Not enough life to pay block cost ("
                         + blockLifeTaxTotal + " required)");
             }
+        }
+
+        PendingInteraction.BlockerDeclaration declaration = gameData.interaction.activeInteraction(
+                PendingInteraction.BlockerDeclaration.class);
+        if (!defenderAcceptedCosts && declaration != null && declaration.choosingForOpponent()
+                && (blockTaxTotal > 0 || blockLifeTaxTotal > 0
+                        || combatTapCostService.hasBlockTapCosts(gameData, declaredBlockers))) {
+            Card sourceCard = gameData.getDelayedActions(DelayedBlockerDeclarationControl.class).stream()
+                    .filter(delayed -> delayed.chooserId().equals(declaration.chooserId()))
+                    .map(DelayedBlockerDeclarationControl::sourceCard).reduce((first, last) -> last)
+                    .orElse(attackerBattlefield.get(blockerAssignments.getFirst().attackerIndex()).getCard());
+            PayBlockCostsEffect payment = new PayBlockCostsEffect(declaration,
+                    blockerAssignments.stream().map(BlockerAssignment::blockerIndex).toList(),
+                    blockerAssignments.stream().map(BlockerAssignment::attackerIndex).toList(), playerName);
+            gameData.interaction.clearAwaitingInput();
+            gameData.pendingMayAbilities.add(new PendingMayAbility(sourceCard, defenderId,
+                    List.of(payment), "Pay the additional costs for the proposed blocks?"));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return CombatResult.DONE;
         }
 
         gameData.interaction.clearAwaitingInput();
@@ -1903,6 +1947,7 @@ public class CombatBlockService {
                 .filter(e -> !(e instanceof CombatOpponentReferencingEffect c)
                         || !c.referencesCombatOpponent())
                 .toList());
+        checkDelayedBecomesBlockedTriggers(gameData, attacker);
         pushRegularBecomesBlockedTriggers(gameData, attacker, controllerId, regularEffects);
 
         combatTriggerService.checkAuraTriggersForCreature(gameData, attacker, EffectSlot.ON_BECOMES_BLOCKED);
@@ -1963,8 +2008,26 @@ public class CombatBlockService {
         log.info("Game {} - {} becomes-blocked trigger pushed onto stack", gameData.id, attacker.getCard().getName());
     }
 
+    private void checkDelayedBecomesBlockedTriggers(GameData gameData, Permanent attacker) {
+        for (var delayed : gameData.temporaryGlobalTriggeredAbilities) {
+            if (delayed.slot() != EffectSlot.ON_BECOMES_BLOCKED
+                    || !attacker.getId().equals(delayed.watchedPermanentId())) {
+                continue;
+            }
+            StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                    delayed.sourceCard(), delayed.controllerId(),
+                    delayed.sourceCard().getName() + "'s delayed becomes-blocked trigger",
+                    List.of(delayed.effect()), attacker.getId(), (UUID) null);
+            trigger.setNonTargeting(true);
+            gameData.stack.add(trigger);
+        }
+    }
+
     private void fireCreatureBecomesBlockedTriggers(GameData gameData, Permanent attacker,
             UUID activeId, List<Permanent> blockers, boolean newlyBlocked) {
+        if (newlyBlocked) {
+            checkDelayedBecomesBlockedTriggers(gameData, attacker);
+        }
         List<EffectRegistration> becomesBlockedRegs = attacker.getCard().getEffectRegistrations(EffectSlot.ON_BECOMES_BLOCKED);
         List<CardEffect> grantedBecomesBlockedEffects = new ArrayList<>(
                 attacker.getTemporaryTriggeredEffects(EffectSlot.ON_BECOMES_BLOCKED));
@@ -2089,6 +2152,7 @@ public class CombatBlockService {
                     .stream().filter(registration -> registration.triggerMode() == mode)
                     .map(EffectRegistration::effect).toList();
             if (effects.isEmpty()) continue;
+            if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
 
             List<CardEffect> matchingEffects = new ArrayList<>();
             FilterContext watcherContext = FilterContext.of(gameData)
@@ -2127,6 +2191,8 @@ public class CombatBlockService {
                 continue;
             }
 
+            boolean referencesBlockedCreature = matchingEffects.stream().anyMatch(effect ->
+                    effect instanceof com.github.laxika.magicalvibes.model.effect.BoostReferencedPermanentEffect);
             StackEntry trigger = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     perm.getCard(),
@@ -2134,12 +2200,13 @@ public class CombatBlockService {
                     perm.getCard().getName() + "'s becomes-blocked trigger",
                     matchingEffects,
                     blockedAttacker.getId(),
-                    blockedAttacker.getId()
+                    referencesBlockedCreature ? perm.getId() : blockedAttacker.getId()
             );
+            trigger.setTriggeringPermanentId(blockedAttacker.getId());
             trigger.setAttackedTargetId(blockedAttacker.getAttackTarget());
             // "It" references the blocked creature without targeting it — can't fizzle.
             trigger.setNonTargeting(true);
-            trigger.setSourcePermanentSnapshot(new Permanent(blockedAttacker));
+            trigger.setSourcePermanentSnapshot(new Permanent(referencesBlockedCreature ? perm : blockedAttacker));
             gameData.stack.add(trigger);
             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} ON_ALLY_CREATURE_BECOMES_BLOCKED trigger for {} blocked",

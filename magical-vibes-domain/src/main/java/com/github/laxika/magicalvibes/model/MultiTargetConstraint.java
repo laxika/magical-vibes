@@ -58,6 +58,8 @@ public enum MultiTargetConstraint {
     AT_MOST_ONE_PER_CONTROLLER,
     /** One target must be chosen for each player who controls at least one legal target. */
     ONE_PER_CONTROLLER_IF_ABLE,
+    /** Exactly one permanent controlled by each opponent must be targeted. */
+    ONE_PER_OPPONENT,
     /** At most one chosen graveyard card may be an instant and at most one may be a sorcery. */
     AT_MOST_ONE_INSTANT_AND_ONE_SORCERY,
     /** At most one chosen graveyard card may be a creature and at most one may be a land. */

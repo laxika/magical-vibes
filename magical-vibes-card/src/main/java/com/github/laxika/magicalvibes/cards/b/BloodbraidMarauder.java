@@ -13,6 +13,6 @@ public class BloodbraidMarauder extends Card {
 
     public BloodbraidMarauder() {
         addEffect(EffectSlot.STATIC, new CantBlockEffect());
-        addEffect(EffectSlot.ON_SELF_CAST, new ConditionalEffect(new Delirium(), new CascadeEffect()));
+        addEffect(EffectSlot.ON_SELF_CAST, ConditionalEffect.atTriggerTime(new Delirium(), new CascadeEffect()));
     }
 }

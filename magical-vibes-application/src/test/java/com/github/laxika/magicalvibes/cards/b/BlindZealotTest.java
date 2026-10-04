@@ -160,7 +160,6 @@ class BlindZealotTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, bears.getId());
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities();
         });
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -179,7 +178,6 @@ class BlindZealotTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, victim.getId());
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
-            harness.passBothPriorities();
         });
 
         harness.assertInGraveyard(player1, "Blind Zealot");

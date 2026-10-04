@@ -33,7 +33,7 @@ class BenalishKnightCounselorTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent first = findPermanents(player1, "Grizzly Bears").stream()
                 .filter(permanent -> permanent != supporter)

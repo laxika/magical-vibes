@@ -714,8 +714,8 @@ public class AmountEvaluationService {
                     countAttachmentsOnSource(gameData, a, ctx);
             case CreaturesBlockedBySource ignored ->
                     countCreaturesBlockedBySource(ctx);
-            case CreaturesBlockingSource ignored ->
-                    countCreaturesBlockingSource(gameData, ctx);
+            case CreaturesBlockingSource count ->
+                    countCreaturesBlockingSource(gameData, ctx, count.useTarget());
             case OpponentPoisonCounters ignored ->
                     countOpponentPoisonCounters(gameData, ctx);
             case OpponentsWithAtLeastPoisonCounters c ->
@@ -2655,12 +2655,13 @@ public class AmountEvaluationService {
         return count[0];
     }
 
-    private int countCreaturesBlockingSource(GameData gameData, AmountContext ctx) {
-        Permanent source = ctx.sourcePermanent();
-        if (source == null) return 0;
+    private int countCreaturesBlockingSource(GameData gameData, AmountContext ctx, boolean useTarget) {
+        UUID watchedId = useTarget ? ctx.targetPermanentId()
+                : ctx.sourcePermanent() == null ? null : ctx.sourcePermanent().getId();
+        if (watchedId == null) return 0;
         final int[] count = {0};
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (permanent.isBlocking() && permanent.getBlockingTargetIds().contains(source.getId())) {
+            if (permanent.isBlocking() && permanent.getBlockingTargetIds().contains(watchedId)) {
                 count[0]++;
             }
         });

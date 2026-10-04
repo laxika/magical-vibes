@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -43,6 +44,6 @@ public class Broodlord extends Card {
                 false, false, true, otherCreature, false, false);
         targetUpTo(new XValue(), new PermanentPredicateTargetFilter(
                 otherCreature, "Target must be another creature you control"), 99)
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, distribution);
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, distribution, TriggerMode.INDEPENDENT);
     }
 }

@@ -48,7 +48,7 @@ public class BlueMagesCane extends Card {
                         EffectSlot.ON_ATTACK,
                         SequenceEffect.of(
                                 new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
-                                        instantOrSorcery, GraveyardSearchScope.OPPONENT_GRAVEYARD),
+                                        instantOrSorcery, GraveyardSearchScope.OPPONENT_GRAVEYARD, true),
                                 CopyCardsExiledWithSourceAndMayCastCopiesEffect.oneForThreeGeneric()),
                         GrantScope.EQUIPPED_CREATURE));
 

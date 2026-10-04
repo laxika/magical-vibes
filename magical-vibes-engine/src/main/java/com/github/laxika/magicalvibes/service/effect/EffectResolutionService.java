@@ -375,6 +375,9 @@ public class EffectResolutionService {
                     gameData, entry, sacrifice, entry.getTargetId())) {
                 if (may.elseEffect() == null) {
                     skipEffect = true;
+                } else if (may.elseEffect() instanceof SequenceEffect sequence) {
+                    entry.insertEffectsToResolve(i + 1, sequence.steps());
+                    skipEffect = true;
                 } else {
                     effectToResolve = may.elseEffect();
                 }

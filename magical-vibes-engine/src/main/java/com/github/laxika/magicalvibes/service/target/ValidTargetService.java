@@ -1842,7 +1842,8 @@ public class ValidTargetService {
 
     private boolean isOnePerControllerConstraint(MultiTargetConstraint constraint) {
         return constraint == MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER
-                || constraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE;
+                || constraint == MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE
+                || constraint == MultiTargetConstraint.ONE_PER_OPPONENT;
     }
 
     private boolean wasBlockedByFirstTargetThisTurn(GameData gameData, UUID firstTargetId,

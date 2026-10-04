@@ -136,7 +136,7 @@ class BlackWidowSuperSpyTest extends BaseCardTest {
         Card nonland = new BlackWidowSuperSpy();
         harness.setLibrary(player2, List.of(nonland));
 
-        resolveCombat();
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         gd.playerBattlefields.get(player1.getId()).remove(widow);
         harness.setGraveyard(player1, List.of(widow.getCard()));
         resolveAllTriggers();

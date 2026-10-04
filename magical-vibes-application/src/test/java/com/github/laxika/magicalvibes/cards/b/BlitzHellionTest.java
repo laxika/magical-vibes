@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BlitzHellion.class})
+@CardUsed({BlitzHellion.class, ControlMagic.class})
 class BlitzHellionTest extends BaseCardTest {
 
     private void advanceToEndStep(Player activePlayer) {
@@ -61,12 +62,14 @@ class BlitzHellionTest extends BaseCardTest {
     void shufflesIntoOwnerLibraryUnderOpponentControl() {
         BlitzHellion card = new BlitzHellion();
         card.setOwnerId(player1.getId());
-        Permanent hellion = harness.addToBattlefieldAndReturn(player2, card);
-        gd.stolenCreatures.put(hellion.getId(), player1.getId());
+        Permanent hellion = harness.addToBattlefieldAndReturn(player1, card);
+        Permanent control = harness.addToBattlefieldAndReturn(player2, new ControlMagic());
+        control.setAttachedTo(hellion.getId());
+        harness.runStateBasedActions();
 
         advanceToEndStep(player2);
         assertThat(gd.stack).hasSize(1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
 
         harness.assertNotOnBattlefield(player2, "Blitz Hellion");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);

@@ -1756,6 +1756,9 @@ public class CombatDamageService {
             }
             if (gameQueryService.hasEffectiveSupertype(gameData, creature, CardSupertype.LEGENDARY)) {
                 gameData.combatDamageSourcesWithLegendaryThisTurn.add(creature.getId());
+                gameData.legendaryCreatureCombatDamageToPlayersThisTurn
+                        .computeIfAbsent(creature.getId(), ignored -> ConcurrentHashMap.newKeySet())
+                        .add(defenderId);
             }
 
             // Record creature subtypes at combat damage time for subtype-conditional triggers

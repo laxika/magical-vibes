@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.mayfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -28,6 +30,8 @@ public class MayCastLesserSpellWithSharedTypeOrCreateTokenEffectHandler implemen
     private final InputCompletionService inputCompletionService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
+    private final com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService additionalSpellCostService;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport exileCastTargetSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,6 +45,16 @@ public class MayCastLesserSpellWithSharedTypeOrCreateTokenEffectHandler implemen
                 .map(MayCastLesserSpellWithSharedTypeOrCreateTokenEffect.class::cast)
                 .findFirst()
                 .orElseThrow();
+
+        if (accepted && (!additionalSpellCostService.satisfiableWithoutManaCost(
+                gameData, player.getId(), ability.sourceCard())
+                || (EffectResolution.needsSpellCastTarget(ability.sourceCard().getEffects(EffectSlot.SPELL),
+                ability.sourceCard().isAuraThatRequiresAttachment(), ability.sourceCard().isEnchantPlayer())
+                || EffectResolution.needsSpellTarget(ability.sourceCard().getEffects(EffectSlot.SPELL)))
+                && ability.sourceCard().getMinTargets() > 0
+                && exileCastTargetSupport.firstSlotCandidates(gameData, ability.sourceCard(), player.getId()).isEmpty())) {
+            accepted = false;
+        }
 
         if (accepted) {
             gameData.pendingMayAbilities.removeIf(pending -> pending.effects().stream()

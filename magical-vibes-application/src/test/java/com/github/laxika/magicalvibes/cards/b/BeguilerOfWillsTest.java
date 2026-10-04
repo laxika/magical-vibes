@@ -370,7 +370,7 @@ class BeguilerOfWillsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, firstTarget.getId());
         harness.passBothPriorities();
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
-        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
         assertThat(beguiler.isTapped()).isFalse();
         harness.activateAbility(player1, 0, null, secondTarget.getId());
         harness.passBothPriorities();

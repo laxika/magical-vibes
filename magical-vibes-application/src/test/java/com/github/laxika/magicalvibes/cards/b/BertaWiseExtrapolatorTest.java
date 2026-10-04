@@ -106,9 +106,7 @@ class BertaWiseExtrapolatorTest extends BaseCardTest {
             harness.addToBattlefield(player1, new DoublingSeason());
             setUpMainPhase(player1);
 
-            harness.setHand(player1, List.of(new LumaretsFavor()));
-            harness.addMana(player1, ManaColor.GREEN, 2);
-            harness.castInstant(player1, 0, berta.getId());
+            harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
             harness.passBothPriorities();
             assertThat(berta.getPlusOnePlusOneCounters()).isEqualTo(2);
             assertThat(gd.interaction.isAwaitingInput()).isFalse();

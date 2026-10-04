@@ -1,5 +1,9 @@
 # The CR 613 Layer System (`model/layer`)
 
+Entry replacement checks use `LayerSystemService.beginPassWithEnteringPermanent` through `GameQueryService.hasLostPrintedAbilitiesAsEntering` to evaluate the entering permanent in a temporary layered board, without adding it to the battlefield or caching the prospective board. This allows ability-removal effects to suppress the permanent's own enters-tapped and enters-with-counters abilities.
+
+Dependency-trial operations for granted abilities use their effect and cost values, rather than allocation identity: handlers may construct equivalent ability objects independently in each trial. Materialized control-Aura effects retain the Aura's attachment timestamp so simultaneous attachment order is preserved.
+
 **Summary for card-implementation sessions.** Continuous effects are resolved by a
 whole-battlefield CR 613 layered pass, not stored on permanents: `LayerSystemService` builds one
 `CharacteristicState` per permanent and applies every continuous effect — `EffectSlot.STATIC`
@@ -1661,3 +1665,5 @@ and any deviations from this document.
     runs were not comparable because a concurrent long-running JVM changed CPU pressure between
     variants, so no MCTS pass-count claim is recorded here. **Verification:** `LayeredBoardCacheTest`,
     `LayerPassBenchmarkTest`, `MCTSBenchmarkTest`, and all 74 `HardAiDecisionEngineTest` cases passed.
+
+Intrinsic basic-land mana abilities follow effective basic land types. GameQueryService.intrinsicBasicLandManaColors derives each color from the layered Plains, Island, Swamp, Mountain, and Forest subtypes, and activation enumeration includes those abilities. Additive subtype effects such as Blanket of Night and Yavimaya, Cradle of Growth therefore need only GrantSubtypeEffect; adding a separate GrantActivatedAbilityEffect would preserve an incorrect redundant mana ability after a later effect replaces that land type.

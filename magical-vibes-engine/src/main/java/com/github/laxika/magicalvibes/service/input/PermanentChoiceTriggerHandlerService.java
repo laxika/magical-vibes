@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -2394,6 +2395,12 @@ public class PermanentChoiceTriggerHandlerService {
             if (sourcePermanent != null) {
                 entry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
                 entry.setSpectacle(sourcePermanent.isSpectacle());
+                if (sourcePermanent.isEvoked()
+                        && etbTtt.sourceCard().getEffectRegistrations(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                        .anyMatch(registration -> registration.triggerMode()
+                                == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT)) {
+                    entry.setTriggeringCardId(etbTtt.sourceCard().getId());
+                }
                 entry.setCollectEvidenceCostPaid(sourcePermanent.isCollectEvidenceCostPaid());
                 entry.setWaterbendCostPaid(sourcePermanent.isWaterbendCostPaid());
                 entry.setRevealCardFromHandCostPaid(sourcePermanent.isRevealCardFromHandCostPaid());

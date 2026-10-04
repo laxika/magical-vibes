@@ -19,7 +19,7 @@ public class MeliraSylvokOutcast extends Card {
 
         // Creatures you control can't have -1/-1 counters put on them.
         addEffect(EffectSlot.STATIC, new GrantEffectEffect(
-                new CantHaveMinusOneMinusOneCountersEffect(), GrantScope.OWN_CREATURES));
+                new CantHaveMinusOneMinusOneCountersEffect(), GrantScope.ALL_OWN_CREATURES));
 
         // Creatures your opponents control lose infect.
         addEffect(EffectSlot.STATIC, new RemoveKeywordEffect(Keyword.INFECT, GrantScope.OPPONENT_CREATURES));

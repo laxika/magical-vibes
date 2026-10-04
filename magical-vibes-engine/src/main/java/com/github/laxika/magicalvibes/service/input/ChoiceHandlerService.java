@@ -117,6 +117,8 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class ChoiceHandlerService {
+    @Autowired @Lazy
+    private PermanentChoiceSpellHandlerService permanentChoiceSpellHandlerService;
 
     private final LibraryRevealSupport libraryRevealSupport;
     private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.normalfx.VentureIntoDungeonEffectHandler> ventureHandlerProvider;
@@ -233,6 +235,18 @@ public class ChoiceHandlerService {
         }
         PendingInteraction.ColorChoice colorChoice =
                 gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        if (colorChoice.context() instanceof ChoiceContext.GraveyardShuffleOrExileReplacementChoice choice) {
+            if (!player.getId().equals(colorChoice.playerId())) {
+                throw new IllegalStateException("Not your turn to choose");
+            }
+            if (!colorChoice.options().contains(colorName)) {
+                throw new IllegalArgumentException("Invalid graveyard replacement choice");
+            }
+            gameData.interaction.clearAwaitingInput();
+            graveyardService.resolveShuffleOrExileReplacement(gameData, choice, "SHUFFLE".equals(colorName));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
         if (colorChoice == null || !player.getId().equals(colorChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
@@ -492,6 +506,11 @@ public class ChoiceHandlerService {
 
         if (colorChoice.context() instanceof ChoiceContext.ExileFreeCastFaceChoice ctx) {
             exileFreeCastSupportProvider.getObject().completeFaceChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.FreeCastAdditionalCostChoice ctx) {
+            if (!colorChoice.options().contains(colorName)) throw new IllegalStateException("Invalid additional cost choice");
+            exileFreeCastQueueSupport.completeAdditionalCostChoice(gameData, colorName, ctx);
             return;
         }
 
@@ -3810,6 +3829,15 @@ public class ChoiceHandlerService {
     private boolean beginResolvingModalTargetChoice(GameData gameData, ChoiceContext.ChooseModeChoice ctx,
                                                     List<CardEffect> effects, TargetFilter targetFilter) {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+        // Shared-target modes reuse the target chosen when the spell or ability was put on
+        // the stack. Choosing zero targets for an optional group remains final.
+        boolean sharedTargetMode = java.util.Arrays.stream(EffectSlot.values())
+                .flatMap(slot -> ctx.sourceCard().getEffects(slot).stream())
+                .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetPermanentEffect modal
+                        && modal.options().equals(ctx.effect().options()));
+        if (sharedTargetMode) {
+            return false;
+        }
         // A combat-damage modal's "that player" effects reuse the damaged player already
         // carried by the trigger; choosing a mode does not choose a different player.
         if (pendingEntry != null && pendingEntry.getTargetId() != null
@@ -5535,7 +5563,7 @@ public class ChoiceHandlerService {
                     new ChoiceContext.CounterDistributionAssignment(
                             ctx.sourceCard(), ctx.controllerId(), ctx.effects(), ctx.sourcePermanentId(),
                             ctx.counterType(), ctx.targetIds(), assignments, ctx.total(), nextTargetIndex,
-                            ctx.allowsPartialDistribution());
+                            ctx.allowsPartialDistribution(), ctx.spellCast());
             playerInputService.beginCounterDistributionAssignmentChoice(gameData, player.getId(), next);
             inputCompletionService.publishStateAfterInput(gameData);
             return;
@@ -5550,6 +5578,11 @@ public class ChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
+        if (ctx.spellCast() != null) {
+            permanentChoiceSpellHandlerService.completeHandCastDistribution(gameData, ctx.spellCast(),
+                    ctx.targetIds(), assignments);
+            return;
+        }
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 ctx.sourceCard(),

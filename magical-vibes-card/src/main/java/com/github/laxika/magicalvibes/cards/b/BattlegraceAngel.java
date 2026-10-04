@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -25,6 +26,6 @@ public class BattlegraceAngel extends Card {
         // GrantScope.TARGET grants to the recorded lone attacker, same trigger target as the boost.
         addEffect(EffectSlot.ON_ALLY_CREATURE_ATTACKS,
                 new ConditionalEffect(new AttacksAlone(),
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET)));
+                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET)), TriggerMode.INDEPENDENT);
     }
 }

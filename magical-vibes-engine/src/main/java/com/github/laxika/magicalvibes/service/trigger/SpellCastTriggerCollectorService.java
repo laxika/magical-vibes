@@ -1900,7 +1900,11 @@ public class SpellCastTriggerCollectorService {
     }
 
     private int kickedCount(StackEntry spellEntry) {
-        int count = spellEntry.isKicked() && !spellEntry.getCard().getKeywords().contains(Keyword.BARGAIN) ? 1 : 0;
+        boolean nonKickerAdditionalCost = spellEntry.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.KickerEffect kicker
+                        && !kicker.countsAsKicker());
+        int count = spellEntry.isKicked() && !nonKickerAdditionalCost
+                && !spellEntry.getCard().getKeywords().contains(Keyword.BARGAIN) ? 1 : 0;
         int repeatedMultikickerCount = spellEntry.getCard().getEffects(EffectSlot.SPELL).stream()
                 .filter(RepeatableAdditionalManaCost.class::isInstance)
                 .map(RepeatableAdditionalManaCost.class::cast)

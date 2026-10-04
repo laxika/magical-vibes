@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
@@ -29,6 +30,7 @@ public class Blizzard extends Card {
 
         // Creatures with flying don't untap during their controllers' untap steps.
         addEffect(EffectSlot.STATIC,
-                new MatchingPermanentsDoesntUntapEffect(new PermanentHasKeywordPredicate(Keyword.FLYING)));
+                new MatchingPermanentsDoesntUntapEffect(new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(), new PermanentHasKeywordPredicate(Keyword.FLYING)))));
     }
 }

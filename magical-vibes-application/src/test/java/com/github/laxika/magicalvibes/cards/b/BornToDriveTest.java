@@ -81,6 +81,9 @@ class BornToDriveTest extends BaseCardTest {
             harness.activateAbility(player1,
                     gd.playerBattlefields.get(player1.getId()).indexOf(vehicle), null, null);
             harness.handlePermanentChosen(player1, pilots.getFirst().getId());
+            if (gd.interaction.activeInteraction() instanceof com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice) {
+                harness.handlePermanentChosen(player1, player1.getId());
+            }
             harness.passBothPriorities();
         });
 

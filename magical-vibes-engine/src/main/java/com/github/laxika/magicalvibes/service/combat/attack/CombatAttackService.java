@@ -1217,8 +1217,8 @@ public class CombatAttackService {
                                 gameData.queueMayAbilityForPlayer(attacker.getCard(), playerId, may, null,
                                         attacker.getId(), defendingPlayerId, new Permanent(attacker));
                             }
-                        } else if (may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.SequenceEffect sequence
-                                && sequence.steps().stream().anyMatch(step ->
+                        } else if ((may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.SequenceEffect sequence
+                                ? sequence.steps() : List.of(may.wrapped())).stream().anyMatch(step ->
                                 step instanceof com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect skip
                                         && skip.controllerStepOnly())) {
                             gameData.queueMayAbilityForPlayer(attacker.getCard(), playerId, may, otherAttackerId,
@@ -1295,32 +1295,70 @@ public class CombatAttackService {
                                         attacker.getId(), defendingPlayerId);
                             }
                         } else if (needsTarget) {
-                            // A static single "up to N" group uses the multi-permanent choice
-                            // flow. Equipment attachments need individual selections so each
-                            // chosen Equipment is attached when the trigger resolves.
-                            Card attackCard = attacker.getCard();
-                            boolean staticSingleMultiTargetGroup = attackCard.getSpellTargets().size() == 1
-                                    && attackCard.getSpellTargets().getFirst().getMaxTargets() > 1
-                                    && attackCard.getSpellTargets().getFirst().getDynamicMinTargets() == null
-                                    && attackCard.getSpellTargets().getFirst().getDynamicMaxTargets() == null;
-                            boolean attachesEquipment = otherEffects.stream()
-                                    .anyMatch(effect -> effect instanceof AttachTargetEquipmentToTriggeringPermanentEffect
-                                            || effect instanceof MayEffect may
-                                            && may.wrapped() instanceof AttachTargetEquipmentToTriggeringPermanentEffect);
-                            if (attackCard.getSpellTargets().size() > 1
-                                    || ((!staticSingleMultiTargetGroup || attachesEquipment)
-                                    && etbTokenTargetService.needsSlotBySlotTargetSelection(attackCard))) {
-                                gameData.queueInteraction(
-                                        new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                                                attackCard, playerId, otherEffects, attacker.getId(),
-                                                List.of(), 0, 0));
-                            } else {
-                                UUID targetChooserId = attacker.getCard().isAttackTriggerTargetChosenByDefendingPlayer()
-                                        ? defendingPlayerId : playerId;
-                                gameData.queueInteraction(
-                                        new PermanentChoiceContext.AttackTriggerTarget(
-                                                attackCard, playerId, otherEffects, attacker.getId(),
-                                                targetChooserId, defendingPlayerId, attacker.getId()));
+                            List<CardEffect> bundledEffects = new ArrayList<>(otherEffects);
+                            List<List<CardEffect>> abilities = new ArrayList<>();
+                            for (CardEffect granted : temporaryAttackEffects) {
+                                if (bundledEffects.remove(granted)) {
+                                    abilities.add(List.of(granted));
+                                }
+                            }
+                            for (var registration : attacker.getCard().getEffectRegistrations(EffectSlot.ON_ATTACK)) {
+                                if (registration.triggerMode()
+                                        == com.github.laxika.magicalvibes.model.TriggerMode.INDEPENDENT
+                                        && bundledEffects.remove(registration.effect())) {
+                                    abilities.add(List.of(registration.effect()));
+                                }
+                            }
+                            if (!bundledEffects.isEmpty()) {
+                                abilities.addFirst(bundledEffects);
+                            }
+                            for (List<CardEffect> abilityEffects : abilities) {
+                                boolean abilityNeedsTarget = abilityEffects.stream().anyMatch(effect ->
+                                        effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                                                || effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
+                                if (!abilityNeedsTarget) {
+                                    StackEntry attackTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                                            attacker.getCard(), playerId, attacker.getCard().getName() + "'s attack trigger",
+                                            abilityEffects, attackerIndices.size(), attacker.getId());
+                                    attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
+                                    attackTrigger.setDefendingPlayerId(defendingPlayerId);
+                                    attackTrigger.setSourcePermanentSnapshot(new Permanent(attacker));
+                                    if (abilityEffects.stream().anyMatch(AwardPersistentAnyColorManaEffect.class::isInstance)) {
+                                        attackTrigger.setEventValue(attackingPower);
+                                    }
+                                    gameData.stack.add(attackTrigger);
+                                    triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
+                                            gameData, attacker, attackTrigger);
+                                    continue;
+                                }
+                                // A static single "up to N" group uses the multi-permanent choice
+                                // flow. Equipment attachments need individual selections so each
+                                // chosen Equipment is attached when the trigger resolves.
+                                Card attackCard = attacker.getCard();
+                                boolean staticSingleMultiTargetGroup = attackCard.getSpellTargets().size() == 1
+                                        && attackCard.getSpellTargets().getFirst().getMaxTargets() > 1
+                                        && attackCard.getSpellTargets().getFirst().getDynamicMinTargets() == null
+                                        && attackCard.getSpellTargets().getFirst().getDynamicMaxTargets() == null;
+                                boolean attachesEquipment = abilityEffects.stream()
+                                        .anyMatch(effect -> effect instanceof AttachTargetEquipmentToTriggeringPermanentEffect
+                                                || effect instanceof MayEffect may
+                                                && may.wrapped() instanceof AttachTargetEquipmentToTriggeringPermanentEffect);
+                                if (attackCard.getSpellTargets().size() > 1
+                                        || ((!staticSingleMultiTargetGroup || attachesEquipment)
+                                        && etbTokenTargetService.needsSlotBySlotTargetSelection(attackCard))) {
+                                    gameData.queueInteraction(
+                                            new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                                    attackCard, playerId, abilityEffects, attacker.getId(),
+                                                    List.of(), 0, 0));
+                                } else {
+                                    UUID targetChooserId = attacker.getCard().isAttackTriggerTargetChosenByDefendingPlayer()
+                                            ? defendingPlayerId : playerId;
+                                    gameData.queueInteraction(
+                                            new PermanentChoiceContext.AttackTriggerTarget(
+                                                    attackCard, playerId, abilityEffects, attacker.getId(),
+                                                    targetChooserId, defendingPlayerId, attacker.getId()));
+                                }
                             }
                         } else {
                             // Capture the attacked player/planeswalker so non-targeting attack
@@ -2279,6 +2317,8 @@ public class CombatAttackService {
                                 perm.getId()
                         );
                         attackedTrigger.setNonTargeting(true);
+                        attackedTrigger.setTriggeringPermanentId(attacker.getId());
+                        attackedTrigger.setTriggeringPermanentControllerId(playerId);
                         attackedTrigger.setSourcePermanentSnapshot(new Permanent(perm));
                         gameData.stack.add(attackedTrigger);
                         gameLogService.append(gameData,
@@ -2965,6 +3005,7 @@ public class CombatAttackService {
                     attackerCount,
                     source.getId());
             playerAttackTrigger.setTargetId(attackingPlayerId);
+            playerAttackTrigger.setTriggeringPermanentControllerId(attackingPlayerId);
             playerAttackTrigger.setAttackedTargetId(attackedTargetId);
             playerAttackTrigger.setSourcePermanentSnapshot(new Permanent(source));
             playerAttackTrigger.setNonTargeting(true);

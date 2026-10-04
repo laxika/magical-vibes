@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -52,7 +53,8 @@ class BroodbirthViperTest extends BaseCardTest {
                 .anyMatch(action -> action.permanentId().equals(copy.getId())
                         && action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
 
-        harness.forceStep(TurnStep.END_OF_COMBAT);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        gd.interaction.clearAwaitingInput();
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         resolveAllTriggers();
@@ -154,6 +156,7 @@ class BroodbirthViperTest extends BaseCardTest {
     void myriadCopyMayAttackPlaneswalker() {
         addThirdPlayer();
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player3, new JaceBeleren());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 3);
         addCreatureReady(player1, new BroodbirthViper());
 
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {

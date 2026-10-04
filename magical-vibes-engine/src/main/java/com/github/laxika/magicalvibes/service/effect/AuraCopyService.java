@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -131,6 +132,9 @@ public class AuraCopyService {
         }
         permanentCopierService.applyCloneCopy(affected, chosen, null, null);
         affected.setCopyWhileAttached(true);
+        floatingEffect = floatingEffect instanceof EquippedCreatureBecomesCopyOfTargetCreatureEffect
+                ? new EquippedCreatureBecomesCopyOfTargetCreatureEffect(affected.getCard())
+                : new EnchantedCreatureIsCopyOfChosenCreatureEffect(affected.getCard());
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), source.getCard().getName(), source.getId(),
                 gameQueryService.findPermanentController(gameData, source.getId()),
@@ -154,7 +158,7 @@ public class AuraCopyService {
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), equipment.getCard().getName(), equipment.getId(),
                 gameQueryService.findPermanentController(gameData, equipment.getId()),
-                new AttachedCreatureIsCopyOfExiledCreatureEffect(), attached.getId(), null, null,
+                new AttachedCreatureIsCopyOfExiledCreatureEffect(attached.getCard()), attached.getId(), null, null,
                 EffectDuration.WHILE_ATTACHED, 0));
         gameLogService.append(gameData, GameLog.text(
                 originalName + " becomes a copy of " + exiledCreature.getName() + "."));
@@ -190,11 +194,30 @@ public class AuraCopyService {
                 continue;
             }
             String copyName = enchanted.getCard().getName();
+            FloatingContinuousEffect remaining = gameData.floatingEffects.stream()
+                    .filter(other -> enchanted.getId().equals(other.affectedPermanentId()))
+                    .filter(other -> copiedCard(other.effect()) != null)
+                    .max(Comparator.comparingLong(FloatingContinuousEffect::timestamp))
+                    .orElse(null);
+            if (remaining != null) {
+                permanentCopierService.applyCloneCopy(enchanted, copiedCard(remaining.effect()),
+                        null, null, java.util.Set.of());
+                continue;
+            }
             enchanted.revertWhileAttachedCopy();
             gameLogService.append(gameData, GameLog.text(
                     copyName + " is no longer a copy and reverts to " + enchanted.getCard().getName() + "."));
             log.info("Game {} - {} reverts from copy back to {} ({} left)", gameData.id, copyName,
                     enchanted.getCard().getName(), floating.sourceCardName());
         }
+    }
+
+    private static Card copiedCard(CardEffect effect) {
+        return switch (effect) {
+            case EquippedCreatureBecomesCopyOfTargetCreatureEffect copy -> copy.copiedCard();
+            case EnchantedCreatureIsCopyOfChosenCreatureEffect copy -> copy.copiedCard();
+            case AttachedCreatureIsCopyOfExiledCreatureEffect copy -> copy.copiedCard();
+            default -> null;
+        };
     }
 }

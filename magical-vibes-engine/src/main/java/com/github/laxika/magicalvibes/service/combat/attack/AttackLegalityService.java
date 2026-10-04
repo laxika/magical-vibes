@@ -353,8 +353,9 @@ public class AttackLegalityService {
             for (Permanent source : defenderBattlefield) {
                 FilterContext context = FilterContext.of(gameData)
                         .withSourceCardId(source.getCard().getId())
+                        .withSourcePermanentId(source.getId())
                         .withSourceControllerId(protectedPlayerId);
-                for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, source)) {
                     if (effect instanceof ConditionalEffect conditional) {
                         if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
                                 ConditionContext.forStaticEffect(source, protectedPlayerId))) {

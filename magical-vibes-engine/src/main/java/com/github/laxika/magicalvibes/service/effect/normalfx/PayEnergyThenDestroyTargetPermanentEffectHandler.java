@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyThenDestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -21,7 +23,6 @@ import java.util.UUID;
 public class PayEnergyThenDestroyTargetPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final AmountEvaluationService amountEvaluationService;
-    private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
 
@@ -55,11 +56,11 @@ public class PayEnergyThenDestroyTargetPermanentEffectHandler implements NormalE
                     GameLog.text(playerName + " pays " + energyAmount + " energy counter(s)."));
         }
 
-        UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
-        if (controllerId != null) {
-            entry.getRemovedPermanentControllers().put(target.getId(), controllerId);
-        }
-        entry.rememberLastKnownPermanentCard(target.getId(), target.getCard());
-        destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(), false);
+        StackEntry destruction = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                entry.getCard(), entry.getControllerId(), entry.getCard().getName() + "'s destruction trigger",
+                List.of(new DestroyTargetPermanentEffect()), target.getId(), entry.getSourcePermanentId());
+        destruction.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+        destruction.setNonTargeting(true);
+        gameData.stack.add(destruction);
     }
 }

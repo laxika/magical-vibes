@@ -124,8 +124,10 @@ class BanishingKnackTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BanishingKnack()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN,
-                () -> harness.castAndResolveInstant(player1, 0, creature.getId()));
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.castAndResolveInstant(player1, 0, creature.getId());
+            resolveAllTriggers();
+        });
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> harness.ensurePriority(player2));
         harness.activateAbility(player2, 0, null, bounceTarget.getId());
         harness.passBothPriorities();

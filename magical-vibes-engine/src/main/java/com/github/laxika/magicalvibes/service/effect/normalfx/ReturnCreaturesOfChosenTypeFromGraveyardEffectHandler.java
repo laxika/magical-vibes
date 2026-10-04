@@ -65,6 +65,7 @@ public class ReturnCreaturesOfChosenTypeFromGraveyardEffectHandler implements No
                     .destination(GraveyardChoiceDestination.BATTLEFIELD)
                     .filter(filter)
                     .returnAll(true)
+                    .chooseAuraAttachment(true)
                     .build();
             graveyardReturnSupport.resolveReturnAll(gameData, entry, returnAll, controllerId, entry.getCard().getId());
         } else {

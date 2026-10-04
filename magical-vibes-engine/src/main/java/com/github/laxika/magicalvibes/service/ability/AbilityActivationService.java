@@ -2139,6 +2139,12 @@ public class AbilityActivationService {
         gameData.recordActivatedAbilityOfGraveyardCard(playerId);
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
         flushActivatedAbilityCostTriggers(gameData);
+        if (!ability.isManaAbility()) {
+            triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(
+                    gameData, playerId, stackEntry, ability, null, playerId, List.of());
+            triggerCollectionService.checkOpponentActivatesNonManaAbilityTriggers(
+                    gameData, playerId, stackEntry, ability, null, playerId, List.of());
+        }
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from the graveyard."));
         log.info("Game {} - {} activates {}'s graveyard ability", gameData.id, player.getUsername(), card.getName());
@@ -6806,6 +6812,18 @@ public class AbilityActivationService {
             boolean powerstoneCtx = manaPool != null && manaPool.getPowerstoneOnlyColorless() > 0;
             int effectiveAdditionalGenericCost = additionalGenericCost - creatureManaPaymentCount;
             boolean colorlessPermanentContext = gameQueryService.getEffectiveColors(gameData, permanent).isEmpty();
+            if (preCheck.hasPhyrexianMana()) {
+                int restDemand = preCheck.hasX()
+                        ? xValue + effectiveAdditionalGenericCost : effectiveAdditionalGenericCost;
+                int lifeCost = preCheck.payPhyrexianManaAuto(copyManaPool(affordabilityPool), restDemand);
+                if (lifeCost > 0 && (!gameQueryService.canPayLifeForCosts(gameData, manaAbility)
+                        || !gameQueryService.canPlayerLifeChange(gameData, playerId))) {
+                    throw new IllegalStateException("Players can't pay life to activate abilities");
+                }
+                if (gameData.getLife(playerId) < lifeCost) {
+                    throw new IllegalStateException("Not enough life to activate ability");
+                }
+            }
             if (preCheck.hasX() && ability.getXColorRestrictions() != null) {
                 if (colorlessPermanentContext && affordabilityPool != null
                         && affordabilityPool.getColorlessSpellOrPermanentAbilityMana() > 0) {

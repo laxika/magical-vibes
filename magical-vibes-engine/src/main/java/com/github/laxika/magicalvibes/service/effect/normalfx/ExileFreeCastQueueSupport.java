@@ -66,6 +66,8 @@ public class ExileFreeCastQueueSupport {
     @org.springframework.beans.factory.annotation.Autowired
     @Lazy
     private com.github.laxika.magicalvibes.service.battlefield.GameQueryService gameQueryService;
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
     public ExileFreeCastQueueSupport(GameLogService gameLogService,
@@ -266,6 +268,12 @@ public class ExileFreeCastQueueSupport {
         }
 
         if (additionalCosts.any()) {
+            if (spellEffects.stream().filter(CostEffect.class::isInstance).count() == 1
+                    && (additionalCosts.discardCardOrPayManaCost() != null || additionalCosts.discardCost() != null)
+                    && additionalSpellCostService.satisfiableWithoutManaCost(gameData, playerId, cardToCast)) {
+                castPreparedSpell(gameData, playerId, card, cardToCast, spellEffects, spellType, asCopy, 0);
+                return;
+            }
             if (additionalCosts.sacrificeCreature()
                     && spellEffects.stream().filter(CostEffect.class::isInstance)
                     .allMatch(com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost.class::isInstance)
@@ -494,6 +502,32 @@ public class ExileFreeCastQueueSupport {
 
     /** Pauses a prepared free cast for a required creature sacrifice, after target selection. */
     public boolean beginSacrificeCostIfNeeded(GameData gameData, StackEntry entry) {
+        List<CardEffect> costs = entry.getEffectsToResolve().stream().filter(CostEffect.class::isInstance).toList();
+        if (costs.size() == 1 && costs.stream().allMatch(cost -> cost instanceof DiscardCardTypeCost
+                || cost instanceof com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost)) {
+            var discardOrPay = costs.stream()
+                    .filter(com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost.class::isInstance)
+                    .map(com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost.class::cast)
+                    .findFirst().orElse(null);
+            List<Integer> candidates = additionalSpellCostService.validDiscardCostIndices(
+                    gameData, entry.getControllerId(), entry.getCard());
+            boolean canPayMana = discardOrPay != null && new com.github.laxika.magicalvibes.model.ManaCost(
+                    discardOrPay.manaCost()).canPay(gameData.playerManaPools.get(entry.getControllerId()));
+            if (canPayMana && candidates != null && !candidates.isEmpty()) {
+                interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
+                        entry.getControllerId(), null, null, new ChoiceContext.FreeCastAdditionalCostChoice(entry),
+                        List.of("Discard a card", "Pay " + discardOrPay.manaCost()),
+                        "Choose how to pay the additional cost."));
+                return true;
+            }
+            if (canPayMana) {
+                spellCastingService.payAdditionalCostsForFreeCast(gameData, entry,
+                        AdditionalSpellCostService.CostSelection.none());
+                return false;
+            }
+            beginFreeCastDiscard(gameData, entry);
+            return true;
+        }
         boolean needsSacrifice = entry.getEffectsToResolve().stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost.class::isInstance);
         if (!needsSacrifice) return false;
@@ -512,6 +546,34 @@ public class ExileFreeCastQueueSupport {
         return true;
     }
 
+    private void beginFreeCastDiscard(GameData gameData, StackEntry entry) {
+        List<Integer> candidates = additionalSpellCostService.validDiscardCostIndices(
+                gameData, entry.getControllerId(), entry.getCard());
+        if (candidates == null || candidates.isEmpty()) throw new IllegalStateException("No card can pay the discard cost");
+        int count = entry.getEffectsToResolve().stream().filter(DiscardCardTypeCost.class::isInstance)
+                .map(DiscardCardTypeCost.class::cast).mapToInt(DiscardCardTypeCost::count).sum();
+        if (count == 0) count = 1;
+        entry.replaceEffectsToResolve(entry.getEffectsToResolve().stream()
+                .filter(effect -> !(effect instanceof DiscardCardTypeCost)
+                        && !(effect instanceof com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayManaCost)).toList());
+        playerInputService.beginDiscardChoice(gameData, entry.getControllerId(), candidates,
+                "Choose a card to discard to cast " + entry.getCard().getName() + ".", count,
+                DiscardFollowUp.NONE.withPendingSpellCast(entry));
+    }
+
+    /** Resumes a prepared spell after choosing its required discard-or-mana payment. */
+    public void completeAdditionalCostChoice(GameData gameData, String choice,
+                                              ChoiceContext.FreeCastAdditionalCostChoice context) {
+        gameData.interaction.clearAwaitingInput();
+        if (choice.equals("Discard a card")) {
+            beginFreeCastDiscard(gameData, context.entry());
+        } else {
+            spellCastingService.payAdditionalCostsForFreeCast(gameData, context.entry(),
+                    AdditionalSpellCostService.CostSelection.none());
+            completeCastAfterDiscard(gameData, context.entry());
+        }
+    }
+
     public void completeSacrificeCost(GameData gameData, UUID permanentId,
                                       PermanentChoiceContext.FreeCastSacrificeCost context) {
         spellCastingService.paySacrificeCreatureCostForFreeCast(gameData, context.entry(), permanentId);
@@ -527,7 +589,8 @@ public class ExileFreeCastQueueSupport {
         gameData.stack.add(entry);
         gameData.recordSpellCast(playerId, entry.getCard());
         gameData.priorityPassedBy.clear();
-        triggerCollectionService.checkSpellCastTriggers(gameData, entry.getCard(), playerId, false);
+        triggerCollectionService.checkSpellCastTriggers(gameData, entry.getCard(), playerId,
+                entry.getSourceZone() != null ? entry.getSourceZone() : Zone.HAND, null);
         if (entry.isCopy() && spellweaverVoluteSupport.handleSuccessfulCopyCast(
                 gameData, entry.getCard().getId())) return;
         castNextFromQueue(gameData, playerId);

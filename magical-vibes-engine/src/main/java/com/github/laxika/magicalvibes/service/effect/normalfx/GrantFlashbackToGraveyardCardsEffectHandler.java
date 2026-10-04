@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -49,8 +48,7 @@ public class GrantFlashbackToGraveyardCardsEffectHandler implements NormalEffect
         if (graveyard == null) return 0;
         int count = 0;
         for (Card card : graveyard) {
-            if (!predicateEvaluationService.matchesCardPredicate(card, effect.filter(), null)
-                    || card.getCastingOption(FlashbackCast.class).isPresent()) {
+            if (!predicateEvaluationService.matchesCardPredicate(card, effect.filter(), null)) {
                 continue;
             }
             gameData.cardsGrantedFlashbackUntilEndOfTurn.add(card.getId());

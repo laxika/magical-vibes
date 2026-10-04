@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -34,6 +35,7 @@ import java.util.Set;
 public class BraidssFrightfulReturn extends Card {
 
     public BraidssFrightfulReturn() {
+        addEffect(EffectSlot.STATIC, new ReadAheadEffect(false));
         addEffect(EffectSlot.SAGA_CHAPTER_I, new MayEffect(
                 new SacrificePermanentThenEffect(
                         new PermanentIsCreaturePredicate(),

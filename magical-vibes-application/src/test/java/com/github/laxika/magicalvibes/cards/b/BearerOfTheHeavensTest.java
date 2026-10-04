@@ -72,7 +72,7 @@ class BearerOfTheHeavensTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getDelayedActions(DelayedDestroyAllPermanents.class)).hasSize(1);
 
-        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
@@ -107,13 +107,13 @@ class BearerOfTheHeavensTest extends BaseCardTest {
 
         harness.passUntil(TurnStep.END_STEP);
         bears.setRegenerationShield(1);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(bears.isTapped()).isTrue();
         assertThat(bears.getRegenerationShield()).isZero();
 
-        harness.passUntil(player2, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }

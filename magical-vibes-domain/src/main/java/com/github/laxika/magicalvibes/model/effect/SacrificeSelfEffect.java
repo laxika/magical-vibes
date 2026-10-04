@@ -3,13 +3,19 @@ package com.github.laxika.magicalvibes.model.effect;
 /**
  * Sacrifices the stack entry's source permanent. The default form requires the ability's
  * controller to still control that permanent; the flagged form instructs its current controller
- * to sacrifice it instead.
+ * to sacrifice it instead. An optional token rider is created for that player only when the
+ * sacrifice succeeds.
  */
-public record SacrificeSelfEffect(boolean currentControllerSacrifices)
+public record SacrificeSelfEffect(boolean currentControllerSacrifices,
+                                  CreateTokenEffect tokenForSacrificingPlayer)
         implements CombatDamageTriggerContextEffect {
 
     public SacrificeSelfEffect() {
-        this(false);
+        this(false, null);
+    }
+
+    public SacrificeSelfEffect(boolean currentControllerSacrifices) {
+        this(currentControllerSacrifices, null);
     }
 
     @Override

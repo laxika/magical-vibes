@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfNameFoundElsewhereEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class CounterSpellIfNameFoundElsewhereEffectHandler implements NormalEffe
 
     private final CounterSupport counterSupport;
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -60,7 +62,7 @@ public class CounterSpellIfNameFoundElsewhereEffectHandler implements NormalEffe
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
                 Card card = permanent.getCard();
-                if (!card.isToken() && spellName.equals(card.getName())) return true;
+                if (!card.isToken() && spellName.equals(gameQueryService.getEffectiveName(gameData, permanent))) return true;
             }
         }
         return false;

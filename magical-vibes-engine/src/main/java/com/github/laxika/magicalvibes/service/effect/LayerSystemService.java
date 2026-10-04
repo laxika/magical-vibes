@@ -381,6 +381,7 @@ public class LayerSystemService {
         private final GameData gameData;
         private final Pass parent;
         private UUID excludedProtectionSourceId;
+        private PermanentSlot enteringSlot;
         private LayeredBoardState board;
         private boolean boardReady;
         private final Map<UUID, GameQueryService.StaticBonus> bonusMemo = new HashMap<>();
@@ -486,13 +487,23 @@ public class LayerSystemService {
     }
 
     private Pass beginPass(GameData gameData, UUID excludedProtectionSourceId) {
+        return beginPass(gameData, excludedProtectionSourceId, null);
+    }
+
+    /** Evaluates continuous effects on an entering permanent without placing it on the battlefield. */
+    public Pass beginPassWithEnteringPermanent(GameData gameData, UUID controllerId, Permanent permanent) {
+        return beginPass(gameData, null, new PermanentSlot(controllerId, permanent, Integer.MAX_VALUE));
+    }
+
+    private Pass beginPass(GameData gameData, UUID excludedProtectionSourceId, PermanentSlot enteringSlot) {
         Pass pass = new Pass(gameData, ACTIVE_PASS.get());
         pass.excludedProtectionSourceId = excludedProtectionSourceId;
+        pass.enteringSlot = enteringSlot;
         ACTIVE_PASS.set(pass);
         boolean computed = false;
         try {
             synchronizeFullTextCopies(gameData);
-            if (CACHE_DISABLED || excludedProtectionSourceId != null) {
+            if (CACHE_DISABLED || excludedProtectionSourceId != null || enteringSlot != null) {
                 computeBoardState(gameData, pass);
             } else {
                 long fingerprint = computeBoardFingerprint(gameData);
@@ -662,6 +673,7 @@ public class LayerSystemService {
         h = mix(h, gameData.ringStates.size());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.hashCode());
         h = mix(h, gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.size());
+        h = mix(h, gameData.permanentsWithPlusOneCountersPutByPlayerThisTurn.hashCode());
         h = mix(h, gameData.cardIntensities.hashCode());
         h = mix(h, gameData.cardIntensities.size());
         h = mix(h, gameData.playersWhoLostGameThisMatch.hashCode());
@@ -745,6 +757,7 @@ public class LayerSystemService {
         h = mix(h, gameData.temporaryGraveyardCardAnimationsUntilEndOfTurn.hashCode());
         h = mix(h, gameData.temporaryGraveyardCardAnimationsUntilEndOfTurn.size());
         h = mix(h, gameData.perpetualCardPowerToughnessModifiers.hashCode());
+        h = mix(h, gameData.perpetualCardBasePowerToughness.hashCode());
         h = mix(h, gameData.perpetualPowerToughnessModifiers.hashCode());
         h = mix(h, gameData.perpetualCardPowerToughnessModifiers.size());
         h = mix(h, gameData.perpetualCardKeywords.hashCode());
@@ -1166,6 +1179,11 @@ public class LayerSystemService {
             for (Permanent permanent : battlefield) {
                 slots.add(new PermanentSlot(playerId, permanent, position++));
             }
+        }
+        Pass pass = ACTIVE_PASS.get();
+        if (pass != null && pass.enteringSlot != null
+                && slots.stream().noneMatch(slot -> slot.permanent().getId().equals(pass.enteringSlot.permanent().getId()))) {
+            slots.add(pass.enteringSlot);
         }
         return slots;
     }
@@ -2988,6 +3006,11 @@ public class LayerSystemService {
                 entries.add(new BasePtEntry(permanent.getId(), 4, null,
                         permanent.getCounterTimestamp(CounterType.BASE_POWER_FOUR), slot.position(),
                         "base power 4 counter"));
+            }
+            var perpetualBase = gameData.perpetualCardBasePowerToughness.get(permanent.getCard().getId());
+            if (perpetualBase != null && !permanent.isFaceDown()) {
+                entries.add(new BasePtEntry(permanent.getId(), perpetualBase.power(), perpetualBase.toughness(),
+                        perpetualBase.timestamp(), slot.position(), "Perpetual base P/T"));
             }
             if (permanent.getCounterCount(CounterType.BASE_TOUGHNESS_FOUR) > 0) {
                 entries.add(new BasePtEntry(permanent.getId(), null, 4,

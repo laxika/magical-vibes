@@ -14,7 +14,8 @@ import java.util.List;
 public class BreakingWave extends Card {
 
     public BreakingWave() {
-        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{U}{U}")), null, true));
+        addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{U}{U}")), null, true)
+                .withFlashAdditionalGenericCost(2));
         addEffect(EffectSlot.SPELL,
                 new SimultaneouslyFlipAllPermanentsTapStatesEffect(new PermanentIsCreaturePredicate()));
     }

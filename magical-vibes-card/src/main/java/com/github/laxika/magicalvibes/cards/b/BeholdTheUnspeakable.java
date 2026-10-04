@@ -34,7 +34,7 @@ public class BeholdTheUnspeakable extends Card {
                         SequenceEffect.of(new ScryEffect(2), new DrawCardEffect(2)),
                         new DrawCardEffect(4)));
 
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileSelfAndReturnTransformedEffect(true));
     }
 
     @Override

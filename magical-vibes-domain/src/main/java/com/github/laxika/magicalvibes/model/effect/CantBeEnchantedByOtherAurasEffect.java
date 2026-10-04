@@ -1,10 +1,14 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Static marker: the permanent this is granted to can't be enchanted by other Auras (CR 702.5 style
- * restriction, e.g. Anti-Magic Aura). Read at Aura-spell targeting time by
- * {@code GameQueryService.cantBeEnchantedByOtherAuras}; never resolved on the stack. Only ever used
- * wrapped in a {@link GrantEffectEffect} (typically scoped to {@code ENCHANTED_CREATURE}).
+ * Static marker restricting Aura attachment, or only Aura spell targeting when
+ * {@code auraSpellsOnly} is true. A targeting-only restriction permits Auras to enter attached
+ * without being cast, and permits attachment effects that do not target with an Aura spell.
+ *
+ * @param auraSpellsOnly whether only targeting by Aura spells is prohibited
  */
-public record CantBeEnchantedByOtherAurasEffect() implements CardEffect {
+public record CantBeEnchantedByOtherAurasEffect(boolean auraSpellsOnly) implements CardEffect {
+    public CantBeEnchantedByOtherAurasEffect() {
+        this(false);
+    }
 }

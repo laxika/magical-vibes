@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +28,12 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ReturnCardFromGraveyardEffect) effect;
+        if (e.filter() instanceof CardIsSelfPredicate
+                && entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(entry.getCard().getId())
+                != entry.getTriggeringCardGraveyardEntryVersion()) {
+            return;
+        }
 
         UUID controllerId = entry.getControllerId();
         UUID sourceCardId = entry.getCard().getId();

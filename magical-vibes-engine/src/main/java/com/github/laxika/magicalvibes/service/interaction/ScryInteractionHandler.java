@@ -7,14 +7,17 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.ScrycastCast;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.SurveilThenEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Lazy;
 
 import java.util.HashSet;
 import java.util.List;
@@ -33,6 +36,9 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
     private final InputCompletionService inputCompletionService;
     private final MayCastHandlerService mayCastHandlerService;
     private final TriggerCollectionService triggerCollectionService;
+
+    @Autowired @Lazy
+    private GraveyardService graveyardService;
 
     @Autowired
     public ScryInteractionHandler(GameLogService gameLogService,
@@ -131,18 +137,23 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
             List<Card> graveyard = gameData.playerGraveyards.get(player.getId());
             for (int idx : bottomCardOrder) {
                 Card card = scryCards.get(idx);
-                graveyard.add(card);
+                if (graveyardService != null) {
+                    graveyardService.addCardToGraveyard(gameData, libraryOwnerId, card, Zone.LIBRARY);
+                } else {
+                    graveyard.add(card);
+                }
                 gameData.cardsSurveilledThisTurn
                         .computeIfAbsent(player.getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet())
                         .add(card.getId());
             }
             setDirectSurveilEventValue(gameData, topCardOrder.size());
+            triggerCollectionService.checkSurveilTriggers(gameData, player.getId());
         } else {
             // Scry: the reject pile goes to the bottom of the library in order.
             for (int idx : bottomCardOrder) {
                 deck.add(scryCards.get(idx));
             }
-            if (scrycastCard == null && interaction.causesScryTriggers()) {
+            if (interaction.causesScryTriggers()) {
                 triggerCollectionService.checkScryTriggers(
                         gameData, player.getId(), bottomCardOrder.size(), count);
             }

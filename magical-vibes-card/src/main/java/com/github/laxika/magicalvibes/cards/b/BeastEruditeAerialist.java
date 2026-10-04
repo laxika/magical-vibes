@@ -16,7 +16,7 @@ public class BeastEruditeAerialist extends Card {
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(
                 Keyword.FLYING,
                 GrantScope.SELF,
-                new PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate()));
+                new PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate(true)));
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DrawCardEffect(1));
     }
 }

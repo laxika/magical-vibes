@@ -676,9 +676,7 @@ public class MayPenaltyChoiceHandlerService {
                 .findFirst()
                 .orElse(null);
 
-        if (targetEntry == null || gameQueryService.isUncounterable(gameData, targetEntry.getCard())
-                || gameQueryService.isProtectedFromCounterBySourceCard(
-                gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+        if (targetEntry == null) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -715,7 +713,11 @@ public class MayPenaltyChoiceHandlerService {
             }
         }
 
-        counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        if (!gameQueryService.isUncounterable(gameData, targetEntry.getCard())
+                && !gameQueryService.isProtectedFromCounterBySourceCard(
+                gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            counterUnlessCounter(gameData, ability.sourceCard(), targetEntry);
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

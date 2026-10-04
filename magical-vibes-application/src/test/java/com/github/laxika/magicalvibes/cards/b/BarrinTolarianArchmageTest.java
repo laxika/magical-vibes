@@ -172,10 +172,10 @@ class BarrinTolarianArchmageTest extends BaseCardTest {
         harness.addToBattlefield(player1, new BarrinTolarianArchmage());
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setHand(player1, List.of(new Unsummon()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
 
         advanceToEndStep(player1);
         assertThat(gd.stack).isEmpty();
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, bear.getId());
 
         harness.assertInHand(player1, "Grizzly Bears");
@@ -217,6 +217,7 @@ class BarrinTolarianArchmageTest extends BaseCardTest {
 
         advanceToEndStep(player1);
         assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, barrin.getId());
         harness.assertNotOnBattlefield(player1, "Barrin, Tolarian Archmage");
         harness.passBothPriorities();

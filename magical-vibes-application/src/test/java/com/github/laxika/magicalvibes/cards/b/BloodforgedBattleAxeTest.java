@@ -117,7 +117,7 @@ class BloodforgedBattleAxeTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         axe.setAttachedTo(creature.getId());
         creature.setAttacking(true);
-        resolveCombat();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE, this::resolveCombat);
 
         assertThat(gd.stack).hasSize(1);
         gd.playerBattlefields.get(player1.getId()).remove(axe);

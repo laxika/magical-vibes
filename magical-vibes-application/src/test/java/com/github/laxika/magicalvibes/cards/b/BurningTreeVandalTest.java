@@ -139,10 +139,7 @@ class BurningTreeVandalTest extends BaseCardTest {
     void multipleRiotInstancesCanAddTwoCounters() {
         harness.addToBattlefield(player1, new RhythmOfTheWild());
 
-        Permanent vandal = castVandal(true);
-        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
-            harness.handleMayAbilityChosen(player1, true);
-        }
+        Permanent vandal = castVandal(true, true);
 
         assertThat(vandal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, vandal, Keyword.HASTE)).isFalse();
@@ -153,16 +150,13 @@ class BurningTreeVandalTest extends BaseCardTest {
     void multipleRiotInstancesCanGiveCounterAndHaste() {
         harness.addToBattlefield(player1, new RhythmOfTheWild());
 
-        Permanent vandal = castVandal(true);
-        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
-            harness.handleMayAbilityChosen(player1, false);
-        }
+        Permanent vandal = castVandal(true, false);
 
         assertThat(vandal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, vandal, Keyword.HASTE)).isTrue();
     }
 
-    private Permanent castVandal(boolean chooseCounter) {
+    private Permanent castVandal(boolean... counterChoices) {
         harness.setHand(player1, List.of(new BurningTreeVandal()));
         harness.addMana(player1, ManaColor.RED, 3);
         harness.forceActivePlayer(player1);
@@ -171,8 +165,10 @@ class BurningTreeVandalTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
-            harness.handleMayAbilityChosen(player1, chooseCounter);
+        for (boolean chooseCounter : counterChoices) {
+            if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+                harness.handleMayAbilityChosen(player1, chooseCounter);
+            }
         }
         return findPermanent(player1, "Burning-Tree Vandal");
     }

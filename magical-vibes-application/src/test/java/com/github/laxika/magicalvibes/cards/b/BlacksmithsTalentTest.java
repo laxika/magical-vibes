@@ -139,7 +139,7 @@ class BlacksmithsTalentTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LeoninScimitar());
         addCreatureReady(player1, new GrizzlyBears());
 
-        advanceToCombat(player1);
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> advanceToCombat(player1));
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();

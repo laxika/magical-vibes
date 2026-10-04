@@ -458,6 +458,7 @@ public class MayMiscHandlerService {
             log.info("Game {} - {} leaves card on top (surveil)", gameData.id, player.getUsername());
         }
 
+        triggerCollectionService.checkSurveilTriggers(gameData, controllerId);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

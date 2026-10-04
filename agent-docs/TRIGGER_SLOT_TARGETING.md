@@ -1,5 +1,7 @@
 # Trigger Slot Targeting Reference
 
+`MultiTargetConstraint.ONE_PER_OPPONENT` requires one legal permanent target controlled by every opponent, even when an opponent has no legal targets. Spells using it cannot be cast without satisfying every opponent's target requirement. `ONE_PER_CONTROLLER_IF_ABLE` retains its optional omission for opponents without legal targets.
+
 `ON_CONTROLLER_CASTS_SPELL` same-name graveyard casts use the dedicated `CastSameNameCardFromGraveyardOnSpellCastEffect` collector path: the cast spell's name is snapshotted, the graveyard card is chosen through `SpellGraveyardTargetTrigger`, and the existing graveyard-cast effect offers the normal-cost cast after targeting.
 
 Quick lookup for deciding whether a given `EffectSlot` can carry a targeted triggered ability, what kind of target (player / permanent) it supports, and which `TargetFilter` types the engine will honour on the card itself.

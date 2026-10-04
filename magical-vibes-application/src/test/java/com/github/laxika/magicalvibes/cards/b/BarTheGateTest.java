@@ -124,7 +124,6 @@ class BarTheGateTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
         harness.castInstant(player2, 0, giant.getId());
-        harness.passPriority(player2);
         harness.castAndResolveInstant(player1, 0, giant.getId());
         harness.handleListChoice(player1, "Dark Pool");
         resolveAllTriggers();

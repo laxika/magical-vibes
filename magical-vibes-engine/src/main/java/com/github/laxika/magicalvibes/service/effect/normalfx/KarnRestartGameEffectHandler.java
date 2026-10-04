@@ -264,6 +264,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersDealtCombatDamageLastTurn.clear();
         gameData.playersWhoAttackedPlayersLastTurn.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
+        gameData.legendaryCreatureCombatDamageToPlayersThisTurn.clear();
         gameData.combatDamageToPlayersThisCombat.clear();
         gameData.combatDamageSourcesThatDealtToCreaturesThisTurn.clear();
         gameData.sourcesThatDealtDamageToCreaturesThisTurn.clear();
@@ -341,6 +342,8 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.combatDamagePreventionPredicatesByController.clear();
         gameData.playersWithAllCreatureDamagePrevented.clear();
         gameData.allPermanentsEnterTappedThisTurn = false;
+        gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.clear();
+        gameData.permanentsWithPlusOneCountersPutByPlayerThisTurn.clear();
         gameData.playersWhoCreatedTokensThisTurn.clear();
         gameData.treasureTokensCreatedThisTurn.clear();
         gameData.playersWhoSacrificedPermanentsThisTurn.clear();

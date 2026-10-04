@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -16,6 +17,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -46,6 +49,11 @@ public class ExileFreeCastSupport {
     private final InputCompletionService inputCompletionService;
     private final ExileCastTargetSupport exileCastTargetSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+
+    @org.springframework.beans.factory.annotation.Autowired @Lazy
+    private SpellCastingService spellCastingService;
+    @org.springframework.beans.factory.annotation.Autowired @Lazy
+    private ExileFreeCastQueueSupport exileFreeCastQueueSupport;
 
     // @Lazy mirrors ParadigmCastSupport: breaks cycles through InputCompletionService/PlayerInputService.
     public ExileFreeCastSupport(GameLogService gameLogService,
@@ -143,6 +151,29 @@ public class ExileFreeCastSupport {
 
         Card physicalCard = exiledEntry.card();
         Card card = face == 1 ? physicalCard.createRuntimeCopyWithFace(physicalCard.getBackFaceCard()) : physicalCard;
+        ChooseOneEffect splitModes = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(ChooseOneEffect.class::isInstance).map(ChooseOneEffect.class::cast)
+                .filter(modal -> modal.options().stream().anyMatch(option -> option.manaCost() != null))
+                .findFirst().orElse(null);
+        List<CardEffect> chosenEffects = null;
+        if (splitModes != null) {
+            if (face < 2) {
+                java.util.Map<String, Integer> modes = new java.util.LinkedHashMap<>();
+                for (int mode = 0; mode < splitModes.options().size(); mode++) {
+                    if (card.hasKeyword(Keyword.FUSE) && mode == splitModes.options().size() - 1) continue;
+                    modes.put(splitModes.options().get(mode).label(), mode + 2);
+                }
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null,
+                        new ChoiceContext.ExileFreeCastFaceChoice(exileCardId, modes, grantHaste,
+                                returnToHandIfUnable, suspendHaste, completeInput),
+                        new ArrayList<>(modes.keySet()), "Choose which spell to cast."));
+                return;
+            }
+            card = card.createRuntimeCopy();
+            chosenEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+            spellCastingService.prepareModalSpellCast(gameData, playerId, card, chosenEffects, face - 2);
+        }
         boolean exileInsteadOfGraveyard = gameData.exileInsteadOfGraveyard.contains(exileCardId);
         if (card.isCastOnlyFromGraveyard()) {
             if (returnToHandIfUnable) {
@@ -155,7 +186,7 @@ public class ExileFreeCastSupport {
             if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
-        if (!additionalSpellCostService.satisfiable(gameData, playerId, card)) {
+        if (!additionalSpellCostService.satisfiableWithoutManaCost(gameData, playerId, card)) {
             if (returnToHandIfUnable) {
                 returnExiledCardToHand(gameData, exileCardId);
             }
@@ -166,7 +197,8 @@ public class ExileFreeCastSupport {
         }
         String playerName = player.getUsername();
         StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);
-        List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+        List<CardEffect> spellEffects = chosenEffects != null ? chosenEffects
+                : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
 
         if (EffectResolution.needsTarget(card) && (card.getMinTargets() > 0
                 || !exileCastTargetSupport.firstSlotCandidates(gameData, card, playerId).isEmpty())) {
@@ -229,6 +261,7 @@ public class ExileFreeCastSupport {
             gameData.spellsGrantedHasteOnEntry.add(exileCardId);
         }
         gameData.recordCardPlayedFromExile(playerId);
+        if (exileFreeCastQueueSupport.beginSacrificeCostIfNeeded(gameData, stackEntry)) return;
         gameData.stack.add(stackEntry);
 
         gameData.recordSpellCast(playerId, card);

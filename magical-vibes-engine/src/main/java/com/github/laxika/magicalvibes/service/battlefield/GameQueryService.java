@@ -2857,6 +2857,7 @@ public class GameQueryService {
 
     private boolean isCreatureWithBonus(GameData gameData, Permanent permanent, StaticBonus bonus) {
         if (hasEffectiveCardType(permanent, bonus, CardType.CREATURE)) return true;
+        if (bonus.cardTypeOverriding()) return false;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.isAnimatedUntilEndOfCombat()) return true;
         if (permanent.isAnimatedUntilNextTurn()) return true;
@@ -3727,17 +3728,36 @@ public class GameQueryService {
     }
 
     private Integer characteristicPowerToughness(GameData gameData, Card card, boolean power) {
-        UUID ownerId = findNonBattlefieldCardOwner(gameData, card);
-        if (ownerId != null && amountEvaluationService != null) {
-            for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof SetPowerToughnessToAmountEffect characteristic) {
-                    return amountEvaluationService.evaluate(gameData,
-                            power ? characteristic.power() : characteristic.toughness(),
-                            AmountContext.forStaticEffect(new Permanent(card), ownerId));
+        var perpetualBase = gameData.perpetualCardBasePowerToughness.get(card.getId());
+        Integer value;
+        if (perpetualBase != null) {
+            value = power ? perpetualBase.power() : perpetualBase.toughness();
+        } else {
+            value = power ? card.getPower() : card.getToughness();
+            UUID ownerId = findNonBattlefieldCardOwner(gameData, card);
+            if (ownerId != null && amountEvaluationService != null) {
+                for (CardEffect effect : card.getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof SetPowerToughnessToAmountEffect characteristic) {
+                        value = amountEvaluationService.evaluate(gameData,
+                                power ? characteristic.power() : characteristic.toughness(),
+                                AmountContext.forStaticEffect(new Permanent(card), ownerId));
+                        break;
+                    }
                 }
             }
         }
-        return power ? card.getPower() : card.getToughness();
+        if (value == null) {
+            return null;
+        }
+        var cardModifier = gameData.perpetualCardPowerToughnessModifiers.get(card.getId());
+        if (cardModifier != null) {
+            value += power ? cardModifier.power() : cardModifier.toughness();
+        }
+        var handModifier = gameData.perpetualPowerToughnessModifiers.get(card.getId());
+        if (handModifier != null) {
+            value += power ? handModifier.power() : handModifier.toughness();
+        }
+        return value;
     }
 
     private boolean containsCard(List<Card> cards, Card sought) {
@@ -7628,12 +7648,19 @@ public class GameQueryService {
      * from its own static effects or from effects granted by other permanents.
      */
     public boolean cantBeEnchantedByOtherAuras(GameData gameData, Permanent target) {
-        for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CantBeEnchantedByOtherAurasEffect) {
-                return true;
-            }
-        }
-        return hasGrantedEffect(gameData, target, CantBeEnchantedByOtherAurasEffect.class);
+        return hasAuraAttachmentRestriction(gameData, target, false);
+    }
+
+    /** Returns whether Aura spells cannot target this permanent, including attachment restrictions. */
+    public boolean cantBeTargetedByAuraSpells(GameData gameData, Permanent target) {
+        return hasAuraAttachmentRestriction(gameData, target, true);
+    }
+
+    private boolean hasAuraAttachmentRestriction(GameData gameData, Permanent target, boolean auraSpell) {
+        List<CardEffect> effects = new ArrayList<>(getActiveStaticEffects(gameData, target));
+        effects.addAll(getGrantedEffects(gameData, target));
+        return effects.stream().anyMatch(effect -> effect instanceof CantBeEnchantedByOtherAurasEffect restriction
+                && (auraSpell || !restriction.auraSpellsOnly()));
     }
 
     /** Returns whether another player is prevented from gaining control of the permanent. */
@@ -8360,7 +8387,8 @@ public class GameQueryService {
     }
 
     public boolean hasExtraBoastActivation(GameData gameData, UUID playerId) {
-        return playerBattlefieldHasStaticEffect(gameData, playerId, AllowExtraBoastActivationEffect.class);
+        return java.util.Objects.equals(gameData.activePlayerId, playerId)
+                && playerBattlefieldHasStaticEffect(gameData, playerId, AllowExtraBoastActivationEffect.class);
     }
 
     /** Returns the number of additional activations granted to power-up abilities by permanents
@@ -11432,6 +11460,16 @@ public class GameQueryService {
                 && isCreature(gameData, permanent)
                 && !hasKeyword(gameData, permanent, Keyword.HASTE)
                 && !canActivateCreatureAbilitiesAsThoughHaste(gameData, controllerId);
+    }
+
+    /** Checks which printed abilities an entering permanent retains after continuous effects apply. */
+    public boolean hasLostPrintedAbilitiesAsEntering(GameData gameData, UUID controllerId, Permanent permanent) {
+        LayerSystemService.Pass pass = layerSystemService.beginPassWithEnteringPermanent(gameData, controllerId, permanent);
+        try {
+            return hasLostPrintedAbilities(gameData, permanent);
+        } finally {
+            layerSystemService.endPass(pass);
+        }
     }
 
     /**

@@ -666,6 +666,8 @@ public class Permanent {
      *  (as opposed to being put onto the battlefield), gating "if you cast it" abilities.
      *  NOT cleared by {@link #resetModifiers()}. */
     @Setter private boolean cast;
+    /** Controller who cast the spell that became this permanent, retained through control changes. */
+    @Setter private UUID castControllerId;
     /** Mana spent to cast the spell that produced this permanent, for as-enters conditions. */
     @Setter private int manaSpentToCast;
     /** Total bloodthirst granted to the spell that produced this permanent while it was on the stack
@@ -1034,6 +1036,7 @@ public class Permanent {
         this.enteredFromZone = source.enteredFromZone;
         this.putOntoBattlefieldWithAbilitySourcePermanentId = source.putOntoBattlefieldWithAbilitySourcePermanentId;
         this.cast = source.cast;
+        this.castControllerId = source.castControllerId;
         this.manaSpentToCast = source.manaSpentToCast;
         this.monstrous = source.monstrous;
         this.motivated = source.motivated;

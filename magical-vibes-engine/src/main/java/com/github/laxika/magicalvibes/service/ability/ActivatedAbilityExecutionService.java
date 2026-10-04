@@ -2151,15 +2151,7 @@ public class ActivatedAbilityExecutionService {
             if (!predicateEvaluationService.matchesPermanentPredicate(gameData, p, predicate)) {
                 continue;
             }
-            if (p.isColorOverridden()) {
-                colors.addAll(p.getTransientColors());
-            } else {
-                if (p.getCard().getColors() != null) {
-                    colors.addAll(p.getCard().getColors());
-                }
-                colors.addAll(p.getTransientColors());
-                colors.addAll(p.getGrantedColors());
-            }
+            colors.addAll(gameQueryService.getEffectiveColors(gameData, p));
         }
         return colors;
     }

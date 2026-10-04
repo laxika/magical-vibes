@@ -155,15 +155,17 @@ final class RecordingCharacteristicState extends CharacteristicState {
 
     @Override
     public void addActivatedAbility(ActivatedAbility ability) {
-        // Granted abilities are shared instances; identity is stable across the trials of one
-        // dependency computation.
-        log("addActivatedAbility:" + System.identityHashCode(ability));
+        log("addActivatedAbility:" + ability.getEffects() + ":" + ability.getManaCost()
+                + ":" + ability.isRequiresTap() + ":" + ability.getTargetFilter()
+                + ":" + ability.getMultiTargetFilters() + ":" + ability.getMinTargets()
+                + ":" + ability.getMaxTargets() + ":" + ability.getTimingRestriction()
+                + ":" + ability.getGrantSourcePermanentId() + ":" + ability.getDescription());
         super.addActivatedAbility(ability);
     }
 
     @Override
     public void addStaticEffect(CardEffect effect) {
-        log("addStaticEffect:" + System.identityHashCode(effect));
+        log("addStaticEffect:" + effect);
         super.addStaticEffect(effect);
     }
 

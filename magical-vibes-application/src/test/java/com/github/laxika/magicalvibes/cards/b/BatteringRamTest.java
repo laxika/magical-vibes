@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
+import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.w.WallOfWood;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -80,8 +80,8 @@ class BatteringRamTest extends BaseCardTest {
                             && se.getTargetId().equals(wall.getId()));
 
             harness.passBothPriorities();
-            assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                    .anyMatch(a -> a.permanentId().equals(wall.getId()));
+            assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                    .anyMatch(a -> a.affectedPermanentId().equals(wall.getId()));
         });
     }
 
@@ -151,7 +151,7 @@ class BatteringRamTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         harness.passBothPriorities();
-        assertThat(gd.hasDelayedAction(DelayedPermanentAction.class)).isFalse();
+        assertThat(gd.hasDelayedAction(DelayedEndOfCombatTrigger.class)).isFalse();
     }
 
     @Test
@@ -184,8 +184,8 @@ class BatteringRamTest extends BaseCardTest {
             TestCards.mutableCard(wall).setSubtypes(List.of());
             harness.passBothPriorities();
 
-            assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                    .anyMatch(a -> a.permanentId().equals(wall.getId()));
+            assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                    .anyMatch(a -> a.affectedPermanentId().equals(wall.getId()));
         });
     }
 
@@ -210,8 +210,8 @@ class BatteringRamTest extends BaseCardTest {
 
             resolveAllTriggers();
 
-            assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                    .extracting(DelayedPermanentAction::permanentId)
+            assertThat(gd.getDelayedActions(DelayedEndOfCombatTrigger.class))
+                    .extracting(DelayedEndOfCombatTrigger::affectedPermanentId)
                     .containsExactlyInAnyOrder(firstWall.getId(), secondWall.getId());
         });
     }

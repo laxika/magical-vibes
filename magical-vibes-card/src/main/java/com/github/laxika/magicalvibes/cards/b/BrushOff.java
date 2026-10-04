@@ -16,7 +16,7 @@ public class BrushOff extends Card {
     public BrushOff() {
         // This spell costs {1}{U} less to cast if it targets an instant or sorcery spell.
         addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingStackEntryEffect(
-                new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)), 2));
+                new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)), 1, "{U}"));
 
         // Counter target spell.
         addEffect(EffectSlot.SPELL, new CounterSpellEffect());

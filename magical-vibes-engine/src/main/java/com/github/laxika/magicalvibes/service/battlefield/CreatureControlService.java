@@ -482,10 +482,10 @@ public class CreatureControlService {
                         .filter(e -> e instanceof ControlEnchantedCreatureEffect)
                         .findFirst()
                         .orElseThrow();
-                gameData.addFloatingEffect(new FloatingContinuousEffect(
+                gameData.floatingEffects.add(new FloatingContinuousEffect(
                         UUID.randomUUID(), aura.getCard().getName(), aura.getId(), auraController,
                         controlEffect, enchanted.getId(), null, null,
-                        EffectDuration.WHILE_ATTACHED, 0));
+                        EffectDuration.WHILE_ATTACHED, aura.getTimestamp()));
             }
         }
     }

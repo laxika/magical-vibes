@@ -118,6 +118,7 @@ class BrutalSuppressionTest extends BaseCardTest {
         Permanent rebel = addCreatureReady(player2, new RebelInformer());
         Permanent firstLand = addLand(player2);
         Permanent secondLand = addLand(player2);
+        Permanent unchosenLand = addLand(player2);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player2, 1, null, rebel.getId());
@@ -128,6 +129,7 @@ class BrutalSuppressionTest extends BaseCardTest {
         }
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(firstLand, secondLand);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(unchosenLand);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(firstLand.getCard(), secondLand.getCard());
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();

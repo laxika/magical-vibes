@@ -13,11 +13,18 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
  *
  * @param slot           the trigger slot to grant (e.g. {@link EffectSlot#ON_DEATH})
  * @param grantedEffect  the effect to fire when the trigger condition is met
+ * @param delayedTrigger registers a spell-sourced delayed trigger watching the target instead
+ *                       of granting that permanent an ability
  */
 public record GrantEffectToTargetUntilEndOfTurnEffect(
         EffectSlot slot,
-        CardEffect grantedEffect
+        CardEffect grantedEffect,
+        boolean delayedTrigger
 ) implements CardEffect {
+
+    public GrantEffectToTargetUntilEndOfTurnEffect(EffectSlot slot, CardEffect grantedEffect) {
+        this(slot, grantedEffect, false);
+    }
 
     @Override
     public TargetSpec targetSpec() {

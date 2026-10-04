@@ -113,11 +113,14 @@ class BlitzballStadiumTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.activateAbility(player1, 0, null, attacker.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.activateAbility(player1, 0, null, attacker.getId());
+            harness.passBothPriorities();
+        });
         attacker.setAttacking(true);
-        resolveCombat();
-        harness.passBothPriorities();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE, this::resolveCombat);
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE,
+                harness::passBothPriorities);
 
         assertThat(attacker.isCantBeBlocked()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
@@ -132,12 +135,15 @@ class BlitzballStadiumTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.activateAbility(player1, 0, null, attacker.getId());
-        harness.passBothPriorities();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.activateAbility(player1, 0, null, attacker.getId());
+            harness.passBothPriorities();
+        });
         attacker.setAttacking(true);
-        resolveCombat();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE, this::resolveCombat);
         attacker.setCounterCount(CounterType.CHARGE, 3);
-        harness.passBothPriorities();
+        harness.withAutoStop(com.github.laxika.magicalvibes.model.TurnStep.COMBAT_DAMAGE,
+                harness::passBothPriorities);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 2);
     }

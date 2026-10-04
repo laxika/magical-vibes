@@ -334,6 +334,8 @@ public class GameData {
     /** Players who controlled a permanent that received a +1/+1 counter this turn. */
     public final Set<UUID> playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn = ConcurrentHashMap.newKeySet();
     public final Set<UUID> permanentsThatReceivedPlusOnePlusOneCountersThisTurn = ConcurrentHashMap.newKeySet();
+    /** Permanents receiving +1/+1 counters, grouped by the player who put those counters. */
+    public final Map<UUID, Set<UUID>> permanentsWithPlusOneCountersPutByPlayerThisTurn = new ConcurrentHashMap<>();
     /** Per-player count of +1/+1 counters put on creatures they controlled this turn. */
     public final Map<UUID, Integer> plusOnePlusOneCountersPutOnControlledCreaturesThisTurn = new ConcurrentHashMap<>();
     /** Players who created at least one token this turn. */
@@ -374,6 +376,12 @@ public class GameData {
     public final Map<UUID, List<CardEffect>> perpetualEnterEffectsByCardId = new ConcurrentHashMap<>();
     /** Perpetual power/toughness modifiers granted to physical cards, keyed by stable card id. */
     public final Map<UUID, CardPowerToughnessModifier> perpetualCardPowerToughnessModifiers =
+            new ConcurrentHashMap<>();
+    /** A perpetual base-power/base-toughness setter, retaining its effect timestamp across zones. */
+    public record PerpetualBasePowerToughness(int power, int toughness, long timestamp) {
+    }
+    /** Perpetual base-power/base-toughness setters keyed by physical card identity. */
+    public final Map<UUID, PerpetualBasePowerToughness> perpetualCardBasePowerToughness =
             new ConcurrentHashMap<>();
     /** Perpetual static effects granted to physical cards while they are on the battlefield. */
     public final Map<UUID, List<CardEffect>> perpetualCardBattlefieldEffectGrants = new ConcurrentHashMap<>();
@@ -1215,6 +1223,8 @@ public class GameData {
     /** How many combat phases have begun this turn (1 during the first combat phase). Reset at the
      *  start of each turn and incremented on entering BEGINNING_OF_COMBAT; read by FirstCombatPhase. */
     public int combatPhasesThisTurn;
+    /** Whether the first combat's window for spells restricted to before combat damage has closed. */
+    public boolean firstCombatDamageTimingClosed;
     public UUID draftId;
     public final Deque<LibraryBottomReorderRequest> pendingLibraryBottomReorders = new ArrayDeque<>();
     public final Deque<PendingInteraction.PermanentAuctionPlacement> pendingAuctionEntries = new ArrayDeque<>();
@@ -2915,6 +2925,9 @@ public class GameData {
 
     /** Tracks which sources that dealt combat damage to players this turn were legendary. */
     public final Set<UUID> combatDamageSourcesWithLegendaryThisTurn = ConcurrentHashMap.newKeySet();
+
+    /** Players dealt combat damage by each creature while that source was legendary. */
+    public final Map<UUID, Set<UUID>> legendaryCreatureCombatDamageToPlayersThisTurn = new ConcurrentHashMap<>();
 
     /** Tracks, per player who controlled the source at damage time, the union of subtypes of creatures
      *  they controlled that dealt combat damage to a player this turn. Used to evaluate the prowl
@@ -6418,6 +6431,9 @@ public class GameData {
         entry.setEventValue(eventValue);
         entry.setMarkSourceOncePerTurnOnAcceptance(markSourceOncePerTurnOnAcceptance);
         entry.setTriggeringPermanentToughnessAtTrigger(triggeringPermanentToughnessAtTrigger);
+        if (may.targetSpec().declaredTarget() == null) {
+            entry.setNonTargeting(true);
+        }
         if (triggeringPermanentToughnessAtTrigger != null && targetCardId != null) {
             entry.setTriggeringPermanentId(targetCardId);
         }
@@ -6923,6 +6939,7 @@ public class GameData {
         copy.additionalCombatPhasesAfterMain = this.additionalCombatPhasesAfterMain;
         copy.additionalCombatPhasesAfterMainReturnStep = this.additionalCombatPhasesAfterMainReturnStep;
         copy.combatPhasesThisTurn = this.combatPhasesThisTurn;
+        copy.firstCombatDamageTimingClosed = this.firstCombatDamageTimingClosed;
         copy.draftId = this.draftId;
         copy.cleanupDiscardPending = this.cleanupDiscardPending;
         copy.simulation = true;
@@ -7013,6 +7030,8 @@ public class GameData {
         copy.playersWhoPlayedOrCastFromOutsideHandThisTurn.addAll(this.playersWhoPlayedOrCastFromOutsideHandThisTurn);
         copy.permanentsThatReceivedPlusOnePlusOneCountersThisTurn
                 .addAll(this.permanentsThatReceivedPlusOnePlusOneCountersThisTurn);
+        this.permanentsWithPlusOneCountersPutByPlayerThisTurn.forEach((playerId, permanentIds) ->
+                copy.permanentsWithPlusOneCountersPutByPlayerThisTurn.put(playerId, new HashSet<>(permanentIds)));
         copy.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn
                 .putAll(this.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn);
         copy.permanentsThatAttackedBattlesThisTurn.addAll(this.permanentsThatAttackedBattlesThisTurn);
@@ -7137,6 +7156,7 @@ public class GameData {
                 copy.perpetualEnterEffectsByCardId.put(cardId,
                         Collections.synchronizedList(new ArrayList<>(effects))));
         copy.perpetualCardPowerToughnessModifiers.putAll(this.perpetualCardPowerToughnessModifiers);
+        copy.perpetualCardBasePowerToughness.putAll(this.perpetualCardBasePowerToughness);
         this.perpetualCardBattlefieldEffectGrants.forEach((cardId, effects) ->
                 copy.perpetualCardBattlefieldEffectGrants.put(cardId,
                         Collections.synchronizedList(new ArrayList<>(effects))));
@@ -7487,6 +7507,8 @@ public class GameData {
         copy.combatDamageSourceNamesThisTurn.putAll(this.combatDamageSourceNamesThisTurn);
         copy.combatDamageSourcesWithChangelingThisTurn.addAll(this.combatDamageSourcesWithChangelingThisTurn);
         copy.combatDamageSourcesWithLegendaryThisTurn.addAll(this.combatDamageSourcesWithLegendaryThisTurn);
+        this.legendaryCreatureCombatDamageToPlayersThisTurn.forEach((sourceId, playerIds) ->
+                copy.legendaryCreatureCombatDamageToPlayersThisTurn.put(sourceId, new HashSet<>(playerIds)));
         this.combatDamageToPlayerControllerSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayerControllerSubtypesThisTurn.put(k, new HashSet<>(v)));
         copy.controllersDealtCombatDamageWithChangelingThisTurn.addAll(this.controllersDealtCombatDamageWithChangelingThisTurn);
@@ -7674,7 +7696,8 @@ public class GameData {
                 copy.playerColorDamagePreventionCount.put(k, new HashMap<>(v)));
 
         // --- PendingMayAbility list (records with shared Card refs) ---
-        copy.pendingMayAbilities.addAll(this.pendingMayAbilities);
+        this.pendingMayAbilities.stream().map(PendingMayAbility::deepCopyEntryRequests)
+                .forEach(copy.pendingMayAbilities::add);
         copy.pendingGemstoneCavernsChoice = this.pendingGemstoneCavernsChoice;
         copy.tariffRemainingPlayers.addAll(this.tariffRemainingPlayers);
         copy.forcedCostOrElseRemainingPlayers.addAll(this.forcedCostOrElseRemainingPlayers);
@@ -7986,6 +8009,7 @@ public class GameData {
         copy.temporaryGraveyardCardAnimationsUntilEndOfTurn
                 .putAll(this.temporaryGraveyardCardAnimationsUntilEndOfTurn);
         copy.perpetualCardPowerToughnessModifiers.putAll(this.perpetualCardPowerToughnessModifiers);
+        copy.perpetualCardBasePowerToughness.putAll(this.perpetualCardBasePowerToughness);
         this.perpetualCardKeywords.forEach((cardId, keywords) ->
                 copy.perpetualCardKeywords.put(cardId, keywords.isEmpty()
                         ? EnumSet.noneOf(Keyword.class) : EnumSet.copyOf(keywords)));

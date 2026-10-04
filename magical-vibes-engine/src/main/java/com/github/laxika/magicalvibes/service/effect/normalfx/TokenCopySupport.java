@@ -295,7 +295,7 @@ public class TokenCopySupport {
                 tokenPermanent.tap();
             }
             if (effect.tappedAndAttacking()) {
-                tokenPermanent.setAttacking(true);
+                tokenPermanent.enterAttacking(true);
                 if (explicitAttackTargets && tokenIndex < expandedAttackTargets.size()) {
                     tokenPermanent.setAttackTarget(expandedAttackTargets.get(tokenIndex));
                 } else if (!explicitAttackTargets && sourcePermanent != null) {

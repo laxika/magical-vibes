@@ -189,4 +189,22 @@ public record PendingMayAbility(
                 eventValue, triggeringPermanentId, sourcePowerAtTrigger, updatedXValue,
                 triggeringPermanentToughnessAtTrigger);
     }
+
+    /** Copies pending entry requests whose permanent has not entered the battlefield yet. */
+    public PendingMayAbility deepCopyEntryRequests() {
+        List<CardEffect> copiedEffects = effects.stream().map(effect ->
+                effect instanceof com.github.laxika.magicalvibes.model.effect.UnleashEffect unleash
+                        && unleash.entryRequest() != null
+                        ? (CardEffect) new com.github.laxika.magicalvibes.model.effect.UnleashEffect(
+                                unleash.entryRequest().deepCopy())
+                        : effect instanceof com.github.laxika.magicalvibes.model.effect.RiotEffect riot
+                        && riot.entryRequest() != null
+                        ? new com.github.laxika.magicalvibes.model.effect.RiotEffect(riot.entryRequest().deepCopy(),
+                                riot.remainingChoices(), riot.counterChoices(), riot.hasteChosen()) : effect).toList();
+        return new PendingMayAbility(sourceCard, controllerId, copiedEffects, description, targetCardId,
+                manaCost, sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost,
+                attackedTargetId, activePlayerId, choicePlayerId, sourcePermanentSnapshot,
+                sourceControllerId, triggeringCardId, eventValue, triggeringPermanentId,
+                sourcePowerAtTrigger, xValue, triggeringPermanentToughnessAtTrigger);
+    }
 }

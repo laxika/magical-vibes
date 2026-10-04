@@ -10,6 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEf
 public class BartelRuneaxe extends Card {
 
     public BartelRuneaxe() {
-        addEffect(EffectSlot.STATIC, new CantBeEnchantedByOtherAurasEffect());
+        addEffect(EffectSlot.STATIC, new CantBeEnchantedByOtherAurasEffect(true));
     }
 }

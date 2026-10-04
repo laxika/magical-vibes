@@ -8,15 +8,27 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class ShuffleIntoLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final TriggerCollectionService triggerCollectionService;
+
+    @Autowired
+    public ShuffleIntoLibraryEffectHandler(GameLogService gameLogService,
+                                          TriggerCollectionService triggerCollectionService) {
+        this.gameLogService = gameLogService;
+        this.triggerCollectionService = triggerCollectionService;
+    }
+
+    public ShuffleIntoLibraryEffectHandler(GameLogService gameLogService) {
+        this(gameLogService, null);
+    }
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -25,11 +37,12 @@ public class ShuffleIntoLibraryEffectHandler implements NormalEffectHandlerBean 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        // CR 707.10a — copies cease to exist when they leave the stack; they never
-        // enter any zone.  The spell disposition handler in StackResolutionService
-        // already guards against this, but the effect handler fires first during
-        // normal effect resolution, so we need the guard here too.
-        if (entry.isCopy()) return;
+        // The library is shuffled even when the spell cannot be put into it. Flashback's
+        // exile replacement is applied by normal spell disposition after resolution.
+        if (entry.isCopy() || entry.isCastWithFlashback()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, entry.getOwnerId());
+            return;
+        }
 
         // When an earlier effect paused resolution for user input (e.g. Beacon of Unrest's
         // graveyard choice), handleSpellDisposition already shuffled the card in — this
@@ -39,6 +52,9 @@ public class ShuffleIntoLibraryEffectHandler implements NormalEffectHandlerBean 
         if (deck.contains(physicalCard)) return;
 
         deck.add(physicalCard);
+        if (triggerCollectionService != null) {
+            triggerCollectionService.checkCardsPutIntoLibraryTriggers(gameData, entry.getOwnerId(), 1);
+        }
         LibraryShuffleHelper.shuffleLibrary(gameData, entry.getOwnerId());
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is shuffled into its owner's library."));

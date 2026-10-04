@@ -151,8 +151,10 @@ class BaneOfBalaGedTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player2, new Forest());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new Forest());
 
-        declareAttackAt(battle);
-        resolveAllTriggers();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackAt(battle);
+            resolveAllTriggers();
+        });
 
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .containsExactlyInAnyOrder(first.getCard(), second.getCard());

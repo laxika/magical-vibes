@@ -46,7 +46,7 @@ public class SacrificeCombatOpponentAtEndOfCombatEffectHandler implements Normal
             return;
         }
 
-        gameData.queueDelayedAction(new SacrificeAtEndOfCombat(targetId, null, entry.getCard(), 0,
+        gameData.queueDelayedAction(new SacrificeAtEndOfCombat(targetId, entry.getControllerId(), entry.getCard(), 0,
                 sacrificeEffect.tokenForSacrificingPlayer()));
         gameLogService.append(gameData,
                 GameLog.cardThen(target.getCard(), " will be sacrificed at end of combat."));
