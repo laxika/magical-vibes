@@ -69,6 +69,7 @@ class SlabHammerTest extends BaseCardTest {
 
     @Test
     void boostWearsOffAtEndOfTurn() {
+        harness.setHand(player1, List.of());
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent hammer = addCreatureReady(player1, new SlabHammer());
         hammer.setAttachedTo(creature.getId());
@@ -81,9 +82,7 @@ class SlabHammerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(creature.getPowerModifier()).isEqualTo(2);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
         assertThat(creature.getPowerModifier()).isZero();
         assertThat(creature.getToughnessModifier()).isZero();

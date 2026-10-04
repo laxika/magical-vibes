@@ -24,7 +24,8 @@ class SandstoneBridgeTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new SandstoneBridge()));
 
-        harness.getGameService().playCard(gd, player1, 0, 0, target.getId(), null);
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
 
         Permanent bridge = gd.playerBattlefields.get(player1.getId()).getLast();
         assertThat(bridge.isTapped()).isTrue();

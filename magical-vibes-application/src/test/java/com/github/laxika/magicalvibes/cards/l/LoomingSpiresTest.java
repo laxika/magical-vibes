@@ -24,7 +24,8 @@ class LoomingSpiresTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new LoomingSpires()));
 
-        harness.getGameService().playCard(gd, player1, 0, 0, target.getId(), null);
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
 
         Permanent spires = gd.playerBattlefields.get(player1.getId()).getLast();
         assertThat(spires.isTapped()).isTrue();
@@ -48,7 +49,7 @@ class LoomingSpiresTest extends BaseCardTest {
     @DisplayName("Tapping adds red mana")
     void tapsForRedMana() {
         Permanent spires = harness.addToBattlefieldAndReturn(player1, new LoomingSpires());
-        spires.setTapped(false);
+        spires.untap();
 
         harness.activateAbility(player1, 0, 0, null, null);
 
