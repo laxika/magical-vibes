@@ -34,7 +34,7 @@ class HolyLightTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Destroys nonwhite creatures reduced to 0 toughness")
+    @DisplayName("Puts nonwhite creatures reduced to 0 toughness into the graveyard")
     void killsSmallNonwhiteCreatures() {
         harness.addToBattlefield(player2, new BogRats());
 
@@ -69,6 +69,35 @@ class HolyLightTest extends BaseCardTest {
 
         assertThat(creature.getEffectivePower()).isEqualTo(2);
         assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Affects nonwhite creatures present when the spell resolves")
+    void affectsCreaturesEnteringBeforeResolution() {
+        harness.castFromHand(player1, new HolyLight(), "{2}{W}");
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new Scarecrow());
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(1);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple casts accumulate and still leave white creatures unchanged")
+    void multipleCastsAccumulate() {
+        harness.addToBattlefield(player1, new Scarecrow());
+        harness.addToBattlefield(player2, new ScarwoodGoblins());
+        Permanent white = harness.addToBattlefieldAndReturn(player2, new Squire());
+
+        castHolyLight();
+        castHolyLight();
+
+        harness.assertInGraveyard(player1, "Scarecrow");
+        harness.assertInGraveyard(player2, "Scarwood Goblins");
+        harness.assertOnBattlefield(player2, "Squire");
+        assertThat(white.getEffectivePower()).isEqualTo(1);
+        assertThat(white.getEffectiveToughness()).isEqualTo(2);
     }
 
     private void castHolyLight() {
