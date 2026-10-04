@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GhostShip;
+import com.github.laxika.magicalvibes.cards.j.Jump;
 import com.github.laxika.magicalvibes.cards.s.Squire;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -9,10 +11,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Flood.class, Squire.class, GhostShip.class})
+@CardUsed({Flood.class, Squire.class, GhostShip.class, Jump.class})
 class FloodTest extends BaseCardTest {
 
     @Test
@@ -101,6 +105,55 @@ class FloodTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         gd.playerBattlefields.get(player2.getId()).remove(target);
         harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void fizzlesIfTargetGainsFlyingBeforeResolution() {
+        harness.addToBattlefieldAndReturn(player1, new Flood());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        Permanent target = addCreatureReady(player2, new Squire());
+        harness.setHand(player2, List.of(new Jump()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    void resolvesAfterFloodLeavesBattlefield() {
+        Permanent flood = harness.addToBattlefieldAndReturn(player1, new Flood());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        Permanent target = addCreatureReady(player2, new Squire());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(flood);
+        gd.playerGraveyards.get(player1.getId()).add(flood.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotActivateWithOnlyOneBlueMana() {
+        harness.addToBattlefieldAndReturn(player1, new Flood());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        Permanent target = addCreatureReady(player2, new Squire());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
 
         assertThat(gd.stack).isEmpty();
         assertThat(target.isTapped()).isFalse();
