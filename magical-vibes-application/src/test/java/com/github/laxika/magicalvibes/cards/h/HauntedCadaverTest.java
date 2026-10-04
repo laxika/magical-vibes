@@ -121,6 +121,70 @@ class HauntedCadaverTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 
+    @Test
+    @DisplayName("A player with fewer than three cards discards their entire hand")
+    void discardsAllCardsFromShortHand() {
+        harness.setHand(player2, List.of(new HauntedCadaver(), new HauntedCadaver()));
+        addAttacker();
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player1, "Haunted Cadaver");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Haunted Cadaver can be sacrificed even when the damaged player has no cards")
+    void canSacrificeAgainstEmptyHand() {
+        harness.setHand(player2, List.of());
+        addAttacker();
+
+        resolveCombat();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Haunted Cadaver");
+        harness.assertInGraveyard(player1, "Haunted Cadaver");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Face-down Haunted Cadaver deals combat damage without its printed trigger")
+    void faceDownCombatDamageDoesNotTrigger() {
+        harness.setHand(player2, List.of(new HauntedCadaver()));
+        Permanent attacker = addAttacker();
+        attacker.setFaceDown(true);
+
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The second player's Cadaver makes the first player discard")
+    void secondPlayerCadaverDiscardsFromDamagedPlayer() {
+        harness.setHand(player1, List.of(new HauntedCadaver()));
+        Permanent attacker = addCreatureReady(player2, new HauntedCadaver());
+        attacker.setAttacking(true);
+
+        resolveCombat(player2);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player2, "Haunted Cadaver");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private Permanent addAttacker() {
         Permanent attacker = addCreatureReady(player1, new HauntedCadaver());
         attacker.setAttacking(true);
