@@ -156,10 +156,73 @@ class HankyuTest extends BaseCardTest {
         assertThat(creature.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Aim counters are removed as a cost and damage retains the removed count")
+    void damageUsesCountersRemovedAtActivation() {
+        harness.setLife(player2, 20);
+        Permanent creature = addCreatureReady(player1, new WanderingOnes());
+        Permanent hankyu = addHankyuReady(player1);
+        hankyu.setAttachedTo(creature.getId());
+        hankyu.setCounterCount(CounterType.AIM, 3);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+
+        assertThat(hankyu.getCounterCount(CounterType.AIM)).isZero();
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        hankyu.setCounterCount(CounterType.AIM, 5);
+        hankyu.setAttachedTo(null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(hankyu.getCounterCount(CounterType.AIM)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Two attached Hankyus keep independent aim counters")
+    void multipleHankyusKeepIndependentCounters() {
+        harness.setLife(player2, 20);
+        Permanent creature = addCreatureReady(player1, new WanderingOnes());
+        Permanent first = addHankyuReady(player1);
+        Permanent second = addHankyuReady(player1);
+        first.setAttachedTo(creature.getId());
+        second.setAttachedTo(creature.getId());
+        first.setCounterCount(CounterType.AIM, 2);
+        second.setCounterCount(CounterType.AIM, 4);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.AIM)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.AIM)).isEqualTo(5);
+        creature.untap();
+        harness.activateAbility(player1, 0, 3, null, player2.getId());
+        assertThat(first.getCounterCount(CounterType.AIM)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.AIM)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("An aim-counter ability cannot put counters on a Hankyu that left the battlefield")
+    void aimCounterAbilityDoesNothingAfterHankyuLeaves() {
+        Permanent creature = addCreatureReady(player1, new WanderingOnes());
+        Permanent hankyu = addHankyuReady(player1);
+        hankyu.setAttachedTo(creature.getId());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        gd.playerBattlefields.get(player1.getId()).remove(hankyu);
+        gd.playerGraveyards.get(player1.getId()).add(hankyu.getCard());
+        harness.passBothPriorities();
+
+        assertThat(hankyu.getCounterCount(CounterType.AIM)).isZero();
+        assertThat(creature.getCounterCount(CounterType.AIM)).isZero();
+    }
+
     private Permanent addHankyuReady(Player player) {
-        Permanent perm = new Permanent(new Hankyu());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new Hankyu());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
