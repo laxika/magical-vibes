@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.c.CeruleanWisps;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GuidingVoice;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({HallOfOracles.class, CeruleanWisps.class, Forest.class, GrizzlyBears.class, GuidingVoice.class})
 class HallOfOraclesTest extends BaseCardTest {
 
     @Test
@@ -82,5 +86,102 @@ class HallOfOraclesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, forest.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    void putsCounterOnOpponentsCreatureAfterCastingSorcery() {
+        Permanent hall = harness.addToBattlefieldAndReturn(player1, new HallOfOracles());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GuidingVoice()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, bears.getId());
+        harness.activateAbility(player1, 0, 2, null, bears.getId());
+
+        assertThat(hall.isTapped()).isTrue();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void counterAbilityCannotBeActivatedWhileSpellIsOnStack() {
+        Permanent hall = harness.addToBattlefieldAndReturn(player1, new HallOfOracles());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CeruleanWisps()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castInstant(player1, 0, bears.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(hall.isTapped()).isFalse();
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void counterAbilityCannotBeActivatedOutsideMainPhase() {
+        harness.addToBattlefield(player1, new HallOfOracles());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CeruleanWisps()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.forceStep(TurnStep.END_STEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    void opponentsInstantDoesNotEnableCounterAbility() {
+        harness.addToBattlefield(player1, new HallOfOracles());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new CeruleanWisps()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("instant or sorcery");
+    }
+
+    @Test
+    void counterAbilityCannotBeActivatedOnOpponentsTurnEvenAfterCastingInstant() {
+        harness.addToBattlefield(player1, new HallOfOracles());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.setHand(player1, List.of(new CeruleanWisps()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    void tappingForManaPreventsCounterActivationWithoutUntapping() {
+        harness.addToBattlefield(player1, new HallOfOracles());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CeruleanWisps()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void filterAbilityRequiresManaPayment() {
+        Permanent hall = harness.addToBattlefieldAndReturn(player1, new HallOfOracles());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(hall.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
