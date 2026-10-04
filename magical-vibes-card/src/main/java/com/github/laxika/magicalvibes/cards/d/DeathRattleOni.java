@@ -17,6 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "13")
+@CardRegistration(set = "MAT", collectorNumber = "63")
+@CardRegistration(set = "MAT", collectorNumber = "113")
+@CardRegistration(set = "MAT", collectorNumber = "197")
 public class DeathRattleOni extends Card {
 
     public DeathRattleOni() {

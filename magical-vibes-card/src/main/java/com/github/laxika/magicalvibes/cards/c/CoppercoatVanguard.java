@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MAT", collectorNumber = "1")
+@CardRegistration(set = "MAT", collectorNumber = "51")
+@CardRegistration(set = "MAT", collectorNumber = "101")
+@CardRegistration(set = "MAT", collectorNumber = "186")
 public class CoppercoatVanguard extends Card {
 
     public CoppercoatVanguard() {

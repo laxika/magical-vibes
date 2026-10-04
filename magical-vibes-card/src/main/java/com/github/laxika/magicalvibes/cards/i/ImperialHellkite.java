@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "LGN", collectorNumber = "103")
 @CardRegistration(set = "MKC", collectorNumber = "155")
+@CardRegistration(set = "ARC", collectorNumber = "42")
 public class ImperialHellkite extends Card {
 
     public ImperialHellkite() {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WWK", collectorNumber = "143")
+@CardRegistration(set = "E01", collectorNumber = "96")
 public class SmolderingSpires extends Card {
 
     public SmolderingSpires() {

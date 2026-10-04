@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 @CardRegistration(set = "INV", collectorNumber = "199")
 @CardRegistration(set = "DPA", collectorNumber = "74")
 @CardRegistration(set = "CMM", collectorNumber = "305")
+@CardRegistration(set = "ARC", collectorNumber = "64")
 public class MolimoMaroSorcerer extends Card {
 
     public MolimoMaroSorcerer() {

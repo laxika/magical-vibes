@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "124")
+@CardRegistration(set = "ARC", collectorNumber = "20")
 public class MakeshiftMannequin extends Card {
 
     public MakeshiftMannequin() {

@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.GrantHexproofToChosenPlaneswa
 import com.github.laxika.magicalvibes.model.effect.PreserveOneLoyaltyCounterForChosenPlaneswalkerTypeEffect;
 
 @CardRegistration(set = "MAT", collectorNumber = "2")
+@CardRegistration(set = "MAT", collectorNumber = "52")
+@CardRegistration(set = "MAT", collectorNumber = "102")
+@CardRegistration(set = "MAT", collectorNumber = "151")
+@CardRegistration(set = "MAT", collectorNumber = "187")
 public class Deification extends Card {
 
     public Deification() {

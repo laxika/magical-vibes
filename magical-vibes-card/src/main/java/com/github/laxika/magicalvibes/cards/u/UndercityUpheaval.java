@@ -15,6 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MAT", collectorNumber = "25")
+@CardRegistration(set = "MAT", collectorNumber = "75")
+@CardRegistration(set = "MAT", collectorNumber = "125")
+@CardRegistration(set = "MAT", collectorNumber = "205")
 public class UndercityUpheaval extends Card {
 
     public UndercityUpheaval() {

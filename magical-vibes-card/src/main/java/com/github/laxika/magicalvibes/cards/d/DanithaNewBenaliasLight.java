@@ -11,6 +11,10 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "29")
+@CardRegistration(set = "MAT", collectorNumber = "79")
+@CardRegistration(set = "MAT", collectorNumber = "129")
+@CardRegistration(set = "MAT", collectorNumber = "166")
+@CardRegistration(set = "MAT", collectorNumber = "209")
 public class DanithaNewBenaliasLight extends Card {
 
     public DanithaNewBenaliasLight() {

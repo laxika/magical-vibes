@@ -19,6 +19,7 @@ import java.util.List;
 @CardRegistration(set = "SLD", collectorNumber = "1546")
 @CardRegistration(set = "DMR", collectorNumber = "94")
 @CardRegistration(set = "C13", collectorNumber = "83")
+@CardRegistration(set = "E01", collectorNumber = "35")
 public class NightscapeFamiliar extends Card {
 
     public NightscapeFamiliar() {

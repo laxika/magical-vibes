@@ -15,6 +15,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 
 @CardRegistration(set = "MAT", collectorNumber = "36")
+@CardRegistration(set = "MAT", collectorNumber = "86")
+@CardRegistration(set = "MAT", collectorNumber = "136")
+@CardRegistration(set = "MAT", collectorNumber = "171")
+@CardRegistration(set = "MAT", collectorNumber = "215")
 public class NahiriForgedInFury extends Card {
 
     public NahiriForgedInFury() {

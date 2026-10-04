@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "151")
+@CardRegistration(set = "ARC", collectorNumber = "115")
 public class Skullcage extends Card {
 
     public Skullcage() {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "OGW", collectorNumber = "18")
+@CardRegistration(set = "E01", collectorNumber = "6")
 public class ExpeditionRaptor extends Card {
 
     public ExpeditionRaptor() {

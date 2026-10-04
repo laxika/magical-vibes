@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 @CardRegistration(set = "MMA", collectorNumber = "128")
 @CardRegistration(set = "IMA", collectorNumber = "144")
 @CardRegistration(set = "C17", collectorNumber = "141")
+@CardRegistration(set = "ARC", collectorNumber = "45")
 public class RyuseiTheFallingStar extends Card {
 
     public RyuseiTheFallingStar() {

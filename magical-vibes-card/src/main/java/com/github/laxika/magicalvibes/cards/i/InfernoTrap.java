@@ -12,6 +12,7 @@ import java.util.List;
 
 @CardRegistration(set = "ZEN", collectorNumber = "133")
 @CardRegistration(set = "DDN", collectorNumber = "67")
+@CardRegistration(set = "ARC", collectorNumber = "43")
 public class InfernoTrap extends Card {
 
     public InfernoTrap() {

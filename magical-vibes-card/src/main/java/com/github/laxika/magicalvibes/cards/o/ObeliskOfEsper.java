@@ -10,6 +10,7 @@ import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "213")
 @CardRegistration(set = "C13", collectorNumber = "250")
+@CardRegistration(set = "ARC", collectorNumber = "113")
 public class ObeliskOfEsper extends Card {
 
     public ObeliskOfEsper() {
