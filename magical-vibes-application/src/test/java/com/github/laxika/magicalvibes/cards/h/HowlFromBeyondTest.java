@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MinionOfLeshrac;
 import com.github.laxika.magicalvibes.cards.w.WindSpirit;
-import com.github.laxika.magicalvibes.cards.z.ZuranOrb;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Forest.class, GrizzlyBears.class, HowlFromBeyond.class, MinionOfLeshrac.class, WindSpirit.class, ZuranOrb.class})
+@CardUsed({Forest.class, HowlFromBeyond.class, MinionOfLeshrac.class, WindSpirit.class})
 class HowlFromBeyondTest extends BaseCardTest {
 
     @Test
@@ -46,7 +44,6 @@ class HowlFromBeyondTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(spirit.getPowerModifier()).isEqualTo(0);
@@ -141,5 +138,32 @@ class HowlFromBeyondTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gameLogContains("fizzles")).isTrue();
         harness.assertInGraveyard(player1, "Howl from Beyond");
+    }
+
+    @Test
+    @DisplayName("Each spell retains its own X and the boosts accumulate")
+    void stackedSpellsRetainTheirOwnX() {
+        Permanent spirit = harness.addToBattlefieldAndReturn(player1, new WindSpirit());
+        harness.setHand(player1, List.of(new HowlFromBeyond(), new HowlFromBeyond()));
+        harness.addMana(player1, ManaColor.BLACK, 7);
+
+        harness.castInstant(player1, 0, 2, spirit.getId());
+        harness.castInstant(player1, 0, 3, spirit.getId());
+        harness.passBothPriorities();
+
+        assertThat(spirit.getEffectivePower()).isEqualTo(6);
+        assertThat(spirit.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(spirit.getEffectivePower()).isEqualTo(8);
+        assertThat(spirit.getEffectiveToughness()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(spirit.getEffectivePower()).isEqualTo(3);
+        assertThat(spirit.getEffectiveToughness()).isEqualTo(2);
     }
 }
