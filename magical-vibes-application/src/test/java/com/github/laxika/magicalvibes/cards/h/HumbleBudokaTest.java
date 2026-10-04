@@ -13,8 +13,44 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HumbleBudoka.class, KodamasMight.class, BurrGrafter.class})
+@CardUsed({HumbleBudoka.class, KodamasMight.class, BurrGrafter.class, HideousLaughter.class})
 class HumbleBudokaTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Shroud prevents its controller from targeting Humble Budoka with a spell")
+    void cannotBeTargetedByControllersSpell() {
+        Permanent budoka = harness.addToBattlefieldAndReturn(player1, new HumbleBudoka());
+        harness.setHand(player1, List.of(new KodamasMight()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, budoka.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("Shroud prevents its controller from targeting Humble Budoka with an ability")
+    void cannotBeTargetedByControllersAbility() {
+        harness.addToBattlefield(player1, new BurrGrafter());
+        Permanent budoka = harness.addToBattlefieldAndReturn(player1, new HumbleBudoka());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, budoka.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("Shroud does not prevent an untargeted effect from killing Humble Budoka")
+    void diesToUntargetedToughnessReduction() {
+        harness.addToBattlefield(player2, new HumbleBudoka());
+        harness.setHand(player1, List.of(new HideousLaughter()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertNotOnBattlefield(player2, "Humble Budoka");
+        harness.assertInGraveyard(player2, "Humble Budoka");
+    }
 
     @Test
     @DisplayName("Humble Budoka cannot be targeted by spells because it has shroud")
