@@ -95,6 +95,63 @@ class HyperionBlacksmithTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    void mayDeclineUntappingTappedOpponentArtifact() {
+        Permanent blacksmith = addReadyBlacksmith(player1);
+        Permanent target = addReadyArtifact(player2);
+        target.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(blacksmith.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void removedTargetDoesNotPromptForOptionalEffect() {
+        addReadyBlacksmith(player1);
+        Permanent target = addReadyArtifact(player2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void abilityResolvesAfterBlacksmithLeavesBattlefield() {
+        Permanent blacksmith = addReadyBlacksmith(player1);
+        Permanent target = addReadyArtifact(player2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(blacksmith);
+        gd.playerGraveyards.get(player1.getId()).add(blacksmith.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void usesArtifactsTappedStateAtResolution() {
+        addReadyBlacksmith(player1);
+        Permanent target = addReadyArtifact(player2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        target.tap();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.isTapped()).isFalse();
+    }
+
     private Permanent addReadyBlacksmith(Player player) {
         return addCreatureReady(player, new HyperionBlacksmith());
     }
