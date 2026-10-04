@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.c.CourserOfKruphix;
+import com.github.laxika.magicalvibes.cards.e.EldraziMonument;
 import com.github.laxika.magicalvibes.cards.m.ManaCylix;
 import com.github.laxika.magicalvibes.cards.w.WarpedDevotion;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,6 +11,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.Set;
@@ -16,7 +20,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HullBreach.class, ManaCylix.class, WarpedDevotion.class})
+@CardUsed({HullBreach.class, ManaCylix.class, WarpedDevotion.class,
+        EldraziMonument.class, CourserOfKruphix.class})
 class HullBreachTest extends BaseCardTest {
 
     @Test
@@ -89,11 +94,47 @@ class HullBreachTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @CardUsed({HullBreach.class, EldraziMonument.class, CourserOfKruphix.class})
+    void combinedModeDestroysSimultaneouslyWhileMonumentStillProtectsEnchantmentCreature() {
+        harness.addToBattlefield(player2, new EldraziMonument());
+        harness.addToBattlefield(player2, new CourserOfKruphix());
+        harness.setHand(player1, List.of(new HullBreach()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castModalSorcery(player1, 0, 2, List.of(
+                harness.getPermanentId(player2, "Eldrazi Monument"),
+                harness.getPermanentId(player2, "Courser of Kruphix")));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Eldrazi Monument");
+        harness.assertOnBattlefield(player2, "Courser of Kruphix");
+        harness.assertNotInGraveyard(player2, "Courser of Kruphix");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void combinedModeStillDestroysRemainingLegalTarget(boolean artifactLeaves) {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new ManaCylix());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new WarpedDevotion());
+        harness.setHand(player1, List.of(new HullBreach()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castModalSorcery(player1, 0, 2, List.of(artifact.getId(), enchantment.getId()));
+
+        harness.getPermanentRemovalService().removePermanentToExile(gd, artifactLeaves ? artifact : enchantment);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, artifactLeaves ? "Warped Devotion" : "Mana Cylix");
+        harness.assertNotInGraveyard(player2, artifactLeaves ? "Mana Cylix" : "Warped Devotion");
+        harness.assertInGraveyard(player1, "Hull Breach");
+    }
+
     private void cast(int mode, UUID targetId) {
         harness.setHand(player1, List.of(new HullBreach()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castSorcery(player1, 0, mode, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, mode, targetId);
     }
 }
