@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.a.ApprenticeWizard;
+import com.github.laxika.magicalvibes.cards.u.UrzasArmor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FireAndBrimstone.class, ApprenticeWizard.class})
+@CardUsed({FireAndBrimstone.class, ApprenticeWizard.class, UrzasArmor.class})
 class FireAndBrimstoneTest extends BaseCardTest {
 
     @Test
@@ -23,8 +24,7 @@ class FireAndBrimstoneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FireAndBrimstone()));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
@@ -44,19 +44,19 @@ class FireAndBrimstoneTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Does nothing if the target no longer attacked this turn when it resolves")
-    void rechecksAttackRestrictionAtResolution() {
+    @DisplayName("The player remains a legal target after their attacker leaves the battlefield")
+    void attackerLeavingDoesNotEraseAttackHistory() {
         addCreatureReady(player2, new ApprenticeWizard());
         declareAttackers(player2, List.of(0));
         harness.setHand(player1, List.of(new FireAndBrimstone()));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.castInstant(player1, 0, player2.getId());
-        gd.playersDeclaredAttackersThisTurn.clear();
+        gd.playerBattlefields.get(player2.getId()).clear();
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
 
     @Test
@@ -67,10 +67,38 @@ class FireAndBrimstoneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FireAndBrimstone()));
         harness.addMana(player1, ManaColor.WHITE, 5);
 
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(12);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Declaring no attackers does not make a player a legal target")
+    void rejectsPlayerWhoDeclaredNoAttackers() {
+        addCreatureReady(player2, new ApprenticeWizard());
+        declareAttackers(player2, List.of());
+        harness.setHand(player1, List.of(new FireAndBrimstone()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("attacked this turn");
+    }
+
+    @Test
+    @CardUsed({FireAndBrimstone.class, ApprenticeWizard.class, UrzasArmor.class})
+    @DisplayName("Urza's Armor prevents one damage from the combined self-target damage event")
+    void selfTargetDamageIsOneEventForPrevention() {
+        addCreatureReady(player1, new ApprenticeWizard());
+        harness.addToBattlefield(player1, new UrzasArmor());
+        declareAttackers(player1, List.of(0));
+        harness.setHand(player1, List.of(new FireAndBrimstone()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(13);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }
