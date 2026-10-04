@@ -57,4 +57,45 @@ class FrogmiteTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
+
+    @Test
+    @DisplayName("Three artifacts still require one mana to cast Frogmite")
+    void threeArtifactsDoNotMakeFrogmiteFree() {
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new Bonesplitter());
+        }
+        harness.setHand(player1, List.of(new Frogmite()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Artifacts in hand, library, and graveyard do not reduce the cost")
+    void affinityDoesNotCountArtifactCardsOutsideBattlefield() {
+        harness.setHand(player1, List.of(new Frogmite(), new Bonesplitter()));
+        harness.setLibrary(player1, List.of(new Bonesplitter()));
+        harness.setGraveyard(player1, List.of(new Bonesplitter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("More than four artifacts allow Frogmite to be cast and resolve without mana")
+    void affinityCanExceedPrintedGenericCost() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new Bonesplitter());
+        }
+        harness.setHand(player1, List.of(new Frogmite()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Frogmite");
+        harness.assertNotInHand(player1, "Frogmite");
+    }
 }

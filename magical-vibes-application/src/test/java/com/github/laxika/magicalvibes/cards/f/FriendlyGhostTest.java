@@ -70,6 +70,53 @@ class FriendlyGhostTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
+    @Test
+    @CardUsed({FriendlyGhost.class})
+    @DisplayName("The entering Ghost can target itself on an otherwise empty battlefield")
+    void etbCanTargetItself() {
+        Permanent ghost = harness.enterBattlefieldAndReturn(player1, new FriendlyGhost());
+        harness.handlePermanentChosen(player1, ghost.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ghost)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ghost)).isEqualTo(8);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @CardUsed({FriendlyGhost.class})
+    @DisplayName("Entering without being cast boosts only the chosen creature")
+    void etbTriggersWithoutCastingAndBoostsOnlyChosenCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FriendlyGhost());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new FriendlyGhost());
+        Permanent source = harness.enterBattlefieldAndReturn(player1, new FriendlyGhost());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
+        assertThat(other.getPowerModifier()).isZero();
+        assertThat(other.getToughnessModifier()).isZero();
+        assertThat(source.getPowerModifier()).isZero();
+        assertThat(source.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @CardUsed({FriendlyGhost.class})
+    @DisplayName("The triggered boost resolves after the source leaves the battlefield")
+    void etbResolvesAfterSourceLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new FriendlyGhost());
+        Permanent source = harness.enterBattlefieldAndReturn(player1, new FriendlyGhost());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, source));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Friendly Ghost");
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(8);
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castAndResolve(Permanent target) {
         harness.setHand(player1, List.of(new FriendlyGhost()));
         harness.addMana(player1, ManaColor.WHITE, 4);

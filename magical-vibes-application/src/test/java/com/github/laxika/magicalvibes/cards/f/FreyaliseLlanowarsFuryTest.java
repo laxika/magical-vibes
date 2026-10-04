@@ -8,9 +8,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SkitteringSurveyor;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -101,10 +99,9 @@ class FreyaliseLlanowarsFuryTest extends BaseCardTest {
     }
 
     private Permanent addReadyFreyalise(int loyalty) {
-        Permanent freyalise = new Permanent(new FreyaliseLlanowarsFury());
+        Permanent freyalise = harness.addToBattlefieldAndReturn(player1, new FreyaliseLlanowarsFury());
         freyalise.setCounterCount(CounterType.LOYALTY, loyalty);
         freyalise.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(freyalise);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return freyalise;
@@ -134,9 +131,7 @@ class FreyaliseLlanowarsFuryTest extends BaseCardTest {
     @Test
     void minusTwoDestroysTargetArtifactOrEnchantment() {
         Permanent freyalise = addReadyFreyalise(3);
-        harness.addToBattlefield(player2, new FountainOfYouth());
-
-        Permanent artifact = findPermanent(player2, "Fountain of Youth");
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
         harness.activateAbility(player1, 0, 1, null, artifact.getId());
         harness.passBothPriorities();
 
@@ -147,9 +142,7 @@ class FreyaliseLlanowarsFuryTest extends BaseCardTest {
     @Test
     void minusTwoDestroysTargetEnchantment() {
         Permanent freyalise = addReadyFreyalise(3);
-        harness.addToBattlefield(player2, new AngelicChorus());
-
-        Permanent enchantment = findPermanent(player2, "Angelic Chorus");
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new AngelicChorus());
         harness.activateAbility(player1, 0, 1, null, enchantment.getId());
         harness.passBothPriorities();
 
@@ -185,4 +178,50 @@ class FreyaliseLlanowarsFuryTest extends BaseCardTest {
                 permanent -> permanent.getCard().getName().equals("Freyalise, Llanowar's Fury"));
     }
 
+    @Test
+    void newElfCannotTapForManaImmediately() {
+        addReadyFreyalise(3);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Elf Druid");
+        int tokenIndex = gd.playerBattlefields.get(player1.getId()).indexOf(token);
+        assertThatThrownBy(() -> harness.activateAbility(player1, tokenIndex, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(token.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void minusSixDrawsNothingWithoutGreenCreatures() {
+        addReadyFreyalise(6);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new SerraAngel());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Card undrawn = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(undrawn));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);
+    }
+
+    @Test
+    void minusSixCountsGreenCreaturesAtResolution() {
+        addReadyFreyalise(6);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Card first = new Forest();
+        Card second = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(first, second));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
+    }
 }

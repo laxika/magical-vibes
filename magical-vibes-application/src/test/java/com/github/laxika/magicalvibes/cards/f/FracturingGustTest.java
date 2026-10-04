@@ -1,18 +1,21 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.d.DarksteelColossus;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
+import com.github.laxika.magicalvibes.cards.r.Regeneration;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+@CardUsed({FracturingGust.class, GrizzlyBears.class, Ornithopter.class, RuleOfLaw.class,
+        Regeneration.class, DarksteelColossus.class})
 class FracturingGustTest extends BaseCardTest {
 
     private static final int STARTING_LIFE = 20;
@@ -25,13 +28,11 @@ class FracturingGustTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FracturingGust()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
-        GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player1, "Ornithopter");
         harness.assertNotOnBattlefield(player2, "Rule of Law");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE + 4);
+        harness.assertLife(player1, STARTING_LIFE + 4);
     }
 
     @Test
@@ -42,13 +43,11 @@ class FracturingGustTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FracturingGust()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
-        GameData gd = harness.getGameData();
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Ornithopter");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE + 2);
+        harness.assertLife(player1, STARTING_LIFE + 2);
     }
 
     @Test
@@ -58,11 +57,62 @@ class FracturingGustTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FracturingGust()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE);
+        harness.assertLife(player1, STARTING_LIFE);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Indestructible artifacts survive and do not contribute to life gained")
+    void excludesIndestructibleArtifactsFromLifeGain() {
+        harness.addToBattlefield(player2, new DarksteelColossus());
+        harness.addToBattlefield(player2, new Ornithopter());
+        harness.setHand(player1, List.of(new FracturingGust()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertOnBattlefield(player2, "Darksteel Colossus");
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertLife(player1, STARTING_LIFE + 2);
+        harness.assertLife(player2, STARTING_LIFE);
+    }
+
+    @Test
+    @DisplayName("Regenerated artifacts survive while their regeneration Aura is destroyed")
+    void excludesRegeneratedArtifactsFromLifeGain() {
+        Permanent thopter = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Regeneration());
+        aura.setAttachedTo(thopter.getId());
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.activateAbility(player2, 1, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new FracturingGust()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertOnBattlefield(player2, "Ornithopter");
+        harness.assertNotOnBattlefield(player2, "Regeneration");
+        harness.assertLife(player1, STARTING_LIFE + 2);
+        harness.assertLife(player2, STARTING_LIFE);
+    }
+
+    @Test
+    @DisplayName("An artifact creature and its Aura both count as destroyed permanents")
+    void countsDestroyedArtifactAndAttachedAura() {
+        Permanent thopter = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Regeneration());
+        aura.setAttachedTo(thopter.getId());
+        harness.setHand(player1, List.of(new FracturingGust()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertNotOnBattlefield(player2, "Ornithopter");
+        harness.assertNotOnBattlefield(player2, "Regeneration");
+        harness.assertLife(player1, STARTING_LIFE + 4);
+        harness.assertLife(player2, STARTING_LIFE);
     }
 }

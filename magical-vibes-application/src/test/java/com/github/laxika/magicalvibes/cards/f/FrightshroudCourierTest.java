@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.AphettoAlchemist;
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FrightshroudCourier.class, ElvishWarrior.class})
+@CardUsed({FrightshroudCourier.class, ElvishWarrior.class, AphettoAlchemist.class})
 class FrightshroudCourierTest extends BaseCardTest {
 
     @Test
@@ -120,6 +121,58 @@ class FrightshroudCourierTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a Zombie creature");
     }
 
+    @Test
+    @DisplayName("Untapping the Courier in response prevents its boost from starting")
+    void untappingInResponsePreventsBoost() {
+        Permanent courier = addCreatureReady(player1, new FrightshroudCourier());
+        addCreatureReady(player1, new AphettoAlchemist());
+        Permanent target = addCreatureReady(player2, new FrightshroudCourier());
+        int basePower = gqs.getEffectivePower(gd, target);
+        int baseToughness = gqs.getEffectiveToughness(gd, target);
+        addAbilityMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player1, 1, null, courier.getId());
+        harness.passBothPriorities();
+        assertThat(courier.isTapped()).isFalse();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(baseToughness);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FEAR)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A boost that ended on untap does not resume when the Courier taps again")
+    void endedBoostDoesNotResumeWhenCourierTapsAgain() {
+        Permanent courier = addCreatureReady(player1, new FrightshroudCourier());
+        addCreatureReady(player1, new AphettoAlchemist());
+        Permanent target = addCreatureReady(player2, new FrightshroudCourier());
+        int basePower = gqs.getEffectivePower(gd, target);
+        int baseToughness = gqs.getEffectiveToughness(gd, target);
+        addAbilityMana();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower + 2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FEAR)).isTrue();
+
+        harness.activateAbility(player1, 1, null, courier.getId());
+        harness.passBothPriorities();
+        assertThat(courier.isTapped()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(baseToughness);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FEAR)).isFalse();
+
+        addAbilityMana();
+        harness.activateAbility(player1, 0, null, courier.getId());
+        harness.passBothPriorities();
+
+        assertThat(courier.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(baseToughness);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FEAR)).isFalse();
+        assertThat(gqs.hasKeyword(gd, courier, Keyword.FEAR)).isTrue();
+    }
     private void addAbilityMana() {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

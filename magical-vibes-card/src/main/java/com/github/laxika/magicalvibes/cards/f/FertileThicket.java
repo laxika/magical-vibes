@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 @CardRegistration(set = "DDR", collectorNumber = "27")
+@CardRegistration(set = "BFZ", collectorNumber = "237")
 public class FertileThicket extends Card {
 
     public FertileThicket() {
