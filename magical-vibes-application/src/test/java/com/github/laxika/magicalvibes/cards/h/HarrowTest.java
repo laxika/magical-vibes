@@ -126,14 +126,76 @@ class HarrowTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot sacrifice a non-land permanent")
     void cannotSacrificeNonLand() {
-        Permanent nonLandPermanent = new Permanent(new BloodstoneCameo());
-        gd.playerBattlefields.get(player1.getId()).add(nonLandPermanent);
+        Permanent nonLandPermanent = harness.addToBattlefieldAndReturn(player1, new BloodstoneCameo());
 
         harness.setHand(player1, List.of(new Harrow()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, null, nonLandPermanent.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Chosen lands wait until the search is complete before entering together")
+    void chosenLandsEnterAfterSearchCompletes() {
+        castHarrow();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertNotOnBattlefield(player1, "Plains");
+        harness.assertNotOnBattlefield(player1, "Forest");
+
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Plains");
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("A single basic land in the library enters without requiring another choice")
+    void onlyOneBasicLandAvailable() {
+        castHarrow();
+        harness.setLibrary(player1, List.of(new Forest(), new CoastalTower()));
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Harrow");
+    }
+
+    @Test
+    @DisplayName("A tapped nonbasic land can pay the sacrifice cost")
+    void canSacrificeTappedNonbasicLand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new CoastalTower());
+        land.tap();
+        harness.setHand(player1, List.of(new Harrow()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castInstantWithSacrifice(player1, 0, null, land.getId());
+
+        harness.assertNotOnBattlefield(player1, "Coastal Tower");
+        harness.assertInGraveyard(player1, "Coastal Tower");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's land cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsLand() {
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent opponentsLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new Harrow()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.castInstantWithSacrifice(player1, 0, null, opponentsLand.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Mountain");
+        harness.assertOnBattlefield(player2, "Forest");
     }
 
     private Permanent castHarrow() {
