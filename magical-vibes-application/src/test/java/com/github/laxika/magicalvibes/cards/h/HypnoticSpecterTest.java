@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.SnappingDrake;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -18,10 +19,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HypnoticSpecter.class, GrizzlyBears.class})
+@CardUsed({HypnoticSpecter.class, GrizzlyBears.class, SnappingDrake.class})
 class HypnoticSpecterTest extends BaseCardTest {
-
-    // ===== Combat damage trigger =====
 
     @Test
     @DisplayName("Dealing combat damage to player forces opponent to discard a card at random")
@@ -78,7 +77,7 @@ class HypnoticSpecterTest extends BaseCardTest {
 
         Permanent specter = addCreatureReady(player1, new HypnoticSpecter());
         specter.setAttacking(true);
-        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        Permanent blocker = addCreatureReady(player2, new SnappingDrake());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
@@ -164,5 +163,44 @@ class HypnoticSpecterTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Zero damage does not trigger a discard")
+    void zeroDamageDoesNotTriggerDiscard() {
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        Permanent specter = addCreatureReady(player1, new HypnoticSpecter());
+        DamageSupport damageSupport = GameTestEngineContext.get().getBean(DamageSupport.class);
+
+        harness.inMutationScope(() -> damageSupport.dealDividedDamageToAnyTargets(
+                gd, specter.getCard(), player1.getId(), Map.of(player2.getId(), 0)));
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Discard happens on resolution even after the Specter leaves the battlefield")
+    void discardResolvesAfterSourceLeavesBattlefield() {
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        Permanent specter = addCreatureReady(player1, new HypnoticSpecter());
+        DamageSupport damageSupport = GameTestEngineContext.get().getBean(DamageSupport.class);
+
+        harness.inMutationScope(() -> damageSupport.dealDividedDamageToAnyTargets(
+                gd, specter.getCard(), player1.getId(), Map.of(player2.getId(), 2)));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.inMutationScope(() -> {
+            gd.playerBattlefields.get(player1.getId()).remove(specter);
+            gd.playerGraveyards.get(player1.getId()).add(specter.getCard());
+        });
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }
