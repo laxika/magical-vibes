@@ -13,6 +13,10 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "MAT", collectorNumber = "43")
+@CardRegistration(set = "MAT", collectorNumber = "93")
+@CardRegistration(set = "MAT", collectorNumber = "143")
+@CardRegistration(set = "MAT", collectorNumber = "178")
+@CardRegistration(set = "MAT", collectorNumber = "222")
 public class RebuildTheCity extends Card {
 
     public RebuildTheCity() {

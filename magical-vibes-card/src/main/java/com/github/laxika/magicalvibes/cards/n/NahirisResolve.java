@@ -19,6 +19,10 @@ import java.util.List;
 import java.util.Set;
 
 @CardRegistration(set = "MAT", collectorNumber = "37")
+@CardRegistration(set = "MAT", collectorNumber = "87")
+@CardRegistration(set = "MAT", collectorNumber = "137")
+@CardRegistration(set = "MAT", collectorNumber = "172")
+@CardRegistration(set = "MAT", collectorNumber = "216")
 public class NahirisResolve extends Card {
 
     public NahirisResolve() {

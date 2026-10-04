@@ -20,6 +20,10 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "24")
+@CardRegistration(set = "MAT", collectorNumber = "74")
+@CardRegistration(set = "MAT", collectorNumber = "124")
+@CardRegistration(set = "MAT", collectorNumber = "164")
+@CardRegistration(set = "MAT", collectorNumber = "204")
 public class TranquilFrillback extends Card {
 
     public TranquilFrillback() {

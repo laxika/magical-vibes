@@ -19,6 +19,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import java.util.List;
 
 @CardRegistration(set = "MAT", collectorNumber = "21")
+@CardRegistration(set = "MAT", collectorNumber = "71")
+@CardRegistration(set = "MAT", collectorNumber = "121")
+@CardRegistration(set = "MAT", collectorNumber = "161")
 public class LeylineImmersion extends Card {
 
     public LeylineImmersion() {
