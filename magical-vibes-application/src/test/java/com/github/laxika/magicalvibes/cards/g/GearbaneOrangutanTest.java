@@ -62,6 +62,55 @@ class GearbaneOrangutanTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Ornithopter");
     }
 
+    @Test
+    void destroyModeCanBeChosenWithoutAnyArtifacts() {
+        castOrangutan();
+        harness.handleListChoice(player1, "Destroy up to one target artifact.");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Gearbane Orangutan");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void sacrificeModeCannotSacrificeAnOpponentsArtifact() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+
+        castOrangutan();
+        harness.handleListChoice(player1,
+                "Sacrifice an artifact. If you do, put two +1/+1 counters on this creature.");
+        harness.passBothPriorities();
+
+        Permanent orangutan = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof GearbaneOrangutan)
+                .findFirst()
+                .orElseThrow();
+        assertThat(orangutan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void sacrificeAddsCountersWithoutASeparateTriggeredAbility() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+
+        castOrangutan();
+        harness.handleListChoice(player1,
+                "Sacrifice an artifact. If you do, put two +1/+1 counters on this creature.");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        Permanent orangutan = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof GearbaneOrangutan)
+                .findFirst()
+                .orElseThrow();
+        assertThat(orangutan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Ornithopter");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castOrangutan() {
         harness.setHand(player1, List.of(new GearbaneOrangutan()));
         harness.addMana(player1, ManaColor.RED, 3);
