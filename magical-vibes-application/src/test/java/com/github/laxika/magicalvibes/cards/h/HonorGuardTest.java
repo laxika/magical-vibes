@@ -225,6 +225,46 @@ class HonorGuardTest extends BaseCardTest {
     // ===== Validation errors =====
 
     @Test
+    @DisplayName("Activations can be stacked during an opponent's turn")
+    void canStackActivationsDuringOpponentsTurn() {
+        Permanent guard = addHonorGuardReady(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(guard.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(guard.getEffectivePower()).isEqualTo(1);
+        assertThat(guard.getEffectiveToughness()).isEqualTo(3);
+        assertThat(guard.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A returned Honor Guard is a new permanent and does not receive the old activation's boost")
+    void returnedSourceDoesNotReceiveOldActivationsBoost() {
+        HonorGuard card = new HonorGuard();
+        Permanent original = harness.addToBattlefieldAndReturn(player1, card);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(original);
+        Permanent returned = harness.addToBattlefieldAndReturn(player1, card);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(returned.getEffectivePower()).isEqualTo(1);
+        assertThat(returned.getEffectiveToughness()).isEqualTo(1);
+    }
+
+    @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
         addHonorGuardReady(player1);
