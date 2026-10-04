@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -40,7 +42,7 @@ class EsgarothGarrisonTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Soldier"));
+                .anyMatch(permanent -> permanent.getCard().isToken());
     }
 
     @Test
@@ -50,7 +52,56 @@ class EsgarothGarrisonTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Forest");
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Soldier"));
+                .noneMatch(permanent -> permanent.getCard().isToken());
+    }
+
+    @Test
+    @DisplayName("Recruit creates a white 1/1 Human Soldier token")
+    void recruitTokenHasBothCreatureTypes() {
+        castAndResolve(new EsgarothGarrison(), new Forest());
+
+        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).toList();
+        assertThat(tokens).hasSize(1);
+        Permanent token = tokens.getFirst();
+        assertThat(token.getCard().getSubtypes())
+                .containsExactlyInAnyOrder(CardSubtype.HUMAN, CardSubtype.SOLDIER);
+        assertThat(token.getCard().getColor()).isEqualTo(CardColor.WHITE);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, findPermanent(player1, "Esgaroth Garrison"))).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Recruit can discard the drawn card and creates its token during the same resolution")
+    void recruitDiscardsDrawnCardWithoutAnotherTrigger() {
+        harness.setLibrary(player1, List.of(new EsgarothGarrison()));
+        harness.castFromHand(player1, new EsgarothGarrison(), "{4}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Esgaroth Garrison");
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Esgaroth Garrison");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).count()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The power-defining ability also works in hand and updates as creatures leave")
+    void powerInHandTracksControlledCreatures() {
+        EsgarothGarrison card = new EsgarothGarrison();
+        harness.setHand(player1, List.of(card));
+        assertThat(gqs.getEffectiveCardPower(gd, card)).isZero();
+        harness.addToBattlefield(player1, new EsgarothGarrison());
+        harness.addToBattlefield(player2, new EsgarothGarrison());
+        assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        assertThat(gqs.getEffectiveCardPower(gd, card)).isZero();
     }
 
     private void castAndResolve(Card discardedCard, Card drawnCard) {
