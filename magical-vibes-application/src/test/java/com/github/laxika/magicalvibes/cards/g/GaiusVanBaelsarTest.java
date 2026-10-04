@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GaiusVanBaelsar.class, GrizzlyBears.class, GroundSeal.class})
+@CardUsed({GaiusVanBaelsar.class, GrizzlyBears.class, GroundSeal.class, FountainOfYouth.class})
 class GaiusVanBaelsarTest extends BaseCardTest {
 
     @Test
@@ -28,7 +28,7 @@ class GaiusVanBaelsarTest extends BaseCardTest {
         harness.addToBattlefield(player2, player2Token);
 
         castGaius(0);
-        resolveCreatureAndEtb();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Player 1 Soldier Token")).isEmpty();
         assertThat(findPermanents(player2, "Player 2 Soldier Token")).isEmpty();
@@ -43,7 +43,7 @@ class GaiusVanBaelsarTest extends BaseCardTest {
         Permanent player2SecondBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castGaius(1);
-        resolveCreatureAndEtb();
+        resolveAllTriggers();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(player1Bears.getId()));
         harness.handleMultiplePermanentsChosen(player2, List.of(player2FirstBears.getId()));
@@ -61,7 +61,7 @@ class GaiusVanBaelsarTest extends BaseCardTest {
         harness.addToBattlefield(player2, new FountainOfYouth());
 
         castGaius(2);
-        resolveCreatureAndEtb();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Ground Seal")).isEmpty();
         assertThat(findPermanents(player2, "Ground Seal")).isEmpty();
@@ -75,9 +75,55 @@ class GaiusVanBaelsarTest extends BaseCardTest {
         harness.castCreature(player1, 0, mode);
     }
 
-    private void resolveCreatureAndEtb() {
+    @Test
+    @DisplayName("The mode is chosen when the enters ability goes on the stack")
+    void choosesModeAfterEntering() {
+        harness.setHand(player1, List.of(new GaiusVanBaelsar()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.castCreature(player1, 0);
+
         harness.passBothPriorities();
-        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Gaius van Baelsar");
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player1, "Each player sacrifices a nontoken creature");
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Gaius van Baelsar");
+        harness.assertInGraveyard(player1, "Gaius van Baelsar");
+    }
+
+    @Test
+    @DisplayName("Gaius must sacrifice itself when it is the only nontoken creature")
+    void sacrificesItselfAndLeavesTokensAlone() {
+        harness.addToBattlefield(player1, creatureToken("Friendly Soldier"));
+        harness.addToBattlefield(player2, creatureToken("Opposing Soldier"));
+
+        castGaius(1);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Gaius van Baelsar");
+        harness.assertInGraveyard(player1, "Gaius van Baelsar");
+        harness.assertOnBattlefield(player1, "Friendly Soldier");
+        harness.assertOnBattlefield(player2, "Opposing Soldier");
+    }
+
+    @Test
+    @DisplayName("Token mode leaves noncreature tokens and nontoken creatures alone")
+    void tokenModeRequiresBothCreatureAndToken() {
+        Card treasure = new Card();
+        treasure.setName("Treasure");
+        treasure.setType(CardType.ARTIFACT);
+        treasure.setToken(true);
+        harness.addToBattlefield(player1, treasure);
+        harness.addToBattlefield(player2, creatureToken("Opposing Soldier"));
+
+        castGaius(0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Treasure");
+        harness.assertOnBattlefield(player1, "Gaius van Baelsar");
+        harness.assertNotOnBattlefield(player2, "Opposing Soldier");
     }
 
     private Card creatureToken(String name) {
