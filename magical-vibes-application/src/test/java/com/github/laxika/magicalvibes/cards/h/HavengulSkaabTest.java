@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HavengulSkaab.class, GrizzlyBears.class, Island.class})
 class HavengulSkaabTest extends BaseCardTest {
 
     @Test
@@ -94,5 +96,39 @@ class HavengulSkaabTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         harness.assertOnBattlefield(player1, "Havengul Skaab");
+    }
+
+    @Test
+    @DisplayName("Another Havengul Skaab is a valid choice even though it has the same name")
+    void anotherSkaabCanBeReturned() {
+        var attacker = addCreatureReady(player1, new HavengulSkaab());
+        var other = addCreatureReady(player1, new HavengulSkaab());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(other.getId());
+        harness.handlePermanentChosen(player1, other.getId());
+
+        assertThat(findPermanents(player1, "Havengul Skaab")).containsExactly(attacker);
+        harness.assertInHand(player1, "Havengul Skaab");
+    }
+
+    @Test
+    @DisplayName("A controlled creature owned by the opponent returns to the opponent's hand")
+    void controlledCreatureReturnsToItsActualOwner() {
+        addCreatureReady(player1, new HavengulSkaab());
+        GrizzlyBears borrowed = new GrizzlyBears();
+        borrowed.setOwnerId(player2.getId());
+        var permanent = addCreatureReady(player1, borrowed);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, permanent.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
     }
 }
