@@ -76,6 +76,43 @@ class FrontPorchSentriesTest extends BaseCardTest {
         assertThat(target.getToughnessModifier()).isEqualTo(0);
     }
 
+    @Test
+    @DisplayName("Death trigger is removed when no opponent creature can be targeted")
+    void noOpponentCreatureDoesNotLeavePendingTrigger() {
+        harness.addToBattlefield(player1, new FrontPorchSentries());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        killSentries();
+
+        harness.assertInGraveyard(player1, "Front Porch Sentries");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanent(player1, "Grizzly Bears").getPowerModifier()).isZero();
+        assertThat(findPermanent(player1, "Grizzly Bears").getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Death trigger does not debuff another creature when its target leaves")
+    void removedTargetDoesNotRedirectDebuff() {
+        harness.addToBattlefield(player1, new FrontPorchSentries());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent survivor = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        killSentries();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(survivor).doesNotContain(target);
+        assertThat(survivor.getPowerModifier()).isZero();
+        assertThat(survivor.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void killSentries() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -84,7 +121,6 @@ class FrontPorchSentriesTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID sentriesId = harness.getPermanentId(player1, "Front Porch Sentries");
-        harness.castInstant(player2, 0, sentriesId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, sentriesId);
     }
 }
