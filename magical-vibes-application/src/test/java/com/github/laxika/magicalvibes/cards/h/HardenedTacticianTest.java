@@ -61,8 +61,77 @@ class HardenedTacticianTest extends BaseCardTest {
         tokenCard.setName("Soldier");
         tokenCard.setType(CardType.CREATURE);
         tokenCard.setToken(true);
-        Permanent token = new Permanent(tokenCard);
-        gd.playerBattlefields.get(player.getId()).add(token);
-        return token;
+        return harness.addToBattlefieldAndReturn(player, tokenCard);
+    }
+
+    @Test
+    @DisplayName("A noncreature token can pay the sacrifice cost before the draw resolves")
+    void sacrificesNoncreatureTokenAsCost() {
+        Permanent tactician = harness.addToBattlefieldAndReturn(player1, new HardenedTactician());
+        tactician.setTapped(true);
+        Card treasure = new Card();
+        treasure.setName("Treasure");
+        treasure.setType(CardType.ARTIFACT);
+        treasure.setToken(true);
+        Permanent token = harness.addToBattlefieldAndReturn(player1, treasure);
+        Forest drawnCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(token);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("An opponent's token cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsToken() {
+        harness.addToBattlefield(player1, new HardenedTactician());
+        Permanent opposingToken = addToken(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingToken);
+    }
+
+    @Test
+    @DisplayName("A nontoken permanent cannot pay the sacrifice cost")
+    void cannotSacrificeNontokenPermanent() {
+        harness.addToBattlefield(player1, new HardenedTactician());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The ability can be used repeatedly without tapping the tactician")
+    void canActivateRepeatedly() {
+        Permanent tactician = harness.addToBattlefieldAndReturn(player1, new HardenedTactician());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        addToken(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        addToken(player1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(tactician);
+        assertThat(tactician.isTapped()).isFalse();
     }
 }
