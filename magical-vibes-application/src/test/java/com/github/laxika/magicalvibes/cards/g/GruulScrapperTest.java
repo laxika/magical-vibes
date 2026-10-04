@@ -47,6 +47,34 @@ class GruulScrapperTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, scrapper, Keyword.HASTE)).isFalse();
     }
 
+    @Test
+    @DisplayName("Red mana added after casting does not grant haste")
+    void redManaAddedAfterCastingDoesNotGrantHaste() {
+        harness.setHand(player1, List.of(new GruulScrapper()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.RED, 1);
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Gruul Scrapper"), Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Only the Scrapper cast with red mana gains haste")
+    void redManaPaymentDoesNotGrantHasteToAnotherScrapper() {
+        Permanent castScrapper = castScrapper(true);
+        Permanent otherScrapper = harness.enterBattlefieldAndReturn(player1, new GruulScrapper());
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, castScrapper, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherScrapper, Keyword.HASTE)).isFalse();
+    }
+
     private Permanent castScrapper(boolean spendRedMana) {
         harness.setHand(player1, List.of(new GruulScrapper()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -59,12 +87,8 @@ class GruulScrapperTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof GruulScrapper)
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Gruul Scrapper");
     }
 }
