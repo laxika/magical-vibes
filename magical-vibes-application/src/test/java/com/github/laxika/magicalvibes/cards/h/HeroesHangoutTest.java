@@ -38,8 +38,9 @@ class HeroesHangoutTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissions)
                 .containsEntry(second.getId(), player1.getId())
                 .doesNotContainKey(first.getId());
-        assertThat(gd.exilePlayPermissionsExpireAtTurnEnd.get(second.getId()))
-                .isEqualTo(gd.turnNumber + 2);
+        harness.castFromExile(player1, second.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(first);
+        harness.assertOnBattlefield(player1, "Forest");
     }
 
     @Test
@@ -65,10 +66,7 @@ class HeroesHangoutTest extends BaseCardTest {
         Permanent target = addCreatureReady(player1, new GrizzlyBears());
         cast(1, List.of(target.getId()));
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(target.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
@@ -83,6 +81,115 @@ class HeroesHangoutTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, 1, List.of(target.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void dateNightWithEmptyLibraryDoesNotRequireAChoice() {
+        harness.setLibrary(player1, List.of());
+
+        cast(0, List.of());
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Heroes' Hangout");
+    }
+
+    @Test
+    void dateNightWithOneCardStillAllowsPlayingIt() {
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+        cast(0, List.of());
+
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
+        harness.castFromExile(player1, land.getId());
+
+        harness.assertOnBattlefield(player1, "Forest");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void dateNightRequiresChoosingExactlyOneOfTheExiledCards() {
+        Card first = new Forest();
+        Card second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        cast(0, List.of());
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), second.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, second.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void dateNightPermissionLastsThroughNextTurnThenExpires() {
+        Card chosen = new Forest();
+        harness.setLibrary(player1, List.of(chosen, new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        cast(0, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        assertThat(gd.exilePlayPermissions).containsEntry(chosen.getId(), player1.getId());
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(chosen.getId());
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(chosen);
+    }
+
+    @Test
+    void dateNightDoesNotWaiveManaCosts() {
+        Card chosen = new HeroesHangout();
+        harness.setLibrary(player1, List.of(chosen, new Forest()));
+        cast(0, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, chosen.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(chosen);
+    }
+
+    @Test
+    void patrolNightRejectsZeroTargets() {
+        harness.setHand(player1, List.of(new HeroesHangout()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, 1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void patrolNightRejectsMoreThanTwoTargets() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        Permanent third = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HeroesHangout()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, 1,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void patrolNightResolvesForRemainingTarget() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new HeroesHangout()));
+        addMana();
+        harness.castModalSorcery(player1, 0, 1, List.of(first.getId(), second.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+        assertThat(second.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
     }
 
     private void cast(int mode, List<java.util.UUID> targetIds) {
