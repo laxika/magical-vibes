@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.h;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AdamantWill;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
+import com.github.laxika.magicalvibes.cards.c.ColdWaterSnapper;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,15 +19,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HaphazardBombardment.class, BalothGorger.class, Forest.class, AdamantWill.class,
+        ColdWaterSnapper.class})
 class HaphazardBombardmentTest extends BaseCardTest {
 
-    // ===== ETB: aim counter placement =====
 
     @Test
     @DisplayName("ETB puts aim counters on all opponent nonenchantment permanents when 4 or fewer")
     void etbPutsAimCountersOnAllWhenFourOrFewer() {
-        Permanent bears1 = addCreature(player2, new GrizzlyBears());
-        Permanent bears2 = addCreature(player2, new GrizzlyBears());
+        Permanent bears1 = addCreature(player2, new BalothGorger());
+        Permanent bears2 = addCreature(player2, new BalothGorger());
 
         castHaphazardBombardment(player1);
 
@@ -36,10 +40,10 @@ class HaphazardBombardmentTest extends BaseCardTest {
     @Test
     @DisplayName("ETB puts aim counters on exactly 4 when opponent has exactly 4 nonenchantment permanents")
     void etbPutsAimCountersOnExactlyFour() {
-        Permanent c1 = addCreature(player2, new GrizzlyBears());
-        Permanent c2 = addCreature(player2, new GrizzlyBears());
-        Permanent c3 = addCreature(player2, new GrizzlyBears());
-        Permanent c4 = addCreature(player2, new GrizzlyBears());
+        Permanent c1 = addCreature(player2, new BalothGorger());
+        Permanent c2 = addCreature(player2, new BalothGorger());
+        Permanent c3 = addCreature(player2, new BalothGorger());
+        Permanent c4 = addCreature(player2, new BalothGorger());
 
         castHaphazardBombardment(player1);
 
@@ -52,7 +56,7 @@ class HaphazardBombardmentTest extends BaseCardTest {
     @Test
     @DisplayName("ETB does not put aim counters on enchantments")
     void etbSkipsEnchantments() {
-        Permanent bears = addCreature(player2, new GrizzlyBears());
+        Permanent bears = addCreature(player2, new BalothGorger());
         Permanent enchantment = addEnchantment(player2);
 
         castHaphazardBombardment(player1);
@@ -76,8 +80,8 @@ class HaphazardBombardmentTest extends BaseCardTest {
     @Test
     @DisplayName("ETB does not put aim counters on own permanents")
     void etbDoesNotAffectOwnPermanents() {
-        Permanent ownBears = addCreature(player1, new GrizzlyBears());
-        Permanent oppBears = addCreature(player2, new GrizzlyBears());
+        Permanent ownBears = addCreature(player1, new BalothGorger());
+        Permanent oppBears = addCreature(player2, new BalothGorger());
 
         castHaphazardBombardment(player1);
 
@@ -95,13 +99,12 @@ class HaphazardBombardmentTest extends BaseCardTest {
         assertThat(land.getCounterCount(CounterType.AIM)).isEqualTo(1);
     }
 
-    // ===== End step trigger =====
 
     @Test
     @DisplayName("End step trigger destroys one permanent with aim counter when 2+ have counters")
     void endStepDestroysOneWhenTwoOrMoreHaveCounters() {
-        Permanent bears1 = addCreature(player2, new GrizzlyBears());
-        Permanent bears2 = addCreature(player2, new GrizzlyBears());
+        Permanent bears1 = addCreature(player2, new BalothGorger());
+        Permanent bears2 = addCreature(player2, new BalothGorger());
         bears1.setCounterCount(CounterType.AIM, 1);
         bears2.setCounterCount(CounterType.AIM, 1);
 
@@ -114,14 +117,14 @@ class HaphazardBombardmentTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         // Exactly one of the two should be destroyed
-        int remaining = (int) countPermanents(player2, "Grizzly Bears");
+        int remaining = (int) countPermanents(player2, "Baloth Gorger");
         assertThat(remaining).isEqualTo(1);
     }
 
     @Test
     @DisplayName("End step trigger does not fire when fewer than 2 permanents have aim counters")
     void endStepDoesNotFireWhenFewerThanTwoCounters() {
-        Permanent bears = addCreature(player2, new GrizzlyBears());
+        Permanent bears = addCreature(player2, new BalothGorger());
         bears.setCounterCount(CounterType.AIM, 1);
 
         addBombardmentToBattlefield(player1);
@@ -134,7 +137,7 @@ class HaphazardBombardmentTest extends BaseCardTest {
     @Test
     @DisplayName("End step trigger does not fire when no permanents have aim counters")
     void endStepDoesNotFireWhenNoCounters() {
-        addCreature(player2, new GrizzlyBears());
+        addCreature(player2, new BalothGorger());
 
         addBombardmentToBattlefield(player1);
         advanceToEndStep(player1);
@@ -145,8 +148,8 @@ class HaphazardBombardmentTest extends BaseCardTest {
     @Test
     @DisplayName("End step trigger re-checks condition on resolution — fizzles if only 1 left")
     void endStepFizzlesIfConditionNoLongerMet() {
-        Permanent bears1 = addCreature(player2, new GrizzlyBears());
-        Permanent bears2 = addCreature(player2, new GrizzlyBears());
+        Permanent bears1 = addCreature(player2, new BalothGorger());
+        Permanent bears2 = addCreature(player2, new BalothGorger());
         bears1.setCounterCount(CounterType.AIM, 1);
         bears2.setCounterCount(CounterType.AIM, 1);
 
@@ -168,8 +171,8 @@ class HaphazardBombardmentTest extends BaseCardTest {
     @Test
     @DisplayName("End step trigger only fires on controller's end step")
     void endStepOnlyFiresOnControllersEndStep() {
-        Permanent bears1 = addCreature(player2, new GrizzlyBears());
-        Permanent bears2 = addCreature(player2, new GrizzlyBears());
+        Permanent bears1 = addCreature(player2, new BalothGorger());
+        Permanent bears2 = addCreature(player2, new BalothGorger());
         bears1.setCounterCount(CounterType.AIM, 1);
         bears2.setCounterCount(CounterType.AIM, 1);
 
@@ -182,7 +185,96 @@ class HaphazardBombardmentTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helper methods =====
+
+    @Test
+    void hexproofDoesNotPreventAimCountersOrDestruction() {
+        Permanent first = addCreature(player2, new ColdWaterSnapper());
+        Permanent second = addCreature(player2, new ColdWaterSnapper());
+        castHaphazardBombardment(player1);
+
+        assertThat(first.getCounterCount(CounterType.AIM)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.AIM)).isEqualTo(1);
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player2, "Cold-Water Snapper")).isEqualTo(1);
+    }
+
+    @Test
+    void enchantmentsWithExistingAimCountersCanBeDestroyed() {
+        Permanent first = addEnchantment(player2);
+        Permanent second = addEnchantment(player2);
+        first.setCounterCount(CounterType.AIM, 1);
+        second.setCounterCount(CounterType.AIM, 1);
+        addBombardmentToBattlefield(player1);
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player2, "Haphazard Bombardment")).isEqualTo(1);
+    }
+
+    @Test
+    void choosesExactlyFourOfFiveEligiblePermanents() {
+        List<Permanent> creatures = java.util.stream.IntStream.range(0, 5)
+                .mapToObj(i -> addCreature(player2, new BalothGorger())).toList();
+
+        castHaphazardBombardment(player1);
+        harness.handleMultiplePermanentsChosen(player1,
+                creatures.subList(1, 5).stream().map(Permanent::getId).toList());
+
+        assertThat(creatures.getFirst().getCounterCount(CounterType.AIM)).isZero();
+        assertThat(creatures.subList(1, 5))
+                .allSatisfy(p -> assertThat(p.getCounterCount(CounterType.AIM)).isEqualTo(1));
+    }
+
+    @Test
+    void multipleAimCountersOnOnePermanentDoNotMeetThreshold() {
+        Permanent creature = addCreature(player2, new BalothGorger());
+        creature.setCounterCount(CounterType.AIM, 4);
+        addBombardmentToBattlefield(player1);
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+    }
+
+    @Test
+    void ownAimCountersDoNotMeetThreshold() {
+        Permanent own = addCreature(player1, new BalothGorger());
+        Permanent opponent = addCreature(player2, new BalothGorger());
+        own.setCounterCount(CounterType.AIM, 1);
+        opponent.setCounterCount(CounterType.AIM, 1);
+        addBombardmentToBattlefield(player1);
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void indestructiblePermanentCountsForThresholdButIsExcludedFromRandomDestruction() {
+        Permanent protectedCreature = addCreature(player2, new BalothGorger());
+        protectedCreature.setCounterCount(CounterType.AIM, 1);
+        addBombardmentToBattlefield(player1);
+        harness.setHand(player2, List.of(new AdamantWill()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player2, 0, protectedCreature.getId());
+
+        // Repeating within the same turn makes an incorrectly random choice overwhelmingly
+        // unlikely to pass, while Adamant Will remains in effect throughout.
+        for (int i = 0; i < 32; i++) {
+            Permanent vulnerable = addCreature(player2, new BalothGorger());
+            vulnerable.setCounterCount(CounterType.AIM, 1);
+            advanceToEndStep(player1);
+            assertThat(gd.stack).hasSize(1);
+            harness.passBothPriorities();
+
+            assertThat(gd.playerBattlefields.get(player2.getId()))
+                    .contains(protectedCreature).doesNotContain(vulnerable);
+        }
+    }
 
     private void castHaphazardBombardment(Player player) {
         harness.setHand(player, List.of(new HaphazardBombardment()));
@@ -194,35 +286,21 @@ class HaphazardBombardmentTest extends BaseCardTest {
     }
 
     private Permanent addBombardmentToBattlefield(Player player) {
-        HaphazardBombardment card = new HaphazardBombardment();
-        Permanent perm = new Permanent(card);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new HaphazardBombardment());
     }
 
     private Permanent addCreature(Player player, Card card) {
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addEnchantment(Player player) {
-        Card enchantment = new Card();
-        enchantment.setType(CardType.ENCHANTMENT);
-        enchantment.setName("Test Enchantment");
-        Permanent perm = new Permanent(enchantment);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new HaphazardBombardment());
     }
 
     private Permanent addLand(Player player) {
-        Card land = new Card();
-        land.setType(CardType.LAND);
-        land.setName("Test Land");
-        Permanent perm = new Permanent(land);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new Forest());
     }
 
     private void advanceToEndStep(Player player) {
