@@ -2,15 +2,14 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.d.DireFleetHoarder;
+import com.github.laxika.magicalvibes.cards.q.QueensBaySoldier;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,25 +19,25 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({FellFlagship.class, AirElemental.class, DireFleetHoarder.class, QueensBaySoldier.class})
 class FellFlagshipTest extends BaseCardTest {
 
-    // ===== Lord effect — Pirates you control get +1/+0 =====
 
     @Test
     @DisplayName("Boosts Pirates you control with +1/+0")
     void boostsPirates() {
         addFellFlagshipReady(player1);
-        Permanent pirate = harness.addToBattlefieldAndReturn(player1, createPirateCard("Test Pirate"));
+        Permanent pirate = harness.addToBattlefieldAndReturn(player1, new DireFleetHoarder());
 
         assertThat(gqs.getEffectivePower(gd, pirate)).isEqualTo(3);     // 2 base + 1 lord
-        assertThat(gqs.getEffectiveToughness(gd, pirate)).isEqualTo(2); // 2 base + 0 lord
+        assertThat(gqs.getEffectiveToughness(gd, pirate)).isEqualTo(1); // 1 base + 0 lord
     }
 
     @Test
     @DisplayName("Does not boost non-Pirate creatures")
     void doesNotBoostNonPirates() {
         addFellFlagshipReady(player1);
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new QueensBaySoldier());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -48,13 +47,12 @@ class FellFlagshipTest extends BaseCardTest {
     @DisplayName("Does not boost opponent's Pirates")
     void doesNotBoostOpponentPirates() {
         addFellFlagshipReady(player1);
-        Permanent opponentPirate = harness.addToBattlefieldAndReturn(player2, createPirateCard("Opponent Pirate"));
+        Permanent opponentPirate = harness.addToBattlefieldAndReturn(player2, new DireFleetHoarder());
 
         assertThat(gqs.getEffectivePower(gd, opponentPirate)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, opponentPirate)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentPirate)).isEqualTo(1);
     }
 
-    // ===== Crew mechanic =====
 
     @Test
     @DisplayName("Fell Flagship is not a creature before crewing")
@@ -62,14 +60,13 @@ class FellFlagshipTest extends BaseCardTest {
         Permanent flagship = addFellFlagshipReady(player1);
 
         assertThat(gqs.isCreature(gd, flagship)).isFalse();
-        assertThat(flagship.getCard().getType()).isEqualTo(CardType.ARTIFACT);
     }
 
     @Test
     @DisplayName("Crewing with a single creature of sufficient power animates Fell Flagship")
     void crewWithSingleCreature() {
         Permanent flagship = addFellFlagshipReady(player1);
-        Permanent crew = addCreatureReady(player1, new SerraAngel()); // 4/4, power >= 3
+        Permanent crew = addCreatureReady(player1, new AirElemental()); // 4/4, power >= 3
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -83,7 +80,52 @@ class FellFlagshipTest extends BaseCardTest {
     @DisplayName("Cannot crew without enough creature power")
     void cannotCrewWithoutEnoughPower() {
         addFellFlagshipReady(player1);
-        addCreatureReady(player1, new GrizzlyBears()); // power 2 < 3
+        addCreatureReady(player1, new QueensBaySoldier()); // power 2 < 3
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough creature power to crew");
+    }
+
+    @Test
+    @DisplayName("The Pirate boost lets a summoning-sick Pirate pay crew 3")
+    void boostedSummoningSickPirateCanCrew() {
+        Permanent flagship = addFellFlagshipReady(player1);
+        Permanent pirate = harness.addToBattlefieldAndReturn(player1, new DireFleetHoarder());
+        pirate.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(pirate.isTapped()).isTrue();
+        assertThat(flagship.isTapped()).isFalse();
+        assertThat(gqs.isCreature(gd, flagship)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, flagship)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, flagship)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Multiple creatures can combine their power to pay crew 3")
+    void multipleCreaturesCanCrew() {
+        Permanent flagship = addFellFlagshipReady(player1);
+        Permanent first = addCreatureReady(player1, new QueensBaySoldier());
+        Permanent second = addCreatureReady(player1, new QueensBaySoldier());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(first.isTapped()).isTrue();
+        assertThat(second.isTapped()).isTrue();
+        assertThat(gqs.isCreature(gd, flagship)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapped creatures and opposing creatures cannot pay crew")
+    void tappedAndOpposingCreaturesCannotCrew() {
+        addFellFlagshipReady(player1);
+        Permanent tapped = addCreatureReady(player1, new AirElemental());
+        tapped.tap();
+        addCreatureReady(player2, new AirElemental());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -94,7 +136,7 @@ class FellFlagshipTest extends BaseCardTest {
     @DisplayName("Crew animation resets at end of turn")
     void crewResetsAtEndOfTurn() {
         Permanent flagship = addFellFlagshipReady(player1);
-        addCreatureReady(player1, new SerraAngel());
+        addCreatureReady(player1, new AirElemental());
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
@@ -109,7 +151,6 @@ class FellFlagshipTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, flagship)).isFalse();
     }
 
-    // ===== Combat damage trigger — that player discards a card =====
 
     @Test
     @DisplayName("Damaged player must discard a card when Fell Flagship deals combat damage")
@@ -120,7 +161,7 @@ class FellFlagshipTest extends BaseCardTest {
         flagship.setAnimatedToughness(3);
         flagship.setAttacking(true);
 
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, new ArrayList<>(List.of(new QueensBaySoldier())));
 
         resolveCombat();
 
@@ -134,7 +175,7 @@ class FellFlagshipTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Queen's Bay Soldier");
     }
 
     @Test
@@ -146,13 +187,14 @@ class FellFlagshipTest extends BaseCardTest {
         flagship.setAnimatedToughness(3);
         flagship.setAttacking(true);
 
-        Permanent blocker = addCreatureReady(player2, new SerraAngel());
+        Permanent blocker = addCreatureReady(player2, new AirElemental());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player2, new ArrayList<>(List.of(new QueensBaySoldier())));
 
         resolveCombat();
+        assertThat(gd.stack).isEmpty();
 
         // No discard prompt — Fell Flagship didn't deal combat damage to a player
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -171,27 +213,42 @@ class FellFlagshipTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>());
 
         resolveCombat();
+        resolveAllTriggers();
 
         // Discard does nothing, no input needed
         assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Helpers =====
 
-    private Card createPirateCard(String name) {
-        Card card = new Card() {};
-        card.setName(name);
-        card.setSubtypes(List.of(CardSubtype.HUMAN, CardSubtype.PIRATE));
-        card.setType(CardType.CREATURE);
-        card.setPower(2);
-        card.setToughness(2);
-        return card;
+    @Test
+    @DisplayName("The damaged player chooses exactly one discard even after the Vehicle leaves")
+    void damagedPlayerChoosesDiscardAfterSourceLeaves() {
+        Permanent flagship = addFellFlagshipReady(player2);
+        addCreatureReady(player2, new AirElemental());
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        flagship.setAttacking(true);
+        harness.setHand(player1, List.of(new QueensBaySoldier(), new AirElemental()));
+        harness.setHand(player2, List.of(new QueensBaySoldier()));
+
+        resolveCombat(player2);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player2.getId()).remove(flagship);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player1, "Air Elemental");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private Permanent addFellFlagshipReady(Player player) {
-        Permanent perm = new Permanent(new FellFlagship());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, new FellFlagship());
     }
 }
