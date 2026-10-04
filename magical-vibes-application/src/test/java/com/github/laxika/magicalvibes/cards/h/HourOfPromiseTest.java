@@ -1,17 +1,18 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.d.DesertOfTheIndomitable;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.f.FrilledSandwalla;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.cards.s.SunscorchedDesert;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.v.ValakutTheMoltenPinnacle;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,29 +20,22 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({HourOfPromise.class, Forest.class, Plains.class, DesertOfTheIndomitable.class,
+        FrilledSandwalla.class, Mountain.class, ValakutTheMoltenPinnacle.class})
 class HourOfPromiseTest extends BaseCardTest {
 
     private PendingInteraction.LibrarySearch activeSearch() {
         return gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
     }
 
-    private void setupLibrary(List<Card> cards) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
-    }
-
     private void castHourOfPromise() {
-        harness.setHand(player1, List.of(new HourOfPromise()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new HourOfPromise(), "{4}{G}");
     }
 
     @Test
     @DisplayName("Resolving offers up to two land cards to the battlefield tapped")
     void resolvesOffersUpToTwoLandsToBattlefieldTapped() {
-        setupLibrary(List.of(new Plains(), new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new FrilledSandwalla()));
         castHourOfPromise();
 
         harness.passBothPriorities();
@@ -52,18 +46,18 @@ class HourOfPromiseTest extends BaseCardTest {
         assertThat(activeSearch().params().canFailToFind()).isTrue();
         assertThat(activeSearch().params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+                .noneMatch(c -> c.getName().equals("Frilled Sandwalla"));
     }
 
     @Test
     @DisplayName("Chosen lands enter the battlefield tapped")
     void chosenLandsEnterTapped() {
-        setupLibrary(List.of(new Plains(), new Forest(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Forest(), new FrilledSandwalla()));
         castHourOfPromise();
 
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(activeSearch()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -76,13 +70,13 @@ class HourOfPromiseTest extends BaseCardTest {
     @Test
     @DisplayName("Fetched Deserts count toward creating two Zombie tokens")
     void fetchedDesertsCountTowardZombies() {
-        harness.addToBattlefield(player1, new SunscorchedDesert());
-        setupLibrary(List.of(new SunscorchedDesert(), new SunscorchedDesert(), new GrizzlyBears()));
+        harness.addToBattlefield(player1, new DesertOfTheIndomitable());
+        harness.setLibrary(player1, List.of(new DesertOfTheIndomitable(), new DesertOfTheIndomitable(), new FrilledSandwalla()));
         castHourOfPromise();
 
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().getSubtypes().contains(CardSubtype.ZOMBIE))
@@ -93,15 +87,144 @@ class HourOfPromiseTest extends BaseCardTest {
     @Test
     @DisplayName("Without three Deserts, no Zombie tokens are created")
     void fewerThanThreeDesertsCreatesNoZombies() {
-        harness.addToBattlefield(player1, new SunscorchedDesert());
-        setupLibrary(List.of(new Forest(), new Plains(), new GrizzlyBears()));
+        harness.addToBattlefield(player1, new DesertOfTheIndomitable());
+        harness.setLibrary(player1, List.of(new Forest(), new Plains(), new FrilledSandwalla()));
         castHourOfPromise();
 
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getSubtypes().contains(CardSubtype.ZOMBIE));
+    }
+
+    @Test
+    @DisplayName("Finding only two Deserts does not create Zombies")
+    void twoFetchedDesertsAreNotEnough() {
+        harness.setLibrary(player1, List.of(new DesertOfTheIndomitable(), new DesertOfTheIndomitable()));
+        castHourOfPromise();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().isToken());
+        harness.assertInGraveyard(player1, "Hour of Promise");
+    }
+
+    @Test
+    @DisplayName("Choosing no lands still creates Zombies with three Deserts")
+    void decliningSearchStillCreatesZombies() {
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new DesertOfTheIndomitable());
+        }
+        harness.setLibrary(player1, List.of(new Forest(), new Plains()));
+        castHourOfPromise();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(activeSearch()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertZombiesCreated();
+        harness.assertInGraveyard(player1, "Hour of Promise");
+    }
+
+    @Test
+    @DisplayName("Choosing one Desert and declining the second land still checks the new Desert count")
+    void choosingOnlyOneLandCanReachThreeDeserts() {
+        harness.addToBattlefield(player1, new DesertOfTheIndomitable());
+        harness.addToBattlefield(player1, new DesertOfTheIndomitable());
+        harness.setLibrary(player1, List.of(new DesertOfTheIndomitable(), new Forest()));
+        castHourOfPromise();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(activeSearch()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().hasType(CardType.LAND))
+                .hasSize(3);
+        assertZombiesCreated();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent Zombie creation")
+    void emptyLibraryStillCreatesZombies() {
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new DesertOfTheIndomitable());
+        }
+        harness.setLibrary(player1, List.of());
+        castHourOfPromise();
+
+        harness.passBothPriorities();
+
+        assertThat(activeSearch()).isNull();
+        assertZombiesCreated();
+        harness.assertInGraveyard(player1, "Hour of Promise");
+    }
+
+    @Test
+    @DisplayName("The opponent's Deserts do not count")
+    void opponentsDesertsDoNotCount() {
+        harness.addToBattlefield(player1, new DesertOfTheIndomitable());
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player2, new DesertOfTheIndomitable());
+        }
+        harness.setLibrary(player1, List.of(new DesertOfTheIndomitable(), new Forest()));
+        castHourOfPromise();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(p -> p.getCard().isToken());
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("A fetched Valakut sees the Mountain entering alongside it regardless of pick order")
+    void fetchedLandsEnterSimultaneously() {
+        for (int i = 0; i < 5; i++) {
+            harness.addToBattlefield(player1, new Mountain());
+        }
+        harness.setLibrary(player1, List.of(new Mountain(), new ValakutTheMoltenPinnacle()));
+        harness.setLife(player2, 20);
+        castHourOfPromise();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().getName().equals("Valakut, the Molten Pinnacle"))
+                .allMatch(p -> p.isTapped());
+        harness.assertInGraveyard(player1, "Hour of Promise");
+    }
+
+    private void assertZombiesCreated() {
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken())
+                .hasSize(2)
+                .allSatisfy(p -> {
+                    assertThat(p.getCard().hasType(CardType.CREATURE)).isTrue();
+                    assertThat(p.getCard().getSubtypes()).contains(CardSubtype.ZOMBIE);
+                    assertThat(p.getCard().getColor()).isEqualTo(CardColor.BLACK);
+                    assertThat(p.getEffectivePower()).isEqualTo(2);
+                    assertThat(p.getEffectiveToughness()).isEqualTo(2);
+                    assertThat(p.isTapped()).isFalse();
+                });
     }
 }
