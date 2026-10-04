@@ -27,9 +27,9 @@ class BlastFurnaceHellkiteTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(0, 1));
 
-        assertThat(hellkite.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(bears.hasKeyword(Keyword.DOUBLE_STRIKE)).isTrue();
-        assertThat(nonattackingBears.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, hellkite, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, nonattackingBears, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test
@@ -40,7 +40,7 @@ class BlastFurnaceHellkiteTest extends BaseCardTest {
 
         declareAttackers(player2, List.of(0));
 
-        assertThat(attackingBears.hasKeyword(Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, attackingBears, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
     @Test

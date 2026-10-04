@@ -83,6 +83,7 @@ public class GraveyardChoiceHandlerService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     private final CloneService cloneService;
     private final LegendRuleService legendRuleService;
     private final GameLogService gameLogService;
@@ -172,6 +173,24 @@ public class GraveyardChoiceHandlerService {
                                     ? com.github.laxika.magicalvibes.model.GraveyardTargetOperationState.DawnbreakReclaimerChoiceStage.CONTROLLER_CARD
                                     : com.github.laxika.magicalvibes.model.GraveyardTargetOperationState.DawnbreakReclaimerChoiceStage.READY);
             gameData.rerunCurrentEffectAfterInteraction = false;
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (graveyardChoice.fromMilledCards()) {
+            if (cardIndex >= 0) {
+                Card chosen = cardPool.get(cardIndex);
+                UUID graveyardOwner = gameQueryService.findGraveyardOwnerById(gameData, chosen.getId());
+                Zone origin = graveyardOwner != null ? Zone.GRAVEYARD
+                        : gameData.findExiledCard(chosen.getId()) != null ? Zone.EXILE : null;
+                if (origin != null) {
+                    UUID ownerId = graveyardOwner != null ? graveyardOwner
+                            : gameData.findExiledCard(chosen.getId()).ownerId();
+                    battlefieldEntryBatchSupport.begin(gameData, List.of(
+                            new com.github.laxika.magicalvibes.model.BattlefieldEntryCard(
+                                    playerId, ownerId, chosen, origin, null)));
+                }
+            }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

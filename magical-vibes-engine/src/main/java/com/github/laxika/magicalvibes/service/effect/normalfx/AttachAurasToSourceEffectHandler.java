@@ -207,7 +207,8 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
     private boolean attachFromGraveyard(GameData gameData, Permanent host, UUID controllerId, UUID cardId) {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         Card card = findCard(graveyard, cardId);
-        if (card == null) {
+        if (card == null || (card.isAura()
+                && !auraAttachmentService.canEnchant(gameData, card, controllerId, host))) {
             return false;
         }
         graveyardService.beginGraveyardLeaveBatch(gameData);
@@ -224,7 +225,8 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
     private boolean attachFromHand(GameData gameData, Permanent host, UUID controllerId, UUID cardId) {
         List<Card> hand = gameData.playerHands.get(controllerId);
         Card card = findCard(hand, cardId);
-        if (card == null) {
+        if (card == null || (card.isAura()
+                && !auraAttachmentService.canEnchant(gameData, card, controllerId, host))) {
             return false;
         }
         hand.remove(card);
@@ -235,7 +237,8 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
     private boolean attachFromLibrary(GameData gameData, Permanent host, UUID controllerId, UUID cardId) {
         List<Card> library = gameData.playerDecks.get(controllerId);
         Card card = findCard(library, cardId);
-        if (card == null) {
+        if (card == null || (card.isAura()
+                && !auraAttachmentService.canEnchant(gameData, card, controllerId, host))) {
             return false;
         }
         LibrarySearchTriggerHelper.checkOpponentSearchTriggers(gameData, gameLogService, controllerId);

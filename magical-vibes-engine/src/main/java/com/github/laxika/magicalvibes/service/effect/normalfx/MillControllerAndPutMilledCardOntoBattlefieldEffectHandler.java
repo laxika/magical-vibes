@@ -15,9 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /** Resolves a mill followed by a choice of one matching milled card to put onto the battlefield. */
@@ -38,19 +36,14 @@ public class MillControllerAndPutMilledCardOntoBattlefieldEffectHandler implemen
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var millEffect = (MillControllerAndPutMilledCardOntoBattlefieldEffect) effect;
         UUID controllerId = entry.getControllerId();
-        List<Card> milled = graveyardService.resolveMillPlayer(
+        List<Card> milled = graveyardService.resolveMillPlayerIncludingExiled(
                 gameData, controllerId, millEffect.count());
 
-        Set<UUID> matchingMilledIds = milled.stream()
+        List<Card> matchingCards = milled.stream()
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(
                         card, millEffect.filter(), entry.getCard().getId(), gameData, controllerId))
-                .map(Card::getId)
-                .collect(Collectors.toSet());
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        List<Integer> validIndices = graveyard == null ? List.of() : IntStream.range(0, graveyard.size())
-                .filter(index -> matchingMilledIds.contains(graveyard.get(index).getId()))
-                .boxed()
                 .toList();
+        List<Integer> validIndices = IntStream.range(0, matchingCards.size()).boxed().toList();
 
         if (validIndices.isEmpty()) {
             return;
@@ -60,6 +53,8 @@ public class MillControllerAndPutMilledCardOntoBattlefieldEffectHandler implemen
         interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
                 .builder(controllerId, validIndices, GraveyardChoiceDestination.BATTLEFIELD,
                         "Choose a " + filterLabel + " milled this way to put onto the battlefield.")
+                .cardPool(matchingCards)
+                .fromMilledCards(true)
                 .mandatory(millEffect.mandatory())
                 .build());
     }

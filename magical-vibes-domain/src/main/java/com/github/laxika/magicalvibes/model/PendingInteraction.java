@@ -3471,8 +3471,24 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                            boolean enterTapped, CounterType enterWithCounter, int enterWithCounterCount,
                            Set<CounterType> enterWithCounters, boolean exileIfLeavesBattlefield,
                            UUID destinationControllerId, boolean mandatory, String prompt, CardEffect grantOnDeathEffect,
-                           com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect returnEffect)
+                           com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect returnEffect, boolean fromMilledCards)
             implements PendingInteraction {
+        public GraveyardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                           GraveyardChoiceDestination destination, java.util.List<Card> cardPool,
+                           boolean gainLifeEqualToManaValue, UUID attachToSourcePermanentId,
+                           CardColor grantColor, CardSubtype grantSubtype, int exileRemainingCount,
+                           int gainLifeIfCreatureAmount, UUID gainLifeIfCreaturePlayerId,
+                           UUID trackWithSourcePermanentId, Card mayAbilitySourceCard,
+                           UUID mayAbilityControllerId, java.util.List<CardEffect> mayAbilityEffects,
+                           UUID mayAbilitySourcePermanentId,
+                           CardSubtype grantSourceHasteIfSubtype, UUID grantSourceHasteSourcePermanentId,
+                           boolean enterTapped, CounterType enterWithCounter, int enterWithCounterCount,
+                           Set<CounterType> enterWithCounters, boolean exileIfLeavesBattlefield,
+                           UUID destinationControllerId, boolean mandatory, String prompt, CardEffect grantOnDeathEffect,
+                           com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect returnEffect) {
+            this(playerId, validIndices, destination, cardPool, gainLifeEqualToManaValue, attachToSourcePermanentId, grantColor, grantSubtype, exileRemainingCount, gainLifeIfCreatureAmount, gainLifeIfCreaturePlayerId, trackWithSourcePermanentId, mayAbilitySourceCard, mayAbilityControllerId, mayAbilityEffects, mayAbilitySourcePermanentId, grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId, enterTapped, enterWithCounter, enterWithCounterCount, enterWithCounters, exileIfLeavesBattlefield, destinationControllerId, mandatory, prompt, grantOnDeathEffect, returnEffect, false);
+        }
+
         public GraveyardChoice(UUID playerId, java.util.List<Integer> validIndices,
                            GraveyardChoiceDestination destination, java.util.List<Card> cardPool,
                            boolean gainLifeEqualToManaValue, UUID attachToSourcePermanentId,
@@ -3540,6 +3556,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             private boolean exileIfLeavesBattlefield;
             private UUID destinationControllerId;
             private boolean mandatory;
+            private boolean fromMilledCards;
+
+            public Builder fromMilledCards(boolean value) {
+                this.fromMilledCards = value;
+                return this;
+            }
             private CardEffect grantOnDeathEffect;
             private com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect returnEffect;
 
@@ -3656,7 +3678,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                         mayAbilityEffects, mayAbilitySourcePermanentId,
                         grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId,
                         enterTapped, enterWithCounter, enterWithCounterCount, enterWithCounters,
-                        exileIfLeavesBattlefield, destinationControllerId, mandatory, prompt, grantOnDeathEffect, returnEffect);
+                        exileIfLeavesBattlefield, destinationControllerId, mandatory, prompt, grantOnDeathEffect, returnEffect, fromMilledCards);
             }
         }
     }

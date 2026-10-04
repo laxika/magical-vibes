@@ -19,7 +19,7 @@ public class BelligerentYearling extends Card {
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.DINOSAUR),
                         new MayEffect(
-                                new SetSelfBasePowerToAmountUntilEndOfTurnEffect(new TargetPower()),
+                                new SetSelfBasePowerToAmountUntilEndOfTurnEffect(new TargetPower(true)),
                                 "Have Belligerent Yearling's base power become equal to that creature's power?")));
     }
 }

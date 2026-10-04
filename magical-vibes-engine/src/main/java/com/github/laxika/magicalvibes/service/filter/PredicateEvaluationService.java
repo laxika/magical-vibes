@@ -4968,4 +4968,6 @@ public class PredicateEvaluationService {
         if (predicate instanceof PermanentAllOfPredicate all) {
             return all.predicates().stream().anyMatch(this::requiresCreature);
         }
-   
+        return false;
+    }
+}

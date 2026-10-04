@@ -11614,4 +11614,3 @@ public class GameQueryService {
                 .toList();
     }
 }
-                      
