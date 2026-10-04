@@ -2,9 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.h.HillcomberGiant;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -41,7 +39,6 @@ class GoldmeadowHarrierTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
 
         assertThat(harrier.isTapped()).isTrue();
-        GameData gd = harness.getGameData();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
@@ -133,8 +130,61 @@ class GoldmeadowHarrierTest extends BaseCardTest {
         harness.getGameData().playerBattlefields.get(player2.getId()).remove(target);
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Harrier can target itself even though paying the cost taps it")
+    void canTargetItself() {
+        Permanent harrier = addCreatureReady(player1, new GoldmeadowHarrier());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, harrier.getId());
+
+        assertThat(harrier.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(harrier.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isFalse();
+    }
+
+    @Test
+    @DisplayName("An already tapped creature is a legal target")
+    void canTargetTappedCreature() {
+        Permanent harrier = addCreatureReady(player1, new GoldmeadowHarrier());
+        Permanent target = addCreatureReady(player2, new HillcomberGiant());
+        target.tap();
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(harrier.isTapped()).isTrue();
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ability taps its target on resolution even if Harrier has left the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent harrier = addCreatureReady(player1, new GoldmeadowHarrier());
+        Permanent target = addCreatureReady(player2, new HillcomberGiant());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(harrier.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+        gd.playerBattlefields.get(player1.getId()).remove(harrier);
+        gd.playerGraveyards.get(player1.getId()).add(harrier.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }
