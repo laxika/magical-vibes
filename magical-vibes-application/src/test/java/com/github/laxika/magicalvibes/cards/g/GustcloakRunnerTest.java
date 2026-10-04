@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.i.Inspirit;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GustcloakRunner.class, ElvishWarrior.class})
+@CardUsed({GustcloakRunner.class, ElvishWarrior.class, Inspirit.class})
 class GustcloakRunnerTest extends BaseCardTest {
 
     @Test
@@ -21,12 +23,9 @@ class GustcloakRunnerTest extends BaseCardTest {
         Permanent runner = addRunner();
         Permanent blocker = addCreatureReady(player2);
 
-        declareAttackers(List.of(0));
-        runner.tap();
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(runner.isTapped()).isFalse();
@@ -41,12 +40,9 @@ class GustcloakRunnerTest extends BaseCardTest {
         Permanent runner = addRunner();
         Permanent blocker = addCreatureReady(player2);
 
-        declareAttackers(List.of(0));
-        runner.tap();
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(runner.isTapped()).isTrue();
@@ -62,14 +58,11 @@ class GustcloakRunnerTest extends BaseCardTest {
         Permanent secondBlocker = addCreatureReady(player2);
         int startingLife = gd.getLife(player2.getId());
 
-        declareAttackers(List.of(0));
-        runner.tap();
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -83,6 +76,68 @@ class GustcloakRunnerTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
         assertThat(firstBlocker.getMarkedDamage()).isZero();
         assertThat(secondBlocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("An already untapped Runner can still be removed from combat")
+    void acceptingTriggerWhenAlreadyUntappedRemovesFromCombat() {
+        Permanent runner = addRunner();
+        Permanent blocker = addCreatureReady(player2);
+        int startingLife = gd.getLife(player2.getId());
+        harness.setHand(player1, List.of(new Inspirit()));
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.ensurePriority(player1);
+        harness.castInstant(player1, 0, runner.getId());
+        harness.passBothPriorities();
+        assertThat(runner.isTapped()).isFalse();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(runner.isTapped()).isFalse();
+        assertThat(runner.isAttacking()).isFalse();
+        assertThat(runner.getAttackTarget()).isNull();
+
+        resolveCombat();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(runner);
+        assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("An unblocked Runner deals combat damage without offering its ability")
+    void unblockedRunnerDoesNotTrigger() {
+        addRunner();
+        addCreatureReady(player2);
+        int startingLife = gd.getLife(player2.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 1);
+    }
+
+    @Test
+    @DisplayName("A blocking Runner does not trigger its becomes-blocked ability")
+    void blockingRunnerDoesNotTrigger() {
+        Permanent attacker = addCreatureReady(player1);
+        Permanent runner = addCreatureReady(player2, new GustcloakRunner());
+        int startingLife = gd.getLife(player2.getId());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(runner);
+        harness.assertInGraveyard(player2, "Gustcloak Runner");
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
     }
 
     private Permanent addRunner() {
