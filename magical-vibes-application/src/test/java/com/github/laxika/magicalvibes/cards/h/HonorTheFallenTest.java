@@ -45,4 +45,50 @@ class HonorTheFallenTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         harness.assertLife(player1, 20);
     }
+
+    @Test
+    @DisplayName("Uses the creature cards present when the spell resolves")
+    void countsCreaturesAtResolution() {
+        FreshVolunteers removedBeforeResolution = new FreshVolunteers();
+        FreshVolunteers addedBeforeResolution = new FreshVolunteers();
+        Brainstorm noncreature = new Brainstorm();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setGraveyard(player1, List.of(removedBeforeResolution));
+        harness.setGraveyard(player2, List.of());
+        harness.castFromHand(player1, new HonorTheFallen(), "{1}{W}");
+
+        harness.setGraveyard(player1, List.of(noncreature));
+        harness.setGraveyard(player2, List.of(addedBeforeResolution));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(addedBeforeResolution);
+        harness.assertInGraveyard(player1, "Brainstorm");
+        harness.assertNotInGraveyard(player2, "Fresh Volunteers");
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A second cast gains no life for creatures already exiled")
+    void secondCastDoesNotCountPreviouslyExiledCreatures() {
+        FreshVolunteers creature = new FreshVolunteers();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(creature));
+        harness.castFromHand(player1, new HonorTheFallen(), "{1}{W}");
+        harness.passBothPriorities();
+        harness.assertLife(player1, 21);
+
+        harness.castFromHand(player1, new HonorTheFallen(), "{1}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(creature);
+        harness.assertNotInGraveyard(player2, "Fresh Volunteers");
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
 }
