@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Extract.class, Forest.class, Island.class, PsychogenicProbe.class})
 class ExtractTest extends BaseCardTest {
@@ -28,8 +29,7 @@ class ExtractTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Extract()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
@@ -52,8 +52,7 @@ class ExtractTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Extract()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         harness.assertInGraveyard(player1, "Extract");
@@ -68,8 +67,7 @@ class ExtractTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Extract()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
         harness.handleCardChosen(player1, 0);
@@ -89,10 +87,52 @@ class ExtractTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Extract()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Cannot decline to find a card in a nonempty library")
+    void cannotDeclineToFindInNonemptyLibrary() {
+        Card forest = new Forest();
+        harness.setLibrary(player2, List.of(forest));
+        harness.setHand(player1, List.of(new Extract()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(forest);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(forest);
+    }
+
+    @Test
+    @DisplayName("A successful search shuffles only the targeted player's library")
+    void successfulSearchShufflesTargetLibrary() {
+        harness.addToBattlefield(player1, new PsychogenicProbe());
+        Card forest = new Forest();
+        Card island = new Island();
+        harness.setLibrary(player2, List.of(forest, island));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Extract()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(island);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(forest);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
     }
 }
