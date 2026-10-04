@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({GrislySalvage.class, GrizzlyBears.class, HillGiant.class, Shock.class, Forest.class})
 class GrislySalvageTest extends BaseCardTest {
 
     @Test
@@ -118,6 +119,73 @@ class GrislySalvageTest extends BaseCardTest {
                 .anyMatch(log -> log.contains("reveals") && log.contains("Grisly Salvage"));
     }
 
+    @Test
+    @DisplayName("A short library still allows taking a land and bins the remaining cards")
+    void shortLibraryAllowsTakingLand() {
+        Card forest = new Forest();
+        Card shock = new Shock();
+        harness.setLibrary(player1, List.of(shock, forest));
+
+        resolveSalvage();
+        chooseCard(0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shock)
+                .hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The only card in the library may be declined")
+    void singleCardLibraryMayBeDeclined() {
+        Card forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+
+        resolveSalvage();
+        chooseCard(-1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library resolves without drawing or offering a choice")
+    void emptyLibraryResolves() {
+        harness.setLibrary(player1, List.of());
+
+        resolveSalvage();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(1).first().isInstanceOf(GrislySalvage.class);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the top five are revealed and the remaining library keeps its order")
+    void leavesCardsBelowTopFiveUntouched() {
+        Card first = new Shock();
+        Card second = new Shock();
+        Card third = new Shock();
+        Card fourth = new Shock();
+        Card fifth = new Shock();
+        Card sixth = new Forest();
+        Card seventh = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth, sixth, seventh));
+
+        resolveSalvage();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(first, second, third, fourth, fifth).hasSize(6);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(sixth, seventh);
+    }
+
     private void resolveSalvage() {
         harness.setHand(player1, List.of(new GrislySalvage()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -127,8 +195,7 @@ class GrislySalvageTest extends BaseCardTest {
     }
 
     private void chooseCard(int index) {
-        harness.getGameService().handleInteractionAnswer(
-                harness.getGameData(), player1, new InteractionAnswer.LibraryCardChosen(index));
+        harness.handleCardChosen(player1, index);
     }
 
     private List<String> searchCards(GameData data) {
@@ -137,8 +204,6 @@ class GrislySalvageTest extends BaseCardTest {
     }
 
     private void setupTopFive(Card... cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 }
