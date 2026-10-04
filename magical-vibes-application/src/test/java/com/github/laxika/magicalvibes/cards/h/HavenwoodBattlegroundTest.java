@@ -28,6 +28,41 @@ class HavenwoodBattlegroundTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Enters tapped when put onto the battlefield without being played")
+    void entersTappedWithoutBeingPlayed() {
+        var land = harness.enterBattlefieldAndReturn(player1, new HavenwoodBattleground());
+
+        assertThat(land.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An entered land can produce mana after the untap step")
+    void enteredLandCanProduceManaAfterUntapping() {
+        harness.enterBattlefieldAndReturn(player1, new HavenwoodBattleground());
+        harness.performUntapStep(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Havenwood Battleground").isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrificing a newly entered and untapped land produces mana immediately")
+    void newlyEnteredLandCanBeSacrificedAfterUntapping() {
+        harness.enterBattlefieldAndReturn(player1, new HavenwoodBattleground()).untap();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        harness.assertNotOnBattlefield(player1, "Havenwood Battleground");
+        harness.assertInGraveyard(player1, "Havenwood Battleground");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Tap ability adds one green mana")
     void tapAddsOneGreenMana() {
         harness.addToBattlefield(player1, new HavenwoodBattleground());
