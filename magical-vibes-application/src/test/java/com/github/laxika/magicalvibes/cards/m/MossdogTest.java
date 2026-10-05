@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.FlowstoneStrike;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.s.SealOfFire;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Mossdog.class, FlowstoneStrike.class, SealOfFire.class})
+@CardUsed({Mossdog.class, FlowstoneStrike.class, SealOfFire.class, Humility.class})
 class MossdogTest extends BaseCardTest {
 
     @Test
@@ -31,8 +32,7 @@ class MossdogTest extends BaseCardTest {
         harness.setHand(player2, List.of(new FlowstoneStrike()));
         harness.addMana(player2, ManaColor.RED, 2);
 
-        harness.castInstant(player2, 0, mossdogId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, mossdogId);
 
         Permanent mossdog = findPermanent(player1, "Mossdog");
         assertThat(mossdog.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -80,6 +80,75 @@ class MossdogTest extends BaseCardTest {
         harness.activateAbility(player1, 1, null, mossdogId);
 
         assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanent(player1, "Mossdog")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not trigger on an opponent's spell while Humility removes its abilities")
+    void doesNotTriggerOnOpponentSpellWithoutAbilities() {
+        harness.addToBattlefield(player1, new Mossdog());
+        harness.addToBattlefield(player1, new Humility());
+        UUID mossdogId = harness.getPermanentId(player1, "Mossdog");
+        harness.setHand(player2, List.of(new FlowstoneStrike()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player2, 0, mossdogId);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanent(player1, "Mossdog")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Does not trigger on an opponent's ability while Humility removes its abilities")
+    void doesNotTriggerOnOpponentAbilityWithoutAbilities() {
+        harness.addToBattlefield(player1, new Mossdog());
+        harness.addToBattlefield(player1, new Humility());
+        harness.addToBattlefield(player2, new SealOfFire());
+        UUID mossdogId = harness.getPermanentId(player1, "Mossdog");
+
+        harness.activateAbility(player2, 0, null, mossdogId);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanent(player1, "Mossdog")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Each separate opponent spell targeting Mossdog adds another counter")
+    void accumulatesCountersFromSeparateSpells() {
+        harness.addToBattlefield(player1, new Mossdog());
+        UUID mossdogId = harness.getPermanentId(player1, "Mossdog");
+        harness.setHand(player2, List.of(new FlowstoneStrike(), new FlowstoneStrike()));
+        harness.addMana(player2, ManaColor.RED, 4);
+
+        harness.castAndResolveInstant(player2, 0, mossdogId);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, mossdogId);
+
+        assertThat(findPermanent(player1, "Mossdog")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A pending trigger cannot put a counter on a different Mossdog after its source dies")
+    void pendingTriggerDoesNotAffectAnotherMossdog() {
+        harness.addToBattlefield(player1, new Mossdog());
+        UUID sourceId = harness.getPermanentId(player1, "Mossdog");
+        harness.addToBattlefield(player1, new SealOfFire());
+        harness.setHand(player2, List.of(new FlowstoneStrike()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, sourceId);
+
+        harness.activateAbility(player1, 1, null, sourceId);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Mossdog");
+        harness.assertInGraveyard(player1, "Mossdog");
+        harness.addToBattlefield(player1, new Mossdog());
+
+        harness.passBothPriorities();
+
         assertThat(findPermanent(player1, "Mossdog")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
