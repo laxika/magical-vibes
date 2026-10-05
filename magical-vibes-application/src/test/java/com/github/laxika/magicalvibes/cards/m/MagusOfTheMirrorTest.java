@@ -101,4 +101,72 @@ class MagusOfTheMirrorTest extends BaseCardTest {
         return magus;
     }
 
+    @Test
+    @DisplayName("Sacrifice is paid immediately and the exchange uses life totals at resolution")
+    void sacrificesBeforeResolutionAndUsesCurrentLifeTotals() {
+        addReadyMagus();
+        advanceToUpkeep(player1);
+        harness.setLife(player1, 5);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        harness.assertNotOnBattlefield(player1, "Magus of the Mirror");
+        harness.assertInGraveyard(player1, "Magus of the Mirror");
+        harness.assertLife(player1, 5);
+        harness.assertLife(player2, 20);
+        harness.setLife(player1, 8);
+        harness.setLife(player2, 17);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 8);
+    }
+
+    @Test
+    @DisplayName("The controller can lose life while the opponent gains life")
+    void exchangesWhenControllerHasMoreLife() {
+        addReadyMagus();
+        advanceToUpkeep(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 5);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 5);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Equal life totals remain unchanged and the sacrifice is still paid")
+    void exchangesEqualLifeTotals() {
+        addReadyMagus();
+        advanceToUpkeep(player1);
+        harness.setLife(player1, 12);
+        harness.setLife(player2, 12);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 12);
+        harness.assertLife(player2, 12);
+        harness.assertInGraveyard(player1, "Magus of the Mirror");
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void cannotActivateWithSummoningSickness() {
+        advanceToUpkeep(player1);
+        Permanent magus = harness.addToBattlefieldAndReturn(player1, new MagusOfTheMirror());
+        magus.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        harness.assertOnBattlefield(player1, "Magus of the Mirror");
+        harness.assertNotInGraveyard(player1, "Magus of the Mirror");
+    }
+
 }
