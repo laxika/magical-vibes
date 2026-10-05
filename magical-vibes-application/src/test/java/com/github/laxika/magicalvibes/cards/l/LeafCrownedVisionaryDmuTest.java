@@ -22,8 +22,7 @@ class LeafCrownedVisionaryDmuTest extends BaseCardTest {
     @Test
     @DisplayName("Other Elves you control get +1/+1")
     void buffsOtherElvesYouControl() {
-        harness.addToBattlefield(player1, new LlanowarElves());
-        Permanent elves = findPermanent(player1, "Llanowar Elves");
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
         int basePower = gqs.getEffectivePower(gd, elves);
         int baseToughness = gqs.getEffectiveToughness(gd, elves);
 
@@ -36,13 +35,11 @@ class LeafCrownedVisionaryDmuTest extends BaseCardTest {
     @Test
     @DisplayName("The Visionary does not buff itself or non-Elves")
     void doesNotBuffItselfOrNonElves() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         int basePower = gqs.getEffectivePower(gd, bears);
         int baseToughness = gqs.getEffectiveToughness(gd, bears);
 
-        harness.addToBattlefield(player1, new LeafCrownedVisionary());
-        Permanent visionary = findPermanent(player1, "Leaf-Crowned Visionary");
+        Permanent visionary = harness.addToBattlefieldAndReturn(player1, new LeafCrownedVisionary());
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(basePower);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(baseToughness);
