@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MuldrothaTheGravetide;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LoathsomeChimera.class, GrizzlyBears.class})
+@CardUsed({LoathsomeChimera.class, GrizzlyBears.class, MuldrothaTheGravetide.class})
 class LoathsomeChimeraTest extends BaseCardTest {
 
     @Test
@@ -60,5 +61,58 @@ class LoathsomeChimeraTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0, List.of(1, 2)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void escapeMarksTheResolvedPermanentAsEscaped() {
+        harness.setGraveyard(player1, List.of(new LoathsomeChimera(),
+                new LoathsomeChimera(), new LoathsomeChimera(), new LoathsomeChimera()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castFromGraveyard(player1, 0, List.of(1, 2, 3));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Loathsome Chimera").isEscaped()).isTrue();
+    }
+
+    @Test
+    @CardUsed({LoathsomeChimera.class, MuldrothaTheGravetide.class})
+    void castingWithMuldrothaDoesNotGrantEscapeCounter() {
+        harness.addToBattlefield(player1, new MuldrothaTheGravetide());
+        harness.setGraveyard(player1, List.of(new LoathsomeChimera()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent chimera = findPermanent(player1, "Loathsome Chimera");
+        assertThat(chimera.isEscaped()).isFalse();
+        assertThat(chimera.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void escapeCannotExileTheSpellItself() {
+        harness.setGraveyard(player1, List.of(new LoathsomeChimera(),
+                new LoathsomeChimera(), new LoathsomeChimera(), new LoathsomeChimera()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0, List.of(0, 1, 2)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void escapeRequiresItsFiveManaCost() {
+        harness.setGraveyard(player1, List.of(new LoathsomeChimera(),
+                new LoathsomeChimera(), new LoathsomeChimera(), new LoathsomeChimera()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0, List.of(1, 2, 3)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
 }
