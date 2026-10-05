@@ -140,6 +140,52 @@ class MawcorTest extends BaseCardTest {
         assertThat(gameLogContains("fizzles")).isTrue();
     }
 
+    @Test
+    @DisplayName("Can target its own controller")
+    void canDamageItsController() {
+        addReadyMawcor(player1);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can target itself and taps before dealing damage")
+    void canTargetItself() {
+        Permanent mawcor = addReadyMawcor(player1);
+
+        harness.activateAbility(player1, 0, null, mawcor.getId());
+
+        assertThat(mawcor.isTapped()).isTrue();
+        assertThat(mawcor.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mawcor");
+        assertThat(mawcor.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activated ability resolves after Mawcor leaves the battlefield")
+    void resolvesAfterSourceLeavesBattlefield() {
+        Permanent mawcor = addReadyMawcor(player1);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(mawcor);
+        gd.playerGraveyards.get(player1.getId()).add(mawcor.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Mawcor");
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addReadyMawcor(Player player) {
         return addCreatureReady(player, new Mawcor());
     }
