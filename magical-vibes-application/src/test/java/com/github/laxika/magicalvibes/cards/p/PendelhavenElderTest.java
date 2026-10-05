@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PendelhavenElder.class, AshcoatBear.class, SageOfEpityr.class, MightOfOldKrosa.class})
 class PendelhavenElderTest extends BaseCardTest {
@@ -72,5 +73,84 @@ class PendelhavenElderTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, elder)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, sage)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, sage)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Checks power and toughness when the ability resolves, after responses")
+    void checksStatsAtResolution() {
+        Permanent elder = addCreatureReady(player1, new PendelhavenElder());
+        Permanent sage = addCreatureReady(player1, new SageOfEpityr());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new MightOfOldKrosa()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.castAndResolveInstant(player1, 0, sage.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, elder)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elder)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, sage)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, sage)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("A second Elder activation does not boost creatures already made 2/3")
+    void consecutiveActivationsDoNotBoostTheSameCreaturesTwice() {
+        Permanent firstElder = addCreatureReady(player1, new PendelhavenElder());
+        Permanent secondElder = addCreatureReady(player1, new PendelhavenElder());
+        Permanent sage = addCreatureReady(player1, new SageOfEpityr());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(firstElder.isTapped()).isTrue();
+        assertThat(secondElder.isTapped()).isTrue();
+        for (Permanent creature : List.of(firstElder, secondElder, sage)) {
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        }
+    }
+
+    @Test
+    @DisplayName("A creature entering after resolution does not receive the boost")
+    void doesNotBoostCreaturesEnteringLater() {
+        Permanent elder = addCreatureReady(player1, new PendelhavenElder());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent laterElder = harness.enterBattlefieldAndReturn(player1, new PendelhavenElder());
+
+        assertThat(gqs.getEffectivePower(gd, elder)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, elder)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, laterElder)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, laterElder)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An Elder with summoning sickness cannot pay the tap cost")
+    void cannotActivateWithSummoningSickness() {
+        Permanent elder = harness.addToBattlefieldAndReturn(player1, new PendelhavenElder());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(elder.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Elder cannot activate again")
+    void cannotActivateWhileTapped() {
+        addCreatureReady(player1, new PendelhavenElder());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 }
