@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PhantasmalTerrain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,14 +17,16 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
+import java.util.List;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MysticCompass.class, Forest.class, GrizzlyBears.class, CityOfBrass.class})
+@CardUsed({MysticCompass.class, Forest.class, GrizzlyBears.class, CityOfBrass.class, PhantasmalTerrain.class})
 class MysticCompassTest extends BaseCardTest {
-
-    // ===== Activation =====
 
     @Test
     @DisplayName("Activating taps the compass, spends the mana, and puts the ability on the stack")
@@ -54,8 +57,6 @@ class MysticCompassTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 
-    // ===== Type replacement (rule 305.7) =====
-
     @Test
     @DisplayName("Chosen type replaces the land's subtypes and its mana ability")
     void chosenTypeReplacesSubtypes() {
@@ -67,17 +68,14 @@ class MysticCompassTest extends BaseCardTest {
     @Test
     @DisplayName("Overridden Forest produces blue mana instead of green")
     void overriddenForestProducesBlueMana() {
-        becomeIsland(player1);
+        Permanent forest = becomeIsland(player1);
 
-        int forestIndex = gd.playerBattlefields.get(player1.getId())
-                .indexOf(gqs.findPermanentById(gd, harness.getPermanentId(player1, "Forest")));
+        int forestIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forest);
         harness.tapPermanent(player1, forestIndex);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
     }
-
-    // ===== Until end of turn =====
 
     @Test
     @DisplayName("Override is cleared at end of turn")
@@ -103,8 +101,6 @@ class MysticCompassTest extends BaseCardTest {
         resolveAllTriggers();
         harness.assertLife(player1, 20);
     }
-
-    // ===== Targeting =====
 
     @Test
     @DisplayName("Can target a land controlled by the opponent")
@@ -154,7 +150,65 @@ class MysticCompassTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a land");
     }
 
-    // ===== Helpers =====
+    @Test
+    void laterPhantasmalTerrainOverridesCompassUntilEndOfTurn() {
+        Permanent forest = becomeIsland(player1);
+        harness.setHand(player1, List.of(new PhantasmalTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.SWAMP.name());
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(forest));
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @ParameterizedTest
+    @CsvSource({"PLAINS, WHITE", "ISLAND, BLUE", "SWAMP, BLACK", "MOUNTAIN, RED", "FOREST, GREEN"})
+    void canChooseEachBasicLandType(CardSubtype type, ManaColor color) {
+        addReadyCompass(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new CityOfBrass());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, land.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, type.name());
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, land)).containsExactly(type);
+        harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(land));
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        resolveAllTriggers();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void cannotActivateTappedCompass() {
+        Permanent compass = addReadyCompass(player1);
+        compass.setTapped(true);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, forest.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+    }
+
+    @Test
+    void newlyEnteredNoncreatureCompassCanActivate() {
+        harness.addToBattlefield(player1, new MysticCompass());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.SWAMP.name());
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
+    }
 
     private Permanent addReadyCompass(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new MysticCompass());
@@ -169,15 +223,13 @@ class MysticCompassTest extends BaseCardTest {
 
     private Permanent becomeIsland(Player player, Card land) {
         addReadyCompass(player);
-        harness.addToBattlefield(player, land);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, land);
         harness.addMana(player, ManaColor.COLORLESS, 1);
         harness.forceActivePlayer(player);
-        UUID landId = harness.getPermanentId(player, land.getName());
-
-        harness.activateAbility(player, 0, null, landId);
+        harness.activateAbility(player, 0, null, permanent.getId());
         harness.passBothPriorities();
         harness.handleListChoice(player, CardSubtype.ISLAND.name());
 
-        return gqs.findPermanentById(gd, landId);
+        return permanent;
     }
 }
