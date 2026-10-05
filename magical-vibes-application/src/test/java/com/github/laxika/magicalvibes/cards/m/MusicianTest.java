@@ -177,4 +177,63 @@ class MusicianTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(musician);
     }
+
+    @Test
+    @DisplayName("Controller may decline the music payment even after all music counters are removed")
+    void mayDeclineMusicPaymentWithNoCounters() {
+        Permanent musician = addReadyMusician(player1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+        bears.setCounterCount(CounterType.MUSIC, 0);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
+    }
+
+    @Test
+    @DisplayName("Music upkeep uses the number of counters at resolution")
+    void musicPaymentCountsCountersAtResolution() {
+        addReadyMusician(player1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player2);
+        bears.setCounterCount(CounterType.MUSIC, 2);
+        harness.passBothPriorities();
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
+    }
+
+    @Test
+    @DisplayName("Own cumulative upkeep increases each upkeep")
+    void cumulativeUpkeepIncreasesEachUpkeep() {
+        Permanent musician = harness.addToBattlefieldAndReturn(player1, new Musician());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(musician.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(musician);
+    }
 }
