@@ -22,8 +22,7 @@ class PainfulMemoriesTest extends BaseCardTest {
         PainfulMemories spell = new PainfulMemories();
         harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         return spell;
     }
 
@@ -51,6 +50,46 @@ class PainfulMemoriesTest extends BaseCardTest {
         List<Card> deck = gd.playerDecks.get(player2.getId());
         assertThat(deck.get(0)).isSameAs(card1);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(card2);
+    }
+
+    @Test
+    @DisplayName("Choosing the second card preserves the remaining hand and library order")
+    void choosingSecondCardPreservesOtherCards() {
+        Card remaining = new GrizzlyBears();
+        Card chosen = new PainfulMemories();
+        Card libraryTop = new GrizzlyBears();
+        Card libraryBottom = new PainfulMemories();
+        harness.setHand(player2, List.of(remaining, chosen));
+        harness.setLibrary(player2, List.of(libraryTop, libraryBottom));
+
+        castPainfulMemories();
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(remaining);
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .containsExactly(chosen, libraryTop, libraryBottom);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(chosen);
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()).toList())
+                .noneMatch(message -> message.contains(remaining.getName()));
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A chosen card becomes the only card in an empty library")
+    void putsCardIntoEmptyLibrary() {
+        Card chosen = new GrizzlyBears();
+        harness.setHand(player2, List.of(chosen));
+        harness.setLibrary(player2, List.of());
+
+        castPainfulMemories();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(chosen);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
