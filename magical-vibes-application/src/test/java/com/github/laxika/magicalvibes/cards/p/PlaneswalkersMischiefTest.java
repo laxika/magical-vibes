@@ -2,14 +2,13 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.ForsakenCity;
 import com.github.laxika.magicalvibes.cards.i.Implode;
+import com.github.laxika.magicalvibes.cards.o.OrimsChant;
 import com.github.laxika.magicalvibes.cards.s.Singe;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PlaneswalkersMischief.class, Singe.class, ForsakenCity.class, Implode.class})
+@CardUsed({PlaneswalkersMischief.class, Singe.class, ForsakenCity.class, Implode.class, OrimsChant.class})
 class PlaneswalkersMischiefTest extends BaseCardTest {
 
     @Test
@@ -94,8 +93,7 @@ class PlaneswalkersMischiefTest extends BaseCardTest {
         addAbilityMana();
 
         activateMischief();
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        harness.inMutationScope(() -> stepTriggerService.handleEndStepTriggers(gd));
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(singe);
         resolveAllTriggers();
@@ -141,6 +139,79 @@ class PlaneswalkersMischiefTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can cast an exiled instant for free in response to its delayed return")
+    void castsInstantInResponseToDelayedReturn() {
+        addMischief();
+        OrimsChant chant = new OrimsChant();
+        harness.setHand(player2, List.of(chant));
+        addAbilityMana();
+
+        activateMischief();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+        harness.castFromExile(player1, chant.getId(), player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(chant);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(chant);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(chant);
+    }
+
+    @Test
+    @DisplayName("Free casting does not let an exiled sorcery be cast during the end step")
+    void cannotCastExiledSorceryAtEndStep() {
+        addMischief();
+        Implode implode = new Implode();
+        Permanent city = harness.addToBattlefieldAndReturn(player2, new ForsakenCity());
+        harness.setHand(player2, List.of(implode));
+        addAbilityMana();
+
+        activateMischief();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, implode.getId(), city.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(implode);
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(implode);
+    }
+
+    @Test
+    @DisplayName("A spell cast before the end step does not return to its owner's hand")
+    void doesNotReturnPreviouslyCastSpell() {
+        addMischief();
+        OrimsChant chant = new OrimsChant();
+        harness.setHand(player2, List.of(chant));
+        addAbilityMana();
+
+        activateMischief();
+        harness.castFromExile(player1, chant.getId(), player2.getId());
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(chant);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(chant);
+    }
+
+    @Test
+    @DisplayName("An uncast exiled spell returns even after the enchantment leaves the battlefield")
+    void returnsUncastSpellAfterSourceLeaves() {
+        Permanent mischief = addMischief();
+        Singe singe = new Singe();
+        harness.setHand(player2, List.of(singe));
+        addAbilityMana();
+
+        activateMischief();
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, mischief));
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(singe);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(singe);
     }
 
     private Permanent addMischief() {
