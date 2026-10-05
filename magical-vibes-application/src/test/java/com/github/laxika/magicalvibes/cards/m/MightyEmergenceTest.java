@@ -2,12 +2,17 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
+import com.github.laxika.magicalvibes.cards.a.AgonyWarp;
+import com.github.laxika.magicalvibes.cards.c.CavernThoctar;
+import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MightyEmergence.class, AvatarOfMight.class, AirElemental.class,
+        Mosstodon.class, CavernThoctar.class, AgonyWarp.class, GloriousAnthem.class, Opalescence.class})
 class MightyEmergenceTest extends BaseCardTest {
 
     @Test
@@ -22,9 +29,7 @@ class MightyEmergenceTest extends BaseCardTest {
     void putsCountersOnBigCreature() {
         harness.addToBattlefield(player1, new MightyEmergence());
 
-        harness.setHand(player1, List.of(new AvatarOfMight())); // 8/8
-        harness.addMana(player1, ManaColor.GREEN, 8);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AvatarOfMight(), "{6}{G}{G}");
         harness.passBothPriorities(); // resolve Avatar of Might
 
         // Enter trigger goes on stack — resolve it to get the may prompt, then accept.
@@ -41,9 +46,7 @@ class MightyEmergenceTest extends BaseCardTest {
     void declineLeavesNoCounters() {
         harness.addToBattlefield(player1, new MightyEmergence());
 
-        harness.setHand(player1, List.of(new AvatarOfMight()));
-        harness.addMana(player1, ManaColor.GREEN, 8);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AvatarOfMight(), "{6}{G}{G}");
         harness.passBothPriorities(); // resolve Avatar of Might
 
         harness.passBothPriorities();
@@ -59,9 +62,7 @@ class MightyEmergenceTest extends BaseCardTest {
     void doesNotTriggerForSmallCreature() {
         harness.addToBattlefield(player1, new MightyEmergence());
 
-        harness.setHand(player1, List.of(new AirElemental())); // 4/4
-        harness.addMana(player1, ManaColor.BLUE, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new AirElemental(), "{3}{U}{U}");
         harness.passBothPriorities(); // resolve Air Elemental
 
         GameData gd = harness.getGameData();
@@ -74,14 +75,61 @@ class MightyEmergenceTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MightyEmergence());
         harness.setHand(player1, List.of());
 
-        harness.setHand(player2, List.of(new AvatarOfMight()));
-        harness.addMana(player2, ManaColor.GREEN, 8);
         harness.forceActivePlayer(player2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new AvatarOfMight(), "{6}{G}{G}");
         harness.passBothPriorities(); // resolve opponent's Avatar of Might
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void triggersForExactlyFivePower() {
+        harness.addToBattlefield(player1, new MightyEmergence());
+        harness.castFromHand(player1, new Mosstodon(), "{4}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanent(player1, "Mosstodon").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(2);
+    }
+
+    @Test
+    void doesNotRecheckPowerWhenAbilityResolves() {
+        harness.addToBattlefield(player1, new MightyEmergence());
+        harness.castFromHand(player1, new CavernThoctar(), "{5}{G}");
+        harness.passBothPriorities();
+        Permanent creature = findPermanent(player1, "Cavern Thoctar");
+        harness.setHand(player1, List.of(new AgonyWarp()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.ensurePriority(player1);
+        harness.castInstant(player1, 0, List.of(creature.getId(), creature.getId()));
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void triggersForItsOwnEntryWhenItEntersAsFivePowerCreature() {
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.castFromHand(player1, new MightyEmergence(), "{2}{G}");
+        harness.passBothPriorities();
+        Permanent emergence = findPermanent(player1, "Mighty Emergence");
+        assertThat(gqs.getEffectivePower(gd, emergence)).isEqualTo(5);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(emergence.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     private Permanent findAvatar(Player player) {
