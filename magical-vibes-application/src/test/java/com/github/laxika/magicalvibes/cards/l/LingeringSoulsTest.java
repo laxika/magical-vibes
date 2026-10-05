@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LingeringSouls.class})
 class LingeringSoulsTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Lingering Souls creates two 1/1 white Spirit tokens with flying")
@@ -28,8 +28,7 @@ class LingeringSoulsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         List<Permanent> spirits = spiritTokens();
         assertThat(spirits).hasSize(2);
@@ -52,8 +51,7 @@ class LingeringSoulsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertInGraveyard(player1, "Lingering Souls");
     }
@@ -65,8 +63,7 @@ class LingeringSoulsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(spiritTokens()).hasSize(2);
     }
@@ -78,8 +75,7 @@ class LingeringSoulsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         harness.assertNotInGraveyard(player1, "Lingering Souls");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -109,6 +105,44 @@ class LingeringSoulsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFlashback(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The same card can create four Spirits by being cast normally and then with flashback")
+    void normalCastThenFlashbackCreatesFourSpirits() {
+        LingeringSouls card = new LingeringSouls();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(spiritTokens()).hasSize(2);
+        harness.assertInGraveyard(player1, "Lingering Souls");
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(spiritTokens()).hasSize(4);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertNotInGraveyard(player1, "Lingering Souls");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flashback requires black mana even when enough total mana is available")
+    void flashbackFailsWithWrongManaColor() {
+        harness.setGraveyard(player1, List.of(new LingeringSouls()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.castFlashback(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInGraveyard(player1, "Lingering Souls");
+        assertThat(gd.stack).isEmpty();
+        assertThat(spiritTokens()).isEmpty();
     }
 
     private List<Permanent> spiritTokens() {
