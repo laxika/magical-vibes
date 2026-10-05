@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MistfireAdept.class, GrizzlyBears.class, Shock.class})
 class MistfireAdeptTest extends BaseCardTest {
 
     @Test
@@ -34,8 +36,7 @@ class MistfireAdeptTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, adept)).isEqualTo(initialPower + 1);
         assertThat(gqs.getEffectiveToughness(gd, adept)).isEqualTo(initialToughness + 1);
@@ -71,8 +72,7 @@ class MistfireAdeptTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, target.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, adept)).isEqualTo(initialPower + 1);
         assertThat(gqs.getEffectiveToughness(gd, adept)).isEqualTo(initialToughness + 1);
@@ -84,5 +84,47 @@ class MistfireAdeptTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, adept)).isEqualTo(initialPower);
         assertThat(target.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
+    }
+
+    @Test
+    @DisplayName("Mistfire Adept can target itself and prowess accumulates for each cast")
+    void repeatedCastsCanGrantFlyingToSelf() {
+        harness.addToBattlefield(player1, new MistfireAdept());
+        Permanent adept = findPermanent(player1, "Mistfire Adept");
+        int initialPower = gqs.getEffectivePower(gd, adept);
+        int initialToughness = gqs.getEffectiveToughness(gd, adept);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        for (int casts = 1; casts <= 2; casts++) {
+            harness.castInstant(player1, 0, player2.getId());
+            resolveAllTriggers();
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player1, adept.getId());
+            resolveAllTriggers();
+
+            assertThat(gqs.getEffectivePower(gd, adept)).isEqualTo(initialPower + casts);
+            assertThat(gqs.getEffectiveToughness(gd, adept)).isEqualTo(initialToughness + casts);
+            assertThat(adept.getGrantedKeywords()).contains(Keyword.FLYING);
+        }
+    }
+
+    @Test
+    @DisplayName("An opponent's noncreature spell does not trigger either ability")
+    void opponentNoncreatureSpellDoesNotTrigger() {
+        harness.addToBattlefield(player1, new MistfireAdept());
+        Permanent adept = findPermanent(player1, "Mistfire Adept");
+        int initialPower = gqs.getEffectivePower(gd, adept);
+        int initialToughness = gqs.getEffectiveToughness(gd, adept);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, adept)).isEqualTo(initialPower);
+        assertThat(gqs.getEffectiveToughness(gd, adept)).isEqualTo(initialToughness);
+        assertThat(adept.getGrantedKeywords()).doesNotContain(Keyword.FLYING);
     }
 }
