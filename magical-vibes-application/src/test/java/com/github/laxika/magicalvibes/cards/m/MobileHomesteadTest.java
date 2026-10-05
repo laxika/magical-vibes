@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.b.BrightfieldGlider;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -54,8 +55,7 @@ class MobileHomesteadTest extends BaseCardTest {
     @Test
     @DisplayName("Attacking lets its controller put a top land onto the battlefield tapped")
     void attackPutsTopLandOntoBattlefieldTapped() {
-        Permanent homestead = harness.addToBattlefieldAndReturn(player1, new MobileHomestead());
-        homestead.setSummoningSick(false);
+        Permanent homestead = addCreatureReady(player1, new MobileHomestead());
         addCreatureReady(player1, new GrizzlyBears());
         crew(homestead);
         harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
@@ -74,8 +74,7 @@ class MobileHomesteadTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the attack trigger leaves the top land on the library")
     void decliningAttackTriggerLeavesLandOnTop() {
-        Permanent homestead = harness.addToBattlefieldAndReturn(player1, new MobileHomestead());
-        homestead.setSummoningSick(false);
+        Permanent homestead = addCreatureReady(player1, new MobileHomestead());
         addCreatureReady(player1, new GrizzlyBears());
         crew(homestead);
         harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
@@ -86,6 +85,69 @@ class MobileHomesteadTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst().getName()).isEqualTo("Forest");
         assertThat(findPermanents(player1, "Forest")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Loses haste when its controller no longer controls a Mount")
+    void losesHasteWhenMountLeaves() {
+        Permanent homestead = harness.addToBattlefieldAndReturn(player1, new MobileHomestead());
+        Permanent mount = harness.addToBattlefieldAndReturn(player1, new BrightfieldGlider());
+        assertThat(gqs.hasKeyword(gd, homestead, Keyword.HASTE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(mount);
+
+        assertThat(gqs.hasKeyword(gd, homestead, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Summoning-sick creatures can pay the crew cost")
+    void summoningSickCreatureCanCrew() {
+        Permanent homestead = harness.addToBattlefieldAndReturn(player1, new MobileHomestead());
+        Permanent crew = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        crew.setSummoningSick(true);
+
+        crew(homestead);
+
+        assertThat(crew.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Attacking lets only its controller see a nonland left on top")
+    void attackShowsNonlandPrivatelyAndLeavesItOnTop() {
+        Permanent homestead = addCreatureReady(player1, new MobileHomestead());
+        addCreatureReady(player1, new GrizzlyBears());
+        crew(homestead);
+        BrightfieldGlider topCard = new BrightfieldGlider();
+        harness.setLibrary(player1, List.of(topCard, new Forest()));
+        harness.clearMessages();
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.publishState();
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
+        assertThat(findPermanents(player1, "Brightfield Glider")).isEmpty();
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("Brightfield Glider"));
+        assertThat(harness.getConn2().getSentMessages())
+                .noneMatch(message -> message.contains("Brightfield Glider"));
+    }
+
+    @Test
+    @DisplayName("Attacking with an empty library requires no choice and does not lose the game")
+    void attackWithEmptyLibraryDoesNothing() {
+        Permanent homestead = addCreatureReady(player1, new MobileHomestead());
+        addCreatureReady(player1, new GrizzlyBears());
+        crew(homestead);
+        harness.setLibrary(player1, List.of());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 
     private void crew(Permanent homestead) {
