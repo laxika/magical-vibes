@@ -78,6 +78,40 @@ class NezumiBladeblesserTest extends BaseCardTest {
         assertKeywords(false, false);
     }
 
+    @Test
+    @DisplayName("Gains keywords immediately when qualifying permanents enter later")
+    void gainsKeywordsWhenQualifyingPermanentsEnter() {
+        harness.addToBattlefield(player1, new NezumiBladeblesser());
+        assertKeywords(false, false);
+
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        assertKeywords(false, true);
+
+        harness.addToBattlefield(player1, new Spellbook());
+        assertKeywords(true, true);
+    }
+
+    @Test
+    @DisplayName("Retains keywords until the last qualifying permanent of each type leaves")
+    void retainsKeywordsWhileAnotherQualifyingPermanentRemains() {
+        harness.addToBattlefield(player1, new NezumiBladeblesser());
+        Permanent firstArtifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        Permanent lastArtifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        Permanent firstEnchantment = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+        Permanent lastEnchantment = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+        assertKeywords(true, true);
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstArtifact);
+        gd.playerBattlefields.get(player1.getId()).remove(firstEnchantment);
+        assertKeywords(true, true);
+
+        gd.playerBattlefields.get(player1.getId()).remove(lastEnchantment);
+        assertKeywords(true, false);
+
+        gd.playerBattlefields.get(player1.getId()).remove(lastArtifact);
+        assertKeywords(false, false);
+    }
+
     private void assertKeywords(boolean deathtouch, boolean menace) {
         Permanent bladeblesser = findPermanent(player1, "Nezumi Bladeblesser");
         assertThat(gqs.hasKeyword(gd, bladeblesser, Keyword.DEATHTOUCH)).isEqualTo(deathtouch);
