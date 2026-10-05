@@ -89,4 +89,40 @@ class MeteorCraterTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
     }
+
+    @Test
+    @DisplayName("Meteor Crater can use its own color after becoming white")
+    void coloredCraterContributesItsOwnColor() {
+        Permanent crater = harness.addToBattlefieldAndReturn(player1, new MeteorCrater());
+        harness.addToBattlefield(player2, new AuroraGriffin());
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player2, 0, null, crater.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(crater.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Uses a permanent's changed color instead of its printed colors")
+    void usesCurrentColorsAfterColorReplacement() {
+        harness.addToBattlefield(player1, new MeteorCrater());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new QuestingPhelddagrif());
+        harness.addToBattlefield(player2, new AuroraGriffin());
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player2, 0, null, creature.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
 }
