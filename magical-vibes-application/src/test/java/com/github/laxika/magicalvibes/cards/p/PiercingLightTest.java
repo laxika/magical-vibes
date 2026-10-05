@@ -23,7 +23,7 @@ class PiercingLightTest extends BaseCardTest {
 
     @Test
     void damagesAttackingCreatureAndScriesOne() {
-        Permanent attacker = addCombatCreature(player2, new AirElemental(), "Air Elemental", true);
+        Permanent attacker = addCombatCreature(player2, new AirElemental(), true);
         Card topCard = new GrizzlyBears();
         harness.setLibrary(player1, List.of(topCard));
 
@@ -41,7 +41,7 @@ class PiercingLightTest extends BaseCardTest {
 
     @Test
     void damagesBlockingCreatureAndScriesOne() {
-        Permanent blocker = addCombatCreature(player2, new AirElemental(), "Air Elemental", false);
+        Permanent blocker = addCombatCreature(player2, new AirElemental(), false);
 
         castSpellAt(blocker.getId());
 
@@ -62,6 +62,83 @@ class PiercingLightTest extends BaseCardTest {
                 .hasMessageContaining("attacking or blocking creature");
     }
 
+    @Test
+    void canPutScryedCardOnBottomWithoutReorderingOtherCards() {
+        Permanent attacker = addCombatCreature(player2, new AirElemental(), true);
+        Card topCard = new GrizzlyBears();
+        Card nextCard = new AirElemental();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+
+        castSpellAt(attacker.getId());
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard, topCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canKeepScryedCardOnTop() {
+        Permanent attacker = addCombatCreature(player2, new AirElemental(), true);
+        Card topCard = new GrizzlyBears();
+        Card nextCard = new AirElemental();
+        harness.setLibrary(player1, List.of(topCard, nextCard));
+
+        castSpellAt(attacker.getId());
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, nextCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotScryWhenTargetStopsAttackingBeforeResolution() {
+        Permanent attacker = addCombatCreature(player2, new AirElemental(), true);
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player1, List.of(new PiercingLight()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, attacker.getId());
+
+        attacker.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getMarkedDamage()).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void lethalDamageStillAllowsScry() {
+        Permanent attacker = addCombatCreature(player2, new GrizzlyBears(), true);
+        Card topCard = new AirElemental();
+        harness.setLibrary(player1, List.of(topCard));
+
+        castSpellAt(attacker.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.Scry.class);
+        gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.ScryOrder(List.of(0), List.of()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(attacker);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(attacker.getCard());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void dealsDamageWithAnEmptyLibrary() {
+        Permanent attacker = addCombatCreature(player2, new AirElemental(), true);
+        harness.setLibrary(player1, List.of());
+
+        castSpellAt(attacker.getId());
+
+        assertThat(attacker.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void castSpellAt(UUID targetId) {
         harness.setHand(player1, List.of(new PiercingLight()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -69,9 +146,8 @@ class PiercingLightTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private Permanent addCombatCreature(Player owner, Card card, String name, boolean attacking) {
-        harness.addToBattlefield(owner, card);
-        Permanent permanent = findPermanent(owner, name);
+    private Permanent addCombatCreature(Player owner, Card card, boolean attacking) {
+        Permanent permanent = harness.addToBattlefieldAndReturn(owner, card);
         permanent.setSummoningSick(false);
         if (attacking) {
             permanent.setAttacking(true);
