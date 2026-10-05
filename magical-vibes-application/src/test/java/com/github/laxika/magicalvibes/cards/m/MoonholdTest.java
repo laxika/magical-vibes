@@ -5,13 +5,16 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({Moonhold.class, Forest.class, GrizzlyBears.class})
 class MoonholdTest extends BaseCardTest {
 
     /** Player1 casts Moonhold at player2 on player1's turn, paying the given mana. */
@@ -79,9 +82,73 @@ class MoonholdTest extends BaseCardTest {
         assertThat(player2Playable()).doesNotContain(0);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(player2Playable()).contains(0);
+    }
+
+    @Test
+    @DisplayName("Creature restriction also wears off at end of turn")
+    void creatureRestrictionWearsOffAtEndOfTurn() {
+        castMoonholdAtPlayer2(0, 3);
+        assertThat(player2Playable()).doesNotContain(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(player2Playable()).contains(1);
+        harness.castCreature(player2, 1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Both restrictions prevent actual land plays and creature casts")
+    void restrictedActionsAreRejected() {
+        castMoonholdAtPlayer2(2, 2);
+        assertThat(player2Playable()).doesNotContain(0, 1);
+
+        assertThatThrownBy(() -> harness.playLand(player2, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.castCreature(player2, 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Moonhold can target its caster and leaves the other player unrestricted")
+    void canTargetSelf() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Moonhold()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.castCreature(player1, 1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(player2Playable()).contains(0, 1);
+    }
+
+    @Test
+    @DisplayName("The creature restriction does not prevent casting an instant")
+    void canStillCastInstants() {
+        castMoonholdAtPlayer2(0, 3);
+        harness.setHand(player2, List.of(new Moonhold()));
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Moonhold");
+        harness.setHand(player1, List.of(new Forest()));
+        assertThatThrownBy(() -> harness.playLand(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
