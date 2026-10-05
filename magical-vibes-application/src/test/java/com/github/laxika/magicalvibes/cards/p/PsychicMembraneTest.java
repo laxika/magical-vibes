@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
+import com.github.laxika.magicalvibes.cards.e.EchoCirclet;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,8 +15,29 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PsychicMembrane.class, AlphaMyr.class, Forest.class})
+@CardUsed({PsychicMembrane.class, AlphaMyr.class, Forest.class, EchoCirclet.class})
 class PsychicMembraneTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Blocking two creatures offers only one card draw")
+    void blockingMultipleCreaturesDrawsOnlyOnce() {
+        Permanent membrane = addCreatureReady(player2, new PsychicMembrane());
+        harness.addToBattlefieldAndReturn(player2, new EchoCirclet()).setAttachedTo(membrane.getId());
+        addCreatureReady(player1, new AlphaMyr());
+        addCreatureReady(player1, new AlphaMyr());
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player2, true);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
+    }
 
     @Test
     @DisplayName("When Psychic Membrane blocks, accepting the trigger draws a card")
