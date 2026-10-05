@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +15,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MirkwoodNurturer.class, Forest.class, GrizzlyBears.class})
+@CardUsed({MirkwoodNurturer.class, Forest.class})
 class MirkwoodNurturerTest extends BaseCardTest {
 
     @Test
@@ -49,11 +48,42 @@ class MirkwoodNurturerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target an opponent's permanent")
     void cannotTargetOpponentsPermanent() {
-        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
-        assertThatThrownBy(() -> castMirkwoodNurturer(List.of(bears.getId())))
+        assertThatThrownBy(() -> castMirkwoodNurturer(List.of(forest.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be another permanent you control");
+    }
+
+    @Test
+    @DisplayName("ETB may choose no target even when another permanent is available")
+    void canDeclineReturnWithAnotherPermanentAvailable() {
+        harness.addToBattlefield(player1, new Forest());
+        castMirkwoodNurturer(List.of());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertNotInHand(player1, "Forest");
+        assertThat(findPermanent(player1, "Mirkwood Nurturer")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("ETB can return a different Mirkwood Nurturer and counters only its source")
+    void canReturnAnotherNurturer() {
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new MirkwoodNurturer());
+        castMirkwoodNurturer(List.of(other.getId()));
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Mirkwood Nurturer");
+        Permanent source = findPermanent(player1, "Mirkwood Nurturer");
+        assertThat(source.getId()).isNotEqualTo(other.getId());
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private void castMirkwoodNurturer(List<UUID> targetIds) {
