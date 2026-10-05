@@ -136,6 +136,50 @@ class InciteWarTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Attack mode applies to creatures the target gains control of after resolution")
+    void attackModeAppliesToNewlyControlledCreature() {
+        Permanent creature = addCreatureReady(player1, new AlphaMyr());
+
+        cast(new int[]{0}, List.of(player2.getId()), false);
+
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerBattlefields.get(player2.getId()).add(creature);
+        creature.setSummoningSick(false);
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Attack mode stops applying when a creature leaves the targeted player's control")
+    void attackModeDoesNotFollowCreatureToAnotherController() {
+        Permanent creature = addCreatureReady(player2, new AlphaMyr());
+
+        cast(new int[]{0}, List.of(player2.getId()), false);
+
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        gd.playerBattlefields.get(player1.getId()).add(creature);
+        creature.setSummoningSick(false);
+
+        declareAttackers(player1, List.of());
+
+        assertThat(creature.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("First-strike mode does not affect creatures entering after resolution")
+    void firstStrikeModeDoesNotAffectLaterCreatures() {
+        Permanent existing = addCreatureReady(player1, new AlphaMyr());
+
+        cast(new int[]{1}, List.of(), false);
+
+        Permanent later = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+
+        assertThat(gqs.hasKeyword(gd, existing, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, later, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
     private void cast(int[] modes, List<UUID> targetIds, boolean entwined) {
         harness.setHand(player1, List.of(new InciteWar()));
         harness.addMana(player1, ManaColor.RED, 1);
