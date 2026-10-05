@@ -33,8 +33,6 @@ class PuppeteerCliqueTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature → ETB → graveyard choice
     }
 
-    // ===== ETB targeting =====
-
     @Test
     @DisplayName("ETB with a creature in an opponent's graveyard prompts a graveyard choice")
     void etbPromptsGraveyardChoice() {
@@ -68,8 +66,6 @@ class PuppeteerCliqueTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Puppeteer Clique");
     }
 
-    // ===== Resolution =====
-
     @Test
     @DisplayName("Resolving puts the opponent's creature onto the battlefield with haste under your control")
     void resolvesAndPutsCreatureOnBattlefield() {
@@ -95,9 +91,8 @@ class PuppeteerCliqueTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Cinderbones");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -140,10 +135,107 @@ class PuppeteerCliqueTest extends BaseCardTest {
                 .noneMatch(c -> c.getName().equals("Cinderbones"));
         harness.assertInHand(player2, "Cinderbones");
 
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
 
         harness.assertInHand(player2, "Cinderbones");
+    }
+
+    @Test
+    @DisplayName("A reanimated creature dies normally before the delayed exile")
+    void stolenCreatureDiesNormally() {
+        Card target = new Cinderbones();
+        harness.setGraveyard(player2, List.of(target));
+        castClique();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        resolveAllTriggers();
+
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Cinderbones"));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Cinderbones");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Persist during an opponent's turn reanimates a creature until your next end step")
+    void opponentEndStepDoesNotExileReanimatedCreature() {
+        Card target = new Cinderbones();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addToBattlefield(player1, new PuppeteerClique());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Puppeteer Clique"));
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        resolveAllTriggers();
+
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Cinderbones");
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+        harness.assertNotOnBattlefield(player1, "Cinderbones");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Reanimation after the end step begins retains haste through cleanup")
+    void hastePersistsBeyondCleanup() {
+        Card target = new Cinderbones();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addToBattlefield(player1, new PuppeteerClique());
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Puppeteer Clique"));
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        resolveAllTriggers();
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        Permanent stolen = findPermanent(player1, "Cinderbones");
+        assertThat(gqs.hasKeyword(gd, stolen, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Persist does not return a Clique that dies with a -1/-1 counter")
+    void persistDoesNotReturnCliqueWithMinusCounter() {
+        harness.addToBattlefield(player1, new PuppeteerClique());
+        findPermanent(player1, "Puppeteer Clique").setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, harness.getPermanentId(player1, "Puppeteer Clique"));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Puppeteer Clique");
+        harness.assertInGraveyard(player1, "Puppeteer Clique");
+    }
+
+    @Test
+    @DisplayName("A reanimated opposing Clique returns to its owner through persist")
+    void stolenCliquePersistsUnderOwnersControl() {
+        Card target = new PuppeteerClique();
+        harness.setGraveyard(player2, List.of(target));
+        castClique();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        resolveAllTriggers();
+
+        Permanent stolen = findPermanents(player1, "Puppeteer Clique").stream()
+                .filter(p -> p.getCard().getId().equals(target.getId())).findFirst().orElseThrow();
+        harness.setHand(player1, List.of(new FlameJavelin()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, stolen.getId());
+        resolveAllTriggers();
+
+        Permanent returned = findPermanent(player2, "Puppeteer Clique");
+        assertThat(returned.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Puppeteer Clique")).isEqualTo(1);
     }
 }
