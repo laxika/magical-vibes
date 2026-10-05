@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.s.SpiritOfTheLabyrinth;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MalignantGrowth.class, Disenchant.class})
+@CardUsed({MalignantGrowth.class, Disenchant.class, SpiritOfTheLabyrinth.class})
 class MalignantGrowthTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
@@ -105,8 +106,7 @@ class MalignantGrowthTest extends BaseCardTest {
         Permanent growth = harness.addToBattlefieldAndReturn(player1, new MalignantGrowth());
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities(); // resolve the growth counter trigger
-        harness.passBothPriorities(); // resolve the cumulative upkeep trigger
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -123,14 +123,12 @@ class MalignantGrowthTest extends BaseCardTest {
         Permanent growth = harness.addToBattlefieldAndReturn(player1, new MalignantGrowth());
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.handleMayAbilityChosen(player1, true);
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.handleMayAbilityChosen(player1, true);
 
@@ -146,11 +144,60 @@ class MalignantGrowthTest extends BaseCardTest {
         Permanent growth = harness.addToBattlefieldAndReturn(player1, new MalignantGrowth());
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities(); // resolve the growth counter trigger
-        harness.passBothPriorities(); // resolve the cumulative upkeep trigger
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(growth);
         harness.assertInGraveyard(player1, "Malignant Growth");
+    }
+
+    @Test
+    @DisplayName("Prevented additional draws cause no damage")
+    void preventedAdditionalDrawsCauseNoDamage() {
+        Permanent growth = harness.addToBattlefieldAndReturn(player1, new MalignantGrowth());
+        growth.setCounterCount(CounterType.GROWTH, 2);
+        harness.addToBattlefield(player2, new SpiritOfTheLabyrinth());
+
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+        int deckBefore = gd.playerDecks.get(player2.getId()).size();
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToDraw(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 1);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Draw-step ability reads growth counters when it resolves")
+    void drawTriggerUsesCurrentCounterCount() {
+        Permanent growth = harness.addToBattlefieldAndReturn(player1, new MalignantGrowth());
+        growth.setCounterCount(CounterType.GROWTH, 1);
+
+        int handBefore = gd.playerHands.get(player2.getId()).size();
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToDraw(player2);
+        growth.setCounterCount(CounterType.GROWTH, 3);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handBefore + 4);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
+    }
+
+    @Test
+    @DisplayName("Opponent upkeep adds neither age nor growth counters")
+    void opponentUpkeepDoesNotAddCountersOrRequirePayment() {
+        Permanent growth = harness.addToBattlefieldAndReturn(player1, new MalignantGrowth());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(growth.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(growth.getCounterCount(CounterType.GROWTH)).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(growth);
     }
 }
