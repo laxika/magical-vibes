@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
@@ -127,6 +129,82 @@ class LoyalRetainersTest extends BaseCardTest {
                 player1, 0, null, guanYu.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("before attackers are declared");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = TurnStep.class, names = {"UPKEEP", "DRAW", "BEGINNING_OF_COMBAT"})
+    @DisplayName("Can activate before attackers are declared even while tapped and summoning sick")
+    void canActivateBeforeAttackersWithTappedNewCreature(TurnStep step) {
+        harness.addToBattlefieldAndReturn(player1, new LoyalRetainers()).setTapped(true);
+        GuanYuSaintedWarrior guanYu = new GuanYuSaintedWarrior();
+        harness.setGraveyard(player1, List.of(guanYu));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(step);
+
+        harness.activateAbility(player1, 0, null, guanYu.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Loyal Retainers");
+        harness.assertOnBattlefield(player1, "Guan Yu, Sainted Warrior");
+        harness.assertNotInGraveyard(player1, "Guan Yu, Sainted Warrior");
+    }
+
+    @Test
+    @DisplayName("Cannot activate in the declare attackers step even when no creatures attack")
+    void cannotActivateInDeclareAttackersStep() {
+        addCreatureReady(player1, new LoyalRetainers());
+        GuanYuSaintedWarrior guanYu = new GuanYuSaintedWarrior();
+        harness.setGraveyard(player1, List.of(guanYu));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, null, guanYu.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+
+        harness.assertOnBattlefield(player1, "Loyal Retainers");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not return a target that leaves the graveyard before resolution")
+    void targetLeavingGraveyardDoesNotRefundSacrifice() {
+        LoyalRetainers retainers = new LoyalRetainers();
+        addCreatureReady(player1, retainers);
+        GuanYuSaintedWarrior guanYu = new GuanYuSaintedWarrior();
+        harness.setGraveyard(player1, List.of(guanYu));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, guanYu.getId(), Zone.GRAVEYARD);
+        harness.setGraveyard(player1, List.of(retainers));
+        harness.setExile(player1, List.of(guanYu));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Guan Yu, Sainted Warrior");
+        harness.assertNotOnBattlefield(player1, "Loyal Retainers");
+        harness.assertInGraveyard(player1, "Loyal Retainers");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate before attackers in a second combat phase")
+    void cannotActivateInSecondCombat() {
+        addCreatureReady(player1, new LoyalRetainers());
+        GuanYuSaintedWarrior guanYu = new GuanYuSaintedWarrior();
+        harness.setGraveyard(player1, List.of(guanYu));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        gd.combatPhasesThisTurn = 2;
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, 0, null, guanYu.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("before attackers are declared");
+
+        harness.assertOnBattlefield(player1, "Loyal Retainers");
+        assertThat(gd.stack).isEmpty();
     }
 
 }
