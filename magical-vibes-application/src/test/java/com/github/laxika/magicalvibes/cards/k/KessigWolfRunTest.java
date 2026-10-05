@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DarkthicketWolf;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +20,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KessigWolfRun.class, DarkthicketWolf.class})
 class KessigWolfRunTest extends BaseCardTest {
-
-    // ===== Mana ability =====
 
     @Test
     @DisplayName("Tapping for mana adds colorless mana")
@@ -33,8 +34,6 @@ class KessigWolfRunTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(landPerm.isTapped()).isTrue();
     }
-
-    // ===== Pump ability =====
 
     @Test
     @DisplayName("Activating pump ability puts it on the stack")
@@ -121,8 +120,6 @@ class KessigWolfRunTest extends BaseCardTest {
         assertThat(landPerm.isTapped()).isTrue();
     }
 
-    // ===== Targeting =====
-
     @Test
     @DisplayName("Can target opponent's creature")
     void canTargetOpponentsCreature() {
@@ -142,9 +139,7 @@ class KessigWolfRunTest extends BaseCardTest {
     void cannotTargetNonCreature() {
         addKessigWolfRun(player1);
         // Add another land as a non-creature target
-        KessigWolfRun otherLand = new KessigWolfRun();
-        Permanent landPerm = new Permanent(otherLand);
-        harness.getGameData().playerBattlefields.get(player2.getId()).add(landPerm);
+        Permanent landPerm = harness.addToBattlefieldAndReturn(player2, new KessigWolfRun());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -174,8 +169,6 @@ class KessigWolfRunTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
-    // ===== Validation errors =====
-
     @Test
     @DisplayName("Cannot activate pump ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
@@ -203,21 +196,52 @@ class KessigWolfRunTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Pump and trample expire at end of turn")
+    void pumpAndTrampleExpireAtEndOfTurn() {
+        addKessigWolfRun(player1);
+        Permanent creature = addCreature(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, 1, 3, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+
+        harness.forceStep(TurnStep.CLEANUP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Pump resolves independently of its source")
+    void pumpResolvesAfterSourceLeavesBattlefield() {
+        Permanent land = addKessigWolfRun(player1);
+        Permanent creature = addCreature(player2);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, 2, creature.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        gd.playerGraveyards.get(player1.getId()).add(land.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
 
     private Permanent addKessigWolfRun(Player player) {
-        KessigWolfRun card = new KessigWolfRun();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new KessigWolfRun());
     }
 
     private Permanent addCreature(Player player) {
-        GrizzlyBears bear = new GrizzlyBears();
-        Permanent perm = new Permanent(bear);
-        perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return harness.addToBattlefieldAndReturn(player, new DarkthicketWolf());
     }
 }
