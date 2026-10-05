@@ -113,4 +113,41 @@ class MarshCrocodileTest extends BaseCardTest {
     private void castMarshCrocodile() {
         harness.castFromHand(player1, new MarshCrocodile(), "{2}{U}{B}");
     }
+
+    @Test
+    @DisplayName("Entering creates two separate triggered abilities")
+    void enteringCreatesSeparateTriggeredAbilities() {
+        castMarshCrocodile();
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Marsh Crocodile");
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Marsh Crocodile can return itself and be discarded after returning")
+    void canReturnItselfAndBeDiscarded() {
+        castMarshCrocodile();
+        resolveAllTriggers();
+
+        UUID crocodileId = harness.getPermanentId(player1, "Marsh Crocodile");
+        harness.handlePermanentChosen(player1, crocodileId);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Marsh Crocodile");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        PendingInteraction.DiscardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Marsh Crocodile");
+        harness.assertNotInHand(player1, "Marsh Crocodile");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
 }
