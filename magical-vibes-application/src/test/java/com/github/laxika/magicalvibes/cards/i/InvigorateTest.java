@@ -43,8 +43,7 @@ class InvigorateTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(creature.getEffectivePower()).isEqualTo(0);
         assertThat(creature.getEffectiveToughness()).isEqualTo(4);
@@ -89,5 +88,62 @@ class InvigorateTest extends BaseCardTest {
         UUID targetId = forest.getId();
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Alternate cost is paid before resolution and can boost an opponent's creature")
+    void paysAlternateCostDuringCastingForOpponentsCreature() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AlabasterWall());
+        int opponentLife = gd.playerLifeTotals.get(player2.getId());
+        int casterLife = gd.playerLifeTotals.get(player1.getId());
+        harness.setHand(player1, List.of(new Invigorate()));
+
+        harness.castInstantWithAlternateCost(player1, 0, creature.getId(), List.of());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife + 3);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(casterLife);
+        assertThat(creature.getEffectivePower()).isZero();
+        assertThat(creature.getEffectiveToughness()).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife + 3);
+    }
+
+    @Test
+    @DisplayName("Paying mana while controlling a Forest does not give the opponent life")
+    void normalCostDoesNotGiveOpponentLife() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AlabasterWall());
+        int opponentLife = gd.playerLifeTotals.get(player2.getId());
+        harness.setHand(player1, List.of(new Invigorate()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(8);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("An opponent's Forest does not enable the alternate cost")
+    void opponentsForestDoesNotEnableAlternateCost() {
+        harness.addToBattlefield(player2, new Forest());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AlabasterWall());
+        int opponentLife = gd.playerLifeTotals.get(player2.getId());
+        harness.setHand(player1, List.of(new Invigorate()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0, creature.getId(), List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("condition is not met");
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLife);
+        assertThat(gd.stack).isEmpty();
     }
 }
