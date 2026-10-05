@@ -54,10 +54,38 @@ class PymTechnologiesTest extends BaseCardTest {
         assertThat(technologies.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Life gain resolves even after the land leaves the battlefield")
+    void gainsLifeAfterLandLeaves() {
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new PymTechnologies()));
+        harness.playLand(player1, 0);
+        assertThat(gd.stack).hasSize(1);
+        harness.assertLife(player1, 20);
+
+        Permanent technologies = gd.playerBattlefields.get(player1.getId()).removeFirst();
+        gd.playerGraveyards.get(player1.getId()).add(technologies.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A land can produce mana without waiting a turn")
+    void newlyControlledLandCanProduceMana() {
+        Permanent technologies = harness.addToBattlefieldAndReturn(player1, new PymTechnologies());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(technologies.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyTechnologies() {
-        Permanent technologies = new Permanent(new PymTechnologies());
-        technologies.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(technologies);
-        return technologies;
+        return addCreatureReady(player1, new PymTechnologies());
     }
 }
