@@ -18,7 +18,7 @@ class PatriarchsBiddingTest extends BaseCardTest {
 
     @Test
     @DisplayName("Each player chooses a type and returns all matching creatures from their graveyard")
-    void eachPlayerChoosesTheirOwnType() {
+    void eachPlayerReturnsBothChosenTypes() {
         harness.setGraveyard(player1, List.of(new ElvishWarrior(), new ElvishWarrior(), new GoblinSledder()));
         harness.setGraveyard(player2, List.of(new GoblinSledder(), new GoblinSledder(), new ElvishWarrior()));
         cast();
@@ -32,8 +32,10 @@ class PatriarchsBiddingTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Elvish Warrior")).hasSize(2);
         assertThat(findPermanents(player2, "Goblin Sledder")).hasSize(2);
-        harness.assertInGraveyard(player1, "Goblin Sledder");
-        harness.assertInGraveyard(player2, "Elvish Warrior");
+        harness.assertOnBattlefield(player1, "Goblin Sledder");
+        harness.assertOnBattlefield(player2, "Elvish Warrior");
+        harness.assertNotInGraveyard(player1, "Goblin Sledder");
+        harness.assertNotInGraveyard(player2, "Elvish Warrior");
     }
 
     @Test
@@ -51,8 +53,8 @@ class PatriarchsBiddingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No cards return when a chosen type is absent from a graveyard")
-    void doesNothingWhenChosenTypesAreAbsent() {
+    @DisplayName("An empty-graveyard player's choice also applies to the other player's graveyard")
+    void emptyGraveyardPlayerCanChooseOtherPlayersCreatureType() {
         harness.setGraveyard(player1, List.of(new ElvishWarrior()));
         harness.setGraveyard(player2, List.of());
         cast();
@@ -60,9 +62,9 @@ class PatriarchsBiddingTest extends BaseCardTest {
         harness.handleListChoice(player1, "GOBLIN");
         harness.handleListChoice(player2, "ELF");
 
-        harness.assertNotOnBattlefield(player1, "Elvish Warrior");
+        harness.assertOnBattlefield(player1, "Elvish Warrior");
         harness.assertNotOnBattlefield(player2, "Goblin Sledder");
-        harness.assertInGraveyard(player1, "Elvish Warrior");
+        harness.assertNotInGraveyard(player1, "Elvish Warrior");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 
@@ -83,6 +85,44 @@ class PatriarchsBiddingTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Elvish Warrior");
         harness.assertOnBattlefield(player2, "Goblin Sledder");
+    }
+
+    @Test
+    @DisplayName("Players may choose the same type without returning a creature twice")
+    void duplicateTypeChoicesReturnEachCreatureOnce() {
+        harness.setGraveyard(player1, List.of(new ElvishWarrior(), new GoblinSledder()));
+        harness.setGraveyard(player2, List.of(new ElvishWarrior()));
+        cast();
+
+        harness.handleListChoice(player1, "ELF");
+        harness.assertNotOnBattlefield(player1, "Elvish Warrior");
+        harness.assertNotOnBattlefield(player2, "Elvish Warrior");
+        harness.handleListChoice(player2, "ELF");
+
+        assertThat(findPermanents(player1, "Elvish Warrior")).hasSize(1);
+        assertThat(findPermanents(player2, "Elvish Warrior")).hasSize(1);
+        harness.assertInGraveyard(player1, "Goblin Sledder");
+        harness.assertNotOnBattlefield(player1, "Goblin Sledder");
+    }
+
+    @Test
+    @DisplayName("Creatures of neither chosen type and noncreature cards remain in the graveyard")
+    void unmatchedCreaturesAndNoncreaturesRemainInGraveyard() {
+        harness.setGraveyard(player1, List.of(new ElvishWarrior(), new PatriarchsBidding()));
+        harness.setGraveyard(player2, List.of(new GoblinSledder()));
+        cast();
+
+        harness.handleListChoice(player1, "BEAR");
+        harness.handleListChoice(player2, "GIANT");
+
+        harness.assertNotOnBattlefield(player1, "Elvish Warrior");
+        harness.assertNotOnBattlefield(player2, "Goblin Sledder");
+        harness.assertNotOnBattlefield(player1, "Patriarch's Bidding");
+        harness.assertInGraveyard(player1, "Elvish Warrior");
+        harness.assertInGraveyard(player2, "Goblin Sledder");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Patriarch's Bidding"))
+                .hasSize(2);
     }
 
     private void cast() {
