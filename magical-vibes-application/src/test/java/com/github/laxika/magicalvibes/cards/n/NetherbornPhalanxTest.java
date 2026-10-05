@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.w.Watchwolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -51,8 +50,7 @@ class NetherbornPhalanxTest extends BaseCardTest {
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards()).containsExactly(matchingCard);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Netherborn Phalanx");
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(matchingCard);
@@ -89,6 +87,71 @@ class NetherbornPhalanxTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("sorcery");
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(phalanx);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
+
+    @Test
+    void opponentWithNoCreaturesLosesNoLife() {
+        harness.addToBattlefield(player1, new Watchwolf());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castFromHand(player1, new NetherbornPhalanx(), "{5}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void countsCreaturesWhenTheEnterTriggerResolves() {
+        harness.addToBattlefield(player2, new BorosRecruit());
+        harness.setLife(player2, 20);
+        harness.castFromHand(player1, new NetherbornPhalanx(), "{5}{B}");
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player2, new Watchwolf());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void transmuteMayFailToFindEvenWithAMatchingCard() {
+        FlowOfIdeas matchingCard = new FlowOfIdeas();
+        harness.setHand(player1, List.of(new NetherbornPhalanx()));
+        harness.setLibrary(player1, List.of(matchingCard));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Netherborn Phalanx");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(matchingCard);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void transmuteCannotBeActivatedWhileTheStackIsNotEmpty() {
+        harness.castFromHand(player1, new NetherbornPhalanx(), "{5}{B}");
+        NetherbornPhalanx phalanx = new NetherbornPhalanx();
+        harness.setHand(player1, List.of(phalanx));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(phalanx);
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
