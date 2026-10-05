@@ -73,11 +73,99 @@ class ProtectTheNegotiatorsTest extends BaseCardTest {
         harness.passPriority(player1);
         harness.setHand(player2, List.of(new ProtectTheNegotiators()));
         harness.addMana(player2, ManaColor.BLUE, 2);
-        harness.castInstant(player2, 0, targetSpell.getId());
+        harness.castAndResolveInstant(player2, 0, targetSpell.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(soldiers(player2)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The newly created Soldier increases the payment before the counter instruction")
+    void newlyCreatedSoldierIncreasesPayment() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        GrizzlyBears targetSpell = new GrizzlyBears();
+        harness.setHand(player1, List.of(targetSpell));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0);
+
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new ProtectTheNegotiators()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castKickedInstant(player2, 0, targetSpell.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(soldiers(player2)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The Soldier remains when the opponent declines an affordable payment")
+    void soldierRemainsWhenPaymentDeclined() {
+        GrizzlyBears targetSpell = new GrizzlyBears();
+        harness.setHand(player1, List.of(targetSpell));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+        harness.castCreature(player1, 0);
+
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new ProtectTheNegotiators()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castKickedInstant(player2, 0, targetSpell.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(soldiers(player2)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("With no creatures an unkicked spell allows a zero-mana payment")
+    void noCreaturesAllowsZeroManaPayment() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        GrizzlyBears targetSpell = new GrizzlyBears();
+        harness.setHand(player1, List.of(targetSpell));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+
+        harness.passPriority(player1);
+        harness.setHand(player2, List.of(new ProtectTheNegotiators()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player2, 0, targetSpell.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(targetSpell.getId()));
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        assertThat(soldiers(player2)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An illegal spell target prevents the kicked spell from creating a Soldier")
+    void illegalTargetPreventsSoldierCreation() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        GrizzlyBears targetSpell = new GrizzlyBears();
+        harness.setHand(player1, List.of(targetSpell));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+
+        harness.passPriority(player1);
+        ProtectTheNegotiators kickedSpell = new ProtectTheNegotiators();
+        harness.setHand(player2, List.of(kickedSpell, new ProtectTheNegotiators()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castKickedInstant(player2, 0, targetSpell.getId());
+        harness.castAndResolveInstant(player2, 0, targetSpell.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(soldiers(player2)).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(card -> card.getId().equals(kickedSpell.getId()));
     }
 
     private List<Permanent> soldiers(Player player) {
