@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.s.StormscapeFamiliar;
 import com.github.laxika.magicalvibes.cards.s.Stratadon;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -73,6 +74,54 @@ class RadiantKavuTest extends BaseCardTest {
         assertThat(gqs.isPreventedFromDealingDamage(gd, black, true)).isFalse();
     }
 
+    @Test
+    @DisplayName("Prevention applies to creatures controlled by the ability's controller too")
+    void preventsControllerCreaturesAsWell() {
+        addCreatureReady(player1, new RadiantKavu());
+        Permanent blue = addCreatureReady(player1, new StormscapeFamiliar());
+        Permanent black = addCreatureReady(player1, new MaggotCarrier());
+
+        activateAbility();
+
+        assertThat(gqs.isPreventedFromDealingDamage(gd, blue, true)).isTrue();
+        assertThat(gqs.isPreventedFromDealingDamage(gd, black, true)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Prevention applies to creatures entering later and survives the Kavu leaving")
+    void appliesToLaterCreaturesAfterSourceLeaves() {
+        Permanent kavu = addCreatureReady(player1, new RadiantKavu());
+        activateAbility();
+        gd.playerBattlefields.get(player1.getId()).remove(kavu);
+        Permanent blue = harness.enterBattlefieldAndReturn(player2, new StormscapeFamiliar());
+
+        assertThat(gqs.isPreventedFromDealingDamage(gd, blue, true)).isTrue();
+        assertThat(gqs.isPreventedFromDealingDamage(gd, blue, false)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Actual combat prevents blue and black damage while other creatures deal damage")
+    void preventsOnlyMatchingAttackersDamage() {
+        Permanent kavu = addCreatureReady(player1, new RadiantKavu());
+        Permanent blue = addCreatureReady(player1, new StormscapeFamiliar());
+        Permanent black = addCreatureReady(player1, new MaggotCarrier());
+        Permanent multicolored = addCreatureReady(player1, new CavernHarpy());
+        Permanent green = addCreatureReady(player1, new PygmyKavu());
+        Permanent colorless = addCreatureReady(player1, new Stratadon());
+        activateAbility();
+
+        kavu.setAttacking(true);
+        blue.setAttacking(true);
+        black.setAttacking(true);
+        multicolored.setAttacking(true);
+        green.setAttacking(true);
+        colorless.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player2, 11);
+    }
     private void activateAbility() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
