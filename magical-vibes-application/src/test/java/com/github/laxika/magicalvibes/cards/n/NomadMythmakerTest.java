@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.o.Overgrowth;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.w.WhispersilkCloak;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -24,7 +25,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GrizzlyBears.class, HolyStrength.class, NomadMythmaker.class, Overgrowth.class, Pacifism.class})
+@CardUsed({GrizzlyBears.class, HolyStrength.class, NomadMythmaker.class, Overgrowth.class, Pacifism.class, WhispersilkCloak.class})
 class NomadMythmakerTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -268,8 +269,8 @@ class NomadMythmakerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ability fizzles if no creatures on controller's battlefield when resolving")
-    void abilityFizzlesIfNoCreaturesWhenResolving() {
+    @DisplayName("Aura remains in graveyard if no creatures are available when resolving")
+    void auraRemainsInGraveyardIfNoCreaturesWhenResolving() {
         addMythmakerReady(player1);
         Card holyStrength = new HolyStrength();
         addToGraveyard(player1, holyStrength);
@@ -286,7 +287,6 @@ class NomadMythmakerTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(holyStrength);
     }
 
@@ -363,10 +363,7 @@ class NomadMythmakerTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
-        NomadMythmaker card = new NomadMythmaker();
-        Permanent perm = new Permanent(card);
-        // summoningSick is true by default
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(perm);
+        harness.addToBattlefield(player1, new NomadMythmaker());
         Card holyStrength = new HolyStrength();
         addToGraveyard(player1, holyStrength);
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -450,6 +447,49 @@ class NomadMythmakerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(ownCreature.getId())
                 .doesNotContain(opponentCreature.getId());
+    }
+
+    @Test
+    @DisplayName("Nomad Mythmaker can attach the returned Aura to itself")
+    void canAttachAuraToItself() {
+        Permanent mythmaker = addMythmakerReady(player1);
+        Card aura = new HolyStrength();
+        addToGraveyard(player1, aura);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, aura.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, mythmaker.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == aura
+                        && mythmaker.getId().equals(permanent.getAttachedTo()));
+        assertThat(gqs.getEffectivePower(gd, mythmaker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, mythmaker)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The creature chosen for attachment may have shroud")
+    void canAttachAuraToCreatureWithShroud() {
+        addMythmakerReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent cloak = harness.addToBattlefieldAndReturn(player1, new WhispersilkCloak());
+        cloak.setAttachedTo(creature.getId());
+        Card aura = new HolyStrength();
+        addToGraveyard(player2, aura);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, aura.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(creature.getId());
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == aura
+                        && creature.getId().equals(permanent.getAttachedTo()));
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(aura);
     }
 
 }
