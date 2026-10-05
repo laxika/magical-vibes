@@ -10,7 +10,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(JungleBarrier.class)
+@CardUsed({JungleBarrier.class})
 class JungleBarrierTest extends BaseCardTest {
 
     @Test
@@ -34,5 +34,46 @@ class JungleBarrierTest extends BaseCardTest {
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid attacker index");
+    }
+
+    @Test
+    @DisplayName("Entry draw waits for its trigger and survives removal of Jungle Barrier")
+    void entryDrawResolvesAfterSourceLeaves() {
+        JungleBarrier drawnCard = new JungleBarrier();
+        JungleBarrier remainingCard = new JungleBarrier();
+        harness.setLibrary(player1, List.of(drawnCard, remainingCard));
+
+        harness.castFromHand(player1, new JungleBarrier(), "{2}{G}{U}");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Jungle Barrier");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, findPermanent(player1, "Jungle Barrier")));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Jungle Barrier");
+        harness.assertInGraveyard(player1, "Jungle Barrier");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+    }
+
+    @Test
+    @DisplayName("Entering without being cast draws for the entering creature's controller")
+    void noncastEntryDrawsForController() {
+        JungleBarrier drawnCard = new JungleBarrier();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(drawnCard));
+
+        harness.enterBattlefieldAndReturn(player2, new JungleBarrier());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Jungle Barrier");
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }
