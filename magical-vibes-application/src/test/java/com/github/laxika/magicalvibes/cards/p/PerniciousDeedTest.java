@@ -134,6 +134,63 @@ class PerniciousDeedTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Urborg Elf");
     }
 
+    @Test
+    @DisplayName("X=3 destroys enchantments at the threshold and spares higher mana values")
+    void destroysEnchantmentsAtExactThreshold() {
+        addDeed(3);
+        harness.addToBattlefield(player1, new PhyrexianArena());
+        harness.addToBattlefield(player2, new PhyrexianArena());
+        harness.addToBattlefield(player2, new Cromat());
+        harness.addToBattlefield(player2, new YavimayaCoast());
+
+        harness.activateAbility(player1, 0, 3, null);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Phyrexian Arena");
+        harness.assertNotOnBattlefield(player2, "Phyrexian Arena");
+        harness.assertInGraveyard(player1, "Phyrexian Arena");
+        harness.assertInGraveyard(player2, "Phyrexian Arena");
+        harness.assertOnBattlefield(player2, "Cromat");
+        harness.assertOnBattlefield(player2, "Yavimaya Coast");
+    }
+
+    @Test
+    @DisplayName("The ability determines affected permanents when it resolves")
+    void destroysPermanentsThatEnterAfterActivation() {
+        addDeed(2);
+
+        harness.activateAbility(player1, 0, 2, null);
+        harness.addToBattlefield(player2, new EmblazonedGolem());
+        harness.addToBattlefield(player2, new PhyrexianArena());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Emblazoned Golem");
+        harness.assertInGraveyard(player2, "Emblazoned Golem");
+        harness.assertOnBattlefield(player2, "Phyrexian Arena");
+    }
+
+    @Test
+    @DisplayName("A creature can regenerate in response to the destruction ability")
+    void canRegenerateInResponse() {
+        addDeed(5);
+        Permanent cromat = harness.addToBattlefieldAndReturn(player2, new Cromat());
+        harness.addToBattlefield(player2, new UrborgElf());
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, 5, null);
+        harness.activateAbility(player2, 0, 2, 0, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Cromat");
+        harness.assertNotInGraveyard(player2, "Cromat");
+        assertThat(cromat.isTapped()).isTrue();
+        assertThat(cromat.getRegenerationShield()).isZero();
+        harness.assertNotOnBattlefield(player2, "Urborg Elf");
+        harness.assertInGraveyard(player2, "Urborg Elf");
+    }
+
     private void addDeed(int xValue) {
         prepareDeed();
         harness.addMana(player1, ManaColor.COLORLESS, xValue);
