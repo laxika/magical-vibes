@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.e.ErraticPortal;
 import com.github.laxika.magicalvibes.cards.s.Slaughter;
+import com.github.laxika.magicalvibes.cards.s.ScareTactics;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,7 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Mirozel.class, Slaughter.class, ErraticPortal.class})
+@CardUsed({Mirozel.class, Slaughter.class, ErraticPortal.class, ScareTactics.class})
 class MirozelTest extends BaseCardTest {
 
     @Test
@@ -28,8 +29,7 @@ class MirozelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Mirozel");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(miroz.getId()));
+        harness.assertNotOnBattlefield(player1, "Mirozel");
     }
 
     @Test
@@ -47,8 +47,7 @@ class MirozelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Mirozel");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(mirozId));
+        harness.assertNotOnBattlefield(player1, "Mirozel");
     }
 
     @Test
@@ -67,5 +66,55 @@ class MirozelTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(unaffectedMirozelId))
                 .noneMatch(permanent -> permanent.getId().equals(targetedMirozelId));
+    }
+
+    @Test
+    @DisplayName("Returns when targeted by its controller's spell")
+    void returnsWhenTargetedByOwnSpell() {
+        Permanent mirozel = harness.addToBattlefieldAndReturn(player1, new Mirozel());
+        harness.setHand(player1, List.of(new Slaughter()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castInstant(player1, 0, mirozel.getId());
+
+        harness.assertOnBattlefield(player1, "Mirozel");
+        harness.assertNotInHand(player1, "Mirozel");
+        harness.passBothPriorities();
+        harness.assertInHand(player1, "Mirozel");
+        harness.assertNotOnBattlefield(player1, "Mirozel");
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Slaughter");
+        harness.assertNotInGraveyard(player1, "Mirozel");
+    }
+
+    @Test
+    @DisplayName("An untargeted spell affecting Mirozel does not trigger its ability")
+    void untargetedSpellDoesNotReturnMirozel() {
+        harness.addToBattlefield(player1, new Mirozel());
+        harness.setHand(player1, List.of(new ScareTactics()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mirozel");
+        harness.assertNotInHand(player1, "Mirozel");
+        harness.assertInGraveyard(player1, "Scare Tactics");
+    }
+
+    @Test
+    @DisplayName("Returns to its owner's hand when controlled by another player")
+    void returnsToOwnerRatherThanController() {
+        Permanent mirozel = harness.addToBattlefieldAndReturn(player2, new Mirozel());
+        gd.stolenCreatures.put(mirozel.getId(), player1.getId());
+        harness.setHand(player1, List.of(new Slaughter()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castInstant(player1, 0, mirozel.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Mirozel");
+        harness.assertNotInHand(player2, "Mirozel");
+        harness.assertNotOnBattlefield(player2, "Mirozel");
     }
 }
