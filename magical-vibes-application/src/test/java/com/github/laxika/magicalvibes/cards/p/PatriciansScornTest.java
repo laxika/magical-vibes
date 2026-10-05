@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.b.BarrenGlory;
 import com.github.laxika.magicalvibes.cards.b.BladeOfTheSixthPride;
 import com.github.laxika.magicalvibes.cards.f.FomoriNomad;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -24,12 +23,9 @@ class PatriciansScornTest extends BaseCardTest {
         Permanent ownEnchantment = harness.addToBattlefieldAndReturn(player1, new BarrenGlory());
         Permanent opponentEnchantment = harness.addToBattlefieldAndReturn(player2, new BarrenGlory());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new FomoriNomad());
-        harness.setHand(player1, List.of(whiteSpell, scorn));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, whiteSpell, "{1}{W}");
         harness.passBothPriorities();
+        harness.setHand(player1, List.of(scorn));
         harness.castInstantWithAlternateCost(player1, 0, null, List.of());
         harness.passBothPriorities();
 
@@ -59,12 +55,9 @@ class PatriciansScornTest extends BaseCardTest {
     void cannotUseFreeAlternateCostAfterCastingNonWhiteSpell() {
         FomoriNomad nonWhiteSpell = new FomoriNomad();
         PatriciansScorn scorn = new PatriciansScorn();
-        harness.setHand(player1, List.of(nonWhiteSpell, scorn));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, nonWhiteSpell, "{4}{R}");
         harness.passBothPriorities();
+        harness.setHand(player1, List.of(scorn));
 
         assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0, null, List.of()))
                 .isInstanceOf(IllegalStateException.class);
@@ -74,6 +67,54 @@ class PatriciansScornTest extends BaseCardTest {
     void cannotUseFreeAlternateCostWithoutAnotherWhiteSpell() {
         PatriciansScorn scorn = new PatriciansScorn();
         harness.setHand(player1, List.of(scorn));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0, null, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void castsForFreeBeforeTheWhiteSpellResolves() {
+        BladeOfTheSixthPride whiteSpell = new BladeOfTheSixthPride();
+        PatriciansScorn scorn = new PatriciansScorn();
+        BarrenGlory enchantment = new BarrenGlory();
+        Permanent permanent = harness.addToBattlefieldAndReturn(player2, enchantment);
+        harness.castFromHand(player1, whiteSpell, "{1}{W}");
+        harness.setHand(player1, List.of(scorn));
+
+        harness.castInstantWithAlternateCost(player1, 0, null, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(permanent);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(enchantment);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(scorn);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard() == whiteSpell);
+    }
+
+    @Test
+    void aNormallyCastScornEnablesAnotherScornForFree() {
+        PatriciansScorn first = new PatriciansScorn();
+        PatriciansScorn second = new PatriciansScorn();
+        harness.castFromHand(player1, first, "{3}{W}");
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(second));
+
+        harness.castInstantWithAlternateCost(player1, 0, null, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void opponentsWhiteSpellDoesNotEnableFreeCasting() {
+        harness.castFromHand(player2, new PatriciansScorn(), "{3}{W}");
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new PatriciansScorn()));
 
         assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0, null, List.of()))
                 .isInstanceOf(IllegalStateException.class);
