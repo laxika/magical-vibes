@@ -78,4 +78,75 @@ class MagmaJetTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard, bottomCard);
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    void doesNotScryWhenItsOnlyTargetLeavesTheBattlefield() {
+        Permanent target = addCreatureReady(player2, new GoblinBrawler());
+        Card first = new GoblinBrawler();
+        Card second = new GoblinBrawler();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setHand(player1, List.of(new MagmaJet()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Magma Jet");
+    }
+
+    @Test
+    void resolvesWithAnEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new MagmaJet()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Magma Jet");
+    }
+
+    @Test
+    void scriesOnlyTheAvailableCardWithAOneCardLibrary() {
+        Card onlyCard = new GoblinBrawler();
+        harness.setLibrary(player1, List.of(onlyCard));
+        harness.setHand(player1, List.of(new MagmaJet()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
+                .containsExactly(onlyCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Magma Jet");
+    }
+
+    @Test
+    void canPutBothLookedAtCardsOnTheBottomInEitherOrder() {
+        Card first = new GoblinBrawler();
+        Card second = new GoblinBrawler();
+        Card third = new GoblinBrawler();
+        harness.setLibrary(player1, List.of(first, second, third));
+        harness.setHand(player1, List.of(new MagmaJet()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, second, first);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Magma Jet");
+    }
 }
