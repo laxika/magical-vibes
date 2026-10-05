@@ -41,8 +41,7 @@ class MarkOfFuryTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(gd.stack).hasSize(1);
@@ -66,8 +65,7 @@ class MarkOfFuryTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).contains(auraCard);
@@ -90,6 +88,35 @@ class MarkOfFuryTest extends BaseCardTest {
                 .singleElement()
                 .extracting(Permanent::getAttachedTo)
                 .isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Can enchant an opponent's creature and grants haste only to that creature")
+    void enchantsOpponentsCreatureWithoutGrantingOtherCreaturesHaste() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player2, new PlatedSpider());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new PlatedSpider());
+        harness.setHand(player1, List.of(new MarkOfFury()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, enchanted, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isFalse();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        harness.assertOnBattlefield(player1, "Mark of Fury");
+        assertThat(gqs.hasKeyword(gd, enchanted, Keyword.HASTE)).isTrue();
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Mark of Fury");
+        harness.assertInHand(player1, "Mark of Fury");
+        harness.assertOnBattlefield(player2, "Plated Spider");
+        assertThat(gqs.hasKeyword(gd, enchanted, Keyword.HASTE)).isFalse();
     }
 
     @Test
