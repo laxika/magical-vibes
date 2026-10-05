@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
+import com.github.laxika.magicalvibes.cards.e.Evacuation;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +19,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({JusticeVanceAstrovik.class, Boomerang.class, GrizzlyBears.class, Island.class})
+@CardUsed({JusticeVanceAstrovik.class, Boomerang.class, Evacuation.class, GrizzlyBears.class, Island.class})
 class JusticeVanceAstrovikTest extends BaseCardTest {
 
     @Test
@@ -105,7 +106,74 @@ class JusticeVanceAstrovikTest extends BaseCardTest {
     private void castBoomerangAndResolveSpell(UUID targetId) {
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
+    }
+
+    @Test
+    void etbReturningOwnPermanentTriggersCounterAbility() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new JusticeVanceAstrovik()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castCreature(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Justice, Vance Astrovik")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void etbRejectsLandTarget() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.setHand(player1, List.of(new JusticeVanceAstrovik()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0, land.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nonland");
+    }
+
+    @Test
+    void controlledPermanentReturningToOpponentsHandStillTriggers() {
+        Permanent justice = harness.addToBattlefieldAndReturn(player1, new JusticeVanceAstrovik());
+        Card borrowedCreature = new GrizzlyBears();
+        borrowedCreature.setOwnerId(player2.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, borrowedCreature);
+
+        castAndResolveBoomerang(target.getId());
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+        assertThat(justice.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void ownedPermanentControlledByOpponentDoesNotTrigger() {
+        Permanent justice = harness.addToBattlefieldAndReturn(player1, new JusticeVanceAstrovik());
+        Card stolenCreature = new GrizzlyBears();
+        stolenCreature.setOwnerId(player1.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, stolenCreature);
+
+        castAndResolveBoomerang(target.getId());
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(justice.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void simultaneousReturnTriggersEvenWhenJusticeLeavesFirst() {
+        harness.addToBattlefield(player1, new JusticeVanceAstrovik());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Evacuation()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertInHand(player1, "Justice, Vance Astrovik");
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.stack).isEmpty();
     }
 }
