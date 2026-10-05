@@ -109,6 +109,53 @@ class NoxiousGhoulTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, opposingBird)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Repeated Zombie entries accumulate and kill non-Zombies with zero toughness")
+    void repeatedZombieEntriesKillNonZombies() {
+        harness.addToBattlefield(player1, new NoxiousGhoul());
+        harness.addToBattlefield(player2, new AvenEnvoy());
+
+        harness.castFromHand(player1, new WitheredWretch(), "{B}{B}");
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player2, "Aven Envoy");
+
+        harness.castFromHand(player1, new WitheredWretch(), "{B}{B}");
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Aven Envoy");
+        harness.assertInGraveyard(player2, "Aven Envoy");
+        assertThat(countPermanents(player1, "Withered Wretch")).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Noxious Ghoul");
+    }
+
+    @Test
+    @DisplayName("A creature entering after the debuff resolves is not affected")
+    void laterCreatureDoesNotReceiveResolvedDebuff() {
+        castNoxiousGhoul();
+        resolveAllTriggers();
+
+        harness.castFromHand(player1, new AvenEnvoy(), "{U}");
+        resolveAllTriggers();
+
+        Permanent bird = findPermanent(player1, "Aven Envoy");
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A second Ghoul triggers both its own ability and the existing Ghoul's ability")
+    void secondGhoulTriggersBothGhouls() {
+        harness.addToBattlefield(player1, new NoxiousGhoul());
+        Permanent bird = harness.addToBattlefieldAndReturn(player2, new KeeneyeAven());
+
+        castNoxiousGhoul();
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, bird)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, bird)).isEqualTo(1);
+        assertThat(countPermanents(player1, "Noxious Ghoul")).isEqualTo(2);
+    }
+
     private void castNoxiousGhoul() {
         harness.castFromHand(player1, new NoxiousGhoul(), "{3}{B}{B}");
     }
