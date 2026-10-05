@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(LosDiablosMissileBase.class)
+@CardUsed({LosDiablosMissileBase.class})
 class LosDiablosMissileBaseTest extends BaseCardTest {
 
     @Test
@@ -54,10 +54,43 @@ class LosDiablosMissileBaseTest extends BaseCardTest {
         assertThat(land.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Life gain waits for its trigger and survives the land leaving")
+    void lifeGainResolvesAfterLandLeaves() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new LosDiablosMissileBase()));
+
+        harness.playLand(player1, 0);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Entering under the opponent's control gains life for that player")
+    void enteringGainsLifeForItsController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        Permanent land = harness.enterBattlefieldAndReturn(player2, new LosDiablosMissileBase());
+
+        assertThat(land.isTapped()).isTrue();
+        harness.assertLife(player2, 20);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 21);
+    }
+
     private Permanent addReadyLand() {
-        Permanent land = new Permanent(new LosDiablosMissileBase());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new LosDiablosMissileBase());
         land.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(land);
         return land;
     }
 }
