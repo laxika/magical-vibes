@@ -1,10 +1,14 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.f.ForsakeTheWorldly;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MaskwoodNexus;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,12 +16,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LilianasMastery.class})
 class LilianasMasteryTest extends BaseCardTest {
 
     private void castMastery(com.github.laxika.magicalvibes.model.Player player) {
-        harness.setHand(player, List.of(new LilianasMastery()));
-        harness.addMana(player, ManaColor.BLACK, 5);
-        harness.castEnchantment(player, 0);
+        harness.castFromHand(player, new LilianasMastery(), "{3}{B}{B}");
         harness.passBothPriorities(); // resolve enchantment spell
         harness.passBothPriorities(); // resolve ETB token trigger
     }
@@ -47,6 +50,7 @@ class LilianasMasteryTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({WalkingCorpse.class})
     @DisplayName("Anthem boosts other Zombies you control")
     void anthemBoostsOtherOwnZombies() {
         Permanent corpse = addCreatureReady(player1, new WalkingCorpse());
@@ -58,6 +62,7 @@ class LilianasMasteryTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({GrizzlyBears.class})
     @DisplayName("Anthem does not boost non-Zombie creatures")
     void anthemDoesNotBoostNonZombies() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
@@ -68,6 +73,7 @@ class LilianasMasteryTest extends BaseCardTest {
     }
 
     @Test
+    @CardUsed({WalkingCorpse.class})
     @DisplayName("Anthem does not boost opponent's Zombies")
     void anthemDoesNotBoostOpponentZombies() {
         Permanent opponentCorpse = addCreatureReady(player2, new WalkingCorpse());
@@ -75,5 +81,53 @@ class LilianasMasteryTest extends BaseCardTest {
 
         assertThat(gqs.getEffectivePower(gd, opponentCorpse)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, opponentCorpse)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Masteries stack their boosts and each creates two tokens")
+    void multipleMasteriesStack() {
+        castMastery(player1);
+        castMastery(player1);
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(4).allSatisfy(token -> {
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
+        });
+    }
+
+    @Test
+    @CardUsed({ForsakeTheWorldly.class})
+    @DisplayName("The token trigger resolves after Mastery is exiled, without its anthem")
+    void tokenTriggerSurvivesSourceLeaving() {
+        harness.castFromHand(player1, new LilianasMastery(), "{3}{B}{B}");
+        harness.passBothPriorities();
+        Permanent mastery = findPermanent(player1, "Liliana's Mastery");
+        assertThat(findPermanents(player1, "Zombie")).isEmpty();
+
+        harness.setHand(player2, List.of(new ForsakeTheWorldly()));
+        harness.addMana(player2, ManaColor.WHITE, 3);
+        harness.castAndResolveInstant(player2, 0, mastery.getId());
+        harness.assertNotOnBattlefield(player1, "Liliana's Mastery");
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Zombie")).hasSize(2).allSatisfy(token -> {
+            assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
+        });
+        assertThat(findPermanents(player2, "Zombie")).isEmpty();
+    }
+
+    @Test
+    @CardUsed({Opalescence.class, MaskwoodNexus.class})
+    @DisplayName("Mastery boosts itself when it becomes a Zombie creature")
+    void anthemIncludesAnimatedZombieMastery() {
+        castMastery(player1);
+        Permanent mastery = findPermanent(player1, "Liliana's Mastery");
+        harness.addToBattlefield(player1, new Opalescence());
+        harness.addToBattlefield(player1, new MaskwoodNexus());
+
+        assertThat(gqs.isCreature(gd, mastery)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, mastery)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, mastery)).isEqualTo(6);
     }
 }
