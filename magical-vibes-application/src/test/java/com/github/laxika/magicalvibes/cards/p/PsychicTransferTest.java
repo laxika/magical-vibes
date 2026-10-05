@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.BoonReflection;
+import com.github.laxika.magicalvibes.cards.c.CourageousResolve;
 import com.github.laxika.magicalvibes.cards.f.ForsakenWastes;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,8 +11,58 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({PsychicTransfer.class, ForsakenWastes.class})
+@CardUsed({PsychicTransfer.class, ForsakenWastes.class, BoonReflection.class,
+        PlatinumEmperion.class, CourageousResolve.class})
 class PsychicTransferTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("May target its controller without changing life totals")
+    void mayTargetController() {
+        harness.setLife(player1, 17);
+        harness.setHand(player1, List.of(new PsychicTransfer()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Psychic Transfer");
+    }
+
+    @Test
+    @DisplayName("Does not exchange when the difference becomes too large before resolution")
+    void differenceBecomesTooLargeBeforeResolution() {
+        harness.setLife(player1, 15);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new PsychicTransfer()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.setLife(player1, 14);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @CardUsed(CourageousResolve.class)
+    @DisplayName("Does not partially exchange when the controller cannot lose life")
+    void doesNotPartiallyExchangeWhenControllerCannotLoseLife() {
+        harness.setLife(player1, 5);
+        harness.setLife(player2, 3);
+        harness.setLibrary(player1, List.of(new PsychicTransfer()));
+        harness.setHand(player1, List.of(new CourageousResolve()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.setHand(player1, List.of(new PsychicTransfer()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player1, 5);
+        harness.assertLife(player2, 3);
+    }
 
     @Test
     @DisplayName("Exchanges life totals when the difference is 5 or less")
