@@ -13,8 +13,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({PurrajOfUrborg.class, FeralShadow.class, GibberingHyenas.class})
@@ -26,12 +24,6 @@ class PurrajOfUrborgTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         return purraj;
-    }
-
-    private void giveBlackSpell(com.github.laxika.magicalvibes.model.Player player) {
-        harness.setHand(player, List.of(new FeralShadow()));
-        harness.addMana(player, ManaColor.BLACK, 1);
-        harness.addMana(player, ManaColor.COLORLESS, 2);
     }
 
     @Test
@@ -52,17 +44,15 @@ class PurrajOfUrborgTest extends BaseCardTest {
     @DisplayName("Controller casts a black spell, pays {B}, gets a +1/+1 counter")
     void controllerCastsBlackSpellAndPays() {
         Permanent purraj = addPurraj();
-        giveBlackSpell(player1);
         harness.addMana(player1, ManaColor.BLACK, 1); // the {B} to pay
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FeralShadow(), "{2}{B}");
+        harness.passBothPriorities(); // resolve triggered ability to its payment choice
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-
-        harness.passBothPriorities(); // resolve triggered ability
 
         assertThat(gqs.getEffectivePower(gd, purraj)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, purraj)).isEqualTo(4);
@@ -72,10 +62,10 @@ class PurrajOfUrborgTest extends BaseCardTest {
     @DisplayName("Declining the payment leaves Purraj unchanged")
     void decliningLeavesPurrajUnchanged() {
         Permanent purraj = addPurraj();
-        giveBlackSpell(player1);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FeralShadow(), "{2}{B}");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
@@ -90,9 +80,8 @@ class PurrajOfUrborgTest extends BaseCardTest {
     @DisplayName("Accepting without {B} leaves Purraj unchanged")
     void acceptingWithoutPaymentLeavesPurrajUnchanged() {
         Permanent purraj = addPurraj();
-        giveBlackSpell(player1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new FeralShadow(), "{2}{B}");
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -112,16 +101,13 @@ class PurrajOfUrborgTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        giveBlackSpell(player2);
-
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new FeralShadow(), "{2}{B}");
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-
-        harness.passBothPriorities(); // resolve triggered ability
 
         assertThat(gqs.getEffectivePower(gd, purraj)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, purraj)).isEqualTo(4);
@@ -130,15 +116,42 @@ class PurrajOfUrborgTest extends BaseCardTest {
     @Test
     @DisplayName("A nonblack spell does not trigger the ability")
     void nonBlackSpellDoesNotTrigger() {
-        Permanent purraj = addPurraj();
-        harness.setHand(player1, List.of(new GibberingHyenas()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        addPurraj();
+        harness.castFromHand(player1, new GibberingHyenas(), "{2}{G}");
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("The trigger goes on the stack before its payment choice")
+    void paymentChoiceWaitsForResolution() {
+        Permanent purraj = addPurraj();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castFromHand(player1, new FeralShadow(), "{2}{B}");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.getEffectivePower(gd, purraj)).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("Purraj does not gain first strike while blocking")
+    void noFirstStrikeWhileBlocking() {
+        Permanent purraj = addPurraj();
+        purraj.setBlocking(true);
+
+        assertThat(gqs.hasKeyword(gd, purraj, Keyword.FIRST_STRIKE)).isFalse();
     }
 }
