@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BriarberryCohort;
 import com.github.laxika.magicalvibes.cards.c.Cursecatcher;
 import com.github.laxika.magicalvibes.cards.d.DeepchannelMentor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GreaterAuramancy;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,8 +15,58 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({PucasMischief.class, BriarberryCohort.class, Cursecatcher.class,
-        DeepchannelMentor.class, Forest.class})
+        DeepchannelMentor.class, Forest.class, GreaterAuramancy.class})
 class PucasMischiefTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Does not offer your own permanent with shroud as the first target")
+    void excludesOwnPermanentWithShroud() {
+        Permanent puca = harness.addToBattlefieldAndReturn(player1, new PucasMischief());
+        Permanent auramancy = harness.addToBattlefieldAndReturn(player1, new GreaterAuramancy());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new BriarberryCohort());
+        harness.addToBattlefield(player2, new Cursecatcher());
+
+        advanceToUpkeep(player1);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(auramancy.getId(), own.getId());
+        assertThat(choice.validPermanentIds()).doesNotContain(puca.getId());
+    }
+
+    @Test
+    @DisplayName("Does not offer an opponent permanent with shroud as the second target")
+    void excludesOpponentPermanentWithShroud() {
+        harness.addToBattlefield(player1, new PucasMischief());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new DeepchannelMentor());
+        Permanent opponentPuca = harness.addToBattlefieldAndReturn(player2, new PucasMischief());
+        Permanent auramancy = harness.addToBattlefieldAndReturn(player2, new GreaterAuramancy());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, own.getId());
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(auramancy.getId());
+        assertThat(choice.validPermanentIds()).doesNotContain(opponentPuca.getId());
+    }
+
+    @Test
+    @DisplayName("Does not trigger during the opponent's upkeep")
+    void doesNotTriggerOnOpponentUpkeep() {
+        harness.addToBattlefield(player1, new PucasMischief());
+        harness.addToBattlefield(player1, new BriarberryCohort());
+        harness.addToBattlefield(player2, new Cursecatcher());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.assertOnBattlefield(player1, "Briarberry Cohort");
+        harness.assertOnBattlefield(player2, "Cursecatcher");
+    }
 
     @Test
     @DisplayName("Exchanges control of both permanents when accepted")
