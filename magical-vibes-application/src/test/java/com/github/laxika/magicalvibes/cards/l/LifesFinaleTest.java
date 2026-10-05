@@ -1,33 +1,33 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.p.Peek;
+import com.github.laxika.magicalvibes.cards.m.MyrSuperion;
+import com.github.laxika.magicalvibes.cards.g.GitaxianProbe;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LifesFinale.class, MyrSuperion.class, GitaxianProbe.class, Swamp.class})
 class LifesFinaleTest extends BaseCardTest {
-
-    // ===== Board wipe =====
 
     @Test
     @DisplayName("Destroys all creatures on resolution")
     void destroysAllCreatures() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new MyrSuperion());
+        harness.addToBattlefield(player2, new MyrSuperion());
 
         harness.setHand(player1, List.of(new LifesFinale()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -36,15 +36,13 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both creatures should be destroyed
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
-        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Myr Superion");
+        harness.assertNotOnBattlefield(player2, "Myr Superion");
 
         // Creatures should be in graveyards
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Myr Superion");
+        harness.assertInGraveyard(player2, "Myr Superion");
     }
-
-    // ===== Library search =====
 
     @Test
     @DisplayName("After board wipe, presents library search for creature cards")
@@ -64,9 +62,8 @@ class LifesFinaleTest extends BaseCardTest {
     @Test
     @DisplayName("Only creature cards are shown in the search")
     void onlyCreatureCardsInSearch() {
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(
-                new GrizzlyBears(), new Peek(), new Swamp(), new GrizzlyBears()
+        harness.setLibrary(player2, List.of(
+                new MyrSuperion(), new GitaxianProbe(), new Swamp(), new MyrSuperion()
         ));
 
         harness.setHand(player1, List.of(new LifesFinale()));
@@ -84,9 +81,8 @@ class LifesFinaleTest extends BaseCardTest {
     @Test
     @DisplayName("Chosen creature card goes to opponent's graveyard")
     void chosenCardGoesToOpponentGraveyard() {
-        Card bears = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(bears);
+        Card bears = new MyrSuperion();
+        harness.setLibrary(player2, List.of(bears));
 
         harness.setHand(player1, List.of(new LifesFinale()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -95,7 +91,7 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Choose the creature card
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Card should be in opponent's graveyard
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -109,9 +105,8 @@ class LifesFinaleTest extends BaseCardTest {
     @Test
     @DisplayName("Found creature lands only in the target's graveyard — not exile, not the caster's")
     void foundCreatureLandsOnlyInTheTargetsGraveyard() {
-        Card bears = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(bears);
+        Card bears = new MyrSuperion();
+        harness.setLibrary(player2, List.of(bears));
 
         harness.setHand(player1, List.of(new LifesFinale()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -119,22 +114,21 @@ class LifesFinaleTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(c -> c.getId().equals(bears.getId()));
         assertThat(gd.exiledCards).noneMatch(e -> e.card().getId().equals(bears.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(c -> c.getId().equals(bears.getId()));
-        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Myr Superion");
     }
 
     @Test
     @DisplayName("Can choose up to three creature cards sequentially")
     void canChooseUpToThreeCreatures() {
-        Card bears1 = new GrizzlyBears();
-        Card bears2 = new GrizzlyBears();
-        Card bears3 = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(bears1, bears2, bears3, new Peek()));
+        Card bears1 = new MyrSuperion();
+        Card bears2 = new MyrSuperion();
+        Card bears3 = new MyrSuperion();
+        harness.setLibrary(player2, List.of(bears1, bears2, bears3, new GitaxianProbe()));
 
         harness.setHand(player1, List.of(new LifesFinale()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -143,34 +137,33 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Pick first creature
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Pick second creature
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Pick third creature
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // All three should be in opponent's graveyard
         long graveyardCreatures = gd.playerGraveyards.get(player2.getId()).stream()
-                .filter(c -> c.getName().equals("Grizzly Bears"))
+                .filter(c -> c.getName().equals("Myr Superion"))
                 .count();
         assertThat(graveyardCreatures).isEqualTo(3);
 
-        // Library should only have the non-creature card left (Peek)
+        // Library should only have the non-creature card left (GitaxianProbe)
         assertThat(gd.playerDecks.get(player2.getId()))
-                .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+                .noneMatch(c -> c.getName().equals("Myr Superion"));
     }
 
     @Test
     @DisplayName("Can decline to find more cards (fail to find)")
     void canDeclineToFindMoreCards() {
-        Card bears1 = new GrizzlyBears();
-        Card bears2 = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(bears1, bears2));
+        Card bears1 = new MyrSuperion();
+        Card bears2 = new MyrSuperion();
+        harness.setLibrary(player2, List.of(bears1, bears2));
 
         harness.setHand(player1, List.of(new LifesFinale()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -179,14 +172,14 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Pick first creature
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // Decline to pick more (-1 = fail to find)
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         // Only one creature should be in graveyard
         long graveyardCreatures = gd.playerGraveyards.get(player2.getId()).stream()
-                .filter(c -> c.getName().equals("Grizzly Bears"))
+                .filter(c -> c.getName().equals("Myr Superion"))
                 .count();
         assertThat(graveyardCreatures).isEqualTo(1);
 
@@ -197,9 +190,8 @@ class LifesFinaleTest extends BaseCardTest {
     @Test
     @DisplayName("Library is shuffled after search completes")
     void libraryIsShuffledAfterSearch() {
-        Card bears = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(bears);
+        Card bears = new MyrSuperion();
+        harness.setLibrary(player2, List.of(bears));
 
         harness.setHand(player1, List.of(new LifesFinale()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -208,18 +200,16 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Decline to pick any card
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         // Log should mention shuffle
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffled") || log.contains("Library is shuffled"));
     }
 
-    // ===== Empty / no creature library =====
-
     @Test
     @DisplayName("Empty opponent library skips search")
     void emptyLibrarySkipsSearch() {
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
 
         harness.setHand(player1, List.of(new LifesFinale()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -234,8 +224,7 @@ class LifesFinaleTest extends BaseCardTest {
     @Test
     @DisplayName("No creature cards in opponent library skips search")
     void noCreaturesInLibrarySkipsSearch() {
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(new Peek(), new Swamp()));
+        harness.setLibrary(player2, List.of(new GitaxianProbe(), new Swamp()));
 
         harness.setHand(player1, List.of(new LifesFinale()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -250,12 +239,10 @@ class LifesFinaleTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no matching cards"));
     }
 
-    // ===== Sorcery after resolution =====
-
     @Test
     @DisplayName("Life's Finale goes to caster's graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
 
         harness.setHand(player1, List.of(new LifesFinale()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -267,14 +254,11 @@ class LifesFinaleTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Life's Finale");
     }
 
-    // ===== Fewer than 3 creature cards =====
-
     @Test
     @DisplayName("Search ends when no more creature cards remain in library")
     void searchEndsWhenNoMoreCreatures() {
-        Card bears = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(bears, new Peek()));
+        Card bears = new MyrSuperion();
+        harness.setLibrary(player2, List.of(bears, new GitaxianProbe()));
 
         harness.setHand(player1, List.of(new LifesFinale()));
         harness.addMana(player1, ManaColor.BLACK, 6);
@@ -283,7 +267,7 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Pick the only creature
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         // No more creature cards — search should end automatically
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
@@ -293,12 +277,78 @@ class LifesFinaleTest extends BaseCardTest {
                 .anyMatch(c -> c.getId().equals(bears.getId()));
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Cannot target the caster")
+    void cannotTargetCaster() {
+        harness.setHand(player1, List.of(new LifesFinale()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Board wipe precedes search and preserves lands")
+    void boardWipePrecedesSearchAndPreservesLands() {
+        harness.addToBattlefield(player1, new MyrSuperion());
+        harness.addToBattlefield(player2, new MyrSuperion());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.setLibrary(player2, List.of(new MyrSuperion()));
+        harness.setHand(player1, List.of(new LifesFinale()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.assertInGraveyard(player1, "Myr Superion");
+        harness.assertInGraveyard(player2, "Myr Superion");
+        harness.assertOnBattlefield(player2, "Swamp");
+        harness.handleCardChosen(player1, -1);
+    }
+
+    @Test
+    @DisplayName("Stops after three cards even when a fourth creature remains")
+    void stopsAfterThreeCards() {
+        Card fourth = new MyrSuperion();
+        harness.setLibrary(player2, List.of(new MyrSuperion(), new MyrSuperion(), new MyrSuperion(), fourth));
+        harness.setHand(player1, List.of(new LifesFinale()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(fourth);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Selected creatures move to the graveyard together after selection completes")
+    void selectedCreaturesMoveTogether() {
+        Card first = new MyrSuperion();
+        Card second = new MyrSuperion();
+        harness.setLibrary(player2, List.of(first, second));
+        harness.setHand(player1, List.of(new LifesFinale()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(first, second);
+
+        harness.handleCardChosen(player1, 0);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(first, second);
+    }
 
     private void setupOpponentLibraryWithCreatures() {
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()
+        harness.setLibrary(player2, List.of(
+                new MyrSuperion(), new MyrSuperion(), new MyrSuperion()
         ));
     }
 }
