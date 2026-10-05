@@ -1,21 +1,21 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ProfessionalWrestler.class, GrizzlyBears.class})
+@CardUsed({ProfessionalWrestler.class})
 class ProfessionalWrestlerTest extends BaseCardTest {
 
     @Test
@@ -25,8 +25,7 @@ class ProfessionalWrestlerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
@@ -34,19 +33,12 @@ class ProfessionalWrestlerTest extends BaseCardTest {
     @Test
     @DisplayName("Professional Wrestler can be blocked by one creature")
     void canBeBlockedByOneCreature() {
-        Permanent attacker = new Permanent(new ProfessionalWrestler());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new ProfessionalWrestler());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        addCreatureReady(player2, new ProfessionalWrestler());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
     }
@@ -54,23 +46,13 @@ class ProfessionalWrestlerTest extends BaseCardTest {
     @Test
     @DisplayName("Professional Wrestler cannot be blocked by two creatures")
     void cannotBeBlockedByTwoCreatures() {
-        Permanent attacker = new Permanent(new ProfessionalWrestler());
-        attacker.setSummoningSick(false);
+        Permanent attacker = addCreatureReady(player1, new ProfessionalWrestler());
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
-        Permanent blockerOne = new Permanent(new GrizzlyBears());
-        blockerOne.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerOne);
+        addCreatureReady(player2, new ProfessionalWrestler());
+        addCreatureReady(player2, new ProfessionalWrestler());
 
-        Permanent blockerTwo = new Permanent(new GrizzlyBears());
-        blockerTwo.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blockerTwo);
-
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
@@ -78,5 +60,55 @@ class ProfessionalWrestlerTest extends BaseCardTest {
         )))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked by more than 1 creature");
+    }
+
+    @Test
+    void noncastEntryCreatesUntappedTreasureOnlyForItsController() {
+        harness.enterBattlefieldAndReturn(player2, new ProfessionalWrestler());
+
+        assertThat(countPermanents(player2, "Treasure")).isZero();
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player2, "Treasure")).isEqualTo(1);
+        assertThat(findPermanent(player2, "Treasure").isTapped()).isFalse();
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+    }
+
+    @Test
+    void enterTriggerStillCreatesTreasureAfterSourceDies() {
+        Permanent wrestler = harness.enterBattlefieldAndReturn(player1, new ProfessionalWrestler());
+        wrestler.setMarkedDamage(4);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Professional Wrestler");
+
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Treasure")).isEqualTo(1);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    void treasureCanImmediatelyBeSacrificedForAnyColor(ManaColor color) {
+        harness.enterBattlefieldAndReturn(player1, new ProfessionalWrestler());
+        resolveAllTriggers();
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(countPermanents(player1, "Treasure")).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void twoWrestlersCanEachBeBlockedByOneCreature() {
+        addCreatureReady(player1, new ProfessionalWrestler()).setAttacking(true);
+        addCreatureReady(player1, new ProfessionalWrestler()).setAttacking(true);
+        addCreatureReady(player2, new ProfessionalWrestler());
+        addCreatureReady(player2, new ProfessionalWrestler());
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 1)));
     }
 }
