@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -106,6 +107,107 @@ class LazotepQuarryTest extends BaseCardTest {
 
         assertThat(quarry.isTapped()).isFalse();
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Zombie copy replaces the original creature types")
+    void zombieCopyReplacesOriginalCreatureTypes() {
+        Permanent quarry = addReadyQuarry();
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, battlefieldIndex(quarry), 2, 2, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(token -> {
+                    assertThat(token.getCard().isToken()).isTrue();
+                    assertThat(token.getCard().getSubtypes()).containsExactly(CardSubtype.ZOMBIE);
+                });
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature in an opponent's graveyard")
+    void rejectsOpponentsGraveyard() {
+        Permanent quarry = addReadyQuarry();
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(quarry), 2, 2, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(quarry.isTapped()).isFalse();
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Cannot copy a noncreature card even when its mana value matches X")
+    void rejectsNoncreatureTarget() {
+        Permanent quarry = addReadyQuarry();
+        LazotepQuarry target = new LazotepQuarry();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(quarry), 2, 0, target.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(quarry.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Lazotep Quarry");
+    }
+
+    @Test
+    @DisplayName("Cannot produce colored mana without a creature to sacrifice")
+    void coloredManaRequiresCreatureSacrifice() {
+        Permanent quarry = addReadyQuarry();
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, battlefieldIndex(quarry), 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(quarry.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    @DisplayName("Copy retains flying and enters untapped")
+    void copyRetainsFlying() {
+        Permanent quarry = addReadyQuarry();
+        AirElemental target = new AirElemental();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.activateAbility(player1, battlefieldIndex(quarry), 2, 5, target.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(token -> {
+                    assertThat(token.getCard().isToken()).isTrue();
+                    assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
+                    assertThat(token.isTapped()).isFalse();
+                });
+        harness.assertNotInGraveyard(player1, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("No token is created when the target leaves the graveyard before resolution")
+    void targetLeavingGraveyardPreventsCopy() {
+        Permanent quarry = addReadyQuarry();
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, battlefieldIndex(quarry), 2, 2, target.getId(), Zone.GRAVEYARD);
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Lazotep Quarry");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }
 
     private Permanent addReadyQuarry() {
