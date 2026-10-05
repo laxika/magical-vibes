@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.b.BadMoon;
+import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.ScatheZombies;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NorthernPaladin.class, ScatheZombies.class, GrizzlyBears.class, BadMoon.class})
+@CardUsed({NorthernPaladin.class, ScatheZombies.class, GrizzlyBears.class, BadMoon.class, DrudgeSkeletons.class})
 class NorthernPaladinTest extends BaseCardTest {
 
     @Test
@@ -108,6 +109,44 @@ class NorthernPaladinTest extends BaseCardTest {
         assertThat(paladin.isTapped()).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
         harness.assertOnBattlefield(player2, "Scathe Zombies");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent paladin = harness.addToBattlefieldAndReturn(player1, new NorthernPaladin());
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        Permanent target = addCreatureReady(player2, new ScatheZombies());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(paladin.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Scathe Zombies");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A black creature can regenerate in response to the destruction ability")
+    void regenerationInResponsePreventsDestruction() {
+        setupPaladin();
+        Permanent target = addCreatureReady(player2, new DrudgeSkeletons());
+        harness.addMana(player2, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Drudge Skeletons");
+        harness.assertNotInGraveyard(player2, "Drudge Skeletons");
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getRegenerationShield()).isZero();
+        assertThat(findPermanent(player1, "Northern Paladin").isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void setupPaladin() {
