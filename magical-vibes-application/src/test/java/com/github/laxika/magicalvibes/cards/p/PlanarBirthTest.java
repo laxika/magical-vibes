@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,8 +29,8 @@ class PlanarBirthTest extends BaseCardTest {
         Card plains = new Plains();
         Card island = new Island();
         Card mountain = new Mountain();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(plains, island)));
-        harness.setGraveyard(player2, new ArrayList<>(List.of(mountain)));
+        harness.setGraveyard(player1, List.of(plains, island));
+        harness.setGraveyard(player2, List.of(mountain));
 
         castPlanarBirth();
 
@@ -52,7 +51,7 @@ class PlanarBirthTest extends BaseCardTest {
         Card basicLand = new Forest();
         Card nonbasicLand = new BlastedLandscape();
         Card creature = new CoralMerfolk();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(basicLand, nonbasicLand, creature)));
+        harness.setGraveyard(player1, List.of(basicLand, nonbasicLand, creature));
 
         castPlanarBirth();
 
@@ -78,6 +77,41 @@ class PlanarBirthTest extends BaseCardTest {
         assertThat(battlefieldCards(player2)).containsExactly(landOwnedByPlayer2);
         assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::isTapped)
                 .containsExactly(true);
+    }
+
+    @Test
+    @DisplayName("Returns the opponent's basic lands even when the caster has none")
+    void returnsOpponentsLandsWhenCasterHasNone() {
+        Card land = new Island();
+        Card nonbasicLand = new BlastedLandscape();
+        harness.setGraveyard(player1, List.of(nonbasicLand));
+        harness.setGraveyard(player2, List.of(land));
+
+        castPlanarBirth();
+
+        assertThat(battlefieldCards(player1)).isEmpty();
+        assertThat(battlefieldCards(player2)).containsExactly(land);
+        assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::isTapped)
+                .containsExactly(true);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(nonbasicLand);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Resolves without choices when both graveyards are empty")
+    void resolvesWithEmptyGraveyards() {
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of());
+
+        castPlanarBirth();
+
+        assertThat(battlefieldCards(player1)).isEmpty();
+        assertThat(battlefieldCards(player2)).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .hasSize(1).allMatch(card -> card instanceof PlanarBirth);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void castPlanarBirth() {
