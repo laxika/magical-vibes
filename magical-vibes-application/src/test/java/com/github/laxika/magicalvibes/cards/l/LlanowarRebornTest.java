@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.Tatterkite;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LlanowarReborn.class, GrizzlyBears.class})
+@CardUsed({LlanowarReborn.class, GrizzlyBears.class, Tatterkite.class})
 class LlanowarRebornTest extends BaseCardTest {
 
     @Test
@@ -117,6 +118,71 @@ class LlanowarRebornTest extends BaseCardTest {
         assertThat(reborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(findPermanent(player2, "Grizzly Bears")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Graft cannot move a counter removed before resolution")
+    void counterRemovedBeforeResolution() {
+        Permanent reborn = addRebornWithCounter();
+        castCreature(player1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        reborn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        harness.passBothPriorities();
+
+        assertThat(reborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(findPermanent(player1, "Grizzly Bears")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Graft keeps the source counter when the entering creature has left")
+    void enteringCreatureLeavesBeforeResolution() {
+        Permanent reborn = addRebornWithCounter();
+        castCreature(player1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent creature = findPermanent(player1, "Grizzly Bears");
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerHands.get(player1.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(reborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Graft moves only one counter even when the land has several")
+    void movesOnlyOneCounter() {
+        Permanent reborn = addRebornWithCounter();
+        reborn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        castCreature(player1);
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(reborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(findPermanent(player1, "Grizzly Bears")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Graft keeps its counter when the entering creature cannot receive counters")
+    void cannotMoveCounterOntoTatterkite() {
+        Permanent reborn = addRebornWithCounter();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new Tatterkite(), "{3}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(reborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(findPermanent(player1, "Tatterkite")
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private Permanent addRebornWithCounter() {
