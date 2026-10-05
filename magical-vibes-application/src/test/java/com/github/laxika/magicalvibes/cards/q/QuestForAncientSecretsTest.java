@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({QuestForAncientSecrets.class, GrizzlyBears.class, Island.class, TomeScour.class})
 class QuestForAncientSecretsTest extends BaseCardTest {
 
     @Test
@@ -31,8 +33,7 @@ class QuestForAncientSecretsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
         resolveQuestMayAbilities(true);
 
         assertThat(quest.getCounterCount(CounterType.QUEST)).isEqualTo(6);
@@ -48,8 +49,7 @@ class QuestForAncientSecretsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
         resolveQuestMayAbilities(false);
 
         assertThat(quest.getCounterCount(CounterType.QUEST)).isZero();
@@ -94,6 +94,64 @@ class QuestForAncientSecretsTest extends BaseCardTest {
                 permanentTarget.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(quest.getCounterCount(CounterType.QUEST)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Cards milled into an opponent's graveyard do not add quest counters")
+    void ignoresOpponentsGraveyard() {
+        Permanent quest = addQuest();
+        harness.setLibrary(player2, List.of(new Island(), new Island(), new Island(),
+                new Island(), new Island()));
+        harness.setHand(player1, List.of(new TomeScour()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        resolveQuestMayAbilities(true);
+
+        assertThat(quest.getCounterCount(CounterType.QUEST)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("A card sacrificed from the battlefield adds a counter to another Quest")
+    void gainsCounterForSacrificedPermanent() {
+        Permanent quest = addQuest();
+        Permanent sacrificedQuest = addQuest();
+        sacrificedQuest.setCounterCount(CounterType.QUEST, 5);
+        harness.setGraveyard(player2, List.of());
+
+        harness.activateAbility(player1, indexOf(player1, sacrificedQuest), null, player2.getId());
+        resolveQuestMayAbilities(true);
+
+        assertThat(quest.getCounterCount(CounterType.QUEST)).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Quest for Ancient Secrets");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificedQuest.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Targeting yourself shuffles the sacrificed Quest along with your graveyard")
+    void shufflesItselfIntoOwnLibrary() {
+        Permanent quest = addQuest();
+        quest.setCounterCount(CounterType.QUEST, 7);
+        Island island = new Island();
+        harness.setGraveyard(player1, List.of(island));
+        int librarySize = gd.playerDecks.get(player1.getId()).size();
+
+        harness.activateAbility(player1, indexOf(player1, quest), null, player1.getId());
+
+        harness.assertNotOnBattlefield(player1, "Quest for Ancient Secrets");
+        harness.assertInGraveyard(player1, "Quest for Ancient Secrets");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .hasSize(librarySize + 2)
+                .contains(island, quest.getCard());
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addQuest() {
