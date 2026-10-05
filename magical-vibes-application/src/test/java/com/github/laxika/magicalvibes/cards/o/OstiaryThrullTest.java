@@ -127,4 +127,53 @@ class OstiaryThrullTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gameLogContains("fizzles")).isTrue();
     }
+
+    @Test
+    void paysTapCostBeforeTargetIsTappedAtResolution() {
+        Permanent thrull = addCreatureReady(player1, new OstiaryThrull());
+        Permanent target = addCreatureReady(player2, new OstiaryThrull());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThat(thrull.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canTargetItself() {
+        Permanent thrull = addCreatureReady(player1, new OstiaryThrull());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, thrull.getId());
+
+        assertThat(thrull.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(thrull.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isFalse();
+    }
+
+    @Test
+    void abilityStillResolvesAfterSourceLeavesBattlefield() {
+        Permanent thrull = addCreatureReady(player1, new OstiaryThrull());
+        Permanent target = addCreatureReady(player2, new OstiaryThrull());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(thrull);
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
