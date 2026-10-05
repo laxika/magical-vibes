@@ -94,9 +94,68 @@ class KamahlsSledgeTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Threshold can be gained before resolution")
+    void thresholdCanBeGainedBeforeResolution() {
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AngelOfRetribution());
+        prepareSledge();
+        harness.castSorcery(player1, 0, target.getId());
+
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        harness.assertLife(player2, 16);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Neither the resolving spell nor a lethally damaged own creature enables threshold")
+    void sixCardsDoNotEnableThresholdWhenOwnTargetDies() {
+        harness.setGraveyard(player1, graveyardWithSevenCards().subList(0, 6));
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AvenTrooper());
+        castAndResolveAtTarget(target);
+
+        harness.assertNotOnBattlefield(player1, "Aven Trooper");
+        harness.assertInGraveyard(player1, "Aven Trooper");
+        harness.assertInGraveyard(player1, "Kamahl's Sledge");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("With threshold, targeting your own creature damages you")
+    void thresholdDamagesOwnCreatureController() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AvenTrooper());
+        castAndResolveAtTarget(target);
+
+        harness.assertInGraveyard(player1, "Aven Trooper");
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 20);
+    }
+
     private void castAndResolveAtTarget(Permanent target) {
         prepareSledge();
         harness.castAndResolveSorcery(player1, 0, target.getId());
+    }
+
+    @Test
+    @DisplayName("An absent target prevents threshold damage to its former controller")
+    void absentTargetPreventsAllDamage() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AngelOfRetribution());
+        prepareSledge();
+        harness.castSorcery(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player1, "Kamahl's Sledge");
     }
 
     private void prepareSledge() {
