@@ -40,9 +40,8 @@ class JayasFirenadoTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 5 damage to a planeswalker")
     void dealsDamageToPlaneswalker() {
-        Permanent target = new Permanent(new NicolBolasPlaneswalker());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new NicolBolasPlaneswalker());
         target.setCounterCount(CounterType.LOYALTY, 7);
-        gd.playerBattlefields.get(player2.getId()).add(target);
 
         castFirenado(target);
 
@@ -61,6 +60,94 @@ class JayasFirenadoTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("creature or planeswalker");
+    }
+
+    @Test
+    @DisplayName("Scry can keep the top card without changing either library")
+    void keepsTopCard() {
+        Plains top = new Plains();
+        JayasFirenado second = new JayasFirenado();
+        Plains opponentTop = new Plains();
+        harness.setLibrary(player1, List.of(top, second));
+        harness.setLibrary(player2, List.of(opponentTop));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        castFirenado(target);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).containsExactly(top);
+        completeScry();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, second);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opponentTop);
+    }
+
+    @Test
+    @DisplayName("Scry can put the top card on the bottom")
+    void putsTopCardOnBottom() {
+        Plains top = new Plains();
+        JayasFirenado second = new JayasFirenado();
+        harness.setLibrary(player1, List.of(top, second));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        castFirenado(target);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, top);
+        harness.assertInGraveyard(player1, "Jaya's Firenado");
+    }
+
+    @Test
+    @DisplayName("An illegal sole target prevents scrying")
+    void doesNotScryWhenTargetLeavesBattlefield() {
+        Plains top = new Plains();
+        harness.setLibrary(player1, List.of(top));
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new JayasFirenado()));
+        addMana();
+        harness.castSorcery(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerHands.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        harness.assertInGraveyard(player1, "Jaya's Firenado");
+    }
+
+    @Test
+    @DisplayName("An empty library does not stop damage or spell resolution")
+    void resolvesWithEmptyLibrary() {
+        harness.setLibrary(player1, List.of());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        castFirenado(target);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Jaya's Firenado");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Can target a creature controlled by the caster")
+    void damagesOwnCreatureAndScries() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+
+        castFirenado(target);
+        completeScry();
+
+        harness.assertInGraveyard(player1, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Rejects a player target")
+    void rejectsPlayerTarget() {
+        harness.setHand(player1, List.of(new JayasFirenado()));
+        addMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void castFirenado(Permanent target) {
