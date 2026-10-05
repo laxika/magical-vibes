@@ -110,6 +110,69 @@ class KyrenToyTest extends BaseCardTest {
         assertThat(toy.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Charge counter is added on resolution, not activation")
+    void chargeCounterWaitsForResolution() {
+        Permanent toy = addReadyToy(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(toy.isTapped()).isTrue();
+        assertThat(colorlessMana()).isZero();
+        assertThat(toy.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(toy.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Removing all counters resolves immediately without using the stack")
+    void removesAllCountersWithoutUsingStack() {
+        Permanent toy = addReadyToy(player1);
+        toy.setCounterCount(CounterType.CHARGE, 3);
+
+        harness.activateAbility(player1, 0, 1, 3, null);
+
+        assertThat(toy.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(toy.isTapped()).isTrue();
+        assertThat(colorlessMana()).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot put a charge counter on Kyren Toy without paying mana")
+    void firstAbilityRequiresMana() {
+        Permanent toy = addReadyToy(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(toy.isTapped()).isFalse();
+        assertThat(toy.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Kyren Toy cannot activate either ability")
+    void tappedToyCannotActivateEitherAbility() {
+        Permanent toy = addReadyToy(player1);
+        toy.setTapped(true);
+        toy.setCounterCount(CounterType.CHARGE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, 2, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(toy.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        assertThat(colorlessMana()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
     private Permanent addReadyToy(Player player) {
         return harness.addToBattlefieldAndReturn(player, new KyrenToy());
     }
