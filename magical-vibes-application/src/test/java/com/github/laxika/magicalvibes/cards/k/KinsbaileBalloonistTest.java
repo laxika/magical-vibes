@@ -91,4 +91,39 @@ class KinsbaileBalloonistTest extends BaseCardTest {
 
         assertThat(giant.hasKeyword(Keyword.FLYING)).isFalse();
     }
+
+    @Test
+    @DisplayName("The attack trigger can target the Balloonist itself")
+    void canTargetItself() {
+        Permanent balloonist = addCreatureReady(player1, new KinsbaileBalloonist());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, balloonist.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(balloonist.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(balloonist.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The attack trigger resolves after the Balloonist leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent balloonist = addCreatureReady(player1, new KinsbaileBalloonist());
+        Permanent giant = addCreatureReady(player1, new HillcomberGiant());
+
+        declareAttackers(player1, List.of(0));
+        harness.handlePermanentChosen(player1, giant.getId());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToHand(gd, balloonist));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(giant.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
