@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +17,47 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({LoveOnTheBattlefield.class, GrizzlyBears.class})
 class LoveOnTheBattlefieldTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("An original attacker still gains first strike after leaving combat")
+    void removedFromCombatAttackerStillGainsFirstStrike() {
+        harness.addToBattlefield(player1, new LoveOnTheBattlefield());
+        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Card drawn = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawn));
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(1, 2));
+            assertThat(gd.stack).hasSize(1);
+            firstAttacker.setAttacking(false);
+            resolveAllTriggers();
+
+            assertThat(gqs.hasKeyword(gd, firstAttacker, Keyword.FIRST_STRIKE)).isTrue();
+            assertThat(gqs.hasKeyword(gd, secondAttacker, Keyword.FIRST_STRIKE)).isTrue();
+            assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+        });
+    }
+
+    @Test
+    @DisplayName("The card is drawn even if both original attackers leave the battlefield")
+    void drawsEvenWhenBothAttackersLeave() {
+        harness.addToBattlefield(player1, new LoveOnTheBattlefield());
+        Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent secondAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Card drawn = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawn));
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> {
+            declareAttackers(List.of(1, 2));
+            assertThat(gd.stack).hasSize(1);
+            gd.playerBattlefields.get(player1.getId()).removeAll(List.of(firstAttacker, secondAttacker));
+            gd.playerGraveyards.get(player1.getId()).addAll(List.of(firstAttacker.getCard(), secondAttacker.getCard()));
+            resolveAllTriggers();
+            assertThat(gd.playerHands.get(player1.getId())).contains(drawn);
+        });
+    }
+
 
     @Test
     @DisplayName("Exactly two attackers gain first strike and draw one card")
