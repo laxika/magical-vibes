@@ -109,9 +109,60 @@ class NumotTheDevastatorTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest);
     }
 
+    @Test
+    @DisplayName("The remaining legal land is destroyed when the other target leaves")
+    void destroysRemainingTarget() {
+        addAttackingNumot();
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+
+        resolveCombatToTargetChoice();
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.handlePermanentChosen(player1, plains.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, forest);
+        harness.passBothPriorities();
+        addPaymentMana();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(plains);
+        harness.assertInGraveyard(player2, "Plains");
+    }
+
+    @Test
+    @DisplayName("Losing all targets prevents resolution and the payment choice")
+    void allTargetsGonePreventsPayment() {
+        addAttackingNumot();
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        resolveCombatToTargetChoice();
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, forest);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The triggered ability survives Numot leaving the battlefield")
+    void resolvesAfterNumotLeaves() {
+        addAttackingNumot();
+        Permanent numot = findPermanent(player1, "Numot, the Devastator");
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        resolveCombatToTargetChoice();
+        harness.handlePermanentChosen(player1, forest.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, numot);
+        harness.passBothPriorities();
+        addPaymentMana();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(forest);
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
     private void addAttackingNumot() {
-        Permanent numot = harness.addToBattlefieldAndReturn(player1, new NumotTheDevastator());
-        numot.setSummoningSick(false);
+        Permanent numot = addCreatureReady(player1, new NumotTheDevastator());
         numot.setAttacking(true);
     }
 
