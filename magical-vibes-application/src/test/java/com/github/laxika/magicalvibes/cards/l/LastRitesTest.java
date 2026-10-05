@@ -151,4 +151,61 @@ class LastRitesTest extends BaseCardTest {
                 .extracting(Card::getName)
                 .containsExactlyInAnyOrder("Last Rites", "Aven Fisher", "Aven Fisher");
     }
+
+    @Test
+    @DisplayName("Lands remain excluded after the first nonland card is chosen")
+    void landsRemainExcludedAfterFirstChoice() {
+        harness.setHand(player1, List.of(new LastRites(), new AvenFisher(), new AvenFisher()));
+        harness.setHand(player2, List.of(new Peek(), new Forest(), new AvenFisher()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleXValueChosen(player1, 2);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class)
+                .validIndices()).containsExactly(1);
+
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getName).containsExactly("Forest");
+    }
+
+    @Test
+    @DisplayName("An empty caster hand still causes the target to reveal their hand")
+    void emptyCasterHandStillRevealsTargetHand() {
+        harness.setHand(player1, List.of(new LastRites()));
+        harness.setHand(player2, List.of(new Peek()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gameLogContains("reveals their hand")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(Card::getName).containsExactly("Peek");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Last Rites");
+    }
+
+    @Test
+    @DisplayName("Choosing zero discards still reveals the target's hand")
+    void choosingZeroDiscardsStillRevealsTargetHand() {
+        harness.setHand(player1, List.of(new LastRites(), new Forest()));
+        harness.setHand(player2, List.of(new Peek()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(gameLogContains("reveals their hand")).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInHand(player1, "Forest");
+        harness.assertInHand(player2, "Peek");
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
 }
