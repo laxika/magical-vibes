@@ -66,6 +66,47 @@ class MysticZealotTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, zealot, Keyword.FLYING)).isFalse();
     }
 
+    @Test
+    @DisplayName("Gains and loses threshold immediately as the graveyard crosses seven cards")
+    void thresholdUpdatesWhileOnBattlefield() {
+        List<Card> sevenCards = graveyardWithSevenCards();
+        harness.setGraveyard(player1, sevenCards.subList(0, 6));
+        Permanent zealot = harness.addToBattlefieldAndReturn(player1, new MysticZealot());
+
+        assertThat(gqs.getEffectivePower(gd, zealot)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, zealot)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, zealot, Keyword.FLYING)).isFalse();
+
+        harness.setGraveyard(player1, sevenCards);
+
+        assertThat(gqs.getEffectivePower(gd, zealot)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, zealot)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, zealot, Keyword.FLYING)).isTrue();
+
+        harness.setGraveyard(player1, sevenCards.subList(0, 6));
+
+        assertThat(gqs.getEffectivePower(gd, zealot)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, zealot)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, zealot, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each Zealot gains only its own threshold bonus")
+    void thresholdBonusIsSelfOnly() {
+        harness.setGraveyard(player1, graveyardWithSevenCards());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new MysticZealot());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new MysticZealot());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new MysticZealot());
+
+        for (Permanent zealot : List.of(first, second)) {
+            assertThat(gqs.getEffectivePower(gd, zealot)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, zealot)).isEqualTo(5);
+            assertThat(gqs.hasKeyword(gd, zealot, Keyword.FLYING)).isTrue();
+        }
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, opposing, Keyword.FLYING)).isFalse();
+    }
     private List<Card> graveyardWithSevenCards() {
         return List.of(
                 new AncestralTribute(), new AncestralTribute(), new AncestralTribute(), new AncestralTribute(),
