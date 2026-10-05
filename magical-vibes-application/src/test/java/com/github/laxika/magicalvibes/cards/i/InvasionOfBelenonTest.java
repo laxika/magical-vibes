@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.b.BelenonWarAnthem;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.s.SwordswornCavalier;
+import com.github.laxika.magicalvibes.cards.z.ZurEternalSchemer;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BelenonWarAnthem.class, GrizzlyBears.class, InvasionOfBelenon.class})
+@CardUsed({BelenonWarAnthem.class, SwordswornCavalier.class, InvasionOfBelenon.class,
+        ZurEternalSchemer.class})
 class InvasionOfBelenonTest extends BaseCardTest {
 
     @Test
@@ -56,18 +57,70 @@ class InvasionOfBelenonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent anthem = findPermanentByName(player1, "Belenon War Anthem");
-        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
+        Permanent cavalier = harness.addToBattlefieldAndReturn(player1, new SwordswornCavalier());
+        assertThat(gqs.getEffectivePower(gd, cavalier)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, cavalier)).isEqualTo(2);
         assertThat(anthem.isTransformed()).isTrue();
     }
 
-    private void castInvasion() {
-        Card invasion = new InvasionOfBelenon();
-        harness.setHand(player1, List.of(invasion));
+    @Test
+    void anthemBoostsOnlyItsControllersCreaturesAndStopsWhenItLeaves() {
+        Permanent anthem = harness.addToBattlefieldAndReturn(player1, new BelenonWarAnthem());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new SwordswornCavalier());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new SwordswornCavalier());
+
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opposing)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, opposing)).isEqualTo(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(anthem);
+        assertThat(gqs.getEffectivePower(gd, own)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, own)).isEqualTo(1);
+    }
+
+    @Test
+    void transformedAnthemBoostsItselfWhenAnimated() {
+        castInvasion();
+        Permanent battle = findPermanentByName(player1, "Invasion of Belenon");
+        battle.setCounterCount(CounterType.DEFENSE, 0);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
+                .checkAfterDefenseRemoved(gd, battle));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent anthem = findPermanentByName(player1, "Belenon War Anthem");
+        Permanent zur = harness.addToBattlefieldAndReturn(player1, new ZurEternalSchemer());
         harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        gs.playCard(gd, player1, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(zur),
+                null, anthem.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, anthem)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, anthem)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, anthem)).isEqualTo(4);
+    }
+
+    @Test
+    void canDeclineCastingTheDefeatedSiege() {
+        castInvasion();
+        Permanent battle = findPermanentByName(player1, "Invasion of Belenon");
+        battle.setCounterCount(CounterType.DEFENSE, 0);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
+                .checkAfterDefenseRemoved(gd, battle));
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Invasion of Belenon");
+        harness.assertNotOnBattlefield(player1, "Belenon War Anthem");
+        assertThat(gd.findExiledCard(battle.getCard().getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    private void castInvasion() {
+        harness.castFromHand(player1, new InvasionOfBelenon(), "{2}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
