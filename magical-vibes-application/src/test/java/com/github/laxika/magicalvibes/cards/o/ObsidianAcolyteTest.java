@@ -81,8 +81,7 @@ class ObsidianAcolyteTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, griffin, CardColor.BLACK)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasProtectionFrom(gd, griffin, CardColor.BLACK)).isFalse();
     }
@@ -102,5 +101,57 @@ class ObsidianAcolyteTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, griffin.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Protection granted in response makes black removal lose its target")
+    void protectsCreatureInResponseToRemoval() {
+        addCreatureReady(player1, new ObsidianAcolyte());
+        Permanent griffin = addCreatureReady(player1, new RazorfootGriffin());
+        harness.setHand(player2, List.of(new Annihilate()));
+        harness.addMana(player2, ManaColor.BLACK, 5);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castInstant(player2, 0, griffin.getId());
+        harness.activateAbility(player1, 0, 0, null, griffin.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Razorfoot Griffin");
+        harness.assertNotInGraveyard(player1, "Razorfoot Griffin");
+        harness.assertInGraveyard(player2, "Annihilate");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A summoning sick, tapped acolyte can activate repeatedly")
+    void canActivateWhileSummoningSickAndTapped() {
+        Permanent acolyte = harness.addToBattlefieldAndReturn(player1, new ObsidianAcolyte());
+        acolyte.setSummoningSick(true);
+        acolyte.setTapped(true);
+        Permanent ownGriffin = addCreatureReady(player1, new RazorfootGriffin());
+        Permanent opposingGriffin = addCreatureReady(player2, new RazorfootGriffin());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, ownGriffin.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 0, null, opposingGriffin.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, ownGriffin, CardColor.BLACK)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, opposingGriffin, CardColor.BLACK)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The ability requires white mana")
+    void cannotActivateWithOnlyNonwhiteMana() {
+        addCreatureReady(player1, new ObsidianAcolyte());
+        Permanent griffin = addCreatureReady(player1, new RazorfootGriffin());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, griffin.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gqs.hasProtectionFrom(gd, griffin, CardColor.BLACK)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 }
