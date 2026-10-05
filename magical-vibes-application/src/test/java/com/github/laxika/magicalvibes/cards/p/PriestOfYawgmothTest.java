@@ -29,9 +29,8 @@ class PriestOfYawgmothTest extends BaseCardTest {
     @DisplayName("Sacrificing an artifact adds black mana equal to its mana value")
     void sacrificeArtifactAddsManaValueInBlack() {
         Permanent priest = addCreatureReady(player1, new PriestOfYawgmoth());
-        addCreatureReady(player1, new AesthirGlider());
+        UUID glider = addCreatureReady(player1, new AesthirGlider()).getId();
         addCreatureReady(player1, new SoldeviDigger());
-        UUID glider = harness.getPermanentId(player1, "Aesthir Glider");
 
         harness.activateAbility(player1, 0, null, null);
         harness.handlePermanentChosen(player1, glider);
@@ -79,5 +78,59 @@ class PriestOfYawgmothTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Soldevi Digger");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+    }
+
+    @Test
+    void cannotActivateWithoutAnArtifactYouControl() {
+        Permanent priest = addCreatureReady(player1, new PriestOfYawgmoth());
+        harness.addToBattlefield(player2, new SoldeviDigger());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(priest.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Soldevi Digger");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        Permanent priest = harness.addToBattlefieldAndReturn(player1, new PriestOfYawgmoth());
+        priest.setSummoningSick(true);
+        harness.addToBattlefield(player1, new SoldeviDigger());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Soldevi Digger");
+        assertThat(priest.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent priest = addCreatureReady(player1, new PriestOfYawgmoth());
+        priest.setTapped(true);
+        harness.addToBattlefield(player1, new SoldeviDigger());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Soldevi Digger");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    void canSacrificeTappedSummoningSickArtifactCreatureWithoutUsingStack() {
+        addCreatureReady(player1, new PriestOfYawgmoth());
+        Permanent glider = harness.addToBattlefieldAndReturn(player1, new AesthirGlider());
+        glider.setTapped(true);
+        glider.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Aesthir Glider");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
     }
 }
