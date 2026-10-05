@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.y.YotianSoldier;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -105,6 +106,70 @@ class JourneyOfDiscoveryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castModalSorceryWithModes(
                 player1, 0, 1, 2, new int[]{0, 1}, List.of(), null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Search may stop after one land even when another is available")
+    void mayStopAfterOneLand() {
+        Forest forest = new Forest();
+        Island island = new Island();
+        cast(new int[]{0}, false, List.of(new JourneyOfDiscovery()), List.of(forest, island));
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+        harness.assertInGraveyard(player1, "Journey of Discovery");
+    }
+
+    @Test
+    @DisplayName("Entwine grants land plays even when the library has no basic lands")
+    void entwineWithNoBasicLands() {
+        YotianSoldier soldier = new YotianSoldier();
+        cast(new int[]{0, 1}, true,
+                List.of(new JourneyOfDiscovery(), new Forest(), new Forest(), new Forest(), new Forest()),
+                List.of(soldier));
+
+        for (int i = 0; i < 3; i++) {
+            harness.playLand(player1, 0);
+        }
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0)).isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(soldier);
+    }
+
+    @Test
+    @DisplayName("Land mode adds two plays after the normal land play was used")
+    void addsLandPlaysAfterNormalPlay() {
+        harness.setHand(player1, List.of(new Forest(), new JourneyOfDiscovery(),
+                new Forest(), new Forest(), new Forest()));
+        harness.playLand(player1, 0);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{1}, List.of(), null);
+        harness.passBothPriorities();
+
+        harness.playLand(player1, 0);
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0)).isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Additional land permission expires on the next turn")
+    void additionalLandPermissionExpires() {
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        cast(new int[]{1}, false, List.of(new JourneyOfDiscovery()),
+                List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.playLand(player1, 0)).isInstanceOf(IllegalStateException.class);
     }
 
     private void cast(int[] modes, boolean entwined, List<Card> hand, List<Card> library) {
