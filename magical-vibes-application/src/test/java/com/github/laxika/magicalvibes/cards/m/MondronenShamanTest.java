@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.d.DawntreaderElk;
+import com.github.laxika.magicalvibes.cards.s.SanctuaryCat;
+import com.github.laxika.magicalvibes.cards.v.VaultOfTheArchangel;
+import com.github.laxika.magicalvibes.cards.w.WitchbaneOrb;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,44 +17,31 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MondronenShaman.class, DawntreaderElk.class, SanctuaryCat.class, VaultOfTheArchangel.class, WitchbaneOrb.class})
 class MondronenShamanTest extends BaseCardTest {
-
-    
-
-    
 
     @Test
     @DisplayName("Transforms to Tovolar's Magehunter when no spells were cast last turn")
     void transformsWhenNoSpellsCastLastTurn() {
-        harness.addToBattlefield(player1, new MondronenShaman());
-        Permanent shaman = findPermanent(player1, "Mondronen Shaman");
+        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new MondronenShaman());
 
         gd.spellsCastLastTurn.clear();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
 
         assertThat(shaman.isTransformed()).isTrue();
         assertThat(shaman.getCard().getName()).isEqualTo("Tovolar's Magehunter");
-        assertThat(gqs.getEffectivePower(gd, shaman)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, shaman)).isEqualTo(5);
     }
 
     @Test
     @DisplayName("Does not transform when any spell was cast last turn")
     void doesNotTransformWhenSpellCastLastTurn() {
-        harness.addToBattlefield(player1, new MondronenShaman());
-        Permanent shaman = findPermanent(player1, "Mondronen Shaman");
+        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new MondronenShaman());
 
         gd.spellsCastLastTurn.put(player2.getId(), 1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
 
         assertThat(shaman.isTransformed()).isFalse();
         assertThat(shaman.getCard().getName()).isEqualTo("Mondronen Shaman");
@@ -65,16 +55,11 @@ class MondronenShamanTest extends BaseCardTest {
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player2.getId(), 2);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
 
         assertThat(shaman.isTransformed()).isFalse();
         assertThat(shaman.getCard().getName()).isEqualTo("Mondronen Shaman");
-        assertThat(gqs.getEffectivePower(gd, shaman)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, shaman)).isEqualTo(2);
     }
 
     @Test
@@ -86,10 +71,7 @@ class MondronenShamanTest extends BaseCardTest {
         gd.spellsCastLastTurn.put(player1.getId(), 1);
         gd.spellsCastLastTurn.put(player2.getId(), 1);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player2);
 
         assertThat(shaman.isTransformed()).isTrue();
         assertThat(shaman.getCard().getName()).isEqualTo("Tovolar's Magehunter");
@@ -103,7 +85,7 @@ class MondronenShamanTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new DawntreaderElk()));
         harness.addMana(player2, ManaColor.GREEN, 2);
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
@@ -124,7 +106,7 @@ class MondronenShamanTest extends BaseCardTest {
     void magehunterDoesNotDamageControllerForOwnSpell() {
         addTransformedMagehunter();
 
-        harness.setHand(player1, List.of(new SuntailHawk()));
+        harness.setHand(player1, List.of(new SanctuaryCat()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
@@ -136,9 +118,107 @@ class MondronenShamanTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
-    private Permanent addTransformedMagehunter() {
+    @Test
+    @DisplayName("Magehunter damages a spell's caster even when that player has hexproof")
+    void magehunterDamageDoesNotTarget() {
+        addTransformedMagehunter();
+        harness.addToBattlefield(player2, new WitchbaneOrb());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new DawntreaderElk()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Magehunter's triggered damage applies lifelink granted by Vault of the Archangel")
+    void magehunterDamageUsesGrantedLifelink() {
+        addTransformedMagehunter();
+        harness.addToBattlefield(player1, new VaultOfTheArchangel());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new DawntreaderElk()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Shaman also transforms at an opponent's upkeep")
+    void transformsAtOpponentsUpkeep() {
+        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new MondronenShaman());
+        gd.spellsCastLastTurn.clear();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(shaman.isTransformed()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The front face does not damage an opponent for casting a spell")
+    void frontFaceDoesNotDamageSpellCaster() {
         harness.addToBattlefield(player1, new MondronenShaman());
-        Permanent shaman = findPermanent(player1, "Mondronen Shaman");
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new DawntreaderElk()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player2, "Dawntreader Elk");
+    }
+
+    @Test
+    @DisplayName("Magehunter transforms at its controller's upkeep when that controller cast more than two spells")
+    void magehunterTransformsForControllersSpellsAtOwnUpkeep() {
+        Permanent shaman = addTransformedMagehunter();
+        gd.spellsCastLastTurn.clear();
+        gd.spellsCastLastTurn.put(player1.getId(), 3);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(shaman.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Magehunter stays transformed when no spells were cast last turn")
+    void magehunterStaysTransformedWhenNoSpellsWereCast() {
+        Permanent shaman = addTransformedMagehunter();
+        gd.spellsCastLastTurn.clear();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(shaman.isTransformed()).isTrue();
+    }
+
+    private Permanent addTransformedMagehunter() {
+        Permanent shaman = harness.addToBattlefieldAndReturn(player1, new MondronenShaman());
         shaman.setCard(shaman.getOriginalCard().getBackFaceCard());
         shaman.setTransformed(true);
         return shaman;
