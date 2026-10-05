@@ -64,11 +64,68 @@ class MoleModuleTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(permanent);
     }
 
+    @Test
+    void onlyPermanentsFromThisMillCanBeChosen() {
+        addAttackingMoleModule();
+        Card oldPermanent = new GrizzlyBears();
+        gd.playerGraveyards.get(player1.getId()).add(oldPermanent);
+        Card milledPermanent = new MoleModule();
+        harness.setLibrary(player1, List.of(milledPermanent, new Shock(), new Shock(), new Shock()));
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIndices()).containsExactly(1);
+        harness.handleGraveyardCardChosen(player1, 1);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(oldPermanent)
+                .doesNotContain(milledPermanent);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == milledPermanent && !permanent.isTapped());
+        assertThat(countPermanents(player1, "Mole Module")).isEqualTo(2);
+    }
+
+    @Test
+    void millsAllAvailableCardsWhenLibraryHasFewerThanFour() {
+        addAttackingMoleModule();
+        Card permanent = new GrizzlyBears();
+        Card instant = new Shock();
+        harness.setLibrary(player1, List.of(permanent, instant));
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        PendingInteraction.GraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIndices()).hasSize(1);
+        harness.handleGraveyardCardChosen(player1, choice.validIndices().getFirst());
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(instant);
+    }
+
+    @Test
+    void noChoiceIsOfferedWhenNoPermanentWasMilled() {
+        addAttackingMoleModule();
+        List<Card> cards = List.of(new Shock(), new Shock(), new Shock(), new Shock());
+        harness.setLibrary(player1, cards);
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(cards);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
+    }
+
     private Permanent addMoleModuleReady() {
-        Permanent mole = new Permanent(new MoleModule());
-        mole.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(mole);
-        return mole;
+        return addCreatureReady(player1, new MoleModule());
     }
 
     private Permanent addAttackingMoleModule() {
