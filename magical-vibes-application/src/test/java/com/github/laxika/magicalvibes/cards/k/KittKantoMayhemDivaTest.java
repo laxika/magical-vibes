@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -10,8 +12,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -24,17 +24,29 @@ class KittKantoMayhemDivaTest extends BaseCardTest {
     void enteringCreatesCitizenToken() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new KittKantoMayhemDiva()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KittKantoMayhemDiva(), "{1}{R}{G}{W}");
 
         harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Citizen")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The Citizen created on entry is an untapped green and white 1/1 creature")
+    void citizenHasTheRequiredTokenCharacteristics() {
+        harness.enterBattlefieldAndReturn(player1, new KittKantoMayhemDiva());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Citizen")).hasSize(1);
+        Permanent citizen = findPermanent(player1, "Citizen");
+        assertThat(citizen.getCard().isToken()).isTrue();
+        assertThat(citizen.getCard().getType()).isEqualTo(CardType.CREATURE);
+        assertThat(citizen.getCard().getSubtypes()).containsExactly(CardSubtype.CITIZEN);
+        assertThat(citizen.getCard().getColors()).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.WHITE);
+        assertThat(gqs.getEffectivePower(gd, citizen)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, citizen)).isEqualTo(1);
+        assertThat(citizen.isTapped()).isFalse();
     }
 
     @Test
@@ -103,6 +115,53 @@ class KittKantoMayhemDivaTest extends BaseCardTest {
         assertThat(tapper.isTapped()).isTrue();
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Paying the tap cost creates a separate trigger before the target is boosted or goaded")
+    void tapPaymentLeavesTimeToRespondBeforeBoostAndGoad() {
+        addCreatureReady(player1, new KittKantoMayhemDiva());
+        Permanent tapperOne = addCreatureReady(player1, new GrizzlyBears());
+        Permanent tapperTwo = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        advanceToCombat(player2);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, tapperOne.getId());
+        harness.handlePermanentChosen(player1, tapperTwo.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(tapperOne.isTapped()).isTrue();
+        assertThat(tapperTwo.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+        assertThat(als.getMustAttackRequirementCount(gd, target)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isTrue();
+        assertThat(als.getMustAttackRequirementCount(gd, target)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Kitt Kanto and a summoning-sick creature can pay the cost on their controller's turn")
+    void summoningSickCreaturesCanTapAndTargetKittOnOwnTurn() {
+        Permanent kitt = harness.addToBattlefieldAndReturn(player1, new KittKantoMayhemDiva());
+        Permanent tapper = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        advanceToCombat(player1);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, kitt.getId());
+        resolveAllTriggers();
+
+        assertThat(kitt.isTapped()).isTrue();
+        assertThat(tapper.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, kitt)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, kitt)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, kitt, Keyword.TRAMPLE)).isTrue();
+        assertThat(als.getMustAttackRequirementCount(gd, kitt)).isEqualTo(1);
     }
 
     private void advanceToCombat(com.github.laxika.magicalvibes.model.Player activePlayer) {
