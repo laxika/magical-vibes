@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.c.CrazedGoblin;
 import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.cards.l.LeoninBola;
+import com.github.laxika.magicalvibes.cards.o.OxiddaGolem;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({InfestedRoothold.class, DarksteelIngot.class, CrazedGoblin.class, LeoninBola.class})
+@CardUsed({InfestedRoothold.class, DarksteelIngot.class, CrazedGoblin.class, LeoninBola.class,
+        OxiddaGolem.class})
 class InfestedRootholdTest extends BaseCardTest {
 
     @Test
@@ -93,6 +96,37 @@ class InfestedRootholdTest extends BaseCardTest {
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Each Infested Roothold offers its own optional token for an opponent's artifact spell")
+    void multipleRootholdsTriggerIndependently() {
+        harness.addToBattlefield(player1, new InfestedRoothold());
+        harness.addToBattlefield(player1, new InfestedRoothold());
+        prepareOpponentArtifactSpell();
+
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Insect")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Infested Roothold can block an artifact creature and prevents its combat damage")
+    void protectionPreventsArtifactCombatDamage() {
+        Permanent roothold = addCreatureReady(player1, new InfestedRoothold());
+        Permanent golem = addCreatureReady(player2, new OxiddaGolem());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(roothold);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(golem);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
     private void prepareOpponentArtifactSpell() {
