@@ -77,4 +77,65 @@ class PhyrexianGhoulTest extends BaseCardTest {
         assertThat(ghoul.getEffectiveToughness()).isEqualTo(6);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
+
+    @Test
+    @DisplayName("The sacrifice is paid before the boost resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent ghoul = addCreatureReady(player1, new PhyrexianGhoul());
+        Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, gorilla.getId());
+
+        harness.assertNotOnBattlefield(player1, "Gorilla Warrior");
+        harness.assertInGraveyard(player1, "Gorilla Warrior");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(ghoul.getEffectivePower()).isEqualTo(2);
+        assertThat(ghoul.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(ghoul.getEffectivePower()).isEqualTo(4);
+        assertThat(ghoul.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A tapped Phyrexian Ghoul with summoning sickness can activate")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new PhyrexianGhoul());
+        ghoul.setSummoningSick(true);
+        ghoul.setTapped(true);
+        Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, gorilla.getId());
+        harness.passBothPriorities();
+
+        assertThat(ghoul.getEffectivePower()).isEqualTo(4);
+        assertThat(ghoul.getEffectiveToughness()).isEqualTo(4);
+        assertThat(ghoul.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Gorilla Warrior");
+    }
+
+    @Test
+    @DisplayName("Pending boosts do not affect another Ghoul after the source sacrifices itself")
+    void pendingBoostsDoNotAffectAnotherGhoul() {
+        Permanent source = addCreatureReady(player1, new PhyrexianGhoul());
+        Permanent gorilla = harness.addToBattlefieldAndReturn(player1, new GorillaWarrior());
+        Permanent otherGhoul = addCreatureReady(player1, new PhyrexianGhoul());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, gorilla.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, source.getId());
+
+        harness.assertInGraveyard(player1, "Phyrexian Ghoul");
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(otherGhoul);
+        assertThat(otherGhoul.getEffectivePower()).isEqualTo(2);
+        assertThat(otherGhoul.getEffectiveToughness()).isEqualTo(2);
+    }
 }
