@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.p.Panharmonicon;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,18 +14,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NylaShirshuSleuth.class, GrizzlyBears.class})
+@CardUsed({NylaShirshuSleuth.class, GrizzlyBears.class, Panharmonicon.class})
 class NylaShirshuSleuthTest extends BaseCardTest {
 
     @Test
     void etbExilesCreatureLosesLifeAndCreatesCluesEqualToManaValue() {
         Card bears = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(bears));
-        harness.setHand(player1, List.of(new NylaShirshuSleuth()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NylaShirshuSleuth(), "{4}{B}");
         harness.passBothPriorities();
 
         PendingInteraction.MultiGraveyardChoice choice =
@@ -45,10 +41,7 @@ class NylaShirshuSleuthTest extends BaseCardTest {
     void etbMayDeclineAndCreatesNoClues() {
         Card bears = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(bears));
-        harness.setHand(player1, List.of(new NylaShirshuSleuth()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NylaShirshuSleuth(), "{4}{B}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
@@ -84,10 +77,7 @@ class NylaShirshuSleuthTest extends BaseCardTest {
     void endStepDoesNotReturnCardWhileAClueIsControlled() {
         Card bears = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(bears));
-        harness.setHand(player1, List.of(new NylaShirshuSleuth()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NylaShirshuSleuth(), "{4}{B}");
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
         resolveAllTriggers();
@@ -99,6 +89,52 @@ class NylaShirshuSleuthTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(nyla.getId())).containsExactly(bears);
     }
 
+    @Test
+    void additionalEnterTriggerUsesOnlyTheCardExiledByThatTrigger() {
+        harness.addToBattlefield(player1, new Panharmonicon());
+        Card first = new NylaShirshuSleuth();
+        Card second = new NylaShirshuSleuth();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.castFromHand(player1, new NylaShirshuSleuth(), "{4}{B}");
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId()));
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+        resolveAllTriggers();
+
+        Permanent nyla = findPermanent(player1, "Nyla, Shirshu Sleuth");
+        assertThat(gd.getCardsExiledByPermanent(nyla.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(10);
+        assertThat(findPermanents(player1, "Clue")).hasSize(10);
+    }
+
+    @Test
+    void enterWithNoCreatureCardsInGraveyardHasNoFollowUpEffect() {
+        harness.castFromHand(player1, new NylaShirshuSleuth(), "{4}{B}");
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(findPermanents(player1, "Clue")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void returnAbilityDoesNotTriggerDuringOpponentsEndStep() {
+        Permanent nyla = addCreatureReady(player1, new NylaShirshuSleuth());
+        Card exiled = new NylaShirshuSleuth();
+        gd.addToExile(player1.getId(), exiled, nyla.getId());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.getCardsExiledByPermanent(nyla.getId())).containsExactly(exiled);
+    }
     private void advanceToEndStep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
