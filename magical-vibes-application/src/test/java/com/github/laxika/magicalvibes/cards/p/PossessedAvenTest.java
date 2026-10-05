@@ -101,7 +101,9 @@ class PossessedAvenTest extends BaseCardTest {
     void abilityCannotTargetBlueNoncreaturePermanent() {
         fillGraveyard(player1, 7);
         addReadyAven();
+        Permanent enchanted = addCreatureReady(player2, new PardicLancer());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new StupefyingTouch());
+        target.setAttachedTo(enchanted.getId());
 
         prepareActivation();
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -122,6 +124,58 @@ class PossessedAvenTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, aven)).isEqualTo(3);
         assertThat(gqs.getEffectiveColors(gd, aven)).doesNotContain(CardColor.BLACK);
         assertThat(gs.getEffectiveActivatedAbilities(gd, aven)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An activated destruction ability still resolves after its source loses threshold")
+    void activatedAbilitySurvivesLossOfThreshold() {
+        fillGraveyard(player1, 7);
+        Permanent aven = addReadyAven();
+        Permanent target = addCreatureReady(player2, new SkywingAven());
+        prepareActivation();
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        gd.playerGraveyards.get(player1.getId()).removeFirst();
+        assertThat(gs.getEffectiveActivatedAbilities(gd, aven)).isEmpty();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Skywing Aven");
+        harness.assertInGraveyard(player2, "Skywing Aven");
+    }
+
+    @Test
+    @DisplayName("The destruction ability does not destroy a target that becomes black before resolution")
+    void targetBecomingBlackIsIllegalAtResolution() {
+        fillGraveyard(player1, 7);
+        fillGraveyard(player2, 6);
+        addReadyAven();
+        Permanent target = addCreatureReady(player2, new PossessedAven());
+        prepareActivation();
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        fillGraveyard(player2, 7);
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLACK);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Possessed Aven");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("The destruction ability requires black mana for its colored cost")
+    void activationRequiresBlackMana() {
+        fillGraveyard(player1, 7);
+        Permanent aven = addReadyAven();
+        Permanent target = addCreatureReady(player2, new SkywingAven());
+        prepareActivation();
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(aven.isTapped()).isFalse();
+        harness.assertOnBattlefield(player2, "Skywing Aven");
     }
 
     private Permanent addReadyAven() {
