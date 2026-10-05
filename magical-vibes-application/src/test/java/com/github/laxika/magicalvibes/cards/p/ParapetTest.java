@@ -5,10 +5,8 @@ import com.github.laxika.magicalvibes.cards.w.Warthog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -40,8 +38,7 @@ class ParapetTest extends BaseCardTest {
     @Test
     @DisplayName("Boost is lost when Parapet leaves the battlefield")
     void boostLostWhenRemoved() {
-        Permanent parapet = new Permanent(new Parapet());
-        gd.playerBattlefields.get(player1.getId()).add(parapet);
+        Permanent parapet = harness.addToBattlefieldAndReturn(player1, new Parapet());
         Permanent warthog = addCreatureReady(player1, new Warthog());
 
         assertThat(gqs.getEffectiveToughness(gd, warthog)).isEqualTo(3);
@@ -57,7 +54,9 @@ class ParapetTest extends BaseCardTest {
         harness.castFromHand(player1, new Parapet(), "{1}{W}");
         harness.passBothPriorities();
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+        resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Parapet");
     }
@@ -73,7 +72,9 @@ class ParapetTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Parapet");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Parapet");
         harness.assertInGraveyard(player1, "Parapet");
@@ -90,7 +91,9 @@ class ParapetTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Parapet");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Parapet");
         harness.assertInGraveyard(player1, "Parapet");
@@ -108,7 +111,9 @@ class ParapetTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Parapet");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Parapet");
         harness.assertInGraveyard(player1, "Parapet");
@@ -129,7 +134,38 @@ class ParapetTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Parapet");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Parapet");
+        harness.assertInGraveyard(player1, "Parapet");
+    }
+
+    @Test
+    @DisplayName("Multiple Parapets stack their boosts for creatures entering later")
+    void multipleParapetsBuffNewCreatures() {
+        harness.addToBattlefield(player1, new Parapet());
+        harness.addToBattlefield(player1, new Parapet());
+        Permanent warthog = harness.addToBattlefieldAndReturn(player1, new Warthog());
+
+        assertThat(gqs.getEffectivePower(gd, warthog)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, warthog)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("An instant-speed Parapet remains until its cleanup trigger resolves")
+    void cleanupSacrificeUsesTheStack() {
+        harness.forceStep(TurnStep.END_STEP);
+        harness.castFromHand(player1, new Parapet(), "{1}{W}");
+        harness.passBothPriorities();
+
+        harness.passUntil(TurnStep.CLEANUP);
+
+        harness.assertOnBattlefield(player1, "Parapet");
+        assertThat(gd.stack).hasSize(1);
+
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Parapet");
         harness.assertInGraveyard(player1, "Parapet");
