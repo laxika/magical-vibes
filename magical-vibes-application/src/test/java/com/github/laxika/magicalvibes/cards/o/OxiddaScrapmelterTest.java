@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.v.VulshokReplica;
+import com.github.laxika.magicalvibes.cards.e.EzurisArchers;
+import com.github.laxika.magicalvibes.cards.a.AccordersShield;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,40 +22,38 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OxiddaScrapmelter.class, AccordersShield.class, VulshokReplica.class, EzurisArchers.class})
 class OxiddaScrapmelterTest extends BaseCardTest {
 
-    // ===== Casting and resolving =====
-
     @Test
-    @DisplayName("Casting Oxidda Scrapmelter puts it on the stack with target")
-    void castingPutsItOnStackWithTarget() {
-        harness.addToBattlefield(player2, new LeoninScimitar());
+    @DisplayName("Casting Oxidda Scrapmelter requires no target")
+    void castingRequiresNoTarget() {
+        harness.addToBattlefield(player2, new AccordersShield());
         harness.setHand(player1, List.of(new OxiddaScrapmelter()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Leonin Scimitar");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        harness.castCreature(player1, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
         assertThat(entry.getCard().getName()).isEqualTo("Oxidda Scrapmelter");
-        assertThat(entry.getTargetId()).isEqualTo(targetId);
+        assertThat(entry.getTargetId()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
     @Test
     @DisplayName("Resolving Oxidda Scrapmelter enters battlefield and triggers ETB destroy")
     void resolvingEntersBattlefieldAndTriggersEtb() {
-        harness.addToBattlefield(player2, new LeoninScimitar());
+        harness.addToBattlefield(player2, new AccordersShield());
         harness.setHand(player1, List.of(new OxiddaScrapmelter()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Leonin Scimitar");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Accorder's Shield");
+        harness.castCreature(player1, 0, targetId);
 
-        // Resolve creature spell → enters battlefield, ETB triggers
+        // Resolve creature spell.
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -71,113 +70,109 @@ class OxiddaScrapmelterTest extends BaseCardTest {
     @Test
     @DisplayName("ETB resolves and destroys target artifact")
     void etbDestroysTargetArtifact() {
-        harness.addToBattlefield(player2, new LeoninScimitar());
+        harness.addToBattlefield(player2, new AccordersShield());
         harness.setHand(player1, List.of(new OxiddaScrapmelter()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Leonin Scimitar");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Accorder's Shield");
+        harness.castCreature(player1, 0, targetId);
 
         // Resolve creature spell
         harness.passBothPriorities();
-        // Resolve ETB triggered ability
+        // Resolve ETB.
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        harness.assertNotOnBattlefield(player2, "Leonin Scimitar");
-        harness.assertInGraveyard(player2, "Leonin Scimitar");
+        harness.assertNotOnBattlefield(player2, "Accorder's Shield");
+        harness.assertInGraveyard(player2, "Accorder's Shield");
     }
 
     @Test
     @DisplayName("ETB destroys artifact creature")
     void etbDestroysArtifactCreature() {
-        harness.addToBattlefield(player2, new BottleGnomes());
+        harness.addToBattlefield(player2, new VulshokReplica());
         harness.setHand(player1, List.of(new OxiddaScrapmelter()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Bottle Gnomes");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Vulshok Replica");
+        harness.castCreature(player1, 0, targetId);
 
         // Resolve creature spell
         harness.passBothPriorities();
-        // Resolve ETB triggered ability
+        // Resolve ETB.
         harness.passBothPriorities();
 
-        harness.assertNotOnBattlefield(player2, "Bottle Gnomes");
-        harness.assertInGraveyard(player2, "Bottle Gnomes");
+        harness.assertNotOnBattlefield(player2, "Vulshok Replica");
+        harness.assertInGraveyard(player2, "Vulshok Replica");
     }
-
-    // ===== Target restrictions =====
 
     @Test
     @DisplayName("Cannot target a non-artifact creature")
     void cannotTargetNonArtifactCreature() {
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new EzurisArchers());
+        harness.addToBattlefield(player2, new AccordersShield());
         harness.setHand(player1, List.of(new OxiddaScrapmelter()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.getPermanentId(player2, "Ezuri's Archers");
 
-        assertThatThrownBy(() -> harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null))
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, targetId))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("artifact");
+                .hasMessageContaining("Invalid permanent");
     }
-
-    // ===== Indestructible =====
 
     @Test
     @DisplayName("Indestructible artifact survives ETB")
     void indestructibleArtifactSurvives() {
-        harness.addToBattlefield(player2, new LeoninScimitar());
+        harness.addToBattlefield(player2, new AccordersShield());
         harness.setHand(player1, List.of(new OxiddaScrapmelter()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Leonin Scimitar");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Accorder's Shield");
+        harness.castCreature(player1, 0, targetId);
 
-        // Resolve creature spell → ETB on stack
+        // Resolve creature spell.
         harness.passBothPriorities();
 
         // Grant indestructible to the target before ETB resolves
-        Permanent target = findPermanent(player2, "Leonin Scimitar");
+        Permanent target = findPermanent(player2, "Accorder's Shield");
         target.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
 
-        // Resolve ETB — should not destroy indestructible artifact
+        // Resolve ETB.
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        harness.assertOnBattlefield(player2, "Leonin Scimitar");
+        harness.assertOnBattlefield(player2, "Accorder's Shield");
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("indestructible"));
     }
-
-    // ===== Fizzle =====
 
     @Test
     @DisplayName("ETB fizzles if target artifact is removed before resolution")
     void etbFizzlesIfTargetRemoved() {
-        harness.addToBattlefield(player2, new LeoninScimitar());
+        harness.addToBattlefield(player2, new AccordersShield());
         harness.setHand(player1, List.of(new OxiddaScrapmelter()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        UUID targetId = harness.getPermanentId(player2, "Leonin Scimitar");
-        harness.getGameService().playCard(harness.getGameData(), player1, 0, 0, targetId, null);
+        UUID targetId = harness.getPermanentId(player2, "Accorder's Shield");
+        harness.castCreature(player1, 0, targetId);
 
-        // Resolve creature spell → ETB on stack
+        // Resolve creature spell.
         harness.passBothPriorities();
 
         // Remove target before ETB resolves
         harness.getGameData().playerBattlefields.get(player2.getId()).clear();
 
-        // Resolve ETB → fizzles
+        // Resolve ETB.
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
-
-    // ===== No target scenarios =====
 
     @Test
     @DisplayName("Can cast without a target when no artifacts on battlefield")
@@ -193,8 +188,8 @@ class OxiddaScrapmelterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB does not trigger when cast without a target")
-    void etbDoesNotTriggerWithoutTarget() {
+    @DisplayName("No ETB ability remains on the stack when there are no legal targets")
+    void noEtbOnStackWithoutLegalTargets() {
         harness.setHand(player1, List.of(new OxiddaScrapmelter()));
         harness.addMana(player1, ManaColor.RED, 4);
 
@@ -205,6 +200,68 @@ class OxiddaScrapmelterTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         harness.assertOnBattlefield(player1, "Oxidda Scrapmelter");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mandatory ETB can destroy an artifact controlled by Scrapmelter's controller")
+    void destroysOwnArtifact() {
+        harness.addToBattlefield(player1, new AccordersShield());
+        harness.setHand(player1, List.of(new OxiddaScrapmelter()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Accorder's Shield"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Accorder's Shield");
+        harness.assertOnBattlefield(player1, "Oxidda Scrapmelter");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An artifact appearing before Scrapmelter enters can be targeted")
+    void targetsArtifactAppearingBeforeEntry() {
+        harness.setHand(player1, List.of(new OxiddaScrapmelter()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castCreature(player1, 0);
+        harness.addToBattlefield(player2, new AccordersShield());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Accorder's Shield"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Accorder's Shield");
+        harness.assertOnBattlefield(player1, "Oxidda Scrapmelter");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Scrapmelter triggers when it enters without being cast")
+    void triggersWithoutBeingCast() {
+        harness.addToBattlefield(player2, new VulshokReplica());
+        harness.enterBattlefieldAndReturn(player1, new OxiddaScrapmelter());
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Vulshok Replica"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Vulshok Replica");
+        harness.assertOnBattlefield(player1, "Oxidda Scrapmelter");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("ETB resolves independently after Scrapmelter leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        harness.addToBattlefield(player2, new AccordersShield());
+        harness.setHand(player1, List.of(new OxiddaScrapmelter()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player2, "Accorder's Shield"));
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Accorder's Shield");
         assertThat(gd.stack).isEmpty();
     }
 }
