@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.cards.i.IntangibleVirtue;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
@@ -11,13 +13,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+@CardUsed({Paraselene.class, RuleOfLaw.class, AngelicChorus.class, GrizzlyBears.class, IntangibleVirtue.class})
 class ParaseleneTest extends BaseCardTest {
 
     private static final int STARTING_LIFE = 20;
-
-    // ===== Resolution =====
 
     @Test
     @DisplayName("Destroys all enchantments and gains 1 life per destroyed")
@@ -27,13 +26,11 @@ class ParaseleneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Paraselene()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player1, "Rule of Law");
         harness.assertNotOnBattlefield(player2, "Angelic Chorus");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE + 2);
+        harness.assertLife(player1, STARTING_LIFE + 2);
     }
 
     @Test
@@ -43,11 +40,9 @@ class ParaseleneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Paraselene()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE);
+        harness.assertLife(player1, STARTING_LIFE);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
@@ -58,12 +53,10 @@ class ParaseleneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Paraselene()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
-        GameData gd = harness.getGameData();
         harness.assertInGraveyard(player1, "Rule of Law");
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE + 1);
+        harness.assertLife(player1, STARTING_LIFE + 1);
     }
 
     @Test
@@ -74,8 +67,7 @@ class ParaseleneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Paraselene()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Rule of Law");
@@ -87,9 +79,56 @@ class ParaseleneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Paraselene()));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertInGraveyard(player1, "Paraselene");
+    }
+
+    @Test
+    @DisplayName("Only destroyed enchantments count toward life gain")
+    void survivingIndestructibleEnchantmentDoesNotCount() {
+        var survivor = harness.addToBattlefieldAndReturn(player1, new IntangibleVirtue());
+        survivor.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.addToBattlefield(player2, new IntangibleVirtue());
+        harness.setHand(player1, List.of(new Paraselene()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertOnBattlefield(player1, "Intangible Virtue");
+        harness.assertInGraveyard(player2, "Intangible Virtue");
+        harness.assertLife(player1, STARTING_LIFE + 1);
+        harness.assertLife(player2, STARTING_LIFE);
+    }
+
+    @Test
+    @DisplayName("Gains no life when all enchantments are indestructible")
+    void gainsNoLifeWhenNoEnchantmentIsDestroyed() {
+        var enchantment = harness.addToBattlefieldAndReturn(player2, new IntangibleVirtue());
+        enchantment.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        harness.setHand(player1, List.of(new Paraselene()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertOnBattlefield(player2, "Intangible Virtue");
+        harness.assertLife(player1, STARTING_LIFE);
+        harness.assertLife(player2, STARTING_LIFE);
+        harness.assertInGraveyard(player1, "Paraselene");
+    }
+
+    @Test
+    @DisplayName("Destroys opposing enchantments with hexproof without targeting")
+    void destroysHexproofEnchantment() {
+        var enchantment = harness.addToBattlefieldAndReturn(player2, new IntangibleVirtue());
+        enchantment.getGrantedKeywords().add(Keyword.HEXPROOF);
+        harness.setHand(player1, List.of(new Paraselene()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        harness.assertInGraveyard(player2, "Intangible Virtue");
+        harness.assertLife(player1, STARTING_LIFE + 1);
+        harness.assertLife(player2, STARTING_LIFE);
     }
 }
