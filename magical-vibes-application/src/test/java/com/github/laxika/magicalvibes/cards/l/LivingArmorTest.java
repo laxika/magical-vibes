@@ -77,4 +77,37 @@ class LivingArmorTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void canTargetOwnCreatureAndCountersAccumulate() {
+        harness.addToBattlefield(player1, new LivingArmor());
+        harness.addToBattlefield(player1, new LivingArmor());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new ScarwoodGoblins());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isEqualTo(4);
+        assertThat(target.getEffectivePower()).isEqualTo(2);
+        assertThat(target.getEffectiveToughness()).isEqualTo(6);
+    }
+
+    @Test
+    void targetLeavingBattlefieldDoesNotRefundSacrifice() {
+        harness.addToBattlefield(player1, new LivingArmor());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ScarwoodGoblins());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ZERO_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Living Armor");
+        harness.assertNotOnBattlefield(player1, "Living Armor");
+        harness.assertInGraveyard(player2, "Scarwood Goblins");
+    }
 }
