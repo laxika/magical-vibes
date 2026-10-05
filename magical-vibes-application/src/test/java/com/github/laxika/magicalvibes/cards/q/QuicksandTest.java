@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.q;
 
-import com.github.laxika.magicalvibes.cards.a.AzureDrake;
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Quicksand.class, GrizzlyBears.class, AzureDrake.class})
+@CardUsed({Quicksand.class, GrizzlyBears.class, AirElemental.class, HillGiant.class})
 class QuicksandTest extends BaseCardTest {
 
     // ===== Mana ability =====
@@ -23,11 +25,10 @@ class QuicksandTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping for colorless mana adds {C}")
     void tapForColorlessMana() {
-        harness.addToBattlefield(player1, new Quicksand());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Quicksand());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
-        Permanent land = findPermanent(player1, "Quicksand");
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
@@ -139,11 +140,61 @@ class QuicksandTest extends BaseCardTest {
     @DisplayName("Cannot target an attacking creature with flying")
     void cannotTargetAttackingCreatureWithFlying() {
         harness.addToBattlefield(player1, new Quicksand());
-        Permanent flyer = addCreatureReady(player2, new AzureDrake());
+        Permanent flyer = addCreatureReady(player2, new AirElemental());
         declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, flyer.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A creature gaining flying before resolution is no longer a legal target")
+    void gainingFlyingBeforeResolutionPreventsDebuff() {
+        harness.addToBattlefield(player1, new Quicksand());
+        Permanent attacker = addCreatureReady(player2, new HillGiant());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        harness.activateAbility(player1, 0, 1, null, attacker.getId());
+        attacker.getGrantedKeywords().add(Keyword.FLYING);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Quicksand");
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Reducing an indestructible attacker's toughness to zero puts it in the graveyard")
+    void zeroToughnessKillsIndestructibleAttacker() {
+        harness.addToBattlefield(player1, new Quicksand());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        attacker.getGrantedKeywords().add(Keyword.INDESTRUCTIBLE);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        harness.activateAbility(player1, 0, 1, null, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Quicksand");
+    }
+
+    @Test
+    @DisplayName("The debuff remains after its target stops attacking once the ability has resolved")
+    void debuffRemainsAfterAttackerLeavesCombat() {
+        harness.addToBattlefield(player1, new Quicksand());
+        Permanent attacker = addCreatureReady(player2, new HillGiant());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        harness.activateAbility(player1, 0, 1, null, attacker.getId());
+        harness.passBothPriorities();
+        attacker.setAttacking(false);
+
+        harness.assertOnBattlefield(player2, "Hill Giant");
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(1);
     }
 
     // ===== Cannot activate when tapped =====
