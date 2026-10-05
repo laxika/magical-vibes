@@ -35,6 +35,9 @@ class IntimidatorInitiateTest extends BaseCardTest {
 
         harness.castFromHand(player1, new IntimidatorInitiate(), "{R}");
 
+        harness.handlePermanentChosen(player1, harness.getGameData().playerBattlefields.get(player1.getId()).getFirst().getId());
+        harness.passBothPriorities();
+
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
@@ -49,9 +52,9 @@ class IntimidatorInitiateTest extends BaseCardTest {
         opponentCastsRedSpell();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, blocker.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(blocker.isCantBlockThisTurn()).isTrue();
         assertThat(harness.getGameData().playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(0);
@@ -65,10 +68,10 @@ class IntimidatorInitiateTest extends BaseCardTest {
 
         opponentCastsRedSpell();
 
+        harness.handlePermanentChosen(player1, blocker.getId());
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
-        while (!harness.getGameData().stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         assertThat(blocker.isCantBlockThisTurn()).isFalse();
     }
@@ -95,8 +98,51 @@ class IntimidatorInitiateTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, target.getId());
 
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("The target is chosen before the optional payment on resolution")
+    void targetIsChosenBeforePayment() {
+        harness.addToBattlefield(player1, new IntimidatorInitiate());
+        Permanent blocker = addCreatureReady(player2, new SafeholdSentry());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        opponentCastsRedSpell();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.handlePermanentChosen(player1, blocker.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(blocker.isCantBlockThisTurn()).isFalse();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(blocker.isCantBlockThisTurn()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents resolution and does not charge the optional payment")
+    void removedTargetDoesNotChargePayment() {
+        harness.addToBattlefield(player1, new IntimidatorInitiate());
+        Permanent blocker = addCreatureReady(player2, new SafeholdSentry());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        opponentCastsRedSpell();
+        harness.handlePermanentChosen(player1, blocker.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(blocker);
+        gd.playerGraveyards.get(player2.getId()).add(blocker.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(blocker.isCantBlockThisTurn()).isFalse();
     }
 }
