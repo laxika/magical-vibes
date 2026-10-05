@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.DwarvenDriller;
 import com.github.laxika.magicalvibes.cards.e.EmberShot;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.l.LavaDart;
+import com.github.laxika.magicalvibes.cards.m.Malignus;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -21,7 +22,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Cagemail.class, DwarvenDriller.class, EmberShot.class, FlaringPain.class, LavaDart.class, PhantomNomad.class, SuntailHawk.class})
+@CardUsed({Cagemail.class, DwarvenDriller.class, EmberShot.class, FlaringPain.class, LavaDart.class, Malignus.class, PhantomNomad.class, SuntailHawk.class})
 class PhantomNomadTest extends BaseCardTest {
 
     @Test
@@ -173,8 +174,7 @@ class PhantomNomadTest extends BaseCardTest {
         nomad.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Permanent blocker = addCreatureReady(player2, new SuntailHawk());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -191,8 +191,7 @@ class PhantomNomadTest extends BaseCardTest {
         Permanent firstBlocker = addCreatureReady(player2, new SuntailHawk());
         Permanent secondBlocker = addCreatureReady(player2, new SuntailHawk());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -208,12 +207,51 @@ class PhantomNomadTest extends BaseCardTest {
         assertThat(nomad.getMarkedDamage()).isZero();
     }
 
+    @Test
+    @DisplayName("Goes to the graveyard when prevention removes its last counter without a toughness boost")
+    void diesWhenItsLastCounterIsRemoved() {
+        Permanent nomad = harness.enterBattlefieldAndReturn(player2, new PhantomNomad());
+        harness.setHand(player1, List.of(new LavaDart(), new LavaDart()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, nomad.getId());
+        assertThat(nomad.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(nomad);
+
+        harness.castAndResolveInstant(player1, 0, nomad.getId());
+
+        assertThat(nomad.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(nomad.getMarkedDamage()).isZero();
+        harness.assertNotOnBattlefield(player2, "Phantom Nomad");
+        harness.assertInGraveyard(player2, "Phantom Nomad");
+    }
+
+    @Test
+    @DisplayName("Combat damage from an unpreventable source still removes a counter")
+    void unpreventableSourceCombatDamageStillRemovesCounter() {
+        harness.setLife(player2, 2);
+        Permanent attacker = addCreatureReady(player1, new Malignus());
+        Permanent nomad = harness.enterBattlefieldAndReturn(player2, new PhantomNomad());
+        harness.setHand(player1, List.of(new Cagemail()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, nomad.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(nomad.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(nomad.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(nomad);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+    }
+
     private void dealEmberShotForJudReview(Permanent target) {
         harness.setHand(player1, List.of(new EmberShot()));
         harness.setLibrary(player1, List.of(new PhantomNomad()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
