@@ -75,17 +75,56 @@ class LightningDragonTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.activateAbility(player1, 0, null, null);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(dragon.getPowerModifier()).isEqualTo(2);
         assertThat(dragon.getToughnessModifier()).isZero();
     }
 
-    private void castAndResolveLightningDragon() {
+    @Test
+    @DisplayName("Echo does not create an enters-the-battlefield trigger")
+    void echoDoesNotTriggerOnEntry() {
         harness.castFromHand(player1, new LightningDragon(), "{2}{R}{R}");
         harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Lightning Dragon");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Echo waits for its controller's upkeep, not the opponent's")
+    void echoDoesNotTriggerOnOpponentsUpkeep() {
+        castAndResolveLightningDragon();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Lightning Dragon");
+
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Lightning Dragon");
+    }
+
+    @Test
+    @DisplayName("Firebreathing can be activated while summoning sick")
+    void firebreathingWorksWhileSummoningSick() {
+        castAndResolveLightningDragon();
+        Permanent dragon = findPermanent(player1, "Lightning Dragon");
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(dragon.getPowerModifier()).isEqualTo(1);
+        assertThat(dragon.getToughnessModifier()).isZero();
+    }
+    private void castAndResolveLightningDragon() {
+        harness.castFromHand(player1, new LightningDragon(), "{2}{R}{R}");
+        resolveAllTriggers();
         harness.assertOnBattlefield(player1, "Lightning Dragon");
     }
 }
