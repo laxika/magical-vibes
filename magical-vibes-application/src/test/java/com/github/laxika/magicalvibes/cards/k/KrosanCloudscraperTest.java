@@ -113,4 +113,60 @@ class KrosanCloudscraperTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(cloudscraper);
     }
+
+    @Test
+    @DisplayName("Turning face up restores the upkeep payment ability")
+    void turnedFaceUpCloudscraperTriggersAtUpkeep() {
+        harness.setHand(player1, List.of(new KrosanCloudscraper()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        Permanent cloudscraper = findPermanent(player1, "Krosan Cloudscraper");
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(cloudscraper));
+        assertThat(cloudscraper.isFaceDown()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Krosan Cloudscraper");
+        harness.assertInGraveyard(player1, "Krosan Cloudscraper");
+    }
+
+    @Test
+    @DisplayName("One green mana cannot pay the upkeep cost, even with additional colorless mana")
+    void insufficientGreenManaCannotPayUpkeep() {
+        harness.addToBattlefield(player1, new KrosanCloudscraper());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Krosan Cloudscraper");
+        harness.assertInGraveyard(player1, "Krosan Cloudscraper");
+    }
+
+    @Test
+    @DisplayName("The controller may decline the upkeep payment even when they can afford it")
+    void canDeclineAffordableUpkeepPayment() {
+        harness.addToBattlefield(player1, new KrosanCloudscraper());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Krosan Cloudscraper");
+        harness.assertInGraveyard(player1, "Krosan Cloudscraper");
+    }
 }
