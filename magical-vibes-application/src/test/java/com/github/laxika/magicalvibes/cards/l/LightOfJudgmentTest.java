@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -63,11 +64,77 @@ class LightOfJudgmentTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void dealsSixDamageWithoutAttachedEquipment() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+
+        cast(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(6);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Light of Judgment");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void killsCreatureWithoutAttachedEquipment() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        cast(target);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Light of Judgment");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void canTargetOwnCreatureAndDestroyEquipmentControlledByOpponent() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        Permanent equipment = addAttachedEquipment(player2, target);
+        Permanent otherCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent otherEquipment = addAttachedEquipment(player2, otherCreature);
+
+        cast(target);
+
+        assertThat(target.getMarkedDamage()).isEqualTo(6);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .containsExactly(equipment.getId())
+                .doesNotContain(otherEquipment.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(equipment.getId()));
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(otherEquipment.getId()));
+        assertThat(otherCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void cannotDestroyMoreThanOneAttachedEquipment() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent firstEquipment = addAttachedEquipment(player2, target);
+        Permanent secondEquipment = addAttachedEquipment(player2, target);
+
+        cast(target);
+
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(firstEquipment.getId(), secondEquipment.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstEquipment.getId()));
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(secondEquipment.getId()));
+    }
+
     private void cast(Permanent target) {
         harness.setHand(player1, List.of(new LightOfJudgment()));
         addMana();
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addMana() {
