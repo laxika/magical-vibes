@@ -130,6 +130,61 @@ class PsychotropeThallidTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Spore counters are paid immediately and cannot fund a second activation")
+    void sporeCountersArePaidBeforeResolution() {
+        Permanent thallid = addPsychotropeThallid();
+        thallid.setCounterCount(CounterType.FUNGUS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(thallid.getCounterCount(CounterType.FUNGUS)).isZero();
+        harness.assertNotOnBattlefield(player1, "Saproling");
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Both abilities can be activated while tapped and summoning sick")
+    void abilitiesDoNotRequireTappingOrHaste() {
+        Permanent thallid = harness.addToBattlefieldAndReturn(player1, new PsychotropeThallid());
+        thallid.setSummoningSick(true);
+        thallid.setTapped(true);
+        thallid.setCounterCount(CounterType.FUNGUS, 3);
+        harness.setHand(player1, List.of());
+        PsychotropeThallid drawnCard = new PsychotropeThallid();
+        harness.setLibrary(player1, List.of(drawnCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Saproling");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(thallid.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's Saproling cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsSaproling() {
+        Permanent saproling = addSaproling();
+        gd.playerBattlefields.get(player1.getId()).remove(saproling);
+        gd.playerBattlefields.get(player2.getId()).add(saproling);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Saproling");
+    }
+
     private Permanent addPsychotropeThallid() {
         return addCreatureReady(player1, new PsychotropeThallid());
     }
