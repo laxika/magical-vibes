@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,8 +24,8 @@ class OkibaGangShinobiTest extends BaseCardTest {
     void combatDamageMakesDamagedPlayerDiscardTwo() {
         Permanent shinobi = addCreatureReady(player1, new OkibaGangShinobi());
         shinobi.setAttacking(true);
-        harness.setHand(player2, new ArrayList<>(List.of(
-                new ChildOfThorns(), new ChildOfThorns(), new ChildOfThorns())));
+        harness.setHand(player2, List.of(
+                new ChildOfThorns(), new ChildOfThorns(), new ChildOfThorns()));
 
         resolveCombat();
         resolveAllTriggers();
@@ -50,12 +49,66 @@ class OkibaGangShinobiTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new ChildOfThorns());
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        harness.setHand(player2, new ArrayList<>(List.of(new ChildOfThorns(), new ChildOfThorns())));
+        harness.setHand(player2, List.of(new ChildOfThorns(), new ChildOfThorns()));
 
         resolveCombat();
         resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("A player with only one card discards it and the ability finishes")
+    void discardsOnlyAvailableCard() {
+        Permanent shinobi = addCreatureReady(player1, new OkibaGangShinobi());
+        shinobi.setAttacking(true);
+        harness.setHand(player2, List.of(new ChildOfThorns()));
+
+        resolveCombat();
+        resolveAllTriggers();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Child of Thorns");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An empty hand does not leave a pending discard choice")
+    void emptyHandFinishesWithoutChoice() {
+        Permanent shinobi = addCreatureReady(player1, new OkibaGangShinobi());
+        shinobi.setAttacking(true);
+        harness.setHand(player2, List.of());
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("When the other player controls the Shinobi, the damaged player still discards")
+    void otherControllerMakesDamagedPlayerDiscard() {
+        Permanent shinobi = addCreatureReady(player2, new OkibaGangShinobi());
+        shinobi.setAttacking(true);
+        harness.setHand(player1, List.of(new ChildOfThorns(), new ChildOfThorns()));
+        harness.setHand(player2, List.of(new ChildOfThorns()));
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
