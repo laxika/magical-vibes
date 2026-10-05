@@ -27,8 +27,7 @@ class MysticRepealTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new MysticRepeal()));
         harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
 
         harness.assertNotOnBattlefield(player2, "Angelic Chorus");
         harness.assertNotInGraveyard(player2, "Angelic Chorus");
@@ -51,5 +50,49 @@ class MysticRepealTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("enchantment");
+    }
+
+    @Test
+    @DisplayName("Returns an enchantment controlled by an opponent to its owner's library")
+    void returnsStolenEnchantmentToOwnersLibrary() {
+        AngelicChorus enchantment = new AngelicChorus();
+        enchantment.setOwnerId(player1.getId());
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, enchantment).getId();
+        GrizzlyBears existingCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(existingCard));
+        int controllerDeckSize = gd.playerDecks.get(player2.getId()).size();
+
+        harness.setHand(player1, List.of(new MysticRepeal()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, targetId);
+
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        harness.assertNotInGraveyard(player1, "Angelic Chorus");
+        harness.assertNotInGraveyard(player2, "Angelic Chorus");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(existingCard, enchantment);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(controllerDeckSize);
+    }
+
+    @Test
+    @DisplayName("Does nothing when its target leaves the battlefield before resolution")
+    void doesNothingWhenTargetLeavesBeforeResolution() {
+        AngelicChorus enchantment = new AngelicChorus();
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, enchantment).getId();
+        int deckSizeBefore = gd.playerDecks.get(player2.getId()).size();
+
+        harness.setHand(player1, List.of(new MysticRepeal(), new MysticRepeal()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castInstant(player1, 0, targetId);
+        harness.castInstant(player1, 0, targetId);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .hasSize(deckSizeBefore + 1)
+                .last().isSameAs(enchantment);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof MysticRepeal).hasSize(2);
     }
 }
