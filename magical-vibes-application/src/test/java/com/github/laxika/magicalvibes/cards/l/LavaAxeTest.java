@@ -96,6 +96,56 @@ class LavaAxeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Lava Axe can target your own planeswalker")
+    void canTargetOwnPlaneswalker() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+        harness.setHand(player1, List.of(new LavaAxe()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, planeswalker.getId());
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Lava Axe sends a planeswalker with five loyalty to the graveyard")
+    void dealsLethalDamageToPlaneswalker() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+        harness.setHand(player1, List.of(new LavaAxe()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, planeswalker.getId());
+
+        harness.assertNotOnBattlefield(player2, "Chandra Nalaar");
+        harness.assertInGraveyard(player2, "Chandra Nalaar");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Lava Axe does not damage a player when its planeswalker target leaves")
+    void doesNotDamagePlayerWhenPlaneswalkerTargetLeaves() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+        harness.setHand(player1, List.of(new LavaAxe()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castSorcery(player1, 0, planeswalker.getId());
+
+        planeswalker.setCounterCount(CounterType.LOYALTY, 0);
+        harness.runStateBasedActions();
+        harness.assertNotOnBattlefield(player2, "Chandra Nalaar");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Lava Axe");
+    }
+
+    @Test
     @DisplayName("Lava Axe goes to graveyard after resolution")
     void goesToGraveyardAfterResolution() {
         harness.setHand(player1, List.of(new LavaAxe()));
