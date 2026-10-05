@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -62,10 +64,94 @@ class InspiringEaselTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
 
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 1, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 1, player2.getId());
 
         assertThat(gd.stack).anyMatch(entry -> entry.getDescription() != null
                 && entry.getDescription().startsWith("Copy of Lightning Bolt"));
+    }
+
+    @Test
+    void restrictedManaCanPayForAnInstant() {
+        harness.addToBattlefield(player1, new InspiringEasel());
+        harness.setHand(player1, List.of(new LightningBolt()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, ManaColor.RED.name());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 17);
+        assertThat(gd.playerManaPools.get(player1.getId()).getInstantSorceryOnlyColored(ManaColor.RED))
+                .isZero();
+    }
+
+    @Test
+    void incorporationCannotBeActivatedOutsideYourMainPhase() {
+        Permanent easel = harness.addToBattlefieldAndReturn(player1, new InspiringEasel());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(easel.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void incorporationResolvesWithoutAChoiceWhenThereAreNoEligibleCards() {
+        Permanent easel = harness.addToBattlefieldAndReturn(player1, new InspiringEasel());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(easel.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void repeatedIncorporationGrantsIndependentCopyTriggers() {
+        harness.addToBattlefield(player1, new InspiringEasel());
+        harness.addToBattlefield(player1, new InspiringEasel());
+        harness.setHand(player1, List.of(new LightningBolt()));
+
+        for (int i = 0; i < 2; i++) {
+            harness.activateAbility(player1, i, 1, null, null);
+            harness.passBothPriorities();
+            harness.handleCardChosen(player1, 0);
+        }
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, player2.getId());
+
+        for (int i = 0; i < 2; i++) {
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, false);
+        }
+
+        assertThat(gd.stack).filteredOn(StackEntry::isCopy).hasSize(2);
+        resolveAllTriggers();
+        harness.assertLife(player2, 11);
+    }
+
+    @Test
+    void incorporatedSpellCopyCanChooseANewTarget() {
+        harness.addToBattlefield(player1, new InspiringEasel());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
     }
 }
