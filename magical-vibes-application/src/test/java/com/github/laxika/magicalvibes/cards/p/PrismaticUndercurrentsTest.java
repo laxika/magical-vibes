@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PrismaticUndercurrents.class, AirElemental.class, Forest.class, Island.class, GrizzlyBears.class})
 class PrismaticUndercurrentsTest extends BaseCardTest {
 
     @Test
@@ -35,8 +36,8 @@ class PrismaticUndercurrentsTest extends BaseCardTest {
         assertThat(search.params().cards()).containsExactly(firstLand, secondLand);
         assertThat(search.params().destination()).isEqualTo(LibrarySearchDestination.HAND);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstLand, secondLand);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nonLand);
@@ -63,6 +64,72 @@ class PrismaticUndercurrentsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getName().equals("Forest")))
                 .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The search may find zero cards even when basic lands are available")
+    void mayDeclineToFindAnyLand() {
+        Card land = new Forest();
+        harness.setLibrary(player1, List.of(land));
+        castPrismaticUndercurrents();
+
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Repeated colors, colorless lands, and opposing permanents do not increase X")
+    void countsOnlyDistinctColorsAmongOwnPermanents() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new AirElemental());
+        Card firstLand = new Forest();
+        Card secondLand = new Island();
+        harness.setLibrary(player1, List.of(firstLand, secondLand));
+        castPrismaticUndercurrents();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstLand);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondLand);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The search may stop after finding fewer than X basic lands")
+    void mayStopAfterOneOfTwoLands() {
+        harness.addToBattlefield(player1, new AirElemental());
+        Card firstLand = new Forest();
+        Card secondLand = new Island();
+        harness.setLibrary(player1, List.of(firstLand, secondLand));
+        castPrismaticUndercurrents();
+
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstLand);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondLand);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Multiple copies each grant an additional land play")
+    void additionalLandPermissionsStack() {
+        harness.addToBattlefield(player1, new PrismaticUndercurrents());
+        harness.addToBattlefield(player1, new PrismaticUndercurrents());
+        harness.setHand(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.playLand(player1, 0);
+        harness.playLand(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(5);
+        assertThat(gd.getMaxLandsThisTurn(player2.getId())).isEqualTo(1);
     }
 
     private void castPrismaticUndercurrents() {
