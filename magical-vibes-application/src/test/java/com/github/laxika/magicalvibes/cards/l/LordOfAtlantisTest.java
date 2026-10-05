@@ -24,10 +24,8 @@ class LordOfAtlantisTest extends BaseCardTest {
     @Test
     @DisplayName("Other Merfolk get +1/+1 and islandwalk")
     void buffsOtherMerfolk() {
-        harness.addToBattlefield(player1, new MerfolkOfThePearlTrident());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new MerfolkOfThePearlTrident());
         harness.addToBattlefield(player1, new LordOfAtlantis());
-
-        Permanent merfolk = merfolk(player1);
 
         assertThat(gqs.getEffectivePower(gd, merfolk)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, merfolk)).isEqualTo(2);
@@ -37,9 +35,7 @@ class LordOfAtlantisTest extends BaseCardTest {
     @Test
     @DisplayName("Lord of Atlantis does not buff itself")
     void doesNotBuffItself() {
-        harness.addToBattlefield(player1, new LordOfAtlantis());
-
-        Permanent lord = lord(player1);
+        Permanent lord = harness.addToBattlefieldAndReturn(player1, new LordOfAtlantis());
 
         assertThat(gqs.getEffectivePower(gd, lord)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, lord)).isEqualTo(2);
@@ -49,10 +45,8 @@ class LordOfAtlantisTest extends BaseCardTest {
     @Test
     @DisplayName("Does not buff non-Merfolk creatures")
     void doesNotBuffNonMerfolk() {
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new LordOfAtlantis());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
 
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
@@ -171,7 +165,33 @@ class LordOfAtlantisTest extends BaseCardTest {
         return findPermanent(player, "Merfolk of the Pearl Trident");
     }
 
-    private Permanent lord(com.github.laxika.magicalvibes.model.Player player) {
-        return findPermanent(player, "Lord of Atlantis");
+    @Test
+    void opposingLordsBuffEachOtherAndBothPlayersMerfolk() {
+        Permanent firstLord = harness.addToBattlefieldAndReturn(player1, new LordOfAtlantis());
+        Permanent secondLord = harness.addToBattlefieldAndReturn(player2, new LordOfAtlantis());
+        Permanent firstMerfolk = harness.addToBattlefieldAndReturn(player1, new MerfolkOfThePearlTrident());
+        Permanent secondMerfolk = harness.addToBattlefieldAndReturn(player2, new MerfolkOfThePearlTrident());
+
+        for (Permanent creature : List.of(firstLord, secondLord, firstMerfolk, secondMerfolk)) {
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+            assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+            assertThat(gqs.hasKeyword(gd, creature, Keyword.ISLANDWALK)).isTrue();
+        }
+    }
+
+    @Test
+    void attackersIslandDoesNotPreventBlocking() {
+        harness.addToBattlefield(player1, new LordOfAtlantis());
+        harness.addToBattlefield(player1, new Island());
+        Permanent attacker = addCreatureReady(player1, new MerfolkOfThePearlTrident());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        prepareDeclareBlockers();
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
     }
 }
