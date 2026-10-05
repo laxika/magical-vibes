@@ -67,11 +67,114 @@ class NissasJudgmentTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void maySupportOneCreatureAndChooseADamageTarget() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        castNissasJudgment(List.of(bear.getId(), elemental.getId()));
+
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(elemental.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void mayChooseOnlyADamageTarget() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        castNissasJudgment(List.of(elemental.getId()));
+
+        assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(elemental.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    void maySupportWithoutChoosingADamageTarget() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+
+        castNissasJudgment(List.of(bear.getId(), elves.getId()));
+
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(elves.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(bear.getMarkedDamage()).isZero();
+        assertThat(elves.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    void maySupportTheOpposingDamageTarget() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        castNissasJudgment(List.of(bear.getId(), elemental.getId(), elemental.getId()));
+
+        assertThat(elemental.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(elemental.getMarkedDamage()).isEqualTo(3);
+        assertThat(bear.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void creaturesWithExistingCountersAlsoDealDamageButOtherCreaturesDoNot() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent existing = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        existing.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addToBattlefield(player1, new AirElemental());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        opposing.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        castNissasJudgment(List.of(bear.getId(), elves.getId(), elemental.getId()));
+
+        assertThat(elemental.getMarkedDamage()).isEqualTo(8);
+        harness.assertInGraveyard(player2, "Air Elemental");
+    }
+
+    @Test
+    void resolvesRemainingSupportAndDamageWhenOneSupportTargetLeaves() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new NissasJudgment()));
+        addMana();
+        harness.castSorcery(player1, 0, List.of(bear.getId(), elves.getId(), elemental.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(bear);
+        gd.playerGraveyards.get(player1.getId()).add(bear.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(elves.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(elemental.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    void stillSupportsWhenDamageTargetLeaves() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent elves = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new NissasJudgment()));
+        addMana();
+        harness.castSorcery(player1, 0, List.of(bear.getId(), elves.getId(), elemental.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(elemental);
+        gd.playerGraveyards.get(player2.getId()).add(elemental.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(elves.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(elemental.getMarkedDamage()).isZero();
+    }
+
     private void castNissasJudgment(List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new NissasJudgment()));
         addMana();
-        harness.castSorcery(player1, 0, targetIds);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetIds);
     }
 
     private void addMana() {
