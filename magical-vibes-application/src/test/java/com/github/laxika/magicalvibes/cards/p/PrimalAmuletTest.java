@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,34 +18,25 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PrimalAmulet.class, PrimalWellspring.class, LightningBolt.class, Divination.class, GrizzlyBears.class, Cancel.class})
 class PrimalAmuletTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    
-
-    
-
     @Test
-    @DisplayName("Has back face configured as Primal Wellspring")
-    void hasBackFace() {
-        PrimalAmulet card = new PrimalAmulet();
-
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("PrimalWellspring");
+    @DisplayName("Primal Amulet enters the battlefield when its spell resolves")
+    void entersBattlefield() {
+        harness.setHand(player1, List.of(new PrimalAmulet()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Primal Amulet");
     }
 
-    
-
-    // ===== Cost reduction =====
-
     @Test
-    @DisplayName("Instant spells cost {1} less with Primal Amulet on the battlefield")
-    void instantsCostOneLess() {
-        Permanent amulet = addAmuletReady(player1);
+    @DisplayName("Colored mana requirements remain payable with Primal Amulet")
+    void coloredManaRequirementsRemainPayable() {
+        addAmuletReady(player1);
 
-        // Lightning Bolt costs {R}, which is already 1 mana — reduction of 1 generic makes it free of generic cost
-        // but it still requires {R} (cost reduction only affects generic)
+        // Lightning Bolt still requires its red mana.
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 
@@ -57,7 +49,7 @@ class PrimalAmuletTest extends BaseCardTest {
     @Test
     @DisplayName("Sorcery spells cost {1} less with Primal Amulet on the battlefield")
     void sorceriesCostOneLess() {
-        Permanent amulet = addAmuletReady(player1);
+        addAmuletReady(player1);
 
         // Divination costs {2}{U} — with reduction it costs {1}{U}
         harness.setHand(player1, List.of(new Divination()));
@@ -72,7 +64,7 @@ class PrimalAmuletTest extends BaseCardTest {
     @Test
     @DisplayName("Cost reduction does not apply to creature spells")
     void costReductionDoesNotApplyToCreatures() {
-        Permanent amulet = addAmuletReady(player1);
+        addAmuletReady(player1);
 
         // Grizzly Bears costs {1}{G} — should not get reduction
         harness.setHand(player1, List.of(new GrizzlyBears()));
@@ -83,8 +75,6 @@ class PrimalAmuletTest extends BaseCardTest {
         org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
                 () -> harness.castCreature(player1, 0));
     }
-
-    // ===== Charge counter trigger =====
 
     @Test
     @DisplayName("Casting an instant puts a charge counter on Primal Amulet")
@@ -131,8 +121,6 @@ class PrimalAmuletTest extends BaseCardTest {
         assertThat(amulet.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
-    // ===== Transform at 4 counters (optional) =====
-
     @Test
     @DisplayName("At 4+ charge counters, player may transform — accepting transforms")
     void transformsWhenAccepted() {
@@ -143,9 +131,7 @@ class PrimalAmuletTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
 
-        // Resolve the counter trigger — adds 4th counter, puts may ability on stack
-        harness.passBothPriorities();
-        // Resolve the may ability — prompts the player
+        // The transform choice is part of the counter trigger's resolution.
         harness.passBothPriorities();
         // Accept the may transform
         harness.handleMayAbilityChosen(player1, true);
@@ -165,9 +151,7 @@ class PrimalAmuletTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
 
-        // Resolve the counter trigger — adds 4th counter, puts may ability on stack
-        harness.passBothPriorities();
-        // Resolve the may ability — prompts the player
+        // The transform choice is part of the counter trigger's resolution.
         harness.passBothPriorities();
         // Decline the may transform
         harness.handleMayAbilityChosen(player1, false);
@@ -193,121 +177,197 @@ class PrimalAmuletTest extends BaseCardTest {
         assertThat(amulet.isTransformed()).isFalse();
     }
 
-    // ===== Back face: Primal Wellspring mana ability with spell copy =====
-
     @Test
-    @DisplayName("Primal Wellspring registers a pending spell copy trigger on mana ability activation")
-    void wellspringRegistersPendingCopy() {
-        Permanent wellspring = addTransformedWellspring(player1);
-
-        int idx = indexOf(player1, wellspring);
-        harness.activateAbility(player1, idx, 0, null, null);
-        // Choose a color
-        harness.handleListChoice(player1, "RED");
-
-        // Pending copy should be registered
-        assertThat(gd.pendingNextInstantSorceryCopyCount.getOrDefault(player1.getId(), 0)).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Casting an instant with pending copy creates a copy on the stack")
+    @DisplayName("Wellspring mana copies an instant and the copy deals damage")
     void wellspringCopiesInstantSpell() {
-        // Directly set up the pending copy (simulating wellspring activation)
-        gd.pendingNextInstantSorceryCopyCount.put(player1.getId(), 1);
-
+        activateWellspringMana(ManaColor.RED);
         harness.setHand(player1, List.of(new LightningBolt()));
-        harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
-
-        // Stack should have: original Lightning Bolt + copy triggered ability
-        assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getDescription().contains("Copy") && e.getDescription().contains("Primal Wellspring"));
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 17);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 14);
     }
 
     @Test
-    @DisplayName("Casting a sorcery with pending copy creates a copy on the stack")
+    @DisplayName("Wellspring mana copies a nontargeted sorcery")
     void wellspringCopiesSorcerySpell() {
-        gd.pendingNextInstantSorceryCopyCount.put(player1.getId(), 1);
-
+        activateWellspringMana(ManaColor.BLUE);
         harness.setHand(player1, List.of(new Divination()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setLibrary(player1, List.of(new LightningBolt(), new LightningBolt(),
+                new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castSorcery(player1, 0, 0);
-
-        assertThat(gd.stack).hasSizeGreaterThanOrEqualTo(2);
-        assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getDescription().contains("Copy") && e.getDescription().contains("Primal Wellspring"));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
     }
 
     @Test
-    @DisplayName("Pending copy is one-shot — only first instant/sorcery gets copied")
+    @DisplayName("One Wellspring mana copies only the spell it pays for")
     void pendingCopyIsOneShot() {
-        gd.pendingNextInstantSorceryCopyCount.put(player1.getId(), 1);
-
+        activateWellspringMana(ManaColor.RED);
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
-        harness.addMana(player1, ManaColor.RED, 2);
-
-        // Cast first bolt — should create copy
         harness.castInstant(player1, 0, player2.getId());
-        long copyCountAfterFirst = gd.stack.stream()
-                .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && e.getDescription().contains("Copy") && e.getDescription().contains("Primal Wellspring"))
-                .count();
-        assertThat(copyCountAfterFirst).isEqualTo(1);
-
-        // Pending copy should be consumed
-        assertThat(gd.pendingNextInstantSorceryCopyCount.getOrDefault(player1.getId(), 0)).isEqualTo(0);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test
-    @DisplayName("Casting a creature does not consume the pending copy trigger")
-    void creatureDoesNotConsumePendingCopy() {
-        gd.pendingNextInstantSorceryCopyCount.put(player1.getId(), 1);
-
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
+    @DisplayName("Wellspring mana spent on a creature cannot copy a later instant")
+    void creatureConsumesWellspringManaWithoutCopying() {
+        activateWellspringMana(ManaColor.GREEN);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new GrizzlyBears(), new LightningBolt()));
         harness.castCreature(player1, 0);
-
-        // No copy trigger and pending count still intact
-        assertThat(gd.stack).noneMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && e.getDescription().contains("Primal Wellspring"));
-        assertThat(gd.pendingNextInstantSorceryCopyCount.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test
-    @DisplayName("Pending copy is cleared when mana pools drain")
-    void pendingCopyClearedOnManaDrain() {
-        gd.pendingNextInstantSorceryCopyCount.put(player1.getId(), 1);
+    @DisplayName("Unused blue Wellspring mana does not copy a red spell paid with other mana")
+    void unusedWellspringManaDoesNotCopySpell() {
+        activateWellspringMana(ManaColor.BLUE);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.castInstant(player1, 0, player2.getId());
+        assertThat(gd.stack).hasSize(1);
+    }
 
-        // Advance step — this drains mana pools and should clear pending copies
+    @Test
+    @DisplayName("Only Wellspring mana actually spent on a spell produces copies")
+    void unspentSecondWellspringDoesNotProduceExtraCopy() {
+        activateWellspringMana(ManaColor.RED);
+        activateWellspringMana(ManaColor.BLUE);
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.castInstant(player1, 0, player2.getId());
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Each Wellspring mana spent on the same spell produces a copy")
+    void multipleWellspringManaCopiesSameSpell() {
+        activateWellspringMana(ManaColor.BLUE);
+        activateWellspringMana(ManaColor.RED);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new Divination()));
+        harness.castSorcery(player1, 0, 0);
+        assertThat(gd.stack).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Wellspring mana lost on a step change cannot copy a later spell")
+    void pendingCopyClearedOnManaDrain() {
+        activateWellspringMana(ManaColor.RED);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance step, draining mana
-
-        assertThat(gd.pendingNextInstantSorceryCopyCount).isEmpty();
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.castInstant(player1, 0, player2.getId());
+        assertThat(gd.stack).hasSize(1);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Opponent spells neither receive the reduction nor add charge counters")
+    void opponentSpellsDoNotBenefitOrTrigger() {
+        Permanent amulet = addAmuletReady(player1);
+        harness.setHand(player2, List.of(new Divination()));
+        harness.forceActivePlayer(player2);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException.class,
+                () -> harness.castSorcery(player2, 0, 0));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player2, 0, 0);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(amulet.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Accepting transformation removes every charge counter, including counters above four")
+    void transformationRemovesAllChargeCounters() {
+        Permanent amulet = addAmuletReady(player1);
+        amulet.setCounterCount(CounterType.CHARGE, 5);
+        amulet.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(amulet.isTransformed()).isTrue();
+        assertThat(amulet.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(amulet.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    private void activateWellspringMana(ManaColor color) {
+        Permanent wellspring = addTransformedWellspring(player1);
+        harness.activateAbility(player1, indexOf(player1, wellspring), 0, null, null);
+        harness.handleListChoice(player1, color.name());
+    }
+
+    @Test
+    @DisplayName("An instant with a generic cost receives the reduction")
+    void instantGenericCostIsReduced() {
+        addAmuletReady(player1);
+        LightningBolt bolt = new LightningBolt();
+        harness.setHand(player2, List.of(bolt));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.setHand(player1, List.of(new Cancel()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, bolt.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Lightning Bolt");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Wellspring copies a spell even when the original has been countered")
+    void copiesCounteredOriginal() {
+        activateWellspringMana(ManaColor.RED);
+        LightningBolt bolt = new LightningBolt();
+        harness.setHand(player1, List.of(bolt));
+        harness.castInstant(player1, 0, player2.getId());
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.castInstant(player2, 0, bolt.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Lightning Bolt");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 17);
+    }
 
     private Permanent addAmuletReady(Player player) {
-        PrimalAmulet card = new PrimalAmulet();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new PrimalAmulet());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
     private Permanent addTransformedWellspring(Player player) {
         PrimalAmulet card = new PrimalAmulet();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
         // Transform to back face
         perm.setCard(card.getBackFaceCard());
         perm.setTransformed(true);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
