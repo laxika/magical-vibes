@@ -1,20 +1,22 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LivingLands;
+import com.github.laxika.magicalvibes.cards.s.Solemnity;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MasterBiomancer.class, GrizzlyBears.class, Forest.class, LivingLands.class, Solemnity.class})
 class MasterBiomancerTest extends BaseCardTest {
 
     @Test
@@ -59,9 +61,7 @@ class MasterBiomancerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
@@ -72,12 +72,7 @@ class MasterBiomancerTest extends BaseCardTest {
     @Test
     @DisplayName("Master Biomancer itself enters without counters when no other one is on the battlefield")
     void biomancerDoesNotAffectItself() {
-        harness.setHand(player1, List.of(new MasterBiomancer()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MasterBiomancer(), "{2}{G}{U}");
         harness.passBothPriorities();
 
         Permanent biomancer = findPermanent(player1, "Master Biomancer");
@@ -97,20 +92,73 @@ class MasterBiomancerTest extends BaseCardTest {
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
+    @Test
+    void zeroPowerStillGrantsMutantType() {
+        Permanent biomancer = addReadyBiomancer(player1);
+        biomancer.setPowerModifier(-2);
+
+        Permanent bears = castBears(player1);
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(bears.getGrantedSubtypes()).contains(CardSubtype.MUTANT);
+    }
+
+    @Test
+    void negativePowerDoesNotPreventMutantType() {
+        Permanent biomancer = addReadyBiomancer(player1);
+        biomancer.setPowerModifier(-3);
+
+        Permanent bears = castBears(player1);
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(bears.getGrantedSubtypes()).contains(CardSubtype.MUTANT);
+    }
+
+    @Test
+    void anotherBiomancerEntersWithCountersAndMutantType() {
+        addReadyBiomancer(player1);
+
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new MasterBiomancer());
+
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(second.getGrantedSubtypes()).contains(CardSubtype.MUTANT);
+        Permanent bears = castBears(player1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
+
+    @Test
+    void counterProhibitionDoesNotPreventMutantType() {
+        addReadyBiomancer(player1);
+        harness.addToBattlefield(player2, new Solemnity());
+
+        Permanent bears = castBears(player1);
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(bears.getGrantedSubtypes()).contains(CardSubtype.MUTANT);
+    }
+
+    @Test
+    void forestEnteringAsCreatureGetsCountersAndMutantType() {
+        addReadyBiomancer(player1);
+        harness.addToBattlefield(player1, new LivingLands());
+
+        Permanent forest = harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(forest.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(forest.getGrantedSubtypes()).contains(CardSubtype.MUTANT);
+    }
+
     private Permanent castBears(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player, List.of(new GrizzlyBears()));
-        harness.addMana(player, ManaColor.GREEN, 2);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
         return findPermanent(player, "Grizzly Bears");
     }
 
     private Permanent addReadyBiomancer(Player player) {
-        Permanent perm = new Permanent(new MasterBiomancer());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new MasterBiomancer());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
