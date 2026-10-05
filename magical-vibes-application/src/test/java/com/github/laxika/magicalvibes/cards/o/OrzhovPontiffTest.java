@@ -109,6 +109,72 @@ class OrzhovPontiffTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(1);
     }
 
+    @Test
+    void boostIncludesPontiffButNotCreaturesEnteringAfterResolutionAndExpires() {
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new OrzhovGuildmage());
+
+        castPontiff();
+        harness.handleListChoice(player1, OWN_CREATURES);
+        harness.passBothPriorities();
+
+        Permanent pontiff = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Orzhov Pontiff"));
+        Permanent lateCreature = harness.enterBattlefieldAndReturn(player1, new OrzhovGuildmage());
+        assertThat(gqs.getEffectivePower(gd, pontiff)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pontiff)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lateCreature)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, pontiff)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, pontiff)).isEqualTo(1);
+    }
+
+    @Test
+    void shrinkDoesNotAffectCreaturesEnteringAfterResolutionAndExpires() {
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new OrzhovGuildmage());
+
+        castPontiff();
+        harness.handleListChoice(player1, OPPONENT_CREATURES);
+        harness.passBothPriorities();
+
+        Permanent lateCreature = harness.enterBattlefieldAndReturn(player2, new OrzhovGuildmage());
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lateCreature)).isEqualTo(2);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(2);
+    }
+
+    @Test
+    void hauntDoesNotExilePontiffWhenItsTargetDiesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new OrzhovGuildmage());
+
+        castPontiff();
+        harness.handleListChoice(player1, OWN_CREATURES);
+        harness.passBothPriorities();
+
+        destroyWithMortify(harness.getPermanentId(player1, "Orzhov Pontiff"));
+        harness.handlePermanentChosen(player1, target.getId());
+        destroyWithMortify(target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Orzhov Pontiff");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(Card::getName)
+                .doesNotContain("Orzhov Pontiff");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void castPontiff() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -125,7 +191,6 @@ class OrzhovPontiffTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, targetId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, targetId);
     }
 }
