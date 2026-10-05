@@ -44,8 +44,7 @@ class PhyrexianDenouncerTest extends BaseCardTest {
         assertThat(target.getEffectiveToughness()).isEqualTo(3);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(target.getEffectivePower()).isEqualTo(4);
         assertThat(target.getEffectiveToughness()).isEqualTo(4);
@@ -96,5 +95,58 @@ class PhyrexianDenouncerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Plague Beetle");
         harness.assertInGraveyard(player2, "Plague Beetle");
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid before the ability resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        addCreatureReady(player1, new PhyrexianDenouncer());
+        Permanent target = addCreatureReady(player2, new PhyrexianPlaguelord());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Phyrexian Denouncer");
+        harness.assertInGraveyard(player1, "Phyrexian Denouncer");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(3);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("The ability can target another creature its controller controls")
+    void abilityCanTargetOwnCreature() {
+        addCreatureReady(player1, new PhyrexianDenouncer());
+        Permanent target = addCreatureReady(player1, new PlagueBeetle());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Phyrexian Denouncer");
+        harness.assertNotOnBattlefield(player1, "Plague Beetle");
+        harness.assertInGraveyard(player1, "Plague Beetle");
+    }
+
+    @Test
+    @DisplayName("Denouncer can target itself, but that target is gone when the ability resolves")
+    void abilityCanTargetItself() {
+        Permanent source = addCreatureReady(player1, new PhyrexianDenouncer());
+        Permanent bystander = addCreatureReady(player2, new PhyrexianPlaguelord());
+
+        harness.activateAbility(player1, 0, null, source.getId());
+
+        harness.assertInGraveyard(player1, "Phyrexian Denouncer");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Phyrexian Denouncer");
+        assertThat(bystander.getEffectivePower()).isEqualTo(4);
+        assertThat(bystander.getEffectiveToughness()).isEqualTo(4);
     }
 }
