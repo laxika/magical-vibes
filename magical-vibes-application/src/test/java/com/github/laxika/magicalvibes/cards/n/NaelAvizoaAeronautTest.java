@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -93,6 +94,89 @@ class NaelAvizoaAeronautTest extends BaseCardTest {
         assertThat(search).isNotNull();
         assertThat(search.params().cards()).containsExactly(first, second);
         assertThat(search.params().cards()).doesNotContain(third, outsideDomain);
+    }
+
+    @Test
+    @DisplayName("Declining with full domain draws the untouched next card")
+    void decliningWithFullDomainDrawsUntouchedNextCard() {
+        addAllBasicLandTypes();
+        Card first = new Plains();
+        Card second = new Island();
+        Card third = new Swamp();
+        Card fourth = new Mountain();
+        Card fifth = new Forest();
+        Card untouched = new Island();
+        harness.setLibrary(player1, List.of(first, second, third, fourth, fifth, untouched));
+        addAttackingNael();
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(untouched)
+                .doesNotContain(first, second, third, fourth, fifth);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(first, second, third, fourth, fifth);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Declining with one land type bottoms that card without drawing")
+    void decliningWithOneLandTypeBottomsCardWithoutDrawing() {
+        harness.addToBattlefield(player1, new Forest());
+        Card lookedAt = new Plains();
+        Card untouched = new Island();
+        harness.setLibrary(player1, List.of(lookedAt, untouched));
+        addAttackingNael();
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, lookedAt);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(lookedAt, untouched);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Opponent's land types do not contribute to zero domain")
+    void opponentsLandTypesDoNotContributeToDomain() {
+        harness.addToBattlefield(player2, new Plains());
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addToBattlefield(player2, new Forest());
+        Card first = new Plains();
+        Card second = new Island();
+        harness.setLibrary(player1, List.of(first, second));
+        addAttackingNael();
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(first, second);
+    }
+
+    @Test
+    @DisplayName("Putting a card on top does not disclose its identity")
+    void puttingCardOnTopDoesNotDiscloseItsIdentity() {
+        harness.addToBattlefield(player1, new Forest());
+        Card chosen = new Island();
+        Card untouched = new Plains();
+        harness.setLibrary(player1, List.of(chosen, untouched));
+        addAttackingNael();
+
+        resolveCombat();
+        harness.passBothPriorities();
+        int logStart = gd.gameLog.size();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(chosen, untouched);
+        assertThat(gd.gameLog.subList(logStart, gd.gameLog.size()))
+                .extracting(GameLogEntry::plainText)
+                .noneMatch(text -> text.contains(chosen.getName()));
     }
 
     private void addAllBasicLandTypes() {
