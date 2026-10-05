@@ -57,8 +57,7 @@ class JeweledSpiritTest extends BaseCardTest {
         assertThat(gqs.hasProtectionFrom(gd, spirit, CardColor.BLUE)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.UPKEEP);
 
         assertThat(gqs.hasProtectionFrom(gd, spirit, CardColor.BLUE)).isFalse();
     }
@@ -71,6 +70,74 @@ class JeweledSpiritTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Protection from artifacts wears off at end of turn")
+    void artifactProtectionWearsOffAtEndOfTurn() {
+        Permanent spirit = addSpiritWithTwoLands();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ARTIFACT");
+
+        assertThat(spirit.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.UPKEEP);
+
+        assertThat(spirit.getProtectionFromCardTypes()).doesNotContain(CardType.ARTIFACT);
+    }
+
+    @Test
+    @DisplayName("Opposing lands cannot pay the sacrifice cost")
+    void cannotSacrificeOpposingLands() {
+        addCreatureReady(player1, new JeweledSpirit());
+        harness.addToBattlefield(player1, new WintermoonMesa());
+        harness.addToBattlefield(player2, new WintermoonMesa());
+        harness.addToBattlefield(player2, new WintermoonMesa());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Spirit can activate the ability")
+    void tappedSummoningSickSpiritCanActivate() {
+        Permanent spirit = addSpiritWithTwoLands();
+        spirit.setTapped(true);
+        spirit.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardColor.GREEN.name());
+
+        assertThat(gqs.hasProtectionFrom(gd, spirit, CardColor.GREEN)).isTrue();
+        assertThat(spirit.isTapped()).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Repeated activations retain each chosen protection")
+    void repeatedActivationsAccumulateProtection() {
+        Permanent spirit = addSpiritWithTwoLands();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardColor.RED.name());
+
+        harness.addToBattlefield(player1, new WintermoonMesa());
+        harness.addToBattlefield(player1, new WintermoonMesa());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ARTIFACT");
+
+        assertThat(gqs.hasProtectionFrom(gd, spirit, CardColor.RED)).isTrue();
+        assertThat(spirit.getProtectionFromCardTypes()).contains(CardType.ARTIFACT);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
     }
 
     private Permanent addSpiritWithTwoLands() {
