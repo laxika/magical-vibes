@@ -51,6 +51,22 @@ class PredatoryFocusTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Assigning damage as though unblocked does not prevent the blocker dealing damage")
+    void blockerStillDealsCombatDamageToAttacker() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new GhostWarden());
+        Permanent blocker = addCreatureReady(player2, new Gristleback());
+
+        castAndChoose(true);
+        declareBlockedAttack(player1, attacker, blocker);
+        resolveCombat();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(blocker);
+    }
+
+    @Test
     @DisplayName("Accepting also affects creatures entering later that turn")
     void affectsCreaturesEnteringLaterThatTurn() {
         harness.setLife(player2, 20);
