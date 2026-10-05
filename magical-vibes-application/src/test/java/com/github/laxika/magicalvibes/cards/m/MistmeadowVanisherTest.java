@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.SolRing;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MistmeadowVanisher.class, GrizzlyBears.class, Island.class})
+@CardUsed({MistmeadowVanisher.class, GrizzlyBears.class, Island.class, SolRing.class})
 class MistmeadowVanisherTest extends BaseCardTest {
 
     @Test
@@ -32,9 +33,7 @@ class MistmeadowVanisherTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player2, "Grizzly Bears");
@@ -84,6 +83,101 @@ class MistmeadowVanisherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Can exile itself and return untapped even after its source leaves")
+    void canExileItself() {
+        Permanent vanisher = harness.addToBattlefieldAndReturn(player1, new MistmeadowVanisher());
+
+        tap(vanisher);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, vanisher.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Mistmeadow Vanisher");
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player1, "Mistmeadow Vanisher");
+        assertThat(returned.getId()).isNotEqualTo(vanisher.getId());
+        assertThat(returned.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A token copy is not a legal target")
+    void tokenCannotBeTargeted() {
+        Permanent vanisher = harness.addToBattlefieldAndReturn(player1, new MistmeadowVanisher());
+        MistmeadowVanisher tokenCard = new MistmeadowVanisher();
+        tokenCard.setToken(true);
+        Permanent token = harness.addToBattlefieldAndReturn(player2, tokenCard);
+
+        tap(vanisher);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).contains(vanisher.getId()).doesNotContain(token.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Mistmeadow Vanisher");
+    }
+
+    @Test
+    @DisplayName("A stolen permanent returns to its owner rather than its former controller")
+    void returnsUnderOwnersControl() {
+        Permanent vanisher = harness.addToBattlefieldAndReturn(player1, new MistmeadowVanisher());
+        Permanent stolen = harness.addToBattlefieldAndReturn(player1, new MistmeadowVanisher());
+        gd.stolenCreatures.put(stolen.getId(), player2.getId());
+
+        tap(vanisher);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, stolen.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(vanisher);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Mistmeadow Vanisher");
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(vanisher);
+    }
+
+    @Test
+    @DisplayName("An exile during an end step waits for the following turn's end step")
+    void exileDuringEndStepWaitsForNextEndStep() {
+        Permanent vanisher = harness.addToBattlefieldAndReturn(player1, new MistmeadowVanisher());
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+
+        tap(vanisher);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, vanisher.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Mistmeadow Vanisher");
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.assertNotOnBattlefield(player1, "Mistmeadow Vanisher");
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mistmeadow Vanisher");
+    }
+
+    @Test
+    @DisplayName("Can exile a noncreature artifact")
+    void canExileNoncreaturePermanent() {
+        Permanent vanisher = harness.addToBattlefieldAndReturn(player1, new MistmeadowVanisher());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SolRing());
+
+        tap(vanisher);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Sol Ring");
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Sol Ring");
     }
 
     private void tap(Permanent permanent) {
