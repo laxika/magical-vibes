@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ConjureRandomCreatureOfEachManaValueToBattlefieldEffectHandler;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -23,7 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OrnateImitations.class, LlanowarElves.class, GrizzlyBears.class})
+@CardUsed({OrnateImitations.class, LlanowarElves.class, GrizzlyBears.class, ThayanEvokers.class})
 class OrnateImitationsTest extends BaseCardTest {
 
     @Test
@@ -56,6 +57,37 @@ class OrnateImitationsTest extends BaseCardTest {
         });
         assertThat(conjured.stream().map(permanent -> permanent.getCard().getManaValue()).toList())
                 .containsExactlyInAnyOrder(1, 2);
+    }
+
+    @Test
+    void conjuringCreatureTriggersConjureAbilities() {
+        Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
+        harness.setHand(player1, List.of(new OrnateImitations()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        var handler = GameTestEngineContext.get().getBean(
+                ConjureRandomCreatureOfEachManaValueToBattlefieldEffectHandler.class);
+        Object originalCatalog = ReflectionTestUtils.getField(handler, "cardCatalog");
+        CardCatalog catalog = mock(CardCatalog.class);
+        when(catalog.getPrintings(any(CardSet.class))).thenReturn(List.of(
+                new CardPrinting("10E", "274", LlanowarElves.class.getName(), "LlanowarElves", false, LlanowarElves::new)));
+        ReflectionTestUtils.setField(handler, "cardCatalog", catalog);
+        try {
+            harness.castAndResolveSorcery(player1, 0, 1);
+            resolveAllTriggers();
+        } finally {
+            ReflectionTestUtils.setField(handler, "cardCatalog", originalCatalog);
+        }
+
+        Permanent conjured = findPermanent(player1, "Llanowar Elves");
+        assertThat(conjured.getCard().isToken()).isFalse();
+        assertThat(conjured.getCard().getOwnerId()).isEqualTo(player1.getId());
+        assertThat(conjured.isTapped()).isFalse();
+        assertThat(conjured.isSummoningSick()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
     }
 
     @Test
