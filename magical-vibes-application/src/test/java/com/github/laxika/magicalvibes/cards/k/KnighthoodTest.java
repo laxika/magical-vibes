@@ -19,6 +19,39 @@ import static org.assertj.core.api.Assertions.assertThat;
 class KnighthoodTest extends BaseCardTest {
 
     @Test
+    @DisplayName("First strike begins when Knighthood resolves, not while it is on the stack")
+    void firstStrikeBeginsOnResolution() {
+        Permanent creature = addCreatureReady(player1, new GiantCockroach());
+
+        harness.castFromHand(player1, new Knighthood(), "{2}{W}");
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A remaining Knighthood continues granting first strike")
+    void remainingCopyContinuesGrantingFirstStrike() {
+        Permanent creature = addCreatureReady(player1, new GiantCockroach());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Knighthood());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Knighthood());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.FIRST_STRIKE)).isFalse();
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(second);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
     @DisplayName("Creatures you control gain first strike")
     void ownCreaturesGainFirstStrike() {
         Permanent creature = addCreatureReady(player1, new GiantCockroach());
