@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HowlingMine;
+import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -15,7 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PlagueWind.class, GrizzlyBears.class, HowlingMine.class})
+@CardUsed({PlagueWind.class, GrizzlyBears.class, HowlingMine.class, TrollAscetic.class, PaladinEnVec.class})
 class PlagueWindTest extends BaseCardTest {
 
     @Test
@@ -68,8 +70,7 @@ class PlagueWindTest extends BaseCardTest {
     @DisplayName("Creatures destroyed by Plague Wind cannot be regenerated")
     void ignoresRegenerationShields() {
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent opposingBears = findPermanent(player2, "Grizzly Bears");
+        Permanent opposingBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         opposingBears.setRegenerationShield(2);
 
         harness.forceActivePlayer(player1);
@@ -94,5 +95,45 @@ class PlagueWindTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Plague Wind destroys a hexproof creature despite regeneration activated in response")
+    void destroysHexproofCreatureDespiteRegenerationResponse() {
+        Permanent troll = harness.addToBattlefieldAndReturn(player2, new TrollAscetic());
+        harness.castFromHand(player1, new PlagueWind(), "{7}{B}{B}");
+
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(troll.getRegenerationShield()).isPositive();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Troll Ascetic");
+        harness.assertInGraveyard(player2, "Troll Ascetic");
+        harness.assertInGraveyard(player1, "Plague Wind");
+    }
+
+    @Test
+    @DisplayName("Plague Wind destroys all opposing creatures including creatures with protection from black")
+    void destroysMultipleCreaturesIncludingProtectionFromBlack() {
+        harness.addToBattlefield(player1, new PaladinEnVec());
+        harness.addToBattlefield(player2, new PaladinEnVec());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new HowlingMine());
+
+        harness.castFromHand(player1, new PlagueWind(), "{7}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Paladin en-Vec");
+        harness.assertNotOnBattlefield(player2, "Paladin en-Vec");
+        harness.assertInGraveyard(player2, "Paladin en-Vec");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Howling Mine");
     }
 }
