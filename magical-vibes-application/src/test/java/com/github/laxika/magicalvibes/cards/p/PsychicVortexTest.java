@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.o.OmenMachine;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,6 +18,79 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({PsychicVortex.class, Forest.class, GrizzlyBears.class, Island.class})
 class PsychicVortexTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Cumulative upkeep cannot be paid when drawing cards is prohibited")
+    @CardUsed(OmenMachine.class)
+    void prohibitedDrawMakesUpkeepUnpayable() {
+        Permanent vortex = harness.addToBattlefieldAndReturn(player1, new PsychicVortex());
+        harness.addToBattlefield(player2, new OmenMachine());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(vortex);
+        harness.assertInGraveyard(player1, "Psychic Vortex");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    @DisplayName("Existing age counters are included in the cumulative upkeep payment")
+    void upkeepIncludesExistingAgeCounters() {
+        Permanent vortex = harness.addToBattlefieldAndReturn(player1, new PsychicVortex());
+        vortex.setCounterCount(CounterType.AGE, 3);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(vortex.getCounterCount(CounterType.AGE)).isEqualTo(4);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(vortex);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 4);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 4);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep does not trigger during an opponent's upkeep")
+    void upkeepDoesNotTriggerForOpponent() {
+        Permanent vortex = harness.addToBattlefieldAndReturn(player1, new PsychicVortex());
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(vortex.getCounterCount(CounterType.AGE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
+    }
+
+    @Test
+    @DisplayName("A queued end-step trigger still resolves after Psychic Vortex leaves")
+    void endStepTriggerSurvivesSourceLeaving() {
+        Permanent vortex = harness.addToBattlefieldAndReturn(player1, new PsychicVortex());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent opponentsIsland = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(vortex);
+        gd.playerGraveyards.get(player1.getId()).add(vortex.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(island);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentsIsland);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Island");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
 
     @Test
     @DisplayName("Paying the cumulative upkeep draws a card and keeps Psychic Vortex")
