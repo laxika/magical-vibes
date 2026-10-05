@@ -65,6 +65,52 @@ class PeaceOfMindTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can activate repeatedly by paying each cost separately")
+    void canActivateRepeatedly() {
+        harness.addToBattlefield(player1, new PeaceOfMind());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.setHand(player1, List.of(new HonorGuard(), new PeaceOfMind()));
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Honor Guard");
+        harness.assertInGraveyard(player1, "Peace of Mind");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        harness.assertLife(player1, lifeBefore);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 3);
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 6);
+        harness.assertOnBattlefield(player1, "Peace of Mind");
+    }
+
+    @Test
+    @DisplayName("Only the activating controller gains life")
+    void playerTwoGainsLifeWhenActivating() {
+        harness.addToBattlefield(player2, new PeaceOfMind());
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.setHand(player2, List.of(new HonorGuard()));
+        int playerOneLife = gd.getLife(player1.getId());
+        int playerTwoLife = gd.getLife(player2.getId());
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.handleCardChosen(player2, 0);
+        harness.assertInGraveyard(player2, "Honor Guard");
+        harness.assertLife(player2, playerTwoLife);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, playerOneLife);
+        harness.assertLife(player2, playerTwoLife + 3);
+    }
+
+    @Test
     @DisplayName("Cannot activate without a card in hand to discard")
     void cannotActivateWithoutCardToDiscard() {
         harness.addToBattlefield(player1, new PeaceOfMind());
