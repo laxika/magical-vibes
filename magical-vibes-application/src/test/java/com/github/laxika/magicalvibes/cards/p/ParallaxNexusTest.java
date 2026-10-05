@@ -145,6 +145,61 @@ class ParallaxNexusTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void removingLastFadeCounterAtUpkeepDoesNotSacrificeNexus() {
+        Permanent nexus = harness.addToBattlefieldAndReturn(player1, new ParallaxNexus());
+        nexus.setCounterCount(CounterType.FADE, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(nexus.getCounterCount(CounterType.FADE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(nexus);
+    }
+
+    @Test
+    void cannotActivateWhileAnotherActivationIsOnStack() {
+        Permanent nexus = harness.addToBattlefieldAndReturn(player1, new ParallaxNexus());
+        nexus.setCounterCount(CounterType.FADE, 2);
+        harness.setHand(player2, List.of());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(nexus.getCounterCount(CounterType.FADE)).isEqualTo(1);
+
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void exiledCardStaysInExileUntilLeavesBattlefieldTriggerResolves() {
+        Permanent nexus = harness.addToBattlefieldAndReturn(player1, new ParallaxNexus());
+        nexus.setCounterCount(CounterType.FADE, 1);
+        SpinelessThug exiledCard = new SpinelessThug();
+        harness.setHand(player2, List.of(exiledCard));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        harness.getPermanentRemovalService().sacrificePermanentToGraveyard(gd, nexus);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(nexus);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(exiledCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(exiledCard);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(exiledCard);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(exiledCard);
+    }
+
     private Permanent castAndResolveNexus() {
         ParallaxNexus card = new ParallaxNexus();
         harness.forceActivePlayer(player1);
@@ -152,9 +207,6 @@ class ParallaxNexusTest extends BaseCardTest {
         harness.castFromHand(player1, card, "{2}{B}");
         harness.passBothPriorities();
 
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() == card)
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Parallax Nexus");
     }
 }
