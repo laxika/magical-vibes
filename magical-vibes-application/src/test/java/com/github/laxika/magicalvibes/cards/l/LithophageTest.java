@@ -97,4 +97,40 @@ class LithophageTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Mountain");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    @DisplayName("Lithophage does not trigger during an opponent's upkeep")
+    void opponentUpkeepDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Lithophage());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Lithophage");
+        harness.assertNotInGraveyard(player1, "Lithophage");
+    }
+
+    @Test
+    @DisplayName("The controller chooses exactly one Mountain to sacrifice")
+    void choosesExactlyOneMountain() {
+        harness.addToBattlefield(player1, new Lithophage());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        var mountains = findPermanents(player1, "Mountain");
+        var chosenMountain = mountains.get(1);
+
+        advanceToUpkeep(player1);
+        chosenMountain.setTapped(true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, chosenMountain.getId());
+
+        harness.assertOnBattlefield(player1, "Lithophage");
+        assertThat(findPermanents(player1, "Mountain"))
+                .extracting(permanent -> permanent.getId())
+                .containsExactly(mountains.get(0).getId());
+        harness.assertInGraveyard(player1, "Mountain");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
