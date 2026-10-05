@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,17 +14,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PaladinOfTheBloodstained.class})
 class PaladinOfTheBloodstainedTest extends BaseCardTest {
-
-    
 
     @Test
     @DisplayName("Casting Paladin of the Bloodstained puts it on the battlefield and triggers ETB")
     void castingPutsOnBattlefield() {
-        harness.setHand(player1, List.of(new PaladinOfTheBloodstained()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PaladinOfTheBloodstained(), "{3}{W}");
         harness.passBothPriorities(); // Resolve creature — ETB trigger goes on stack
         harness.passBothPriorities(); // Resolve ETB trigger
 
@@ -35,10 +31,7 @@ class PaladinOfTheBloodstainedTest extends BaseCardTest {
     @Test
     @DisplayName("When Paladin of the Bloodstained enters, a Vampire token is created")
     void etbCreatesVampireToken() {
-        harness.setHand(player1, List.of(new PaladinOfTheBloodstained()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PaladinOfTheBloodstained(), "{3}{W}");
         harness.passBothPriorities(); // Resolve creature
         harness.passBothPriorities(); // Resolve ETB trigger
 
@@ -49,10 +42,7 @@ class PaladinOfTheBloodstainedTest extends BaseCardTest {
     @Test
     @DisplayName("ETB token is a 1/1 white Vampire creature token with lifelink")
     void tokenHasCorrectProperties() {
-        harness.setHand(player1, List.of(new PaladinOfTheBloodstained()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PaladinOfTheBloodstained(), "{3}{W}");
         harness.passBothPriorities(); // Resolve creature
         harness.passBothPriorities(); // Resolve ETB trigger
 
@@ -70,13 +60,43 @@ class PaladinOfTheBloodstainedTest extends BaseCardTest {
     @Test
     @DisplayName("Battlefield has both Paladin and Vampire token after ETB resolves")
     void battlefieldHasBothPermanents() {
-        harness.setHand(player1, List.of(new PaladinOfTheBloodstained()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PaladinOfTheBloodstained(), "{3}{W}");
         harness.passBothPriorities(); // Resolve creature
         harness.passBothPriorities(); // Resolve ETB trigger
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The Vampire is created only when the ETB trigger resolves")
+    void tokenCreationWaitsForTriggerResolution() {
+        harness.castFromHand(player1, new PaladinOfTheBloodstained(), "{3}{W}");
+
+        assertThat(findPermanents(player1, "Vampire")).isEmpty();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Paladin of the Bloodstained");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(findPermanents(player1, "Vampire")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Vampire")).hasSize(1);
+        assertThat(findPermanent(player1, "Vampire").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast creates a token for the entering creature's controller")
+    void enteringUnderOpponentControlCreatesTokenForOpponent() {
+        harness.enterBattlefieldAndReturn(player2, new PaladinOfTheBloodstained());
+
+        assertThat(findPermanents(player2, "Vampire")).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Vampire")).hasSize(1);
+        assertThat(findPermanents(player1, "Vampire")).isEmpty();
+        harness.assertOnBattlefield(player2, "Paladin of the Bloodstained");
+        assertThat(gd.stack).isEmpty();
     }
 }
