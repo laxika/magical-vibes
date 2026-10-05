@@ -114,4 +114,57 @@ class MorphlingTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, morphling)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, morphling)).isEqualTo(3);
     }
+    @Test
+    @DisplayName("Shroud gained in response makes a targeted spell fail to resolve")
+    void shroudInResponseStopsTargetedSpell() {
+        Permanent morphling = addCreatureReady(player1, new Morphling());
+        harness.setHand(player2, List.of(new Humble()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player2, 0, morphling.getId());
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, morphling, Keyword.SHROUD)).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, morphling)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, morphling)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, morphling, Keyword.SHROUD)).isTrue();
+        harness.assertInGraveyard(player2, "Humble");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Repeated power increases put Morphling into the graveyard at zero toughness")
+    void repeatedPowerIncreasesCauseZeroToughnessDeath() {
+        addCreatureReady(player1, new Morphling());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        for (int i = 0; i < 3; i++) {
+            harness.activateAbility(player1, 0, 3, null, null);
+            harness.passBothPriorities();
+        }
+
+        harness.assertNotOnBattlefield(player1, "Morphling");
+        harness.assertInGraveyard(player1, "Morphling");
+    }
+
+    @Test
+    @DisplayName("Summoning sickness does not prevent untapping or gaining flying")
+    void abilitiesWorkWhileSummoningSick() {
+        Permanent morphling = harness.addToBattlefieldAndReturn(player1, new Morphling());
+        morphling.setSummoningSick(true);
+        morphling.tap();
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(morphling.isTapped()).isFalse();
+        assertThat(gqs.hasKeyword(gd, morphling, Keyword.FLYING)).isTrue();
+    }
 }
