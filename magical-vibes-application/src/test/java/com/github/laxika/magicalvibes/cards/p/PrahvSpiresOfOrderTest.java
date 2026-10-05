@@ -60,7 +60,8 @@ class PrahvSpiresOfOrderTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(source.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -74,14 +75,15 @@ class PrahvSpiresOfOrderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, source.getId());
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(source.getId());
-
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
 
-        assertThat(gd.permanentsPreventedFromDealingDamage).doesNotContain(source.getId());
+        source.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 18);
     }
 
     @Test
@@ -102,7 +104,6 @@ class PrahvSpiresOfOrderTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 18);
-        assertThat(gd.permanentsPreventedFromDealingDamage).contains(chosenSource.getId());
     }
 
     @Test
@@ -125,6 +126,61 @@ class PrahvSpiresOfOrderTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(target.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Prevents repeated damage from your own source to either player's creatures, but not life loss")
+    void preventsRepeatedDamageToEitherPlayersCreatures() {
+        harness.addToBattlefield(player1, new PrahvSpiresOfOrder());
+        Permanent source = addCreatureReady(player1, new RakdosIckspitter());
+        Permanent ownTarget = addCreatureReady(player1, new MistralCharger());
+        Permanent opposingTarget = addCreatureReady(player2, new MistralCharger());
+        addPreventionMana();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, source.getId());
+
+        harness.activateAbility(player1, 1, 0, null, ownTarget.getId());
+        harness.passBothPriorities();
+        source.setTapped(false);
+        harness.activateAbility(player1, 1, 0, null, opposingTarget.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownTarget);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingTarget);
+        assertThat(ownTarget.getMarkedDamage()).isZero();
+        assertThat(opposingTarget.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Choosing a creature spell also prevents damage from the permanent it becomes")
+    void preventsDamageFromChosenPermanentSpell() {
+        harness.addToBattlefield(player1, new PrahvSpiresOfOrder());
+        MistralCharger charger = new MistralCharger();
+        harness.setHand(player2, List.of(charger));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castCreature(player2, 0);
+
+        addPreventionMana();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, charger.getId());
+        harness.passBothPriorities();
+
+        Permanent source = findPermanent(player2, "Mistral Charger");
+        source.setSummoningSick(false);
+        source.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 20);
     }
 
     @Test
