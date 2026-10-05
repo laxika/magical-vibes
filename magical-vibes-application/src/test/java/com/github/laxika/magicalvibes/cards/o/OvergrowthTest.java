@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Piracy;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Overgrowth.class, Forest.class, GrizzlyBears.class, Piracy.class})
+@CardUsed({Overgrowth.class, Forest.class, GrizzlyBears.class, Piracy.class, IcyManipulator.class, Island.class})
 class OvergrowthTest extends BaseCardTest {
 
     @Test
@@ -61,6 +63,56 @@ class OvergrowthTest extends BaseCardTest {
         harness.tapPermanent(player1, 0);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("An enchanted Island produces blue mana and two additional green mana immediately")
+    void enchantedIslandAddsGreenManaWithoutUsingStack() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Overgrowth());
+        aura.setAttachedTo(island.getId());
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Overgrowth mana is immediately available to cast a spell")
+    void bonusManaCanImmediatelyPayForSpell() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Overgrowth());
+        aura.setAttachedTo(forest.getId());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        harness.tapPermanent(player1, 0);
+        harness.castCreature(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tapping enchanted land with Icy Manipulator does not produce mana")
+    void tappingLandWithoutManaAbilityDoesNotAddMana() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new Overgrowth());
+        aura.setAttachedTo(forest.getId());
+        harness.addToBattlefield(player1, new IcyManipulator());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 2, null, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
