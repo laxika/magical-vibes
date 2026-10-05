@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.f.FlameJavelin;
+import com.github.laxika.magicalvibes.cards.v.VolcanicSpite;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({InfectedDefector.class, FlameJavelin.class})
+@CardUsed({InfectedDefector.class, VolcanicSpite.class})
 class InfectedDefectorTest extends BaseCardTest {
 
     @Test
@@ -20,12 +21,16 @@ class InfectedDefectorTest extends BaseCardTest {
     void deathCreatesIncubatorToken() {
         harness.addToBattlefield(player1, new InfectedDefector());
 
-        killWithFlameJavelin();
+        killWithVolcanicSpite();
         harness.passBothPriorities();
 
         Permanent incubator = findPermanent(player1, "Incubator");
         assertThat(incubator.getCard().getType()).isEqualTo(CardType.ARTIFACT);
+        assertThat(incubator.getCard().hasType(CardType.CREATURE)).isFalse();
+        assertThat(incubator.getCard().getSubtypes()).containsExactly(CardSubtype.INCUBATOR);
         assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Infected Defector");
     }
 
     @Test
@@ -33,7 +38,7 @@ class InfectedDefectorTest extends BaseCardTest {
     void incubatorTransformsWithItsAbility() {
         harness.addToBattlefield(player1, new InfectedDefector());
 
-        killWithFlameJavelin();
+        killWithVolcanicSpite();
         harness.passBothPriorities();
 
         Permanent incubator = findPermanent(player1, "Incubator");
@@ -42,20 +47,45 @@ class InfectedDefectorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(incubator.isTransformed()).isTrue();
-        assertThat(incubator.getCard().getName()).isEqualTo("Phyrexian");
+        assertThat(incubator.getCard().getName()).isEqualTo("Phyrexian Token");
+        assertThat(incubator.getCard().hasType(CardType.CREATURE)).isTrue();
+        assertThat(incubator.getCard().hasType(CardType.ARTIFACT)).isTrue();
+        assertThat(incubator.getCard().getSubtypes()).containsExactly(CardSubtype.PHYREXIAN);
         assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, incubator)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, incubator)).isEqualTo(3);
     }
 
-    private void killWithFlameJavelin() {
-        harness.forceActivePlayer(player2);
-        harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.setHand(player2, java.util.List.of(new FlameJavelin()));
-        harness.addMana(player2, ManaColor.RED, 6);
-
-        harness.castInstant(player2, 0, harness.getPermanentId(player1, "Infected Defector"));
+    @Test
+    @DisplayName("Two pending transform activations leave the Incubator transformed only once")
+    void pendingTransformActivationsDoNotTransformBack() {
+        harness.addToBattlefield(player1, new InfectedDefector());
+        killWithVolcanicSpite();
         harness.passBothPriorities();
+
+        Permanent incubator = findPermanent(player1, "Incubator");
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(incubator);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.ensurePriority(player1);
+        harness.activateAbility(player1, index, null, null);
+        harness.ensurePriority(player1);
+        harness.activateAbility(player1, index, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(incubator.isTransformed()).isTrue();
+        assertThat(incubator.getCard().getName()).isEqualTo("Phyrexian Token");
+        assertThat(incubator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, incubator)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, incubator)).isEqualTo(3);
+    }
+
+    private void killWithVolcanicSpite() {
+        harness.ensurePriority(player2);
+        harness.setHand(player2, java.util.List.of(new VolcanicSpite()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Infected Defector"));
     }
 }
