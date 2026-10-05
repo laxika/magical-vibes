@@ -40,4 +40,45 @@ class ProwlingFelidarTest extends BaseCardTest {
         assertThat(felidar.getEffectivePower()).isEqualTo(2);
         assertThat(felidar.getEffectiveToughness()).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("A land entering without being played triggers only when the ability resolves")
+    void landEnteringWithoutBeingPlayedTriggers() {
+        Permanent felidar = harness.addToBattlefieldAndReturn(player1, new ProwlingFelidar());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThat(felidar.getPlusOnePlusOneCounters()).isZero();
+        harness.passBothPriorities();
+        assertThat(felidar.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each land entering in the same turn adds another counter")
+    void repeatedLandEntriesAccumulateCounters() {
+        Permanent felidar = harness.addToBattlefieldAndReturn(player1, new ProwlingFelidar());
+
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+
+        assertThat(felidar.getPlusOnePlusOneCounters()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each Prowling Felidar puts its landfall counter on itself")
+    void multipleFelidarsEachReceiveTheirOwnCounter() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new ProwlingFelidar());
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new ProwlingFelidar());
+
+        assertThat(first.getPlusOnePlusOneCounters()).isZero();
+        assertThat(second.getPlusOnePlusOneCounters()).isZero();
+        harness.enterBattlefieldAndReturn(player1, new Forest());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(second.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
 }
