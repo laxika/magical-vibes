@@ -84,12 +84,118 @@ class PriestOfFellRitesTest extends BaseCardTest {
         assertThat(returned.getGrantedKeywords()).contains(Keyword.HASTE);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Priest of Fell Rites");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(exiled -> exiled.getName().equals("Priest of Fell Rites"));
+    }
+
+    @Test
+    @DisplayName("An unearthed Priest can immediately sacrifice itself to reanimate another creature")
+    void unearthedPriestCanReanimateAndIsExiledAsCost() {
+        PriestOfFellRites priest = new PriestOfFellRites();
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(priest, creature));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateGraveyardAbility(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD);
+
+        harness.assertLife(player1, 17);
+        harness.assertNotOnBattlefield(player1, "Priest of Fell Rites");
+        harness.assertNotInGraveyard(player1, "Priest of Fell Rites");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getId().equals(priest.getId()));
+
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Reanimation cannot be activated without enough life to pay its cost")
+    void rejectsActivationWithInsufficientLife() {
+        addCreatureReady(player1, new PriestOfFellRites());
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLife(player1, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 2);
+        harness.assertOnBattlefield(player1, "Priest of Fell Rites");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(findPermanent(player1, "Priest of Fell Rites").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A Priest without haste cannot pay its tap cost on the turn it enters")
+    void rejectsActivationWithSummoningSickness() {
+        harness.addToBattlefield(player1, new PriestOfFellRites());
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Priest of Fell Rites");
+    }
+
+    @Test
+    @DisplayName("Unearth cannot be activated during the opponent's main phase")
+    void unearthOnlyAtSorcerySpeed() {
+        harness.setGraveyard(player1, List.of(new PriestOfFellRites()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Priest of Fell Rites");
+        harness.assertNotOnBattlefield(player1, "Priest of Fell Rites");
+    }
+
+    @Test
+    @DisplayName("Removing the target before resolution does not refund activation costs")
+    void removedTargetDoesNotReturnOrRefundCosts() {
+        addCreatureReady(player1, new PriestOfFellRites());
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+
+        harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD);
+        gd.playerGraveyards.get(player1.getId()).remove(creature);
+        gd.getPlayerExiledCards(player1.getId()).add(creature);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertLife(player1, 17);
+        harness.assertInGraveyard(player1, "Priest of Fell Rites");
+    }
+
+    @Test
+    @DisplayName("Unearth requires all five mana including white and black")
+    void unearthRequiresFullManaCost() {
+        harness.setGraveyard(player1, List.of(new PriestOfFellRites()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Priest of Fell Rites");
+        harness.assertNotOnBattlefield(player1, "Priest of Fell Rites");
     }
 }
