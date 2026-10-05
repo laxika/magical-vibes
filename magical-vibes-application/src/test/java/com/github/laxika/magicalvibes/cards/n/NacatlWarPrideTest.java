@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.b.BladeOfTheSixthPride;
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
+import com.github.laxika.magicalvibes.cards.g.GoblinWarDrums;
 import com.github.laxika.magicalvibes.cards.z.ZoeticCavern;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +18,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NacatlWarPride.class, BladeOfTheSixthPride.class})
+@CardUsed({NacatlWarPride.class, BladeOfTheSixthPride.class, ChandraNalaar.class,
+        ZoeticCavern.class, GoblinWarDrums.class})
 class NacatlWarPrideTest extends BaseCardTest {
 
     @Test
@@ -62,7 +64,8 @@ class NacatlWarPrideTest extends BaseCardTest {
         assertThat(copies).hasSize(2);
         assertThat(copies).allSatisfy(copy -> {
             assertThat(copy.isTapped()).isTrue();
-            assertThat(copy.isAttackedThisTurn()).isTrue();
+            assertThat(copy.isAttacking()).isTrue();
+            assertThat(copy.isAttackedThisTurn()).isFalse();
             assertThat(copy.getCard().getPower()).isEqualTo(3);
             assertThat(copy.getCard().getToughness()).isEqualTo(3);
         });
@@ -193,6 +196,46 @@ class NacatlWarPrideTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
 
+        assertThat(findPermanents(player1, "Nacatl War-Pride").stream()
+                .filter(permanent -> permanent.getCard().isToken())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({GoblinWarDrums.class})
+    @DisplayName("A War-Pride with menace may be blocked by two creatures")
+    void menaceAllowsMultipleBlockersWhenExactlyOneIsImpossible() {
+        Permanent warPride = addCreatureReady(player1, new NacatlWarPride());
+        harness.addToBattlefield(player1, new GoblinWarDrums());
+        addCreatureReady(player2, new BladeOfTheSixthPride());
+        addCreatureReady(player2, new BladeOfTheSixthPride());
+        warPride.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .allSatisfy(blocker -> assertThat(blocker.isBlocking()).isTrue());
+    }
+
+    @Test
+    @DisplayName("End-step exile uses a delayed trigger that can be responded to")
+    void copiesRemainUntilDelayedExileTriggerResolves() {
+        addCreatureReady(player1, new NacatlWarPride());
+        addCreatureReady(player2, new BladeOfTheSixthPride()).tap();
+        addCreatureReady(player2, new BladeOfTheSixthPride()).tap();
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.END_STEP, () -> harness.passBothPriorities());
+
+        assertThat(findPermanents(player1, "Nacatl War-Pride").stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(2);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
         assertThat(findPermanents(player1, "Nacatl War-Pride").stream()
                 .filter(permanent -> permanent.getCard().isToken())).isEmpty();
     }
