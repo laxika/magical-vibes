@@ -42,7 +42,7 @@ class MillikinTest extends BaseCardTest {
     @Test
     @DisplayName("The milled card goes to the graveyard")
     void milledCardGoesToGraveyard() {
-        Permanent millikin = addCreatureReady(player1, new Millikin());
+        addCreatureReady(player1, new Millikin());
 
         Card topCard = gd.playerDecks.get(player1.getId()).getFirst();
 
@@ -65,7 +65,7 @@ class MillikinTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate when already tapped")
     void cannotActivateWhileTapped() {
-        Permanent millikin = addCreatureReady(player1, new Millikin());
+        addCreatureReady(player1, new Millikin());
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -83,5 +83,28 @@ class MillikinTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough cards in library to mill");
+    }
+
+    @Test
+    @DisplayName("Milling the last library card pays the cost and still produces mana")
+    void canActivateWithExactlyOneLibraryCard() {
+        addCreatureReady(player1, new Millikin());
+        Card lastCard = new Millikin();
+        harness.setLibrary(player1, List.of(lastCard));
+        harness.setGraveyard(player1, List.of());
+        int manaBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(lastCard);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(manaBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(manaBefore + 1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(lastCard);
+        assertThat(gd.stack).isEmpty();
     }
 }
