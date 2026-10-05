@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(MirrisGuile.class)
+@CardUsed({MirrisGuile.class})
 class MirrisGuileTest extends BaseCardTest {
 
     private void resolveUpkeepTrigger(Player activePlayer) {
@@ -88,9 +88,8 @@ class MirrisGuileTest extends BaseCardTest {
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card cardA = deck.get(0);
         Card cardB = deck.get(1);
-        deck.clear();
-        deck.add(cardA);
-        deck.add(cardB);
+        harness.setLibrary(player1, List.of(cardA, cardB));
+        deck = gd.playerDecks.get(player1.getId());
 
         resolveUpkeepTrigger(player1);
         harness.handleMayAbilityChosen(player1, true);
@@ -108,13 +107,53 @@ class MirrisGuileTest extends BaseCardTest {
     void emptyLibraryDoesNotPrompt() {
         harness.addToBattlefield(player1, new MirrisGuile());
 
+        harness.setLibrary(player1, List.of());
         List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
 
         resolveUpkeepTrigger(player1);
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(deck).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A one-card library can be inspected and returned unchanged")
+    void singleCardLibraryIsReturnedUnchanged() {
+        harness.addToBattlefield(player1, new MirrisGuile());
+        Card onlyCard = new MirrisGuile();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        resolveUpkeepTrigger(player1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards())
+                .containsExactly(onlyCard);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An upkeep ability still resolves after Mirri's Guile leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new MirrisGuile());
+        List<Card> originalLibrary = List.copyOf(gd.playerDecks.get(player1.getId()));
+        List<Card> opponentLibrary = List.copyOf(gd.playerDecks.get(player2.getId()));
+
+        advanceToUpkeep(player1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(2, 0, 1)));
+
+        List<Card> deck = gd.playerDecks.get(player1.getId());
+        assertThat(deck.subList(0, 3)).containsExactly(
+                originalLibrary.get(2), originalLibrary.get(0), originalLibrary.get(1));
+        assertThat(deck.subList(3, deck.size())).containsExactlyElementsOf(
+                originalLibrary.subList(3, originalLibrary.size()));
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(opponentLibrary);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
