@@ -153,5 +153,50 @@ class ProdigalPyromancerTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
     }
 
+    @Test
+    @DisplayName("Can deal damage to its controller")
+    void canDamageItsController() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new ProdigalPyromancer());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Can target itself and die from its own damage")
+    void canTargetItself() {
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+
+        harness.activateAbility(player1, 0, null, pyromancer.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Prodigal Pyromancer");
+        harness.assertInGraveyard(player1, "Prodigal Pyromancer");
+    }
+
+    @Test
+    @DisplayName("Ability resolves after its source dies in response")
+    void abilityResolvesAfterSourceDies() {
+        harness.setLife(player2, 20);
+        Permanent source = addCreatureReady(player1, new ProdigalPyromancer());
+        addCreatureReady(player2, new ProdigalPyromancer());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.activateAbility(player2, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Prodigal Pyromancer");
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.stack).isEmpty();
+    }
+
 }
 
