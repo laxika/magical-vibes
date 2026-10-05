@@ -102,4 +102,56 @@ class OrzhovBasilicaTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(basilica.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("A controlled land owned by the opponent returns to the opponent's hand")
+    void returnsBorrowedLandToItsOwner() {
+        GodlessShrine shrine = new GodlessShrine();
+        shrine.setOwnerId(player2.getId());
+        Permanent borrowedLand = harness.addToBattlefieldAndReturn(player1, shrine);
+        harness.setHand(player1, List.of(new OrzhovBasilica()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, borrowedLand.getId());
+
+        harness.assertNotOnBattlefield(player1, "Godless Shrine");
+        harness.assertInHand(player2, "Godless Shrine");
+        harness.assertNotInHand(player1, "Godless Shrine");
+        harness.assertOnBattlefield(player1, "Orzhov Basilica");
+    }
+
+    @Test
+    @DisplayName("The return trigger still resolves after Basilica leaves the battlefield")
+    void returnsLandAfterSourceLeavesBattlefield() {
+        Permanent shrine = harness.addToBattlefieldAndReturn(player1, new GodlessShrine());
+        harness.setHand(player1, List.of(new OrzhovBasilica()));
+        harness.playLand(player1, 0);
+        Permanent basilica = findPermanent(player1, "Orzhov Basilica");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, basilica));
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, shrine.getId());
+
+        harness.assertNotOnBattlefield(player1, "Godless Shrine");
+        harness.assertInHand(player1, "Godless Shrine");
+        harness.assertInHand(player1, "Orzhov Basilica");
+    }
+
+    @Test
+    @DisplayName("The return trigger resolves without a choice if no lands remain")
+    void resolvesWhenNoControlledLandsRemain() {
+        harness.setHand(player1, List.of(new OrzhovBasilica()));
+        harness.playLand(player1, 0);
+        Permanent basilica = findPermanent(player1, "Orzhov Basilica");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, basilica));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Orzhov Basilica");
+    }
 }
