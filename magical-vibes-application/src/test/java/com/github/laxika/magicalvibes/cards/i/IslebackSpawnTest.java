@@ -97,6 +97,60 @@ class IslebackSpawnTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, spawn)).isEqualTo(8);
     }
 
+    @Test
+    @DisplayName("An empty library still grants the boost")
+    void boostFromEmptyLibrary() {
+        harness.setLibrary(player1, filler(21));
+        harness.setLibrary(player2, List.of());
+        harness.addToBattlefield(player1, new IslebackSpawn());
+
+        Permanent spawn = findSpawn();
+        assertThat(gqs.getEffectivePower(gd, spawn)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, spawn)).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Two small libraries grant only one +4/+8 bonus")
+    void boostDoesNotStackForMultipleLibraries() {
+        harness.setLibrary(player1, filler(20));
+        harness.setLibrary(player2, filler(20));
+        harness.addToBattlefield(player1, new IslebackSpawn());
+
+        Permanent spawn = findSpawn();
+        assertThat(gqs.getEffectivePower(gd, spawn)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, spawn)).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Gains the boost immediately when a library shrinks to twenty cards")
+    void gainsBoostWhenLibraryShrinks() {
+        harness.setLibrary(player1, filler(21));
+        harness.setLibrary(player2, filler(21));
+        harness.addToBattlefield(player1, new IslebackSpawn());
+
+        Permanent spawn = findSpawn();
+        assertThat(gqs.getEffectivePower(gd, spawn)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, spawn)).isEqualTo(8);
+
+        harness.setLibrary(player2, filler(20));
+        assertThat(gqs.getEffectivePower(gd, spawn)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, spawn)).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Shroud also prevents an opponent's Puncture Bolt from targeting Isleback Spawn")
+    void shroudPreventsOpponentTargeting() {
+        harness.addToBattlefield(player1, new IslebackSpawn());
+        Permanent spawn = findSpawn();
+        harness.setHand(player2, List.of(new PunctureBolt()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, spawn.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
     private List<Card> filler(int count) {
         List<Card> cards = new ArrayList<>();
         for (int i = 0; i < count; i++) {
