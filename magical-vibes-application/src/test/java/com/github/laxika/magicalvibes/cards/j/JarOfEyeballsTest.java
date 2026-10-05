@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +21,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({JarOfEyeballs.class, GrizzlyBears.class, Shock.class, MarchOfTheMachines.class})
 class JarOfEyeballsTest extends BaseCardTest {
-
-    // ===== Death trigger =====
 
     @Test
     @DisplayName("Puts two eyeball counters when an ally creature dies")
@@ -38,8 +40,7 @@ class JarOfEyeballsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player2, 0, bearsId);
-        harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
+        harness.castAndResolveInstant(player2, 0, bearsId);
         harness.passBothPriorities(); // Resolve Jar's eyeball counter trigger
 
         assertThat(jar.getCounterCount(CounterType.EYEBALL)).isEqualTo(2);
@@ -58,8 +59,7 @@ class JarOfEyeballsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.castInstant(player1, 0, bearsId);
-        harness.passBothPriorities(); // Resolve Shock → bears die
+        harness.castAndResolveInstant(player1, 0, bearsId);
 
         assertThat(jar.getCounterCount(CounterType.EYEBALL)).isZero();
     }
@@ -79,8 +79,7 @@ class JarOfEyeballsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player2, 0, bearsId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bearsId);
         harness.passBothPriorities();
 
         assertThat(jar.getCounterCount(CounterType.EYEBALL)).isEqualTo(2);
@@ -90,14 +89,11 @@ class JarOfEyeballsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         UUID bears2Id = harness.getPermanentId(player1, "Grizzly Bears");
-        harness.castInstant(player2, 0, bears2Id);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bears2Id);
         harness.passBothPriorities();
 
         assertThat(jar.getCounterCount(CounterType.EYEBALL)).isEqualTo(4);
     }
-
-    // ===== Activated ability =====
 
     @Test
     @DisplayName("Activating removes all eyeball counters as a cost and enters library reveal choice")
@@ -172,13 +168,156 @@ class JarOfEyeballsTest extends BaseCardTest {
         ).isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helper methods =====
+    @Test
+    void zeroCountersCanBeRemovedAndLibraryIsUnchanged() {
+        Permanent jar = addReadyJar(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        List<Card> originalLibrary = List.copyOf(gd.playerDecks.get(player1.getId()));
+        List<Card> originalHand = List.copyOf(gd.playerHands.get(player1.getId()));
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(jar.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(originalLibrary);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(originalHand);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void remainingCardsCanBePutOnBottomInChosenOrder() {
+        Permanent jar = addReadyJar(player1);
+        jar.setCounterCount(CounterType.EYEBALL, 3);
+        jar.setCounterCount(CounterType.CHARGE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        Card chosen = new JarOfEyeballs();
+        Card second = new GrizzlyBears();
+        Card third = new Shock();
+        Card untouched = new JarOfEyeballs();
+        harness.setLibrary(player1, List.of(chosen, second, third, untouched));
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(jar.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, third, second);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void fewerLibraryCardsThanCountersStillPutsAvailableCardInHand() {
+        Permanent jar = addReadyJar(player1);
+        jar.setCounterCount(CounterType.EYEBALL, 6);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        Card onlyCard = new JarOfEyeballs();
+        harness.setLibrary(player1, List.of(onlyCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void emptyLibraryDoesNotCreateAChoice() {
+        Permanent jar = addReadyJar(player1);
+        jar.setCounterCount(CounterType.EYEBALL, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setLibrary(player1, List.of());
+        List<Card> originalHand = List.copyOf(gd.playerHands.get(player1.getId()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(originalHand);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(jar.getCounterCount(CounterType.EYEBALL)).isZero();
+    }
+
+    @Test
+    void countersAddedAfterActivationDoNotChangeNumberOfCardsLookedAt() {
+        Permanent jar = addReadyJar(player1);
+        jar.setCounterCount(CounterType.EYEBALL, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.passBothPriorities();
+        assertThat(jar.getCounterCount(CounterType.EYEBALL)).isEqualTo(2);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).allCards()).hasSize(2);
+        assertThat(jar.getCounterCount(CounterType.EYEBALL)).isEqualTo(2);
+    }
+
+    @Test
+    void animatedJarTriggersWhenItDies() {
+        Permanent jar = harness.addToBattlefieldAndReturn(player1, new JarOfEyeballs());
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        jar.setMarkedDamage(3);
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Jar of Eyeballs");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isSameAs(jar.getCard());
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Jar of Eyeballs");
+    }
+
+    @Test
+    void simultaneousCreatureDeathsEachAddTwoCounters() {
+        Permanent jar = harness.addToBattlefieldAndReturn(player1, new JarOfEyeballs());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        first.setMarkedDamage(2);
+        second.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(jar.getCounterCount(CounterType.EYEBALL)).isEqualTo(4);
+    }
+
+    @Test
+    void libraryAbilityStillResolvesAfterAnimatedJarDies() {
+        Permanent jar = addReadyJar(player1);
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        jar.setCounterCount(CounterType.EYEBALL, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        Card chosen = new JarOfEyeballs();
+        Card other = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(chosen, other));
+
+        harness.activateAbility(player1, 0, null, null);
+        jar.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Jar of Eyeballs");
+        if (gd.stack.size() > 1) {
+            harness.passBothPriorities();
+        }
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(chosen);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(other);
+    }
 
     private Permanent addReadyJar(Player player) {
-        JarOfEyeballs card = new JarOfEyeballs();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new JarOfEyeballs());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
