@@ -38,11 +38,10 @@ class KamiOfEmptyGravesTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(spirit.getId()));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .noneMatch(c -> c.getId().equals(spirit.getId()));
+        harness.assertInHand(player1, "Nikko-Onna");
+        harness.assertNotInGraveyard(player1, "Nikko-Onna");
     }
 
     @Test
@@ -76,13 +75,27 @@ class KamiOfEmptyGravesTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(c -> c.getId().equals(spirit.getId()));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getId().equals(spirit.getId()));
+        harness.assertInGraveyard(player1, "Nikko-Onna");
+        harness.assertNotInHand(player1, "Nikko-Onna");
+    }
+
+    @Test
+    @DisplayName("Soulshift requires a target even when its controller intends to decline the return")
+    void targetMustBeChosenBeforeResolution() {
+        harness.addToBattlefield(player1, new KamiOfEmptyGraves());
+        harness.setGraveyard(player1, List.of(new NikkoOnna()));
+
+        kikuToKillKami();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.maxCount()).isEqualTo(1);
     }
 
     @Test
