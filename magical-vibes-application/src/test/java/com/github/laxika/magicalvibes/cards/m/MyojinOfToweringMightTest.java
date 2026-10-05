@@ -129,6 +129,71 @@ class MyojinOfToweringMightTest extends BaseCardTest {
         assertThat(myojin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void canTargetItselfWhileTappedAndSummoningSick() {
+        Permanent myojin = addReadyMyojin(player1);
+        myojin.setTapped(true);
+        myojin.setSummoningSick(true);
+
+        harness.activateAbilityWithDamageAssignments(player1, 0, 0, null,
+                Map.of(myojin.getId(), 8));
+        resolveAllTriggers();
+
+        assertThat(myojin.getCounterCount(CounterType.INDESTRUCTIBLE)).isZero();
+        assertThat(myojin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(8);
+        assertThat(gqs.hasKeyword(gd, myojin, Keyword.TRAMPLE)).isTrue();
+        assertThat(myojin.isTapped()).isTrue();
+    }
+
+    @Test
+    void trampleExpiresButCountersRemainAfterCleanup() {
+        Permanent myojin = addReadyMyojin(player1);
+        harness.activateAbilityWithDamageAssignments(player1, 0, 0, null,
+                Map.of(myojin.getId(), 8));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, myojin, Keyword.TRAMPLE)).isTrue();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, myojin, Keyword.TRAMPLE)).isFalse();
+        assertThat(myojin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(8);
+    }
+
+    @Test
+    void doesNotRedistributeCountersWhenOneTargetChangesController() {
+        addReadyMyojin(player1);
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbilityWithDamageAssignments(player1, 0, 0, null,
+                Map.of(first.getId(), 3, second.getId(), 5));
+
+        gd.playerBattlefields.get(player1.getId()).remove(first);
+        gd.playerBattlefields.get(player2.getId()).add(first);
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isFalse();
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, second, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void abilityResolvesAfterItsSourceLeavesTheBattlefield() {
+        Permanent myojin = addReadyMyojin(player1);
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbilityWithDamageAssignments(player1, 0, 0, null,
+                Map.of(bear.getId(), 8));
+
+        gd.playerBattlefields.get(player1.getId()).remove(myojin);
+        gd.playerGraveyards.get(player1.getId()).add(myojin.getCard());
+        resolveAllTriggers();
+
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(8);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
+    }
+
     private Permanent addReadyMyojin(Player player) {
         Permanent myojin = addCreatureReady(player, new MyojinOfToweringMight());
         myojin.setCounterCount(CounterType.INDESTRUCTIBLE, 1);
