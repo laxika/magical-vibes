@@ -126,4 +126,62 @@ class PyromancyTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Fleeting Image");
         harness.assertInGraveyard(player2, "Miscalculation");
     }
+
+    @Test
+    @DisplayName("Discards exactly one random card immediately and uses that card's mana value")
+    void randomDiscardIsPaidBeforeResolution() {
+        harness.addToBattlefield(player1, new Pyromancy());
+        harness.setHand(player1, List.of(new FleetingImage(), new Miscalculation()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        String discardedName = gd.playerGraveyards.get(player1.getId()).getFirst().getName();
+        assertThat(discardedName).isIn("Fleeting Image", "Miscalculation");
+        harness.assertNotInHand(player1, discardedName);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, discardedName.equals("Fleeting Image") ? 17 : 18);
+    }
+
+    @Test
+    @DisplayName("Each activation retains its own discarded card and the enchantment need not tap")
+    void multipleActivationsRetainTheirOwnDiscardedCards() {
+        harness.addToBattlefield(player1, new Pyromancy());
+        harness.setHand(player1, List.of(new FleetingImage()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.setHand(player1, List.of(new Miscalculation()));
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 15);
+        harness.assertInGraveyard(player1, "Fleeting Image");
+        harness.assertInGraveyard(player1, "Miscalculation");
+    }
+
+    @Test
+    @DisplayName("Cannot activate with less than three mana and does not discard a card")
+    void insufficientManaDoesNotDiscard() {
+        harness.addToBattlefield(player1, new Pyromancy());
+        harness.setHand(player1, List.of(new FleetingImage()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.assertInHand(player1, "Fleeting Image");
+        harness.assertNotInGraveyard(player1, "Fleeting Image");
+        harness.assertLife(player2, 20);
+    }
 }
