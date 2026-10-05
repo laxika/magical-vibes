@@ -71,8 +71,8 @@ class MunghaWurmTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A Mungha Wurm controlled by an opponent restricts your lands")
-    void opponentMunghaWurmRestrictsYourLands() {
+    @DisplayName("A Mungha Wurm controlled by an opponent does not restrict your lands")
+    void opponentMunghaWurmDoesNotRestrictYourLands() {
         addCreatureReady(player2, new MunghaWurm());
         Permanent firstLand = addCreatureReady(player1, new RhysticCave());
         Permanent secondLand = addCreatureReady(player1, new RhysticCave());
@@ -80,10 +80,41 @@ class MunghaWurmTest extends BaseCardTest {
         secondLand.tap();
 
         advanceToNextTurn(player2);
-        harness.handleMultiplePermanentsChosen(player1, List.of(firstLand.getId()));
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(firstLand.isTapped()).isFalse();
-        assertThat(secondLand.isTapped()).isTrue();
+        assertThat(secondLand.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Multiple Mungha Wurms still allow one land to untap")
+    void multipleWurmsStillAllowOneLandToUntap() {
+        addCreatureReady(player1, new MunghaWurm());
+        addCreatureReady(player1, new MunghaWurm());
+        Permanent firstLand = addCreatureReady(player1, new RhysticCave());
+        Permanent secondLand = addCreatureReady(player1, new RhysticCave());
+        firstLand.tap();
+        secondLand.tap();
+
+        advanceToNextTurn(player2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(secondLand.getId()));
+
+        assertThat(firstLand.isTapped()).isTrue();
+        assertThat(secondLand.isTapped()).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A single tapped land untaps without a restricted choice")
+    void singleTappedLandUntapsNormally() {
+        addCreatureReady(player1, new MunghaWurm());
+        Permanent land = addCreatureReady(player1, new RhysticCave());
+        land.tap();
+
+        advanceToNextTurn(player2);
+
+        assertThat(land.isTapped()).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
