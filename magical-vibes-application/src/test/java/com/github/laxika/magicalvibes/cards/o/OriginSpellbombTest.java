@@ -1,18 +1,22 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OriginSpellbomb.class, Shatter.class})
 class OriginSpellbombTest extends BaseCardTest {
-
-    // ===== Activated ability: create a 1/1 Myr artifact creature token =====
 
     @Test
     @DisplayName("Activating ability creates a 1/1 Myr artifact creature token")
@@ -31,7 +35,7 @@ class OriginSpellbombTest extends BaseCardTest {
         // Resolve the token creation ability
         harness.passBothPriorities();
 
-        assertThat(countMyrTokens()).isEqualTo(1);
+        assertThat(countPermanents(player1, "Myr")).isEqualTo(1);
     }
 
     @Test
@@ -67,8 +71,6 @@ class OriginSpellbombTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Origin Spellbomb");
         harness.assertInGraveyard(player1, "Origin Spellbomb");
     }
-
-    // ===== Death trigger: may pay {W} to draw =====
 
     @Test
     @DisplayName("Accepting death trigger and paying {W} draws a card")
@@ -147,8 +149,6 @@ class OriginSpellbombTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Both abilities interact correctly =====
-
     @Test
     @DisplayName("Both abilities work: Myr token created AND controller draws a card")
     void bothAbilitiesWork() {
@@ -173,15 +173,54 @@ class OriginSpellbombTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Myr token created
-        assertThat(countMyrTokens()).isEqualTo(1);
+        assertThat(countPermanents(player1, "Myr")).isEqualTo(1);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Destruction triggers the draw for the spellbomb's controller without creating a Myr")
+    void destructionTriggersDrawForController() {
+        Permanent spellbomb = harness.addToBattlefieldAndReturn(player2, new OriginSpellbomb());
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.setLibrary(player2, List.of(new OriginSpellbomb()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        int handSizeBefore = gd.playerHands.get(player2.getId()).size();
 
-    private int countMyrTokens() {
-        return (int) gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Myr"))
-                .filter(p -> p.getCard().getSubtypes().contains(CardSubtype.MYR))
-                .count();
+        harness.castAndResolveInstant(player1, 0, spellbomb.getId());
+        harness.assertInGraveyard(player2, "Origin Spellbomb");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeBefore + 1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(countPermanents(player1, "Myr")).isZero();
+        assertThat(countPermanents(player2, "Myr")).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped spellbomb cannot activate its ability")
+    void tappedSpellbombCannotActivate() {
+        harness.addToBattlefieldAndReturn(player1, new OriginSpellbomb()).setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Origin Spellbomb");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The spellbomb cannot activate without paying its generic mana cost")
+    void cannotActivateWithoutMana() {
+        harness.addToBattlefield(player1, new OriginSpellbomb());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Origin Spellbomb");
+        assertThat(gd.stack).isEmpty();
     }
 }
