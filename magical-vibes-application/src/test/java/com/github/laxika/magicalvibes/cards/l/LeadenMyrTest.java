@@ -12,6 +12,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed(LeadenMyr.class)
 class LeadenMyrTest extends BaseCardTest {
+    @Test
+    @DisplayName("Leaden Myr adds mana immediately to its controller without using the stack")
+    void manaAbilityResolvesImmediatelyForItsController() {
+        Permanent perm = addCreatureReady(player2, new LeadenMyr());
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(perm.isTapped()).isTrue();
+    }
 
     @Test
     @DisplayName("Tapping Leaden Myr produces one black mana")
