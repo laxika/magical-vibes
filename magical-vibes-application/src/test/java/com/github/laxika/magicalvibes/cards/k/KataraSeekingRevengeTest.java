@@ -74,6 +74,75 @@ class KataraSeekingRevengeTest extends BaseCardTest {
                 .isNull();
     }
 
+    @Test
+    @DisplayName("Can pay the optional waterbend cost entirely with mana and cast with black")
+    void paysWaterbendWithManaOnly() {
+        harness.setHand(player1, List.of(new KataraSeekingRevenge()));
+        WaterbendingLesson drawnCard = new WaterbendingLesson();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        gs.playCard(gd, player1, 0, 0, null, null, List.of(), List.of(), false,
+                null, null, null, null, null, false, null, null, null,
+                List.of(), List.of(), false, null, null, null, null, null, null, true);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        harness.assertOnBattlefield(player1, "Katara, Seeking Revenge");
+    }
+
+    @Test
+    @DisplayName("Without waterbend, can discard the card just drawn and immediately count it as a Lesson")
+    void discardsDrawnLessonFromInitiallyEmptyHand() {
+        harness.setHand(player1, List.of(new KataraSeekingRevenge()));
+        WaterbendingLesson drawnCard = new WaterbendingLesson();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setGraveyard(player1, List.of());
+        addMana();
+
+        harness.castCreature(player1, 0);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNotNull();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(drawnCard);
+        Permanent katara = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.getEffectivePower(gd, katara)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, katara)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Continuously updates the bonus as Lessons enter and leave the graveyard")
+    void updatesBonusWhenGraveyardChanges() {
+        Permanent katara = addCreatureReady(player1, new KataraSeekingRevenge());
+        harness.setGraveyard(player1, List.of());
+        assertThat(gqs.getEffectivePower(gd, katara)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, katara)).isEqualTo(3);
+
+        harness.setGraveyard(player1, List.of(new WaterbendingLesson(), new WaterbendingLesson()));
+        assertThat(gqs.getEffectivePower(gd, katara)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, katara)).isEqualTo(5);
+
+        harness.setGraveyard(player1, List.of(new WaterbendingLesson()));
+        assertThat(gqs.getEffectivePower(gd, katara)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, katara)).isEqualTo(4);
+
+        harness.setGraveyard(player1, List.of());
+        assertThat(gqs.getEffectivePower(gd, katara)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, katara)).isEqualTo(3);
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
