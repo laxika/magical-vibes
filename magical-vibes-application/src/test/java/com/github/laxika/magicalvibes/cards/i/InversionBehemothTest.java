@@ -10,6 +10,9 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({InversionBehemoth.class, GiantCockroach.class})
@@ -79,6 +82,106 @@ class InversionBehemothTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(9);
         assertThat(gqs.getEffectivePower(gd, cockroach)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, cockroach)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The controller may choose zero targets")
+    void mayChooseZeroTargets() {
+        Permanent behemoth = harness.addToBattlefieldAndReturn(player1, new InversionBehemoth());
+
+        advanceToBeginningOfCombat(player1);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(9);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("A creature cannot be chosen twice for the same ability")
+    void chosenCreatureIsRemovedFromRemainingChoices() {
+        Permanent behemoth = harness.addToBattlefieldAndReturn(player1, new InversionBehemoth());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new InversionBehemoth());
+
+        advanceToBeginningOfCombat(player1);
+        harness.handlePermanentChosen(player1, behemoth.getId());
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(player1.getId(), other.getId());
+
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("Switching a creature in two combats during the same turn restores its original values")
+    void switchesFromTwoCombatsCancel() {
+        Permanent behemoth = harness.addToBattlefieldAndReturn(player1, new InversionBehemoth());
+
+        advanceToBeginningOfCombat(player1);
+        harness.handlePermanentChosen(player1, behemoth.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(2);
+
+        advanceToBeginningOfCombat(player1);
+        harness.handlePermanentChosen(player1, behemoth.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("The remaining target is switched even if the source was also targeted and leaves")
+    void resolvesForRemainingTargetAfterSourceLeaves() {
+        Permanent behemoth = harness.addToBattlefieldAndReturn(player1, new InversionBehemoth());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new InversionBehemoth());
+
+        advanceToBeginningOfCombat(player1);
+        harness.handlePermanentChosen(player1, behemoth.getId());
+        harness.handlePermanentChosen(player1, other.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, behemoth);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Inversion Behemoth");
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(9);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Any number of targets includes more than one hundred creatures")
+    void mayTargetMoreThanOneHundredCreatures() {
+        List<Permanent> creatures = new ArrayList<>();
+        creatures.add(harness.addToBattlefieldAndReturn(player1, new InversionBehemoth()));
+        for (int i = 0; i < 100; i++) {
+            creatures.add(harness.addToBattlefieldAndReturn(player2, new InversionBehemoth()));
+        }
+
+        advanceToBeginningOfCombat(player1);
+        for (Permanent creature : creatures) {
+            PendingInteraction.PermanentChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice).isNotNull();
+            assertThat(choice.validIds()).contains(creature.getId());
+            harness.handlePermanentChosen(player1, creature.getId());
+        }
+        harness.passBothPriorities();
+
+        for (Permanent creature : creatures) {
+            assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(9);
+            assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        }
     }
 
     private void advanceToBeginningOfCombat(Player activePlayer) {
