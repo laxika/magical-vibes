@@ -139,4 +139,38 @@ class KismetTest extends BaseCardTest {
         assertThat(kismet.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Opponent permanents entering without being cast still enter tapped")
+    void opponentsPermanentsEnteringWithoutCastingEnterTapped() {
+        harness.addToBattlefield(player1, new Kismet());
+
+        Permanent bears = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent mine = harness.enterBattlefieldAndReturn(player2, new HowlingMine());
+        Permanent forest = harness.enterBattlefieldAndReturn(player2, new Forest());
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(mine.isTapped()).isTrue();
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Kismet does not prevent affected permanents from untapping normally")
+    void affectedPermanentsUntapNormally() {
+        harness.addToBattlefield(player1, new Kismet());
+        Permanent bears = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent mine = harness.enterBattlefieldAndReturn(player2, new HowlingMine());
+        Permanent forest = harness.enterBattlefieldAndReturn(player2, new Forest());
+
+        assertThat(bears.isTapped()).isTrue();
+        assertThat(mine.isTapped()).isTrue();
+        assertThat(forest.isTapped()).isTrue();
+
+        harness.performUntapStep(player2);
+
+        assertThat(bears.isTapped()).isFalse();
+        assertThat(mine.isTapped()).isFalse();
+        assertThat(forest.isTapped()).isFalse();
+    }
+
 }
