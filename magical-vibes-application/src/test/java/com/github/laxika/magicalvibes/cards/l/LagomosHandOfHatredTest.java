@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -48,11 +47,7 @@ class LagomosHandOfHatredTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(findPermanents(player1, "Elemental")).hasSize(1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.ensurePriority(player1);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Elemental")).isEmpty();
@@ -81,10 +76,88 @@ class LagomosHandOfHatredTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(lagomos.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Does not create an Elemental during the opponent's combat")
+    void doesNotTriggerDuringOpponentsCombat() {
+        harness.addToBattlefield(player1, new LagomosHandOfHatred());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Elemental")).isEmpty();
+        assertThat(findPermanents(player2, "Elemental")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Four creature deaths are insufficient even when split between players")
+    void cannotSearchAfterFourDeathsAcrossPlayers() {
+        Permanent lagomos = addReadyLagomos(player1);
+        gd.creatureDeathCountThisTurn.put(player1.getId(), 2);
+        gd.creatureDeathCountThisTurn.put(player2.getId(), 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(lagomos), null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("five or more creatures died");
+        assertThat(lagomos.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Counts actual creature deaths controlled by either player")
+    void searchesAfterFiveActualDeathsAcrossPlayers() {
+        Permanent lagomos = addReadyLagomos(player1);
+        harness.setLibrary(player1, List.of(new LagomosHandOfHatred()));
+        for (int i = 0; i < 5; i++) {
+            Permanent bear = harness.addToBattlefieldAndReturn(i < 2 ? player1 : player2, new GrizzlyBears());
+            bear.setMarkedDamage(2);
+        }
+        harness.runStateBasedActions();
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(lagomos), null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInHand(player1, "Lagomos, Hand of Hatred");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(lagomos.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Can resolve a search with an empty library")
+    void searchesEmptyLibrary() {
+        Permanent lagomos = addReadyLagomos(player1);
+        gd.creatureDeathCountThisTurn.put(player2.getId(), 5);
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(lagomos), null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(lagomos.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The delayed sacrifice still happens after Lagomos dies")
+    void sacrificesTokenAfterLagomosDies() {
+        Permanent lagomos = harness.addToBattlefieldAndReturn(player1, new LagomosHandOfHatred());
+        advanceToCombat(player1);
+        harness.passBothPriorities();
+        lagomos.setMarkedDamage(3);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player1, "Lagomos, Hand of Hatred");
+        assertThat(findPermanents(player1, "Elemental")).hasSize(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Elemental")).isEmpty();
     }
 
     private Permanent addReadyLagomos(Player player) {
