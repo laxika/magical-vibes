@@ -19,8 +19,7 @@ class PresenceOfTheWiseTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PresenceOfTheWise(), new HandOfHonor(), new HandOfCruelty()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertLife(player1, 24);
     }
@@ -31,8 +30,7 @@ class PresenceOfTheWiseTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PresenceOfTheWise()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertLife(player1, 20);
     }
@@ -44,10 +42,37 @@ class PresenceOfTheWiseTest extends BaseCardTest {
         harness.setHand(player2, List.of(new HandOfHonor(), new HandOfCruelty()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Counts cards added to hand before resolution")
+    void countsCardsAddedBeforeResolution() {
+        harness.setHand(player1, List.of(new PresenceOfTheWise(), new HandOfHonor()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.setHand(player1, List.of(new HandOfHonor(), new HandOfCruelty()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Counts cards remaining after hand becomes empty before resolution")
+    void countsEmptyHandAtResolution() {
+        harness.setHand(player1, List.of(new PresenceOfTheWise(), new HandOfHonor()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.setHand(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
     }
 }
