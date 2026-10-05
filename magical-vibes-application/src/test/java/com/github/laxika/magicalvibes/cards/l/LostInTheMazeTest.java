@@ -2,21 +2,24 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LostInTheMaze.class, GrizzlyBears.class, Island.class})
+@CardUsed({LostInTheMaze.class, GrizzlyBears.class, Island.class, Opalescence.class})
 class LostInTheMazeTest extends BaseCardTest {
 
     @Test
@@ -74,6 +77,88 @@ class LostInTheMazeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Already tapped opposing creatures still receive stun counters")
+    void alreadyTappedCreatureReceivesStunCounter() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.tap();
+        creature.setCounterCount(CounterType.STUN, 1);
+
+        castLostInTheMaze(1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.STUN)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Remaining legal targets resolve when another target leaves the battlefield")
+    void resolvesForRemainingTarget() {
+        Permanent removed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castLostInTheMaze(2);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, removed.getId());
+        harness.handlePermanentChosen(player1, remaining.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(removed);
+        harness.passBothPriorities();
+
+        assertThat(remaining.isTapped()).isTrue();
+        assertThat(remaining.getCounterCount(CounterType.STUN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Lost in the Maze has hexproof while it is itself a tapped creature")
+    void animatedTappedSourceHasHexproof() {
+        harness.addToBattlefield(player1, new Opalescence());
+        Permanent maze = harness.addToBattlefieldAndReturn(player1, new LostInTheMaze());
+
+        assertThat(gqs.isCreature(gd, maze)).isTrue();
+        assertThat(gqs.hasKeyword(gd, maze, Keyword.HEXPROOF)).isFalse();
+        maze.tap();
+
+        assertThat(gqs.hasKeyword(gd, maze, Keyword.HEXPROOF)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Flash permits casting during the end step")
+    void canCastDuringEndStep() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.forceStep(TurnStep.END_STEP);
+
+        castLostInTheMaze(1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(creature.getCounterCount(CounterType.STUN)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("X greater than 100 still requires and affects exactly X creatures")
+    void canTargetMoreThanOneHundredCreatures() {
+        List<Permanent> creatures = new ArrayList<>();
+        for (int i = 0; i < 101; i++) {
+            creatures.add(harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()));
+        }
+
+        castLostInTheMaze(101);
+        harness.passBothPriorities();
+        for (Permanent creature : creatures) {
+            harness.handlePermanentChosen(player1, creature.getId());
+        }
+        harness.passBothPriorities();
+
+        assertThat(creatures).allSatisfy(creature -> {
+            assertThat(creature.isTapped()).isTrue();
+            assertThat(creature.getCounterCount(CounterType.STUN)).isEqualTo(1);
+        });
     }
 
     private void castLostInTheMaze(int xValue) {
