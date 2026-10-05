@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LavaRunner.class, Forest.class, Mountain.class, GiantGrowth.class, ProdigalPyromancer.class})
+@CardUsed({LavaRunner.class, Forest.class, Mountain.class, GiantGrowth.class, ProdigalPyromancer.class, Counterspell.class})
 class LavaRunnerTest extends BaseCardTest {
 
     @Test
@@ -121,5 +122,28 @@ class LavaRunnerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Lava Runner");
         harness.assertOnBattlefield(player2, "Prodigal Pyromancer");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Countering the targeting spell does not prevent the land sacrifice")
+    void sacrificesLandEvenIfTargetingSpellIsCountered() {
+        Permanent lavaRunner = harness.addToBattlefieldAndReturn(player1, new LavaRunner());
+        harness.addToBattlefield(player2, new Forest());
+        GiantGrowth growth = new GiantGrowth();
+        harness.setHand(player2, List.of(growth));
+        harness.setHand(player1, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.forceActivePlayer(player2);
+
+        harness.castInstant(player2, 0, lavaRunner.getId());
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, growth.getId());
+        harness.assertInGraveyard(player2, "Giant Growth");
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+        harness.assertOnBattlefield(player1, "Lava Runner");
     }
 }
