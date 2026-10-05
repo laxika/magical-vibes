@@ -134,4 +134,42 @@ class PathOfPeaceTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Coral Merfolk");
         harness.assertLife(player2, ownerLifeBefore + 4);
     }
+
+    @Test
+    @DisplayName("Can destroy your own creature and gain 4 life")
+    void destroysOwnCreatureAndGainsLife() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new CoralMerfolk());
+        harness.setHand(player1, List.of(new PathOfPeace()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        int ownerLifeBefore = gd.getLife(player1.getId());
+        int opponentLifeBefore = gd.getLife(player2.getId());
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Coral Merfolk");
+        harness.assertInGraveyard(player1, "Coral Merfolk");
+        harness.assertLife(player1, ownerLifeBefore + 4);
+        harness.assertLife(player2, opponentLifeBefore);
+    }
+
+    @Test
+    @DisplayName("No destruction or life gain when the target gains shroud before resolution")
+    void targetGainsShroudBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new CoralMerfolk());
+        harness.setHand(player1, List.of(new PathOfPeace()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        int ownerLifeBefore = gd.getLife(player2.getId());
+        int casterLifeBefore = gd.getLife(player1.getId());
+
+        harness.castSorcery(player1, 0, target.getId());
+        target.getGrantedKeywords().add(Keyword.SHROUD);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Coral Merfolk");
+        harness.assertNotInGraveyard(player2, "Coral Merfolk");
+        harness.assertLife(player2, ownerLifeBefore);
+        harness.assertLife(player1, casterLifeBefore);
+        harness.assertInGraveyard(player1, "Path of Peace");
+        assertThat(gd.stack).isEmpty();
+    }
 }
