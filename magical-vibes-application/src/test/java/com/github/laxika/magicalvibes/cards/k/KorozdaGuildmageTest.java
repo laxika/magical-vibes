@@ -11,12 +11,14 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KorozdaGuildmage.class, GrizzlyBears.class, HillGiant.class})
 class KorozdaGuildmageTest extends BaseCardTest {
 
     @Test
@@ -71,8 +73,7 @@ class KorozdaGuildmageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Hill Giant");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .filteredOn(p -> p.getCard().getName().equals("Saproling"))
+        assertThat(findPermanents(player1, "Saproling"))
                 .hasSize(3)
                 .allSatisfy(p -> {
                     assertThat(p.getCard().getPower()).isEqualTo(1);
@@ -95,8 +96,7 @@ class KorozdaGuildmageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Korozda Guildmage");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .filteredOn(p -> p.getCard().getName().equals("Saproling"))
+        assertThat(findPermanents(player1, "Saproling"))
                 .hasSize(2);
         assertThat(guildmage.getId()).isNotIn(
                 gd.playerBattlefields.get(player1.getId()).stream().map(Permanent::getId).toList());
@@ -117,8 +117,7 @@ class KorozdaGuildmageTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Korozda Guildmage");
         harness.assertOnBattlefield(player1, "Saproling Token");
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .filteredOn(p -> "Saproling".equals(p.getCard().getName()))
+        assertThat(findPermanents(player1, "Saproling"))
                 .hasSize(2);
     }
 
@@ -130,6 +129,45 @@ class KorozdaGuildmageTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can boost and grant intimidate to an opponent's creature")
+    void canTargetOpponentsCreature() {
+        addCreatureReady(player1, new KorozdaGuildmage());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.INTIMIDATE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sacrificing a boosted Guildmage uses its battlefield toughness and pays the cost immediately")
+    void sacrificeUsesBoostedToughnessAfterSourceLeaves() {
+        Permanent guildmage = addCreatureReady(player1, new KorozdaGuildmage());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, guildmage.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertInGraveyard(player1, "Korozda Guildmage");
+        assertThat(countPermanents(player1, "Saproling")).isZero();
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Saproling")).isEqualTo(3);
     }
 
     private Card createTokenCreature(String name) {
