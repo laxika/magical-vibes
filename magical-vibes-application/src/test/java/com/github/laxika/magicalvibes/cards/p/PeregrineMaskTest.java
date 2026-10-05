@@ -10,9 +10,50 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PeregrineMask.class, Watchwolf.class})
 class PeregrineMaskTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void cannotEquipOpponentsCreature() {
+        Permanent mask = harness.addToBattlefieldAndReturn(player1, new PeregrineMask());
+        Permanent creature = addCreatureReady(player2, new Watchwolf());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(mask.getAttachedTo()).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("All granted abilities move only when the equip ability resolves")
+    void keywordsMoveOnlyOnResolution() {
+        Permanent mask = harness.addToBattlefieldAndReturn(player1, new PeregrineMask());
+        Permanent firstCreature = addCreatureReady(player1, new Watchwolf());
+        Permanent secondCreature = addCreatureReady(player1, new Watchwolf());
+        mask.setAttachedTo(firstCreature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, secondCreature.getId());
+
+        assertThat(mask.getAttachedTo()).isEqualTo(firstCreature.getId());
+        for (Keyword keyword : new Keyword[]{Keyword.DEFENDER, Keyword.FLYING, Keyword.FIRST_STRIKE}) {
+            assertThat(gqs.hasKeyword(gd, firstCreature, keyword)).isTrue();
+            assertThat(gqs.hasKeyword(gd, secondCreature, keyword)).isFalse();
+        }
+
+        harness.passBothPriorities();
+
+        assertThat(mask.getAttachedTo()).isEqualTo(secondCreature.getId());
+        for (Keyword keyword : new Keyword[]{Keyword.DEFENDER, Keyword.FLYING, Keyword.FIRST_STRIKE}) {
+            assertThat(gqs.hasKeyword(gd, firstCreature, keyword)).isFalse();
+            assertThat(gqs.hasKeyword(gd, secondCreature, keyword)).isTrue();
+        }
+    }
 
     @Test
     @DisplayName("Equipping Peregrine Mask gives the creature defender, flying, and first strike")
