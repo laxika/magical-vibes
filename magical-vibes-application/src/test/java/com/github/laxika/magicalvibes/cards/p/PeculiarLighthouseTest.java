@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +19,7 @@ class PeculiarLighthouseTest extends BaseCardTest {
     void entersTappedWhenEveryPlayerHasMoreThanThirteenLife() {
         playLighthouse(14, 14);
 
-        assertThat(findLighthouse(player1).isTapped()).isTrue();
+        assertThat(findPermanent(player1, "Peculiar Lighthouse").isTapped()).isTrue();
     }
 
     @Test
@@ -28,7 +27,7 @@ class PeculiarLighthouseTest extends BaseCardTest {
     void entersUntappedWhenControllerHasThirteenOrLessLife() {
         playLighthouse(13, 20);
 
-        assertThat(findLighthouse(player1).isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Peculiar Lighthouse").isTapped()).isFalse();
     }
 
     @Test
@@ -36,7 +35,41 @@ class PeculiarLighthouseTest extends BaseCardTest {
     void entersUntappedWhenOpponentHasThirteenOrLessLife() {
         playLighthouse(20, 13);
 
-        assertThat(findLighthouse(player1).isTapped()).isFalse();
+        assertThat(findPermanent(player1, "Peculiar Lighthouse").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Enters untapped when its controller is below 13 life")
+    void entersUntappedWhenControllerIsBelowThirteenLife() {
+        playLighthouse(12, 20);
+
+        assertThat(findPermanent(player1, "Peculiar Lighthouse").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Enters untapped when its opponent is below 13 life")
+    void entersUntappedWhenOpponentIsBelowThirteenLife() {
+        playLighthouse(20, 12);
+
+        assertThat(findPermanent(player1, "Peculiar Lighthouse").isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Entering without being played still checks life totals")
+    void enteringWithoutBeingPlayedChecksLifeTotals() {
+        harness.setLife(player1, 14);
+        harness.setLife(player2, 14);
+
+        Permanent tapped = harness.enterBattlefieldAndReturn(player1, new PeculiarLighthouse());
+        assertThat(tapped.isTapped()).isTrue();
+
+        harness.setLife(player2, 13);
+        Permanent untapped = harness.enterBattlefieldAndReturn(player1, new PeculiarLighthouse());
+        assertThat(untapped.isTapped()).isFalse();
+        assertThat(tapped.isTapped()).isTrue();
+
+        harness.setLife(player2, 14);
+        assertThat(untapped.isTapped()).isFalse();
     }
 
     @Test
@@ -59,7 +92,7 @@ class PeculiarLighthouseTest extends BaseCardTest {
     }
 
     private void tapFor(ManaColor color, int abilityIndex) {
-        Permanent lighthouse = addLighthouseReady(player1);
+        Permanent lighthouse = harness.addToBattlefieldAndReturn(player1, new PeculiarLighthouse());
 
         harness.activateAbility(player1, 0, abilityIndex, null, null);
 
@@ -67,14 +100,4 @@ class PeculiarLighthouseTest extends BaseCardTest {
         assertThat(lighthouse.isTapped()).isTrue();
     }
 
-    private Permanent addLighthouseReady(Player player) {
-        Permanent lighthouse = new Permanent(new PeculiarLighthouse());
-        lighthouse.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(lighthouse);
-        return lighthouse;
-    }
-
-    private Permanent findLighthouse(Player player) {
-        return findPermanent(player, "Peculiar Lighthouse");
-    }
 }
