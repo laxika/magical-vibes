@@ -32,11 +32,9 @@ class OtterPenguinTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(3);
 
-        Permanent blocker = new Permanent(new GrizzlyBears());
-        blocker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         otter.setAttacking(true);
-        beginBlockers();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 indexOf(player2, blocker), indexOf(player1, otter)))))
@@ -60,6 +58,83 @@ class OtterPenguinTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Controller's second draw triggers during an opponent's turn")
+    void triggersDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        Permanent otter = harness.addToBattlefieldAndReturn(player1, new OtterPenguin());
+        harness.setLibrary(player1, List.of(new OtterPenguin(), new OtterPenguin()));
+
+        drawAndResolveTrigger(player1);
+        drawAndResolveTrigger(player1);
+
+        assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(3);
+        assertThat(otter.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An opponent's second draw does not trigger the ability")
+    void doesNotTriggerForOpponentsDraws() {
+        Permanent otter = harness.addToBattlefieldAndReturn(player1, new OtterPenguin());
+        harness.setLibrary(player2, List.of(new OtterPenguin(), new OtterPenguin()));
+
+        drawAndResolveTrigger(player2);
+        drawAndResolveTrigger(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(1);
+        assertThat(otter.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Counts draws made before this creature entered the battlefield")
+    void countsEarlierDrawsAndWaitsForResolution() {
+        harness.setLibrary(player1, List.of(new OtterPenguin(), new OtterPenguin()));
+        drawAndResolveTrigger(player1);
+        Permanent otter = harness.addToBattlefieldAndReturn(player1, new OtterPenguin());
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(1);
+        assertThat(otter.isCantBeBlocked()).isFalse();
+
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(3);
+        assertThat(otter.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Both effects expire and the ability can trigger again on the next turn")
+    void expiresAndTriggersAgainNextTurn() {
+        Permanent otter = harness.addToBattlefieldAndReturn(player1, new OtterPenguin());
+        harness.setLibrary(player1, List.of(new OtterPenguin(), new OtterPenguin(),
+                new OtterPenguin(), new OtterPenguin()));
+        drawAndResolveTrigger(player1);
+        drawAndResolveTrigger(player1);
+        assertThat(otter.isCantBeBlocked()).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(1);
+        assertThat(otter.isCantBeBlocked()).isFalse();
+
+        drawAndResolveTrigger(player1);
+        assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(2);
+        drawAndResolveTrigger(player1);
+        assertThat(gqs.getEffectivePower(gd, otter)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, otter)).isEqualTo(3);
+        assertThat(otter.isCantBeBlocked()).isTrue();
+    }
+
     private void drawAndResolveTrigger(Player player) {
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player.getId()));
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
@@ -67,12 +142,5 @@ class OtterPenguinTest extends BaseCardTest {
 
     private int indexOf(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
-    }
-
-    private void beginBlockers() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
     }
 }
