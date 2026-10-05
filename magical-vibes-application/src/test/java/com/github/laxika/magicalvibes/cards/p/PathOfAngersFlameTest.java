@@ -50,4 +50,28 @@ class PathOfAngersFlameTest extends BaseCardTest {
         assertThat(existingCreature.getEffectivePower()).isEqualTo(4);
         assertThat(laterCreature.getEffectivePower()).isEqualTo(2);
     }
+
+    @Test
+    void creaturesEnteringBeforeResolutionAreBoosted() {
+        harness.castFromHand(player1, new PathOfAngersFlame(), "{2}{R}");
+
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HandOfHonor());
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(4);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    void multipleCopiesGiveCumulativeBoosts() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HandOfHonor());
+
+        harness.castFromHand(player1, new PathOfAngersFlame(), "{2}{R}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new PathOfAngersFlame(), "{2}{R}");
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(6);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
 }
