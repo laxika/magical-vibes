@@ -9,9 +9,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -36,10 +33,9 @@ class MagistratesScepterTest extends BaseCardTest {
     void secondAbilityQueuesExtraTurn() {
         Permanent scepter = addReadyScepter();
         scepter.setCounterCount(CounterType.CHARGE, 3);
-        enableAutoStopAtPrecombatMain();
 
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(scepter.getCounterCount(CounterType.CHARGE)).isZero();
         assertThat(gd.extraTurns).containsExactly(player1.getId());
@@ -73,26 +69,90 @@ class MagistratesScepterTest extends BaseCardTest {
     void secondAbilityRemovesExactlyThreeChargeCounters() {
         Permanent scepter = addReadyScepter();
         scepter.setCounterCount(CounterType.CHARGE, 4);
-        enableAutoStopAtPrecombatMain();
 
         harness.activateAbility(player1, 0, 1, null, null);
-        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
 
         assertThat(scepter.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
         assertThat(scepter.isTapped()).isTrue();
         assertThat(gd.extraTurns).containsExactly(player1.getId());
     }
 
+    @Test
+    @DisplayName("Charge counter is added on resolution, not when the tap cost is paid")
+    void firstAbilityUsesTheStack() {
+        Permanent scepter = addReadyScepter();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(scepter.isTapped()).isTrue();
+        assertThat(scepter.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(scepter.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Charge counters are removed as a cost before the extra turn resolves")
+    void secondAbilityPaysCountersImmediately() {
+        Permanent scepter = addReadyScepter();
+        scepter.setCounterCount(CounterType.CHARGE, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(scepter.isTapped()).isTrue();
+        assertThat(scepter.getCounterCount(CounterType.CHARGE)).isZero();
+        assertThat(gd.extraTurns).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
+
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Neither ability can be activated while the Scepter is tapped")
+    void tappedScepterCannotActivateEitherAbility() {
+        Permanent scepter = addReadyScepter();
+        scepter.setTapped(true);
+        scepter.setCounterCount(CounterType.CHARGE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(scepter.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.extraTurns).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activation on an opponent's turn grants the controller the next turn")
+    void extraTurnOnOpponentsTurnBelongsToController() {
+        Permanent scepter = addReadyScepter();
+        scepter.setCounterCount(CounterType.CHARGE, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.ensurePriority(player1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, harness::passBothPriorities);
+
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.extraTurns).isEmpty();
+        assertThat(scepter.isTapped()).isFalse();
+    }
+
     private Permanent addReadyScepter() {
         return harness.addToBattlefieldAndReturn(player1, new MagistratesScepter());
     }
 
-    private void enableAutoStopAtPrecombatMain() {
-        Set<TurnStep> stops = ConcurrentHashMap.newKeySet();
-        stops.add(TurnStep.PRECOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player1.getId(), stops);
-        Set<TurnStep> opponentStops = ConcurrentHashMap.newKeySet();
-        opponentStops.add(TurnStep.PRECOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player2.getId(), opponentStops);
-    }
 }
