@@ -99,4 +99,63 @@ class LeoninBolaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(bola.getAttachedTo()).isNull();
     }
+
+    @Test
+    @DisplayName("A summoning-sick creature cannot pay the granted tap cost")
+    void summoningSicknessPreventsActivation() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AuriokGlaivemaster());
+        creature.setSummoningSick(true);
+        Permanent bola = harness.addToBattlefieldAndReturn(player1, new LeoninBola());
+        bola.setAttachedTo(creature.getId());
+        Permanent target = addCreatureReady(player2, new AuriokGlaivemaster());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(creature.isTapped()).isFalse();
+        assertThat(bola.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("With two Bolas, only the Bola granting the chosen ability is unattached")
+    void multipleBolasUnattachOnlyChosenEquipment() {
+        Permanent creature = addCreatureReady(player1, new AuriokGlaivemaster());
+        Permanent firstBola = harness.addToBattlefieldAndReturn(player1, new LeoninBola());
+        Permanent secondBola = harness.addToBattlefieldAndReturn(player1, new LeoninBola());
+        firstBola.setAttachedTo(creature.getId());
+        secondBola.setAttachedTo(creature.getId());
+        Permanent target = addCreatureReady(player2, new AuriokGlaivemaster());
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+
+        assertThat(firstBola.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(secondBola.getAttachedTo()).isNull();
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(target.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The granted ability resolves after its source creature leaves the battlefield")
+    void abilityResolvesWithoutSourceCreature() {
+        Permanent creature = addCreatureReady(player1, new AuriokGlaivemaster());
+        Permanent bola = harness.addToBattlefieldAndReturn(player1, new LeoninBola());
+        bola.setAttachedTo(creature.getId());
+        Permanent target = addCreatureReady(player2, new AuriokGlaivemaster());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        assertThat(bola.getAttachedTo()).isNull();
+        assertThat(target.isTapped()).isTrue();
+    }
 }
