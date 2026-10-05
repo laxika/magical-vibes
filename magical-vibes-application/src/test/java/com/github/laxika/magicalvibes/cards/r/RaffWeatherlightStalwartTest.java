@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.f.Fireball;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RaffWeatherlightStalwart.class, GrizzlyBears.class, LightningBolt.class})
+@CardUsed({RaffWeatherlightStalwart.class, GrizzlyBears.class, LightningBolt.class, Fireball.class})
 class RaffWeatherlightStalwartTest extends BaseCardTest {
 
     @Test
@@ -109,5 +110,105 @@ class RaffWeatherlightStalwartTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Raff, Weatherlight Stalwart"));
+    }
+
+    @Test
+    @DisplayName("A sorcery triggers the draw before the spell resolves")
+    void sorceryTriggersBeforeResolving() {
+        Permanent raff = addCreatureReady(player1, new RaffWeatherlightStalwart());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Fireball()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 1, player2.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.assertLife(player2, 20);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(raff.isTapped()).isTrue();
+        assertThat(bear.isTapped()).isTrue();
+        harness.assertInHand(player1, "Grizzly Bears");
+        resolveAllTriggers();
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Raff and another summoning-sick creature can pay the draw cost")
+    void summoningSickCreaturesCanPayTapCost() {
+        Permanent raff = harness.addToBattlefieldAndReturn(player1, new RaffWeatherlightStalwart());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        raff.setSummoningSick(true);
+        bear.setSummoningSick(true);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(raff.isTapped()).isTrue();
+        assertThat(bear.isTapped()).isTrue();
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("One untapped creature cannot pay the cost even with other tapped creatures")
+    void insufficientUntappedCreaturesDoNotDraw() {
+        Permanent raff = addCreatureReady(player1, new RaffWeatherlightStalwart());
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        bear.tap();
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+        resolveAllTriggers();
+
+        assertThat(raff.isTapped()).isFalse();
+        assertThat(bear.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("An opponent casting an instant does not trigger Raff")
+    void opponentInstantDoesNotTrigger() {
+        addCreatureReady(player1, new RaffWeatherlightStalwart());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new LightningBolt()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Raff, Weatherlight Stalwart"));
+        resolveAllTriggers();
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("The activated ability works while Raff is tapped and only affects creatures present at resolution")
+    void activatedAbilityDoesNotAffectLaterCreatures() {
+        Permanent raff = addCreatureReady(player1, new RaffWeatherlightStalwart());
+        raff.tap();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        Permanent lateCreature = harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, raff)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, raff, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, lateCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, lateCreature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, lateCreature, Keyword.VIGILANCE)).isFalse();
     }
 }
