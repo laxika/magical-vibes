@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.a.AgonyWarp;
+import com.github.laxika.magicalvibes.cards.d.Disembowel;
+import com.github.laxika.magicalvibes.cards.f.ForkedBolt;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -8,14 +11,17 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PrecursorGolem.class, Shock.class, GrizzlyBears.class, AgonyWarp.class, ForkedBolt.class, Disembowel.class})
 class PrecursorGolemTest extends BaseCardTest {
 
     
@@ -151,10 +157,103 @@ class PrecursorGolemTest extends BaseCardTest {
         assertThat(allTargets).doesNotHaveDuplicates();
     }
 
-    private void castAndResolveGolemWithTokens() {
-        harness.setHand(player1, List.of(new PrecursorGolem()));
+    @Test
+    @DisplayName("Agony Warp targeting one Golem twice copies both targets onto each other Golem")
+    void repeatedTargetsAreReplacedOnEveryCopy() {
+        castAndResolveGolemWithTokens();
+        UUID originalTarget = getAnyGolemTokenId(player1);
+        harness.setHand(player1, List.of(new AgonyWarp()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, List.of(originalTarget, originalTarget));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Forked Bolt assigned entirely to one Golem deals two damage to each Golem")
+    void dividedDamageCopiesRetargetTheirAssignments() {
+        castAndResolveGolemWithTokens();
+        harness.setHand(player1, List.of(new ForkedBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castSorcery(player1, 0, Map.of(getAnyGolemTokenId(player1), 2));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .hasSize(3)
+                .allSatisfy(golem -> assertThat(golem.getMarkedDamage()).isEqualTo(2));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A spell targeting two different Golems does not trigger copying")
+    void distinctGolemTargetsDoNotTrigger() {
+        castAndResolveGolemWithTokens();
+        List<UUID> targets = gd.playerBattlefields.get(player1.getId()).stream()
+                .map(Permanent::getId).limit(2).toList();
+        harness.setHand(player1, List.of(new AgonyWarp()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0, targets);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Disembowel copies use the original X to determine eligible Golems")
+    void eligibleTargetsUseOriginalXValue() {
+        castAndResolveGolemWithTokens();
+        UUID originalTarget = harness.getPermanentId(player1, "Precursor Golem");
+        Permanent otherGolem = harness.addToBattlefieldAndReturn(player2, new PrecursorGolem());
+        harness.setHand(player1, List.of(new Disembowel()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castCreature(player1, 0);
+
+        harness.castInstant(player1, 0, 5, originalTarget);
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack.stream().filter(entry -> entry.isCopy()).toList())
+                .singleElement()
+                .satisfies(copy -> {
+                    assertThat(copy.getTargetId()).isEqualTo(otherGolem.getId());
+                    assertThat(copy.getXValue()).isEqualTo(5);
+                });
+    }
+
+@Test
+    @DisplayName("Copies of an opponent's spell remain controlled by that opponent")
+    void opponentControlsEveryCopy() {
+        castAndResolveGolemWithTokens();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, getAnyGolemTokenId(player1));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(3);
+        assertThat(gd.stack)
+                .allSatisfy(entry -> assertThat(entry.getControllerId()).isEqualTo(player2.getId()));
+        assertThat(gd.stack.stream().filter(entry -> entry.isCopy()).toList()).hasSize(2);
+    }
+
+    private void castAndResolveGolemWithTokens() {
+        harness.castFromHand(player1, new PrecursorGolem(), "{5}");
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
     }
