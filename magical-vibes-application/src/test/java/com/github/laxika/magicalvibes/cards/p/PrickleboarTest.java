@@ -1,13 +1,18 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Prickleboar.class})
 class PrickleboarTest extends BaseCardTest {
 
     @Test
@@ -49,5 +54,22 @@ class PrickleboarTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         assertThat(gqs.getEffectivePower(gd, ownBoar)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, enemyBoar)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Attacking Prickleboar kills a blocking Prickleboar before it can deal damage")
+    void firstStrikeKillsBlockerBeforeNormalDamage() {
+        addCreatureReady(player1, new Prickleboar());
+        addCreatureReady(player2, new Prickleboar());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Prickleboar");
+        harness.assertNotInGraveyard(player1, "Prickleboar");
+        harness.assertNotOnBattlefield(player2, "Prickleboar");
+        harness.assertInGraveyard(player2, "Prickleboar");
+        harness.assertLife(player2, 20);
     }
 }
