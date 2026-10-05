@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.e.EsperPanorama;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,13 +20,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LushGrowth.class, Forest.class, Island.class, Swamp.class, GrizzlyBears.class, EsperPanorama.class})
 class LushGrowthTest extends BaseCardTest {
 
     @Test
     @DisplayName("Resolving Lush Growth attaches it to target land")
     void resolvingAttachesToTargetLand() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new LushGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -39,11 +41,9 @@ class LushGrowthTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted land's subtypes become Mountain, Forest, and Plains")
     void enchantedLandSubtypesOverridden() {
-        harness.addToBattlefield(player1, new Island());
-        Permanent island = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent aura = new Permanent(new LushGrowth());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new LushGrowth());
         aura.setAttachedTo(island.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         GameQueryService.StaticBonus bonus = gqs.computeStaticBonus(gd, island);
 
@@ -58,11 +58,9 @@ class LushGrowthTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted Island taps for red, green, or white")
     void enchantedLandTapsForRedGreenOrWhite() {
-        harness.addToBattlefield(player1, new Island());
-        Permanent island = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent aura = new Permanent(new LushGrowth());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new LushGrowth());
         aura.setAttachedTo(island.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         assertThat(gqs.getOverriddenLandManaColors(gd, island))
                 .containsExactly(ManaColor.RED, ManaColor.GREEN, ManaColor.WHITE);
@@ -81,11 +79,9 @@ class LushGrowthTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted Swamp can produce white mana")
     void enchantedSwampCanProduceWhite() {
-        harness.addToBattlefield(player1, new Swamp());
-        Permanent swamp = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent aura = new Permanent(new LushGrowth());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new LushGrowth());
         aura.setAttachedTo(swamp.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         gs.tapPermanent(gd, player1, 0);
         harness.handleListChoice(player1, "WHITE");
@@ -97,11 +93,9 @@ class LushGrowthTest extends BaseCardTest {
     @Test
     @DisplayName("Normal mana production resumes when Lush Growth leaves")
     void normalManaResumesWhenAuraLeaves() {
-        harness.addToBattlefield(player1, new Island());
-        Permanent island = gd.playerBattlefields.get(player1.getId()).getFirst();
-        Permanent aura = new Permanent(new LushGrowth());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new LushGrowth());
         aura.setAttachedTo(island.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
 
         gd.playerBattlefields.get(player1.getId()).remove(aura);
         gs.tapPermanent(gd, player1, 0);
@@ -121,5 +115,59 @@ class LushGrowthTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
+    }
+
+    @Test
+    @DisplayName("An opponent's enchanted land produces red for its controller")
+    void opponentLandProducesRedForItsController() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.setHand(player1, List.of(new LushGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castEnchantment(player1, 0, island.getId());
+        harness.passBothPriorities();
+        harness.tapPermanent(player2, 0);
+        harness.handleListChoice(player2, "RED");
+
+        assertThat(island.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    @DisplayName("Enchanted Panorama loses its printed search ability and colorless production")
+    void panoramaLosesPrintedAbilities() {
+        Permanent panorama = harness.addToBattlefieldAndReturn(player1, new EsperPanorama());
+        harness.setHand(player1, List.of(new LushGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, panorama.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(panorama);
+        assertThat(panorama.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)
+                + gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)
+                + gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Lush Growth goes to the graveyard if its target leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.setHand(player1, List.of(new LushGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0, island.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(island);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Lush Growth");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof LushGrowth);
+        assertThat(gd.stack).isEmpty();
     }
 }
