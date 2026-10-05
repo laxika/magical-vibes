@@ -89,4 +89,42 @@ class OboroEnvoyTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Uses hand size at resolution and keeps that reduction after hand size changes")
+    void handSizeIsDeterminedAtResolution() {
+        addCreatureReady(player1, new OboroEnvoy());
+        Permanent target = addCreatureReady(player2, new FiddleheadKami());
+        harness.addToBattlefieldAndReturn(player1, new OboroPalaceInTheClouds());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new FiddleheadKami(), new FiddleheadKami()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.setHand(player1, List.of(new OboroEnvoy(), new FiddleheadKami(),
+                new FiddleheadKami(), new OboroPalaceInTheClouds()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+        harness.setHand(player1, List.of());
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("A tapped Envoy can target itself and the returned land counts in hand")
+    void tappedEnvoyCanTargetItself() {
+        Permanent envoy = harness.addToBattlefieldAndReturn(player1, new OboroEnvoy());
+        envoy.setTapped(true);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new OboroPalaceInTheClouds());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, envoy.getId());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, envoy)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, envoy)).isEqualTo(3);
+    }
 }
