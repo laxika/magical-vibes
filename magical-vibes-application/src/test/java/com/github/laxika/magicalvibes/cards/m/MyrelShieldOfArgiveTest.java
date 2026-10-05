@@ -58,8 +58,9 @@ class MyrelShieldOfArgiveTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, myrel.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
-        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.tapPermanent(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("during your opponent's turn");
     }
 
     @Test
@@ -75,5 +76,67 @@ class MyrelShieldOfArgiveTest extends BaseCardTest {
         harness.castInstant(player2, 0, myrel.getId());
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Only the controller's Soldiers count, including Myrel herself")
+    void doesNotCountOpponentsSoldiers() {
+        addCreatureReady(player1, new MyrelShieldOfArgive());
+        addCreatureReady(player2, new MyrelShieldOfArgive());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
+        assertThat(countPermanents(player2, "Soldier")).isZero();
+    }
+
+    @Test
+    @DisplayName("The attack trigger counts Soldiers at resolution even if Myrel has left")
+    void createsNoTokensWhenNoSoldiersRemain() {
+        Permanent myrel = addCreatureReady(player1, new MyrelShieldOfArgive());
+
+        declareAttackers(List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player1.getId()).remove(myrel);
+        gd.playerGraveyards.get(player1.getId()).add(myrel.getCard());
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Soldier")).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Soldier tokens from a previous attack count on the next attack")
+    void countsPreviouslyCreatedSoldierTokens() {
+        addCreatureReady(player1, new MyrelShieldOfArgive());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(1);
+
+        harness.performUntapStep(player1);
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(countPermanents(player1, "Soldier")).isEqualTo(3);
+        assertThat(findPermanents(player1, "Soldier")).allSatisfy(token ->
+                assertThat(token.isAttacking()).isFalse());
+    }
+
+    @Test
+    @DisplayName("Opponents can activate creature mana abilities during their own turn")
+    void allowsOpponentManaAbilitiesDuringTheirTurn() {
+        addCreatureReady(player1, new MyrelShieldOfArgive());
+        Permanent elves = addCreatureReady(player2, new LlanowarElves());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(elves.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId())
+                .get(com.github.laxika.magicalvibes.model.ManaColor.GREEN)).isEqualTo(1);
     }
 }
