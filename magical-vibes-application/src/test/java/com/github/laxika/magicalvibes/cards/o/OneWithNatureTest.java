@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.Brushland;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +19,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OneWithNature.class, GrizzlyBears.class, Forest.class, Plains.class, Brushland.class})
+@CardUsed({OneWithNature.class, GrizzlyBears.class, Forest.class, Plains.class, Brushland.class,
+        ProdigalPyromancer.class})
 class OneWithNatureTest extends BaseCardTest {
 
     @Test
@@ -179,6 +181,80 @@ class OneWithNatureTest extends BaseCardTest {
 
         resolveCombat();
 
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The controller may fail to find even when a basic land is available")
+    void mayFailToFindAvailableBasicLand() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachOneWithNature(player1, creature);
+        Forest forest = new Forest();
+        Plains plains = new Plains();
+        harness.setLibrary(player1, List.of(forest, plains));
+        creature.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(forest, plains);
+        assertThat(findPermanents(player1, "Forest")).isEmpty();
+        assertThat(findPermanents(player1, "Plains")).isEmpty();
+        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Combat damage from another creature does not trigger the Aura")
+    void anotherCreatureDealingCombatDamageDoesNotTrigger() {
+        Permanent enchantedCreature = addCreatureReady(player1, new GrizzlyBears());
+        attachOneWithNature(player1, enchantedCreature);
+        setupLibraryWithBasicLands();
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The search still resolves after the Aura leaves the battlefield")
+    void searchResolvesAfterAuraLeavesBattlefield() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        attachOneWithNature(player1, creature);
+        setupLibraryWithBasicLands();
+        creature.setAttacking(true);
+
+        resolveCombat();
+        Permanent aura = findPermanent(player1, "One with Nature");
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(findPermanents(player1, "One with Nature")).isEmpty();
+        assertThat(findPermanent(player1, "Forest").isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Noncombat damage from the enchanted creature does not trigger the Aura")
+    void noncombatDamageDoesNotTrigger() {
+        Permanent creature = addCreatureReady(player1, new ProdigalPyromancer());
+        attachOneWithNature(player1, creature);
+        setupLibraryWithBasicLands();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
