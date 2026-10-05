@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LivingLands;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Murasa.class, GrizzlyBears.class, Forest.class})
+@CardUsed({Murasa.class, GrizzlyBears.class, Forest.class, LivingLands.class})
 class MurasaTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -27,7 +28,7 @@ class MurasaTest extends BaseCardTest {
     @BeforeEach
     void preparePlane() {
         planar = GameTestEngineContext.get().getBean(PlanechaseService.class);
-        triggers = GameTestEngineContext.get().getBean(TriggerCollectionService.class);
+        triggers = harness.getTriggerCollectionService();
         gd.planechase = new PlanechaseState();
         gd.planechase.controllerId = player1.getId();
         gd.planechase.faceUp.add(new PlanarObject(new Murasa(), gd.nextTimestamp()));
@@ -71,7 +72,7 @@ class MurasaTest extends BaseCardTest {
     }
 
     @Test
-    void chaosAnimatesTargetLandUntilPlaneswalk() {
+    void chaosAnimationPersistsAfterPlaneswalk() {
         var forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.inMutationScope(() -> planar.chaos(gd));
@@ -90,6 +91,90 @@ class MurasaTest extends BaseCardTest {
 
         harness.inMutationScope(() -> planar.planeswalk(gd));
 
-        assertThat(gqs.isCreature(gd, forest)).isFalse();
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(4);
+    }
+
+    @Test
+    void creatureTokenDoesNotTriggerSearch() {
+        var token = new GrizzlyBears();
+        token.setToken(true);
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.enterBattlefieldAndReturn(player2, token);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void noncreatureLandDoesNotTriggerSearch() {
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.enterBattlefieldAndReturn(player2, new Forest());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void searchCanFailToFindEvenWhenBasicLandIsAvailable() {
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player2, -1);
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        harness.assertNotOnBattlefield(player2, "Forest");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void acceptingSearchWithEmptyLibraryFinishesNormally() {
+        harness.setLibrary(player2, List.of());
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.passBothPriorities();
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Forest");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void entryTriggerUsesStackBeforeOfferingSearchChoice() {
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @CardUsed({Murasa.class, LivingLands.class, Forest.class})
+    void forestEnteringAsCreatureTriggersSearch() {
+        harness.addToBattlefield(player1, new LivingLands());
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        var forest = harness.enterBattlefieldAndReturn(player2, new Forest());
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player2, false);
     }
 }
