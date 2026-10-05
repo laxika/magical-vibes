@@ -130,6 +130,39 @@ class ManaShortTest extends BaseCardTest {
                 .hasMessageContaining("only target players");
     }
 
+    @Test
+    @DisplayName("Mana produced by tapping a land in response is lost on resolution")
+    void clearsManaFromLandTappedInResponse() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player1, List.of(new ManaShort()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castInstant(player1, 0, player2.getId());
+
+        harness.tapPermanent(player2, 0);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Lands entering after casting are tapped without producing mana")
+    void tapsLandsPresentAtResolutionWithoutProducingMana() {
+        harness.setHand(player1, List.of(new ManaShort()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castInstant(player1, 0, player2.getId());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.passBothPriorities();
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+    }
+
     private void castAndResolve(UUID targetPlayerId) {
         harness.setHand(player1, List.of(new ManaShort()));
         harness.addMana(player1, ManaColor.BLUE, 3);
