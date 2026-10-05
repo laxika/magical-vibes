@@ -73,6 +73,77 @@ class KamizObscuraOculusTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isFalse();
     }
 
+    @Test
+    void landDiscardDoesNotIncreasePowerAndNonattackingKamizCannotBeChosen() {
+        Permanent kamiz = addCreatureReady(player1, new KamizObscuraOculus());
+        Permanent wizard = addCreatureReady(player1, new FugitiveWizard());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherBears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        declareAttackers(List.of(1, 2, 3));
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice.validIds()).containsExactlyInAnyOrder(
+                wizard.getId(), bears.getId(), otherBears.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+        discardByName("Mountain");
+
+        PendingInteraction.MultiPermanentChoice secondChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(secondChoice.validIds()).containsExactly(wizard.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(wizard.getId()));
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
+        assertThat(gqs.hasKeyword(gd, wizard, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, kamiz, Keyword.DOUBLE_STRIKE)).isFalse();
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Mountain");
+    }
+
+    @Test
+    void loneAttackerStillConnivesWithoutGrantingDoubleStrike() {
+        Permanent kamiz = addCreatureReady(player1, new KamizObscuraOculus());
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, kamiz.getId());
+        harness.passBothPriorities();
+        discardByName("Grizzly Bears");
+
+        assertThat(kamiz.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasCantBeBlocked(gd, kamiz)).isTrue();
+        assertThat(gqs.hasKeyword(gd, kamiz, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        harness.assertInHand(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void abilityDoesNothingWhenItsOnlyTargetLeavesBeforeResolution() {
+        addCreatureReady(player1, new KamizObscuraOculus());
+        Permanent wizard = addCreatureReady(player1, new FugitiveWizard());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        declareAttackers(List.of(1, 2));
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerGraveyards.get(player1.getId()).add(bears.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Mountain");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, wizard, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void discardByName(String cardName) {
         List<Card> hand = gd.playerHands.get(player1.getId());
         int index = -1;
