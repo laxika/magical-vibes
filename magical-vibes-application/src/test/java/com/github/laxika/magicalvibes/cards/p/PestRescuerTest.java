@@ -78,6 +78,74 @@ class PestRescuerTest extends BaseCardTest {
         harness.assertLife(player2, 23);
     }
 
+    @Test
+    @DisplayName("Creates a Pest on an opponent's upkeep even when that opponent controls a Pest")
+    void opponentPestDoesNotPreventCreation() {
+        harness.addToBattlefield(player1, new PestRescuer());
+        harness.enterBattlefieldAndReturn(player2, new ProfessorOfZoomancy());
+        resolveAllTriggers();
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(pestTokens(player1)).hasSize(1);
+        assertThat(pestTokens(player2)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Multiple Rescuers create only one Pest but each adds to life gain")
+    void multipleRescuersRecheckConditionAndStackLifeBonuses() {
+        harness.addToBattlefield(player1, new PestRescuer());
+        harness.addToBattlefield(player1, new PestRescuer());
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        assertThat(pestTokens(player1)).hasSize(1);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, pestTokens(player1).getFirst().getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    @DisplayName("The upkeep ability resolves after its source leaves the battlefield")
+    void upkeepTriggerSurvivesSourceRemoval() {
+        Permanent rescuer = harness.addToBattlefieldAndReturn(player1, new PestRescuer());
+        advanceToUpkeep(player1);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, rescuer.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Pest Rescuer");
+        assertThat(pestTokens(player1)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A Pest's death does not gain extra life after its Rescuer leaves")
+    void lifeBonusEndsWhenRescuerLeaves() {
+        Permanent rescuer = harness.addToBattlefieldAndReturn(player1, new PestRescuer());
+        harness.setLife(player1, 20);
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        Permanent pest = pestTokens(player1).getFirst();
+
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, rescuer.getId());
+        harness.castAndResolveInstant(player1, 0, pest.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+    }
+
     private List<Permanent> pestTokens(Player player) {
         return findPermanents(player, "Pest").stream()
                 .filter(permanent -> permanent.getCard().isToken()
