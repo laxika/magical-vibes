@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.r;
 
-import com.github.laxika.magicalvibes.testutil.TestCards;
-import com.github.laxika.magicalvibes.cards.a.AjaniOutlandChaperone;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.t.TeferiHeroOfDominaria;
+import com.github.laxika.magicalvibes.cards.m.MesaUnicorn;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
+import com.github.laxika.magicalvibes.cards.c.ColdWaterSnapper;
+import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,9 +17,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({RadiatingLightning.class, MesaUnicorn.class, BalothGorger.class,
+        TeferiHeroOfDominaria.class, LlanowarElves.class, ColdWaterSnapper.class})
 class RadiatingLightningTest extends BaseCardTest {
-
-    // ===== Damage to player =====
 
     @Test
     @DisplayName("Deals 3 damage to target player")
@@ -32,22 +34,20 @@ class RadiatingLightningTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 
-    // ===== Damage to creatures =====
-
     @Test
     @DisplayName("Deals 1 damage to each creature target player controls")
     void deals1DamageToEachCreature() {
         harness.setLife(player2, 20);
-        // Grizzly Bears is 2/2 — survives 1 damage
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        // Mesa Unicorn is 2/2 — survives 1 damage
+        harness.addToBattlefield(player2, new MesaUnicorn());
+        harness.addToBattlefield(player2, new MesaUnicorn());
         harness.setHand(player1, List.of(new RadiatingLightning()));
         harness.addMana(player1, ManaColor.RED, 4);
 
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        // Both Grizzly Bears should survive with 1 damage
+        // Both Mesa Unicorns should survive with 1 damage
         List<Permanent> battlefield = gd.playerBattlefields.get(player2.getId());
         assertThat(battlefield).hasSize(2);
         assertThat(battlefield).allMatch(p -> p.getMarkedDamage() == 1);
@@ -61,10 +61,7 @@ class RadiatingLightningTest extends BaseCardTest {
     void kills1ToughnessCreatures() {
         harness.setLife(player2, 20);
         // Add a 1/1 creature to player2
-        Permanent oneOne = new Permanent(new GrizzlyBears());
-        TestCards.mutableCard(oneOne).setToughness(1);
-        TestCards.mutableCard(oneOne).setPower(1);
-        gd.playerBattlefields.get(player2.getId()).add(oneOne);
+        harness.addToBattlefield(player2, new LlanowarElves());
 
         harness.setHand(player1, List.of(new RadiatingLightning()));
         harness.addMana(player1, ManaColor.RED, 4);
@@ -79,11 +76,9 @@ class RadiatingLightningTest extends BaseCardTest {
     @DisplayName("Leaves the target player's planeswalker alone — only creatures are damaged")
     void leavesTheTargetPlayersPlaneswalkerAlone() {
         harness.setLife(player2, 20);
-        Permanent ajani = new Permanent(new AjaniOutlandChaperone());
-        ajani.setCounterCount(CounterType.LOYALTY, 4);
-        ajani.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(ajani);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent teferi = harness.addToBattlefieldAndReturn(player2, new TeferiHeroOfDominaria());
+        teferi.setCounterCount(CounterType.LOYALTY, 4);
+        harness.addToBattlefield(player2, new MesaUnicorn());
 
         harness.setHand(player1, List.of(new RadiatingLightning()));
         harness.addMana(player1, ManaColor.RED, 4);
@@ -91,19 +86,17 @@ class RadiatingLightningTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        // The Bear takes its 1 damage; the planeswalker keeps every loyalty counter.
-        assertThat(findPermanent(player2, "Grizzly Bears").getMarkedDamage()).isEqualTo(1);
-        harness.assertOnBattlefield(player2, "Ajani, Outland Chaperone");
-        assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+        // The Unicorn takes its 1 damage; the planeswalker keeps every loyalty counter.
+        assertThat(findPermanent(player2, "Mesa Unicorn").getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Teferi, Hero of Dominaria");
+        assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
     }
-
-    // ===== Does not affect caster's creatures =====
 
     @Test
     @DisplayName("Does not damage caster's own creatures")
     void doesNotDamageCastersCreatures() {
         harness.setLife(player2, 20);
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new MesaUnicorn());
         harness.setHand(player1, List.of(new RadiatingLightning()));
         harness.addMana(player1, ManaColor.RED, 4);
 
@@ -115,15 +108,13 @@ class RadiatingLightningTest extends BaseCardTest {
         assertThat(casterBattlefield.getFirst().getMarkedDamage()).isZero();
     }
 
-    // ===== Combined effect =====
-
     @Test
     @DisplayName("Deals 3 to player and 1 to each creature simultaneously")
     void dealsBothDamages() {
         harness.setLife(player2, 20);
-        // Hill Giant is 3/3 — survives 1 damage
-        harness.addToBattlefield(player2, new HillGiant());
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        // Baloth Gorger is 4/4 — survives 1 damage
+        harness.addToBattlefield(player2, new BalothGorger());
+        harness.addToBattlefield(player2, new MesaUnicorn());
         harness.setHand(player1, List.of(new RadiatingLightning()));
         harness.addMana(player1, ManaColor.RED, 4);
 
@@ -138,8 +129,6 @@ class RadiatingLightningTest extends BaseCardTest {
         assertThat(battlefield).allMatch(p -> p.getMarkedDamage() == 1);
     }
 
-    // ===== No creatures =====
-
     @Test
     @DisplayName("Works when target player controls no creatures")
     void worksWithNoCreatures() {
@@ -151,5 +140,54 @@ class RadiatingLightningTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("Can target its controller and damages only that player's creatures")
+    void canTargetItsController() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new MesaUnicorn());
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new MesaUnicorn());
+        harness.setHand(player1, List.of(new RadiatingLightning()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+        assertThat(ownCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(opposingCreature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Damages creatures present at resolution, including those added after casting")
+    void damagesCreaturesPresentAtResolution() {
+        harness.setHand(player1, List.of(new RadiatingLightning()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castInstant(player1, 0, player2.getId());
+
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new MesaUnicorn());
+        harness.passBothPriorities();
+
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Radiating Lightning");
+    }
+
+    @Test
+    @DisplayName("Damages hexproof creatures because only their controller is targeted")
+    void damagesHexproofCreatures() {
+        harness.setLife(player2, 20);
+        Permanent snapper = harness.addToBattlefieldAndReturn(player2, new ColdWaterSnapper());
+        harness.setHand(player1, List.of(new RadiatingLightning()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        assertThat(snapper.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player2, "Cold-Water Snapper");
     }
 }
