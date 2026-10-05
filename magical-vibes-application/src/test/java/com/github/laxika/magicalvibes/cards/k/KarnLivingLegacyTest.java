@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.cards.a.AutomaticLibrarian;
+import com.github.laxika.magicalvibes.cards.m.MoltenMonstrosity;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KarnLivingLegacy.class, Forest.class, MoltenMonstrosity.class, AutomaticLibrarian.class})
 class KarnLivingLegacyTest extends BaseCardTest {
 
     @Test
@@ -41,9 +43,9 @@ class KarnLivingLegacyTest extends BaseCardTest {
     @DisplayName("-1 pays X and puts one looked-at card into hand")
     void minusOnePaysAndChoosesOneCard() {
         Permanent karn = addReadyKarn(4);
-        Card first = new GrizzlyBears();
+        Card first = new MoltenMonstrosity();
         Card second = new Forest();
-        Card belowLookedCards = new Ornithopter();
+        Card belowLookedCards = new AutomaticLibrarian();
         harness.setLibrary(player1, List.of(first, second, belowLookedCards));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -67,19 +69,18 @@ class KarnLivingLegacyTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("-7 gives artifacts a tap ability that deals 1 damage")
-    void minusSevenGivesArtifactsDamageAbility() {
+    @DisplayName("-7 gives an emblem that taps an artifact to deal 1 damage")
+    void minusSevenEmblemDealsDamage() {
         Permanent karn = addReadyKarn(7);
-        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AutomaticLibrarian());
         artifact.setSummoningSick(false);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.emblems).hasSize(1);
-        assertThat(gs.getEffectiveActivatedAbilities(gd, artifact)).hasSize(1);
-
-        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.activateEmblemAbility(player1, 0, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, artifact.getId());
         harness.passBothPriorities();
 
         assertThat(artifact.isTapped()).isTrue();
@@ -87,11 +88,81 @@ class KarnLivingLegacyTest extends BaseCardTest {
         assertThat(karn.getCounterCount(CounterType.LOYALTY)).isZero();
     }
 
+    @Test
+    @DisplayName("The emblem can tap an artifact creature with summoning sickness")
+    void emblemCanTapNewArtifactCreature() {
+        addReadyKarn(7);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AutomaticLibrarian());
+        artifact.setSummoningSick(true);
+
+        harness.activateEmblemAbility(player1, 0, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+
+        assertThat(artifact.isTapped()).isTrue();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("-1 can pay zero without looking at or moving any cards")
+    void minusOneCanPayZero() {
+        addReadyKarn(4);
+        Card first = new Forest();
+        harness.setLibrary(player1, List.of(first));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("-1 pays the full amount even when fewer cards remain in the library")
+    void minusOneWithShortLibrary() {
+        addReadyKarn(4);
+        Card first = new Forest();
+        harness.setLibrary(player1, List.of(first));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 3);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("-1 resolves without drawing when the library is empty")
+    void minusOneWithEmptyLibrary() {
+        addReadyKarn(4);
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 2);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyKarn(int loyalty) {
-        Permanent karn = new Permanent(new KarnLivingLegacy());
+        Permanent karn = harness.addToBattlefieldAndReturn(player1, new KarnLivingLegacy());
         karn.setCounterCount(CounterType.LOYALTY, loyalty);
         karn.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(karn);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return karn;
