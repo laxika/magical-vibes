@@ -7,6 +7,10 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -48,5 +52,42 @@ class MoxJasperTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("A tapped Dragon allows immediate mana of each color and Jasper pays its tap cost")
+    void addsEachColorImmediatelyAndTaps(ManaColor color) {
+        var jasper = harness.addToBattlefieldAndReturn(player1, new MoxJasper());
+        var dragon = harness.addToBattlefieldAndReturn(player1, new DragonWhelp());
+        dragon.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(jasper.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Dragon cards in hand and graveyard do not allow activation")
+    void dragonCardsOutsideBattlefieldDoNotSatisfyCondition() {
+        var jasper = harness.addToBattlefieldAndReturn(player1, new MoxJasper());
+        harness.setHand(player1, List.of(new DragonWhelp()));
+        harness.setGraveyard(player1, List.of(new DragonWhelp()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Dragon");
+        assertThat(jasper.isTapped()).isFalse();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }
