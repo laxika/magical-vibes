@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -51,9 +50,6 @@ class LeoninAbunasTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new Shatter()));
         harness.addMana(player2, ManaColor.RED, 2);
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -71,5 +67,71 @@ class LeoninAbunasTest extends BaseCardTest {
         harness.castInstant(player1, 0, artifact.getId());
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Opponent's activated ability cannot target a protected artifact creature")
+    void opponentAbilityCannotTargetArtifactCreature() {
+        harness.addToBattlefield(player1, new LeoninAbunas());
+        Permanent artifactCreature = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        harness.addToBattlefield(player2, new AetherSpellbomb());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, 0, null, artifactCreature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("hexproof");
+        harness.assertOnBattlefield(player2, "Aether Spellbomb");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returning Leonin Abunas to hand ends its protection")
+    void protectionEndsWhenSourceLeaves() {
+        Permanent abunas = harness.addToBattlefieldAndReturn(player1, new LeoninAbunas());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AlphaMyr());
+        harness.addToBattlefield(player2, new AetherSpellbomb());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player2, 0, 0, null, abunas.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Leonin Abunas");
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.HEXPROOF)).isFalse();
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, artifact.getId());
+
+        harness.assertNotOnBattlefield(player1, "Alpha Myr");
+        harness.assertInGraveyard(player1, "Alpha Myr");
+    }
+
+    @Test
+    @DisplayName("A spell fails to resolve if its artifact target gains hexproof before resolution")
+    void protectionIsCheckedAgainAtResolution() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new AetherSpellbomb());
+        harness.setHand(player2, List.of(new Shatter()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, artifact.getId());
+
+        harness.enterBattlefieldAndReturn(player1, new LeoninAbunas());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Aether Spellbomb");
+        harness.assertInGraveyard(player2, "Shatter");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Artifacts controlled by the opponent remain vulnerable")
+    void opponentArtifactCanBeDestroyed() {
+        harness.addToBattlefield(player1, new LeoninAbunas());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new AetherSpellbomb());
+        harness.setHand(player1, List.of(new Shatter()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, artifact.getId());
+
+        harness.assertNotOnBattlefield(player2, "Aether Spellbomb");
+        harness.assertInGraveyard(player2, "Aether Spellbomb");
     }
 }
