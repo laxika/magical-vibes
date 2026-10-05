@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TimberpackWolf;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -9,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,12 +18,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KytheonHeroOfAkros.class, Shock.class, TimberpackWolf.class})
 class KytheonHeroOfAkrosTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking together with two other creatures exiles Kytheon and returns him transformed")
     void transformsWhenThreeCreaturesAttack() {
-        Permanent kytheon = addKytheon(player1);
+        addKytheon(player1);
         addCreature(player1, "Ally1");
         addCreature(player1, "Ally2");
 
@@ -69,8 +72,7 @@ class KytheonHeroOfAkrosTest extends BaseCardTest {
         Permanent kytheon = findPermanent(player1, "Kytheon, Hero of Akros");
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, kytheon.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, kytheon.getId());
 
         harness.assertOnBattlefield(player1, "Kytheon, Hero of Akros");
     }
@@ -82,16 +84,13 @@ class KytheonHeroOfAkrosTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, kytheon.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, kytheon.getId());
 
         harness.assertNotOnBattlefield(player1, "Kytheon, Hero of Akros");
     }
 
     private Permanent addKytheon(Player player) {
-        Permanent perm = new Permanent(new KytheonHeroOfAkros());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        Permanent perm = addCreatureReady(player, new KytheonHeroOfAkros());
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
@@ -103,9 +102,89 @@ class KytheonHeroOfAkrosTest extends BaseCardTest {
         card.setType(CardType.CREATURE);
         card.setPower(1);
         card.setToughness(1);
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        addCreatureReady(player, card);
+    }
+
+    @Test
+    void transformationDoesNotTriggerWhenAttackersAreDeclared() {
+        addKytheon(player1);
+        addCreatureReady(player1, new TimberpackWolf());
+        addCreatureReady(player1, new TimberpackWolf());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0, 1, 2)));
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Kytheon, Hero of Akros");
+    }
+
+    @Test
+    void transformationUsesTheStackAtEndOfCombat() {
+        addKytheon(player1);
+        addCreatureReady(player1, new TimberpackWolf());
+        addCreatureReady(player1, new TimberpackWolf());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0, 1, 2)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        harness.assertOnBattlefield(player1, "Kytheon, Hero of Akros");
+        harness.assertNotOnBattlefield(player1, "Gideon, Battle-Forged");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Gideon, Battle-Forged");
+    }
+
+    @Test
+    void indestructibleExpiresAtCleanup() {
+        Permanent kytheon = addKytheon(player1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, kytheon.getId());
+
+        harness.assertInGraveyard(player1, "Kytheon, Hero of Akros");
+    }
+
+    @Test
+    void otherAttackersStillCountAfterDying() {
+        addKytheon(player1);
+        Permanent wolf = addCreatureReady(player1, new TimberpackWolf());
+        addCreatureReady(player1, new TimberpackWolf());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0, 1, 2)));
+        resolveAllTriggers();
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, wolf.getId());
+        harness.castAndResolveInstant(player2, 0, wolf.getId());
+        harness.assertInGraveyard(player1, "Timberpack Wolf");
+
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Gideon, Battle-Forged");
+    }
+
+    @Test
+    void doesNotTransformWhenOnlyOtherCreaturesAttack() {
+        addKytheon(player1);
+        addCreatureReady(player1, new TimberpackWolf());
+        addCreatureReady(player1, new TimberpackWolf());
+        addCreatureReady(player1, new TimberpackWolf());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(1, 2, 3)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kytheon, Hero of Akros");
+        harness.assertNotOnBattlefield(player1, "Gideon, Battle-Forged");
     }
 
 }

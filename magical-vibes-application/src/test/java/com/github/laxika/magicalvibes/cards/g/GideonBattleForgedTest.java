@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.k.KytheonHeroOfAkros;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TimberpackWolf;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +22,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KytheonHeroOfAkros.class, Shock.class, TimberpackWolf.class})
 class GideonBattleForgedTest extends BaseCardTest {
 
     @Test
@@ -99,8 +102,7 @@ class GideonBattleForgedTest extends BaseCardTest {
         // A creature card is 2/2 here, so 2 damage would be lethal without indestructible.
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, bear.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, bear.getId());
 
         harness.assertOnBattlefield(player1, "Bear");
     }
@@ -120,8 +122,7 @@ class GideonBattleForgedTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, gideon.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, gideon.getId());
 
         assertThat(gideon.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
@@ -145,9 +146,57 @@ class GideonBattleForgedTest extends BaseCardTest {
         card.setType(CardType.CREATURE);
         card.setPower(2);
         card.setToughness(2);
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        return addCreatureReady(player, card);
+    }
+
+    @Test
+    void plusOneProtectsOpposingCreatureUntilAbilityControllersNextTurn() {
+        addGideon(player1, 3);
+        Permanent wolf = addCreatureReady(player2, new TimberpackWolf());
+        wolf.tap();
+
+        harness.activateAbility(player1, 0, 1, null, wolf.getId());
+        harness.passBothPriorities();
+        assertThat(wolf.isTapped()).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.INDESTRUCTIBLE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+        assertThat(gqs.hasKeyword(gd, wolf, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    void zeroAnimationAndDamagePreventionExpireAtCleanup() {
+        Permanent gideon = addGideon(player1, 3);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        assertThat(gqs.isCreature(gd, gideon)).isFalse();
+        assertThat(gqs.hasKeyword(gd, gideon, Keyword.INDESTRUCTIBLE)).isFalse();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, gideon.getId());
+        assertThat(gideon.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+    }
+
+    @Test
+    void plusTwoDoesNotRequireTappedCreatureToAttack() {
+        addGideon(player1, 3);
+        Permanent wolf = addCreatureReady(player2, new TimberpackWolf());
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(wolf.getId()));
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        wolf.tap();
+        declareAttackers(player2, List.of());
+
+        assertThat(wolf.isAttacking()).isFalse();
     }
 }
