@@ -6,33 +6,32 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LlanowarEnvoy.class})
 class LlanowarEnvoyTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
     @Test
-    @DisplayName("Llanowar Envoy has one activated ability that costs {1}{G} and does not tap")
-    void hasCorrectAbility() {
-        LlanowarEnvoy card = new LlanowarEnvoy();
+    @DisplayName("Ability does not tap Llanowar Envoy")
+    void abilityDoesNotTapEnvoy() {
+        Permanent envoy = addReadyEnvoy(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
 
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{1}{G}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(AwardAnyColorManaEffect.class);
+        assertThat(envoy.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
     }
-
-    // ===== Mana production =====
 
     @Test
     @DisplayName("Activating ability prompts for color choice")
@@ -50,18 +49,21 @@ class LlanowarEnvoyTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    @Test
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
     @DisplayName("Choosing a color adds that mana to pool")
-    void choosingColorAddsMana() {
+    void choosingColorAddsMana(ManaColor color) {
         addReadyEnvoy(player1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.handleListChoice(player1, "BLUE");
+        harness.handleListChoice(player1, color.name());
 
         GameData gd = harness.getGameData();
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -98,8 +100,6 @@ class LlanowarEnvoyTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
     }
 
-    // ===== Validation =====
-
     @Test
     @DisplayName("Cannot activate ability without enough mana")
     void cannotActivateWithoutEnoughMana() {
@@ -109,13 +109,40 @@ class LlanowarEnvoyTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
-
     private Permanent addReadyEnvoy(Player player) {
-        LlanowarEnvoy card = new LlanowarEnvoy();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new LlanowarEnvoy());
         perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent envoy = harness.addToBattlefieldAndReturn(player1, new LlanowarEnvoy());
+        envoy.setSummoningSick(true);
+        envoy.setTapped(true);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(envoy.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the green requirement with colorless mana")
+    void cannotActivateWithoutGreenMana() {
+        addReadyEnvoy(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }
