@@ -189,6 +189,73 @@ class MartyrOfBonesTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("A tapped, summoning-sick Martyr can exile fewer than X cards from its controller's graveyard")
+    void exilesFewerThanXFromOwnGraveyardWithoutTapCost() {
+        Card firstBlackCard = new KrovikanScoundrel();
+        Card secondBlackCard = new GristleGrinner();
+        harness.setHand(player1, List.of(firstBlackCard, secondBlackCard));
+        Card target = new KjeldoranOutrider();
+        Card untouched = new KrovikanScoundrel();
+        harness.setGraveyard(player1, List.of(target, untouched));
+        Permanent martyr = harness.addToBattlefieldAndReturn(player1, new MartyrOfBones());
+        martyr.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        activate(martyr, 2, List.of(target.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(firstBlackCard.getId(), secondBlackCard.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(martyr);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(martyr.getCard(), target, untouched);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(target);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(untouched, martyr.getCard());
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstBlackCard, secondBlackCard);
+    }
+
+    @Test
+    @DisplayName("Exiles the remaining legal target when another target leaves the graveyard")
+    void resolvesWithOneTargetMissing() {
+        Card firstBlackCard = new KrovikanScoundrel();
+        Card secondBlackCard = new GristleGrinner();
+        harness.setHand(player1, List.of(firstBlackCard, secondBlackCard));
+        Card removedTarget = new KrovikanScoundrel();
+        Card remainingTarget = new KjeldoranOutrider();
+        harness.setGraveyard(player2, List.of(removedTarget, remainingTarget));
+        Permanent martyr = addCreatureReady(player1, new MartyrOfBones());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        activate(martyr, 2, List.of(removedTarget.getId(), remainingTarget.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(firstBlackCard.getId(), secondBlackCard.getId()));
+        harness.setGraveyard(player2, List.of(remainingTarget));
+        harness.setHand(player2, List.of(removedTarget));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(remainingTarget);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(removedTarget);
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same graveyard card twice")
+    void rejectsDuplicateTargets() {
+        harness.setHand(player1, List.of(new KrovikanScoundrel(), new GristleGrinner()));
+        Card target = new KjeldoranOutrider();
+        harness.setGraveyard(player2, List.of(target));
+        Permanent martyr = addCreatureReady(player1, new MartyrOfBones());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> activate(martyr, 2, List.of(target.getId(), target.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("same card twice");
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(martyr);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(target);
+    }
+
     private void activate(Permanent martyr, int xValue, List<UUID> targetIds) {
         harness.forceActivePlayer(player1);
         int permanentIndex = gd.playerBattlefields.get(player1.getId()).indexOf(martyr);
