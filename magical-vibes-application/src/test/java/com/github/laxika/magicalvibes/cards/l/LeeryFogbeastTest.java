@@ -27,8 +27,7 @@ class LeeryFogbeastTest extends BaseCardTest {
         addCreatureReady(player1, new ElvishWarrior());
         Permanent blocker = addCreatureReady(player2, new ElvishWarrior());
 
-        declareAttackers(List.of(0, 1));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(fogbeast))));
@@ -45,8 +44,7 @@ class LeeryFogbeastTest extends BaseCardTest {
         harness.setLife(player2, 20);
         addCreatureReady(player1, new LeeryFogbeast());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
@@ -60,8 +58,7 @@ class LeeryFogbeastTest extends BaseCardTest {
         Permanent fogbeast = addCreatureReady(player1, new LeeryFogbeast());
         Permanent blocker = addCreatureReady(player2, new ElvishWarrior());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(fogbeast))));
@@ -72,5 +69,44 @@ class LeeryFogbeastTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Leery Fogbeast blocking does not prevent combat damage")
+    void blockingDoesNotTriggerPrevention() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new ElvishWarrior());
+        addCreatureReady(player1, new ElvishWarrior());
+        Permanent fogbeast = addCreatureReady(player2, new LeeryFogbeast());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(fogbeast);
+    }
+
+    @Test
+    @DisplayName("Removing Leery Fogbeast in response does not stop its prevention trigger")
+    void preventionResolvesAfterSourceDies() {
+        harness.setLife(player2, 20);
+        Permanent fogbeast = addCreatureReady(player1, new LeeryFogbeast());
+        addCreatureReady(player1, new ElvishWarrior());
+        Permanent blocker = addCreatureReady(player2, new ElvishWarrior());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(gd.stack).hasSize(1);
+        harness.castAndResolveInstant(player1, 0, fogbeast.getId());
+        resolveAllTriggers();
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(fogbeast);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(blocker.getMarkedDamage()).isZero();
     }
 }
