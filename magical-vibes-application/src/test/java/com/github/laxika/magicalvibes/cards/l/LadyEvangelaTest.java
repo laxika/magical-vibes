@@ -47,8 +47,7 @@ class LadyEvangelaTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player1, new BarbaryApes());
         Permanent attacker = addCreatureReady(player2, new BarbaryApes());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player1.getId()).indexOf(blocker), 0)));
 
@@ -110,6 +109,79 @@ class LadyEvangelaTest extends BaseCardTest {
         UUID targetId = karakas.getId();
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Prevention persists after Lady Evangela leaves the battlefield")
+    void preventionPersistsAfterSourceLeaves() {
+        Permanent evangela = addCreatureReady(player1, new LadyEvangela());
+        harness.addToBattlefield(player1, new Karakas());
+        Permanent attacker = addAttacker(player2);
+        harness.setLife(player1, 20);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, null, evangela.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Lady Evangela");
+        resolveCombat(player2);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Other attacking creatures still deal combat damage")
+    void doesNotPreventOtherAttackersDamage() {
+        addCreatureReady(player1, new LadyEvangela());
+        Permanent target = addAttacker(player2);
+        addAttacker(player2);
+        harness.setLife(player1, 20);
+        addActivationMana();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        harness.addToBattlefield(player1, new LadyEvangela());
+        Permanent target = addCreatureReady(player2, new BarbaryApes());
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent evangela = addCreatureReady(player1, new LadyEvangela());
+        evangela.setTapped(true);
+        Permanent target = addCreatureReady(player2, new BarbaryApes());
+        addActivationMana();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Requires both white and black mana")
+    void cannotActivateWithoutBlackMana() {
+        Permanent evangela = addCreatureReady(player1, new LadyEvangela());
+        Permanent target = addCreatureReady(player2, new BarbaryApes());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(evangela.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addActivationMana() {
