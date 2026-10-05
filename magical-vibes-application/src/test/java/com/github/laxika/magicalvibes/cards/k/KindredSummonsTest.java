@@ -1,10 +1,9 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
-import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.c.ContainmentPriest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KindredSummons.class, AvianChangeling.class, Forest.class, GrizzlyBears.class, HillGiant.class, LlanowarElves.class, PsychogenicProbe.class, Shock.class})
+@CardUsed({KindredSummons.class, AvianChangeling.class, ContainmentPriest.class, GrizzlyBears.class, HillGiant.class, PsychogenicProbe.class, Shock.class})
 class KindredSummonsTest extends BaseCardTest {
 
     @Test
@@ -60,16 +59,20 @@ class KindredSummonsTest extends BaseCardTest {
     @DisplayName("Choosing a type you control none of reveals no cards")
     void chosenTypeYouControlNoneOfRevealsNoCards() {
         harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
         Card shock = new Shock();
         Card giant = new HillGiant();
         harness.setLibrary(player1, List.of(shock, giant));
 
         castAndChoose("ELF");
+        harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
-                .containsExactly(shock.getId(), giant.getId());
+                .containsExactlyInAnyOrder(shock.getId(), giant.getId());
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(giant.getId()));
+        harness.assertLife(player1, 18);
     }
 
     @Test
@@ -83,7 +86,91 @@ class KindredSummonsTest extends BaseCardTest {
         castAndChooseBear();
         harness.passBothPriorities();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("An empty library is still shuffled")
+    void emptyLibraryStillTriggersShuffleAbilities() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        harness.setLibrary(player1, List.of());
+
+        castAndChooseBear();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Changeling in the library matches the chosen type")
+    void putsRevealedChangelingOntoBattlefield() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Card changeling = new AvianChangeling();
+        Card beyond = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(new Shock(), changeling, beyond));
+
+        castAndChooseBear();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(changeling.getId()));
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .contains(beyond.getId()).doesNotContain(changeling.getId());
+    }
+
+    @Test
+    @DisplayName("Too few matches reveals the whole library and puts every match onto the battlefield")
+    void putsAllAvailableMatchesOntoBattlefieldWhenLibraryRunsOut() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        Card matching = new GrizzlyBears();
+        Card shock = new Shock();
+        Card giant = new HillGiant();
+        harness.setLibrary(player1, List.of(shock, matching, giant));
+
+        castAndChooseBear();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(matching.getId()));
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactlyInAnyOrder(shock.getId(), giant.getId());
+    }
+
+    @Test
+    @DisplayName("Opponents' matching creatures do not increase the reveal count")
+    void doesNotCountOpponentsCreatures() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second));
+
+        castAndChooseBear();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(first.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(second.getId()));
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(second.getId());
+    }
+
+    @Test
+    @DisplayName("Containment Priest does not exile creatures entering alongside it")
+    void revealedContainmentPriestDoesNotAffectSimultaneousEntrants() {
+        harness.addToBattlefield(player1, new AvianChangeling());
+        harness.addToBattlefield(player1, new AvianChangeling());
+        Card priest = new ContainmentPriest();
+        Card changeling = new AvianChangeling();
+        harness.setLibrary(player1, List.of(priest, changeling));
+
+        castAndChoose("CLERIC");
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(permanent -> permanent.getCard().getId())
+                .contains(priest.getId(), changeling.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
     private void castAndChooseBear() {
@@ -94,8 +181,7 @@ class KindredSummonsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KindredSummons()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleListChoice(player1, creatureType);
     }
 }
