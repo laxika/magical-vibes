@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.Demystify;
+import com.github.laxika.magicalvibes.cards.p.PullFromEternity;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +17,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({IxalansBinding.class, GrizzlyBears.class, Naturalize.class, Demystify.class, PullFromEternity.class})
 class IxalansBindingTest extends BaseCardTest {
 
     private void castAndResolveIxalansBinding(UUID targetId) {
@@ -33,7 +37,6 @@ class IxalansBindingTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== ETB exile =====
 
     @Test
     @DisplayName("ETB exiles target nonland permanent an opponent controls until source leaves")
@@ -57,7 +60,6 @@ class IxalansBindingTest extends BaseCardTest {
         assertThat(gd.exileReturnOnPermanentLeave).isNotEmpty();
     }
 
-    // ===== LTB return =====
 
     @Test
     @DisplayName("Exiled card returns when Ixalan's Binding is destroyed")
@@ -73,8 +75,7 @@ class IxalansBindingTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 2);
         UUID bindingId = harness.getPermanentId(player1, "Ixalan's Binding");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bindingId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bindingId);
 
         // Grizzly Bears should return to the battlefield
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -98,13 +99,11 @@ class IxalansBindingTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 2);
         UUID bindingId = harness.getPermanentId(player1, "Ixalan's Binding");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bindingId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bindingId);
 
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
     }
 
-    // ===== Static casting restriction =====
 
     @Test
     @DisplayName("Opponent cannot cast spells with same name as exiled card")
@@ -160,7 +159,6 @@ class IxalansBindingTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
     }
 
-    // ===== Restriction lifts when source leaves =====
 
     @Test
     @DisplayName("Casting restriction lifts when Ixalan's Binding is destroyed")
@@ -176,8 +174,7 @@ class IxalansBindingTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.GREEN, 2);
         UUID bindingId = harness.getPermanentId(player1, "Ixalan's Binding");
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, bindingId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, bindingId);
 
         // Casting restriction should be gone since Ixalan's Binding left
         harness.forceActivePlayer(player2);
@@ -189,5 +186,72 @@ class IxalansBindingTest extends BaseCardTest {
         harness.castCreature(player2, 0);
 
         assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Removing Binding before its enter trigger resolves does not exile the target")
+    void sourceLeavesBeforeEnterTriggerResolves() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.setHand(player1, List.of(new IxalansBinding()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castEnchantment(player1, 0, bearsId);
+        harness.passBothPriorities();
+
+        UUID bindingId = harness.getPermanentId(player1, "Ixalan's Binding");
+        harness.setHand(player2, List.of(new Demystify()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, bindingId);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Ixalan's Binding");
+    }
+
+    @Test
+    @DisplayName("Binding can exile an enchantment and restrict casting enchantments with its name")
+    void exilesNoncreatureAndRestrictsItsName() {
+        harness.addToBattlefield(player2, new IxalansBinding());
+        UUID opponentBindingId = harness.getPermanentId(player2, "Ixalan's Binding");
+        castAndResolveIxalansBinding(opponentBindingId);
+
+        harness.assertNotOnBattlefield(player2, "Ixalan's Binding");
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new IxalansBinding()));
+        harness.addMana(player2, ManaColor.WHITE, 4);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player2, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("The casting restriction ends when the exiled card leaves exile")
+    void restrictionEndsWhenExiledCardLeavesExile() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.addToBattlefield(player2, bears);
+        castAndResolveIxalansBinding(harness.getPermanentId(player2, "Grizzly Bears"));
+
+        resetForFollowUpSpell();
+        harness.setHand(player1, List.of(new PullFromEternity()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Ixalan's Binding");
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }
