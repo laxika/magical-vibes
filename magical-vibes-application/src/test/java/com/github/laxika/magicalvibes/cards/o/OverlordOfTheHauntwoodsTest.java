@@ -26,8 +26,7 @@ class OverlordOfTheHauntwoodsTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent everywhere = findPermanent(player1, "Everywhere");
         assertThat(everywhere.isTapped()).isTrue();
@@ -74,14 +73,102 @@ class OverlordOfTheHauntwoodsTest extends BaseCardTest {
         assertThat(overlord.isAttackedThisTurn()).isTrue();
     }
 
+    @Test
+    @DisplayName("Normal casting enters as a creature without impending counters")
+    void normalCastDoesNotUseImpending() {
+        harness.setHand(player1, List.of(new OverlordOfTheHauntwoods()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        Permanent overlord = findPermanent(player1, "Overlord of the Hauntwoods");
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(gqs.isCreature(gd, overlord)).isTrue();
+
+        overlord.setCounterCount(CounterType.TIME, 2);
+        advanceToOwnEndStep();
+
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(2);
+        assertThat(gqs.isCreature(gd, overlord)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Impending still creates a tapped Everywhere token on entry")
+    void impendingEntryCreatesToken() {
+        castWithImpending();
+
+        assertThat(findPermanents(player1, "Everywhere")).hasSize(1);
+        assertThat(findPermanent(player1, "Everywhere").isTapped()).isTrue();
+        assertThat(findPermanents(player2, "Everywhere")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Impending removes exactly one counter during the controller's end step")
+    void ownEndStepRemovesOneCounter() {
+        Permanent overlord = castWithImpending();
+
+        advanceToOwnEndStep();
+
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(3);
+        assertThat(gqs.isCreature(gd, overlord)).isFalse();
+        assertThat(findPermanents(player1, "Everywhere")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Impending does not remove counters during the opponent's end step")
+    void opponentEndStepDoesNotRemoveCounter() {
+        Permanent overlord = castWithImpending();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(4);
+        assertThat(gqs.isCreature(gd, overlord)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Impending counters are present before the entry trigger resolves")
+    void impendingCountersAreAppliedOnEntry() {
+        harness.setHand(player1, List.of(new OverlordOfTheHauntwoods()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        Permanent overlord = findPermanent(player1, "Overlord of the Hauntwoods");
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(4);
+        assertThat(gqs.isCreature(gd, overlord)).isFalse();
+        assertThat(findPermanents(player1, "Everywhere")).isEmpty();
+
+        resolveAllTriggers();
+
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(4);
+        assertThat(findPermanents(player1, "Everywhere")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Adding a time counter after impending expires makes it a noncreature again")
+    void newTimeCounterRestoresImpendingRestriction() {
+        Permanent overlord = castWithImpending();
+        overlord.setCounterCount(CounterType.TIME, 1);
+        advanceToOwnEndStep();
+        assertThat(gqs.isCreature(gd, overlord)).isTrue();
+
+        overlord.setCounterCount(CounterType.TIME, 1);
+
+        assertThat(gqs.isCreature(gd, overlord)).isFalse();
+    }
+
     private Permanent castWithImpending() {
         harness.setHand(player1, List.of(new OverlordOfTheHauntwoods()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         return findPermanent(player1, "Overlord of the Hauntwoods");
     }
@@ -91,6 +178,6 @@ class OverlordOfTheHauntwoodsTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 }
