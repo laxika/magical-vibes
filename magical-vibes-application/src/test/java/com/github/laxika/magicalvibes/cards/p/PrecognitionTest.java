@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class PrecognitionTest extends BaseCardTest {
 
     private void setOpponentLibrary() {
-        harness.setLibrary(player2, new ArrayList<>(List.of(new CanyonWildcat(), new LowlandGiant(), new Forest())));
+        harness.setLibrary(player2, List.of(new CanyonWildcat(), new LowlandGiant(), new Forest()));
     }
 
     private List<String> opponentLibraryNames() {
@@ -52,9 +52,11 @@ class PrecognitionTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
-        harness.setLibrary(player2, new ArrayList<>(List.of(new LowlandGiant(), new Forest())));
+        harness.setLibrary(player2, List.of(new LowlandGiant(), new Forest()));
         harness.passBothPriorities();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -83,7 +85,7 @@ class PrecognitionTest extends BaseCardTest {
     @DisplayName("An empty opponent library presents no choice")
     void emptyLibraryNoChoice() {
         harness.addToBattlefield(player1, new Precognition());
-        harness.setLibrary(player2, new ArrayList<>());
+        harness.setLibrary(player2, List.of());
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, player2.getId());
@@ -116,5 +118,49 @@ class PrecognitionTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The controller can decline looking without learning the top card")
+    void mayDeclineLookingBeforeTopCardIsDisclosed() {
+        harness.addToBattlefield(player1, new Precognition());
+        setOpponentLibrary();
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.clearMessages();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        var choice = (PendingInteraction.MayAbilityChoice) gd.interaction.activeInteraction();
+        assertThat(choice.description()).doesNotContain("Canyon Wildcat");
+        assertThat(harness.getConn1().getMessagesContaining("Canyon Wildcat")).isEmpty();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(opponentLibraryNames()).containsExactly("Canyon Wildcat", "Lowland Giant", "Forest");
+    }
+
+    @Test
+    @DisplayName("Looking does not require moving the card to the bottom")
+    void mayLookAndThenDeclineBottoming() {
+        harness.addToBattlefield(player1, new Precognition());
+        setOpponentLibrary();
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(opponentLibraryNames()).containsExactly("Canyon Wildcat", "Lowland Giant", "Forest");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        var choice = (PendingInteraction.MayAbilityChoice) gd.interaction.activeInteraction();
+        assertThat(choice.description()).contains("Canyon Wildcat");
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(opponentLibraryNames()).containsExactly("Canyon Wildcat", "Lowland Giant", "Forest");
     }
 }
