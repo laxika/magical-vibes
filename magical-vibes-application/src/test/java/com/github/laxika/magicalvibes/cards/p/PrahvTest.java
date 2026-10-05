@@ -81,4 +81,50 @@ class PrahvTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(12);
     }
+
+    @Test
+    void chaosCountsHandSizeAtResolution() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.setHand(player2, List.of(new Shock(), new Shock(), new Shock()));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 11);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void chaosWithEmptyHandDoesNotGainLife() {
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Shock()));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    void declaringNoAttackersDoesNotPreventCasting() {
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of());
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
 }
