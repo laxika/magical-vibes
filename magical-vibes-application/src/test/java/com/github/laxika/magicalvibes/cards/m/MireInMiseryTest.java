@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -48,11 +47,48 @@ class MireInMiseryTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(artifact);
     }
 
+    @Test
+    void opponentCanChooseEnchantmentInsteadOfCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
+
+        cast();
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(enchantment.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(creature);
+        harness.assertInGraveyard(player2, "Glorious Anthem");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void sacrificesOnlyEligibleEnchantmentWithoutPrompting() {
+        harness.addToBattlefield(player2, new GloriousAnthem());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        Permanent ownEnchantment = harness.addToBattlefieldAndReturn(player1, new GloriousAnthem());
+
+        cast();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(artifact);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(ownEnchantment);
+        harness.assertInGraveyard(player2, "Glorious Anthem");
+    }
+
+    @Test
+    void sacrificesOnlyEligibleCreatureWithoutPrompting() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        cast();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(artifact);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
     private void cast() {
-        harness.setHand(player1, List.of(new MireInMisery()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0);
+        harness.castFromHand(player1, new MireInMisery(), "{1}{B}");
         harness.passBothPriorities();
     }
 }
