@@ -61,4 +61,52 @@ class MakindiOxTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Invalid permanent");
     }
+
+    @Test
+    @DisplayName("Landfall can target an already tapped opponent creature")
+    void landfallCanTargetTappedCreature() {
+        harness.addToBattlefield(player1, new MakindiOx());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new MakindiOx());
+        victim.setTapped(true);
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, victim.getId());
+        harness.passBothPriorities();
+
+        assertThat(victim.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Landfall with no opposing creatures does not leave a target prompt")
+    void landfallWithNoLegalTargets() {
+        Permanent ox = harness.addToBattlefieldAndReturn(player1, new MakindiOx());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(ox.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Landfall still resolves after Makindi Ox leaves the battlefield")
+    void landfallResolvesWithoutSource() {
+        Permanent ox = harness.addToBattlefieldAndReturn(player1, new MakindiOx());
+        Permanent victim = harness.addToBattlefieldAndReturn(player2, new MakindiOx());
+        harness.setHand(player1, List.of(new Forest()));
+
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, victim.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(ox);
+        gd.playerGraveyards.get(player1.getId()).add(ox.getCard());
+        harness.passBothPriorities();
+
+        assertThat(victim.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
