@@ -48,4 +48,20 @@ class MisshapenFiendTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Misshapen Fiend can block a ground creature")
+    void flyingCreatureCanBlockGroundCreature() {
+        Permanent attacker = addCreatureReady(player1, new GerrardsIrregulars());
+        Permanent blocker = addCreatureReady(player2, new MisshapenFiend());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }
