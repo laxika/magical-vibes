@@ -25,10 +25,10 @@ class MassOfMysteriesTest extends BaseCardTest {
     @Test
     @DisplayName("Beginning of combat targets another Elemental creature you control")
     void beginningOfCombatTargetsAnotherElementalYouControl() {
-        Permanent mass = addReadyCreature(player1, new MassOfMysteries());
-        Permanent elemental = addReadyCreature(player1, new AirElemental());
-        Permanent opponentElemental = addReadyCreature(player2, new AirElemental());
-        Permanent nonElemental = addReadyCreature(player1, new GrizzlyBears());
+        Permanent mass = addCreatureReady(player1, new MassOfMysteries());
+        Permanent elemental = addCreatureReady(player1, new AirElemental());
+        Permanent opponentElemental = addCreatureReady(player2, new AirElemental());
+        Permanent nonElemental = addCreatureReady(player1, new GrizzlyBears());
 
         advanceToCombat(player1);
 
@@ -42,8 +42,8 @@ class MassOfMysteriesTest extends BaseCardTest {
     @DisplayName("Myriad creates one tapped attacking copy for each other opponent and exiles it at end of combat")
     void myriadCreatesAndExilesCopyAtEndOfCombat() {
         UUID thirdPlayerId = addThirdPlayer();
-        addReadyCreature(player1, new MassOfMysteries());
-        Permanent elemental = addReadyCreature(player1, new AirElemental());
+        addCreatureReady(player1, new MassOfMysteries());
+        Permanent elemental = addCreatureReady(player1, new AirElemental());
 
         advanceToCombat(player1);
         harness.handlePermanentChosen(player1, elemental.getId());
@@ -78,11 +78,92 @@ class MassOfMysteriesTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())).isEmpty();
     }
 
-    private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+    @Test
+    @DisplayName("Myriad's controller may decline to create the copy")
+    void mayDeclineCopy() {
+        addThirdPlayer();
+        addCreatureReady(player1, new MassOfMysteries());
+        Permanent elemental = addCreatureReady(player1, new AirElemental());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, elemental.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(1), Map.of(1, player2.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.handleMayAbilityChosen(player1, false);
+            resolveAllTriggers();
+        });
+
+        assertThat(findPermanents(player1, "Air Elemental")).containsExactly(elemental);
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @DisplayName("Myriad creates no copies in a two-player game")
+    void noCopiesWithOnlyDefendingOpponent() {
+        addCreatureReady(player1, new MassOfMysteries());
+        Permanent elemental = addCreatureReady(player1, new AirElemental());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, elemental.getId());
+        harness.passBothPriorities();
+
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            declareAttackers(List.of(1));
+            resolveAllTriggers();
+        });
+
+        assertThat(findPermanents(player1, "Air Elemental")).containsExactly(elemental);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.MayAbilityChoice.class);
+    }
+
+    @Test
+    @DisplayName("The ability does not trigger during an opponent's combat")
+    void doesNotTriggerDuringOpponentsCombat() {
+        addCreatureReady(player1, new MassOfMysteries());
+        addCreatureReady(player1, new AirElemental());
+
+        harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> advanceToCombat(player2));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNotInstanceOf(PendingInteraction.PermanentChoice.class);
+    }
+
+    @Test
+    @DisplayName("Removing Mass of Mysteries after its trigger does not prevent granting myriad")
+    void triggerResolvesAfterMassLeaves() {
+        addThirdPlayer();
+        Permanent mass = addCreatureReady(player1, new MassOfMysteries());
+        Permanent elemental = addCreatureReady(player1, new AirElemental());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, elemental.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(mass);
+        gd.playerGraveyards.get(player1.getId()).add(mass.getCard());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0), Map.of(0, player2.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            harness.handleMayAbilityChosen(player1, true);
+            resolveAllTriggers();
+        });
+
+        assertThat(findPermanents(player1, "Air Elemental").stream()
+                .filter(permanent -> permanent.getCard().isToken())).hasSize(1);
     }
 
     private UUID addThirdPlayer() {
