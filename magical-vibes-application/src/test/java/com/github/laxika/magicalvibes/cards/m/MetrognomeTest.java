@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.c.CacklingFiend;
 import com.github.laxika.magicalvibes.cards.c.Catalog;
 import com.github.laxika.magicalvibes.cards.d.Duress;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Metrognome.class, Duress.class, Catalog.class, Forest.class, CacklingFiend.class})
+@CardUsed({Metrognome.class, Duress.class, Catalog.class, Forest.class, CacklingFiend.class, Disenchant.class})
 class MetrognomeTest extends BaseCardTest {
 
     @Test
@@ -26,8 +27,7 @@ class MetrognomeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Duress()));
         harness.addMana(player1, ManaColor.BLACK, 1);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
@@ -76,8 +76,7 @@ class MetrognomeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(
@@ -99,5 +98,39 @@ class MetrognomeTest extends BaseCardTest {
         assertThat(gnomes.getFirst().getCard().isToken()).isTrue();
         assertThat(gqs.isArtifact(gd, gnomes.getFirst())).isTrue();
         assertThat(gqs.isCreature(gd, gnomes.getFirst())).isTrue();
+    }
+
+    @Test
+    @DisplayName("Activated ability resolves after Metrognome is destroyed")
+    void activatedAbilityResolvesAfterSourceIsDestroyed() {
+        Permanent metrognome = harness.addToBattlefieldAndReturn(player1, new Metrognome());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.setHand(player2, List.of(new Disenchant()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, metrognome.getId());
+
+        harness.assertInGraveyard(player1, "Metrognome");
+        assertThat(findPermanents(player1, "Gnome")).isEmpty();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Gnome")).hasSize(1);
+        assertThat(findPermanents(player2, "Gnome")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Metrognome can activate the turn it enters as a noncreature artifact")
+    void canActivateOnTurnItEnters() {
+        harness.castFromHand(player1, new Metrognome(), "{4}");
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Gnome")).hasSize(1);
     }
 }
