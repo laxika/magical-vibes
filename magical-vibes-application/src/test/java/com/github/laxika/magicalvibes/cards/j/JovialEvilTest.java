@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.a.AmrouKithkin;
 import com.github.laxika.magicalvibes.cards.a.AzureDrake;
+import com.github.laxika.magicalvibes.cards.h.HazezonTamar;
+import com.github.laxika.magicalvibes.cards.l.LandTax;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({JovialEvil.class, AmrouKithkin.class, AzureDrake.class})
+@CardUsed({JovialEvil.class, AmrouKithkin.class, AzureDrake.class, HazezonTamar.class, LandTax.class})
 class JovialEvilTest extends BaseCardTest {
 
     @Test
@@ -36,6 +38,34 @@ class JovialEvilTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Counts a multicolored white creature once and ignores white noncreatures")
+    void countsMulticoloredWhiteCreaturesButNotWhiteNoncreatures() {
+        harness.addToBattlefield(player2, new HazezonTamar());
+        harness.addToBattlefield(player2, new LandTax());
+
+        castJovialEvil(player2.getId());
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Counts white creatures at resolution rather than when cast")
+    void countsWhiteCreaturesAtResolution() {
+        harness.addToBattlefield(player2, new AmrouKithkin());
+        harness.setHand(player1, List.of(new JovialEvil()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        harness.addToBattlefield(player2, new AmrouKithkin());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
     }
 
     @Test
