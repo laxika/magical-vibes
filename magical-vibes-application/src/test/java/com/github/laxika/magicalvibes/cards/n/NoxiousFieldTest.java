@@ -30,8 +30,8 @@ class NoxiousFieldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(land.isTapped()).isTrue();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
         assertThat(ownCreature.getMarkedDamage()).isEqualTo(1);
         assertThat(opposingCreature.getMarkedDamage()).isEqualTo(1);
     }
@@ -67,8 +67,54 @@ class NoxiousFieldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(land.isTapped()).isTrue();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("A tapped enchanted land cannot pay the granted ability's tap cost")
+    void tappedLandCannotActivateGrantedAbility() {
+        Permanent land = setUpEnchantedLand();
+        land.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Removing the Aura does not stop an already activated land ability")
+    void activatedAbilityResolvesAfterAuraLeaves() {
+        setUpEnchantedLand();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HollowWarrior());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(
+                gd, findPermanent(player1, "Noxious Field"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Noxious Field");
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 19);
+        assertThat(creature.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The land loses the granted ability when Noxious Field leaves")
+    void removingAuraRemovesGrantedAbility() {
+        setUpEnchantedLand();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(
+                gd, findPermanent(player1, "Noxious Field"));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent setUpEnchantedLand() {
