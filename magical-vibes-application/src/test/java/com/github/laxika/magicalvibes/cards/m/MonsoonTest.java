@@ -39,7 +39,7 @@ class MonsoonTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard().getName().equals("Forest"))
                 .allMatch(p -> !p.isTapped());
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
     }
 
     @Test
@@ -54,7 +54,7 @@ class MonsoonTest extends BaseCardTest {
         advanceToEndStepTrigger(player1);
 
         assertThat(findPermanents(player1, "Island")).allMatch(Permanent::isTapped);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
     }
 
     @Test
@@ -66,7 +66,7 @@ class MonsoonTest extends BaseCardTest {
 
         advanceToEndStepTrigger(player1);
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.assertLife(player1, 20);
     }
 
     @Test
@@ -82,8 +82,8 @@ class MonsoonTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Island")).allMatch(Permanent::isTapped);
         assertThat(findPermanents(player2, "Island")).allMatch(p -> !p.isTapped());
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -96,6 +96,45 @@ class MonsoonTest extends BaseCardTest {
         advanceToEndStepTrigger(player1);
 
         assertThat(findPermanent(player1, "Snow-Covered Island").isTapped()).isTrue();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Islands tapped for mana in response do not cause damage")
+    void islandsTappedInResponseDoNotCount() {
+        harness.addToBattlefield(player1, new Monsoon());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        harness.tapPermanent(player1, 1);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Island")).allMatch(Permanent::isTapped);
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Multiple Monsoons only count Islands tapped by their own trigger")
+    void multipleMonsoonsDoNotCountTheSameIslandsTwice() {
+        harness.addToBattlefield(player1, new Monsoon());
+        harness.addToBattlefield(player2, new Monsoon());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Island());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToEndStepTrigger(player1);
+        harness.assertLife(player1, 18);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Island")).allMatch(Permanent::isTapped);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(gd.stack).isEmpty();
     }
 }
