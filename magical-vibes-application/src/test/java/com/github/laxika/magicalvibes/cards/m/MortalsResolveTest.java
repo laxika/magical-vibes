@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MortalsResolve.class, GrizzlyBears.class, DoomBlade.class, FountainOfYouth.class})
 class MortalsResolveTest extends BaseCardTest {
 
     @Test
@@ -77,5 +79,46 @@ class MortalsResolveTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, targetId))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Can grant both effects to an opponent's creature")
+    void canTargetOpponentsCreature() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MortalsResolve()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        UUID bearId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castInstant(player1, 0, bearId);
+        harness.passBothPriorities();
+
+        Permanent bear = findPermanent(player2, "Grizzly Bears");
+        assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bear)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, bear, Keyword.INDESTRUCTIBLE)).isTrue();
+        harness.assertInGraveyard(player1, "Mortal's Resolve");
+    }
+
+    @Test
+    @DisplayName("Does not protect a creature destroyed in response")
+    void targetDestroyedBeforeResolution() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MortalsResolve()));
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        UUID bearId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castInstant(player1, 0, bearId);
+        harness.castInstant(player2, 0, bearId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mortal's Resolve");
+        harness.assertInGraveyard(player2, "Doom Blade");
+        assertThat(gd.stack).isEmpty();
     }
 }
