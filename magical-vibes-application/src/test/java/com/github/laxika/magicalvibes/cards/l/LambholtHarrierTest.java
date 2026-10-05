@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -53,9 +54,57 @@ class LambholtHarrierTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(target.isCantBlockThisTurn()).isTrue();
 
-        gd.expireEndOfTurnFloatingEffects();
-        target.resetModifiers();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(target.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Harrier can activate and target itself")
+    void tappedSummoningSickHarrierCanTargetItself() {
+        Permanent harrier = harness.addToBattlefieldAndReturn(player1, new LambholtHarrier());
+        harrier.setSummoningSick(true);
+        harrier.setTapped(true);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, harrier.getId());
+        harness.passBothPriorities();
+
+        assertThat(harrier.isCantBlockThisTurn()).isTrue();
+        assertThat(harrier.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability can be activated repeatedly without tapping the source")
+    void abilityCanBeActivatedRepeatedly() {
+        Permanent harrier = addCreatureReady(player1, new LambholtHarrier());
+        Permanent first = addCreatureReady(player2, new LambholtHarrier());
+        Permanent second = addCreatureReady(player2, new LambholtHarrier());
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, first.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(first.isCantBlockThisTurn()).isTrue();
+        assertThat(second.isCantBlockThisTurn()).isTrue();
+        assertThat(harrier.isCantBlockThisTurn()).isFalse();
+        assertThat(harrier.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Ability requires the full four mana activation cost")
+    void abilityCannotBeActivatedWithInsufficientMana() {
+        Permanent harrier = addCreatureReady(player1, new LambholtHarrier());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, harrier.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThat(harrier.isCantBlockThisTurn()).isFalse();
     }
 }
