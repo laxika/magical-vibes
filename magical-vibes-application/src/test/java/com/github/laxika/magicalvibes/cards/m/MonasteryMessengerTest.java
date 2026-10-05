@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SeizeOpportunity;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MonasteryMessenger.class, GrizzlyBears.class, Island.class, Shock.class})
+@CardUsed({MonasteryMessenger.class, GrizzlyBears.class, Island.class, Shock.class, SeizeOpportunity.class})
 class MonasteryMessengerTest extends BaseCardTest {
 
     @Test
@@ -64,14 +65,72 @@ class MonasteryMessengerTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("ETB does not trigger when there is no legal graveyard target")
-    void etbDoesNotTriggerWithoutLegalTarget() {
+    @DisplayName("ETB needs no target selection when there is no legal graveyard target")
+    void etbNeedsNoSelectionWithoutLegalTarget() {
         harness.setGraveyard(player1, List.of(new GrizzlyBears(), new Island()));
 
         castMessenger();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNull();
+    }
+
+    @Test
+    @DisplayName("ETB excludes cards in the opponent's graveyard")
+    void etbExcludesOpponentsGraveyard() {
+        SeizeOpportunity ownCard = new SeizeOpportunity();
+        SeizeOpportunity opponentCard = new SeizeOpportunity();
+        harness.setGraveyard(player1, List.of(ownCard));
+        harness.setGraveyard(player2, List.of(opponentCard));
+
+        castMessenger();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
+                .validCardIds()).containsExactly(ownCard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownCard.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(ownCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+    }
+
+    @Test
+    @DisplayName("ETB returns only the selected card and preserves the library order")
+    void etbReturnsOnlySelectedCard() {
+        SeizeOpportunity selected = new SeizeOpportunity();
+        SeizeOpportunity unselected = new SeizeOpportunity();
+        Island top = new Island();
+        Island bottom = new Island();
+        harness.setGraveyard(player1, List.of(unselected, selected));
+        harness.setLibrary(player1, List.of(top, bottom));
+
+        castMessenger();
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(selected, top, bottom);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(unselected);
+        harness.assertNotInHand(player1, "Seize Opportunity");
+    }
+
+    @Test
+    @DisplayName("ETB does not choose a replacement when its target leaves the graveyard")
+    void etbDoesNotRetargetAtResolution() {
+        SeizeOpportunity selected = new SeizeOpportunity();
+        SeizeOpportunity remaining = new SeizeOpportunity();
+        Island top = new Island();
+        harness.setGraveyard(player1, List.of(selected, remaining));
+        harness.setLibrary(player1, List.of(top));
+
+        castMessenger();
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+        harness.setGraveyard(player1, List.of(remaining));
+        harness.setExile(player1, List.of(selected));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 
     private void castMessenger() {
