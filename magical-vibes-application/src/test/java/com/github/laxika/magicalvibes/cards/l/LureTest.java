@@ -1,15 +1,11 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
-import com.github.laxika.magicalvibes.cards.c.CloudSprite;
-import com.github.laxika.magicalvibes.cards.f.FreshVolunteers;
+import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hipparion;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.cards.w.WarCadence;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -22,7 +18,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AirElemental.class, BalduvianBarbarians.class, GrizzlyBears.class, Hipparion.class, Lure.class, Mountain.class, FreshVolunteers.class, CloudSprite.class, WarCadence.class})
+@CardUsed({AirElemental.class, CrawWurm.class, GrizzlyBears.class, Hipparion.class, Lure.class, Mountain.class})
 class LureTest extends BaseCardTest {
 
     @Test
@@ -47,18 +43,18 @@ class LureTest extends BaseCardTest {
                 new BlockerAssignment(1, 0)
         ));
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("declares 2 blockers"));
+        assertThat(gameLogContains("declares 2 blockers")).isTrue();
     }
 
     @Test
     @DisplayName("A blocker that can block multiple attackers must block the Lure attacker")
     void lureRequirementTakesPriorityOverOtherAttackers() {
-        Permanent enchantedAttacker = attackingCreature(new FreshVolunteers());
-        attackingCreature(new FreshVolunteers());
+        Permanent enchantedAttacker = attackingCreature(new GrizzlyBears());
+        attackingCreature(new GrizzlyBears());
         Permanent lure = harness.addToBattlefieldAndReturn(player1, new Lure());
         lure.setAttachedTo(enchantedAttacker.getId());
 
-        Permanent blocker = addCreatureReady(player2, new FreshVolunteers());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
 
@@ -116,7 +112,7 @@ class LureTest extends BaseCardTest {
     @Test
     @DisplayName("Lure does not require a blocker to pay a blocking cost")
     void blockCostIsNotRequiredForLure() {
-        Permanent enchantedAttacker = addCreatureReady(player1, new BalduvianBarbarians());
+        Permanent enchantedAttacker = addCreatureReady(player1, new CrawWurm());
         enchantedAttacker.setAttacking(true);
         Permanent lure = harness.addToBattlefieldAndReturn(player1, new Lure());
         lure.setAttachedTo(enchantedAttacker.getId());
@@ -131,14 +127,15 @@ class LureTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Lure does not require a blocker to pay a blocking cost")
-    void blockCostIsNotRequiredForLureUpstreamReview() {
-        Permanent enchantedAttacker = addCreatureReady(player1, new AirElemental());
+    @DisplayName("Lure does not require paying a blocking cost even when mana is available")
+    void blockCostIsOptionalWithManaAvailable() {
+        Permanent enchantedAttacker = addCreatureReady(player1, new CrawWurm());
         enchantedAttacker.setAttacking(true);
         Permanent lure = harness.addToBattlefieldAndReturn(player1, new Lure());
         lure.setAttachedTo(enchantedAttacker.getId());
 
         Permanent blocker = addCreatureReady(player2, new Hipparion());
+        harness.addMana(player2, ManaColor.WHITE, 1);
 
         prepareDeclareBlockers();
 
@@ -215,6 +212,65 @@ class LureTest extends BaseCardTest {
 
         assertThat(firstBlocker.isBlocking()).isTrue();
         assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A blocker may choose either of two attackers enchanted by Lure")
+    void twoLuresAllowChoosingEitherAttacker() {
+        Permanent first = attackingCreature(new GrizzlyBears());
+        Permanent second = attackingCreature(new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player1, new Lure()).setAttachedTo(first.getId());
+        harness.addToBattlefieldAndReturn(player1, new Lure()).setAttachedTo(second.getId());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block enchanted creature if able");
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(second.getId());
+    }
+
+    @Test
+    @DisplayName("Hipparion must block a Lure attacker that does not require payment")
+    void blockerWithConditionalCostMustBlockSmallAttacker() {
+        Permanent attacker = attackingCreature(new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player1, new Lure()).setAttachedTo(attacker.getId());
+        Permanent blocker = addCreatureReady(player2, new Hipparion());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block enchanted creature if able");
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("Multiple Lures on one attacker each count as a blocking requirement")
+    void overlappingLuresMustMaximizeRequirementsSatisfied() {
+        Permanent first = attackingCreature(new GrizzlyBears());
+        Permanent second = attackingCreature(new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player1, new Lure()).setAttachedTo(first.getId());
+        harness.addToBattlefieldAndReturn(player1, new Lure()).setAttachedTo(first.getId());
+        harness.addToBattlefieldAndReturn(player1, new Lure()).setAttachedTo(second.getId());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(first.getId());
     }
 
     private Permanent attackingCreature(Card card) {
