@@ -76,6 +76,57 @@ class MysticPenitentTest extends BaseCardTest {
         harness.setGraveyard(player, cards);
     }
 
+    @Test
+    @DisplayName("Gains the bonus immediately when the seventh card enters its controller's graveyard")
+    void gainsBonusWhenGraveyardGrows() {
+        fillGraveyard(player1, 6);
+        harness.addToBattlefield(player1, new MysticPenitent());
+        assertStats(1, 1, false);
+
+        gd.playerGraveyards.get(player1.getId()).add(new AvenFlock());
+
+        assertStats(2, 2, true);
+    }
+
+    @Test
+    @DisplayName("Threshold does not boost other creatures")
+    void thresholdBonusAppliesOnlyToSelf() {
+        fillGraveyard(player1, 7);
+        harness.addToBattlefield(player1, new MysticPenitent());
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new AvenFlock());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new MysticPenitent());
+
+        assertStats(2, 2, true);
+        assertThat(gqs.getEffectivePower(gd, ally)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ally)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponent)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Attacking without threshold does not tap Mystic Penitent")
+    void vigilanceWithoutThreshold() {
+        Permanent penitent = addCreatureReady(player1, new MysticPenitent());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(penitent.isAttacking()).isTrue();
+        assertThat(penitent.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Attacking with threshold does not tap Mystic Penitent")
+    void vigilanceWithThreshold() {
+        fillGraveyard(player1, 7);
+        Permanent penitent = addCreatureReady(player1, new MysticPenitent());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(penitent.isAttacking()).isTrue();
+        assertThat(penitent.isTapped()).isFalse();
+    }
+
     private Permanent findPenitent() {
         return findPermanent(player1, "Mystic Penitent");
     }
