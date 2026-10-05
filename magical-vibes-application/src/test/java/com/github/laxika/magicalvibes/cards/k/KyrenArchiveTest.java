@@ -105,4 +105,52 @@ class KyrenArchiveTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(discardedCard);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(archive.getCard());
     }
+
+    @Test
+    @DisplayName("Discard and sacrifice are paid before the exiled cards return")
+    void activationPaysCostsBeforeResolution() {
+        Permanent archive = harness.addToBattlefieldAndReturn(player1, new KyrenArchive());
+        Card storedCard = new KyrenToy();
+        Card discardedCard = new KyrenToy();
+        harness.setLibrary(player1, List.of(storedCard));
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.setHand(player1, List.of(discardedCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(archive);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(discardedCard, archive.getCard());
+        assertThat(gd.getCardsExiledByPermanent(archive.getId())).containsExactly(storedCard);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(storedCard);
+        assertThat(gd.getCardsExiledByPermanent(archive.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate with an empty hand and returns only its own linked cards")
+    void emptyHandActivationDoesNotReturnAnotherArchivesCards() {
+        Permanent archive = harness.addToBattlefieldAndReturn(player1, new KyrenArchive());
+        Permanent otherArchive = harness.addToBattlefieldAndReturn(player1, new KyrenArchive());
+        Card storedCard = new KyrenToy();
+        Card otherStoredCard = new KyrenToy();
+        gd.addToExile(player1.getId(), storedCard, archive.getId(), true);
+        gd.addToExile(player1.getId(), otherStoredCard, otherArchive.getId(), true);
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(storedCard);
+        assertThat(gd.getCardsExiledByPermanent(archive.getId())).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(otherArchive.getId())).containsExactly(otherStoredCard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(otherArchive);
+    }
 }
