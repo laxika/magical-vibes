@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +15,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({QasaliPridemage.class, GrizzlyBears.class, LeoninScimitar.class, GloriousAnthem.class})
 class QasaliPridemageTest extends BaseCardTest {
-
-    // ===== Exalted =====
 
     @Test
     @DisplayName("Exalted — another creature attacking alone gets +1/+1")
@@ -44,13 +43,11 @@ class QasaliPridemageTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 
-    // ===== Activated ability =====
-
     @Test
     @DisplayName("{1}, Sacrifice: destroys target artifact and sacrifices Qasali Pridemage")
     void destroysTargetArtifact() {
         addCreatureReady(player1, new QasaliPridemage());
-        Permanent target = addReadyArtifact(player2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -68,7 +65,7 @@ class QasaliPridemageTest extends BaseCardTest {
     @DisplayName("{1}, Sacrifice: destroys target enchantment")
     void destroysTargetEnchantment() {
         addCreatureReady(player1, new QasaliPridemage());
-        Permanent target = addReadyEnchantment(player2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GloriousAnthem());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, target.getId());
@@ -93,24 +90,93 @@ class QasaliPridemageTest extends BaseCardTest {
     @DisplayName("Cannot activate without enough mana")
     void cannotActivateWithoutMana() {
         addCreatureReady(player1, new QasaliPridemage());
-        Permanent target = addReadyArtifact(player2);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Helpers =====
+    @Test
+    void boostsItselfWhenAttackingAlone() {
+        Permanent pridemage = addCreatureReady(player1, new QasaliPridemage());
 
-    private Permanent addReadyArtifact(Player player) {
-        Permanent perm = new Permanent(new LeoninScimitar());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, pridemage)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, pridemage)).isEqualTo(3);
     }
 
-    private Permanent addReadyEnchantment(Player player) {
-        Permanent perm = new Permanent(new GloriousAnthem());
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+    @Test
+    void doesNotBoostAnOpponentsLoneAttacker() {
+        addCreatureReady(player1, new QasaliPridemage());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canActivateWhileTapped() {
+        Permanent pridemage = addCreatureReady(player1, new QasaliPridemage());
+        pridemage.tap();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Qasali Pridemage");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
+    }
+
+    @Test
+    void multipleExaltedAbilitiesBoostTheSameAttacker() {
+        addCreatureReady(player1, new QasaliPridemage());
+        addCreatureReady(player1, new QasaliPridemage());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(2));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(4);
+    }
+
+    @Test
+    void canActivateWhileSummoningSickAndTargetOwnArtifact() {
+        harness.addToBattlefield(player1, new QasaliPridemage());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.assertInGraveyard(player1, "Qasali Pridemage");
+        harness.assertOnBattlefield(player1, "Leonin Scimitar");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+    }
+
+    @Test
+    void exaltedStillResolvesAfterItsSourceIsSacrificed() {
+        addCreatureReady(player1, new QasaliPridemage());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        declareAttackers(player1, List.of(1));
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Qasali Pridemage");
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
     }
 }
