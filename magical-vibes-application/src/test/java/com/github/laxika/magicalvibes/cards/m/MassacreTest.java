@@ -81,7 +81,6 @@ class MassacreTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
@@ -101,5 +100,73 @@ class MassacreTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Rootwater Commando");
         harness.assertInGraveyard(player1, "Rootwater Commando");
         harness.assertInGraveyard(player2, "Rootwater Commando");
+    }
+
+    @Test
+    @DisplayName("Your own Plains does not satisfy the opponent's Plains requirement")
+    void cannotCastForFreeWithOnlyOwnPlains() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Plains());
+        harness.setHand(player1, List.of(new Massacre()));
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (java.util.UUID) null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Tapped qualifying lands allow the free cast and are only required when casting")
+    void resolvesAfterQualifyingLandsLeaveBattlefield() {
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
+        swamp.setTapped(true);
+        plains.setTapped(true);
+        addCreatureReady(player2, new RootwaterCommando());
+        harness.setHand(player1, List.of(new Massacre()));
+
+        harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
+        gd.playerBattlefields.get(player1.getId()).remove(swamp);
+        gd.playerBattlefields.get(player2.getId()).remove(plains);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Rootwater Commando");
+        harness.assertInGraveyard(player1, "Massacre");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Creatures entering before resolution are affected")
+    void affectsCreaturesEnteringBeforeResolution() {
+        harness.castFromHand(player1, new Massacre(), "{2}{B}{B}");
+        harness.addToBattlefield(player2, new RootwaterCommando());
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Rootwater Commando");
+        harness.assertInGraveyard(player2, "Rootwater Commando");
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution are not affected")
+    void doesNotAffectCreaturesEnteringAfterResolution() {
+        harness.castFromHand(player1, new Massacre(), "{2}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player2, new RootwaterCommando());
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player2, "Rootwater Commando");
+        harness.assertNotInGraveyard(player2, "Rootwater Commando");
+    }
+
+    @Test
+    @DisplayName("The free cast still requires sorcery timing")
+    void cannotCastForFreeDuringEndStep() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player2, new Plains());
+        harness.setHand(player1, List.of(new Massacre()));
+        harness.forceStep(TurnStep.END_STEP);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, (java.util.UUID) null))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
