@@ -78,6 +78,38 @@ class OneDozenEyesTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Colorless mana cannot pay the green entwine cost")
+    void entwineRequiresGreenMana() {
+        harness.setHand(player1, List.of(new OneDozenEyes()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 8);
+
+        assertThatThrownBy(() -> harness.castModalSorceryWithModes(
+                player1, 0, 1, 2, new int[]{0, 1}, List.of(), null))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Tokens are created on resolution and only for the selected mode")
+    void createsTokensOnlyOnResolution() {
+        harness.setHand(player1, List.of(new OneDozenEyes()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{1}, List.of(), null);
+
+        assertThat(findPermanents(player1, "Beast")).isEmpty();
+        assertThat(findPermanents(player1, "Insect")).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Beast")).isEmpty();
+        assertThat(findPermanents(player1, "Insect")).hasSize(5);
+        assertThat(findPermanents(player2, "Beast")).isEmpty();
+        assertThat(findPermanents(player2, "Insect")).isEmpty();
+        harness.assertInGraveyard(player1, "One Dozen Eyes");
+    }
+
     private void cast(int[] modes, boolean entwined) {
         harness.setHand(player1, List.of(new OneDozenEyes()));
         harness.addMana(player1, ManaColor.GREEN, entwined ? 4 : 1);
