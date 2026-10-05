@@ -66,4 +66,60 @@ class MarkerBeetlesTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Marker Beetles");
         harness.assertInHand(player1, "Plated Spider");
     }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Marker Beetles can be sacrificed and boosts your creature before drawing")
+    void sacrificeTriggersBoostBeforeDrawing() {
+        Permanent beetles = harness.addToBattlefieldAndReturn(player1, new MarkerBeetles());
+        beetles.setSummoningSick(true);
+        beetles.tap();
+        Permanent target = addCreatureReady(player1, new PlatedSpider());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GoliathBeetle()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Marker Beetles");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(5);
+        assertThat(target.getEffectiveToughness()).isEqualTo(5);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Goliath Beetle");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Losing the death trigger's target does not prevent the separate draw ability")
+    void removedDeathTriggerTargetDoesNotPreventDraw() {
+        addCreatureReady(player1, new MarkerBeetles());
+        Permanent target = addCreatureReady(player2, new MarkerBeetles());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new PlatedSpider()));
+        harness.setLibrary(player2, List.of(new GoliathBeetle()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Marker Beetles");
+        harness.assertInGraveyard(player2, "Marker Beetles");
+        harness.assertInHand(player1, "Plated Spider");
+        harness.assertInHand(player2, "Goliath Beetle");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }
