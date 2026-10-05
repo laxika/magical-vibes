@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -32,6 +31,12 @@ class MagusOfTheJarTest extends BaseCardTest {
 
         addReadyMagus();
         harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Magus of the Jar");
+        harness.assertInGraveyard(player1, "Magus of the Jar");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactlyElementsOf(player1Hand);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactlyElementsOf(player2Hand);
+        assertThat(gd.exiledCards).isEmpty();
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
@@ -96,9 +101,85 @@ class MagusOfTheJarTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Magus of the Jar");
     }
 
+    @Test
+    @DisplayName("Empty original hands still create a delayed discard at the next end step")
+    void emptyOriginalHandsStillDiscardDrawnCards() {
+        setDeck(player1, 7);
+        setDeck(player2, 7);
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        addReadyMagus();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        List<Card> drawn1 = List.copyOf(gd.playerHands.get(player1.getId()));
+        List<Card> drawn2 = List.copyOf(gd.playerHands.get(player2.getId()));
+        advanceToEndStep(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsAll(drawn1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsAll(drawn2);
+    }
+
+    @Test
+    @DisplayName("Activation during an end step waits until the following end step")
+    void activationDuringEndStepWaitsForNextEndStep() {
+        Card original1 = new Island();
+        Card original2 = new Forest();
+        setDeck(player1, 7);
+        setDeck(player2, 7);
+        harness.setHand(player1, List.of(original1));
+        harness.setHand(player2, List.of(original2));
+        addReadyMagus();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7).doesNotContain(original1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7).doesNotContain(original2);
+        assertThat(gd.exiledCards).hasSize(2);
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(original1);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(original2);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Returning the exiled hands uses the stack and happens only once")
+    void delayedReturnUsesStackAndTriggersOnlyOnce() {
+        Card original1 = new Island();
+        Card original2 = new Forest();
+        setDeck(player1, 7);
+        setDeck(player2, 7);
+        harness.setHand(player1, List.of(original1));
+        harness.setHand(player2, List.of(original2));
+        addReadyMagus();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player1, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(7);
+        assertThat(gd.exiledCards).hasSize(2);
+        harness.passBothPriorities();
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(original1);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(original2);
+        assertThat(gd.exiledCards).isEmpty();
+    }
+
     private void addReadyMagus() {
-        Permanent magus = harness.addToBattlefieldAndReturn(player1, new MagusOfTheJar());
-        magus.setSummoningSick(false);
+        addCreatureReady(player1, new MagusOfTheJar());
     }
 
     private void advanceToEndStep(Player activePlayer) {
@@ -114,7 +195,6 @@ class MagusOfTheJarTest extends BaseCardTest {
         for (int i = 0; i < count; i++) {
             deck.add(new Forest());
         }
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(deck);
+        harness.setLibrary(player, deck);
     }
 }
