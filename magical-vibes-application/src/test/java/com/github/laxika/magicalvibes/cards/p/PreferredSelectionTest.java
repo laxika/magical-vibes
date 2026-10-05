@@ -105,6 +105,60 @@ class PreferredSelectionTest extends BaseCardTest {
     }
 
     @Test
+    void cannotPayAfterAnotherPlayerGainsControlOfTheEnchantment() {
+        setup();
+
+        advanceToUpkeep(player1);
+        gd.playerBattlefields.get(player1.getId()).remove(preferredSelection);
+        gd.playerBattlefields.get(player2.getId()).add(preferredSelection);
+        harness.passBothPriorities();
+
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.addMana(player1, ManaColor.GREEN, 2);
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleCardChosen(player1, 1);
+        });
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(top, second);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(second);
+        assertThat(gd.playerDecks.get(player1.getId()).getLast()).isSameAs(top);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(preferredSelection);
+    }
+
+    @Test
+    void payingWithOneCardPutsThatCardIntoHand() {
+        setup();
+        harness.setLibrary(player1, List.of(top));
+
+        triggerUpkeep();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.addMana(player1, ManaColor.GREEN, 2);
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+            harness.handleMayAbilityChosen(player1, true);
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(top);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(preferredSelection.getCard());
+    }
+
+    @Test
+    void decliningWithOneCardKeepsThatCardInTheLibrary() {
+        setup();
+        harness.setLibrary(player1, List.of(top));
+
+        triggerUpkeep();
+        harness.withAutoStop(TurnStep.UPKEEP, () -> harness.handleMayAbilityChosen(player1, false));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(top);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(preferredSelection);
+    }
+
+    @Test
     void cannotUseThePaymentOptionAfterEnchantmentLeavesTheBattlefield() {
         setup();
 
@@ -112,11 +166,12 @@ class PreferredSelectionTest extends BaseCardTest {
         gd.playerBattlefields.get(player1.getId()).remove(preferredSelection);
         harness.passBothPriorities();
 
-        gd.playerAutoStopSteps.put(player1.getId(), java.util.Set.of(TurnStep.UPKEEP));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 1);
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            harness.addMana(player1, ManaColor.GREEN, 2);
+            harness.addMana(player1, ManaColor.COLORLESS, 2);
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handleCardChosen(player1, 1);
+        });
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
