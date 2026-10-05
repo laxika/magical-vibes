@@ -70,4 +70,87 @@ class KarnLegacyReforgedTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Mind Stone")).hasSize(1);
     }
+
+    @Test
+    void characteristicAbilityWorksInHandAndDoesNotCountKarnOutsideTheBattlefield() {
+        KarnLegacyReforged karn = new KarnLegacyReforged();
+        harness.setHand(player1, java.util.List.of(karn));
+        harness.addToBattlefield(player2, new WurmcoilEngine());
+
+        assertThat(gqs.getEffectiveCardPower(gd, karn)).isZero();
+        assertThat(gqs.getEffectiveCardToughness(gd, karn)).isZero();
+
+        harness.addToBattlefield(player1, new MindStone());
+
+        assertThat(gqs.getEffectiveCardPower(gd, karn)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, karn)).isEqualTo(2);
+    }
+
+    @Test
+    void opponentsArtifactsDoNotAffectPowerToughnessOrManaProduction() {
+        Permanent karn = harness.addToBattlefieldAndReturn(player1, new KarnLegacyReforged());
+        harness.addToBattlefield(player2, new WurmcoilEngine());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, karn)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, karn)).isEqualTo(5);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getPowerstoneOnlyColorless()).isZero();
+    }
+
+    @Test
+    void upkeepTriggerUsesArtifactCountAtResolutionAndCanBeRespondedTo() {
+        harness.addToBattlefield(player1, new KarnLegacyReforged());
+        harness.addToBattlefield(player1, new MindStone());
+        harness.setLibrary(player1, java.util.List.of(new GrizzlyBears()));
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isZero();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, 1, null, null);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Mind Stone");
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isEqualTo(1);
+    }
+
+    @Test
+    void karnsManaCanPayForAnActivatedAbility() {
+        harness.addToBattlefield(player1, new KarnLegacyReforged());
+        harness.addToBattlefield(player1, new MindStone());
+        harness.setLibrary(player1, java.util.List.of(new GrizzlyBears()));
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Mind Stone");
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isEqualTo(1);
+    }
+
+    @Test
+    void manaSurvivesActualStepTransitionsButExpiresAtEndOfTurn() {
+        harness.addToBattlefield(player1, new KarnLegacyReforged());
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isEqualTo(1);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isEqualTo(1);
+
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        resolveAllTriggers();
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerstoneOnlyColorless()).isZero();
+    }
 }
