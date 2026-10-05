@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SacredCat;
+import com.github.laxika.magicalvibes.cards.u.UniversalAutomaton;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -10,8 +11,33 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KingOfThePride.class, SacredCat.class, GrizzlyBears.class})
+@CardUsed({KingOfThePride.class, SacredCat.class, GrizzlyBears.class, UniversalAutomaton.class})
 class KingOfThePrideTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Changeling creatures count as Cats, but only yours receive the bonus")
+    void boostsOnlyControlledChangelings() {
+        Permanent ownChangeling = harness.addToBattlefieldAndReturn(player1, new UniversalAutomaton());
+        Permanent opponentChangeling = harness.addToBattlefieldAndReturn(player2, new UniversalAutomaton());
+        harness.addToBattlefield(player1, new KingOfThePride());
+
+        assertThat(gqs.getEffectivePower(gd, ownChangeling)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, ownChangeling)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponentChangeling)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opponentChangeling)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Two Kings boost each other without boosting themselves")
+    void kingsBoostEachOther() {
+        Permanent firstKing = harness.addToBattlefieldAndReturn(player1, new KingOfThePride());
+        Permanent secondKing = harness.addToBattlefieldAndReturn(player1, new KingOfThePride());
+
+        assertThat(gqs.getEffectivePower(gd, firstKing)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, firstKing)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, secondKing)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, secondKing)).isEqualTo(2);
+    }
 
     @Test
     @DisplayName("Other Cats you control get +2/+1")
