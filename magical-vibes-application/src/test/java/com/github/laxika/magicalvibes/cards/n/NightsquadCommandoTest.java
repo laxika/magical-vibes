@@ -2,14 +2,11 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,10 +39,39 @@ class NightsquadCommandoTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Human Soldier");
     }
 
+    @Test
+    @DisplayName("An opponent's attack does not satisfy raid")
+    void opponentsAttackDoesNotCreateToken() {
+        gd.playersDeclaredAttackersThisTurn.add(player2.getId());
+
+        castCommando();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Human Soldier");
+        harness.assertNotOnBattlefield(player2, "Human Soldier");
+    }
+
+    @Test
+    @DisplayName("Raid trigger resolves after Nightsquad Commando leaves the battlefield")
+    void raidTriggerResolvesWithoutSource() {
+        gd.playersDeclaredAttackersThisTurn.add(player1.getId());
+
+        castCommando();
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Human Soldier");
+
+        Permanent commando = findPermanent(player1, "Nightsquad Commando");
+        gd.playerBattlefields.get(player1.getId()).remove(commando);
+        gd.playerGraveyards.get(player1.getId()).add(commando.getCard());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Human Soldier");
+        harness.assertNotOnBattlefield(player2, "Human Soldier");
+    }
+
     private void castCommando() {
-        harness.setHand(player1, List.of(new NightsquadCommando()));
-        harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new NightsquadCommando(), "{2}{B}");
     }
 }
