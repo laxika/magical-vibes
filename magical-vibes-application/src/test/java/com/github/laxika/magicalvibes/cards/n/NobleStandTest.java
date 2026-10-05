@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.d.DefiantFalcon;
 import com.github.laxika.magicalvibes.cards.b.BolaWarrior;
 import com.github.laxika.magicalvibes.cards.w.WallOfGlare;
+import com.github.laxika.magicalvibes.cards.s.SealOfRemoval;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -11,7 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({NobleStand.class, DefiantFalcon.class, BolaWarrior.class, WallOfGlare.class})
+@CardUsed({NobleStand.class, DefiantFalcon.class, BolaWarrior.class, WallOfGlare.class, SealOfRemoval.class})
 class NobleStandTest extends BaseCardTest {
 
     @Test
@@ -21,8 +24,7 @@ class NobleStandTest extends BaseCardTest {
         addCreatureReady(player1, new DefiantFalcon());
         addCreatureReady(player1, new NobleStand());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
@@ -37,8 +39,7 @@ class NobleStandTest extends BaseCardTest {
         addCreatureReady(player2, new DefiantFalcon());
         addCreatureReady(player1, new NobleStand());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
@@ -55,8 +56,7 @@ class NobleStandTest extends BaseCardTest {
         addCreatureReady(player1, new DefiantFalcon());
         addCreatureReady(player1, new NobleStand());
 
-        declareAttackers(player2, List.of(0, 1));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0, 1));
         gs.declareBlockers(gd, player1,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 1)));
         resolveAllTriggers();
@@ -72,8 +72,7 @@ class NobleStandTest extends BaseCardTest {
         addCreatureReady(player1, new WallOfGlare());
         addCreatureReady(player1, new NobleStand());
 
-        declareAttackers(player2, List.of(0, 1));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0, 1));
         gs.declareBlockers(gd, player1,
                 List.of(new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
         resolveAllTriggers();
@@ -88,11 +87,49 @@ class NobleStandTest extends BaseCardTest {
         addCreatureReady(player1, new DefiantFalcon());
         addCreatureReady(player1, new NobleStand());
 
-        declareAttackers(player2, List.of(0));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
         gs.declareBlockers(gd, player1, List.of());
         resolveAllTriggers();
 
         harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Each Noble Stand gains life independently for the same blocker")
+    void multipleNobleStandsEachTrigger() {
+        addCreatureReady(player2, new DefiantFalcon());
+        addCreatureReady(player1, new DefiantFalcon());
+        harness.addToBattlefield(player1, new NobleStand());
+        harness.addToBattlefield(player1, new NobleStand());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Life gain still resolves after the blocking creature leaves the battlefield")
+    void blockerLeavingDoesNotStopLifeGain() {
+        addCreatureReady(player2, new DefiantFalcon());
+        Permanent blocker = addCreatureReady(player1, new DefiantFalcon());
+        harness.addToBattlefield(player1, new NobleStand());
+        harness.addToBattlefield(player1, new SealOfRemoval());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+            harness.assertLife(player1, 20);
+            harness.activateAbility(player1, 2, null, blocker.getId());
+            harness.passBothPriorities();
+            harness.assertNotOnBattlefield(player1, "Defiant Falcon");
+            harness.assertInHand(player1, "Defiant Falcon");
+            harness.assertLife(player1, 20);
+            resolveAllTriggers();
+            harness.assertLife(player1, 22);
+            harness.assertLife(player2, 20);
+        });
     }
 }
