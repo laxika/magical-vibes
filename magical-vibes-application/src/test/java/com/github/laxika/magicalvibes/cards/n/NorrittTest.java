@@ -130,9 +130,8 @@ class NorrittTest extends BaseCardTest {
     void rejectsWallAndNewlyControlledCreature() {
         addReadyNorritt();
         Permanent wall = addCreatureReady(player2, new GlacialWall());
-        Permanent fresh = new Permanent(new BalduvianBears());
+        Permanent fresh = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
         fresh.setSummoningSick(true);
-        gd.playerBattlefields.get(player2.getId()).add(fresh);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
 
@@ -179,5 +178,53 @@ class NorrittTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("before attackers are declared");
+    }
+
+    @Test
+    @DisplayName("First ability can untap a blue Wall controlled by its controller")
+    void untapsOwnBlueWall() {
+        addReadyNorritt();
+        Permanent wall = addCreatureReady(player1, new GlacialWall());
+        wall.tap();
+
+        harness.activateAbility(player1, 0, 0, null, wall.getId());
+        harness.passBothPriorities();
+
+        assertThat(wall.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An able target cannot be omitted from attackers")
+    void cannotOmitAbleTargetFromAttackers() {
+        addReadyNorritt();
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Delayed destruction survives Norritt leaving the battlefield")
+    void destroysNonattackerAfterNorrittLeaves() {
+        Permanent norritt = addReadyNorritt();
+        Permanent target = addCreatureReady(player2, new BalduvianBears());
+        target.tap();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).remove(norritt);
+        gd.playerGraveyards.get(player1.getId()).add(norritt.getCard());
+
+        runEndStep();
+
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
     }
 }
