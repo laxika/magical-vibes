@@ -86,10 +86,68 @@ class KeyToTheSideDoorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void cannotDiscardANonlegendaryCardSharingAControlledPermanentsName() {
+        Permanent key = addReadyKey(player1);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(key.isTapped()).isFalse();
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void paysDiscardBeforeDrawingAndDoesNotRecheckMatchingPermanentOnResolution() {
+        Permanent key = addReadyKey(player1);
+        Permanent legendary = harness.addToBattlefieldAndReturn(player1, new ArvadTheCursed());
+        harness.setHand(player1, List.of(new NiambiEsteemedSpeaker(), new ArvadTheCursed()));
+        harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices())
+                .containsExactly(1);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(key.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Arvad the Cursed");
+        assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactly("Niambi, Esteemed Speaker");
+
+        gd.playerBattlefields.get(player1.getId()).remove(legendary);
+        gd.playerGraveyards.get(player1.getId()).add(legendary.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
+                .containsExactlyInAnyOrder("Niambi, Esteemed Speaker", "Forest", "Grizzly Bears");
+    }
+
+    @Test
+    void cannotActivateEitherAbilityWhileTapped() {
+        Permanent key = addReadyKey(player1);
+        key.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new ArvadTheCursed());
+        harness.setHand(player1, List.of(new ArvadTheCursed()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertInHand(player1, "Arvad the Cursed");
+        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyKey(Player player) {
-        Permanent key = new Permanent(new KeyToTheSideDoor());
-        key.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(key);
+        Permanent key = addCreatureReady(player, new KeyToTheSideDoor());
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
