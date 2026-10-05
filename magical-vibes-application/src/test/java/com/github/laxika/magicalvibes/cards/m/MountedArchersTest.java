@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MountedArchers.class, TrainedArmodon.class, WindDrake.class})
 class MountedArchersTest extends BaseCardTest {
@@ -86,6 +87,66 @@ class MountedArchersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(archers.getAdditionalBlocksUntilEndOfTurn()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two activations allow blocking three flying attackers")
+    void blocksThreeFlyingAttackersAfterTwoActivations() {
+        Permanent archers = addArchers();
+        addFlyingAttacker();
+        addFlyingAttacker();
+        addFlyingAttacker();
+
+        activate(archers);
+        activate(archers);
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(0, 2)
+        ));
+
+        assertThat(archers.getBlockingTargets()).containsExactlyInAnyOrder(0, 1, 2);
+    }
+
+    @Test
+    @DisplayName("One activation does not allow blocking three attackers")
+    void cannotBlockMoreThanGrantedLimit() {
+        Permanent archers = addArchers();
+        addAttacker();
+        addAttacker();
+        addAttacker();
+
+        activate(archers);
+        prepareDeclareBlockers(player1);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1),
+                new BlockerAssignment(0, 2)
+        ))).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("assigned too many times");
+    }
+
+    @Test
+    @DisplayName("Summoning sickness does not prevent activating the ability or blocking twice")
+    void summoningSickArchersCanActivateAndBlockTwice() {
+        Permanent archers = addArchers();
+        archers.setSummoningSick(true);
+        addAttacker();
+        addAttacker();
+
+        activate(archers);
+        assertThat(archers.isTapped()).isFalse();
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1)
+        ));
+
+        assertThat(archers.getBlockingTargets()).containsExactlyInAnyOrder(0, 1);
     }
 
     private Permanent addArchers() {
