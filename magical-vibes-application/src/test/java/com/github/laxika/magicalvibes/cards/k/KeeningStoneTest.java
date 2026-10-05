@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +13,65 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KeeningStone.class, Forest.class})
 class KeeningStoneTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("An empty graveyard means no cards are milled")
+    void emptyGraveyardMillsNothing() {
+        harness.addToBattlefield(player1, new KeeningStone());
+        harness.setGraveyard(player1, List.of(new Forest(), new Forest()));
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A smaller library is milled completely")
+    void millsOnlyAvailableCards() {
+        harness.addToBattlefield(player1, new KeeningStone());
+        harness.setGraveyard(player2, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("Activation requires five mana")
+    void cannotActivateWithInsufficientMana() {
+        Permanent stone = harness.addToBattlefieldAndReturn(player1, new KeeningStone());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(stone.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Stone cannot activate again")
+    void cannotActivateWhileTapped() {
+        Permanent stone = harness.addToBattlefieldAndReturn(player1, new KeeningStone());
+        stone.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Target player mills cards equal to the number of cards in their graveyard")
