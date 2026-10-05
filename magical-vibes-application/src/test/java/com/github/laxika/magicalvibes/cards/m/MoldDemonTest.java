@@ -115,4 +115,41 @@ class MoldDemonTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Mold Demon");
         assertThat(countPermanents(player2, "Swamp")).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Tapped Swamps can be sacrificed to keep Mold Demon")
+    void tappedSwampsCanPay() {
+        harness.addToBattlefieldAndReturn(player1, new Swamp()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Swamp()).tap();
+        castMoldDemon();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(countPermanents(player1, "Swamp")).isZero();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Swamp")).hasSize(2);
+        harness.assertOnBattlefield(player1, "Mold Demon");
+    }
+
+    @Test
+    @DisplayName("Mold Demon enters before its sacrifice trigger resolves")
+    void sacrificeIsAnEnterTriggerRatherThanACastingCost() {
+        harness.setHand(player1, List.of(new MoldDemon()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castCreature(player1, 0);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mold Demon");
+        harness.assertNotInGraveyard(player1, "Mold Demon");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Mold Demon");
+        harness.assertInGraveyard(player1, "Mold Demon");
+        assertThat(gd.stack).isEmpty();
+    }
 }
