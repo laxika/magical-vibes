@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArmoredWhirlTurtle;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MuYanling.class, GrizzlyBears.class})
+@CardUsed({MuYanling.class, ArmoredWhirlTurtle.class})
 class MuYanlingTest extends BaseCardTest {
 
     @Test
@@ -45,7 +45,7 @@ class MuYanlingTest extends BaseCardTest {
     void minusThreeDrawsTwoCards() {
         Permanent muYanling = addReadyMuYanling(player1, 5);
         List<com.github.laxika.magicalvibes.model.Card> library = List.of(
-                new GrizzlyBears(), new GrizzlyBears());
+                new ArmoredWhirlTurtle(), new ArmoredWhirlTurtle());
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, library);
 
@@ -73,20 +73,78 @@ class MuYanlingTest extends BaseCardTest {
         assertThat(muYanling.getCounterCount(CounterType.LOYALTY)).isZero();
     }
 
+    @Test
+    @DisplayName("+2 can target your own creature and expires after the turn")
+    void plusTwoExpiresAfterTheTurn() {
+        addReadyMuYanling(player1, 5);
+        Permanent target = addCreature(player1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBeBlocked()).isTrue();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(target.isCantBeBlocked()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ultimate grants an extra turn even with no opposing creatures")
+    void ultimateGrantsExtraTurnWithoutOpposingCreatures() {
+        addReadyMuYanling(player1, 10);
+        Permanent ownCreature = addCreature(player1);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(ownCreature.isTapped()).isFalse();
+        assertThat(gd.extraTurns).containsExactly(player1.getId());
+        harness.assertNotOnBattlefield(player1, "Mu Yanling");
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player1, TurnStep.UPKEEP);
+
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        assertThat(gd.extraTurns).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ultimate cannot be activated without enough loyalty")
+    void ultimateRequiresTenLoyalty() {
+        Permanent muYanling = addReadyMuYanling(player1, 9);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(muYanling.getCounterCount(CounterType.LOYALTY)).isEqualTo(9);
+        assertThat(gd.extraTurns).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only one loyalty ability can be activated each turn")
+    void cannotActivateAnotherLoyaltyAbilityThisTurn() {
+        Permanent muYanling = addReadyMuYanling(player1, 5);
+        Permanent target = addCreature(player1);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(muYanling.getCounterCount(CounterType.LOYALTY)).isEqualTo(7);
+    }
+
     private Permanent addReadyMuYanling(Player player, int loyalty) {
-        Permanent permanent = new Permanent(new MuYanling());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new MuYanling());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;
     }
 
     private Permanent addCreature(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new ArmoredWhirlTurtle());
     }
 }
