@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.a.AjaniGoldmane;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -13,11 +15,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NukaNukeLauncher.class, GrizzlyBears.class, RagingGoblin.class, Shock.class})
+@CardUsed({NukaNukeLauncher.class, GrizzlyBears.class, RagingGoblin.class, Shock.class, AjaniGoldmane.class})
 class NukaNukeLauncherTest extends BaseCardTest {
 
     @Test
@@ -54,8 +57,7 @@ class NukaNukeLauncherTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(gd.playerRadCounters).doesNotContainKey(player1.getId());
         assertThat(gd.playerRadCounters).doesNotContainKey(player2.getId());
 
@@ -63,8 +65,7 @@ class NukaNukeLauncherTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
 
         assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(2);
     }
@@ -90,13 +91,63 @@ class NukaNukeLauncherTest extends BaseCardTest {
         assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(2);
     }
 
+    @Test
+    void equipAttachesToOwnCreature() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent launcher = harness.addToBattlefieldAndReturn(player1, new NukaNukeLauncher());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 1, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(launcher.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+    }
+
+    @Test
+    void registeredTriggerSurvivesEquipmentLeavingAndTriggersForEverySpell() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent launcher = harness.addToBattlefieldAndReturn(player1, new NukaNukeLauncher());
+        launcher.setAttachedTo(creature.getId());
+        declareAttackers(player1, List.of(0));
+        resolveAllTriggers();
+        gd.playerBattlefields.get(player1.getId()).remove(launcher);
+        gd.playerGraveyards.get(player1.getId()).add(launcher.getCard());
+
+        castSpellAs(player2);
+        castSpellAs(player2);
+
+        assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(4);
+    }
+
+    @Test
+    void defendingPlayerStillGetsRadCountersIfAttackedPlaneswalkerDiesBeforeTriggerResolves() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent launcher = harness.addToBattlefieldAndReturn(player1, new NukaNukeLauncher());
+        launcher.setAttachedTo(creature.getId());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new AjaniGoldmane());
+        planeswalker.setCounterCount(CounterType.LOYALTY, 2);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.beginAttackerDeclarationInput();
+        gs.declareAttackers(gd, player1, List.of(0), Map.of(0, planeswalker.getId()));
+        harness.castAndResolveInstant(player1, 0, planeswalker.getId());
+        harness.assertNotOnBattlefield(player2, "Ajani Goldmane");
+        resolveAllTriggers();
+
+        castSpellAs(player2);
+
+        assertThat(gd.playerRadCounters.get(player2.getId())).isEqualTo(2);
+    }
+
     private void castSpellAs(com.github.laxika.magicalvibes.model.Player player) {
         harness.setHand(player, List.of(new Shock()));
         harness.addMana(player, ManaColor.RED, 1);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castInstant(player, 0, player == player1 ? player2.getId() : player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player, 0, player == player1 ? player2.getId() : player1.getId());
     }
 
     private void endTurn() {
