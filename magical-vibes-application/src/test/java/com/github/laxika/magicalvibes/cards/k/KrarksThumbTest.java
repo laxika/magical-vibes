@@ -39,6 +39,29 @@ class KrarksThumbTest extends BaseCardTest {
                 .noneMatch(log -> log.contains("(flipped 2 coins and ignored 1)"));
     }
 
+    @Test
+    @DisplayName("A tapped Thumb still replaces coin flips")
+    void tappedThumbStillApplies() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        Permanent thumb = harness.addToBattlefieldAndReturn(player1, new KrarksThumb());
+        thumb.setTapped(true);
+        castFieryGambit(target);
+
+        assertThat(coinFlipLogs()).anyMatch(log -> log.contains("(flipped 2 coins and ignored 1)"));
+    }
+
+    @Test
+    @DisplayName("A Thumb that has lost all abilities does not replace coin flips")
+    void thumbWithoutAbilitiesDoesNotApply() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        Permanent thumb = harness.addToBattlefieldAndReturn(player1, new KrarksThumb());
+        thumb.setLosesAllAbilitiesUntilEndOfTurn(true);
+        castFieryGambit(target);
+
+        assertThat(coinFlipLogs()).isNotEmpty()
+                .noneMatch(log -> log.contains("(flipped 2 coins and ignored 1)"));
+    }
+
     private void castFieryGambit(Permanent target) {
         harness.setHand(player1, List.of(new FieryGambit()));
         harness.addMana(player1, ManaColor.RED, 3);
