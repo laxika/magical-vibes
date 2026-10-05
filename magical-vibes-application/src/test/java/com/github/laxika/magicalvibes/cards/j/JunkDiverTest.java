@@ -92,4 +92,44 @@ class JunkDiverTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(ownArtifact.getId());
     }
+
+    @Test
+    @DisplayName("Another Junk Diver is a legal target despite having the same name")
+    void returnsAnotherJunkDiver() {
+        Permanent junkDiver = harness.addToBattlefieldAndReturn(player1, new JunkDiver());
+        Card otherDiver = new JunkDiver();
+        harness.setGraveyard(player1, List.of(otherDiver));
+
+        sacrificeJunkDiver(junkDiver);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(otherDiver.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(otherDiver.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(Card::getId).contains(otherDiver.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId).contains(junkDiver.getCard().getId())
+                .doesNotContain(otherDiver.getId());
+    }
+
+    @Test
+    @DisplayName("A target that leaves the graveyard is not returned and cannot be replaced")
+    void doesNotReturnMissingTargetOrChooseReplacement() {
+        Permanent junkDiver = harness.addToBattlefieldAndReturn(player1, new JunkDiver());
+        Card target = new BraidwoodCup();
+        Card otherArtifact = new BraidwoodCup();
+        harness.setGraveyard(player1, List.of(target, otherArtifact));
+
+        sacrificeJunkDiver(junkDiver);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(junkDiver.getCard(), otherArtifact));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Braidwood Cup");
+        harness.assertInGraveyard(player1, "Braidwood Cup");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
 }
