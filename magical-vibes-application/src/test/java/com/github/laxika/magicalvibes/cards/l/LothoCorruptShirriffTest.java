@@ -22,16 +22,13 @@ class LothoCorruptShirriffTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 3);
         harness.setLife(player1, 20);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player1, 19);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player1, 19);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
@@ -48,13 +45,102 @@ class LothoCorruptShirriffTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castInstant(player2, 0);
-        harness.passBothPriorities();
-        harness.castInstant(player2, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0);
+        harness.castAndResolveInstant(player2, 0);
 
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 20);
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    void countsEachPlayersSpellsIndependentlyInTheSameTurn() {
+        addCreatureReady(player1, new LothoCorruptShirriff());
+        harness.setHand(player1, List.of(new DarkRitual(), new DarkRitual()));
+        harness.setHand(player2, List.of(new DarkRitual(), new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0);
+
+        harness.assertLife(player1, 20);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+
+        harness.ensurePriority(player1);
+        harness.castAndResolveInstant(player1, 0);
+        harness.assertLife(player1, 19);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0);
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(2);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void countsLothoAsTheFirstSpellOfTheTurn() {
+        harness.setHand(player1, List.of(new LothoCorruptShirriff(), new DarkRitual()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setLife(player1, 20);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 20);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+
+        harness.castInstant(player1, 0);
+        harness.assertLife(player1, 20);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void doesNotTriggerWhenLothoItselfIsTheSecondSpell() {
+        harness.setHand(player1, List.of(new DarkRitual(), new LothoCorruptShirriff(), new DarkRitual()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertLife(player1, 20);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    void triggeredAbilityResolvesAfterLothoIsKilledInResponse() {
+        addCreatureReady(player1, new LothoCorruptShirriff());
+        harness.setHand(player1, List.of(new DarkRitual(), new DarkRitual()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.setLife(player1, 20);
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.castInstant(player1, 0);
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Lotho, Corrupt Shirriff"));
+        harness.assertInGraveyard(player1, "Lotho, Corrupt Shirriff");
+        harness.assertLife(player1, 20);
+
+        harness.passBothPriorities();
+        harness.assertLife(player1, 19);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+        harness.passBothPriorities();
     }
 }
