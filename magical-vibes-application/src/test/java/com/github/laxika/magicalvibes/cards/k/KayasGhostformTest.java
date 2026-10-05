@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.d.Disperse;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GideonBlackblade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.PlanarCleansing;
+import com.github.laxika.magicalvibes.cards.s.ShallowGrave;
 import com.github.laxika.magicalvibes.cards.v.VraskasContempt;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KayasGhostform.class, GrizzlyBears.class, GideonBlackblade.class, DoomBlade.class,
-        Disperse.class, VraskasContempt.class})
+        Disperse.class, VraskasContempt.class, PlanarCleansing.class, ShallowGrave.class})
 class KayasGhostformTest extends BaseCardTest {
 
     @Test
@@ -28,8 +30,7 @@ class KayasGhostformTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -43,8 +44,7 @@ class KayasGhostformTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new VraskasContempt()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -54,15 +54,13 @@ class KayasGhostformTest extends BaseCardTest {
     @Test
     void canEnchantAndReturnAPlaneswalker() {
         GideonBlackblade card = new GideonBlackblade();
-        Permanent planeswalker = new Permanent(card);
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, card);
         planeswalker.setCounterCount(CounterType.LOYALTY, 4);
-        gd.playerBattlefields.get(player1.getId()).add(planeswalker);
         castGhostform(planeswalker);
 
         harness.setHand(player1, List.of(new VraskasContempt()));
         harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castInstant(player1, 0, planeswalker.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, planeswalker.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -77,8 +75,7 @@ class KayasGhostformTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Disperse()));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -94,6 +91,69 @@ class KayasGhostformTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void doesNotReturnCreatureAfterAuraWasRemovedEarlier() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        castGhostform(creature);
+        harness.setHand(player1, List.of(new Disperse()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Kaya's Ghostform"));
+
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void returnsCreatureWhenAuraAndCreatureAreDestroyedTogether() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        castGhostform(creature);
+        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
+        Permanent aura = battlefield.stream()
+                .filter(permanent -> permanent.getCard() instanceof KayasGhostform)
+                .findFirst().orElseThrow();
+        battlefield.remove(aura);
+        battlefield.add(0, aura);
+
+        harness.setHand(player1, List.of(new PlanarCleansing()));
+        harness.addMana(player1, ManaColor.WHITE, 6);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Kaya's Ghostform");
+        harness.assertNotOnBattlefield(player1, "Kaya's Ghostform");
+    }
+
+    @Test
+    void doesNotReturnCreatureThatLeftAndReenteredGraveyardBeforeTriggerResolves() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        castGhostform(creature);
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+
+        harness.setHand(player1, List.of(new ShallowGrave()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Grizzly Bears"));
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
     private void castGhostform(Permanent target) {
