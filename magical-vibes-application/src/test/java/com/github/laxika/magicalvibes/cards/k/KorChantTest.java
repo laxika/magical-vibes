@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.o.OgreShaman;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -87,11 +86,8 @@ class KorChantTest extends BaseCardTest {
         castKorChant(protectedCreature, redirectCreature);
 
         harness.handlePermanentChosen(player1, attacker.getId());
-        harness.forceActivePlayer(player2);
         attacker.setAttacking(true);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player2);
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 indexOf(player1, protectedCreature), indexOf(player2, attacker))));
         resolveCombat(player2);
@@ -147,6 +143,47 @@ class KorChantTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(
                 player1, 0, List.of(opponentCreature.getId(), ownCreature.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The chosen source can also be the destination creature you control")
+    void redirectsDamageBackToChosenSource() {
+        Permanent protectedCreature = addCreatureReady(player1, new KillerWhale());
+        Permanent shaman = addCreatureReady(player1, new OgreShaman());
+        castKorChant(protectedCreature, shaman);
+
+        harness.handlePermanentChosen(player1, shaman.getId());
+        harness.setHand(player1, List.of(new KorChant()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, indexOf(player1, shaman), null, protectedCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(protectedCreature.getMarkedDamage()).isZero();
+        assertThat(shaman.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Damage reaches the protected creature after the destination dies")
+    void doesNotRedirectAfterDestinationLeavesBattlefield() {
+        Permanent protectedCreature = addCreatureReady(player1, new KillerWhale());
+        Permanent redirectCreature = addCreatureReady(player2, new OgreShaman());
+        Permanent shaman = addCreatureReady(player1, new OgreShaman());
+        castKorChant(protectedCreature, redirectCreature);
+
+        harness.handlePermanentChosen(player1, shaman.getId());
+        harness.setHand(player1, List.of(new KorChant(), new KorChant(), new KorChant()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, indexOf(player1, shaman), null, protectedCreature.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, indexOf(player1, shaman), null, protectedCreature.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(redirectCreature);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(redirectCreature.getCard());
+
+        harness.activateAbility(player1, indexOf(player1, shaman), null, protectedCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(protectedCreature.getMarkedDamage()).isEqualTo(2);
     }
 
     private void castKorChant(Permanent protectedCreature, Permanent redirectCreature) {
