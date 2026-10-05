@@ -1,13 +1,13 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.y.YoungWolf;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OvergrownFarmland.class, Mountain.class, YoungWolf.class})
 class OvergrownFarmlandTest extends BaseCardTest {
 
     @Test
@@ -50,7 +51,7 @@ class OvergrownFarmlandTest extends BaseCardTest {
     @DisplayName("Non-land permanents do not count toward the land check")
     void nonLandPermanentsDoNotCount() {
         for (int i = 0; i < 3; i++) {
-            gd.playerBattlefields.get(player1.getId()).add(new Permanent(new LlanowarElves()));
+            harness.addToBattlefield(player1, new YoungWolf());
         }
 
         playFarmland();
@@ -64,6 +65,40 @@ class OvergrownFarmlandTest extends BaseCardTest {
         for (int i = 0; i < 5; i++) {
             addBasicLand(player2);
         }
+
+        playFarmland();
+
+        assertThat(findFarmland(player1).isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapped lands count toward entering untapped")
+    void tappedLandsCount() {
+        harness.addToBattlefieldAndReturn(player1, new Mountain()).tap();
+        harness.addToBattlefieldAndReturn(player1, new Mountain()).tap();
+
+        playFarmland();
+
+        assertThat(findFarmland(player1).isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Nonbasic lands count toward entering untapped")
+    void nonbasicLandsCount() {
+        harness.addToBattlefield(player1, new OvergrownFarmland());
+        harness.addToBattlefield(player1, new OvergrownFarmland());
+
+        playFarmland();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()).getLast().isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("One land and nonland permanents still cause tapped entry")
+    void oneLandAndNonlandsEnterTapped() {
+        addBasicLand(player1);
+        harness.addToBattlefield(player1, new YoungWolf());
+        harness.addToBattlefield(player1, new YoungWolf());
 
         playFarmland();
 
@@ -97,18 +132,15 @@ class OvergrownFarmlandTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
     }
 
     private void addFarmlandReady(Player player) {
-        Permanent perm = new Permanent(new OvergrownFarmland());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
+        addCreatureReady(player, new OvergrownFarmland());
     }
 
     private void addBasicLand(Player player) {
-        Card land = new Mountain();
-        gd.playerBattlefields.get(player.getId()).add(new Permanent(land));
+        harness.addToBattlefield(player, new Mountain());
     }
 
     private Permanent findFarmland(Player player) {
