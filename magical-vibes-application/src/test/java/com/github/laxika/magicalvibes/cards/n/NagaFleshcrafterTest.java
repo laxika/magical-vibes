@@ -29,8 +29,7 @@ class NagaFleshcrafterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bears.getId());
 
@@ -83,5 +82,90 @@ class NagaFleshcrafterTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, legendary.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void decliningCopyLeavesAnUnmodifiedCreatureThatDies() {
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new NagaFleshcrafter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Naga Fleshcrafter");
+        harness.assertInGraveyard(player1, "Naga Fleshcrafter");
+    }
+
+    @Test
+    void enterCopyCanChooseAnOpponentsLegendaryHexproofCreature() {
+        Permanent target = addCreatureReady(player2, new ThrunTheLastTroll());
+        harness.setHand(player1, List.of(new NagaFleshcrafter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, target.getId());
+
+        harness.assertOnBattlefield(player1, "Thrun, the Last Troll");
+        harness.assertOnBattlefield(player2, "Thrun, the Last Troll");
+        harness.assertNotInGraveyard(player1, "Naga Fleshcrafter");
+    }
+
+    @Test
+    void renewCannotTargetAnOpponentsCreature() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new NagaFleshcrafter()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Naga Fleshcrafter");
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void renewCannotBeActivatedDuringCombat() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new NagaFleshcrafter()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player1, "Naga Fleshcrafter");
+    }
+
+    @Test
+    void renewKeepsExistingCountersAndDoesNotCopyOpponentsCreatures() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new HillGiant());
+        Permanent opponent = addCreatureReady(player2, new HillGiant());
+        other.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setGraveyard(player1, List.of(new NagaFleshcrafter()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateGraveyardAbility(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(other.getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(4);
+        assertThat(opponent.getCard().getName()).isEqualTo("Hill Giant");
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(3);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }
