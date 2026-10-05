@@ -99,6 +99,78 @@ class NegativeZonePortalTest extends BaseCardTest {
         }
     }
 
+    @Test
+    void noncreatureCardsDoNotCountTowardsUpkeepThreshold() {
+        Permanent portal = setupWithExiledCreatures(3);
+        Card noncreature = new Shock();
+        harness.setGraveyard(player2, List.of(noncreature));
+        portal.untap();
+        activate(portal, noncreature);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("coin flip for Negative Zone Portal")).isFalse();
+        harness.assertOnBattlefield(player1, "Negative Zone Portal");
+        assertThat(gd.getCardsExiledByPermanent(portal.getId())).hasSize(4);
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        setupWithExiledCreatures(4);
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("coin flip for Negative Zone Portal")).isFalse();
+        harness.assertOnBattlefield(player1, "Negative Zone Portal");
+    }
+
+    @Test
+    void doesNotDrawWhenTargetLeavesGraveyardBeforeResolution() {
+        Permanent portal = harness.addToBattlefieldAndReturn(player1, new NegativeZonePortal());
+        Card creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setLibrary(player1, List.of(new Shock()));
+        int handSize = gd.playerHands.get(player1.getId()).size();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, creature.getId(), Zone.GRAVEYARD);
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player2, List.of(creature));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSize);
+        assertThat(gd.getCardsExiledByPermanent(portal.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).contains(creature);
+        assertThat(portal.isTapped()).isTrue();
+    }
+
+    @Test
+    void upkeepRechecksCreatureCountBeforeFlipping() {
+        Permanent portal = setupWithExiledCreatures(4);
+        advanceToUpkeep(player1);
+        Card returned = gd.getCardsExiledByPermanent(portal.getId()).getFirst();
+        gd.removeFromExile(returned.getId());
+        harness.setHand(player2, List.of(returned));
+
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("coin flip for Negative Zone Portal")).isFalse();
+        harness.assertOnBattlefield(player1, "Negative Zone Portal");
+    }
+
+    @Test
+    void upkeepDoesNotPutAbilityOnStackBelowThreshold() {
+        setupWithExiledCreatures(3);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void activate(Permanent portal, Card target) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
