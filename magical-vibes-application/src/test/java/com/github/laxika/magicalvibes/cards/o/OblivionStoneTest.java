@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.b.Bonesplitter;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.t.TrollAscetic;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OblivionStone.class, AlphaMyr.class, Bonesplitter.class, Forest.class})
+@CardUsed({OblivionStone.class, AlphaMyr.class, Bonesplitter.class, Forest.class, TrollAscetic.class})
 class OblivionStoneTest extends BaseCardTest {
 
     @Test
@@ -84,4 +85,74 @@ class OblivionStoneTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canPutAnotherFateCounterOnItself() {
+        Permanent stone = harness.addToBattlefieldAndReturn(player1, new OblivionStone());
+        stone.setCounterCount(CounterType.FATE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, 0, null, stone.getId());
+        harness.passBothPriorities();
+
+        assertThat(stone.getCounterCount(CounterType.FATE)).isEqualTo(3);
+        assertThat(stone.isTapped()).isTrue();
+    }
+
+    @Test
+    void sacrificesMarkedStoneImmediatelyBeforeDestroyingAnything() {
+        Permanent stone = harness.addToBattlefieldAndReturn(player1, new OblivionStone());
+        stone.setCounterCount(CounterType.FATE, 1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new AlphaMyr());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Oblivion Stone");
+        harness.assertInGraveyard(player1, "Oblivion Stone");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Alpha Myr");
+        harness.assertInGraveyard(player2, "Alpha Myr");
+    }
+
+    @Test
+    void clearsEveryFateCounterEvenWhenNoPermanentIsDestroyed() {
+        harness.addToBattlefield(player1, new OblivionStone());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Bonesplitter());
+        artifact.setCounterCount(CounterType.FATE, 3);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.setCounterCount(CounterType.FATE, 2);
+        land.setCounterCount(CounterType.CHARGE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
+        assertThat(artifact.getCounterCount(CounterType.FATE)).isZero();
+        assertThat(land.getCounterCount(CounterType.FATE)).isZero();
+        assertThat(land.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
+    }
+
+    @Test
+    void allowsUnmarkedCreatureToRegenerateThroughTheWipe() {
+        harness.addToBattlefield(player1, new OblivionStone());
+        Permanent troll = harness.addToBattlefieldAndReturn(player1, new TrollAscetic());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(troll);
+        assertThat(troll.isTapped()).isTrue();
+        assertThat(troll.getRegenerationShield()).isZero();
+        harness.assertInGraveyard(player1, "Oblivion Stone");
+    }
 }
