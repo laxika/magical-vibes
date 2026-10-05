@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({InfantryVeteran.class, GrizzlyBears.class})
+@CardUsed({InfantryVeteran.class, RuneclawBear.class})
 class InfantryVeteranTest extends BaseCardTest {
 
     // ===== Activation on attacking creature =====
@@ -94,7 +94,7 @@ class InfantryVeteranTest extends BaseCardTest {
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
         addReadyVeteran(player1);
-        Permanent nonAttacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonAttacker = addCreatureReady(player1, new RuneclawBear());
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, nonAttacker.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -131,7 +131,6 @@ class InfantryVeteranTest extends BaseCardTest {
         assertThat(attacker.getToughnessModifier()).isEqualTo(1);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(attacker.getPowerModifier()).isEqualTo(0);
@@ -175,12 +174,65 @@ class InfantryVeteranTest extends BaseCardTest {
 
     // ===== Helpers =====
 
+    @Test
+    @DisplayName("An attacking Infantry Veteran can target itself and remains attacking after paying the tap cost")
+    void attackingVeteranCanBoostItself() {
+        Permanent veteran = addReadyVeteran(player1);
+        veteran.setAttacking(true);
+
+        harness.activateAbility(player1, 0, null, veteran.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(veteran.isTapped()).isTrue();
+        assertThat(veteran.isAttacking()).isTrue();
+        assertThat(veteran.getPowerModifier()).isEqualTo(1);
+        assertThat(veteran.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The ability resolves even if Infantry Veteran leaves the battlefield")
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent veteran = addReadyVeteran(player1);
+        Permanent attacker = addAttackingCreature(player1);
+        attacker.tap();
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(veteran);
+        gd.playerGraveyards.get(player1.getId()).add(veteran.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A resolved boost remains after the creature stops attacking")
+    void resolvedBoostRemainsAfterCombat() {
+        addReadyVeteran(player1);
+        Permanent attacker = addAttackingCreature(player1);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        attacker.setAttacking(false);
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(1);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(1);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
     private Permanent addReadyVeteran(Player player) {
         return addCreatureReady(player, new InfantryVeteran());
     }
 
     private Permanent addAttackingCreature(Player player) {
-        Permanent perm = addCreatureReady(player, new GrizzlyBears());
+        Permanent perm = addCreatureReady(player, new RuneclawBear());
         perm.setAttacking(true);
         return perm;
     }
