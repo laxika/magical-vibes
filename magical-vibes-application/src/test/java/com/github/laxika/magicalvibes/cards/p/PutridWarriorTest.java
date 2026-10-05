@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GoblinLegionnaire;
 import com.github.laxika.magicalvibes.cards.q.QuicksilverDagger;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -74,8 +75,8 @@ class PutridWarriorTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
         harness.handleListChoice(player1, LOSE_LIFE);
+        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -102,21 +103,60 @@ class PutridWarriorTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Goblin Legionnaire");
     }
 
+    @Test
+    @DisplayName("The mode is chosen before players receive priority to respond to the trigger")
+    void choosesModeWhenTriggerIsPutOnStack() {
+        addAttacker();
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        addCreatureReady(player2, new GoblinLegionnaire());
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.handleListChoice(player1, GAIN_LIFE);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("The opposing controller can choose life gain after dealing noncombat damage")
+    void opposingControllerChoosesLifeGain() {
+        Permanent warrior = addCreatureReady(player2, new PutridWarrior());
+        Permanent dagger = harness.addToBattlefieldAndReturn(player2, new QuicksilverDagger());
+        dagger.setAttachedTo(warrior.getId());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player2, GAIN_LIFE);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 21);
+    }
+
     private PutridWarrior addAttacker() {
         return addAttacker(new PutridWarrior());
     }
 
     private PutridWarrior addAttacker(PutridWarrior warrior) {
-        Permanent permanent = new Permanent(warrior);
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player1, warrior);
         permanent.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(permanent);
         return warrior;
     }
 
     private void resolveCombatAndChoose(String mode) {
         resolveCombat();
-        harness.passBothPriorities();
         harness.handleListChoice(player1, mode);
+        harness.passBothPriorities();
     }
 }
