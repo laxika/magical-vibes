@@ -49,8 +49,7 @@ class InameAsOneTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(spirit));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, iname.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, iname.getId());
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -147,8 +146,7 @@ class InameAsOneTest extends BaseCardTest {
         harness.setHand(player1, List.of(new SoullessRevival()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, iname.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, iname.getId());
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Iname as One");
@@ -178,6 +176,42 @@ class InameAsOneTest extends BaseCardTest {
         assertThat(choice.validCardIds()).doesNotContain(nonSpirit.getId());
         harness.assertInGraveyard(player1, "Iname as One");
         harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An illegal death-trigger target prevents Iname from being exiled")
+    void deathTriggerDoesNotResolveWhenTargetLeavesGraveyard() {
+        InameAsOne iname = new InameAsOne();
+        Card spirit = new HundredTalonKami();
+        harness.addToBattlefield(player1, iname);
+        harness.setGraveyard(player1, List.of(spirit));
+        castWrathOfGod();
+
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.setHand(player1, List.of(new SoullessRevival()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, spirit.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Iname as One");
+        harness.assertInHand(player1, "Hundred-Talon Kami");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Putting Iname directly onto the battlefield does not trigger its library search")
+    void directEntryDoesNotSearchLibrary() {
+        Card spirit = new KamiOfOldStone();
+        harness.setLibrary(player1, List.of(spirit));
+
+        harness.enterBattlefieldAndReturn(player1, new InameAsOne());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(spirit);
+        harness.assertOnBattlefield(player1, "Iname as One");
     }
 
     private void castWrathOfGod() {
