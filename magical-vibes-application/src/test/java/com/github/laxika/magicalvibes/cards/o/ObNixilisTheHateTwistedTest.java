@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.u.UnlikelyAid;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +21,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ObNixilisTheHateTwisted.class, CounselOfTheSoratami.class, Forest.class, GrizzlyBears.class})
+@CardUsed({ObNixilisTheHateTwisted.class, CounselOfTheSoratami.class, Forest.class,
+        GrizzlyBears.class, UnlikelyAid.class, Unsummon.class})
 class ObNixilisTheHateTwistedTest extends BaseCardTest {
 
     @Test
@@ -36,9 +39,7 @@ class ObNixilisTheHateTwistedTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 3);
 
         harness.castSorcery(player2, 0, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(18);
     }
@@ -94,11 +95,86 @@ class ObNixilisTheHateTwistedTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
 
+
+    @Test
+    @DisplayName("Its controller can destroy their own creature and draw without taking damage")
+    void destroysOwnCreatureWithoutDrawDamage() {
+        addReadyOb(player1);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("An indestructible creature survives but its controller still draws and takes damage")
+    void indestructibleTargetStillCausesDraws() {
+        addReadyOb(player1);
+        harness.setHand(player2, List.of(new UnlikelyAid()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player2, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.castInstant(player2, 0, bears.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("An illegal target prevents both destruction and the two draws")
+    void removedTargetDoesNotCauseDraws() {
+        addReadyOb(player1);
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player2, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        harness.castInstant(player2, 0, bears.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("Spending the last two loyalty still destroys and draws but causes no draw damage")
+    void lastTwoLoyaltyDoesNotCauseDrawDamage() {
+        Permanent obNixilis = addReadyOb(player1);
+        obNixilis.setCounterCount(CounterType.LOYALTY, 2);
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest(), new Forest(), new Forest()));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 0, null, bears.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Ob Nixilis, the Hate-Twisted");
+        harness.assertInGraveyard(player1, "Ob Nixilis, the Hate-Twisted");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
     private Permanent addReadyOb(Player player) {
-        Permanent permanent = new Permanent(new ObNixilisTheHateTwisted());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new ObNixilisTheHateTwisted());
         permanent.setCounterCount(CounterType.LOYALTY, 5);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;
