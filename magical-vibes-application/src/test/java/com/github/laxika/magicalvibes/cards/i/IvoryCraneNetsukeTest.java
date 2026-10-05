@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @CardUsed({IvoryCraneNetsuke.class, EbonyOwlNetsuke.class})
 class IvoryCraneNetsukeTest extends BaseCardTest {
 
@@ -65,5 +67,64 @@ class IvoryCraneNetsukeTest extends BaseCardTest {
 
         harness.assertLife(player1, lifeBefore);
         harness.assertLife(player2, opponentLifeBefore);
+    }
+
+    @Test
+    void gainsFourLifeWithMoreThanSevenCards() {
+        harness.addToBattlefield(player1, new IvoryCraneNetsuke());
+        harness.setHand(player1, handCards(8));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 4);
+        harness.assertLife(player2, opponentLifeBefore);
+    }
+
+    @Test
+    void doesNotTriggerIfHandReachesSevenAfterUpkeepBegins() {
+        harness.addToBattlefield(player1, new IvoryCraneNetsuke());
+        harness.setHand(player1, handCards(6));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+        harness.setHand(player1, handCards(7));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    void gainsLifeIfHandReturnsToSevenBeforeResolution() {
+        harness.addToBattlefield(player1, new IvoryCraneNetsuke());
+        harness.setHand(player1, handCards(7));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player1, handCards(6));
+        harness.setHand(player1, handCards(7));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 4);
+    }
+
+    @Test
+    void eachCopyTriggersIndependently() {
+        harness.addToBattlefield(player1, new IvoryCraneNetsuke());
+        harness.addToBattlefield(player1, new IvoryCraneNetsuke());
+        harness.setHand(player1, handCards(7));
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.assertLife(player1, lifeBefore + 4);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 8);
     }
 }
