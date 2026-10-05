@@ -57,4 +57,42 @@ class LeaveNoTraceTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("A white target does not spread destruction through a multicolor enchantment")
+    void whiteTargetDoesNotSpreadThroughGreen() {
+        harness.addToBattlefield(player2, new ConcertedEffort());
+        harness.addToBattlefield(player1, new GlareOfSubdual());
+        harness.addToBattlefield(player2, new DarkHeartOfTheWood());
+        harness.addToBattlefield(player2, new GolgariGermination());
+        harness.setHand(player1, List.of(new LeaveNoTrace()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player2, "Concerted Effort"));
+
+        harness.assertInGraveyard(player2, "Concerted Effort");
+        harness.assertInGraveyard(player1, "Glare of Subdual");
+        harness.assertOnBattlefield(player2, "Dark Heart of the Wood");
+        harness.assertOnBattlefield(player2, "Golgari Germination");
+    }
+
+    @Test
+    @DisplayName("An absent target prevents destruction of the other enchantments")
+    void missingTargetPreventsRadianceDestruction() {
+        harness.addToBattlefield(player2, new ConcertedEffort());
+        harness.addToBattlefield(player1, new GlareOfSubdual());
+        harness.setHand(player1, List.of(new LeaveNoTrace()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        UUID targetId = harness.getPermanentId(player2, "Concerted Effort");
+        harness.castInstant(player1, 0, targetId);
+        gd.playerBattlefields.get(player2.getId()).removeIf(permanent -> permanent.getId().equals(targetId));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Glare of Subdual");
+        harness.assertInGraveyard(player1, "Leave No Trace");
+    }
 }
