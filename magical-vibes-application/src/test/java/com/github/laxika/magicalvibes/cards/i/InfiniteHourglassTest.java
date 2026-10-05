@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({InfiniteHourglass.class, GrizzlyBears.class})
+@CardUsed({InfiniteHourglass.class, GrizzlyBears.class, AnimateArtifact.class})
 class InfiniteHourglassTest extends BaseCardTest {
 
     @Test
@@ -22,11 +22,8 @@ class InfiniteHourglassTest extends BaseCardTest {
     void upkeepTriggerAddsTimeCounter() {
         Permanent hourglass = harness.addToBattlefieldAndReturn(player1, new InfiniteHourglass());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // upkeep trigger goes on stack
-        harness.passBothPriorities(); // resolve PutCountersOnSelfEffect
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
 
         assertThat(hourglass.getCounterCount(CounterType.TIME)).isEqualTo(1);
     }
@@ -36,11 +33,8 @@ class InfiniteHourglassTest extends BaseCardTest {
     void upkeepTriggerDoesNotAffectOpponentsUpkeep() {
         Permanent hourglass = harness.addToBattlefieldAndReturn(player1, new InfiniteHourglass());
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
 
         assertThat(hourglass.getCounterCount(CounterType.TIME)).isZero();
     }
@@ -148,7 +142,6 @@ class InfiniteHourglassTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(AnimateArtifact.class)
     @DisplayName("All creatures includes Infinite Hourglass when it becomes a creature")
     void animatedHourglassBoostsItself() {
         Permanent hourglass = harness.addToBattlefieldAndReturn(player1, new InfiniteHourglass());
@@ -160,5 +153,102 @@ class InfiniteHourglassTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, hourglass)).isTrue();
         assertThat(gqs.getEffectivePower(gd, hourglass)).isEqualTo(6);
         assertThat(gqs.getEffectiveToughness(gd, hourglass)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Controller can remove a counter during an opponent's upkeep and immediately reduce the boost")
+    void controllerRemovesCounterDuringOpponentsUpkeep() {
+        Permanent hourglass = harness.addToBattlefieldAndReturn(player1, new InfiniteHourglass());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        hourglass.setCounterCount(CounterType.TIME, 2);
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(hourglass.getCounterCount(CounterType.TIME)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(4);
+        resolveAllTriggers();
+
+        assertThat(hourglass.getCounterCount(CounterType.TIME)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Opponent can activate during their own upkeep even when the artifact is tapped")
+    void opponentRemovesCounterDuringOwnUpkeepFromTappedHourglass() {
+        Permanent hourglass = harness.addToBattlefieldAndReturn(player1, new InfiniteHourglass());
+        hourglass.setCounterCount(CounterType.TIME, 1);
+        hourglass.setTapped(true);
+        advanceToUpkeep(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(hourglass.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(hourglass.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Two activations may be stacked with only one time counter remaining")
+    void stackedActivationsRemoveAtMostAvailableCounters() {
+        Permanent hourglass = harness.addToBattlefieldAndReturn(player1, new InfiniteHourglass());
+        hourglass.setCounterCount(CounterType.TIME, 1);
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(hourglass.getCounterCount(CounterType.TIME)).isEqualTo(1);
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(hourglass.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing a counter in response to the upkeep trigger does not prevent its later addition")
+    void activationRespondsToUpkeepTrigger() {
+        Permanent hourglass = harness.addToBattlefieldAndReturn(player1, new InfiniteHourglass());
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player2, 0, null, null);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(hourglass.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(hourglass.getCounterCount(CounterType.TIME)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple hourglasses add their own boosts and an activation removes only its source's counter")
+    void multipleHourglassesUseIndependentCounterCounts() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new InfiniteHourglass());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new InfiniteHourglass());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        first.setCounterCount(CounterType.TIME, 2);
+        second.setCounterCount(CounterType.TIME, 3);
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(7);
+        harness.activateAbility(player1, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(first.getCounterCount(CounterType.TIME)).isEqualTo(2);
+        assertThat(second.getCounterCount(CounterType.TIME)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
     }
 }
