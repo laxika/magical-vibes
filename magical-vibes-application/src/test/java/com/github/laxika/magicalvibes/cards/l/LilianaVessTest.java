@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -8,13 +7,15 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.cards.s.SoulWarden;
+import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -24,32 +25,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({LilianaVess.class, GrizzlyBears.class, Plains.class, Swamp.class, SoulWarden.class, GrafdiggersCage.class})
 class LilianaVessTest extends BaseCardTest {
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three loyalty abilities")
-    void hasThreeLoyaltyAbilities() {
-        LilianaVess card = new LilianaVess();
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-    }
-
-    
-
-    
-
-    
-
-    // ===== Casting =====
 
     @Test
     @DisplayName("Casting puts planeswalker spell on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new LilianaVess()));
-        harness.addMana(player1, ManaColor.BLACK, 5);
-
-        harness.castPlaneswalker(player1, 0);
+        harness.castFromHand(player1, new LilianaVess(), "{3}{B}{B}");
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -61,10 +43,7 @@ class LilianaVessTest extends BaseCardTest {
     @Test
     @DisplayName("Resolving puts planeswalker on battlefield with initial loyalty 5")
     void resolvingEntersBattlefieldWithLoyalty() {
-        harness.setHand(player1, List.of(new LilianaVess()));
-        harness.addMana(player1, ManaColor.BLACK, 5);
-
-        harness.castPlaneswalker(player1, 0);
+        harness.castFromHand(player1, new LilianaVess(), "{3}{B}{B}");
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
@@ -74,8 +53,6 @@ class LilianaVessTest extends BaseCardTest {
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         assertThat(liliana.isSummoningSick()).isFalse();
     }
-
-    // ===== +1 ability: Target player discards a card =====
 
     @Test
     @DisplayName("+1 ability makes target player discard a card and increases loyalty")
@@ -116,8 +93,6 @@ class LilianaVessTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
-    // ===== -2 ability: Search library for a card to top =====
-
     @Test
     @DisplayName("-2 ability triggers library search and decreases loyalty")
     void minusTwoTriggersLibrarySearch() {
@@ -137,7 +112,7 @@ class LilianaVessTest extends BaseCardTest {
     @Test
     @DisplayName("-2 ability puts chosen card on top of library")
     void minusTwoPutsCardOnTop() {
-        Permanent liliana = addReadyLiliana(player1);
+        addReadyLiliana(player1);
         setupLibrary();
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -155,7 +130,7 @@ class LilianaVessTest extends BaseCardTest {
         }
         assertThat(bearsIndex).isGreaterThanOrEqualTo(0);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(bearsIndex));
+        harness.handleCardChosen(player1, bearsIndex);
 
         // The chosen card should be on top of the library
         List<Card> deck = gd.playerDecks.get(player1.getId());
@@ -166,7 +141,7 @@ class LilianaVessTest extends BaseCardTest {
     @Test
     @DisplayName("-2 ability is unrestricted search (cannot fail to find)")
     void minusTwoCannotFailToFind() {
-        Permanent liliana = addReadyLiliana(player1);
+        addReadyLiliana(player1);
         setupLibrary();
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -175,8 +150,6 @@ class LilianaVessTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isFalse();
     }
-
-    // ===== -8 ability: Put all creature cards from all graveyards onto battlefield =====
 
     @Test
     @DisplayName("-8 ability puts all creature cards from all graveyards onto battlefield under controller's control")
@@ -188,9 +161,8 @@ class LilianaVessTest extends BaseCardTest {
         GrizzlyBears bears1 = new GrizzlyBears();
         GrizzlyBears bears2 = new GrizzlyBears();
         GrizzlyBears bears3 = new GrizzlyBears();
-        gd.playerGraveyards.get(player1.getId()).add(bears1);
-        gd.playerGraveyards.get(player2.getId()).add(bears2);
-        gd.playerGraveyards.get(player2.getId()).add(bears3);
+        harness.setGraveyard(player1, List.of(bears1));
+        harness.setGraveyard(player2, List.of(bears2, bears3));
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -214,8 +186,7 @@ class LilianaVessTest extends BaseCardTest {
         liliana.setCounterCount(CounterType.LOYALTY, 8);
 
         // Put a non-creature card into graveyard
-        gd.playerGraveyards.get(player2.getId()).add(new Plains());
-        gd.playerGraveyards.get(player2.getId()).add(new GrizzlyBears());
+        harness.setGraveyard(player2, List.of(new Plains(), new GrizzlyBears()));
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -238,8 +209,6 @@ class LilianaVessTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough loyalty");
     }
-
-    // ===== Loyalty ability restrictions =====
 
     @Test
     @DisplayName("Cannot activate loyalty ability during opponent's turn")
@@ -269,22 +238,94 @@ class LilianaVessTest extends BaseCardTest {
                 .hasMessageContaining("one loyalty ability");
     }
 
-    // ===== Helpers =====
+    @Test
+    void plusOneResolvesAgainstEmptyHand() {
+        Permanent liliana = addReadyLiliana(player1);
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void targetPlayerChoosesExactlyOneCardToDiscard() {
+        addReadyLiliana(player1);
+        GrizzlyBears bears = new GrizzlyBears();
+        Swamp swamp = new Swamp();
+        harness.setHand(player2, List.of(bears, swamp));
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(bears);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(swamp);
+    }
+
+    @Test
+    void minusTwoResolvesWithEmptyLibrary() {
+        Permanent liliana = addReadyLiliana(player1);
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void minusEightReturningCreaturesSeeEachOtherEnter() {
+        Permanent liliana = addReadyLiliana(player1);
+        liliana.setCounterCount(CounterType.LOYALTY, 9);
+        harness.setLife(player1, 20);
+        harness.setGraveyard(player1, List.of(new SoulWarden(), new SoulWarden()));
+        harness.setGraveyard(player2, List.of());
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    void minusEightBlockedCreaturesStayInTheirOriginalGraveyards() {
+        Permanent liliana = addReadyLiliana(player1);
+        liliana.setCounterCount(CounterType.LOYALTY, 9);
+        harness.addToBattlefield(player2, new GrafdiggersCage());
+        GrizzlyBears ownBears = new GrizzlyBears();
+        GrizzlyBears opposingBears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(ownBears));
+        harness.setGraveyard(player2, List.of(opposingBears));
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownBears);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingBears);
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
 
     private Permanent addReadyLiliana(Player player) {
-        LilianaVess card = new LilianaVess();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new LilianaVess());
         perm.setCounterCount(CounterType.LOYALTY, 5);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Swamp(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Swamp(), new GrizzlyBears(), new GrizzlyBears()));
     }
 }
