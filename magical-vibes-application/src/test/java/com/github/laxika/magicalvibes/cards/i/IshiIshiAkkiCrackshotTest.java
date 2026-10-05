@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.f.FirstVolley;
 import com.github.laxika.magicalvibes.cards.g.GoblinCohort;
 import com.github.laxika.magicalvibes.cards.h.HeedTheMists;
 import com.github.laxika.magicalvibes.cards.k.KamiOfFalseHope;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,9 +12,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IshiIshiAkkiCrackshot.class, HeedTheMists.class, KamiOfFalseHope.class, GoblinCohort.class})
+@CardUsed({IshiIshiAkkiCrackshot.class, HeedTheMists.class, KamiOfFalseHope.class, GoblinCohort.class,
+        FirstVolley.class})
 class IshiIshiAkkiCrackshotTest extends BaseCardTest {
 
     /** Player1 controls Ishi-Ishi; it is player2's (the opponent's) turn. */
@@ -80,5 +85,50 @@ class IshiIshiAkkiCrackshotTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(controllerLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Controller's own Spirit spell does not trigger")
+    void ownSpiritDoesNotTrigger() {
+        harness.addToBattlefield(player1, new IshiIshiAkkiCrackshot());
+        harness.castFromHand(player1, new KamiOfFalseHope(), "{W}");
+
+        int controllerLifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, controllerLifeBefore);
+        harness.assertLife(player2, opponentLifeBefore);
+        harness.assertOnBattlefield(player1, "Kami of False Hope");
+    }
+
+    @Test
+    @DisplayName("Triggered damage still resolves after Ishi-Ishi leaves the battlefield")
+    void damageResolvesAfterSourceLeavesBattlefield() {
+        setUpOpponentTurn();
+        var ishiIshiId = harness.getPermanentId(player1, "Ishi-Ishi, Akki Crackshot");
+        harness.castFromHand(player2, new KamiOfFalseHope(), "{W}");
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.setHand(player1, List.of(new FirstVolley()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, ishiIshiId);
+
+        harness.assertInGraveyard(player1, "Ishi-Ishi, Akki Crackshot");
+        assertThat(gd.stack).hasSize(2);
+        harness.assertLife(player2, opponentLifeBefore);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, opponentLifeBefore - 2);
+        harness.assertNotOnBattlefield(player2, "Kami of False Hope");
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Kami of False Hope");
+        harness.assertLife(player2, opponentLifeBefore - 2);
     }
 }
