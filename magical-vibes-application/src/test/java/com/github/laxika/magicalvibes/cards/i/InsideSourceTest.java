@@ -12,8 +12,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -25,6 +23,7 @@ class InsideSourceTest extends BaseCardTest {
     void createsDetectiveToken() {
         castInsideSource();
 
+        assertThat(countPermanents(player1, "Detective")).isEqualTo(1);
         Permanent detective = findPermanent(player1, "Detective");
         assertThat(detective.getCard().getPower()).isEqualTo(2);
         assertThat(detective.getCard().getToughness()).isEqualTo(2);
@@ -55,10 +54,8 @@ class InsideSourceTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-Detective creature")
     void cannotTargetNonDetective() {
-        harness.addToBattlefield(player1, new InsideSource());
+        Permanent source = addCreatureReady(player1, new InsideSource());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        Permanent source = findPermanent(player1, "Inside Source");
-        source.setSummoningSick(false);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -69,11 +66,92 @@ class InsideSourceTest extends BaseCardTest {
     }
 
     private void castInsideSource() {
-        harness.setHand(player1, List.of(new InsideSource()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new InsideSource(), "{2}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
+    }
+
+    @Test
+    void cannotTargetOpponentsDetective() {
+        Permanent source = addCreatureReady(player1, new InsideSource());
+        harness.enterBattlefieldAndReturn(player2, new InsideSource());
+        resolveAllTriggers();
+        Permanent detective = findPermanent(player2, "Detective");
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, detective.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.isTapped()).isFalse();
+    }
+
+    @Test
+    void cannotActivateWhileSummoningSick() {
+        castInsideSource();
+        Permanent detective = findPermanent(player1, "Detective");
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, detective.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateOutsideMainPhase() {
+        castInsideSource();
+        findPermanent(player1, "Inside Source").setSummoningSick(false);
+        Permanent detective = findPermanent(player1, "Detective");
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, detective.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateDuringOpponentsMainPhase() {
+        castInsideSource();
+        findPermanent(player1, "Inside Source").setSummoningSick(false);
+        Permanent detective = findPermanent(player1, "Detective");
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, detective.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWithSpellOnStack() {
+        castInsideSource();
+        findPermanent(player1, "Inside Source").setSummoningSick(false);
+        Permanent detective = findPermanent(player1, "Detective");
+        harness.castFromHand(player1, new InsideSource(), "{2}{W}");
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, detective.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        resolveAllTriggers();
+    }
+
+    @Test
+    void boostAndVigilanceExpireAtEndOfTurn() {
+        castInsideSource();
+        Permanent source = findPermanent(player1, "Inside Source");
+        source.setSummoningSick(false);
+        Permanent detective = findPermanent(player1, "Detective");
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, detective.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, detective)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, detective, Keyword.VIGILANCE)).isTrue();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.getEffectivePower(gd, detective)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, detective)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, detective, Keyword.VIGILANCE)).isFalse();
     }
 }
