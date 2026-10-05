@@ -64,6 +64,46 @@ class OverlaidTerrainTest extends BaseCardTest {
                 .hasMessageContaining("no activated ability");
     }
 
+    @Test
+    @DisplayName("Can enter when its controller has no lands")
+    void entersWithNoLands() {
+        castAndResolveTerrain();
+
+        harness.assertOnBattlefield(player1, "Overlaid Terrain");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Lands retain their original mana abilities")
+    void retainsOriginalLandManaAbility() {
+        harness.addToBattlefield(player1, new OverlaidTerrain());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.tapPermanent(player1, 1);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The granted ability disappears when Overlaid Terrain leaves")
+    void grantedAbilityDisappearsWhenTerrainLeaves() {
+        harness.addToBattlefield(player1, new OverlaidTerrain());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent terrain = gd.playerBattlefields.get(player1.getId()).getFirst();
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, terrain));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("no activated ability");
+        harness.tapPermanent(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
     private void castAndResolveTerrain() {
         harness.setHand(player1, List.of(new OverlaidTerrain()));
         harness.addMana(player1, ManaColor.GREEN, 4);
