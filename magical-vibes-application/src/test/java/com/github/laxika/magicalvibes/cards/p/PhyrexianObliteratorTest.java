@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.a.ActOfAggression;
+import com.github.laxika.magicalvibes.cards.c.ChancellorOfTheTangle;
+import com.github.laxika.magicalvibes.cards.g.GlistenerElf;
+import com.github.laxika.magicalvibes.cards.s.ShrineOfBurningRage;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -7,8 +12,8 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,9 +23,9 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PhyrexianObliterator.class, GrizzlyBears.class, Shock.class, ActOfAggression.class,
+        ChancellorOfTheTangle.class, GlistenerElf.class, PristineTalisman.class, ShrineOfBurningRage.class})
 class PhyrexianObliteratorTest extends BaseCardTest {
-
-    // ===== Non-combat damage trigger =====
 
     @Test
     @DisplayName("Shock dealing 2 damage to Obliterator forces source controller to sacrifice 2 permanents")
@@ -32,8 +37,7 @@ class PhyrexianObliteratorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID obliteratorId = harness.getPermanentId(player2, "Phyrexian Obliterator");
-        harness.castInstant(player1, 0, obliteratorId);
-        harness.passBothPriorities(); // Resolve Shock — 2 damage to Obliterator
+        harness.castAndResolveInstant(player1, 0, obliteratorId); // Resolve Shock — 2 damage to Obliterator
 
         GameData gd = harness.getGameData();
 
@@ -61,8 +65,7 @@ class PhyrexianObliteratorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID obliteratorId = harness.getPermanentId(player2, "Phyrexian Obliterator");
-        harness.castInstant(player1, 0, obliteratorId);
-        harness.passBothPriorities(); // Resolve Shock — 2 damage
+        harness.castAndResolveInstant(player1, 0, obliteratorId); // Resolve Shock — 2 damage
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -99,8 +102,7 @@ class PhyrexianObliteratorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         UUID obliteratorId = harness.getPermanentId(player2, "Phyrexian Obliterator");
-        harness.castInstant(player1, 0, obliteratorId);
-        harness.passBothPriorities(); // Resolve Shock
+        harness.castAndResolveInstant(player1, 0, obliteratorId); // Resolve Shock
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
@@ -112,31 +114,21 @@ class PhyrexianObliteratorTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== Combat damage trigger =====
-
     @Test
     @DisplayName("Blocking creature dealing combat damage forces attacker's controller to sacrifice permanents")
     void combatDamageForcesAttackerControllerToSacrifice() {
-        harness.addToBattlefield(player2, new PhyrexianObliterator());
-        harness.addToBattlefield(player1, new GrizzlyBears()); // 2/2 attacker
+        Permanent obliterator = addCreatureReady(player2, new PhyrexianObliterator());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new GrizzlyBears()); // extra permanent
 
-        Permanent attacker = gd.playerBattlefields.get(player1.getId()).get(0);
-        attacker.setSummoningSick(false);
         attacker.setAttacking(true);
 
-        Permanent obliterator = gd.playerBattlefields.get(player2.getId()).getFirst();
-        obliterator.setSummoningSick(false);
         obliterator.setBlocking(true);
         obliterator.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
         // Resolve combat damage — attacker (2/2) deals 2 to Obliterator, Obliterator (5/5) kills attacker
         // Obliterator trigger goes on stack for 2 damage
-        harness.passBothPriorities();
+        resolveCombat();
 
         // After combat, attacker dies (lethal from Obliterator), trigger on stack
         // One Grizzly Bears remains. Sacrifice count = 2, but only 1 permanent → auto-sacrifice that one
@@ -154,26 +146,18 @@ class PhyrexianObliteratorTest extends BaseCardTest {
     @Test
     @DisplayName("Obliterator as attacker blocked by creature triggers sacrifice on blocker's controller")
     void obliteratorAttackingBlockedTriggersOnBlockerController() {
-        harness.addToBattlefield(player1, new PhyrexianObliterator());
-        harness.addToBattlefield(player2, new GrizzlyBears()); // 2/2 blocker
+        Permanent obliterator = addCreatureReady(player1, new PhyrexianObliterator());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears()); // additional permanent
         harness.addToBattlefield(player2, new GrizzlyBears()); // additional permanent
 
-        Permanent obliterator = gd.playerBattlefields.get(player1.getId()).getFirst();
-        obliterator.setSummoningSick(false);
         obliterator.setAttacking(true);
 
-        Permanent blocker = gd.playerBattlefields.get(player2.getId()).get(0);
-        blocker.setSummoningSick(false);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
         // Advance from DECLARE_BLOCKERS — Obliterator has trample so manual damage assignment needed
-        harness.passBothPriorities();
+        resolveCombat();
 
         // Assign Obliterator's 5 damage: 2 to blocker (lethal for 2/2), 3 trample to player2
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
@@ -193,5 +177,131 @@ class PhyrexianObliteratorTest extends BaseCardTest {
 
         // Obliterator should survive (5/5 takes 2 damage)
         harness.assertOnBattlefield(player1, "Phyrexian Obliterator");
+    }
+
+    @Test
+    @DisplayName("Lethal damage still triggers and uses the sacrificed damage source's last controller")
+    void lethalDamageFromSacrificedSourceStillForcesSacrifice() {
+        Permanent obliterator = harness.addToBattlefieldAndReturn(player2, new PhyrexianObliterator());
+        Permanent shrine = harness.addToBattlefieldAndReturn(player1, new ShrineOfBurningRage());
+        shrine.setCounterCount(CounterType.CHARGE, 7);
+        harness.addToBattlefield(player1, new PristineTalisman());
+        harness.addToBattlefield(player1, new PristineTalisman());
+        harness.addToBattlefield(player1, new PristineTalisman());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, obliterator.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Phyrexian Obliterator");
+        harness.assertInGraveyard(player1, "Shrine of Burning Rage");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Pristine Talisman")).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Zero damage does not trigger a sacrifice")
+    void zeroDamageDoesNotTrigger() {
+        Permanent obliterator = harness.addToBattlefieldAndReturn(player2, new PhyrexianObliterator());
+        harness.addToBattlefield(player1, new ShrineOfBurningRage());
+        harness.addToBattlefield(player1, new PristineTalisman());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, obliterator.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Pristine Talisman");
+        harness.assertOnBattlefield(player2, "Phyrexian Obliterator");
+    }
+
+    @Test
+    @DisplayName("Damage from your own source can make you sacrifice Obliterator itself")
+    void ownDamageSourceCanForceSacrificeOfObliterator() {
+        Permanent shrine = harness.addToBattlefieldAndReturn(player1, new ShrineOfBurningRage());
+        shrine.setCounterCount(CounterType.CHARGE, 2);
+        Permanent obliterator = harness.addToBattlefieldAndReturn(player1, new PhyrexianObliterator());
+        Permanent talisman = harness.addToBattlefieldAndReturn(player1, new PristineTalisman());
+        harness.addToBattlefield(player1, new PristineTalisman());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, obliterator.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.maxCount()).isEqualTo(2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(obliterator.getId(), talisman.getId()));
+
+        harness.assertInGraveyard(player1, "Phyrexian Obliterator");
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        harness.assertOnBattlefield(player1, "Pristine Talisman");
+    }
+
+    @Test
+    @DisplayName("Two sources dealing infect damage simultaneously create separate sacrifice triggers")
+    void simultaneousInfectSourcesCreateSeparateTriggers() {
+        Permanent obliterator = addCreatureReady(player1, new PhyrexianObliterator());
+        Permanent firstElf = addCreatureReady(player2, new GlistenerElf());
+        Permanent secondElf = addCreatureReady(player2, new GlistenerElf());
+        Permanent firstTalisman = harness.addToBattlefieldAndReturn(player2, new PristineTalisman());
+        harness.addToBattlefield(player2, new PristineTalisman());
+        obliterator.setAttacking(true);
+        firstElf.setBlocking(true);
+        firstElf.addBlockingTarget(0);
+        secondElf.setBlocking(true);
+        secondElf.addBlockingTarget(0);
+
+        resolveCombat();
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                firstElf.getId(), 1, secondElf.getId(), 1, player2.getId(), 3));
+
+        assertThat(obliterator.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(1);
+        harness.handleMultiplePermanentsChosen(player2, List.of(firstTalisman.getId()));
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Phyrexian Obliterator");
+    }
+
+    @Test
+    @DisplayName("Damage source's current controller sacrifices if control changes before resolution")
+    void changedDamageSourceControllerSacrificesAtResolution() {
+        Permanent chancellor = addCreatureReady(player1, new ChancellorOfTheTangle());
+        Permanent obliterator = addCreatureReady(player2, new PhyrexianObliterator());
+        harness.addToBattlefield(player1, new PristineTalisman());
+        chancellor.setAttacking(true);
+        obliterator.setBlocking(true);
+        obliterator.addBlockingTarget(0);
+
+        resolveCombat();
+
+        harness.assertInGraveyard(player2, "Phyrexian Obliterator");
+        harness.assertOnBattlefield(player1, "Chancellor of the Tangle");
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player2, List.of(new ActOfAggression()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player2, 0, chancellor.getId());
+        harness.assertOnBattlefield(player2, "Chancellor of the Tangle");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Chancellor of the Tangle");
+        harness.assertInGraveyard(player1, "Chancellor of the Tangle");
+        harness.assertOnBattlefield(player1, "Pristine Talisman");
     }
 }
