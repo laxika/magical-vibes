@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.b.BadRiver;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.r.Replenish;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NullChamber.class, NobleElephant.class, Disenchant.class, BadRiver.class, Replenish.class})
+@CardUsed({NullChamber.class, NobleElephant.class, Disenchant.class, BadRiver.class, Replenish.class,
+        SongOfTheDryads.class})
 class NullChamberTest extends BaseCardTest {
 
     @Test
@@ -65,7 +67,7 @@ class NullChamberTest extends BaseCardTest {
     @Test
     @DisplayName("Neither player can cast a spell with either chosen name")
     void neitherPlayerCanCastEitherChosenName() {
-        addReadyNullChamber(player1, "Noble Elephant", "Disenchant");
+        Permanent chamber = addReadyNullChamber(player1, "Noble Elephant", "Disenchant");
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -127,8 +129,7 @@ class NullChamberTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new Disenchant()));
         harness.addMana(player2, ManaColor.WHITE, 2);
-        harness.castInstant(player2, 0, chamber.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, chamber.getId());
 
         harness.clearPriorityPassed();
         harness.setHand(player2, List.of(new NobleElephant()));
@@ -185,8 +186,7 @@ class NullChamberTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
@@ -202,11 +202,103 @@ class NullChamberTest extends BaseCardTest {
         assertThat(perm.getSecondChosenName()).isEqualTo("Null Chamber");
     }
 
+    @Test
+    @DisplayName("The controller cannot submit a basic land name")
+    void controllerCannotChooseBasicLandName() {
+        harness.setHand(player1, List.of(new NullChamber()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, "Plains"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.assertNotOnBattlefield(player1, "Null Chamber");
+    }
+
+    @Test
+    @DisplayName("The opponent cannot submit a basic land name")
+    void opponentCannotChooseBasicLandName() {
+        harness.setHand(player1, List.of(new NullChamber()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Noble Elephant");
+
+        assertThatThrownBy(() -> harness.handleListChoice(player2, "Plains"))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.assertNotOnBattlefield(player1, "Null Chamber");
+    }
+
+    @Test
+    @DisplayName("Both players may choose the same card name")
+    void bothPlayersCanChooseSameName() {
+        harness.setHand(player1, List.of(new NullChamber(), new NobleElephant()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Noble Elephant");
+        harness.handleListChoice(player2, "Noble Elephant");
+
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, chamber.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A named land can be played after Song of the Dryads removes Null Chamber's abilities")
+    void namedLandCanBePlayedWhenChamberLosesAbilities() {
+        Permanent chamber = addReadyNullChamber(player1, "Bad River", "Noble Elephant");
+        harness.setHand(player1, List.of(new SongOfTheDryads(), new BadRiver()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, chamber.getId());
+        harness.passBothPriorities();
+
+        harness.playLand(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Bad River");
+    }
+
+    @Test
+    @DisplayName("A spell with an unchosen name can still be cast")
+    void unchosenSpellCanBeCast() {
+        addReadyNullChamber(player1, "Bad River", "Disenchant");
+        harness.setHand(player1, List.of(new NobleElephant()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Noble Elephant");
+    }
+
+    @Test
+    @DisplayName("World permanents tied for newest are both put into the graveyard")
+    void worldRulePutsTiedChambersIntoGraveyard() {
+        Permanent first = addReadyNullChamber(player1, "Noble Elephant", "Disenchant");
+        Permanent second = addReadyNullChamber(player2, "Bad River", "Disenchant");
+        first.setTimestamp(1);
+        second.setTimestamp(1);
+
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Null Chamber");
+        harness.assertNotOnBattlefield(player2, "Null Chamber");
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(card -> card.getName())
+                .contains("Null Chamber");
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(card -> card.getName())
+                .contains("Null Chamber");
+    }
+
     private Permanent addReadyNullChamber(Player player, String firstName, String secondName) {
-        Permanent perm = new Permanent(new NullChamber());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new NullChamber());
         perm.setChosenName(firstName);
         perm.setSecondChosenName(secondName);
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 }
