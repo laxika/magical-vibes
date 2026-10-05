@@ -59,8 +59,7 @@ class PsychicBattleTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Repulse()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
-        harness.castInstant(player2, 0, originalTarget.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, originalTarget.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         StackEntry spell = gd.stack.stream()
@@ -80,8 +79,7 @@ class PsychicBattleTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Repulse()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
-        harness.castInstant(player2, 0, originalTarget.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, originalTarget.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
@@ -103,8 +101,7 @@ class PsychicBattleTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Repulse()));
         harness.addMana(player2, ManaColor.BLUE, 3);
 
-        harness.castInstant(player2, 0, originalTarget.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, originalTarget.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, true);
@@ -124,7 +121,7 @@ class PsychicBattleTest extends BaseCardTest {
         var originalTargetOne = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
         var originalTargetTwo = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
         var alternateTargetOne = harness.addToBattlefieldAndReturn(player1, new RazorfootGriffin());
-        harness.addToBattlefieldAndReturn(player1, new RazorfootGriffin());
+        harness.addToBattlefield(player1, new RazorfootGriffin());
         harness.setLibrary(player1, List.of(new PsychicBattle()));
         harness.setLibrary(player2, List.of(new Island()));
         harness.setHand(player2, List.of(new SwayOfIllusion()));
@@ -145,6 +142,45 @@ class PsychicBattleTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
         assertThat(spell.getDeclaredTargetIds()).containsExactly(alternateTargetOne.getId(), originalTargetTwo.getId());
+    }
+
+    @Test
+    void playerMaySwapTwoTargetsWhenTheFinalTargetsAreLegal() {
+        harness.addToBattlefield(player1, new PsychicBattle());
+        var firstTarget = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
+        var secondTarget = harness.addToBattlefieldAndReturn(player2, new RazorfootGriffin());
+        harness.addToBattlefield(player1, new RazorfootGriffin());
+        harness.setLibrary(player1, List.of(new PsychicBattle()));
+        harness.setLibrary(player2, List.of(new Island()));
+        harness.setHand(player2, List.of(new SwayOfIllusion()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player2, 0, List.of(firstTarget.getId(), secondTarget.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).contains(secondTarget.getId());
+        harness.handlePermanentChosen(player1, secondTarget.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, firstTarget.getId());
+
+        StackEntry spell = gd.stack.stream()
+                .filter(entry -> entry.getCard().getName().equals("Sway of Illusion"))
+                .findFirst().orElseThrow();
+        assertThat(spell.getDeclaredTargetIds()).containsExactly(secondTarget.getId(), firstTarget.getId());
+    }
+
+    @Test
+    void choosingNoTargetsDoesNotTriggerPsychicBattle() {
+        harness.addToBattlefield(player1, new PsychicBattle());
+        harness.setHand(player2, List.of(new SwayOfIllusion()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, List.of());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Sway of Illusion");
     }
 
     @Test
