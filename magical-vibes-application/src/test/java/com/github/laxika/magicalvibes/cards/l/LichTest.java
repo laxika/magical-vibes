@@ -1,14 +1,17 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.b.BoonReflection;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.d.Disperse;
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.f.FlameBurst;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HealingSalve;
 import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -25,7 +28,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 
-@CardUsed({DuskImp.class, FlameBurst.class, Lich.class, Forest.class, GrizzlyBears.class, Shock.class, Disenchant.class, Disperse.class})
+@CardUsed({DuskImp.class, FlameBurst.class, Lich.class, Forest.class, GrizzlyBears.class,
+        Shock.class, Disenchant.class, Disperse.class, PlatinumAngel.class,
+        PlatinumEmperion.class, HealingSalve.class, BoonReflection.class, SongOfTheDryads.class})
 class LichTest extends BaseCardTest {
 
     @Test
@@ -270,10 +275,77 @@ class LichTest extends BaseCardTest {
     private void castLich() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new Lich()));
-        harness.addMana(player1, ManaColor.BLACK, 4);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new Lich(), "{B}{B}{B}{B}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    void multipleLichesReplaceEachLifeGainOnlyOnce() {
+        harness.addToBattlefield(player1, new Lich());
+        harness.addToBattlefield(player1, new Lich());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new HealingSalve()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void playerChoosesBetweenLifeGainReplacementEffects() {
+        harness.addToBattlefield(player1, new Lich());
+        harness.addToBattlefield(player1, new BoonReflection());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new HealingSalve()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(7);
+    }
+
+    @Test
+    void fullyPreventedDamageDoesNotRequireSacrifices() {
+        castLich();
+        harness.setHand(player1, List.of(new HealingSalve()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, 1, player1.getId());
+        harness.passBothPriorities();
+
+        shockController();
+
+        harness.assertLife(player1, 0);
+        harness.assertOnBattlefield(player1, "Lich");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    void becomingAForestRemovesLifeGainReplacement() {
+        Permanent lich = harness.addToBattlefieldAndReturn(player1, new Lich());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new SongOfTheDryads()));
+        harness.addMana(player2, ManaColor.GREEN, 3);
+        harness.castEnchantment(player2, 0, lich.getId());
+        harness.passBothPriorities();
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setHand(player1, List.of(new HealingSalve()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 23);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 
     private void shockController() {
