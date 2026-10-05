@@ -5,15 +5,16 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GraftedExoskeleton;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Shunt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,14 +22,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LivewireLash.class, GrizzlyBears.class, GiantGrowth.class, Shock.class,
+        Boomerang.class, Shunt.class, GraftedExoskeleton.class})
 class LivewireLashTest extends BaseCardTest {
-
-    // ===== Equip ability =====
 
     @Test
     @DisplayName("Resolving equip ability attaches Livewire Lash to target creature")
     void resolvingEquipAttachesToCreature() {
-        Permanent lash = addLashReady(player1);
+        Permanent lash = harness.addToBattlefieldAndReturn(player1, new LivewireLash());
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -38,13 +39,11 @@ class LivewireLashTest extends BaseCardTest {
         assertThat(lash.getAttachedTo()).isEqualTo(creature.getId());
     }
 
-    // ===== Static boost =====
-
     @Test
     @DisplayName("Equipped creature gets +2/+0 from Livewire Lash")
     void equippedCreatureGetsBoost() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent lash = addLashReady(player1);
+        Permanent lash = harness.addToBattlefieldAndReturn(player1, new LivewireLash());
         lash.setAttachedTo(creature.getId());
 
         int effectivePower = gqs.getEffectivePower(gd, creature);
@@ -55,13 +54,11 @@ class LivewireLashTest extends BaseCardTest {
         assertThat(effectiveToughness).isEqualTo(2);
     }
 
-    // ===== Trigger fires when equipped creature is targeted by a spell =====
-
     @Test
     @DisplayName("Trigger fires when equipped creature is targeted by a spell, prompts for any target")
     void triggerFiresWhenEquippedCreatureTargetedBySpell() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent lash = addLashReady(player1);
+        Permanent lash = harness.addToBattlefieldAndReturn(player1, new LivewireLash());
         lash.setAttachedTo(creature.getId());
 
         harness.setHand(player1, List.of(new GiantGrowth()));
@@ -80,7 +77,7 @@ class LivewireLashTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent lash = addLashReady(player1);
+        Permanent lash = harness.addToBattlefieldAndReturn(player1, new LivewireLash());
         lash.setAttachedTo(creature.getId());
 
         harness.setHand(player1, List.of(new GiantGrowth()));
@@ -102,7 +99,7 @@ class LivewireLashTest extends BaseCardTest {
     @DisplayName("Trigger deals 2 damage to chosen creature target")
     void triggerDeals2DamageToCreature() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent lash = addLashReady(player1);
+        Permanent lash = harness.addToBattlefieldAndReturn(player1, new LivewireLash());
         lash.setAttachedTo(creature.getId());
 
         Permanent targetCreature = addCreatureReady(player2, new GrizzlyBears());
@@ -123,13 +120,11 @@ class LivewireLashTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(targetCreature.getId()));
     }
 
-    // ===== Trigger does NOT fire when equipment is not attached =====
-
     @Test
     @DisplayName("Trigger does NOT fire when Livewire Lash is not attached to the targeted creature")
     void triggerDoesNotFireWhenNotAttached() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        addLashReady(player1); // Not attached to any creature
+        harness.addToBattlefieldAndReturn(player1, new LivewireLash()); // Not attached to any creature
 
         harness.setHand(player1, List.of(new GiantGrowth()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -140,15 +135,13 @@ class LivewireLashTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    // ===== Trigger does NOT fire when spell targets a player =====
-
     @Test
     @DisplayName("Trigger does NOT fire when spell targets a player instead of equipped creature")
     void triggerDoesNotFireWhenSpellTargetsPlayer() {
         harness.setLife(player2, 20);
 
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent lash = addLashReady(player1);
+        Permanent lash = harness.addToBattlefieldAndReturn(player1, new LivewireLash());
         lash.setAttachedTo(creature.getId());
 
         harness.setHand(player1, List.of(new Shock()));
@@ -161,15 +154,13 @@ class LivewireLashTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    // ===== Trigger fires when equipped creature is targeted by damage spell =====
-
     @Test
     @DisplayName("Trigger fires when equipped creature is targeted by a damage spell like Shock")
     void triggerFiresFromDamageSpell() {
         harness.setLife(player2, 20);
 
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent lash = addLashReady(player1);
+        Permanent lash = harness.addToBattlefieldAndReturn(player1, new LivewireLash());
         lash.setAttachedTo(creature.getId());
 
         harness.setHand(player1, List.of(new Shock()));
@@ -186,19 +177,18 @@ class LivewireLashTest extends BaseCardTest {
 
         // Resolve triggered ability first (top of stack), then Shock
         harness.passBothPriorities(); // Resolve trigger - 2 damage to player2
-        harness.passBothPriorities(); // Resolve Shock - 2 damage to creature (4/2 with lash, survives)
+        harness.passBothPriorities(); // Resolve Shock, which kills the equipped 4/2 creature
 
         // Player2 took 2 damage from the trigger
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
     }
-
-    // ===== Triggered ability is on the stack as TRIGGERED_ABILITY =====
 
     @Test
     @DisplayName("Triggered ability is put on the stack as TRIGGERED_ABILITY type")
     void triggeredAbilityOnStack() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent lash = addLashReady(player1);
+        Permanent lash = harness.addToBattlefieldAndReturn(player1, new LivewireLash());
         lash.setAttachedTo(creature.getId());
 
         harness.setHand(player1, List.of(new GiantGrowth()));
@@ -219,8 +209,6 @@ class LivewireLashTest extends BaseCardTest {
                 .contains("Grizzly Bears's triggered ability targets Bob.");
     }
 
-    // ===== Trigger fires when spell is retargeted onto equipped creature (Shunt) =====
-
     @Test
     @DisplayName("Trigger fires when a spell is redirected onto the equipped creature via Shunt")
     void triggerFiresWhenSpellRetargetedOntoEquippedCreature() {
@@ -228,7 +216,7 @@ class LivewireLashTest extends BaseCardTest {
 
         // Player1 has a creature with Livewire Lash and another unequipped creature
         Permanent equippedCreature = addCreatureReady(player1, new GrizzlyBears());
-        Permanent lash = addLashReady(player1);
+        Permanent lash = harness.addToBattlefieldAndReturn(player1, new LivewireLash());
         lash.setAttachedTo(equippedCreature.getId());
 
         Permanent otherCreature = addCreatureReady(player2, new GrizzlyBears());
@@ -275,12 +263,75 @@ class LivewireLashTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Creature controller chooses the damage target even when an opponent controls the Lash")
+    void creatureControllerChoosesTarget() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent lash = harness.addToBattlefieldAndReturn(player1, new LivewireLash());
+        lash.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
 
-    private Permanent addLashReady(Player player) {
-        Permanent perm = new Permanent(new LivewireLash());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        harness.castInstant(player1, 0, creature.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Re-equipping moves the power boost to the new creature")
+    void reEquippingMovesBoost() {
+        Permanent lash = harness.addToBattlefieldAndReturn(player1, new LivewireLash());
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent second = addCreatureReady(player1, new GrizzlyBears());
+        lash.setAttachedTo(first.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(lash.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Damage from the equipped creature uses infect granted by another Equipment")
+    void triggerDamageUsesGrantedInfect() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent lash = harness.addToBattlefieldAndReturn(player1, new LivewireLash());
+        lash.setAttachedTo(creature.getId());
+        Permanent exoskeleton = harness.addToBattlefieldAndReturn(player1, new GraftedExoskeleton());
+        exoskeleton.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(2);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Targeting the equipped creature with an equip ability does not trigger damage")
+    void activatedAbilityDoesNotTriggerDamage() {
+        Permanent lash = harness.addToBattlefieldAndReturn(player1, new LivewireLash());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        lash.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 20);
     }
 }
