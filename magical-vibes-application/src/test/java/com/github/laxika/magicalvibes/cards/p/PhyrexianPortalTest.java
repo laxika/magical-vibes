@@ -108,17 +108,78 @@ class PhyrexianPortalTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Searching may fail to find, sending the whole pile back into the library")
-    void searchMayFailToFind() {
+    @DisplayName("Searching a nonempty pile requires finding one card")
+    void searchMustFindOneCard() {
         List<Card> library = activateAndReachSeparation(tenCardLibrary());
         List<Card> pile1 = library.subList(0, 4);
 
         harness.handleMultipleCardsChosen(player2, pile1.stream().map(Card::getId).toList());
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMultipleCardsChosen(player1, List.of());
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
 
-        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(pile1);
+        Card wanted = pile1.getFirst();
+        harness.handleMultipleCardsChosen(player1, List.of(wanted.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(wanted);
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrderElementsOf(pile1.subList(1, 4));
+    }
+
+    @Test
+    @CardUsed({PhyrexianPortal.class, ShieldSphere.class, PsychogenicProbe.class})
+    @DisplayName("Searching an empty pile still shuffles the library")
+    void emptyPileStillCausesShuffle() {
+        harness.addToBattlefield(player2, new PsychogenicProbe());
+        harness.setLife(player1, 20);
+        activateAndReachSeparation(tenCardLibrary());
+
+        harness.handleMultipleCardsChosen(player2, List.of());
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Only the top ten cards are divided and the remaining library is preserved")
+    void deeperLibraryCardsAreNotIncludedInPiles() {
+        List<Card> library = tenCardLibrary();
+        Card deeperCard = new ShieldSphere();
+        library.add(deeperCard);
+        activateAndReachSeparation(library);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrderElementsOf(
+                library.subList(0, 10).stream().map(Card::getId).toList());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(deeperCard);
+
+        Card wanted = library.getFirst();
+        harness.handleMultipleCardsChosen(player2, List.of(wanted.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(wanted.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(wanted);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(deeperCard);
+        assertThat(library.subList(1, 10))
+                .allSatisfy(card -> assertThat(gd.findExiledCard(card.getId())).isNotNull());
+    }
+
+    @Test
+    @DisplayName("The searched card is not revealed in the public log")
+    void searchedCardRemainsPrivate() {
+        List<Card> library = activateAndReachSeparation(tenCardLibrary());
+        Card wanted = library.getFirst();
+        harness.handleMultipleCardsChosen(player2, List.of(wanted.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        int previousLogSize = gd.gameLog.size();
+
+        harness.handleMultipleCardsChosen(player1, List.of(wanted.getId()));
+
+        assertThat(gd.gameLog.subList(previousLogSize, gd.gameLog.size()))
+                .allSatisfy(entry -> assertThat(entry.plainText()).doesNotContain(wanted.getName()));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(wanted);
     }
 
     @Test
@@ -139,18 +200,30 @@ class PhyrexianPortalTest extends BaseCardTest {
     @Test
     @DisplayName("Nothing happens when the library has fewer than ten cards")
     void fewerThanTenCardsDoesNothing() {
-        harness.addToBattlefield(player1, new PhyrexianPortal());
         List<Card> library = List.of(new ShieldSphere(), new ShieldSphere(), new ShieldSphere());
-        harness.setLibrary(player1, library);
-        harness.setHand(player1, List.of());
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-
-        harness.activateAbility(player1, 0, null, player2.getId());
-        harness.passBothPriorities();
+        activateAndReachSeparation(library);
 
         assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ten-card condition is checked when the ability resolves")
+    void librarySizeIsCheckedAtResolution() {
+        harness.addToBattlefield(player1, new PhyrexianPortal());
+        harness.setLibrary(player1, tenCardLibrary());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        List<Card> reducedLibrary = tenCardLibrary().subList(0, 9);
+        harness.setLibrary(player1, reducedLibrary);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(reducedLibrary);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
