@@ -92,8 +92,7 @@ class PatternOfRebirthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         Permanent creature = gd.playerBattlefields.get(player2.getId()).getFirst();
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
@@ -113,12 +112,75 @@ class PatternOfRebirthTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The Aura's controller controls the death trigger even on an opponent's creature")
+    void auraControllerControlsDeathTrigger() {
+        Permanent creature = attachAuraToCreature(player1, player2);
+        creature.setMarkedDamage(1);
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player2, "Fledgling Osprey");
+        harness.assertInGraveyard(player1, "Pattern of Rebirth");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("A restricted search may fail to find even with a creature in the library")
+    void mayFailToFindCreature() {
+        Permanent creature = attachAuraToCreature(player1, player2);
+        Card foundCreature = new PlatedSpider();
+        harness.setLibrary(player2, List.of(foundCreature));
+
+        killCreature(creature);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, -1);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(foundCreature);
+        harness.assertNotOnBattlefield(player2, "Plated Spider");
+    }
+
+    @Test
+    @DisplayName("Accepting a search with an empty library completes without a card choice")
+    void searchEmptyLibrary() {
+        Permanent creature = attachAuraToCreature(player1, player2);
+        harness.setLibrary(player2, List.of());
+
+        killCreature(creature);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting Pattern of Rebirth attaches it and its controller can search after the creature dies")
+    void castAuraAndSearchOwnLibrary() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FledglingOsprey());
+        harness.setHand(player1, List.of(new PatternOfRebirth()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        Card foundCreature = new PlatedSpider();
+        harness.setLibrary(player1, List.of(foundCreature));
+
+        killCreature(creature);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Plated Spider");
+        harness.assertInGraveyard(player1, "Pattern of Rebirth");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
     private Permanent attachAuraToCreature(Player auraController, Player creatureController) {
         Permanent creature = harness.addToBattlefieldAndReturn(creatureController, new FledglingOsprey());
 
-        Permanent aura = new Permanent(new PatternOfRebirth());
+        Permanent aura = harness.addToBattlefieldAndReturn(auraController, new PatternOfRebirth());
         aura.setAttachedTo(creature.getId());
-        gd.playerBattlefields.get(auraController.getId()).add(aura);
         return creature;
     }
 
