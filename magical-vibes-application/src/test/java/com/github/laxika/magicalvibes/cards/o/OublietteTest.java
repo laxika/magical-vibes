@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.t.TeferisProtection;
+import com.github.laxika.magicalvibes.cards.u.UnholyStrength;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +19,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Oubliette.class, Disenchant.class, GrizzlyBears.class, Island.class})
+@CardUsed({Oubliette.class, Disenchant.class, GrizzlyBears.class, Island.class, UnholyStrength.class,
+        TeferisProtection.class})
 class OublietteTest extends BaseCardTest {
 
     @Test
@@ -29,7 +32,7 @@ class OublietteTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
         assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(creature);
 
-        advanceToUntap(player2);
+        harness.performUntapStep(player2);
 
         assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(creature);
     }
@@ -47,8 +50,7 @@ class OublietteTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Disenchant()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
-        harness.castInstant(player2, 0, oublietteId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, oublietteId);
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
         assertThat(creature.isTapped()).isTrue();
@@ -78,10 +80,76 @@ class OublietteTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private void advanceToUntap(com.github.laxika.magicalvibes.model.Player player) {
-        harness.forceActivePlayer(player);
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passUntil(player, TurnStep.UNTAP);
+    @Test
+    @DisplayName("Removing Oubliette before its enter trigger resolves does not phase out or tap the creature")
+    void sourceLeavesBeforeTriggerResolves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Oubliette(), new Disenchant()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Oubliette"));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(creature.isTapped()).isFalse();
+        harness.assertInGraveyard(player1, "Oubliette");
+    }
+
+    @Test
+    @DisplayName("An opposing Aura phases out and returns attached with the creature without being tapped")
+    void opposingAuraPhasesWithCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new UnholyStrength()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        UUID auraId = harness.getPermanentId(player1, "Unholy Strength");
+        Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getId().equals(auraId)).findFirst().orElseThrow();
+
+        castAndResolveOubliette(creature.getId());
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(aura);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(creature);
+        harness.performUntapStep(player1);
+        harness.performUntapStep(player2);
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(aura);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(creature);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Oubliette"));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+        assertThat(aura.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(aura.isTapped()).isFalse();
+        assertThat(creature.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Phasing out Oubliette before its enter trigger resolves does not stop that trigger")
+    void phasedOutSourceStillPhasesOutTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Oubliette(), new TeferisProtection()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(creature);
+        harness.performUntapStep(player2);
+        assertThat(gd.phasedOutPermanents.get(player2.getId())).contains(creature);
     }
 }
