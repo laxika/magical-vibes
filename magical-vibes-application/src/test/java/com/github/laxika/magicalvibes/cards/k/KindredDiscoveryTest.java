@@ -66,6 +66,67 @@ class KindredDiscoveryTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Draws once for each matching attacking creature")
+    void drawsForEachMatchingAttacker() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addReadyDiscovery(CardSubtype.BEAR);
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Does not draw when a creature of another type attacks")
+    void doesNotDrawForDifferentTypeAttacking() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of());
+        addCreatureReady(player1, new GrizzlyBears());
+        addReadyDiscovery(CardSubtype.ELF);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not draw for an opponent's matching creature entering")
+    void doesNotDrawForOpponentsCreatureEntering() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of());
+        addReadyDiscovery(CardSubtype.BEAR);
+        harness.forceActivePlayer(player2);
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not draw for an opponent's matching creature attacking")
+    void doesNotDrawForOpponentsCreatureAttacking() {
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of());
+        addReadyDiscovery(CardSubtype.BEAR);
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
     private Permanent addReadyDiscovery(CardSubtype chosenSubtype) {
         Permanent discovery = harness.addToBattlefieldAndReturn(player1, new KindredDiscovery());
         discovery.setChosenSubtype(chosenSubtype);
