@@ -28,6 +28,12 @@ class PatrolSignalerTest extends BaseCardTest {
         enterMainWithPriority(player1);
 
         harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(signaler.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(findPermanents(player1, "Kithkin Soldier")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Kithkin Soldier"))
@@ -73,6 +79,36 @@ class PatrolSignalerTest extends BaseCardTest {
                 .hasMessageContaining("summoning sickness");
         assertThat(signaler.isTapped()).isTrue();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Insufficient mana leaves the source tapped and creates no token")
+    void cannotActivateWithoutEnoughMana() {
+        Permanent signaler = addTapped(player1, new PatrolSignaler());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        enterMainWithPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(signaler.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Kithkin Soldier")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate during the opponent's turn and creates the token for its controller")
+    void canActivateDuringOpponentsTurn() {
+        addTapped(player1, new PatrolSignaler());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        enterMainWithPriority(player2);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Kithkin Soldier")).hasSize(1);
+        assertThat(findPermanents(player2, "Kithkin Soldier")).isEmpty();
     }
 
     private Permanent addTapped(Player player, Card card) {
