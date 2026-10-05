@@ -18,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Pox.class, PaleBears.class, Forest.class})
+@CardUsed({Pox.class, PaleBears.class, Forest.class, TajuruPreserver.class})
 class PoxTest extends BaseCardTest {
 
     private List<UUID> landIds(Player player, int limit) {
@@ -53,8 +53,7 @@ class PoxTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // ceil(20/3) = 7 -> 13; ceil(10/3) = 4 -> 6
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(13);
@@ -77,8 +76,7 @@ class PoxTest extends BaseCardTest {
         harness.setHand(player2, new ArrayList<>(List.of(new Forest(), new Forest())));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // Active player (caster) discards first: two cards.
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -113,8 +111,7 @@ class PoxTest extends BaseCardTest {
             harness.addToBattlefield(player1, new PaleBears());
         }
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -141,8 +138,7 @@ class PoxTest extends BaseCardTest {
             harness.addToBattlefield(player1, new Forest());
         }
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.MultiPermanentChoice creatureChoice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -174,8 +170,7 @@ class PoxTest extends BaseCardTest {
             harness.addToBattlefield(player2, new PaleBears());
         }
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.MultiPermanentChoice player1Choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -205,8 +200,7 @@ class PoxTest extends BaseCardTest {
         // One creature -> ceil(1/3) = 1, so the whole board is sacrificed with no prompt.
         harness.addToBattlefield(player1, new PaleBears());
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player1, "Pale Bears")).isEqualTo(0);
@@ -224,8 +218,7 @@ class PoxTest extends BaseCardTest {
         harness.addToBattlefield(player2, new TajuruPreserver());
         harness.addToBattlefield(player2, new Forest());
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(countPermanents(player2, "Tajuru Preserver")).isEqualTo(1);
@@ -247,8 +240,7 @@ class PoxTest extends BaseCardTest {
             harness.addToBattlefield(player1, new Forest());
         }
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -281,8 +273,7 @@ class PoxTest extends BaseCardTest {
             harness.addToBattlefield(player1, new Forest()); // -> sacrifice 1
         }
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         // 1) Life: ceil(20/3) = 7 -> 13.
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(13);
@@ -303,5 +294,82 @@ class PoxTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(countPermanents(player1, "Pale Bears")).isEqualTo(2);
         assertThat(landCount(player1)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("All players choose their discards before any chosen card leaves a hand")
+    void discardsOnlyAfterBothPlayersHaveChosen() {
+        harness.setHand(player1, List.of(new Pox(), new Forest()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleCardChosen(player1, 0);
+
+        PendingInteraction.DiscardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertNotInGraveyard(player1, "Forest");
+
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Creatures stay on the battlefield until both players choose their sacrifices")
+    void sacrificesOnlyAfterBothPlayersHaveChosen() {
+        harness.setHand(player2, List.of());
+        for (int i = 0; i < 3; i++) {
+            harness.addToBattlefield(player1, new PaleBears());
+            harness.addToBattlefield(player2, new PaleBears());
+        }
+        harness.castFromHand(player1, new Pox(), "{B}{B}{B}");
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, creatureIds(player1, 1));
+
+        assertThat(countPermanents(player1, "Pale Bears")).isEqualTo(3);
+        assertThat(countPermanents(player2, "Pale Bears")).isEqualTo(3);
+        harness.handleMultiplePermanentsChosen(player2, creatureIds(player2, 1));
+
+        assertThat(countPermanents(player1, "Pale Bears")).isEqualTo(2);
+        assertThat(countPermanents(player2, "Pale Bears")).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Tajuru Preserver does not prevent its controller's own Pox sacrifices")
+    void ownPoxStillCausesSacrifices() {
+        harness.setHand(player2, List.of());
+        harness.addToBattlefield(player1, new TajuruPreserver());
+        harness.addToBattlefield(player1, new Forest());
+        harness.castFromHand(player1, new Pox(), "{B}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Tajuru Preserver");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Tajuru Preserver");
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Small life totals lose a third rounded up without rounding the remainder")
+    void roundsLowLifeTotalsUp() {
+        harness.setLife(player1, 2);
+        harness.setLife(player2, 5);
+        harness.setHand(player2, List.of());
+        harness.castFromHand(player1, new Pox(), "{B}{B}{B}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 1);
+        harness.assertLife(player2, 3);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
