@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.b.BayFalcon;
+import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.i.IvoryMask;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -10,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MisersCage.class, BayFalcon.class})
+@CardUsed({MisersCage.class, BayFalcon.class, Disenchant.class, IvoryMask.class})
 class MisersCageTest extends BaseCardTest {
 
     @Test
@@ -86,5 +89,40 @@ class MisersCageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("The upkeep ability damages an opponent with shroud because it does not target")
+    void damagesOpponentWithShroud() {
+        harness.addToBattlefield(player1, new MisersCage());
+        harness.addToBattlefield(player2, new IvoryMask());
+        harness.setHand(player2, List.of(new BayFalcon(), new BayFalcon(), new BayFalcon(),
+                new BayFalcon(), new BayFalcon()));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Destroying the Cage after its ability triggers does not prevent the damage")
+    void triggerResolvesAfterSourceDestroyed() {
+        var cage = harness.addToBattlefieldAndReturn(player1, new MisersCage());
+        harness.setHand(player1, List.of(new Disenchant()));
+        harness.setHand(player2, List.of(new BayFalcon(), new BayFalcon(), new BayFalcon(),
+                new BayFalcon(), new BayFalcon(), new BayFalcon()));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, cage.getId());
+        harness.assertInGraveyard(player1, "Misers' Cage");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 2);
     }
 }
