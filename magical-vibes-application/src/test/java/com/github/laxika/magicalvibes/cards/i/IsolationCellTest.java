@@ -4,10 +4,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.cards.p.PhyrexiasCore;
+import com.github.laxika.magicalvibes.cards.w.WitchbaneOrb;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,9 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({IsolationCell.class, GrizzlyBears.class, Shock.class, SuntailHawk.class, PhyrexiasCore.class, WitchbaneOrb.class})
 class IsolationCellTest extends BaseCardTest {
-
-    // ===== Only triggers on creature spells =====
 
     @Test
     @DisplayName("Triggers when opponent casts a creature spell")
@@ -72,8 +74,6 @@ class IsolationCellTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
 
-    // ===== Opponent has mana: chooses to pay =====
-
     @Test
     @DisplayName("Opponent with mana is prompted to pay or lose life")
     void opponentWithManaIsPrompted() {
@@ -116,8 +116,6 @@ class IsolationCellTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 
-    // ===== Opponent has no mana: auto life loss =====
-
     @Test
     @DisplayName("Auto-loses 2 life when opponent has no mana to pay")
     void autoLosesLifeWithNoMana() {
@@ -143,8 +141,6 @@ class IsolationCellTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 
-    // ===== Life loss can kill opponent =====
-
     @Test
     @DisplayName("Life loss from not paying can reduce opponent to 0 or below")
     void lifeLossCanKill() {
@@ -165,8 +161,6 @@ class IsolationCellTest extends BaseCardTest {
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(-1);
     }
-
-    // ===== Multiple Isolation Cells =====
 
     @Test
     @DisplayName("Multiple Isolation Cells each trigger independently")
@@ -201,7 +195,73 @@ class IsolationCellTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 4);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Hexproof does not stop the non-targeting life-loss trigger")
+    void affectsOpponentWithHexproof() {
+        harness.addToBattlefield(player1, new IsolationCell());
+        harness.addToBattlefield(player2, new WitchbaneOrb());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Opponent may generate mana during resolution before choosing to pay")
+    void mayActivateManaAbilitiesWhenAskedToPay() {
+        harness.addToBattlefield(player1, new IsolationCell());
+        harness.addToBattlefield(player2, new PhyrexiasCore());
+        harness.addToBattlefield(player2, new PhyrexiasCore());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        harness.castCreature(player2, 0);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
+        harness.tapPermanent(player2, 0);
+        harness.tapPermanent(player2, 1);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Trigger still resolves after Isolation Cell leaves the battlefield")
+    void triggerSurvivesSourceLeavingBattlefield() {
+        setupOpponentCastsCreatureWithMana();
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A creature entering without being cast does not trigger Isolation Cell")
+    void enteringWithoutCastingDoesNotTrigger() {
+        harness.addToBattlefield(player1, new IsolationCell());
+
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
 
     /**
      * Sets up: player1 has Isolation Cell on battlefield, player2 casts a creature spell
