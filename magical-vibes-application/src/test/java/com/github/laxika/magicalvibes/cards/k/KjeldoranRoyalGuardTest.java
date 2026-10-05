@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GreenWard;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -21,7 +22,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GrizzlyBears.class, KjeldoranRoyalGuard.class, LlanowarElves.class, Shock.class})
+@CardUsed({GreenWard.class, GrizzlyBears.class, KjeldoranRoyalGuard.class, LlanowarElves.class, Shock.class})
 class KjeldoranRoyalGuardTest extends BaseCardTest {
 
     @Test
@@ -344,13 +345,10 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
         Permanent guard = addGuardReady(player2);
         addUnblockedAttacker(player1); // 2/2
         prepareDeclareBlockers(player1);
-        harness.setHand(player1, List.of(new Shock()));
-        harness.addMana(player1, ManaColor.RED, 1);
 
         // Resolve the ability, then remove its source before combat.
         harness.activateAbility(player2, 0, null, null);
         harness.passBothPriorities();
-        harness.setHand(player1, List.of());
         gd.playerBattlefields.get(player2.getId()).remove(guard);
 
         resolveCombat();
@@ -387,11 +385,48 @@ class KjeldoranRoyalGuardTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castAndResolveInstant(player1, 0, guard.getId());
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(guard);
+        assertThat(guard.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Earlier Guard redirection remains active after a later Guard leaves the battlefield")
+    void earlierGuardEffectSurvivesLaterGuardLeaving() {
+        Permanent firstGuard = addGuardReady(player2);
+        Permanent secondGuard = addGuardReady(player2);
+        addUnblockedAttacker(player1);
+        prepareDeclareBlockers(player1);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player2, 1, null, null);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(secondGuard);
+        resolveCombat();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player2.getId())).contains(guard);
-        assertThat(guard.getMarkedDamage()).isEqualTo(2);
+        assertThat(firstGuard.getMarkedDamage()).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({GreenWard.class})
+    @DisplayName("Protection prevents redirected damage from a green attacker")
+    void protectionPreventsRedirectedCombatDamage() {
+        Permanent guard = addGuardReady(player2);
+        Permanent ward = harness.addToBattlefieldAndReturn(player2, new GreenWard());
+        ward.setAttachedTo(guard.getId());
+        addUnblockedAttacker(player1);
+        prepareDeclareBlockers(player1);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        assertThat(guard.getMarkedDamage()).isZero();
     }
 
     private Permanent addGuardReady(Player player) {
