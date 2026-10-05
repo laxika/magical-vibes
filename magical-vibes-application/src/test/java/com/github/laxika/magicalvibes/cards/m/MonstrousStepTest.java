@@ -26,7 +26,7 @@ class MonstrousStepTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castSorcery(player1, 0, List.of(attacker.getId(), blocker.getId()));
-        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.passBothPriorities();
 
         assertThat(attacker.getPowerModifier()).isEqualTo(7);
         assertThat(attacker.getToughnessModifier()).isEqualTo(7);
@@ -92,5 +92,78 @@ class MonstrousStepTest extends BaseCardTest {
         harness.beginBlockerDeclarationInput();
 
         gs.declareBlockers(gd, player2, List.of());
+    }
+
+    @Test
+    @DisplayName("The boost still resolves when the optional blocker leaves")
+    void boostsWhenOptionalBlockerLeaves() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MonstrousStep()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castSorcery(player1, 0, List.of(attacker.getId(), blocker.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(blocker);
+        harness.passBothPriorities();
+
+        assertThat(attacker.getPowerModifier()).isEqualTo(7);
+        assertThat(attacker.getToughnessModifier()).isEqualTo(7);
+        harness.assertInGraveyard(player1, "Monstrous Step");
+    }
+
+    @Test
+    @DisplayName("The optional blocker gets no boost or requirement when the first target leaves")
+    void noRequirementWhenFirstTargetLeaves() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MonstrousStep()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        harness.castSorcery(player1, 0, List.of(attacker.getId(), blocker.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(attacker);
+        harness.passBothPriorities();
+
+        assertThat(blocker.getPowerModifier()).isZero();
+        assertThat(blocker.getToughnessModifier()).isZero();
+        assertThat(blocker.getMustBlockIds()).isEmpty();
+        harness.assertInGraveyard(player1, "Monstrous Step");
+    }
+
+    @Test
+    @DisplayName("An able chosen blocker cannot decline to block the boosted attacker")
+    void ableBlockerMustBlock() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MonstrousStep()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.castSorcery(player1, 0, List.of(attacker.getId(), blocker.getId()));
+        harness.passBothPriorities();
+
+        attacker.setAttacking(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.beginBlockerDeclarationInput();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+    }
+
+    @Test
+    @DisplayName("Both the boost and block requirement expire at the end of the turn")
+    void effectsExpireAtEndOfTurn() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MonstrousStep()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.castSorcery(player1, 0, List.of(attacker.getId(), blocker.getId()));
+        harness.passBothPriorities();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+
+        assertThat(attacker.getPowerModifier()).isZero();
+        assertThat(attacker.getToughnessModifier()).isZero();
+        assertThat(blocker.getMustBlockIds()).isEmpty();
     }
 }
