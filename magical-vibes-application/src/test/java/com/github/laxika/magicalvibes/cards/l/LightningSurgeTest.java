@@ -30,8 +30,7 @@ class LightningSurgeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningSurge()));
         harness.addMana(player1, ManaColor.RED, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -85,8 +84,7 @@ class LightningSurgeTest extends BaseCardTest {
         harness.setGraveyard(player1, graveyard);
         harness.addMana(player1, ManaColor.RED, 7);
 
-        harness.castFlashback(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
         harness.assertNotInGraveyard(player1, "Lightning Surge");
@@ -104,8 +102,7 @@ class LightningSurgeTest extends BaseCardTest {
         harness.setGraveyard(player1, graveyard);
         harness.addMana(player1, ManaColor.RED, 7);
 
-        harness.castFlashback(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
     }
@@ -177,6 +174,53 @@ class LightningSurgeTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Phantom Flock");
         harness.assertInGraveyard(player2, "Phantom Flock");
+    }
+
+    @Test
+    @DisplayName("Losing threshold before resolution restores preventable four damage")
+    void losingThresholdBeforeResolutionRestoresPreventableDamage() {
+        harness.setGraveyard(player1, filler(7));
+        harness.setHand(player1, List.of(new LightningSurge()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.setHand(player2, List.of(new HealingSalve()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.setGraveyard(player1, filler(6));
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, 1, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Six graveyard cards do not count the resolving spell toward threshold")
+    void resolvingSpellDoesNotCountItselfTowardThreshold() {
+        harness.setGraveyard(player1, filler(6));
+        harness.setHand(player1, List.of(new LightningSurge()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 16);
+        harness.assertInGraveyard(player1, "Lightning Surge");
+    }
+
+    @Test
+    @DisplayName("Below threshold Phantom Flock prevents damage and loses one counter")
+    void belowThresholdDamageToPhantomFlockIsPrevented() {
+        Permanent flock = harness.addToBattlefieldAndReturn(player2, new PhantomFlock());
+        flock.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setHand(player1, List.of(new LightningSurge()));
+        harness.addMana(player1, ManaColor.RED, 5);
+
+        harness.castAndResolveSorcery(player1, 0, flock.getId());
+
+        harness.assertOnBattlefield(player2, "Phantom Flock");
+        assertThat(flock.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(flock.getMarkedDamage()).isZero();
     }
 
     private List<Card> fillerForJudReview(int count) {
