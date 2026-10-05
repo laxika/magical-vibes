@@ -30,8 +30,7 @@ class PsychicTheftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PsychicTheft()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
                 .hasMessageContaining("valid");
@@ -50,8 +49,7 @@ class PsychicTheftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PsychicTheft()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(land, creature);
@@ -64,8 +62,7 @@ class PsychicTheftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PsychicTheft()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
 
         harness.passUntil(TurnStep.END_STEP);
@@ -84,8 +81,7 @@ class PsychicTheftTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PsychicTheft()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
 
         harness.addMana(player1, ManaColor.BLUE, 3);
@@ -105,8 +101,7 @@ class PsychicTheftTest extends BaseCardTest {
         harness.setHand(player1, List.of(theft));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player1, 0);
 
         harness.passUntil(TurnStep.END_STEP);
@@ -118,5 +113,83 @@ class PsychicTheftTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(instant);
         harness.assertNotOnBattlefield(player2, "Chimeric Idol");
+    }
+
+    @Test
+    void canTargetItsControllerAndReturnsTheCardToThatPlayersHand() {
+        Card spell = new ManaVapors();
+        harness.setHand(player1, List.of(new PsychicTheft(), spell));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(spell);
+
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(spell);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void doesNothingWhenTheTargetHandIsEmpty() {
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new PsychicTheft()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void castingTheExiledCardRequiresPayingItsManaCost() {
+        Card spell = new ManaVapors();
+        harness.setHand(player2, List.of(spell));
+        harness.setHand(player1, List.of(new PsychicTheft()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId(), player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(spell);
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castFromExile(player1, spell.getId(), player2.getId());
+        resolveAllTriggers();
+
+        harness.passUntil(TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(spell);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(spell);
+    }
+
+    @Test
+    void cannotCastTheExiledSorceryInResponseToItsDelayedReturn() {
+        Card spell = new ManaVapors();
+        harness.setHand(player2, List.of(spell));
+        harness.setHand(player1, List.of(new PsychicTheft()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.passUntil(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, spell.getId(), player2.getId()))
+                .hasMessageContaining("sorcery-speed");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(spell);
+
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(spell);
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(spell.getId());
     }
 }
