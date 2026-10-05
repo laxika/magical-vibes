@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.a.AnjeFalkenrath;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -17,7 +18,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LeadershipVacuum.class, GrizzlyBears.class})
+@CardUsed({LeadershipVacuum.class, GrizzlyBears.class, AnjeFalkenrath.class})
 class LeadershipVacuumTest extends BaseCardTest {
 
     @Test
@@ -31,15 +32,13 @@ class LeadershipVacuumTest extends BaseCardTest {
         var nonCommander = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         Card drawnCard = new GrizzlyBears();
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).add(drawnCard);
+        harness.setLibrary(player1, List.of(drawnCard));
         harness.setHand(player1, List.of(new LeadershipVacuum()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castInstant(player1, 0, 2, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .containsExactly(nonCommander);
@@ -64,6 +63,51 @@ class LeadershipVacuumTest extends BaseCardTest {
                 .hasMessageContaining("only target players");
     }
 
+    @Test
+    void drawsForCasterWhenTargetControlsNoCommanders() {
+        var creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card drawnCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new LeadershipVacuum()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(creature);
+    }
+
+    @Test
+    void canTargetSelfAndLeavesOtherPlayersCommanderOnBattlefield() {
+        gd.format = DeckFormat.COMMANDER;
+        Card ownCommander = new AnjeFalkenrath();
+        ownCommander.setOwnerId(player1.getId());
+        gd.makeCommander(player1.getId(), ownCommander);
+        Card otherCommander = new AnjeFalkenrath();
+        otherCommander.setOwnerId(player2.getId());
+        gd.makeCommander(player2.getId(), otherCommander);
+        gd.playerCommandZones.put(player1.getId(), new ArrayList<>());
+        gd.playerCommandZones.put(player2.getId(), new ArrayList<>());
+        harness.addToBattlefield(player1, ownCommander);
+        var untouchedCommander = harness.addToBattlefieldAndReturn(player2, otherCommander);
+        Card drawnCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new LeadershipVacuum()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerCommandZones.get(player1.getId())).containsExactly(ownCommander);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(untouchedCommander);
+        assertThat(gd.playerCommandZones.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.pendingCommanderZoneMoves).isEmpty();
+    }
     private Card commander(com.github.laxika.magicalvibes.model.Player owner, String name) {
         Card card = new Card();
         card.setName(name);
