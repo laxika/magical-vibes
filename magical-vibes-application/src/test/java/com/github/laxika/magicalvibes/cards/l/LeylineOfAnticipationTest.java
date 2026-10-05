@@ -6,14 +6,15 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.service.GameService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.CardUsedExtension;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.List;
 
@@ -21,13 +22,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Tag("scryfall")
+@ExtendWith(CardUsedExtension.class)
+@CardUsed({LeylineOfAnticipation.class, RuneclawBear.class, LavaAxe.class})
 class LeylineOfAnticipationTest {
 
     protected GameTestHarness harness;
     protected Player player1;
     protected Player player2;
-    protected GameService gs;
-    protected GameQueryService gqs;
     protected GameData gd;
 
     @BeforeEach
@@ -35,13 +36,10 @@ class LeylineOfAnticipationTest {
         harness = new GameTestHarness();
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();
-        gs = harness.getGameService();
-        gqs = harness.getGameQueryService();
         gd = harness.getGameData();
-        // Do NOT call skipMulligan() here — leyline tests need to set hand first
+        gd.alwaysOfferPriorityWindows = true;
+        // Set opening hands before ending the mulligan process.
     }
-
-    // ===== Leyline opening hand mechanic (CR 103.6) =====
 
     @Test
     @DisplayName("Leyline in opening hand prompts may ability at game start")
@@ -60,10 +58,8 @@ class LeylineOfAnticipationTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leyline of Anticipation"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .noneMatch(c -> c.getName().equals("Leyline of Anticipation"));
+        harness.assertOnBattlefield(player1, "Leyline of Anticipation");
+        harness.assertNotInHand(player1, "Leyline of Anticipation");
     }
 
     @Test
@@ -74,10 +70,8 @@ class LeylineOfAnticipationTest {
 
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard().getName().equals("Leyline of Anticipation"));
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leyline of Anticipation"));
+        harness.assertNotOnBattlefield(player1, "Leyline of Anticipation");
+        harness.assertInHand(player1, "Leyline of Anticipation");
     }
 
     @Test
@@ -86,13 +80,12 @@ class LeylineOfAnticipationTest {
         harness.setHand(player1, List.of(new LeylineOfAnticipation()));
         harness.skipMulligan();
 
-        // Decline the leyline — card stays in hand
+        // Decline the leyline; the card stays in hand.
         harness.handleMayAbilityChosen(player1, false);
 
         // Game should be running now without re-prompting
         assertThat(gd.pendingMayAbilities).isEmpty();
-        assertThat(gd.playerHands.get(player1.getId()))
-                .anyMatch(c -> c.getName().equals("Leyline of Anticipation"));
+        harness.assertInHand(player1, "Leyline of Anticipation");
     }
 
     @Test
@@ -131,17 +124,13 @@ class LeylineOfAnticipationTest {
         harness.setHand(player2, List.of(new LeylineOfAnticipation()));
         harness.skipMulligan();
 
-        // Accept both — per CR 103.6, starting player acts first
+        // The starting player makes pregame choices first.
         harness.handleMayAbilityChosen(player1, true);
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leyline of Anticipation"));
-        assertThat(gd.playerBattlefields.get(player2.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leyline of Anticipation"));
+        harness.assertOnBattlefield(player1, "Leyline of Anticipation");
+        harness.assertOnBattlefield(player2, "Leyline of Anticipation");
     }
-
-    // ===== Grant flash to all spells =====
 
     @Test
     @DisplayName("Can cast creature at instant speed with Leyline of Anticipation on battlefield")
@@ -152,13 +141,13 @@ class LeylineOfAnticipationTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new RuneclawBear()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Runeclaw Bear");
     }
 
     @Test
@@ -171,16 +160,16 @@ class LeylineOfAnticipationTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new RuneclawBear()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         // Player2 passes priority, giving player1 priority
-        harness.getGameService().passPriority(harness.getGameData(), player2);
+        harness.passPriority(player2);
 
         harness.castCreature(player1, 0);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Runeclaw Bear");
     }
 
     @Test
@@ -188,7 +177,6 @@ class LeylineOfAnticipationTest {
     void canCastSorceryAtInstantSpeed() {
         harness.skipMulligan();
         harness.addToBattlefield(player1, new LeylineOfAnticipation());
-        harness.addToBattlefield(player2, new GrizzlyBears());
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
@@ -202,8 +190,6 @@ class LeylineOfAnticipationTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Lava Axe");
     }
 
-    // ===== Only affects controller =====
-
     @Test
     @DisplayName("Leyline of Anticipation only grants flash to its controller's spells")
     void onlyAffectsController() {
@@ -213,15 +199,13 @@ class LeylineOfAnticipationTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new RuneclawBear()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
-
-    // ===== Effect goes away when Leyline leaves =====
 
     @Test
     @DisplayName("Spells lose flash timing when Leyline of Anticipation leaves the battlefield")
@@ -235,15 +219,13 @@ class LeylineOfAnticipationTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new RuneclawBear()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
-
-    // ===== Leyline can be cast normally from hand =====
 
     @Test
     @DisplayName("Leyline of Anticipation can be cast normally for {2}{U}{U}")
@@ -257,7 +239,62 @@ class LeylineOfAnticipationTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Leyline of Anticipation");
+    }
+
+    @Test
+    @DisplayName("Each opening-hand Leyline can be accepted or declined independently")
+    void canAcceptOneLeylineAndDeclineAnother() {
+        LeylineOfAnticipation accepted = new LeylineOfAnticipation();
+        LeylineOfAnticipation declined = new LeylineOfAnticipation();
+        harness.setHand(player1, List.of(accepted, declined));
+        harness.skipMulligan();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, false);
+
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Leyline of Anticipation"));
+                .extracting(p -> p.getCard().getId()).containsExactly(accepted.getId());
+        assertThat(gd.playerHands.get(player1.getId()))
+                .extracting(c -> c.getId()).containsExactly(declined.getId());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Leyline in hand does not grant flash to itself or other spells")
+    void leylineInHandDoesNotGrantFlash() {
+        harness.skipMulligan();
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new LeylineOfAnticipation(), new RuneclawBear()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThatThrownBy(() -> harness.castCreature(player1, 1))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Leyline allows casting an enchantment in response to another spell")
+    void canCastEnchantmentWithNonemptyStack() {
+        harness.skipMulligan();
+        harness.addToBattlefield(player1, new LeylineOfAnticipation());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new RuneclawBear(), new LeylineOfAnticipation()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreature(player1, 0);
+        harness.castEnchantment(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getCard()).isInstanceOf(LeylineOfAnticipation.class);
     }
 }
