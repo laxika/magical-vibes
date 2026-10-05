@@ -71,4 +71,61 @@ class OrazcaPuzzleDoorTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(door);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(door.getCard());
     }
+
+    @Test
+    @DisplayName("Orazca Puzzle-Door requires choosing one card when two are available")
+    void cannotDeclineHandSelection() {
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.addToBattlefield(player1, new OrazcaPuzzleDoor());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).contains(second).doesNotContain(first);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first).doesNotContain(second);
+    }
+
+    @Test
+    @DisplayName("Choosing the second card leaves cards below the top two in their original order")
+    void choosesSecondCardAndPreservesRemainingLibrary() {
+        Forest first = new Forest();
+        OrazcaPuzzleDoor second = new OrazcaPuzzleDoor();
+        Forest third = new Forest();
+        OrazcaPuzzleDoor fourth = new OrazcaPuzzleDoor();
+        harness.setLibrary(player1, List.of(first, second, third, fourth));
+        harness.addToBattlefield(player1, new OrazcaPuzzleDoor());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(second).doesNotContain(first);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(first).doesNotContain(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third, fourth);
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent activation and creates no choice")
+    void emptyLibrary() {
+        OrazcaPuzzleDoor door = new OrazcaPuzzleDoor();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+        harness.addToBattlefield(player1, door);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotOnBattlefield(player1, "Orazca Puzzle-Door");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(door);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
 }
