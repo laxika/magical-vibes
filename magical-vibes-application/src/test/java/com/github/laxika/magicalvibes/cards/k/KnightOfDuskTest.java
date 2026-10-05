@@ -8,15 +8,18 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.Terror;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KnightOfDusk.class, GrizzlyBears.class})
+@CardUsed({KnightOfDusk.class, GrizzlyBears.class, Terror.class})
 class KnightOfDuskTest extends BaseCardTest {
 
     @Test
@@ -152,8 +155,7 @@ class KnightOfDuskTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
 
         // Resolve both abilities
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
@@ -214,6 +216,68 @@ class KnightOfDuskTest extends BaseCardTest {
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
                 log.contains("destroyed"));
+    }
+
+    @Test
+    @DisplayName("Tapped Knight can destroy its tapped blocker")
+    void tappedKnightCanDestroyTappedBlocker() {
+        Permanent knight = addCreatureReady(player1, new KnightOfDusk());
+        knight.setAttacking(true);
+        knight.setTapped(true);
+        Permanent blocker = addBlocker(player2, 0);
+        blocker.setTapped(true);
+        setupCombatStep();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(knight.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Destroying an earlier permanent does not invalidate the Knight's blocker")
+    void blockerRemainsLegalAfterEarlierPermanentLeaves() {
+        Permanent earlier = addCreatureReady(player1, new GrizzlyBears());
+        Permanent knight = addCreatureReady(player1, new KnightOfDusk());
+        knight.setAttacking(true);
+        Permanent blocker = addBlocker(player2, 1);
+        blocker.addBlockingTargetId(knight.getId());
+        setupCombatStep();
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, earlier.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Knight of Dusk");
+    }
+
+    @Test
+    @DisplayName("Pending activation still destroys the blocker after an earlier permanent leaves")
+    void pendingActivationSurvivesBattlefieldIndexChange() {
+        Permanent earlier = addCreatureReady(player1, new GrizzlyBears());
+        Permanent knight = addCreatureReady(player1, new KnightOfDusk());
+        knight.setAttacking(true);
+        Permanent blocker = addBlocker(player2, 1);
+        blocker.addBlockingTargetId(knight.getId());
+        setupCombatStep();
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, null, blocker.getId());
+        harness.castInstant(player1, 0, earlier.getId());
+
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Knight of Dusk");
     }
 
     private Permanent addBlocker(Player player, int attackerIndex) {
