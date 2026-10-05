@@ -66,4 +66,76 @@ class MiasmaDemonTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
     }
+
+    @Test
+    @CardUsed({MiasmaDemon.class})
+    void canDiscardZeroCards() {
+        MiasmaDemon retained = new MiasmaDemon();
+        harness.setHand(player1, List.of(retained));
+        Permanent demon = harness.enterBattlefieldAndReturn(player1, new MiasmaDemon());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleXValueChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(4);
+    }
+
+    @Test
+    @CardUsed({MiasmaDemon.class})
+    void canChooseFewerTargetsAndTargetItsOwnSourceWithASeparateTrigger() {
+        harness.setHand(player1, List.of(new MiasmaDemon(), new MiasmaDemon()));
+        Permanent demon = harness.enterBattlefieldAndReturn(player1, new MiasmaDemon());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleXValueChosen(player1, 2);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, demon.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(4);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({MiasmaDemon.class})
+    void canDiscardWithoutChoosingTargets() {
+        MiasmaDemon discarded = new MiasmaDemon();
+        harness.setHand(player1, List.of(discarded));
+        Permanent demon = harness.enterBattlefieldAndReturn(player1, new MiasmaDemon());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleXValueChosen(player1, 1);
+        harness.handleCardChosen(player1, 0);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(4);
+    }
+
+    @Test
+    @CardUsed({MiasmaDemon.class})
+    void emptyHandDoesNotCreateADebuffTrigger() {
+        harness.setHand(player1, List.of());
+        Permanent demon = harness.enterBattlefieldAndReturn(player1, new MiasmaDemon());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.getEffectivePower(gd, demon)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, demon)).isEqualTo(4);
+    }
 }
