@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
+import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,16 +18,13 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PincherBeetles.class, Boomerang.class, GrizzlyBears.class, ProdigalPyromancer.class, WrathOfGod.class})
+@CardUsed({PincherBeetles.class, Boomerang.class, Cancel.class, GrizzlyBears.class, ProdigalPyromancer.class, WrathOfGod.class})
 class PincherBeetlesTest extends BaseCardTest {
 
     @Test
     @DisplayName("Casting Pincher Beetles puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new PincherBeetles()));
-        harness.addMana(player1, ManaColor.GREEN, 3);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PincherBeetles(), "{2}{G}");
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -98,5 +96,23 @@ class PincherBeetlesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, beetles.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("Shroud does not prevent countering Pincher Beetles on the stack")
+    void canBeCounteredAsCreatureSpell() {
+        PincherBeetles beetles = new PincherBeetles();
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castFromHand(player1, beetles, "{2}{G}");
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, beetles.getId());
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Pincher Beetles");
+        harness.assertInGraveyard(player1, "Pincher Beetles");
+        harness.assertInGraveyard(player2, "Cancel");
     }
 }
