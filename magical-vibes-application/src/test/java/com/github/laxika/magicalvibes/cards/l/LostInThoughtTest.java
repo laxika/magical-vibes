@@ -31,12 +31,7 @@ class LostInThoughtTest extends BaseCardTest {
         Permanent aura = harness.addToBattlefieldAndReturn(player2, new LostInThought());
         aura.setAttachedTo(creature.getId());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
@@ -47,16 +42,13 @@ class LostInThoughtTest extends BaseCardTest {
     @Test
     @DisplayName("Enchanted creature cannot block")
     void enchantedCreatureCannotBlock() {
-        Permanent attacker = addCreatureReady(player1, new SuntailHawk());
+        Permanent attacker = addCreatureReady(player1, new CabalTrainee());
         attacker.setAttacking(true);
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new LostInThought());
         Permanent blocker = addCreatureReady(player2, new HarvesterDruid());
         aura.setAttachedTo(blocker.getId());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -203,6 +195,58 @@ class LostInThoughtTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .containsExactlyInAnyOrder(graveyard.get(0), graveyard.get(1), graveyard.get(2));
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(graveyard.get(3));
+    }
+
+    @Test
+    @DisplayName("Paying to ignore Lost in Thought is immediate and does not use the stack")
+    void bypassIsAnImmediateSpecialActionAndAllowsAttacking() {
+        Permanent creature = addCreatureReady(player1, new CabalTrainee());
+        harness.setGraveyard(player1, List.of(new SuntailHawk(), new SuntailHawk(), new SuntailHawk()));
+        addOpponentAuraAtIndexTwoForJudReview(creature);
+
+        harness.activateAbility(player1, 2, 0, null, null);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(3);
+        declareAttackers(player1, List.of(0));
+        assertThat(creature.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Paying to ignore Lost in Thought allows blocking this turn")
+    void bypassAllowsBlocking() {
+        Permanent blocker = addCreatureReady(player1, new CabalTrainee());
+        Permanent attacker = addCreatureReady(player2, new CabalTrainee());
+        attacker.setAttacking(true);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new LostInThought());
+        aura.setAttachedTo(blocker.getId());
+        harness.setGraveyard(player1, List.of(new SuntailHawk(), new SuntailHawk(), new SuntailHawk()));
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ignoring Lost in Thought applies only to the player who paid")
+    void newControllerDoesNotInheritThePreviousControllersExemption() {
+        Permanent creature = addCreatureReady(player1, new CabalTrainee());
+        harness.setGraveyard(player1, List.of(new SuntailHawk(), new SuntailHawk(), new SuntailHawk()));
+        addOpponentAuraAtIndexTwoForJudReview(creature);
+        harness.activateAbility(player1, 2, 0, null, null);
+
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerBattlefields.get(player2.getId()).add(creature);
+        creature.setSummoningSick(true);
+        harness.ensurePriority(player2);
+
+        Permanent target = gd.playerBattlefields.get(player2.getId()).getFirst();
+        assertThatThrownBy(() -> harness.activateAbility(player2, 3, 0, target.getId(), null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
     }
 
     private Permanent addOpponentAuraAtIndexTwoForJudReview(Permanent enchantedCreature) {
