@@ -4,8 +4,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -55,15 +53,47 @@ class PitilessHordeTest extends BaseCardTest {
 
         Permanent horde = findPermanent(player1, "Pitiless Horde");
         assertThat(horde.hasKeyword(Keyword.HASTE)).isTrue();
-        assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .anyMatch(action -> action.permanentId().equals(horde.getId())
-                        && action.kind() == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP);
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.assertOnBattlefield(player1, "Pitiless Horde");
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Pitiless Horde");
         harness.assertNotOnBattlefield(player1, "Pitiless Horde");
+    }
+
+    @Test
+    @DisplayName("Dash does not create an enters-the-battlefield triggered ability")
+    void dashDoesNotCreateAnEtbTrigger() {
+        harness.setHand(player1, List.of(new PitilessHorde()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castWithAlternateCost(player1, 0, (java.util.UUID) null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Pitiless Horde");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting normally does not grant haste or return the creature at end step")
+    void normalCastStaysOnBattlefield() {
+        harness.setHand(player1, List.of(new PitilessHorde()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Pitiless Horde").hasKeyword(Keyword.HASTE)).isFalse();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Pitiless Horde");
+        harness.assertNotInHand(player1, "Pitiless Horde");
     }
 }
