@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,8 +12,6 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,10 +35,8 @@ class OriginOfSpiderManTest extends BaseCardTest {
     @Test
     @DisplayName("Chapter II puts a counter on a creature and makes it a legendary Spider Hero")
     void chapterIIMakesCreatureLegendarySpiderHero() {
-        harness.addToBattlefield(player1, new OriginOfSpiderMan());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent saga = findPermanent(player1, "Origin of Spider-Man");
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new OriginOfSpiderMan());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         saga.setCounterCount(CounterType.LORE, 1);
 
         advanceToNextChapter();
@@ -60,10 +55,8 @@ class OriginOfSpiderManTest extends BaseCardTest {
     @Test
     @DisplayName("Chapter III gives a creature double strike until end of turn")
     void chapterIIIGrantsDoubleStrike() {
-        harness.addToBattlefield(player1, new OriginOfSpiderMan());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-        Permanent saga = findPermanent(player1, "Origin of Spider-Man");
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new OriginOfSpiderMan());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         saga.setCounterCount(CounterType.LORE, 2);
 
         advanceToNextChapter();
@@ -77,11 +70,9 @@ class OriginOfSpiderManTest extends BaseCardTest {
     @Test
     @DisplayName("Chapters II and III only target creatures you control")
     void chaptersOnlyTargetOwnCreatures() {
-        harness.addToBattlefield(player1, new OriginOfSpiderMan());
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new OriginOfSpiderMan());
         harness.addToBattlefield(player1, new GrizzlyBears());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-        Permanent saga = findPermanent(player1, "Origin of Spider-Man");
-        Permanent opponentBears = findPermanent(player2, "Grizzly Bears");
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         saga.setCounterCount(CounterType.LORE, 1);
 
         advanceToNextChapter();
@@ -90,11 +81,102 @@ class OriginOfSpiderManTest extends BaseCardTest {
                 .doesNotContain(opponentBears.getId());
     }
 
+    @Test
+    @DisplayName("Chapter II requires choosing a creature when a legal target exists")
+    void chapterIICannotBeSkipped() {
+        addAndResolveSaga();
+        Permanent spider = findPermanent(player1, "Spider");
+
+        advanceToNextChapter();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).containsExactly(spider.getId());
+        assertThat(choice.validPlayerIds()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chapter III requires choosing a creature when a legal target exists")
+    void chapterIIICannotBeSkipped() {
+        addAndResolveSaga();
+        Permanent saga = findPermanent(player1, "Origin of Spider-Man");
+        Permanent spider = findPermanent(player1, "Spider");
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).containsExactly(spider.getId());
+        assertThat(choice.validPlayerIds()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Chapter II retains existing creature types and lasts beyond cleanup")
+    void chapterIIChangesArePermanentAndAdditive() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new OriginOfSpiderMan());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        saga.setCounterCount(CounterType.LORE, 1);
+
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.BEAR)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.SPIDER)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, bears, CardSubtype.HERO)).isTrue();
+        assertThat(gqs.hasEffectiveSupertype(gd, bears, CardSupertype.LEGENDARY)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The final chapter sacrifices the Saga and double strike expires at cleanup")
+    void finalChapterSacrificesSagaAndDoubleStrikeExpires() {
+        addAndResolveSaga();
+        Permanent saga = findPermanent(player1, "Origin of Spider-Man");
+        Permanent spider = findPermanent(player1, "Spider");
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+        harness.handlePermanentChosen(player1, spider.getId());
+        harness.assertOnBattlefield(player1, "Origin of Spider-Man");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Origin of Spider-Man");
+        harness.assertInGraveyard(player1, "Origin of Spider-Man");
+        assertThat(gqs.hasKeyword(gd, spider, Keyword.DOUBLE_STRIKE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, spider, Keyword.DOUBLE_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, spider, Keyword.REACH)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Chapter III excludes opposing creatures and noncreature permanents")
+    void chapterIIIOnlyTargetsOwnCreatures() {
+        Permanent saga = harness.addToBattlefieldAndReturn(player1, new OriginOfSpiderMan());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        saga.setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactly(bears.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.DOUBLE_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponentBears, Keyword.DOUBLE_STRIKE)).isFalse();
+    }
+
     private void addAndResolveSaga() {
-        harness.setHand(player1, List.of(new OriginOfSpiderMan()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castEnchantment(player1, 0);
+        harness.castFromHand(player1, new OriginOfSpiderMan(), "{1}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
