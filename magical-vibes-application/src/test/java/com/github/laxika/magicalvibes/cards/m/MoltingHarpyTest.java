@@ -64,4 +64,35 @@ class MoltingHarpyTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Molting Harpy");
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
+
+    @Test
+    @DisplayName("Colored mana can pay the generic upkeep cost")
+    void coloredManaPaysUpkeepCost() {
+        harness.addToBattlefield(player1, new MoltingHarpy());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Molting Harpy");
+        harness.assertNotInGraveyard(player1, "Molting Harpy");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Payment remains optional when sufficient mana is available")
+    void decliningWithEnoughManaSacrificesWithoutSpendingMana() {
+        harness.addToBattlefield(player1, new MoltingHarpy());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Molting Harpy");
+        harness.assertInGraveyard(player1, "Molting Harpy");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
 }
