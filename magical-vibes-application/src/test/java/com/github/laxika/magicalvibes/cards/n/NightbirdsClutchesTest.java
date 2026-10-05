@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NightbirdsClutches.class, GrizzlyBears.class, FountainOfYouth.class})
 class NightbirdsClutchesTest extends BaseCardTest {
 
     @Test
@@ -29,8 +31,7 @@ class NightbirdsClutchesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, List.of(creature1.getId(), creature2.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(creature1.getId(), creature2.getId()));
 
         assertThat(creature1.isCantBlockThisTurn()).isTrue();
         assertThat(creature2.isCantBlockThisTurn()).isTrue();
@@ -45,8 +46,7 @@ class NightbirdsClutchesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, List.of(creature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
 
         assertThat(creature.isCantBlockThisTurn()).isTrue();
     }
@@ -94,16 +94,12 @@ class NightbirdsClutchesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, List.of(blocker.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(blocker.getId()));
 
         assertThat(blocker.isCantBlockThisTurn()).isTrue();
 
         attacker.setAttacking(true);
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers();
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class);
@@ -138,8 +134,7 @@ class NightbirdsClutchesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castSorcery(player1, 0, List.of(creature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
 
         harness.assertInGraveyard(player1, "Nightbird's Clutches");
     }
@@ -219,5 +214,97 @@ class NightbirdsClutchesTest extends BaseCardTest {
         harness.castFlashback(player1, 0, List.of(creature.getId()));
 
         harness.assertNotInGraveyard(player1, "Nightbird's Clutches");
+    }
+
+    @Test
+    @DisplayName("Can resolve with zero targets and no creatures on the battlefield")
+    void canCastWithZeroTargets() {
+        harness.setHand(player1, List.of(new NightbirdsClutches()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, List.of());
+
+        harness.assertInGraveyard(player1, "Nightbird's Clutches");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can flash back with zero targets")
+    void canFlashbackWithZeroTargets() {
+        harness.setGraveyard(player1, List.of(new NightbirdsClutches()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castFlashback(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotInGraveyard(player1, "Nightbird's Clutches");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Nightbird's Clutches"));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot choose the same creature twice")
+    void cannotTargetSameCreatureTwice() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new NightbirdsClutches()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0,
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can target your own creature without affecting other creatures")
+    void canTargetOwnCreature() {
+        Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent otherCreature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new NightbirdsClutches()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(ownCreature.getId()));
+
+        assertThat(ownCreature.isCantBlockThisTurn()).isTrue();
+        assertThat(otherCreature.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The blocking restriction expires before the next turn")
+    void blockingRestrictionExpires() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new NightbirdsClutches()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
+        assertThat(creature.isCantBlockThisTurn()).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(creature.isCantBlockThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Flashback exiles the spell even if every target leaves before resolution")
+    void flashbackExilesWhenAllTargetsBecomeIllegal() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        harness.setGraveyard(player1, List.of(new NightbirdsClutches()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castFlashback(player1, 0, List.of(creature.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+
+        harness.passBothPriorities();
+
+        assertThat(creature.isCantBlockThisTurn()).isFalse();
+        harness.assertNotInGraveyard(player1, "Nightbird's Clutches");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Nightbird's Clutches"));
+        assertThat(gd.stack).isEmpty();
     }
 }
