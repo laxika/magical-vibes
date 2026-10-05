@@ -40,4 +40,34 @@ class InvigoratingFallsTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
     }
+
+    @Test
+    @DisplayName("Counts creature cards added to graveyards before resolution")
+    void countsCreaturesAddedBeforeResolution() {
+        int lifeBefore = gd.getLife(player1.getId());
+        int opponentLifeBefore = gd.getLife(player2.getId());
+
+        harness.castFromHand(player1, new InvigoratingFalls(), "{2}{G}{G}");
+        harness.setGraveyard(player1, List.of(new AvenTrooper()));
+        harness.setGraveyard(player2, List.of(new AvenTrooper(), new AvenTrooper()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 3);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore);
+    }
+
+    @Test
+    @DisplayName("Does not count creature cards removed from graveyards before resolution")
+    void doesNotCountCreaturesRemovedBeforeResolution() {
+        harness.setGraveyard(player1, List.of(new AvenTrooper()));
+        harness.setGraveyard(player2, List.of(new AvenTrooper(), new AvenTrooper()));
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castFromHand(player1, new InvigoratingFalls(), "{2}{G}{G}");
+        harness.setGraveyard(player1, List.of());
+        harness.setGraveyard(player2, List.of(new AvenTrooper()));
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore + 1);
+    }
 }
