@@ -84,4 +84,68 @@ class ManaMatrixTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Multiple Mana Matrices reduce generic costs cumulatively")
+    void multipleMatricesStack() {
+        harness.addToBattlefield(player1, new ManaMatrix());
+        harness.addToBattlefield(player1, new ManaMatrix());
+        harness.setHand(player1, List.of(new StormSeeker()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A tapped Mana Matrix still reduces spell costs")
+    void tappedMatrixStillReducesCosts() {
+        harness.addToBattlefieldAndReturn(player1, new ManaMatrix()).setTapped(true);
+        harness.setHand(player1, List.of(new StormSeeker()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Mana Matrix does not reduce artifact spells")
+    void artifactSpellsAreNotReduced() {
+        harness.addToBattlefield(player1, new ManaMatrix());
+        harness.setHand(player1, List.of(new ManaMatrix()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castArtifact(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castArtifact(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Excess generic reduction still leaves colored mana to pay")
+    void excessReductionDoesNotPayColoredMana() {
+        harness.addToBattlefield(player1, new ManaMatrix());
+        harness.addToBattlefield(player1, new ManaMatrix());
+        harness.setHand(player1, List.of(new SylvanLibrary()));
+
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castEnchantment(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
 }
