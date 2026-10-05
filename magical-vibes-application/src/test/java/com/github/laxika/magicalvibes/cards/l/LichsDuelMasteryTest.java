@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -14,7 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LichsDuelMastery.class, GrizzlyBears.class})
+@CardUsed({LichsDuelMastery.class, GrizzlyBears.class, Shock.class})
 class LichsDuelMasteryTest extends BaseCardTest {
 
     private UUID castMastery(int librarySize) {
@@ -61,7 +63,7 @@ class LichsDuelMasteryTest extends BaseCardTest {
     @Test
     @DisplayName("Sacrifices itself when no shields remain")
     void sacrificesWhenNoShieldsRemain() {
-        UUID masteryId = castMastery(1);
+        castMastery(1);
         harness.setLife(player1, 20);
 
         harness.inMutationScope(() -> harness.getLifeSupport()
@@ -69,11 +71,9 @@ class LichsDuelMasteryTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getLifeSupport()
                 .applyLifeLoss(gd, player1.getId(), 1, "second test"));
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getId().equals(masteryId));
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card instanceof LichsDuelMastery);
+        harness.assertLife(player1, 20);
+        harness.assertNotOnBattlefield(player1, "Lich's Duel Mastery");
+        harness.assertInGraveyard(player1, "Lich's Duel Mastery");
 
         harness.passBothPriorities();
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
@@ -90,5 +90,51 @@ class LichsDuelMasteryTest extends BaseCardTest {
 
         harness.assertLife(player2, 17);
         assertThat(gd.getCardsExiledByPermanent(masteryId)).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("Damage replaces its life loss with one shield")
+    void damageReturnsOneShieldInsteadOfLosingLife() {
+        UUID masteryId = castMastery(5);
+        harness.setLife(player1, 20);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.getCardsExiledByPermanent(masteryId)).hasSize(4);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+    }
+
+    @Test
+    @DisplayName("Zero life loss does not consume a shield")
+    void zeroLifeLossDoesNotConsumeShield() {
+        UUID masteryId = castMastery(5);
+        harness.setLife(player1, 20);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.inMutationScope(() -> harness.getLifeSupport()
+                .applyLifeLoss(gd, player1.getId(), 0, "test"));
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.getCardsExiledByPermanent(masteryId)).hasSize(5);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
+
+    @Test
+    @DisplayName("Leaving for the hand triggers a loss even with shields remaining")
+    void leavingForHandLosesGameWithShieldsRemaining() {
+        UUID masteryId = castMastery(5);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, gqs.findPermanentById(gd, masteryId)));
+
+        harness.assertNotOnBattlefield(player1, "Lich's Duel Mastery");
+        harness.assertInHand(player1, "Lich's Duel Mastery");
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+        harness.passBothPriorities();
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }
