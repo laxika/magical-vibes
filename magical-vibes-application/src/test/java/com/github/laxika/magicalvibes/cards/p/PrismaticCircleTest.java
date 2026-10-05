@@ -20,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PrismaticCircle.class, ViashinoWarrior.class, GiantMantis.class})
+@CardUsed({PrismaticCircle.class, ViashinoWarrior.class, GiantMantis.class, Incinerate.class})
 class PrismaticCircleTest extends BaseCardTest {
 
     @Test
@@ -101,7 +101,6 @@ class PrismaticCircleTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Incinerate.class)
     @DisplayName("A chosen source spell has its next damage to you prevented")
     void preventsDamageFromChosenSpellOnStack() {
         harness.setLife(player1, 20);
@@ -176,6 +175,89 @@ class PrismaticCircleTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(circle);
         harness.assertInGraveyard(player1, "Prismatic Circle");
+    }
+
+    @Test
+    @DisplayName("Another source of the same color is not prevented")
+    void doesNotPreventAnotherRedSource() {
+        harness.setLife(player1, 20);
+        addCircle(player1, CardColor.RED);
+        Permanent chosen = addCreatureReady(player2, new ViashinoWarrior());
+        Permanent other = addCreatureReady(player2, new ViashinoWarrior());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, chosen.getId());
+
+        other.setAttacking(true);
+        resolveCombat(player2);
+
+        harness.assertLife(player1, 16);
+        assertThat(gd.playerSourceNextDamageShields)
+                .anyMatch(s -> s.sourceId().equals(chosen.getId()));
+    }
+
+    @Test
+    @DisplayName("A shield prevents one damage event but not a later event from the same source")
+    void shieldOnlyPreventsOneDamageEvent() {
+        harness.setLife(player1, 20);
+        addCircle(player1, CardColor.RED);
+        Permanent warrior = addCreatureReady(player2, new ViashinoWarrior());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, warrior.getId());
+
+        harness.forceActivePlayer(player2);
+        warrior.setAttacking(true);
+        harness.resolveCombatDamage();
+        harness.assertLife(player1, 20);
+
+        harness.resolveCombatDamage();
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep charges for existing age counters plus the new counter")
+    void upkeepScalesWithAgeCounters() {
+        Permanent circle = harness.addToBattlefieldAndReturn(player1, new PrismaticCircle());
+        circle.setCounterCount(CounterType.AGE, 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(circle.getCounterCount(CounterType.AGE)).isEqualTo(3);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Prismatic Circle");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("An already resolved shield remains after the circle is sacrificed")
+    void shieldSurvivesSacrificingCircle() {
+        harness.setLife(player1, 20);
+        addCircle(player1, CardColor.RED);
+        Permanent warrior = addCreatureReady(player2, new ViashinoWarrior());
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, warrior.getId());
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Prismatic Circle");
+
+        harness.forceActivePlayer(player2);
+        warrior.setAttacking(true);
+        harness.resolveCombatDamage();
+
+        harness.assertLife(player1, 20);
     }
 
     private Permanent addCircle(Player player, CardColor chosen) {
