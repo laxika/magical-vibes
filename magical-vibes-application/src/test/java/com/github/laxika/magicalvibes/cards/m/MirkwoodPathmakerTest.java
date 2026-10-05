@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({MirkwoodPathmaker.class, Forest.class, Mountain.class})
@@ -57,9 +59,51 @@ class MirkwoodPathmakerTest extends BaseCardTest {
     }
 
     private Permanent addPathmaker(Player player) {
-        Permanent permanent = new Permanent(new MirkwoodPathmaker());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player, new MirkwoodPathmaker());
+    }
+
+    @Test
+    @DisplayName("Uses the new controller's land count after changing control")
+    void updatesWhenControlChanges() {
+        Permanent pathmaker = addPathmaker(player1);
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Mountain());
+
+        gd.playerBattlefields.get(player1.getId()).remove(pathmaker);
+        gd.playerBattlefields.get(player2.getId()).add(pathmaker);
+
+        assertThat(gqs.getEffectivePower(gd, pathmaker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, pathmaker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Nonland creatures do not increase power or toughness")
+    void doesNotCountNonlandPermanents() {
+        Permanent pathmaker = addPathmaker(player1);
+        addPathmaker(player1);
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThat(gqs.getEffectivePower(gd, pathmaker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, pathmaker)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The characteristic-defining ability works in hand and graveyard")
+    void definesPowerAndToughnessOutsideBattlefield() {
+        MirkwoodPathmaker pathmaker = new MirkwoodPathmaker();
+        harness.setHand(player1, List.of(pathmaker));
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Mountain());
+
+        assertThat(gqs.getEffectiveCardPower(gd, pathmaker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, pathmaker)).isEqualTo(1);
+
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(pathmaker));
+        harness.addToBattlefield(player1, new Mountain());
+
+        assertThat(gqs.getEffectiveCardPower(gd, pathmaker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, pathmaker)).isEqualTo(2);
     }
 }
