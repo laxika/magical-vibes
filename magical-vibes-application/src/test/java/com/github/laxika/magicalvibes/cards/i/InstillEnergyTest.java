@@ -182,4 +182,43 @@ class InstillEnergyTest extends BaseCardTest {
 
         assertThat(bearsPerm.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("Activating for an untapped creature still consumes the turn's activation")
+    void activatingForUntappedCreatureConsumesActivation() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new InstillEnergy());
+        aura.setAttachedTo(bears.getId());
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(bears.isTapped()).isFalse();
+
+        bears.tap();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        assertThat(bears.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Each Instill Energy has its own activation limit and can activate in the end step")
+    void separateAurasCanUntapSameCreatureDuringEndStep() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent firstAura = harness.addToBattlefieldAndReturn(player1, new InstillEnergy());
+        firstAura.setAttachedTo(bears.getId());
+        Permanent secondAura = harness.addToBattlefieldAndReturn(player1, new InstillEnergy());
+        secondAura.setAttachedTo(bears.getId());
+        harness.forceStep(TurnStep.END_STEP);
+
+        bears.tap();
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(bears.isTapped()).isFalse();
+
+        bears.tap();
+        harness.activateAbility(player1, 2, null, null);
+        harness.passBothPriorities();
+        assertThat(bears.isTapped()).isFalse();
+    }
 }
