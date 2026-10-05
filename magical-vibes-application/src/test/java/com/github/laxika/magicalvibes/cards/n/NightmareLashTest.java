@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.f.Frogmite;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NightmareLash.class, Frogmite.class, Swamp.class})
+@CardUsed({NightmareLash.class, Frogmite.class, Swamp.class, Mountain.class})
 class NightmareLashTest extends BaseCardTest {
 
     @Test
@@ -136,6 +137,68 @@ class NightmareLashTest extends BaseCardTest {
                 .hasMessageContaining("sorcery speed");
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(lash.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Non-Swamp lands do not increase the bonus")
+    void ignoresNonSwampLands() {
+        Permanent creature = addCreatureReady(player1, new Frogmite());
+        Permanent lash = addLash(player1);
+        lash.setAttachedTo(creature.getId());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Re-equipping moves the bonus only when the equip ability resolves")
+    void reEquipMovesBonusOnResolution() {
+        Permanent lash = addLash(player1);
+        Permanent original = addCreatureReady(player1, new Frogmite());
+        Permanent replacement = addCreatureReady(player1, new Frogmite());
+        lash.setAttachedTo(original.getId());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, replacement.getId());
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+        assertThat(lash.getAttachedTo()).isEqualTo(original.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, replacement)).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(lash.getAttachedTo()).isEqualTo(replacement.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, replacement)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, replacement)).isEqualTo(3);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @DisplayName("An equip target leaving does not refund life or detach the Equipment")
+    void vanishedEquipTargetKeepsOriginalAttachmentAndLifePayment() {
+        Permanent lash = addLash(player1);
+        Permanent original = addCreatureReady(player1, new Frogmite());
+        Permanent target = addCreatureReady(player1, new Frogmite());
+        lash.setAttachedTo(original.getId());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
+        assertThat(lash.getAttachedTo()).isEqualTo(original.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, original)).isEqualTo(3);
     }
 
     private Permanent addLash(com.github.laxika.magicalvibes.model.Player player) {
