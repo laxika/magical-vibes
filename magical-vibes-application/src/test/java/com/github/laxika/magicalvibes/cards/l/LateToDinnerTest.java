@@ -24,8 +24,7 @@ class LateToDinnerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castSorcery(player1, 0, List.of(creature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
@@ -41,8 +40,7 @@ class LateToDinnerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
-        harness.castSorcery(player1, 0, List.of(creature.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
 
         harness.activateAbility(player1, 1, 0, null, null);
         harness.passBothPriorities();
@@ -61,5 +59,97 @@ class LateToDinnerTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(nonCreature.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotTargetOpponentsCreatureCard() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(creature));
+        harness.setHand(player1, List.of(new LateToDinner()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Food");
+    }
+
+    @Test
+    void cannotCastWithoutCreatureTarget() {
+        harness.setHand(player1, List.of(new LateToDinner()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertNotOnBattlefield(player1, "Food");
+    }
+
+    @Test
+    void createsNoFoodWhenTargetLeavesGraveyard() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new LateToDinner()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castSorcery(player1, 0, List.of(creature.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(creature));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Food");
+        harness.assertInGraveyard(player1, "Late to Dinner");
+    }
+
+    @Test
+    void foodIsSacrificedAsCostBeforeLifeIsGained() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new LateToDinner()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Food");
+        harness.assertLife(player1, 20);
+        harness.passBothPriorities();
+        harness.assertLife(player1, 23);
+    }
+
+    @Test
+    void foodCannotBeActivatedWithoutTwoMana() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new LateToDinner()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Food");
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    void tappedFoodCannotBeActivated() {
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new LateToDinner()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.castAndResolveSorcery(player1, 0, List.of(creature.getId()));
+        findPermanent(player1, "Food").setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Food");
+        harness.assertLife(player1, 20);
     }
 }
