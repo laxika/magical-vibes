@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TuinvaleTreefolk;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -14,10 +15,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PiperOfTheSwarm.class, GrizzlyBears.class})
+@CardUsed({PiperOfTheSwarm.class, TuinvaleTreefolk.class})
 class PiperOfTheSwarmTest extends BaseCardTest {
 
     @Test
@@ -25,7 +28,7 @@ class PiperOfTheSwarmTest extends BaseCardTest {
     void ratsYouControlHaveMenace() {
         addPiperReady(player1);
         Permanent rat = addRat(player1);
-        Permanent nonRat = addCreatureReady(player1, new GrizzlyBears());
+        Permanent nonRat = addCreatureReady(player1, new TuinvaleTreefolk());
         Permanent opponentRat = addRat(player2);
 
         assertThat(gqs.hasKeyword(gd, rat, Keyword.MENACE)).isTrue();
@@ -48,6 +51,8 @@ class PiperOfTheSwarmTest extends BaseCardTest {
         assertThat(rat.getEffectiveToughness()).isEqualTo(1);
         assertThat(rat.getCard().getType()).isEqualTo(CardType.CREATURE);
         assertThat(rat.getCard().getSubtypes()).contains(CardSubtype.RAT);
+        assertThat(rat.getCard().getColor()).isEqualTo(CardColor.BLACK);
+        assertThat(piper.isTapped()).isTrue();
         assertThat(gqs.hasKeyword(gd, rat, Keyword.MENACE)).isTrue();
     }
 
@@ -58,7 +63,7 @@ class PiperOfTheSwarmTest extends BaseCardTest {
         addRat(player1);
         addRat(player1);
         addRat(player1);
-        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        Permanent target = addCreatureReady(player2, new TuinvaleTreefolk());
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -67,6 +72,65 @@ class PiperOfTheSwarmTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Rat")).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    void cannotPayWithOnlyTwoOwnRats() {
+        Permanent piper = addPiperReady(player1);
+        addRat(player1);
+        addRat(player1);
+        addRat(player2);
+        Permanent target = addCreatureReady(player2, new TuinvaleTreefolk());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, battlefieldIndex(player1, piper),
+                1, null, target.getId())).isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player1, "Rat")).hasSize(2);
+        assertThat(piper.isTapped()).isFalse();
+    }
+
+    @Test
+    void controlPersistsWhenPiperLeavesBeforeResolution() {
+        Permanent piper = addPiperReady(player1);
+        addRat(player1);
+        addRat(player1);
+        addRat(player1);
+        Permanent target = addCreatureReady(player2, new TuinvaleTreefolk());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, piper), 1, null, target.getId());
+        assertThat(findPermanents(player1, "Rat")).isEmpty();
+        gd.playerBattlefields.get(player1.getId()).remove(piper);
+        gd.playerGraveyards.get(player1.getId()).add(piper.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        advanceToUpkeep(player2);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+    }
+
+    @Test
+    void noncreatureRatPermanentCanPaySacrificeCost() {
+        Permanent piper = addPiperReady(player1);
+        addRat(player1);
+        addRat(player1);
+        // Represents a kindred enchantment whose creature subtype has become Rat.
+        Card kindredRat = new Card();
+        kindredRat.setName("Kindred Rat enchantment");
+        kindredRat.setType(CardType.ENCHANTMENT);
+        kindredRat.setAdditionalTypes(Set.of(CardType.KINDRED));
+        kindredRat.setSubtypes(List.of(CardSubtype.RAT));
+        Permanent noncreatureRat = harness.addToBattlefieldAndReturn(player1, kindredRat);
+        Permanent target = addCreatureReady(player2, new TuinvaleTreefolk());
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.activateAbility(player1, battlefieldIndex(player1, piper), 1, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(noncreatureRat).contains(target);
+        assertThat(findPermanents(player1, "Rat")).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
     }
 
