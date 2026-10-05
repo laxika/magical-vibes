@@ -143,4 +143,50 @@ class MacabreWaltzTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
                 .containsExactly(ownCreature.getId());
     }
+
+    @Test
+    @DisplayName("If every chosen target leaves the graveyard, the spell does not discard")
+    void allTargetsGonePreventsDiscard() {
+        Card first = new AzoriusFirstWing();
+        Card second = new AzoriusHerald();
+        Card retained = new AzoriusSignet();
+        harness.setGraveyard(player1, List.of(first, second));
+        harness.castFromHand(player1, new MacabreWaltz(), "{1}{B}");
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.setHand(player1, List.of(retained));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(first, second));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
+        harness.assertInGraveyard(player1, "Macabre Waltz");
+    }
+
+    @Test
+    @DisplayName("With one target remaining, return it and discard a card already in hand")
+    void oneTargetGoneStillReturnsAndDiscards() {
+        Card removed = new AzoriusFirstWing();
+        Card remaining = new AzoriusHerald();
+        Card discarded = new AzoriusSignet();
+        harness.setGraveyard(player1, List.of(removed, remaining));
+        harness.castFromHand(player1, new MacabreWaltz(), "{1}{B}");
+        harness.handleMultipleCardsChosen(player1, List.of(removed.getId(), remaining.getId()));
+        harness.setHand(player1, List.of(discarded));
+        harness.setGraveyard(player1, List.of(remaining));
+        harness.setExile(player1, List.of(removed));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(discarded, remaining);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded).doesNotContain(removed, remaining);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Macabre Waltz");
+    }
 }
