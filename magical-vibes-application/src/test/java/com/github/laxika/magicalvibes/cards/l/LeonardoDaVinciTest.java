@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Haystack;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -18,7 +19,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LeonardoDaVinci.class, DarksteelRelic.class, GrizzlyBears.class})
+@CardUsed({LeonardoDaVinci.class, DarksteelRelic.class, GrizzlyBears.class, Haystack.class})
 class LeonardoDaVinciTest extends BaseCardTest {
 
     @Test
@@ -93,6 +94,57 @@ class LeonardoDaVinciTest extends BaseCardTest {
                 permanent -> permanent.getCard().isToken() && permanent.getCard().getName().equals("Grizzly Bears"));
     }
 
+    @Test
+    @DisplayName("Artifact exile and copying complete during the original ability resolution")
+    void artifactCopyCompletesDuringOriginalResolution() {
+        Permanent leonardo = addCreatureReady(player1, new LeonardoDaVinci());
+        Haystack haystack = new Haystack();
+        LeonardoDaVinci drawnCard = new LeonardoDaVinci();
+        harness.setHand(player1, List.of(haystack));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(leonardo),
+                1, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).contains(haystack, drawnCard);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(haystack);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(haystack);
+        Permanent token = findPermanent(player1, "Haystack");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, token)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hand size and affected Thopters are determined at resolution")
+    void firstAbilityLocksHandSizeAndAffectedCreaturesAtResolution() {
+        Permanent leonardo = addCreatureReady(player1, new LeonardoDaVinci());
+        Permanent ownThopter = addThopter();
+        Permanent opposingThopter = addThopter();
+        gd.playerBattlefields.get(player1.getId()).remove(opposingThopter);
+        gd.playerBattlefields.get(player2.getId()).add(opposingThopter);
+        harness.setHand(player1, List.of(new Haystack()));
+        harness.addMana(player1, ManaColor.BLUE, 5);
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(leonardo),
+                0, null, null);
+        harness.setHand(player1, List.of(new Haystack(), new Haystack(), new Haystack(), new Haystack()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, ownThopter)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, ownThopter)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, opposingThopter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, opposingThopter)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, leonardo)).isEqualTo(3);
+        Permanent laterThopter = addThopter();
+        assertThat(gqs.getEffectivePower(gd, laterThopter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, laterThopter)).isEqualTo(1);
+    }
     private Permanent addThopter() {
         Card card = new Card();
         card.setName("Thopter");
