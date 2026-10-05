@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.d.DuskriderFalcon;
 import com.github.laxika.magicalvibes.cards.h.HeavyBallista;
 import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
+import com.github.laxika.magicalvibes.cards.r.Relearn;
 import com.github.laxika.magicalvibes.cards.t.Thunderbolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -26,9 +27,47 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         DuskriderFalcon.class,
         HeavyBallista.class,
         RedwoodTreefolk.class,
+        Relearn.class,
         Thunderbolt.class
 })
 class KithkinArmorTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Casting the Aura attaches it and restricts blocking of the enchanted creature")
+    void castingArmorRestrictsBlocking() {
+        Permanent attacker = addCreatureReady(player1, new BenalishKnight());
+        harness.setHand(player1, List.of(new KithkinArmor()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castEnchantment(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Kithkin Armor").getAttachedTo()).isEqualTo(attacker.getId());
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new RedwoodTreefolk());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> declareBlock(blocker, attacker))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A card referred to by a spell on the stack is a legal damage source choice")
+    void canChooseGraveyardCardTargetedBySpellOnStack() {
+        Permanent enchanted = addCreatureReady(player1, new RedwoodTreefolk());
+        Permanent armor = attachArmor(enchanted);
+        Thunderbolt source = new Thunderbolt();
+        harness.setGraveyard(player1, List.of(source));
+        harness.setHand(player1, List.of(new Relearn()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0, source.getId());
+
+        chooseDamageSource(armor, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Thunderbolt");
+        harness.assertInGraveyard(player1, "Kithkin Armor");
+    }
 
     @Test
     @DisplayName("Enchanted creature can't be blocked by a creature with power 3")
@@ -186,8 +225,7 @@ class KithkinArmorTest extends BaseCardTest {
 
         chooseDamageSource(armor, attacker.getId());
 
-        declareAttackers(player2, List.of(indexOf(player2, attacker)));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(indexOf(player2, attacker)));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 indexOf(player1, enchanted), indexOf(player2, attacker))));
         harness.passBothPriorities();
