@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Metalworker.class, JunkDiver.class, ThranDynamo.class, HulkingOgre.class})
 class MetalworkerTest extends BaseCardTest {
@@ -96,5 +97,67 @@ class MetalworkerTest extends BaseCardTest {
 
     private void addReadyMetalworker() {
         addCreatureReady(player1, new Metalworker());
+    }
+
+    @Test
+    @DisplayName("Mana ability resolves without using the stack and taps Metalworker")
+    void resolvesWithoutUsingStack() {
+        var metalworker = addCreatureReady(player1, new Metalworker());
+        JunkDiver artifact = new JunkDiver();
+        harness.setHand(player1, List.of(artifact));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(metalworker.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifact);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("tapped");
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void cannotActivateWithSummoningSickness() {
+        var metalworker = harness.addToBattlefieldAndReturn(player1, new Metalworker());
+        metalworker.setSummoningSick(true);
+        harness.setHand(player1, List.of(new JunkDiver()));
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("summoning sickness");
+
+        assertThat(metalworker.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot reveal nonartifacts, opponents' cards, or the same card twice")
+    void rejectsInvalidRevealSelections() {
+        addReadyMetalworker();
+        JunkDiver artifact = new JunkDiver();
+        HulkingOgre nonArtifact = new HulkingOgre();
+        ThranDynamo opponentsArtifact = new ThranDynamo();
+        harness.setHand(player1, List.of(artifact, nonArtifact));
+        harness.setHand(player2, List.of(opponentsArtifact));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(nonArtifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(opponentsArtifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(artifact.getId(), artifact.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentsArtifact);
     }
 }
