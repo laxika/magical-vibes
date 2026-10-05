@@ -177,4 +177,51 @@ class InfernalDarknessTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(darkness);
         harness.assertInGraveyard(player1, "Infernal Darkness");
     }
+
+    @Test
+    @DisplayName("Insufficient life prevents the entire cumulative upkeep payment")
+    void insufficientLifeDoesNotSpendMana() {
+        Permanent darkness = harness.addToBattlefieldAndReturn(player1, new InfernalDarkness());
+        darkness.setCounterCount(CounterType.AGE, 1);
+        harness.setLife(player1, 1);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Infernal Darkness");
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(darkness);
+        harness.assertLife(player1, 1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Declining upkeep restores normal land mana production")
+    void replacementEndsAfterSacrifice() {
+        harness.addToBattlefield(player1, new InfernalDarkness());
+        harness.addToBattlefield(player1, new Forest());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.tapPermanent(player1, 0);
+
+        harness.assertInGraveyard(player1, "Infernal Darkness");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple copies replace each mana only once")
+    void multipleCopiesDoNotIncreaseManaAmount() {
+        harness.addToBattlefield(player1, new InfernalDarkness());
+        harness.addToBattlefield(player1, new InfernalDarkness());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.tapPermanent(player1, 2);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
 }
