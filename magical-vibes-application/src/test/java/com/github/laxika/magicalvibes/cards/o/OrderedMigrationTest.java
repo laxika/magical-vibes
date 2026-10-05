@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.c.CoastalTower;
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -13,7 +16,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OrderedMigration.class, Plains.class, Island.class, Swamp.class})
+@CardUsed({OrderedMigration.class, Plains.class, Island.class, Swamp.class,
+        Mountain.class, Forest.class, CoastalTower.class})
 class OrderedMigrationTest extends BaseCardTest {
 
     @Test
@@ -79,5 +83,51 @@ class OrderedMigrationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .isEmpty();
+    }
+
+    @Test
+    @DisplayName("Creates five Birds when all five basic land types are present")
+    void createsFiveBirdsForAllBasicLandTypes() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.castFromHand(player1, new OrderedMigration(), "{3}{W}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(5);
+    }
+
+    @Test
+    @DisplayName("A land producing white and blue mana without basic land types contributes no Birds")
+    void ignoresManaColorsOfUntypedLands() {
+        harness.addToBattlefield(player1, new CoastalTower());
+
+        harness.castFromHand(player1, new OrderedMigration(), "{3}{W}{U}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .isEmpty();
+    }
+
+    @Test
+    @DisplayName("Counts basic land types at resolution rather than when cast")
+    void countsLandTypesAtResolution() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.castFromHand(player1, new OrderedMigration(), "{3}{W}{U}");
+
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player1, new Swamp());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(2);
     }
 }
