@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NetherTraitor;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SuddenShock;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -19,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PhyrexianTotem.class, GrizzlyBears.class, Shock.class})
+@CardUsed({PhyrexianTotem.class, GrizzlyBears.class, Shock.class, NetherTraitor.class, SuddenShock.class})
 class PhyrexianTotemTest extends BaseCardTest {
 
     @Test
@@ -31,6 +33,33 @@ class PhyrexianTotemTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         assertThat(totem.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A newly entered noncreature Totem can produce mana")
+    void noncreatureTotemDoesNotRequireHasteToProduceMana() {
+        Permanent totem = harness.addToBattlefieldAndReturn(player1, new PhyrexianTotem());
+        totem.setSummoningSick(true);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(totem.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The Totem can animate while tapped and remains tapped")
+    void tappedTotemCanAnimate() {
+        Permanent totem = addReadyTotem(player1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, totem)).isTrue();
+        assertThat(totem.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 
     @Test
@@ -88,10 +117,86 @@ class PhyrexianTotemTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("Automatic sacrifices happen simultaneously when only two permanents remain")
+    void automaticSacrificesDoNotTriggerSimultaneouslyDyingNetherTraitor() {
+        harness.addToBattlefield(player2, new NetherTraitor());
+        Permanent totem = addReadyTotem(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.activateAbility(player2, 1, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new SuddenShock()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, totem.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Nether Traitor");
+        harness.assertInGraveyard(player2, "Phyrexian Totem");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Combat damage makes the Totem sacrifice itself when fewer permanents remain than damage dealt")
+    void combatDamageSacrificesAllAvailablePermanents() {
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        attacker.setSummoningSick(false);
+        Permanent totem = addReadyTotem(player2);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        attacker.setAttacking(true);
+        totem.setBlocking(true);
+        totem.addBlockingTarget(0);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Phyrexian Totem");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Lethal combat damage still requires sacrifices after the Totem dies")
+    void lethalCombatDamageUsesLastKnownCreatureStatus() {
+        Permanent attacker = addReadyTotem(player1);
+        Permanent blocker = addReadyTotem(player2);
+        harness.addToBattlefield(player2, new PhyrexianTotem());
+        for (Player player : List.of(player1, player2)) {
+            harness.addMana(player, ManaColor.COLORLESS, 2);
+            harness.addMana(player, ManaColor.BLACK, 1);
+            harness.activateAbility(player, 0, 1, null, null);
+            harness.passBothPriorities();
+        }
+
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
     private Permanent addReadyTotem(Player player) {
-        Permanent totem = new Permanent(new PhyrexianTotem());
+        Permanent totem = harness.addToBattlefieldAndReturn(player, new PhyrexianTotem());
         totem.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(totem);
         return totem;
     }
 }
