@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -44,13 +43,42 @@ class PatagiaViperTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Patagia Viper");
     }
 
-    private void castPatagiaViperWithBlueMana() {
-        harness.setHand(player1, List.of(new PatagiaViper()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    @Test
+    @DisplayName("Token creation and sacrifice are separate triggered abilities")
+    void queuesTwoSeparateEnterTriggers() {
+        harness.enterBattlefieldAndReturn(player1, new PatagiaViper());
 
-        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(2);
+        harness.assertOnBattlefield(player1, "Patagia Viper");
+        assertThat(findPermanents(player1, "Snake")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast creates tokens and sacrifices the Viper")
+    void sacrificesItselfWhenNotCast() {
+        harness.enterBattlefieldAndReturn(player1, new PatagiaViper());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Snake")).hasSize(2);
+        harness.assertNotOnBattlefield(player1, "Patagia Viper");
+        harness.assertInGraveyard(player1, "Patagia Viper");
+    }
+
+    @Test
+    @DisplayName("An opposing Viper creates tokens for its controller")
+    void createsTokensForOpposingController() {
+        harness.enterBattlefieldAndReturn(player2, new PatagiaViper());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player2, "Snake")).hasSize(2);
+        assertThat(findPermanents(player1, "Snake")).isEmpty();
+        harness.assertNotOnBattlefield(player2, "Patagia Viper");
+        harness.assertInGraveyard(player2, "Patagia Viper");
+    }
+
+    private void castPatagiaViperWithBlueMana() {
+        harness.castFromHand(player1, new PatagiaViper(), "{2}{G}{U}");
+
         resolveAllTriggers();
     }
 }
