@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MetamorphicAlteration.class, GrizzlyBears.class, HillGiant.class, AirElemental.class, Demystify.class})
 class MetamorphicAlterationTest extends BaseCardTest {
 
     @Test
@@ -86,8 +88,7 @@ class MetamorphicAlterationTest extends BaseCardTest {
         Permanent aura = findPermanent(player1, "Metamorphic Alteration");
         harness.setHand(player2, List.of(new Demystify()));
         harness.addMana(player2, ManaColor.WHITE, 1);
-        harness.castInstant(player2, 0, aura.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, aura.getId());
 
         assertThat(bears.getCard().getName()).isEqualTo("Grizzly Bears");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
@@ -97,7 +98,6 @@ class MetamorphicAlterationTest extends BaseCardTest {
     @Test
     @DisplayName("The Aura can only enchant a creature")
     void cannotEnchantANonCreature() {
-        Permanent giant = addCreatureReady(player1, new HillGiant());
         Permanent otherAura = harness.addToBattlefieldAndReturn(player1, new MetamorphicAlteration());
         harness.setHand(player1, List.of(new MetamorphicAlteration()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -105,6 +105,50 @@ class MetamorphicAlterationTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, otherAura.getId()))
                 .hasMessageContaining("can only enchant a creature");
-        assertThat(giant.getCard().getName()).isEqualTo("Hill Giant");
+    }
+    @Test
+    @DisplayName("Self-copy preserves copied values after an earlier Aura leaves")
+    void selfCopyPreservesCopiedValues() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent giant = addCreatureReady(player1, new HillGiant());
+        harness.setHand(player1, List.of(new MetamorphicAlteration(), new MetamorphicAlteration()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, giant.getId());
+        Permanent firstAura = findPermanent(player1, "Metamorphic Alteration");
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.setHand(player2, List.of(new Demystify()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, firstAura.getId());
+        assertThat(bears.getCard().getName()).isEqualTo("Hill Giant");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(3);
+        assertThat(findPermanents(player1, "Metamorphic Alteration")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Later changes to the chosen creature do not change the copy")
+    void laterChangesToChosenCreatureDoNotChangeCopy() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent giant = addCreatureReady(player1, new HillGiant());
+        Permanent elemental = addCreatureReady(player2, new AirElemental());
+        harness.setHand(player1, List.of(new MetamorphicAlteration(), new MetamorphicAlteration()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, giant.getId());
+        harness.castEnchantment(player1, 0, giant.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, elemental.getId());
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, giant, Keyword.FLYING)).isTrue();
+        assertThat(bears.getCard().getName()).isEqualTo("Hill Giant");
+        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
     }
 }
