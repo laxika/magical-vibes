@@ -5,14 +5,14 @@ import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MachinistsArsenal.class, GrizzlyBears.class, LeoninScimitar.class})
 class MachinistsArsenalTest extends BaseCardTest {
@@ -67,12 +67,79 @@ class MachinistsArsenalTest extends BaseCardTest {
     }
 
     private void castArsenal() {
-        harness.setHand(player1, List.of(new MachinistsArsenal()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castFromHand(player1, new MachinistsArsenal(), "{4}{W}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void opponentsArtifactsAndControlledNonartifactsDoNotIncreaseBoost() {
+        castArsenal();
+        Permanent hero = findPermanent(player1, "Hero");
+        harness.addToBattlefield(player2, new LeoninScimitar());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(3);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, hero))
+                .contains(CardSubtype.HERO, CardSubtype.ARTIFICER);
+    }
+
+    @Test
+    void jobSelectStillCreatesHeroWhenEquipmentLeavesBeforeTriggerResolves() {
+        harness.castFromHand(player1, new MachinistsArsenal(), "{4}{W}");
+        harness.passBothPriorities();
+        Permanent arsenal = findPermanent(player1, "Machinist's Arsenal");
+        gd.playerBattlefields.get(player1.getId()).remove(arsenal);
+        gd.playerGraveyards.get(player1.getId()).add(arsenal.getCard());
+
+        harness.passBothPriorities();
+
+        Permanent hero = findPermanent(player1, "Hero");
+        assertThat(gqs.getEffectivePower(gd, hero)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, hero)).isEqualTo(1);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, hero))
+                .contains(CardSubtype.HERO).doesNotContain(CardSubtype.ARTIFICER);
+        assertThat(countPermanents(player1, "Hero")).isEqualTo(1);
+    }
+
+    @Test
+    void equipCannotTargetOpponentsCreature() {
+        castArsenal();
+        Permanent arsenal = findPermanent(player1, "Machinist's Arsenal");
+        Permanent hero = findPermanent(player1, "Hero");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(arsenal.getAttachedTo()).isEqualTo(hero.getId());
+    }
+
+    @Test
+    void equipRequiresFourMana() {
+        castArsenal();
+        Permanent arsenal = findPermanent(player1, "Machinist's Arsenal");
+        Permanent hero = findPermanent(player1, "Hero");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(arsenal.getAttachedTo()).isEqualTo(hero.getId());
+    }
+
+    @Test
+    void equipCannotBeActivatedDuringCombat() {
+        castArsenal();
+        Permanent arsenal = findPermanent(player1, "Machinist's Arsenal");
+        Permanent hero = findPermanent(player1, "Hero");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, bears.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(arsenal.getAttachedTo()).isEqualTo(hero.getId());
     }
 }
