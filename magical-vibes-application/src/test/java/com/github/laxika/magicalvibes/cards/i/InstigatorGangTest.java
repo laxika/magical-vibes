@@ -1,20 +1,22 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({InstigatorGang.class, WalkingCorpse.class})
 class InstigatorGangTest extends BaseCardTest {
-
-    // ===== Werewolf transform: front → back (no spells cast last turn) =====
 
     @Test
     @DisplayName("Transforms to Wildblood Pack when no spells were cast last turn")
@@ -25,10 +27,7 @@ class InstigatorGangTest extends BaseCardTest {
         // spellsCastLastTurn is empty (no spells cast)
         gd.spellsCastLastTurn.clear();
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger goes on stack
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve triggered ability
 
         assertThat(gang.isTransformed()).isTrue();
@@ -46,16 +45,11 @@ class InstigatorGangTest extends BaseCardTest {
         // Simulate that a spell was cast last turn
         gd.spellsCastLastTurn.put(player1.getId(), 1);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep — no trigger
+        advanceToUpkeep(player1);
 
         assertThat(gang.isTransformed()).isFalse();
         assertThat(gang.getCard().getName()).isEqualTo("Instigator Gang");
     }
-
-    // ===== Werewolf transform: back → front (two or more spells cast last turn) =====
 
     @Test
     @DisplayName("Wildblood Pack transforms back when a player cast two or more spells last turn")
@@ -65,10 +59,7 @@ class InstigatorGangTest extends BaseCardTest {
 
         // Transform to Wildblood Pack first
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve transform
         assertThat(gang.isTransformed()).isTrue();
 
@@ -76,10 +67,7 @@ class InstigatorGangTest extends BaseCardTest {
         gd.spellsCastLastTurn.clear();
         gd.spellsCastLastTurn.put(player2.getId(), 2);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, back-face trigger goes on stack
+        advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve transform back
 
         assertThat(gang.isTransformed()).isFalse();
@@ -96,10 +84,7 @@ class InstigatorGangTest extends BaseCardTest {
 
         // Transform to Wildblood Pack first
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        advanceToUpkeep(player1);
         harness.passBothPriorities();
         assertThat(gang.isTransformed()).isTrue();
 
@@ -108,16 +93,11 @@ class InstigatorGangTest extends BaseCardTest {
         gd.spellsCastLastTurn.put(player1.getId(), 1);
         gd.spellsCastLastTurn.put(player2.getId(), 1);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep — no trigger
+        advanceToUpkeep(player2);
 
         assertThat(gang.isTransformed()).isTrue();
         assertThat(gang.getCard().getName()).isEqualTo("Wildblood Pack");
     }
-
-    // ===== Transform triggers on every upkeep (not just controller's) =====
 
     @Test
     @DisplayName("Transform triggers on opponent's upkeep too")
@@ -129,23 +109,18 @@ class InstigatorGangTest extends BaseCardTest {
         gd.spellsCastLastTurn.clear();
 
         // Trigger on opponent's upkeep (not player1's)
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep, trigger fires
+        advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve
 
         assertThat(gang.isTransformed()).isTrue();
         assertThat(gang.getCard().getName()).isEqualTo("Wildblood Pack");
     }
 
-    // ===== Static boost: attacking creatures you control get +1/+0 (front face) =====
-
     @Test
     @DisplayName("Attacking creatures you control get +1/+0 from front face")
     void frontFaceBoostsAttackingCreatures() {
         Permanent gang = addCreatureReady(player1, new InstigatorGang());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears()); // 2/2
+        Permanent corpse = addCreatureReady(player1, new WalkingCorpse()); // 2/2
 
         markAttacking(player1, List.of(0, 1));
 
@@ -153,39 +128,37 @@ class InstigatorGangTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, gang)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, gang)).isEqualTo(3);
 
-        // Grizzly Bears (2/2) attacking gets +1/+0 = 3/2
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        // Walking Corpse (2/2) attacking gets +1/+0 = 3/2
+        assertThat(gqs.getEffectivePower(gd, corpse)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, corpse)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Non-attacking creatures do not get the boost")
     void nonAttackingCreaturesNotBoosted() {
         addCreatureReady(player1, new InstigatorGang());
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears()); // 2/2
+        Permanent corpse = addCreatureReady(player1, new WalkingCorpse()); // 2/2
 
-        // Only attack with Instigator Gang (index 0), not bears
+        // Only attack with Instigator Gang (index 0), not corpse
         markAttacking(player1, List.of(0));
 
-        // Bears is not attacking, should remain 2/2
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        // The corpse is not attacking, should remain 2/2
+        assertThat(gqs.getEffectivePower(gd, corpse)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, corpse)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Opponent's attacking creatures do not get the boost")
     void opponentAttackingCreaturesNotBoosted() {
         addCreatureReady(player1, new InstigatorGang());
-        Permanent oppBears = addCreatureReady(player2, new GrizzlyBears()); // 2/2
+        Permanent opponentCorpse = addCreatureReady(player2, new WalkingCorpse()); // 2/2
 
         markAttacking(player2, List.of(0));
 
-        // Opponent's bears attacking should not get the +1/+0
-        assertThat(gqs.getEffectivePower(gd, oppBears)).isEqualTo(2);
-        assertThat(gqs.getEffectiveToughness(gd, oppBears)).isEqualTo(2);
+        // Opponent's corpse attacking should not get the +1/+0
+        assertThat(gqs.getEffectivePower(gd, opponentCorpse)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opponentCorpse)).isEqualTo(2);
     }
-
-    // ===== Static boost: attacking creatures you control get +3/+0 (back face) =====
 
     @Test
     @DisplayName("Attacking creatures you control get +3/+0 from back face")
@@ -196,14 +169,11 @@ class InstigatorGangTest extends BaseCardTest {
 
         // Transform to Wildblood Pack
         gd.spellsCastLastTurn.clear();
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.UNTAP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advance to upkeep
+        advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve transform
         assertThat(gang.isTransformed()).isTrue();
 
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears()); // 2/2
+        Permanent corpse = addCreatureReady(player1, new WalkingCorpse()); // 2/2
 
         markAttacking(player1, List.of(0, 1));
 
@@ -211,12 +181,73 @@ class InstigatorGangTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, gang)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, gang)).isEqualTo(5);
 
-        // Grizzly Bears (2/2) attacking gets +3/+0 = 5/2
-        assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(5);
-        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(2);
+        // Walking Corpse (2/2) attacking gets +3/+0 = 5/2
+        assertThat(gqs.getEffectivePower(gd, corpse)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, corpse)).isEqualTo(2);
     }
 
-    // ===== Helper methods =====
+    @Test
+    void frontFaceBoostsAttackersWhileItStaysBack() {
+        Permanent gang = addCreatureReady(player1, new InstigatorGang());
+        Permanent attacker = addCreatureReady(player1, new WalkingCorpse());
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+
+        assertThat(gqs.getEffectivePower(gd, gang)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+    }
+
+    @Test
+    void multipleGangsBoostEachOtherWithoutDoubleCountingSelf() {
+        Permanent first = addCreatureReady(player1, new InstigatorGang());
+        Permanent second = addCreatureReady(player1, new InstigatorGang());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(4);
+    }
+
+    @Test
+    void backFaceOnlyBoostsItsControllersAttackersWhileItStaysBack() {
+        Permanent gang = addCreatureReady(player1, new InstigatorGang());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gang.isTransformed()).isTrue();
+
+        Permanent attacker = addCreatureReady(player1, new WalkingCorpse());
+        Permanent nonAttacker = addCreatureReady(player1, new WalkingCorpse());
+        Permanent opponent = addCreatureReady(player2, new WalkingCorpse());
+        declareAttackersAndPrepareBlockers(List.of(1));
+
+        assertThat(gqs.getEffectivePower(gd, gang)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, nonAttacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, opponent)).isEqualTo(2);
+    }
+
+    @Test
+    void transformedPackTramplesWithItsOwnAttackBonus() {
+        addCreatureReady(player1, new InstigatorGang());
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        Permanent blocker = addCreatureReady(player2, new WalkingCorpse());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(
+                blocker.getId(), 2,
+                player2.getId(), 6));
+
+        harness.assertLife(player2, 14);
+        harness.assertInGraveyard(player2, "Walking Corpse");
+        harness.assertOnBattlefield(player1, "Wildblood Pack");
+    }
 
     private void markAttacking(Player player, List<Integer> attackerIndices) {
         List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());
