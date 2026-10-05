@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.c.CostOfBrilliance;
+import com.github.laxika.magicalvibes.cards.b.BanewhipPunisher;
 import com.github.laxika.magicalvibes.cards.f.Fireblast;
 import com.github.laxika.magicalvibes.cards.m.ManOWar;
 import com.github.laxika.magicalvibes.cards.s.SoulOfShandalar;
 import com.github.laxika.magicalvibes.cards.w.Warthog;
 import com.github.laxika.magicalvibes.cards.z.ZhalfirinCrusader;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -21,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PeaceTalks.class, Warthog.class, Fireblast.class, ZhalfirinCrusader.class, ManOWar.class,
-        CostOfBrilliance.class, SoulOfShandalar.class})
+        CostOfBrilliance.class, SoulOfShandalar.class, BanewhipPunisher.class})
 class PeaceTalksTest extends BaseCardTest {
 
     @Test
@@ -126,10 +128,7 @@ class PeaceTalksTest extends BaseCardTest {
         Permanent warthog = addCreatureReady(player2, new Warthog());
         castPeaceTalks(player1);
 
-        harness.setHand(player1, List.of(new ManOWar()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new ManOWar(), "{2}{U}");
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, warthog.getId());
         harness.passBothPriorities();
@@ -164,6 +163,60 @@ class PeaceTalksTest extends BaseCardTest {
                 player1, indexOf(player1, soul), 0, List.of(player2.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be the targets");
+    }
+
+    @Test
+    void optionalTriggeredAbilityCanTargetCreature() {
+        Permanent target = addCreatureReady(player2, new Warthog());
+        castPeaceTalks(player1);
+
+        harness.castFromHand(player1, new BanewhipPunisher(), "{2}{B}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void spellCanTargetPlayerAfterRestrictionExpires() {
+        castPeaceTalks(player1);
+        advanceTurn();
+        advanceTurn();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.setHand(player1, List.of(new Fireblast()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void secondPeaceTalksExtendsRestrictionThroughFollowingTurn() {
+        advanceTurn();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        castPeaceTalks(player2);
+        advanceTurn();
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        castPeaceTalks(player1);
+        advanceTurn();
+
+        Permanent creature = addCreatureReady(player2, new Warthog());
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        assertThat(harness.getCombatAttackService()
+                .getAttackableCreatureIndices(gd, player2.getId())).isEmpty();
+        assertThat(creature.isTapped()).isFalse();
+
+        advanceTurn();
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        Permanent attacker = addCreatureReady(player1, new Warthog());
+        assertThat(harness.getCombatAttackService()
+                .getAttackableCreatureIndices(gd, player1.getId()))
+                .contains(indexOf(player1, attacker));
     }
 
     private void castPeaceTalks(Player caster) {
