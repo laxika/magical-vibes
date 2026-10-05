@@ -1,7 +1,12 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.b.BurnTheImpure;
+import com.github.laxika.magicalvibes.cards.v.Vivisection;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.c.Cancel;
+import com.github.laxika.magicalvibes.cards.s.SteelSabotage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -20,18 +25,16 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KnowledgePool.class, CounselOfTheSoratami.class, Forest.class, GrizzlyBears.class,
+        Mountain.class, Shock.class, BurnTheImpure.class, Vivisection.class, Cancel.class, SteelSabotage.class})
 class KnowledgePoolTest extends BaseCardTest {
-
-    // ===== ETB — each player exiles top 3 =====
 
     @Test
     @DisplayName("ETB exiles top 3 cards from each player's library")
     void etbExilesTopThreeFromEachPlayer() {
         // Setup: give each player known cards in their library
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new Forest(), new Forest(), new Forest(), new Forest()));
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(new Mountain(), new Mountain(), new Mountain(), new Mountain()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Mountain(), new Mountain(), new Mountain(), new Mountain()));
 
         int p1DeckBefore = gd.playerDecks.get(player1.getId()).size();
         int p2DeckBefore = gd.playerDecks.get(player2.getId()).size();
@@ -68,10 +71,8 @@ class KnowledgePoolTest extends BaseCardTest {
     @Test
     @DisplayName("ETB exiles fewer cards when library has less than 3")
     void etbExilesFewerWhenLibrarySmall() {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(new Forest(), new Forest()));
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(new Mountain()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player2, List.of(new Mountain()));
 
         harness.setHand(player1, List.of(new KnowledgePool()));
         harness.addMana(player1, ManaColor.WHITE, 6);
@@ -85,8 +86,6 @@ class KnowledgePoolTest extends BaseCardTest {
         UUID kpPermId = harness.getPermanentId(player1, "Knowledge Pool");
         assertThat(gd.getCardsExiledByPermanent(kpPermId)).hasSize(3); // 2 + 1
     }
-
-    // ===== Cast trigger — spell from hand =====
 
     @Test
     @DisplayName("Casting a spell from hand triggers Knowledge Pool")
@@ -124,15 +123,12 @@ class KnowledgePoolTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.KnowledgePoolCastChoice.class);
     }
 
-    // ===== Player picks from pool =====
-
     @Test
     @DisplayName("Player can cast a nonland non-targeted card from the pool without paying mana cost")
     void playerCastsFromPool() {
         // Put a non-targeted creature in the pool
         Card bears = new GrizzlyBears();
         setupKnowledgePoolManually(List.of(bears));
-        gd.getPlayerExiledCards(player1.getId()).add(bears);
 
         UUID kpPermId = harness.getPermanentId(player1, "Knowledge Pool");
 
@@ -151,8 +147,6 @@ class KnowledgePoolTest extends BaseCardTest {
         List<Card> pool = gd.getCardsExiledByPermanent(kpPermId);
         assertThat(pool).noneMatch(c -> c.getId().equals(bears.getId()));
     }
-
-    // ===== Player declines =====
 
     @Test
     @DisplayName("Player can decline to cast from the pool")
@@ -176,8 +170,6 @@ class KnowledgePoolTest extends BaseCardTest {
         // Interaction should be cleared
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
-
-    // ===== No re-trigger =====
 
     @Test
     @DisplayName("Replacement spell cast from KP does NOT re-trigger Knowledge Pool")
@@ -209,8 +201,6 @@ class KnowledgePoolTest extends BaseCardTest {
         assertThat(kpTriggers).isZero();
     }
 
-    // ===== Original spell gone =====
-
     @Test
     @DisplayName("If original spell is countered before KP trigger resolves, 'if the player does' fails")
     void originalSpellGoneBeforeTriggerResolves() {
@@ -236,8 +226,6 @@ class KnowledgePoolTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(kpPermId)).hasSize(poolSizeBefore);
     }
 
-    // ===== Nonland filter =====
-
     @Test
     @DisplayName("Lands in the pool are not offered as choices")
     void landsNotOfferedAsChoices() {
@@ -253,8 +241,6 @@ class KnowledgePoolTest extends BaseCardTest {
         // removes the just-exiled card, and only lands remain eligible → no choice
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
-
-    // ===== "Other" filter =====
 
     @Test
     @DisplayName("The just-exiled card is not offered as a choice")
@@ -285,11 +271,9 @@ class KnowledgePoolTest extends BaseCardTest {
         }
     }
 
-    // ===== KP destroyed =====
-
     @Test
-    @DisplayName("KP trigger fizzles if Knowledge Pool is destroyed before trigger resolves")
-    void kpDestroyedBeforeTriggerResolves() {
+    @DisplayName("KP trigger still exiles and offers a spell after Knowledge Pool leaves")
+    void kpRemovedBeforeTriggerResolves() {
         setupKnowledgePoolWithPool();
 
         harness.setHand(player1, List.of(new CounselOfTheSoratami()));
@@ -303,21 +287,24 @@ class KnowledgePoolTest extends BaseCardTest {
         // Resolve KP trigger
         harness.passBothPriorities();
 
-        // Trigger should fizzle — no choice presented
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.KnowledgePoolCastChoice.class);
+        assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Counsel of the Soratami"));
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Counsel of the Soratami"));
 
-        // Original spell should still be on stack (not exiled)
-        assertThat(gd.stack).anyMatch(se -> se.getCard().getName().equals("Counsel of the Soratami"));
+        Card bears = gd.getCardsExiledByPermanent(kpPermId).stream()
+                .filter(card -> card instanceof GrizzlyBears).findFirst().orElseThrow();
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
-
-    // ===== Creature from pool =====
 
     @Test
     @DisplayName("Casting a creature from the KP pool puts it on the stack and enters battlefield")
     void creatureFromPool() {
         Card bears = new GrizzlyBears();
         setupKnowledgePoolManually(List.of(bears));
-        gd.getPlayerExiledCards(player1.getId()).add(bears);
 
         harness.setHand(player1, List.of(new CounselOfTheSoratami()));
         harness.addMana(player1, ManaColor.BLUE, 3);
@@ -339,14 +326,11 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
-    // ===== Targeted spell from pool =====
-
     @Test
     @DisplayName("Casting a targeted spell from pool prompts for target selection")
     void targetedSpellFromPool() {
         Card shock = new Shock();
         setupKnowledgePoolManually(List.of(shock));
-        gd.getPlayerExiledCards(player1.getId()).add(shock);
 
         // Give player2 a creature to target
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -379,7 +363,102 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("A counterspell from the pool chooses a spell already on the stack")
+    void counterspellFromPoolCanTargetSpellOnStack() {
+        Card counsel = new CounselOfTheSoratami();
+        harness.setHand(player1, List.of(counsel));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorcery(player1, 0, 0);
+
+        Card cancel = new Cancel();
+        setupKnowledgePoolManually(List.of(cancel));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(cancel.getId()));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(counsel.getId());
+        harness.handlePermanentChosen(player1, counsel.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Counsel of the Soratami");
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A modal spell from the pool chooses its mode and target before resolving")
+    void modalSpellFromPoolChoosesModeAndTargetWhileCasting() {
+        Card sabotage = new SteelSabotage();
+        setupKnowledgePoolManually(List.of(sabotage));
+        harness.setHand(player1, List.of(new CounselOfTheSoratami()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(sabotage.getId()));
+
+        // The only legal mode returns the Pool itself; the caster must make that choice
+        // while casting, before anyone can respond to the replacement spell.
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A spell with an unpaid mandatory sacrifice cost cannot be cast from the pool")
+    void mandatoryAdditionalCostCannotBeWaived() {
+        Card vivisection = new Vivisection();
+        setupKnowledgePoolManually(List.of(vivisection));
+        harness.setHand(player1, List.of(new CounselOfTheSoratami()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of(vivisection.getId()));
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(vivisection.getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(vivisection);
+    }
+
+    @Test
+    @DisplayName("A targeted spell with no legal targets remains exiled")
+    void spellWithNoLegalTargetsRemainsExiled() {
+        Card burn = new BurnTheImpure();
+        setupKnowledgePoolManually(List.of(burn));
+        harness.setHand(player1, List.of(new CounselOfTheSoratami()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of(burn.getId()));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(burn);
+    }
+
+    @Test
+    @DisplayName("The opponent who casts from hand may cast a card owned by the Pool controller")
+    void opponentCanCastAnotherPlayersExiledCard() {
+        Card bears = new GrizzlyBears();
+        setupKnowledgePoolManually(List.of(bears));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.KnowledgePoolCastChoice.class)
+                .playerId()).isEqualTo(player2.getId());
+        harness.handleMultipleCardsChosen(player2, List.of(bears.getId()));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(bears);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).anyMatch(card -> card instanceof Shock);
+        harness.assertLife(player1, 20);
+    }
 
     /**
      * Sets up a Knowledge Pool on player1's battlefield by casting it properly,
@@ -387,13 +466,11 @@ class KnowledgePoolTest extends BaseCardTest {
      */
     private void setupKnowledgePoolWithPool() {
         // Give each player some spells in their library for ETB exile
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 new Shock(), new GrizzlyBears(), new Forest(),
                 new Forest(), new Forest()
         ));
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(
+        harness.setLibrary(player2, List.of(
                 new Mountain(), new Mountain(), new Mountain(),
                 new Forest(), new Forest()
         ));
