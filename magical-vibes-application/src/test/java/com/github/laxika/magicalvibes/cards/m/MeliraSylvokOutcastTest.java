@@ -1,13 +1,17 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.b.BlackcleaveGoblin;
+import com.github.laxika.magicalvibes.cards.g.GrimAffliction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IchorRats;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,27 +19,22 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MeliraSylvokOutcast.class, BlackcleaveGoblin.class, GrizzlyBears.class, IchorRats.class,
+        GrimAffliction.class, TurnToFrog.class})
 class MeliraSylvokOutcastTest extends BaseCardTest {
 
-    // ===== Ability 1: You can't get poison counters =====
-
     @Test
-    @DisplayName("Controller cannot get poison counters from infect combat damage")
-    void controllerDoesNotGetPoisonFromInfectCombat() {
+    @DisplayName("Opponent infect creature deals normal combat damage while Melira is present")
+    void controllerTakesNormalDamageFromOpponentInfectCreature() {
         harness.addToBattlefield(player1, new MeliraSylvokOutcast());
+        Permanent goblin = addCreatureReady(player2, new BlackcleaveGoblin());
+        goblin.setAttacking(true);
+        harness.setLife(player1, 20);
 
-        // Give player2 an infect creature and attack player1
-        harness.addToBattlefield(player2, new BlackcleaveGoblin());
+        resolveCombat(player2);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-
-        Permanent goblin = findPermanent(player2, "Blackcleave Goblin");
-
-        // But wait - Melira also removes infect from opponent creatures!
-        // So the goblin should not have infect
-        assertThat(gqs.hasKeyword(gd, goblin, Keyword.INFECT)).isFalse();
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
     }
 
     @Test
@@ -61,15 +60,11 @@ class MeliraSylvokOutcastTest extends BaseCardTest {
                 .isEqualTo(poisonBefore);
     }
 
-    // ===== Ability 2: Creatures you control can't have -1/-1 counters =====
-
     @Test
     @DisplayName("Own creature cannot have -1/-1 counters placed on it")
     void ownCreatureCantGetMinusCounters() {
         harness.addToBattlefield(player1, new MeliraSylvokOutcast());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         // Verify the creature has the granted effect
         assertThat(gqs.cantHaveMinusOneMinusOneCounters(gd, bears)).isTrue();
@@ -79,9 +74,7 @@ class MeliraSylvokOutcastTest extends BaseCardTest {
     @DisplayName("Opponent creatures are not protected from -1/-1 counters")
     void opponentCreatureCanGetMinusCounters() {
         harness.addToBattlefield(player1, new MeliraSylvokOutcast());
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player2, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         assertThat(gqs.cantHaveMinusOneMinusOneCounters(gd, bears)).isFalse();
     }
@@ -90,9 +83,7 @@ class MeliraSylvokOutcastTest extends BaseCardTest {
     @DisplayName("-1/-1 counter protection is lost when Melira leaves the battlefield")
     void minusCounterProtectionLostWhenMeliraRemoved() {
         harness.addToBattlefield(player1, new MeliraSylvokOutcast());
-        harness.addToBattlefield(player1, new GrizzlyBears());
-
-        Permanent bears = findPermanent(player1, "Grizzly Bears");
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         assertThat(gqs.cantHaveMinusOneMinusOneCounters(gd, bears)).isTrue();
 
@@ -103,15 +94,11 @@ class MeliraSylvokOutcastTest extends BaseCardTest {
         assertThat(gqs.cantHaveMinusOneMinusOneCounters(gd, bears)).isFalse();
     }
 
-    // ===== Ability 3: Creatures your opponents control lose infect =====
-
     @Test
     @DisplayName("Opponent creature with infect loses infect")
     void opponentInfectCreatureLosesInfect() {
         harness.addToBattlefield(player1, new MeliraSylvokOutcast());
-        harness.addToBattlefield(player2, new BlackcleaveGoblin());
-
-        Permanent goblin = findPermanent(player2, "Blackcleave Goblin");
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new BlackcleaveGoblin());
 
         // Blackcleave Goblin normally has infect, but Melira removes it
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.INFECT)).isFalse();
@@ -121,9 +108,7 @@ class MeliraSylvokOutcastTest extends BaseCardTest {
     @DisplayName("Own creature with infect keeps infect")
     void ownInfectCreatureKeepsInfect() {
         harness.addToBattlefield(player1, new MeliraSylvokOutcast());
-        harness.addToBattlefield(player1, new BlackcleaveGoblin());
-
-        Permanent goblin = findPermanent(player1, "Blackcleave Goblin");
+        Permanent goblin = harness.addToBattlefieldAndReturn(player1, new BlackcleaveGoblin());
 
         // Controller's own infect creatures should keep infect
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.INFECT)).isTrue();
@@ -133,9 +118,7 @@ class MeliraSylvokOutcastTest extends BaseCardTest {
     @DisplayName("Infect removal is lost when Melira leaves the battlefield")
     void infectRemovalLostWhenMeliraRemoved() {
         harness.addToBattlefield(player1, new MeliraSylvokOutcast());
-        harness.addToBattlefield(player2, new BlackcleaveGoblin());
-
-        Permanent goblin = findPermanent(player2, "Blackcleave Goblin");
+        Permanent goblin = harness.addToBattlefieldAndReturn(player2, new BlackcleaveGoblin());
 
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.INFECT)).isFalse();
 
@@ -145,5 +128,86 @@ class MeliraSylvokOutcastTest extends BaseCardTest {
 
         // Goblin regains infect
         assertThat(gqs.hasKeyword(gd, goblin, Keyword.INFECT)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Melira prevents actual counter placement on herself")
+    void preventsMinusCounterPlacementOnHerself() {
+        Permanent melira = harness.addToBattlefieldAndReturn(player1, new MeliraSylvokOutcast());
+        harness.setHand(player1, List.of(new GrimAffliction()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, melira.getId());
+
+        assertThat(melira.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertOnBattlefield(player1, "Melira, Sylvok Outcast");
+    }
+
+    @Test
+    @DisplayName("Melira preserves existing counters but prevents proliferating them")
+    void preservesExistingCountersAndPreventsProliferation() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        gd.playerPoisonCounters.put(player1.getId(), 3);
+        harness.addToBattlefield(player1, new MeliraSylvokOutcast());
+        harness.setHand(player1, List.of(new GrimAffliction()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(3);
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId(), player1.getId()));
+
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerPoisonCounters.get(player1.getId())).isEqualTo(3);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Opponent creatures can actually receive minus counters")
+    void allowsMinusCounterPlacementOnOpponentCreature() {
+        harness.addToBattlefield(player1, new MeliraSylvokOutcast());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new GrimAffliction()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Removing Melira's abilities allows her controller to receive poison")
+    void abilityLossEndsPoisonProtection() {
+        Permanent melira = harness.addToBattlefieldAndReturn(player1, new MeliraSylvokOutcast());
+        harness.setHand(player1, List.of(new TurnToFrog(), new IchorRats()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, melira.getId());
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isEqualTo(1);
+        assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An allied creature remains protected when it loses its own abilities")
+    void abilityLossOnProtectedCreatureDoesNotRemoveCounterRestriction() {
+        harness.addToBattlefield(player1, new MeliraSylvokOutcast());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new TurnToFrog(), new GrimAffliction()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 }
