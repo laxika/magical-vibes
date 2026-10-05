@@ -18,6 +18,72 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class OpalineBracersTest extends BaseCardTest {
 
     @Test
+    void colorlessPaymentGivesNoChargeCounters() {
+        harness.setHand(player1, List.of(new OpalineBracers()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Opaline Bracers").getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    void enteringWithoutBeingCastGivesNoChargeCounters() {
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        Permanent bracers = harness.enterBattlefieldAndReturn(player1, new OpalineBracers());
+
+        assertThat(bracers.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    void boostUpdatesWhenChargeCountersChangeAndIgnoresOtherCounters() {
+        Permanent bracers = harness.addToBattlefieldAndReturn(player1, new OpalineBracers());
+        Permanent creature = addCreatureReady(player1, new Arachnoid());
+        bracers.setCounterCount(CounterType.CHARGE, 2);
+        bracers.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(8);
+
+        bracers.setCounterCount(CounterType.CHARGE, 3);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(9);
+
+        bracers.setCounterCount(CounterType.CHARGE, 0);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(6);
+    }
+
+    @Test
+    void reequippingMovesTheBoostWithoutMovingCounters() {
+        Permanent bracers = harness.addToBattlefieldAndReturn(player1, new OpalineBracers());
+        Permanent first = addCreatureReady(player1, new Arachnoid());
+        Permanent second = addCreatureReady(player1, new Arachnoid());
+        bracers.setCounterCount(CounterType.CHARGE, 3);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, first.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(bracers.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(bracers.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(9);
+    }
+
+    @Test
     void sunburstPutsOneChargeCounterForEachColorSpent() {
         harness.setHand(player1, List.of(new OpalineBracers()));
         harness.addMana(player1, ManaColor.WHITE, 1);
