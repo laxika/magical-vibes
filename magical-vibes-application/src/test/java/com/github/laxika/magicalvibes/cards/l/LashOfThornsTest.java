@@ -43,6 +43,39 @@ class LashOfThornsTest extends BaseCardTest {
     }
 
     @Test
+    void canTargetOpponentsCreatureWithoutAffectingOtherCreatures() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castOn(target);
+
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(3);
+        assertThat(target.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+        assertThat(other.getEffectivePower()).isEqualTo(2);
+        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        assertThat(other.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
+    void repeatedCastsStackBoostsAndBothExpireAtCleanup() {
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castOn(bear);
+        castOn(bear);
+
+        assertThat(bear.getEffectivePower()).isEqualTo(6);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(4);
+        assertThat(bear.hasKeyword(Keyword.DEATHTOUCH)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(bear.hasKeyword(Keyword.DEATHTOUCH)).isFalse();
+    }
+
+    @Test
     void cannotTargetNoncreaturePermanent() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new LashOfThorns()));
@@ -56,7 +89,6 @@ class LashOfThornsTest extends BaseCardTest {
     private void castOn(Permanent target) {
         harness.setHand(player1, List.of(new LashOfThorns()));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
