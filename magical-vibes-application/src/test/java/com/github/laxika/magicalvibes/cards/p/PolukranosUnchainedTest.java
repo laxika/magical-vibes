@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HavengulLich;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.Solemnity;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -15,15 +18,12 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PolukranosUnchained.class, GrizzlyBears.class, Shock.class})
+@CardUsed({PolukranosUnchained.class, GrizzlyBears.class, Shock.class, HavengulLich.class, Solemnity.class})
 class PolukranosUnchainedTest extends BaseCardTest {
 
     @Test
     void entersWithSixCountersFromHand() {
-        harness.setHand(player1, List.of(new PolukranosUnchained()));
-        addPolukranosMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PolukranosUnchained(), "{2}{B}{G}");
         harness.passBothPriorities();
 
         Permanent polukranos = findPermanent(player1, "Polukranos, Unchained");
@@ -100,9 +100,75 @@ class PolukranosUnchainedTest extends BaseCardTest {
         assertThat(polukranos.getMarkedDamage()).isZero();
     }
 
-    private void addPolukranosMana() {
+    @Test
+    @CardUsed({HavengulLich.class, PolukranosUnchained.class})
+    void castingFromGraveyardWithoutEscapeEntersWithSixCounters() {
+        harness.addToBattlefield(player1, new HavengulLich());
+        PolukranosUnchained card = new PolukranosUnchained();
+        harness.setGraveyard(player1, List.of(card));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, card.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromGraveyard(player1, card.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent polukranos = findPermanent(player1, "Polukranos, Unchained");
+        assertThat(polukranos.isEscaped()).isFalse();
+        assertThat(polukranos.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+    }
+
+    @Test
+    @CardUsed({PolukranosUnchained.class, Solemnity.class, Shock.class})
+    void counterPlacementRestrictionDoesNotPreventRemovingCountersForDamage() {
+        harness.castFromHand(player1, new PolukranosUnchained(), "{2}{B}{G}");
+        harness.passBothPriorities();
+        Permanent polukranos = findPermanent(player1, "Polukranos, Unchained");
+        harness.addToBattlefield(player1, new Solemnity());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, polukranos.getId());
+        harness.passBothPriorities();
+
+        assertThat(polukranos.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(polukranos.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Polukranos, Unchained");
+    }
+
+    @Test
+    void damageExceedingCountersIsEntirelyPrevented() {
+        Permanent polukranos = harness.addToBattlefieldAndReturn(player2, new PolukranosUnchained());
+        polukranos.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, polukranos.getId());
+        harness.passBothPriorities();
+
+        assertThat(polukranos.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(polukranos.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player2, "Polukranos, Unchained");
+    }
+
+    @Test
+    void canFightAnotherCreatureControlledByItsController() {
+        Permanent polukranos = harness.addToBattlefieldAndReturn(player1, new PolukranosUnchained());
+        polukranos.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 6);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(polukranos.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(polukranos.getMarkedDamage()).isZero();
     }
 }
