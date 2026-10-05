@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Metamorphose.class, BrainFreeze.class, FrozenSolid.class,
-        Stabilizer.class, TempleOfTheFalseGod.class, ZombieCutthroat.class})
+        Stabilizer.class, TempleOfTheFalseGod.class, ZombieCutthroat.class, JaceBeleren.class})
 class MetamorphoseTest extends BaseCardTest {
 
     @Test
@@ -35,8 +35,7 @@ class MetamorphoseTest extends BaseCardTest {
                 new Stabilizer(), new FrozenSolid(), new TempleOfTheFalseGod(), new BrainFreeze()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Zombie Cutthroat");
         assertThat(gd.playerDecks.get(player2.getId()))
@@ -66,8 +65,7 @@ class MetamorphoseTest extends BaseCardTest {
         harness.setHand(player2, List.of(new TempleOfTheFalseGod()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleCardChosen(player2, -1);
 
         harness.assertNotOnBattlefield(player2, "Zombie Cutthroat");
@@ -90,7 +88,6 @@ class MetamorphoseTest extends BaseCardTest {
 
     @Test
     @DisplayName("Does not offer a planeswalker card from the opponent's hand")
-    @CardUsed(JaceBeleren.class)
     void doesNotOfferPlaneswalkerCard() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ZombieCutthroat());
         harness.setLibrary(player2, List.of(new TempleOfTheFalseGod()));
@@ -98,10 +95,137 @@ class MetamorphoseTest extends BaseCardTest {
         harness.setHand(player2, List.of(new TempleOfTheFalseGod(), new JaceBeleren(), new BrainFreeze()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class).validIndices())
                 .containsExactly(0);
+    }
+
+    @Test
+    void opponentCanPutCreatureOntoBattlefieldWithoutPayingItsManaCost() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Stabilizer());
+        harness.setHand(player1, List.of(new Metamorphose()));
+        harness.setHand(player2, List.of(new ZombieCutthroat()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertOnBattlefield(player2, "Zombie Cutthroat");
+        harness.assertNotInHand(player2, "Zombie Cutthroat");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentCanPutLandOntoBattlefield() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Stabilizer());
+        harness.setHand(player1, List.of(new Metamorphose()));
+        harness.setHand(player2, List.of(new TempleOfTheFalseGod()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertOnBattlefield(player2, "Temple of the False God");
+        harness.assertNotInHand(player2, "Temple of the False God");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void resolvesWithoutAChoiceWhenOpponentHasNoCardsInHand() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ZombieCutthroat());
+        harness.setHand(player1, List.of(new Metamorphose()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst().getId())
+                .isEqualTo(target.getCard().getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void doesNotOfferPermanentWhenTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ZombieCutthroat());
+        harness.setHand(player1, List.of(new Metamorphose()));
+        harness.setHand(player2, List.of(new Stabilizer()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToHand(gd, target));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Stabilizer");
+        harness.assertNotOnBattlefield(player2, "Stabilizer");
+        harness.assertInGraveyard(player1, "Metamorphose");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void auraStaysInHandWhenThereIsNothingLegalToEnchant() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ZombieCutthroat());
+        harness.setHand(player1, List.of(new Metamorphose()));
+        harness.setHand(player2, List.of(new FrozenSolid()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInHand(player2, "Frozen Solid");
+        harness.assertNotOnBattlefield(player2, "Frozen Solid");
+        harness.assertNotInGraveyard(player2, "Frozen Solid");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void opponentChoosesWhatAuraEnchantsAsItEnters() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Stabilizer());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ZombieCutthroat());
+        harness.addToBattlefield(player2, new ZombieCutthroat());
+        harness.setHand(player1, List.of(new Metamorphose()));
+        harness.setHand(player2, List.of(new FrozenSolid()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handlePermanentChosen(player2, creature.getId());
+
+        harness.assertOnBattlefield(player2, "Frozen Solid");
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Frozen Solid"))
+                .singleElement().extracting(Permanent::getAttachedTo).isEqualTo(creature.getId());
+        harness.assertNotInHand(player2, "Frozen Solid");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void returnsBorrowedPermanentToOwnersLibraryButOffersItsControllerTheChoice() {
+        Card borrowedCard = new ZombieCutthroat();
+        borrowedCard.setOwnerId(player1.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, borrowedCard);
+        Card libraryCard = new TempleOfTheFalseGod();
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.setHand(player1, List.of(new Metamorphose()));
+        harness.setHand(player2, List.of(new Stabilizer()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(borrowedCard.getId(), libraryCard.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 0);
+        harness.assertOnBattlefield(player2, "Stabilizer");
+        harness.assertNotOnBattlefield(player2, "Zombie Cutthroat");
+        assertThat(gd.stack).isEmpty();
     }
 }
