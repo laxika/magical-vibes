@@ -235,4 +235,23 @@ class PentagramOfTheAgesTest extends BaseCardTest {
     private Permanent addReadyPentagram(Player player) {
         return addCreatureReady(player, new PentagramOfTheAges());
     }
+
+    @Test
+    @DisplayName("Only the first damage event from the chosen source is prevented")
+    void onlyFirstDamageEventIsPrevented() {
+        harness.setLife(player1, 20);
+        addReadyPentagram(player1);
+        Permanent artillery = addCreatureReady(player1, new OrcishArtillery());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, artillery.getId());
+
+        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        assertThat(gd.playerSourceNextDamageShields).isEmpty();
+    }
 }
