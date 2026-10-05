@@ -82,6 +82,50 @@ class ProdigalSorcererTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can deal damage to its controller")
+    void canTargetItsController() {
+        harness.setLife(player1, 20);
+        addCreatureReady(player1, new ProdigalSorcerer());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Can target itself and die from its own damage")
+    void canTargetItself() {
+        Permanent sorcerer = addCreatureReady(player1, new ProdigalSorcerer());
+
+        harness.activateAbility(player1, 0, null, sorcerer.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Prodigal Sorcerer");
+        harness.assertInGraveyard(player1, "Prodigal Sorcerer");
+    }
+
+    @Test
+    @DisplayName("Damage from separate activations accumulates on a creature")
+    void damageFromSeparateActivationsAccumulates() {
+        addCreatureReady(player1, new ProdigalSorcerer());
+        addCreatureReady(player1, new ProdigalSorcerer());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+
+        harness.activateAbility(player1, 1, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Cannot activate ability with summoning sickness")
     void cannotActivateWithSummoningSickness() {
         harness.addToBattlefieldAndReturn(player1, new ProdigalSorcerer());
