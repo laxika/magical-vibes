@@ -73,14 +73,63 @@ class OliviasWrathTest extends BaseCardTest {
         assertThat(creature.getEffectiveToughness()).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("Opposing Vampires do not contribute to X")
+    void noControlledVampiresMeansNoReduction() {
+        harness.addToBattlefield(player2, new VampireNoble());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        castOliviasWrath();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("X is determined on resolution and remains fixed afterward")
+    void countsVampiresAtResolutionAndLocksInReduction() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        prepareOliviasWrath();
+        harness.castSorcery(player1, 0);
+        harness.addToBattlefield(player1, new VampireNoble());
+        harness.passBothPriorities();
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+
+        harness.addToBattlefield(player1, new VampireNoble());
+
+        assertThat(creature.getEffectivePower()).isEqualTo(2);
+        assertThat(creature.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Creatures entering after resolution are not affected")
+    void doesNotAffectCreaturesEnteringAfterResolution() {
+        harness.addToBattlefield(player1, new VampireNoble());
+        Permanent existingCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        castOliviasWrath();
+        Permanent newCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+
+        assertThat(existingCreature.getEffectivePower()).isEqualTo(2);
+        assertThat(existingCreature.getEffectiveToughness()).isEqualTo(2);
+        assertThat(newCreature.getEffectivePower()).isEqualTo(3);
+        assertThat(newCreature.getEffectiveToughness()).isEqualTo(3);
+    }
+
     private void castOliviasWrath() {
+        prepareOliviasWrath();
+        harness.castAndResolveSorcery(player1, 0, List.of());
+    }
+
+    private void prepareOliviasWrath() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new OliviasWrath()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
     }
 }
