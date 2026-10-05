@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.s.SchoolOfTheUnseen;
 import com.github.laxika.magicalvibes.cards.t.ThawingGlaciers;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PhyrexianWarBeast.class, Pyrokinesis.class, SchoolOfTheUnseen.class, ThawingGlaciers.class})
+@CardUsed({PhyrexianWarBeast.class, Pyrokinesis.class, SchoolOfTheUnseen.class, ThawingGlaciers.class, Boomerang.class})
 class PhyrexianWarBeastTest extends BaseCardTest {
 
     /** Deals lethal damage to the War Beast so its leaves-the-battlefield ability triggers. */
@@ -55,9 +56,7 @@ class PhyrexianWarBeastTest extends BaseCardTest {
         int startingLife = gd.playerLifeTotals.get(player1.getId());
 
         killWarBeast();
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -101,5 +100,45 @@ class PhyrexianWarBeastTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife - 1);
+    }
+
+    @Test
+    @DisplayName("Returning a borrowed War Beast to hand penalizes its last controller, not its owner")
+    void returningToHandPenalizesLastController() {
+        PhyrexianWarBeast beast = new PhyrexianWarBeast();
+        beast.setOwnerId(player2.getId());
+        harness.addToBattlefield(player1, beast);
+        harness.addToBattlefield(player1, new SchoolOfTheUnseen());
+        harness.addToBattlefield(player2, new ThawingGlaciers());
+        int controllerLife = gd.playerLifeTotals.get(player1.getId());
+        int ownerLife = gd.playerLifeTotals.get(player2.getId());
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castAndResolveInstant(player2, 0, harness.getPermanentId(player1, "Phyrexian War Beast"));
+        resolveAllTriggers();
+
+        harness.assertInHand(player2, "Phyrexian War Beast");
+        harness.assertNotOnBattlefield(player1, "Phyrexian War Beast");
+        harness.assertInGraveyard(player1, "School of the Unseen");
+        harness.assertOnBattlefield(player2, "Thawing Glaciers");
+        harness.assertLife(player1, controllerLife - 1);
+        harness.assertLife(player2, ownerLife);
+    }
+
+    @Test
+    @DisplayName("The opponent's lands cannot be sacrificed when the controller has none")
+    void noLandsDoesNotSacrificeOpponentsLand() {
+        harness.addToBattlefield(player1, new PhyrexianWarBeast());
+        harness.addToBattlefield(player2, new SchoolOfTheUnseen());
+        int controllerLife = gd.playerLifeTotals.get(player1.getId());
+        int opponentLife = gd.playerLifeTotals.get(player2.getId());
+
+        killWarBeast();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "School of the Unseen");
+        harness.assertLife(player1, controllerLife - 1);
+        harness.assertLife(player2, opponentLife);
     }
 }
