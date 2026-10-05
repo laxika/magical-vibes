@@ -61,6 +61,86 @@ class KataraWaterbendingMasterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 
+    @Test
+    void opponentCastingDuringTheirTurnDoesNotGiveExperience() {
+        harness.addToBattlefield(player1, new KataraWaterbendingMaster());
+        enterOpponentTurn();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerExperienceCounters).isEmpty();
+    }
+
+    @Test
+    void eachSpellDuringOpponentTurnAddsAnotherExperienceCounter() {
+        harness.addToBattlefield(player1, new KataraWaterbendingMaster());
+        enterOpponentTurn();
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerExperienceCounters).containsEntry(player1.getId(), 2);
+        assertThat(gd.playerExperienceCounters).doesNotContainKey(player2.getId());
+    }
+
+    @Test
+    void decliningAttackAbilityNeitherDrawsNorDiscards() {
+        addReadyKatara();
+        gd.playerExperienceCounters.put(player1.getId(), 2);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Shock");
+        harness.assertNotInGraveyard(player1, "Shock");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void decliningWithNoExperienceKeepsHandAndLibrary() {
+        addReadyKatara();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertInHand(player1, "Shock");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void attackAbilityUsesExperienceCountAtResolution() {
+        addReadyKatara();
+        gd.playerExperienceCounters.put(player1.getId(), 1);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+
+        declareAttackers(player1, List.of(0));
+        gd.playerExperienceCounters.put(player1.getId(), 3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Shock");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
     private void enterOpponentTurn() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
