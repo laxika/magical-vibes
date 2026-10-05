@@ -96,4 +96,50 @@ class KeldonMegalithsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("0 or fewer cards in your hand");
     }
+
+    @Test
+    @DisplayName("Hellbent is not checked again when the ability resolves")
+    void hellbentAbilityResolvesAfterHandBecomesNonempty() {
+        harness.addToBattlefield(player1, new KeldonMegaliths());
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.setHand(player1, List.of(new KeldonMegaliths()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("Mana ability does not require an empty hand and resolves immediately")
+    void manaAbilityWorksWithCardsInHand() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new KeldonMegaliths());
+        harness.setHand(player1, List.of(new KeldonMegaliths()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Hellbent ability cannot be activated while the land is tapped")
+    void tappedLandCannotActivateHellbentAbility() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new KeldonMegaliths());
+        harness.setHand(player1, List.of());
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(land.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+    }
 }
