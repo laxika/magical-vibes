@@ -21,8 +21,7 @@ class MagmaBurstTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
@@ -106,5 +105,56 @@ class MagmaBurstTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castKickedInstantWithSacrifices(player1, 0, player2.getId(),
                 List.of(player2.getId()), List.of(firstLand.getId(), secondLand.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void kickedSpellStillDamagesAdditionalTargetIfPrimaryTargetLeaves() {
+        var firstLand = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        var secondLand = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        var creature = harness.addToBattlefieldAndReturn(player2, new AncientSpider());
+        harness.setHand(player1, List.of(new MagmaBurst()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castKickedInstantWithSacrifices(player1, 0, creature.getId(),
+                List.of(player2.getId()), List.of(firstLand.getId(), secondLand.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(creature);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        harness.assertInGraveyard(player1, "Magma Burst");
+    }
+
+    @Test
+    void kickedSpellCanDamageTwoDifferentPlayers() {
+        var firstLand = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        var secondLand = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        harness.setHand(player1, List.of(new MagmaBurst()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        harness.castKickedInstantWithSacrifices(player1, 0, player2.getId(),
+                List.of(player1.getId()), List.of(firstLand.getId(), secondLand.getId()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void kickerCannotSacrificeTheSameLandTwice() {
+        var land = harness.addToBattlefieldAndReturn(player1, new TerminalMoraine());
+        harness.setHand(player1, List.of(new MagmaBurst()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 3);
+
+        assertThatThrownBy(() -> harness.castKickedInstantWithSacrifices(player1, 0, player2.getId(),
+                List.of(player1.getId()), List.of(land.getId(), land.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(4);
+        harness.assertInHand(player1, "Magma Burst");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 }
