@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AmbassadorLaquatus;
 import com.github.laxika.magicalvibes.cards.c.CopperMyr;
+import com.github.laxika.magicalvibes.cards.c.CoolButRude;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PurpleDragonPunks.class, CopperMyr.class, GrizzlyBears.class, AmbassadorLaquatus.class})
+@CardUsed({PurpleDragonPunks.class, CopperMyr.class, GrizzlyBears.class, AmbassadorLaquatus.class,
+        CoolButRude.class})
 class PurpleDragonPunksTest extends BaseCardTest {
 
     @Test
@@ -76,9 +79,76 @@ class PurpleDragonPunksTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getArtifactSpellOrAbilityOnlyMana(ManaColor.RED)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Mana is available immediately and tapping prevents a second activation")
+    void manaAbilityResolvesImmediatelyAndRequiresUntappedSource() {
+        Permanent punks = addCreatureReady(player1, new PurpleDragonPunks());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(punks.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactSpellOrAbilityOnlyMana(ManaColor.RED))
+                .isEqualTo(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactSpellOrAbilityOnlyMana(ManaColor.RED))
+                .isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents the tap mana ability")
+    void summoningSicknessPreventsActivation() {
+        Permanent punks = harness.addToBattlefieldAndReturn(player1, new PurpleDragonPunks());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(punks.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactSpellOrAbilityOnlyMana(ManaColor.RED))
+                .isZero();
+    }
+
+    @Test
+    @DisplayName("Restricted red mana pays a colored cost of a nonartifact ability")
+    void paysColoredNonartifactAbilityCost() {
+        addReadyPunks();
+        Permanent rude = harness.addToBattlefieldAndReturn(player1, new CoolButRude());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(rude.getCounterCount(CounterType.LEVEL)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactSpellOrAbilityOnlyMana(ManaColor.RED))
+                .isZero();
+    }
+
+    @Test
+    @DisplayName("Restricted red mana cannot pay the red cost of another Purple Dragon Punks")
+    void cannotPayColoredNonartifactSpellCost() {
+        addReadyPunks();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.activateAbility(player1, 0, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player1, List.of(new PurpleDragonPunks()));
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getArtifactSpellOrAbilityOnlyMana(ManaColor.RED))
+                .isEqualTo(1);
+    }
+
     private void addReadyPunks() {
-        harness.addToBattlefield(player1, new PurpleDragonPunks());
-        Permanent punks = findPermanent(player1, "Purple Dragon Punks");
-        punks.setSummoningSick(false);
+        addCreatureReady(player1, new PurpleDragonPunks());
     }
 }
