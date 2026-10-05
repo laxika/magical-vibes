@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -47,7 +46,6 @@ class NoyanDarRoilShaperTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, ownForest)).isEqualTo(3);
         assertThat(gqs.hasEffectiveSubtype(gd, ownForest, CardSubtype.ELEMENTAL)).isTrue();
         assertThat(gqs.hasKeyword(gd, ownForest, Keyword.HASTE)).isTrue();
-        assertThat(ownForest.getCard().hasType(CardType.LAND)).isTrue();
     }
 
     @Test
@@ -67,17 +65,74 @@ class NoyanDarRoilShaperTest extends BaseCardTest {
         harness.addToBattlefield(player1, new NoyanDarRoilShaper());
         harness.addToBattlefield(player1, new Forest());
 
-        harness.setHand(player1, List.of(new Divination()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new Divination(), "{2}{U}");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
         harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
 
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+    }
+
+    @Test
+    void targetIsChosenBeforeTheOptionalDecisionAtResolution() {
+        harness.addToBattlefield(player1, new NoyanDarRoilShaper());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        castShock();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(forest.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+
+        harness.handlePermanentChosen(player1, forest.getId());
+        assertThat(gd.stack).hasSize(2);
+        assertThat(forest.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(forest.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
+    }
+
+    @Test
+    void repeatedAnimationAddsCountersWithoutResettingThem() {
+        harness.addToBattlefield(player1, new NoyanDarRoilShaper());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        for (int i = 0; i < 2; i++) {
+            castShock();
+            harness.handleMayAbilityChosen(player1, true);
+            harness.handlePermanentChosen(player1, forest.getId());
+            harness.passBothPriorities();
+            harness.passBothPriorities();
+        }
+
+        assertThat(forest.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(6);
+        assertThat(gqs.isLand(gd, forest)).isTrue();
+        assertThat(gqs.hasKeyword(gd, forest, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    void opponentsInstantDoesNotTrigger() {
+        harness.addToBattlefield(player1, new NoyanDarRoilShaper());
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.ensurePriority(player2);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(forest.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.isCreature(gd, forest)).isFalse();
     }
 
     private void castShock() {
