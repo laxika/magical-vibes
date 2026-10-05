@@ -79,4 +79,74 @@ class MycosynthGolemTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castArtifact(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void ownAffinityCanReduceCostToZero() {
+        for (int i = 0; i < 12; i++) {
+            harness.addToBattlefield(player1, new ConjurersBauble());
+        }
+        harness.setHand(player1, List.of(new MycosynthGolem()));
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void grantedAffinityStacksWithOwnAffinity() {
+        harness.addToBattlefield(player1, new MycosynthGolem());
+        harness.addToBattlefield(player1, new ConjurersBauble());
+        harness.setHand(player1, List.of(new MycosynthGolem()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void multipleGolemsGrantSeparateInstancesOfAffinity() {
+        harness.addToBattlefield(player1, new MycosynthGolem());
+        harness.addToBattlefield(player1, new MycosynthGolem());
+        harness.setHand(player1, List.of(new BatteredGolem()));
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    void opponentsGolemDoesNotGrantAffinity() {
+        harness.addToBattlefield(player2, new MycosynthGolem());
+        harness.addToBattlefield(player1, new ConjurersBauble());
+        harness.setHand(player1, List.of(new BatteredGolem()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void grantedAffinityDoesNotCountOpponentsArtifacts() {
+        harness.addToBattlefield(player1, new MycosynthGolem());
+        harness.addToBattlefield(player2, new ConjurersBauble());
+        harness.setHand(player1, List.of(new BatteredGolem()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void golemInHandDoesNotGrantAffinity() {
+        harness.addToBattlefield(player1, new ConjurersBauble());
+        harness.setHand(player1, List.of(new BatteredGolem(), new MycosynthGolem()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
