@@ -73,6 +73,54 @@ class MikeyLeoChaosOrderTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Draws when you put a -1/-1 counter on Mikey and Leo themselves")
+    void drawsForMinusCounterOnSelf() {
+        Permanent mikey = harness.addToBattlefieldAndReturn(player1, new MikeyLeoChaosOrder());
+        harness.addToBattlefield(player1, new FumeSpitter());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 1, null, mikey.getId());
+        resolveAllTriggers();
+
+        assertThat(mikey.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Does not draw when you put a counter on an opponent's creature")
+    void doesNotDrawForCounterOnOpponentCreature() {
+        harness.addToBattlefield(player1, new MikeyLeoChaosOrder());
+        harness.addToBattlefield(player1, new FumeSpitter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.activateAbility(player1, 1, null, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's counter placement does not consume your trigger for the turn")
+    void opponentPlacementDoesNotConsumeTrigger() {
+        Permanent mikey = harness.addToBattlefieldAndReturn(player1, new MikeyLeoChaosOrder());
+        Permanent township = harness.addToBattlefieldAndReturn(player1, new GavonyTownship());
+        harness.addToBattlefield(player2, new FumeSpitter());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.forceActivePlayer(player2);
+        harness.activateAbility(player2, 0, null, mikey.getId());
+        resolveAllTriggers();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        activateTownship(township);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
     private void activateTownship(Permanent township) {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
