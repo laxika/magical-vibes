@@ -46,6 +46,9 @@ class NewFrontiersTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
 
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gameLogContains("Library is shuffled.")).isFalse();
+
         search = activeSearch();
         assertThat(search.params().playerId()).isEqualTo(player2.getId());
         assertThat(search.params().remainingCount()).isEqualTo(2);
@@ -60,8 +63,7 @@ class NewFrontiersTest extends BaseCardTest {
                 .allMatch(permanent -> permanent.isTapped());
         assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2)
                 .allMatch(permanent -> permanent.isTapped());
-        assertThat(gameLogContains(player1.getUsername() + "'s library is shuffled.")).isTrue();
-        assertThat(gameLogContains(player2.getUsername() + "'s library is shuffled.")).isTrue();
+        assertThat(gameLogContains("shuffled.")).isTrue();
     }
 
     @Test
@@ -73,11 +75,12 @@ class NewFrontiersTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Island());
         harness.setLibrary(player1, List.of(new Plains(), new Swamp()));
-        harness.setLibrary(player2, List.of());
+        harness.setLibrary(player2, List.of(new Forest()));
         castNewFrontiers(2);
 
         harness.handleCardChosen(player1, 0);
         harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player2, -1);
 
         assertThat(activeSearch()).isNull();
         resolveAllTriggers();
@@ -99,6 +102,7 @@ class NewFrontiersTest extends BaseCardTest {
         assertThat(activeSearch()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gameLogContains("shuffled.")).isFalse();
     }
 
     @Test
@@ -121,12 +125,16 @@ class NewFrontiersTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A player without a basic land is skipped")
-    void playerWithoutBasicLandIsSkipped() {
+    @DisplayName("A player without a basic land may decline to search")
+    void playerWithoutBasicLandMayDecline() {
         harness.setLibrary(player1, List.of(new Simplify()));
         harness.setLibrary(player2, List.of(new Plains()));
         castNewFrontiers(1);
 
+        assertThat(activeSearch()).isNotNull();
+        assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, -1);
+        assertThat(gameLogContains("shuffled.")).isFalse();
         assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
 
         harness.handleCardChosen(player2, 0);
@@ -138,36 +146,65 @@ class NewFrontiersTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An empty library still counts as a search")
-    void emptyLibraryStillTriggersOpponentSearchAbility() {
+    @DisplayName("A player with an empty library may decline to search without triggering Ob Nixilis")
+    void emptyLibraryMayDeclineSearch() {
         harness.addToBattlefield(player2, new ObNixilisUnshackled());
         harness.setLife(player1, 20);
         harness.setLibrary(player1, List.of());
         harness.setLibrary(player2, List.of());
         castNewFrontiers(1);
 
+        assertThat(activeSearch()).isNotNull();
+        assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, -1);
+        harness.handleCardChosen(player2, -1);
         resolveAllTriggers();
 
-        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
     }
 
     @Test
-    @DisplayName("With X=0 New Frontiers does not start a search")
-    void xZeroDoesNothing() {
+    @DisplayName("With X=0 players still have the choice to search")
+    void xZeroStillOffersOptionalSearch() {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setLibrary(player2, List.of(new Plains()));
         castNewFrontiers(0);
 
+        assertThat(activeSearch()).isNotNull();
+        assertThat(activeSearch().params().playerId()).isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, -1);
+        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, -1);
         assertThat(activeSearch()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Finding fewer lands than X completes both searches and resumes resolution")
+    void fewerAvailableLandsThanXCompletesResolution() {
+        harness.setLibrary(player1, List.of(new Forest(), new Simplify()));
+        harness.setLibrary(player2, List.of(new Plains(), new Simplify()));
+        castNewFrontiers(3);
+
+        harness.handleCardChosen(player1, 0);
+        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(activeSearch()).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1)
+                .allMatch(permanent -> permanent.isTapped());
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1)
+                .allMatch(permanent -> permanent.isTapped());
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+    }
+
     private void castNewFrontiers(int xValue) {
         harness.setHand(player1, List.of(new NewFrontiers()));
         harness.addMana(player1, ManaColor.GREEN, xValue + 1);
-        harness.castSorcery(player1, 0, xValue);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, xValue);
     }
 
     private PendingInteraction.LibrarySearch activeSearch() {
