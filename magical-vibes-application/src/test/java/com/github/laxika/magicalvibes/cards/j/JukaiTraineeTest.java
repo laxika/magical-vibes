@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({JukaiTrainee.class, GrizzlyBears.class})
+@CardUsed({JukaiTrainee.class, GrizzlyBears.class, HighGround.class})
 class JukaiTraineeTest extends BaseCardTest {
 
     @Test
@@ -84,16 +85,30 @@ class JukaiTraineeTest extends BaseCardTest {
     }
 
     private Permanent addReadyTrainee(Player player) {
-        Permanent permanent = new Permanent(new JukaiTrainee());
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return addCreatureReady(player, new JukaiTrainee());
     }
 
     private void addReadyAttacker(Player player) {
-        Permanent permanent = new Permanent(new GrizzlyBears());
-        permanent.setSummoningSick(false);
+        Permanent permanent = addCreatureReady(player, new GrizzlyBears());
         permanent.setAttacking(true);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
+    }
+
+    @Test
+    @DisplayName("Blocking multiple attackers gives only one +1/+1 boost")
+    void blockingMultipleAttackersGivesOnlyOneBoost() {
+        Permanent trainee = addReadyTrainee(player2);
+        harness.addToBattlefield(player2, new HighGround());
+        addReadyAttacker(player1);
+        addReadyAttacker(player1);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(0, 1)
+        ));
+        resolveAllTriggers();
+
+        assertThat(trainee.getPowerModifier()).isEqualTo(1);
+        assertThat(trainee.getToughnessModifier()).isEqualTo(1);
     }
 }
