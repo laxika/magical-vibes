@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
+import com.github.laxika.magicalvibes.cards.s.SunbathingRootwalla;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,8 +14,59 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LlanowarStalker.class, FugitiveWizard.class})
+@CardUsed({LlanowarStalker.class, FugitiveWizard.class, SunbathingRootwalla.class})
 class LlanowarStalkerTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Each creature entry creates a separate boost that waits for resolution")
+    void repeatedEntriesStackAndResolveIndependently() {
+        Permanent stalker = harness.addToBattlefieldAndReturn(player1, new LlanowarStalker());
+        int initialPower = stalker.getEffectivePower();
+        int initialToughness = stalker.getEffectiveToughness();
+
+        harness.enterBattlefieldAndReturn(player1, new SunbathingRootwalla());
+        harness.enterBattlefieldAndReturn(player1, new SunbathingRootwalla());
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(stalker.getEffectivePower()).isEqualTo(initialPower);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(stalker.getEffectivePower()).isEqualTo(initialPower + 1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(stalker.getEffectivePower()).isEqualTo(initialPower + 2);
+        assertThat(stalker.getEffectiveToughness()).isEqualTo(initialToughness);
+    }
+
+    @Test
+    @DisplayName("A second Stalker boosts the first but does not boost itself")
+    void anotherStalkerBoostsOnlyTheExistingStalker() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new LlanowarStalker());
+        int initialPower = first.getEffectivePower();
+
+        Permanent second = harness.enterBattlefieldAndReturn(player1, new LlanowarStalker());
+        int secondInitialPower = second.getEffectivePower();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(initialPower + 1);
+        assertThat(second.getEffectivePower()).isEqualTo(secondInitialPower);
+        assertThat(gd.stack).isEmpty();
+
+        harness.enterBattlefieldAndReturn(player1, new SunbathingRootwalla());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getEffectivePower()).isEqualTo(initialPower + 2);
+        assertThat(second.getEffectivePower()).isEqualTo(secondInitialPower + 1);
+        assertThat(gd.stack).isEmpty();
+    }
 
     @Test
     @DisplayName("Another creature entering under your control gives Llanowar Stalker +1/+0")
