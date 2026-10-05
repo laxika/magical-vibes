@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.e.EmberShot;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.l.LavaDart;
 import com.github.laxika.magicalvibes.cards.l.LightningSurge;
+import com.github.laxika.magicalvibes.cards.m.Malignus;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +21,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArcaneTeachings.class, BorderPatrol.class, EmberShot.class, FlaringPain.class, LavaDart.class, LightningSurge.class, PhantomTiger.class})
+@CardUsed({ArcaneTeachings.class, BorderPatrol.class, EmberShot.class, FlaringPain.class, LavaDart.class, LightningSurge.class, Malignus.class, PhantomTiger.class})
 class PhantomTigerTest extends BaseCardTest {
 
     @Test
@@ -44,8 +45,7 @@ class PhantomTigerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new PhantomTiger()));
         harness.setHand(player1, List.of(new EmberShot()));
         harness.addMana(player1, ManaColor.RED, 7);
-        harness.castInstant(player1, 0, tiger.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, tiger.getId());
 
         assertThat(tiger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(tiger.getMarkedDamage()).isZero();
@@ -143,8 +143,7 @@ class PhantomTigerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LightningSurge()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castSorcery(player1, 0, tiger.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, tiger.getId());
 
         assertThat(tiger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(tiger.getMarkedDamage()).isZero();
@@ -171,8 +170,7 @@ class PhantomTigerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new FlaringPain()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         castLavaDartForJudReview(tiger);
 
@@ -181,10 +179,31 @@ class PhantomTigerTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(tiger);
     }
 
+    @Test
+    @DisplayName("Unpreventable combat damage removes a counter even when only its source forbids prevention")
+    void sourceSpecificUnpreventableCombatDamageRemovesCounter() {
+        Permanent tiger = harness.enterBattlefieldAndReturn(player2, new PhantomTiger());
+        harness.setHand(player1, List.of(new ArcaneTeachings()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castEnchantment(player1, 0, tiger.getId());
+        harness.passBothPriorities();
+
+        harness.setLife(player2, 2);
+        Permanent attacker = harness.enterBattlefieldAndReturn(player1, new Malignus());
+        attacker.setSummoningSick(false);
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        harness.passBothPriorities();
+
+        assertThat(tiger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(tiger.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(tiger);
+    }
+
     private void castLavaDartForJudReview(Permanent target) {
         harness.setHand(player1, List.of(new LavaDart()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
