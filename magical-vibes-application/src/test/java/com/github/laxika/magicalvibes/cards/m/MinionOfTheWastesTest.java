@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
+import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -16,14 +16,11 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MinionOfTheWastes.class, HornedTurtle.class})
+@CardUsed({MinionOfTheWastes.class, HornedTurtle.class, PlatinumEmperion.class})
 class MinionOfTheWastesTest extends BaseCardTest {
 
     private void cast(String lifePaid) {
-        harness.setHand(player1, List.of(new MinionOfTheWastes()));
-        harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MinionOfTheWastes(), "{3}{B}{B}{B}");
         harness.passBothPriorities();
         if (lifePaid != null) {
             harness.handleListChoice(player1, lifePaid);
@@ -77,6 +74,67 @@ class MinionOfTheWastesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Later life-total changes do not change the amount paid on entry")
+    void powerAndToughnessRemainEqualToOriginalPayment() {
+        cast("5");
+        Permanent minion = findPermanent(player1, "Minion of the Wastes");
+
+        harness.setLife(player1, 30);
+        assertThat(gqs.getEffectivePower(gd, minion)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, minion)).isEqualTo(5);
+
+        harness.setLife(player1, 2);
+        assertThat(gqs.getEffectivePower(gd, minion)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, minion)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Each Minion remembers its own life payment")
+    void multipleMinionsRememberSeparatePayments() {
+        cast("3");
+        Permanent first = findPermanent(player1, "Minion of the Wastes");
+        cast("7");
+        Permanent second = findPermanents(player1, "Minion of the Wastes").stream()
+                .filter(permanent -> !permanent.getId().equals(first.getId()))
+                .findFirst().orElseThrow();
+
+        harness.assertLife(player1, 10);
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("A controller whose life total cannot change may pay only zero")
+    void cannotPayPositiveLifeWithPlatinumEmperion() {
+        harness.addToBattlefield(player1, new PlatinumEmperion());
+        cast(null);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("0");
+
+        harness.handleListChoice(player1, "0");
+        harness.assertLife(player1, 20);
+        harness.assertNotOnBattlefield(player1, "Minion of the Wastes");
+        harness.assertInGraveyard(player1, "Minion of the Wastes");
+    }
+
+    @Test
+    @DisplayName("An opponent's Platinum Emperion does not restrict the controller's payment")
+    void opponentLifeRestrictionDoesNotPreventPayment() {
+        harness.addToBattlefield(player2, new PlatinumEmperion());
+
+        cast("5");
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 20);
+        Permanent minion = findPermanent(player1, "Minion of the Wastes");
+        assertThat(gqs.getEffectivePower(gd, minion)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, minion)).isEqualTo(5);
+    }
+
+    @Test
     @DisplayName("Trample assigns excess combat damage after lethal damage to its blocker")
     void trampleDealsExcessCombatDamage() {
         harness.setLife(player2, 20);
@@ -86,8 +144,7 @@ class MinionOfTheWastesTest extends BaseCardTest {
         minion.setSummoningSick(false);
         Permanent blocker = addCreatureReady(player2, new HornedTurtle());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
