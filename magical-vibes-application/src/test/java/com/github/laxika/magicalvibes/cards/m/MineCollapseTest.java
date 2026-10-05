@@ -35,10 +35,9 @@ class MineCollapseTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 5 damage to a target planeswalker")
     void dealsDamageToPlaneswalker() {
-        Permanent planeswalker = new Permanent(new MuYanlingSkyDancer());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new MuYanlingSkyDancer());
         planeswalker.setCounterCount(CounterType.LOYALTY, 6);
         planeswalker.setSummoningSick(false);
-        gd.playerBattlefields.get(player2.getId()).add(planeswalker);
         harness.setHand(player1, List.of(new MineCollapse()));
         addMineCollapseMana();
 
@@ -85,6 +84,74 @@ class MineCollapseTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A tapped Mountain can pay the alternate cost and is sacrificed before resolution")
+    void sacrificesTappedMountainBeforeResolution() {
+        harness.forceActivePlayer(player1);
+        Permanent mountain = harness.addToBattlefieldAndReturn(player1, new Mountain());
+        mountain.tap();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MineCollapse()));
+
+        harness.castInstantWithAlternateCost(player1, 0,
+                harness.getPermanentId(player2, "Grizzly Bears"), List.of(mountain.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Mine Collapse");
+    }
+
+    @Test
+    @DisplayName("A non-Mountain cannot pay the alternate cost")
+    void cannotSacrificeNonMountain() {
+        harness.forceActivePlayer(player1);
+        UUID bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears()).getId();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MineCollapse()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0,
+                harness.getPermanentId(player2, "Grizzly Bears"), List.of(bear)))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An opponent's Mountain cannot pay the alternate cost")
+    void cannotSacrificeOpponentsMountain() {
+        harness.forceActivePlayer(player1);
+        UUID mountain = harness.addToBattlefieldAndReturn(player2, new Mountain()).getId();
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MineCollapse()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(player1, 0,
+                harness.getPermanentId(player2, "Grizzly Bears"), List.of(mountain)))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("The normal mana cost remains available during an opponent's turn")
+    void castsNormallyDuringOpponentsTurn() {
+        harness.forceActivePlayer(player2);
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MineCollapse()));
+        addMineCollapseMana();
+
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Grizzly Bears"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Mountain");
     }
 
     private void addMineCollapseMana() {
