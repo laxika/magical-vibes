@@ -3,16 +3,10 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.FixedIfControlledCreaturesTotalToughnessAtLeast;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,20 +15,20 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OrysaTideChoreographer.class, AvatarOfMight.class, GrizzlyBears.class, Forest.class})
 class OrysaTideChoreographerTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Has cost-reduction STATIC effect and ETB draw two")
-    void hasCorrectEffects() {
-        OrysaTideChoreographer card = new OrysaTideChoreographer();
+    @DisplayName("Opponent creatures do not contribute to the toughness threshold")
+    void opponentToughnessDoesNotReduceCost() {
+        harness.setHand(player1, List.of(new OrysaTideChoreographer()));
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new AvatarOfMight());
+        harness.addMana(player1, ManaColor.BLUE, 2);
 
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        ReduceOwnCastCostEffect reduce = (ReduceOwnCastCostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(reduce.amount()).isEqualTo(new FixedIfControlledCreaturesTotalToughnessAtLeast(10, 3));
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        DrawCardEffect draw = (DrawCardEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(draw.amount()).isEqualTo(new Fixed(2));
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
     }
 
     @Test
@@ -73,7 +67,7 @@ class OrysaTideChoreographerTest extends BaseCardTest {
     void etbDrawsTwo() {
         harness.setHand(player1, List.of(new OrysaTideChoreographer()));
         harness.addMana(player1, ManaColor.BLUE, 5);
-        setDeck(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -85,8 +79,28 @@ class OrysaTideChoreographerTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
-    private void setDeck(Player player, List<Card> cards) {
-        gd.playerDecks.get(player.getId()).clear();
-        gd.playerDecks.get(player.getId()).addAll(cards);
+    @Test
+    @DisplayName("Orysa on the stack does not contribute its own toughness")
+    void spellDoesNotCountItsOwnToughness() {
+        harness.setHand(player1, List.of(new OrysaTideChoreographer()));
+        harness.addToBattlefield(player1, new AvatarOfMight());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Reduction leaves the blue mana requirement intact")
+    void reductionDoesNotPayColoredMana() {
+        harness.setHand(player1, List.of(new OrysaTideChoreographer()));
+        harness.addToBattlefield(player1, new AvatarOfMight());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
     }
 }
