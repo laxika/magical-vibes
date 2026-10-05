@@ -1,9 +1,14 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
+import com.github.laxika.magicalvibes.cards.t.Terror;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KumanosPupils.class, GrizzlyBears.class, ProdigalPyromancer.class,
-        GiantSpider.class, LlanowarElves.class})
+        GiantSpider.class, LlanowarElves.class, Humble.class, GiantGrowth.class, Terror.class})
 class KumanosPupilsTest extends BaseCardTest {
 
     private boolean isExiled(String cardName) {
@@ -93,5 +98,92 @@ class KumanosPupilsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Pupils that lost all abilities does not exile a creature it kills")
+    void losingAbilitiesDisablesReplacement() {
+        var pupils = addCreatureReady(player1, new KumanosPupils());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Humble(), new GiantGrowth()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castInstant(player1, 0, pupils.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, pupils.getId());
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertOnBattlefield(player1, "Kumano's Pupils");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(isExiled("Grizzly Bears")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Pupils dying simultaneously still exiles the creature it damaged")
+    void simultaneousCombatDeathsAreBothExiled() {
+        addCreatureReady(player1, new KumanosPupils());
+        harness.addToBattlefield(player2, new KumanosPupils());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+
+        harness.assertNotOnBattlefield(player1, "Kumano's Pupils");
+        harness.assertNotOnBattlefield(player2, "Kumano's Pupils");
+        harness.assertNotInGraveyard(player1, "Kumano's Pupils");
+        harness.assertNotInGraveyard(player2, "Kumano's Pupils");
+        assertThat(gd.exiledCards.stream()
+                .filter(e -> e.card().getName().equals("Kumano's Pupils")).count()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A damaged creature destroyed later that turn is exiled")
+    void destructionAfterDamageIsReplaced() {
+        addCreatureReady(player1, new KumanosPupils());
+        harness.addToBattlefield(player2, new GiantSpider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.assertOnBattlefield(player2, "Giant Spider");
+
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Giant Spider"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Giant Spider");
+        harness.assertNotInGraveyard(player2, "Giant Spider");
+        assertThat(isExiled("Giant Spider")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Damage from a previous turn does not cause exile")
+    void damageHistoryExpiresAtTurnBoundary() {
+        addCreatureReady(player1, new KumanosPupils());
+        harness.addToBattlefield(player2, new GiantSpider());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        harness.assertOnBattlefield(player2, "Giant Spider");
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new Terror()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, harness.getPermanentId(player2, "Giant Spider"));
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Kumano's Pupils");
+        harness.assertInGraveyard(player2, "Giant Spider");
+        assertThat(isExiled("Giant Spider")).isFalse();
     }
 }
