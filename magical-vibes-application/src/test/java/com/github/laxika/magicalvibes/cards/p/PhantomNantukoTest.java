@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.e.EmberShot;
 import com.github.laxika.magicalvibes.cards.f.FlaringPain;
 import com.github.laxika.magicalvibes.cards.h.HaplessResearcher;
 import com.github.laxika.magicalvibes.cards.l.LavaDart;
+import com.github.laxika.magicalvibes.cards.q.QuestingBeast;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -21,7 +22,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Cagemail.class, DwarvenDriller.class, EmberShot.class, FlaringPain.class, HaplessResearcher.class, LavaDart.class, PhantomNantuko.class})
+@CardUsed({Cagemail.class, DwarvenDriller.class, EmberShot.class, FlaringPain.class, HaplessResearcher.class, LavaDart.class, PhantomNantuko.class, QuestingBeast.class})
 class PhantomNantukoTest extends BaseCardTest {
 
     @Test
@@ -143,8 +144,7 @@ class PhantomNantukoTest extends BaseCardTest {
         nantuko.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Permanent blocker = addCreatureReady(player2, new HaplessResearcher());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -161,12 +161,31 @@ class PhantomNantukoTest extends BaseCardTest {
         assertThat(nantuko.getMarkedDamage()).isZero();
     }
 
+    @Test
+    @DisplayName("Removes a counter when Questing Beast makes combat damage unpreventable")
+    void removesCounterForSourceSpecificUnpreventableCombatDamage() {
+        Permanent nantuko = harness.enterBattlefieldAndReturn(player2, new PhantomNantuko());
+        harness.setHand(player1, List.of(new Cagemail()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castEnchantment(player1, 0, nantuko.getId());
+        harness.passBothPriorities();
+
+        addCreatureReady(player1, new DwarvenDriller());
+        addCreatureReady(player1, new QuestingBeast());
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player2, "Phantom Nantuko")).isSameAs(nantuko);
+        assertThat(nantuko.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(nantuko.getMarkedDamage()).isEqualTo(2);
+    }
+
     private void castEmberShotForJudReview(Permanent target) {
         harness.setHand(player1, List.of(new EmberShot()));
         harness.setLibrary(player1, List.of(new PhantomNantuko()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 6);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 }
