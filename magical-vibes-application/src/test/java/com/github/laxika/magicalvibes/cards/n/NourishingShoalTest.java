@@ -58,4 +58,46 @@ class NourishingShoalTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(player1, 0, 1, null, 1))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("X can be zero when paying the normal mana cost")
+    void canCastForZero() {
+        harness.setHand(player1, List.of(new NourishingShoal()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        int lifeBefore = gd.getLife(player1.getId());
+
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.assertLife(player1, lifeBefore);
+        harness.assertInGraveyard(player1, "Nourishing Shoal");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Another Shoal in hand has mana value two for the alternate cost")
+    void canExileAnotherShoalBeforeSpellInHand() {
+        NourishingShoal exiledShoal = new NourishingShoal();
+        harness.setHand(player1, List.of(exiledShoal, new NourishingShoal()));
+        int lifeBefore = gd.getLife(player1.getId());
+        int opponentLifeBefore = gd.getLife(player2.getId());
+
+        harness.castInstantWithAlternateExileFromHand(player1, 1, 2, null, 0);
+        harness.assertLife(player1, lifeBefore);
+        assertThat(gd.exiledCards).extracting(e -> e.card()).containsExactly(exiledShoal);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, lifeBefore + 2);
+        harness.assertLife(player2, opponentLifeBefore);
+        harness.assertInGraveyard(player1, "Nourishing Shoal");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The spell being cast cannot exile itself to pay its alternate cost")
+    void cannotExileItself() {
+        harness.setHand(player1, List.of(new NourishingShoal()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateExileFromHand(player1, 0, 2, null, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
