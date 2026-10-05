@@ -35,8 +35,7 @@ class LiberateTest extends BaseCardTest {
         addLiberateMana();
 
         UUID soldierId = harness.getPermanentId(player1, "Ardent Soldier");
-        harness.castInstant(player1, 0, soldierId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, soldierId);
 
         harness.assertNotOnBattlefield(player1, "Ardent Soldier");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -53,10 +52,10 @@ class LiberateTest extends BaseCardTest {
         addLiberateMana();
 
         UUID soldierId = harness.getPermanentId(player1, "Ardent Soldier");
-        harness.castInstant(player1, 0, soldierId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, soldierId);
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Ardent Soldier");
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -78,15 +77,15 @@ class LiberateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Liberate()));
         addLiberateMana();
 
-        harness.castInstant(player1, 0, stolen.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, stolen.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(stolen.getId()));
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Dromar, the Banisher"));
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(stolen.getId()));
@@ -125,13 +124,71 @@ class LiberateTest extends BaseCardTest {
         addLiberateMana();
 
         UUID soldierId = harness.getPermanentId(player1, "Ardent Soldier");
-        harness.castInstant(player1, 0, soldierId);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, soldierId);
 
-        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Ardent Soldier");
         assertThat(returned.getId()).isNotEqualTo(soldierId);
         assertThat(returned.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The return uses the stack and the creature stays exiled until it resolves")
+    void returnWaitsForTriggerResolution() {
+        harness.setHand(player1, List.of(new Liberate()));
+        harness.addToBattlefield(player1, new ArdentSoldier());
+        addLiberateMana();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Ardent Soldier"));
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+
+        harness.assertNotOnBattlefield(player1, "Ardent Soldier");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Ardent Soldier");
+    }
+
+    @Test
+    @DisplayName("Casting during an end step waits until the following turn's end step")
+    void castDuringEndStepReturnsNextTurn() {
+        harness.setHand(player1, List.of(new Liberate()));
+        harness.addToBattlefield(player1, new ArdentSoldier());
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        addLiberateMana();
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Ardent Soldier"));
+
+        harness.assertNotOnBattlefield(player1, "Ardent Soldier");
+        assertThat(gd.stack).isEmpty();
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.assertNotOnBattlefield(player1, "Ardent Soldier");
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        harness.assertNotOnBattlefield(player1, "Ardent Soldier");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Ardent Soldier");
+    }
+
+    @Test
+    @DisplayName("Liberate does not exile a target that an opponent gains control of in response")
+    void targetMustStillBeControlledOnResolution() {
+        Permanent dragon = addCreatureReady(player1, new DromarTheBanisher());
+        Permanent empress = addCreatureReady(player2, new EmpressGalina());
+        harness.setHand(player1, List.of(new Liberate()));
+        addLiberateMana();
+        harness.castInstant(player1, 0, dragon.getId());
+
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.activateAbility(player2,
+                gd.playerBattlefields.get(player2.getId()).indexOf(empress), null, dragon.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Dromar, the Banisher");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
+        harness.assertInGraveyard(player1, "Liberate");
     }
 }
