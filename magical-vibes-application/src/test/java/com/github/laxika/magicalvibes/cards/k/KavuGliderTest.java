@@ -95,4 +95,24 @@ class KavuGliderTest extends BaseCardTest {
         assertThat(glider.getEffectivePower()).isEqualTo(2);
         assertThat(glider.getEffectiveToughness()).isEqualTo(3);
     }
+
+    @Test
+    @DisplayName("Both abilities can be activated while tapped and summoning sick")
+    void abilitiesWorkWhileTappedAndSummoningSick() {
+        Permanent glider = harness.addToBattlefieldAndReturn(player1, new KavuGlider());
+        glider.setSummoningSick(true);
+        glider.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(glider.getEffectivePower()).isEqualTo(2);
+        assertThat(glider.getEffectiveToughness()).isEqualTo(2);
+        assertThat(glider.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(glider.isTapped()).isTrue();
+    }
 }
