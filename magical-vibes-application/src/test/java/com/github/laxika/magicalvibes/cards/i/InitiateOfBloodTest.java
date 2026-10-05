@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GokaTheUnjust;
 import com.github.laxika.magicalvibes.cards.k.KashiTribeWarriors;
+import com.github.laxika.magicalvibes.cards.n.NeglectedHeirloom;
+import com.github.laxika.magicalvibes.cards.a.AshmouthBlade;
 import com.github.laxika.magicalvibes.cards.r.RendFlesh;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,8 +22,65 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({InitiateOfBlood.class, GokaTheUnjust.class, DevotedRetainer.class, KashiTribeWarriors.class,
-        RendFlesh.class, Forest.class})
+        RendFlesh.class, Forest.class, NeglectedHeirloom.class, AshmouthBlade.class})
 class InitiateOfBloodTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Flipping Initiate does not trigger equipped creature transformation abilities")
+    void flippingDoesNotTransformEquipment() {
+        Permanent initiate = addCreatureReady(player1, new InitiateOfBlood());
+        Permanent heirloom = harness.addToBattlefieldAndReturn(player1, new NeglectedHeirloom());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 1, null, initiate.getId());
+        resolveAllTriggers();
+        assertThat(heirloom.getAttachedTo()).isEqualTo(initiate.getId());
+
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DevotedRetainer());
+        gd.permanentsDealtDamageThisTurn.add(target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Devoted Retainer");
+        assertThat(initiate.isTransformed()).isTrue();
+        assertThat(heirloom.isTransformed()).isFalse();
+        assertThat(heirloom.getAttachedTo()).isEqualTo(initiate.getId());
+    }
+
+    @Test
+    @DisplayName("Target dying before the ability resolves does not flip Initiate")
+    void targetDiesBeforeResolution() {
+        Permanent initiate = addCreatureReady(player1, new InitiateOfBlood());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new KashiTribeWarriors());
+        gd.permanentsDealtDamageThisTurn.add(target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.setHand(player1, List.of(new RendFlesh()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Kashi-Tribe Warriors");
+        assertThat(initiate.isTransformed()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The ability still damages its target after Initiate leaves the battlefield")
+    void sourceDiesBeforeResolution() {
+        Permanent initiate = addCreatureReady(player1, new InitiateOfBlood());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DevotedRetainer());
+        gd.permanentsDealtDamageThisTurn.add(target.getId());
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        harness.setHand(player1, List.of(new RendFlesh()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, initiate.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Initiate of Blood");
+        harness.assertInGraveyard(player2, "Devoted Retainer");
+    }
 
     @Test
     @DisplayName("Deals 1 damage to a damaged creature and flips when that creature dies")
