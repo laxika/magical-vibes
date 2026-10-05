@@ -65,12 +65,90 @@ class OverlordOfTheBoilerbilgesTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, overlord)).isTrue();
     }
 
-    private void castNormally() {
-        harness.setHand(player1, List.of(new OverlordOfTheBoilerbilges()));
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
+    @Test
+    void enteringCanDealDamageToCreature() {
+        Permanent target = addCreatureReady(player2, new OverlordOfTheBoilerbilges());
+        castNormally();
 
-        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(4);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void impendingStillDealsEnterDamage() {
+        castWithImpending();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void enterDamageResolvesAfterSourceLeavesBattlefield() {
+        castNormally();
+        harness.handlePermanentChosen(player1, player2.getId());
+        Permanent overlord = findPermanent(player1, "Overlord of the Boilerbilges");
+        gd.playerBattlefields.get(player1.getId()).remove(overlord);
+        gd.playerGraveyards.get(player1.getId()).add(overlord.getCard());
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+    }
+
+    @Test
+    void addingTimeCounterAfterImpendingExpiresMakesItNoncreatureAgain() {
+        Permanent overlord = castWithImpending();
+        overlord.setCounterCount(CounterType.TIME, 1);
+        advanceToOwnEndStep();
+        assertThat(gqs.isCreature(gd, overlord)).isTrue();
+
+        overlord.setCounterCount(CounterType.TIME, 1);
+
+        assertThat(gqs.isCreature(gd, overlord)).isFalse();
+    }
+
+    @Test
+    void ownEndStepRemovesExactlyOneCounter() {
+        Permanent overlord = castWithImpending();
+
+        advanceToOwnEndStep();
+
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(3);
+        assertThat(gqs.isCreature(gd, overlord)).isFalse();
+    }
+
+    @Test
+    void opponentsEndStepDoesNotRemoveCounter() {
+        Permanent overlord = castWithImpending();
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(4);
+        assertThat(gqs.isCreature(gd, overlord)).isFalse();
+    }
+
+    @Test
+    void normalCastIsCreatureAndDoesNotRemoveAddedTimeCounter() {
+        castNormally();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        Permanent overlord = findPermanent(player1, "Overlord of the Boilerbilges");
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isZero();
+        overlord.setCounterCount(CounterType.TIME, 1);
+
+        advanceToOwnEndStep();
+
+        assertThat(overlord.getCounterCount(CounterType.TIME)).isEqualTo(1);
+        assertThat(gqs.isCreature(gd, overlord)).isTrue();
+    }
+
+    private void castNormally() {
+        harness.castFromHand(player1, new OverlordOfTheBoilerbilges(), "{4}{R}{R}");
         harness.passBothPriorities();
     }
 
