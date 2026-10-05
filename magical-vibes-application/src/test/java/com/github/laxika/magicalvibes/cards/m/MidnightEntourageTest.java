@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GiftedAetherborn;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MidnightEntourage.class, GiftedAetherborn.class, GrizzlyBears.class, Murder.class})
 class MidnightEntourageTest extends BaseCardTest {
 
     @Test
@@ -117,12 +118,63 @@ class MidnightEntourageTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore);
     }
 
+    @Test
+    @DisplayName("Simultaneous deaths trigger for Midnight Entourage and each other Aetherborn")
+    void simultaneousDeathsEachTrigger() {
+        Permanent entourage = harness.addToBattlefieldAndReturn(player1, new MidnightEntourage());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GiftedAetherborn());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GiftedAetherborn());
+        harness.setLibrary(player1, List.of(new GiftedAetherborn(), new GiftedAetherborn(), new GiftedAetherborn()));
+        int lifeBefore = gd.getLife(player1.getId());
+        entourage.setMarkedDamage(gqs.getEffectiveToughness(gd, entourage));
+        first.setMarkedDamage(gqs.getEffectiveToughness(gd, first));
+        second.setMarkedDamage(gqs.getEffectiveToughness(gd, second));
+
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 3);
+    }
+
+    @Test
+    @DisplayName("Two Entourages each trigger when one of them dies")
+    void twoEntouragesTriggerForOneDeath() {
+        harness.addToBattlefield(player1, new MidnightEntourage());
+        harness.addToBattlefield(player1, new MidnightEntourage());
+        harness.setLibrary(player1, List.of(new GiftedAetherborn(), new GiftedAetherborn()));
+        int lifeBefore = gd.getLife(player1.getId());
+
+        killCreature(player1, "Midnight Entourage");
+
+        assertThat(countPermanents(player1, "Midnight Entourage")).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("Removing the anthem can cause a later death without another trigger")
+    void laterDeathAfterAnthemLeavesDoesNotTrigger() {
+        harness.addToBattlefield(player1, new MidnightEntourage());
+        Permanent aetherborn = harness.addToBattlefieldAndReturn(player1, new GiftedAetherborn());
+        harness.setLibrary(player1, List.of(new GiftedAetherborn()));
+        int lifeBefore = gd.getLife(player1.getId());
+        aetherborn.setMarkedDamage(gqs.getEffectiveToughness(gd, aetherborn) - 1);
+
+        killCreature(player1, "Midnight Entourage");
+
+        harness.assertInGraveyard(player1, "Gifted Aetherborn");
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 1);
+    }
+
     private void killCreature(com.github.laxika.magicalvibes.model.Player owner, String name) {
         harness.setHand(player1, List.of(new Murder()));
         harness.addMana(player1, ManaColor.BLACK, 3);
         UUID targetId = harness.getPermanentId(owner, name);
-        harness.castInstant(player1, 0, targetId);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetId);
+        resolveAllTriggers();
     }
 }
