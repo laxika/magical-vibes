@@ -23,12 +23,10 @@ class NeurokSpyTest extends BaseCardTest {
     void cantBeBlockedWhenDefenderControlsArtifact() {
         harness.addToBattlefield(player2, new Ornithopter());
 
-        Permanent blocker = addCreatureReady(player2, new FangrenHunter());
+        addCreatureReady(player2, new FangrenHunter());
 
-        Permanent spy = addCreatureReady(player1, new NeurokSpy());
-        spy.setAttacking(true);
-
-        prepareDeclareBlockers();
+        addCreatureReady(player1, new NeurokSpy());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -40,10 +38,8 @@ class NeurokSpyTest extends BaseCardTest {
     void canBeBlockedWhenDefenderControlsNoArtifact() {
         Permanent blocker = addCreatureReady(player2, new FangrenHunter());
 
-        Permanent spy = addCreatureReady(player1, new NeurokSpy());
-        spy.setAttacking(true);
-
-        prepareDeclareBlockers();
+        addCreatureReady(player1, new NeurokSpy());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -54,12 +50,11 @@ class NeurokSpyTest extends BaseCardTest {
     @DisplayName("Neurok Spy can be blocked when only the attacking player controls an artifact")
     void attackingPlayersArtifactDoesNotCount() {
         harness.addToBattlefield(player1, new Ornithopter());
-        Permanent spy = addCreatureReady(player1, new NeurokSpy());
-        spy.setAttacking(true);
+        addCreatureReady(player1, new NeurokSpy());
 
         Permanent blocker = addCreatureReady(player2, new FangrenHunter());
 
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(1));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
 
@@ -70,13 +65,38 @@ class NeurokSpyTest extends BaseCardTest {
     @DisplayName("Neurok Spy can't be blocked when defending player controls a noncreature artifact")
     void noncreatureArtifactStillCounts() {
         harness.addToBattlefield(player2, new Bonesplitter());
-        Permanent blocker = addCreatureReady(player2, new FangrenHunter());
-        Permanent spy = addCreatureReady(player1, new NeurokSpy());
-        spy.setAttacking(true);
-
-        prepareDeclareBlockers();
+        addCreatureReady(player2, new FangrenHunter());
+        addCreatureReady(player1, new NeurokSpy());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("A tapped artifact still makes Neurok Spy unblockable")
+    void tappedArtifactStillCounts() {
+        harness.addToBattlefield(player2, new Bonesplitter());
+        findPermanent(player2, "Bonesplitter").setTapped(true);
+        addCreatureReady(player2, new FangrenHunter());
+        addCreatureReady(player1, new NeurokSpy());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("Neurok Spy checks player one's artifacts when player two attacks")
+    void checksDefendingPlayerWhenPlayerTwoAttacks() {
+        harness.addToBattlefield(player1, new Bonesplitter());
+        addCreatureReady(player1, new FangrenHunter());
+        addCreatureReady(player2, new NeurokSpy());
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0))))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can't be blocked");
     }
