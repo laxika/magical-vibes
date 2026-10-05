@@ -77,7 +77,7 @@ class JunkyoBellTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(mine.getId())
-                .doesNotContain(theirs.getId());
+                .doesNotContain(theirs.getId(), findPermanent(player1, "Junkyo Bell").getId());
 
         harness.handlePermanentChosen(player1, mine.getId());
     }
@@ -105,6 +105,123 @@ class JunkyoBellTest extends BaseCardTest {
                 .noneMatch(card -> card.getName().equals("Wandering Ones"));
     }
 
+    @Test
+    @DisplayName("Creature count is determined on resolution and the boost then stays fixed")
+    void creatureCountIsDeterminedOnResolution() {
+        addBell(player1);
+        Permanent target = addCreatureReady(player1, new WanderingOnes());
+        addCreatureReady(player2, new JukaiMessenger());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        addCreatureReady(player1, new JukaiMessenger());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+
+        addCreatureReady(player1, new WanderingOnes());
+
+        assertThat(target.getPowerModifier()).isEqualTo(2);
+        assertThat(target.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The Bell does not trigger during an opponent's upkeep")
+    void doesNotTriggerOnOpponentUpkeep() {
+        addBell(player1);
+        Permanent target = addCreatureReady(player1, new WanderingOnes());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(target.getPowerModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("An upkeep without a legal creature target requires no choice")
+    void noCreatureRequiresNoChoice() {
+        addBell(player1);
+        addCreatureReady(player2, new WanderingOnes());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Control is checked when the delayed sacrifice resolves")
+    void controlChangesInResponseToDelayedSacrifice() {
+        addBell(player1);
+        Permanent target = addCreatureReady(player1, new WanderingOnes());
+        acceptTargeting(target);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gqs.findPermanentById(gd, target.getId())).isNotNull();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player2, List.of(new BlindWithAnger()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(target.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Wandering Ones"));
+    }
+
+    @Test
+    @DisplayName("A target stolen before the upkeep ability resolves receives no boost or sacrifice")
+    void targetBecomesIllegalBeforeResolution() {
+        addBell(player1);
+        Permanent target = addCreatureReady(player1, new WanderingOnes());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.setHand(player2, List.of(new BlindWithAnger()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+
+        passToEndStep();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(target.getId()));
+    }
+
+    @Test
+    @DisplayName("A surviving creature loses the Bell's boost at cleanup")
+    void boostExpiresAtCleanup() {
+        addBell(player1);
+        Permanent target = addCreatureReady(player1, new WanderingOnes());
+        acceptTargeting(target);
+
+        harness.setHand(player2, List.of(new BlindWithAnger()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        passToEndStep();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getId().equals(target.getId()));
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+    }
+
     private void addBell(Player player) {
         harness.addToBattlefield(player, new JunkyoBell());
     }
@@ -118,7 +235,7 @@ class JunkyoBellTest extends BaseCardTest {
 
     private void passToEndStep() {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
     }
 }
