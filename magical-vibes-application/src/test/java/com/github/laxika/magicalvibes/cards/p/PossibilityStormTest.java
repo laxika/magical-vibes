@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.d.Demolish;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.PossibilityStormExileAndCastEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,12 +17,12 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PossibilityStorm.class, CounselOfTheSoratami.class, Forest.class, GrizzlyBears.class, Demolish.class})
 class PossibilityStormTest extends BaseCardTest {
 
     private UUID setUpStorm(List<Card> player1Library) {
         harness.addToBattlefield(player1, new PossibilityStorm());
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(player1Library);
+        harness.setLibrary(player1, player1Library);
         return harness.getPermanentId(player1, "Possibility Storm");
     }
 
@@ -40,8 +41,7 @@ class PossibilityStormTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getLast().getEffectsToResolve().getFirst())
-                .isInstanceOf(PossibilityStormExileAndCastEffect.class);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
     }
 
     @Test
@@ -107,6 +107,62 @@ class PossibilityStormTest extends BaseCardTest {
 
         assertThat(gd.getCardsExiledByPermanent(stormId)).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A second Storm still searches after the first Storm exiles the original spell")
+    void secondStormStillSearchesWithoutOriginalSpell() {
+        setUpStorm(List.of(new CounselOfTheSoratami(), new CounselOfTheSoratami(), new Forest()));
+        harness.addToBattlefield(player1, new PossibilityStorm());
+
+        castCounsel();
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.passBothPriorities();
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An uncastable matching card is bottomed even when the player accepts")
+    void matchingCardWithoutLegalTargetsIsBottomed() {
+        UUID stormId = setUpStorm(List.of(new Forest(), new Demolish()));
+
+        castCounsel();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(stormId)).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("An opponent's spell searches that opponent's library and stops at the first match")
+    void opponentUsesOwnLibraryAndChoosesWhetherToCast() {
+        UUID stormId = setUpStorm(List.of(new GrizzlyBears()));
+        Forest untouched = new Forest();
+        harness.setLibrary(player2, List.of(new Forest(), new CounselOfTheSoratami(), untouched));
+        harness.setHand(player2, List.of(new CounselOfTheSoratami()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+        harness.forceActivePlayer(player2);
+
+        harness.castSorcery(player2, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(untouched);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.getCardsExiledByPermanent(stormId)).hasSize(3);
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(untouched);
+        assertThat(gd.getCardsExiledByPermanent(stormId)).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 }
