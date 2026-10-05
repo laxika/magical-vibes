@@ -63,10 +63,85 @@ class MaesterSeymourTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void canActivateMonstrosityAgainAfterBecomingMonstrous() {
+        Permanent maester = harness.addToBattlefieldAndReturn(player1, new MaesterSeymour());
+        maester.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(maester.isMonstrous()).isTrue();
+        assertThat(maester.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(maester.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(maester.isMonstrous()).isTrue();
+    }
+
+    @Test
+    void monstrosityCountsItsOwnCountersButNotOpponentsAndUsesResolutionTimeCount() {
+        Permanent maester = harness.addToBattlefieldAndReturn(player1, new MaesterSeymour());
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        maester.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        opponent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 10);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        ally.setCounterCount(CounterType.CHARGE, 3);
+        harness.passBothPriorities();
+
+        assertThat(maester.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
+        assertThat(maester.isMonstrous()).isTrue();
+    }
+
+    @Test
+    void becomesMonstrousEvenWhenThereAreNoCounters() {
+        Permanent maester = harness.addToBattlefieldAndReturn(player1, new MaesterSeymour());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(maester.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(maester.isMonstrous()).isTrue();
+    }
+
+    @Test
+    void combatTriggerUsesPowerAtResolution() {
+        Permanent maester = harness.addToBattlefieldAndReturn(player1, new MaesterSeymour());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        advanceToBeginningOfCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        maester.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    void combatAbilityDoesNotTriggerOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new MaesterSeymour());
+        Permanent ally = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        advanceToBeginningOfCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(ally.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
     private void advanceToBeginningOfCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
