@@ -70,6 +70,62 @@ class LurkingInformantTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Only the top card is put into the graveyard")
+    void leavesRemainingLibraryInOrder() {
+        addReadyInformant();
+        Card topCard = new BorosRecruit();
+        Card secondCard = new BorosRecruit();
+        Card thirdCard = new BorosRecruit();
+        harness.setLibrary(player2, java.util.List.of(topCard, secondCard, thirdCard));
+
+        activate(player2.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(secondCard, thirdCard);
+    }
+
+    @Test
+    @DisplayName("Activation pays two generic mana and taps the Informant before resolution")
+    void paysActivationCostsBeforeResolving() {
+        Permanent informant = addReadyInformant();
+        Card topCard = new BorosRecruit();
+        harness.setLibrary(player2, java.util.List.of(topCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThat(informant.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
+        assertThat(gd.pendingMayAbilities).isEmpty();
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    @DisplayName("The activated ability still resolves after the Informant leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent informant = addReadyInformant();
+        Card topCard = new BorosRecruit();
+        harness.setLibrary(player2, java.util.List.of(topCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(informant);
+        harness.setGraveyard(player1, java.util.List.of(informant.getCard()));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(topCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
     private Permanent addReadyInformant() {
         return addCreatureReady(player1, new LurkingInformant());
     }
