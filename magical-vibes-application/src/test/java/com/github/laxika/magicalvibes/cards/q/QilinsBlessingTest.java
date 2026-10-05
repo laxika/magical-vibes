@@ -68,4 +68,48 @@ class QilinsBlessingTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
     }
+
+    @Test
+    @DisplayName("Can boost an opponent's creature without boosting another creature")
+    void boostsOpponentsCreature() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new QilinsBlessing()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        Permanent target = findPermanent(player2, "Grizzly Bears");
+        harness.castInstant(player1, 0, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getEffectivePower()).isEqualTo(4);
+        assertThat(target.getEffectiveToughness()).isEqualTo(4);
+        Permanent other = findPermanent(player1, "Grizzly Bears");
+        assertThat(other.getEffectivePower()).isEqualTo(2);
+        assertThat(other.getEffectiveToughness()).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Qilin's Blessing");
+    }
+
+    @Test
+    @DisplayName("Multiple blessings stack and both boosts expire at cleanup")
+    void multipleBoostsStackAndExpire() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new QilinsBlessing(), new QilinsBlessing()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        Permanent bear = findPermanent(player1, "Grizzly Bears");
+        harness.castInstant(player1, 0, bear.getId());
+        harness.passBothPriorities();
+        harness.castInstant(player1, 0, bear.getId());
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(6);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(6);
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(bear.getEffectivePower()).isEqualTo(2);
+        assertThat(bear.getEffectiveToughness()).isEqualTo(2);
+    }
 }
