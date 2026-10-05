@@ -77,6 +77,69 @@ class MidnightCharmTest extends BaseCardTest {
         }
     }
 
+    @Test
+    @DisplayName("Damage mode gains life even when all damage is prevented")
+    void damageModeGainsLifeWhenDamageIsPrevented() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SulfurElemental());
+        target.setDamagePreventionShield(1);
+        harness.setLife(player1, 10);
+
+        castMode(0, target);
+
+        harness.assertLife(player1, 11);
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(target.getDamagePreventionShield()).isZero();
+        harness.assertOnBattlefield(player2, "Sulfur Elemental");
+    }
+
+    @Test
+    @DisplayName("Damage mode gains life when its damage is lethal")
+    void damageModeGainsLifeWhenDamageIsLethal() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SulfurElemental());
+        target.setMarkedDamage(1);
+        harness.setLife(player1, 10);
+
+        castMode(0, target);
+
+        harness.assertLife(player1, 11);
+        harness.assertNotOnBattlefield(player2, "Sulfur Elemental");
+        harness.assertInGraveyard(player2, "Sulfur Elemental");
+    }
+
+    @Test
+    @DisplayName("Damage mode does not gain life when its only target leaves before resolution")
+    void damageModeDoesNotGainLifeWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SulfurElemental());
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(new MidnightCharm()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castModalInstant(player1, 0, 0, List.of(target.getId()));
+
+        target.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.assertInGraveyard(player2, "Sulfur Elemental");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertInGraveyard(player1, "Midnight Charm");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Tap mode can target an already tapped creature without granting first strike")
+    void tapModeCanTargetAlreadyTappedCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SulfurElemental());
+        target.tap();
+        harness.setLife(player1, 10);
+
+        castMode(2, target);
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+        harness.assertLife(player1, 10);
+        harness.assertInGraveyard(player1, "Midnight Charm");
+    }
     private void castMode(int modeIndex, Permanent target) {
         harness.setHand(player1, List.of(new MidnightCharm()));
         harness.addMana(player1, ManaColor.BLACK, 1);
