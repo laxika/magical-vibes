@@ -69,4 +69,46 @@ class InescapableBruteTest extends BaseCardTest {
         assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
         assertThat(blocker.getMarkedDamage()).isZero();
     }
+
+    @Test
+    @DisplayName("One available blocker may choose either of two Inescapable Brutes")
+    void oneBlockerMayChooseBetweenTwoBrutes() {
+        addCreatureReady(player1, new InescapableBrute());
+        addCreatureReady(player1, new InescapableBrute());
+        Permanent blocker = addCreatureReady(player2, new WaspLancer());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Additional available creatures need not block once one blocks the Brute")
+    void additionalBlockerMayRemainUnused() {
+        addCreatureReady(player1, new InescapableBrute());
+        Permanent blocker = addCreatureReady(player2, new WaspLancer());
+        Permanent unused = addCreatureReady(player2, new WaspLancer());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+        assertThat(unused.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Wither deals ordinary life loss to a player when no blocker is available")
+    void unblockedBruteDealsDamageToPlayer() {
+        addCreatureReady(player1, new InescapableBrute());
+        Permanent tapped = addCreatureReady(player2, new WaspLancer());
+        tapped.tap();
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        harness.assertLife(player2, 17);
+    }
 }
