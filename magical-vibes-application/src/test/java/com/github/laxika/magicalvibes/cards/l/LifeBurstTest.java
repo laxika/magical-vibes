@@ -25,8 +25,7 @@ class LifeBurstTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 22);
         harness.assertLife(player1, 20);
@@ -41,8 +40,7 @@ class LifeBurstTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 18);
         harness.assertInGraveyard(player1, "Life Burst");
@@ -58,10 +56,49 @@ class LifeBurstTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @DisplayName("Can target its caster and count copies in the opponent's graveyard")
+    void canTargetCaster() {
+        harness.setLife(player1, 10);
+        harness.setGraveyard(player2, List.of(new LifeBurst(), new LifeBurst()));
+        harness.setHand(player1, List.of(new LifeBurst()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Counts a responding Life Burst that resolved before this spell")
+    void countsCopiesAtResolution() {
+        harness.setLife(player1, 10);
+        harness.setHand(player1, List.of(new LifeBurst()));
+        harness.setHand(player2, List.of(new LifeBurst()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, player1.getId());
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 14);
+        harness.assertInGraveyard(player2, "Life Burst");
+        harness.assertNotInGraveyard(player1, "Life Burst");
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 20);
+        harness.assertInGraveyard(player1, "Life Burst");
     }
 
     @Test
