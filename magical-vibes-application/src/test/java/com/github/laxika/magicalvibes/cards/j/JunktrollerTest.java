@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Junktroller.class, GrayscaledGharial.class, BorosRecruit.class, Char.class})
 class JunktrollerTest extends BaseCardTest {
@@ -63,5 +64,57 @@ class JunktrollerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(target);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent junktroller = addCreatureReady(player1, new Junktroller());
+        junktroller.setTapped(true);
+        Card target = new Char();
+        harness.setGraveyard(player1, List.of(target));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tapped");
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(target);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent junktroller = addCreatureReady(player1, new Junktroller());
+        junktroller.setSummoningSick(true);
+        Card target = new Char();
+        harness.setGraveyard(player1, List.of(target));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(junktroller.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Resolves after Junktroller leaves the battlefield and moves only the chosen card")
+    void resolvesWithoutSourceIntoEmptyLibrary() {
+        addCreatureReady(player1, new Junktroller());
+        Card target = new Char();
+        Card other = new GrayscaledGharial();
+        harness.setGraveyard(player2, List.of(other, target));
+        harness.setLibrary(player2, List.of());
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(other);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(target);
+        assertThat(gd.stack).isEmpty();
     }
 }
