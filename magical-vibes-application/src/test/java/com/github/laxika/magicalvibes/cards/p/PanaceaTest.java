@@ -49,9 +49,8 @@ class PanaceaTest extends BaseCardTest {
     @DisplayName("The prevention ability cannot target a land")
     void cannotTargetLand() {
         harness.addToBattlefield(player1, new Panacea());
-        harness.addToBattlefield(player2, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        Permanent forest = findPermanent(player2, "Forest");
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -133,5 +132,71 @@ class PanaceaTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The shield prevents lethal damage to a creature")
+    void preventsLethalDamageToCreature() {
+        harness.addToBattlefield(player1, new Panacea());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 2, bears.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(bears.getDamagePreventionShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("Multiple Panaceas add their prevention amounts for the same player")
+    void multipleShieldsAccumulate() {
+        harness.addToBattlefield(player1, new Panacea());
+        harness.addToBattlefield(player1, new Panacea());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerDamagePreventionShields).doesNotContainKey(player2.getId());
+    }
+
+    @Test
+    @DisplayName("A tapped Panacea cannot activate again")
+    void cannotActivateWhileTapped() {
+        harness.addToBattlefield(player1, new Panacea());
+        harness.activateAbility(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Damage dealt before the ability resolves is not prevented")
+    void damageBeforeResolutionIsNotPrevented() {
+        harness.addToBattlefield(player1, new Panacea());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, 2, player2.getId());
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.assertLife(player2, 18);
     }
 }
