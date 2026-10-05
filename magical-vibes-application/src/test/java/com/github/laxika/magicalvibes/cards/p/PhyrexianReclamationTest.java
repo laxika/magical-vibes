@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GiantCockroach;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -30,10 +29,9 @@ class PhyrexianReclamationTest extends BaseCardTest {
         harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(creature.getId()));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         assertThat(gd.playerHands.get(player1.getId())).contains(creature);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(creature);
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+        harness.assertLife(player1, 18);
     }
 
     @Test
@@ -85,6 +83,50 @@ class PhyrexianReclamationTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
                 player1, 0, 0, List.of(creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void paysLifeBeforeResolutionAndDoesNotChooseAnotherCreatureWhenTargetLeaves() {
+        Card target = new GiantCockroach();
+        Card other = new GiantCockroach();
+        harness.addToBattlefield(player1, new PhyrexianReclamation());
+        harness.setGraveyard(player1, List.of(target, other));
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.assertLife(player1, 18);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(target);
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        harness.assertLife(player1, 16);
+
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).contains(target).doesNotContain(other);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(target).doesNotContain(other);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 16);
+    }
+
+    @Test
+    void cannotSubstituteColorlessManaForBlackMana() {
+        Card creature = new GiantCockroach();
+        harness.addToBattlefield(player1, new PhyrexianReclamation());
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLife(player1, 20);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 0, List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 20);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void addActivationMana() {
