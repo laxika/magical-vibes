@@ -103,4 +103,58 @@ class InysHaenTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(land);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opposingCard);
     }
+
+    @Test
+    void planeswalkToMillsAllRemainingCardsWhenLibraryHasFewerThanThree() {
+        Card first = new Forest();
+        Card second = new Forest();
+        harness.setLibrary(player1, List.of(first, second));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        harness.inMutationScope(() -> planar.trigger(
+                gd, source, com.github.laxika.magicalvibes.model.EffectSlot.PLANESWALK_TO_TRIGGERED,
+                player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    void upkeepMillsOnlyTheNewActivePlayersLibrary() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        Card first = new Forest();
+        Card second = new Forest();
+        Card third = new Forest();
+        harness.setLibrary(player2, List.of(first, second, third));
+        harness.forceActivePlayer(player2);
+
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleUpkeepTriggers(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first, second, third);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void chaosDoesNotReturnAnotherCardWhenItsTargetLeavesTheGraveyard() {
+        Card target = new GrizzlyBears();
+        Card other = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target, other));
+        harness.setHand(player1, List.of());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.inMutationScope(() -> triggers.processNextSpellGraveyardTargetTrigger(gd));
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(other));
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(other);
+    }
 }
