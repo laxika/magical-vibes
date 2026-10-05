@@ -65,6 +65,70 @@ class KeeperOfTheFlameTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Life gained by the controller in response does not invalidate the target")
+    void controllerLifeGainDoesNotInvalidateTarget() {
+        readyKeeper(10, 11);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.setLife(player1, 15);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 15);
+        harness.assertLife(player2, 9);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent keeper = readyKeeper(10, 11);
+        keeper.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(keeper.isTapped()).isFalse();
+        harness.assertLife(player2, 11);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent keeper = readyKeeper(10, 11);
+        keeper.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertLife(player2, 11);
+    }
+
+    @Test
+    @DisplayName("Colorless mana cannot pay the red activation cost")
+    void cannotActivateWithoutRedMana() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 11);
+        Permanent keeper = addCreatureReady(player1, new KeeperOfTheFlame());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(keeper.isTapped()).isFalse();
+        harness.assertLife(player2, 11);
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves after its source leaves the battlefield")
+    void resolvesWithoutSource() {
+        Permanent keeper = readyKeeper(10, 11);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, keeper));
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 9);
+    }
+
     private Permanent readyKeeper(int controllerLife, int opponentLife) {
         harness.setLife(player1, controllerLife);
         harness.setLife(player2, opponentLife);
