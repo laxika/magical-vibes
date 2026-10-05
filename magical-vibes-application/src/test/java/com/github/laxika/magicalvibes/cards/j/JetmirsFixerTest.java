@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(JetmirsFixer.class)
+@CardUsed({JetmirsFixer.class, JewelThief.class})
 class JetmirsFixerTest extends BaseCardTest {
 
     @Test
@@ -57,17 +58,54 @@ class JetmirsFixerTest extends BaseCardTest {
 
     private void activateTreasureAndChooseColor(String color) {
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
-        int treasureIndex = -1;
-        for (int i = 0; i < battlefield.size(); i++) {
-            if (battlefield.get(i).getCard().getName().equals("Treasure")) {
-                treasureIndex = i;
-                break;
-            }
-        }
-        assertThat(treasureIndex).isGreaterThanOrEqualTo(0);
+        int treasureIndex = battlefield.indexOf(findPermanent(player1, "Treasure"));
 
         harness.activateAbility(player1, treasureIndex, null, null);
         harness.handleListChoice(player1, color);
+    }
+
+    @Test
+    @DisplayName("One Treasure mana is sufficient and the counter survives cleanup")
+    void mixedManaPlacesPersistentCounter() {
+        Permanent fixer = addCreatureReady(player1, new JetmirsFixer());
+        harness.castFromHand(player1, new JewelThief(), "{2}{G}");
+        resolveAllTriggers();
+        activateTreasureAndChooseColor("RED");
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(fixer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(fixer.getPowerModifier()).isZero();
+        assertThat(fixer.getToughnessModifier()).isZero();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        assertThat(fixer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each pending activation remembers its own mana payment")
+    void overlappingActivationsKeepTheirOwnTreasurePayment() {
+        Permanent fixer = addCreatureReady(player1, new JetmirsFixer());
+        harness.castFromHand(player1, new JewelThief(), "{2}{G}");
+        resolveAllTriggers();
+        activateTreasureAndChooseColor("RED");
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(fixer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(fixer.getPowerModifier()).isEqualTo(1);
+        assertThat(fixer.getToughnessModifier()).isEqualTo(1);
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        assertThat(fixer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(fixer.getPowerModifier()).isZero();
+        assertThat(fixer.getToughnessModifier()).isZero();
     }
 
     private void addTreasureToken(Player player) {
