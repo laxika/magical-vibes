@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.g.GoblinCohort;
 import com.github.laxika.magicalvibes.cards.h.HerosDemise;
 import com.github.laxika.magicalvibes.cards.t.Tallowisp;
+import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KodamaOfTheCenterTree.class, KamiOfFalseHope.class, Tallowisp.class,
-        GoblinCohort.class, HerosDemise.class})
+        GoblinCohort.class, HerosDemise.class, WrathOfGod.class})
 class KodamaOfTheCenterTreeTest extends BaseCardTest {
 
     @Test
@@ -82,5 +83,69 @@ class KodamaOfTheCenterTreeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Tallowisp");
+    }
+
+    @Test
+    void loneKodamaCanReturnOneManaSpiritButNotTwoManaSpirit() {
+        Permanent kodama = harness.addToBattlefieldAndReturn(player1, new KodamaOfTheCenterTree());
+        Card eligible = new KamiOfFalseHope();
+        Card tooExpensive = new Tallowisp();
+        harness.setGraveyard(player1, List.of(eligible, tooExpensive));
+        harness.setHand(player1, List.of(new HerosDemise()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, kodama.getId());
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(eligible.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Kami of False Hope");
+        harness.assertInGraveyard(player1, "Tallowisp");
+    }
+
+    @Test
+    void canReturnItselfWithFiveSpiritsAtDeath() {
+        Card kodamaCard = new KodamaOfTheCenterTree();
+        Permanent kodama = harness.addToBattlefieldAndReturn(player1, kodamaCard);
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new KamiOfFalseHope());
+        }
+        harness.setHand(player1, List.of(new HerosDemise()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, kodama.getId());
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).contains(kodamaCard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(kodamaCard.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Kodama of the Center Tree");
+    }
+
+    @Test
+    void simultaneousDeathsUseSpiritCountBeforeAnySpiritLeaves() {
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new KamiOfFalseHope());
+        }
+        Card kodama = new KodamaOfTheCenterTree();
+        harness.addToBattlefield(player1, kodama);
+        harness.setHand(player1, List.of(new WrathOfGod()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).contains(kodama.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(kodama.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Kodama of the Center Tree");
     }
 }
