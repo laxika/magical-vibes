@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.a.ArcTrail;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HealingGrace;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
 import com.github.laxika.magicalvibes.cards.l.LilianaVess;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -9,9 +10,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -21,25 +21,93 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KazarovSengirPureblood.class, ArcTrail.class, GrizzlyBears.class,
+        InvasionOfInnistrad.class, LilianaVess.class, Shock.class, HealingGrace.class})
 class KazarovSengirPurebloodTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Kazarov has activated ability: {3}{R}: deal 2 damage to target creature")
-    void hasCorrectActivatedAbility() {
-        KazarovSengirPureblood card = new KazarovSengirPureblood();
+    @DisplayName("A tapped, summoning-sick Kazarov can activate repeatedly and target itself or an ally")
+    void activatedAbilityDoesNotRequireTapAndCanTargetOwnCreatures() {
+        Permanent kazarov = harness.addToBattlefieldAndReturn(player1, new KazarovSengirPureblood());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        kazarov.setTapped(true);
+        kazarov.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.RED, 2);
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isEqualTo("{3}{R}");
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        DealDamageToTargetCreatureEffect damageEffect = (DealDamageToTargetCreatureEffect) ability.getEffects().getFirst();
-        assertThat(damageEffect.damage()).isEqualTo(new Fixed(2));
+        harness.activateAbility(player1, 0, null, kazarov.getId());
+        harness.passBothPriorities();
+
+        assertThat(kazarov.getMarkedDamage()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(kazarov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+        assertThat(kazarov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Damage to two opposing creatures gives one counter per creature, not per damage point")
+    void damageToTwoCreaturesAddsTwoCounters() {
+        Permanent kazarov = harness.addToBattlefieldAndReturn(player1, new KazarovSengirPureblood());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ArcTrail()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(first.getId(), second.getId()));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(second.getMarkedDamage()).isEqualTo(1);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(kazarov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Damage to an opposing player does not trigger Kazarov")
+    void damageToOpponentPlayerDoesNotTrigger() {
+        Permanent kazarov = harness.addToBattlefieldAndReturn(player1, new KazarovSengirPureblood());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).isEmpty();
+        assertThat(kazarov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Fully prevented damage does not trigger Kazarov")
+    void preventedDamageDoesNotTrigger() {
+        Permanent kazarov = harness.addToBattlefieldAndReturn(player1, new KazarovSengirPureblood());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new HealingGrace()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        harness.handlePermanentChosen(player2, kazarov.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 0, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(bears.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+        assertThat(kazarov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Nested
     @DisplayName("Triggered ability — non-combat damage")
+    @CardUsed({KazarovSengirPureblood.class, GrizzlyBears.class, Shock.class})
     class NonCombatDamageTrigger {
 
         @Test
@@ -51,8 +119,7 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.RED, 1);
 
             UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-            harness.castInstant(player1, 0, bearsId);
-            harness.passBothPriorities(); // Resolve Shock — 2 damage to Grizzly Bears
+            harness.castAndResolveInstant(player1, 0, bearsId);
 
             // Kazarov trigger should be on the stack
             assertThat(gd.stack).hasSize(1);
@@ -100,8 +167,7 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
 
             // Player2 shocks player1's Grizzly Bears
             UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
-            harness.castInstant(player2, 0, bearsId);
-            harness.passBothPriorities(); // Resolve Shock
+            harness.castAndResolveInstant(player2, 0, bearsId);
 
             // Kazarov's trigger should NOT fire (damage was dealt to controller's creature, not opponent's)
             assertThat(gd.stack).isEmpty();
@@ -113,6 +179,7 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Triggered ability — combat damage")
+    @CardUsed({KazarovSengirPureblood.class, GrizzlyBears.class})
     class CombatDamageTrigger {
 
         @Test
@@ -159,6 +226,8 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
      */
     @Nested
     @DisplayName("Triggered ability — non-creature any-target permanents")
+    @CardUsed({KazarovSengirPureblood.class, LilianaVess.class, ArcTrail.class,
+            InvasionOfInnistrad.class, Shock.class})
     class NonCreatureAnyTargets {
 
         @Test
@@ -171,8 +240,7 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.RED, 2);
 
             // 2 damage to the planeswalker, 1 to its controller — no creature is damaged at all.
-            harness.castSorcery(player1, 0, List.of(liliana.getId(), player2.getId()));
-            harness.passBothPriorities(); // Resolve Arc Trail
+            harness.castAndResolveSorcery(player1, 0, List.of(liliana.getId(), player2.getId()));
 
             assertThat(gd.stack).isEmpty();
             assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
@@ -190,8 +258,7 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
             harness.setHand(player1, List.of(new Shock()));
             harness.addMana(player1, ManaColor.RED, 1);
 
-            harness.castInstant(player1, 0, battle.getId());
-            harness.passBothPriorities(); // Resolve Shock — 2 damage to the battle
+            harness.castAndResolveInstant(player1, 0, battle.getId());
 
             assertThat(gd.stack).isEmpty();
             assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(3);
