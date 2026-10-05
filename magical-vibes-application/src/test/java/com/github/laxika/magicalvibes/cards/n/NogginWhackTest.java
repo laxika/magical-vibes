@@ -40,8 +40,7 @@ class NogginWhackTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NogginWhack()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Target reveals Auntie's Snitch (0), Earwig Squad (1), Frogtosser Banneret (2) — Mudbutton Clanger stays hidden.
         harness.handleCardChosen(player2, 0);
@@ -83,8 +82,7 @@ class NogginWhackTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NogginWhack()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Straight to the controller's discard choice over the whole (two-card) hand.
         PendingInteraction.RevealCardsDiscardChoice choice = activeChoice();
@@ -109,8 +107,7 @@ class NogginWhackTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NogginWhack()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         PendingInteraction.RevealCardsDiscardChoice choice = activeChoice();
         assertThat(choice).isNotNull();
@@ -130,8 +127,7 @@ class NogginWhackTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NogginWhack()));
         harness.addMana(player1, ManaColor.BLACK, 4);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("empty"));
@@ -173,5 +169,60 @@ class NogginWhackTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castWithProwl(player1, 0, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Prowl");
+    }
+
+    @Test
+    @DisplayName("Both discard choices are made before either card leaves the hand")
+    void choosesBothCardsBeforeDiscarding() {
+        Card snitch = new AuntiesSnitch();
+        Card squad = new EarwigSquad();
+        Card banneret = new FrogtosserBanneret();
+        harness.setHand(player2, List.of(snitch, squad, banneret));
+        harness.setHand(player1, List.of(new NogginWhack()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(snitch, squad, banneret);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(banneret);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyInAnyOrder(snitch, squad);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The caster may target themselves and chooses two of their revealed cards")
+    void canTargetSelf() {
+        Card snitch = new AuntiesSnitch();
+        Card squad = new EarwigSquad();
+        Card banneret = new FrogtosserBanneret();
+        harness.setHand(player1, List.of(new NogginWhack(), snitch, squad, banneret));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(banneret);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(snitch, squad);
+        harness.assertInGraveyard(player1, "Noggin Whack");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Prowl cannot be used before any qualifying combat damage")
+    void prowlUnavailableWithoutCombatDamage() {
+        harness.setHand(player1, List.of(new NogginWhack()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castWithProwl(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Prowl");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }
