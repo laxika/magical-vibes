@@ -64,6 +64,79 @@ class KeeperOfTheMindTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot activate without choosing an opponent")
+    void cannotActivateWithoutTarget() {
+        Permanent keeper = readyKeeper(1, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(keeper.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while tapped")
+    void cannotActivateWhileTapped() {
+        Permanent keeper = readyKeeper(1, 3);
+        keeper.setTapped(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent keeper = readyKeeper(1, 3);
+        keeper.setSummoningSick(true);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the blue activation cost with red mana")
+    void cannotPayWithRedMana() {
+        Permanent keeper = readyKeeper(1, 3);
+        gd.playerManaPools.get(player1.getId()).clear();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(keeper.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Still draws if the controller's hand grows before resolution")
+    void drawsAfterControllerHandGrows() {
+        readyKeeper(1, 3);
+        harness.setLibrary(player1, List.of(new RagingGoblin()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.setHand(player1, cards(4));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(5);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("The activated ability resolves after its source leaves the battlefield")
+    void drawsAfterSourceLeavesBattlefield() {
+        readyKeeper(0, 2);
+        harness.setLibrary(player1, List.of(new RagingGoblin()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+    }
+
     private Permanent readyKeeper(int controllerHandSize, int opponentHandSize) {
         harness.setHand(player1, cards(controllerHandSize));
         harness.setHand(player2, cards(opponentHandSize));
