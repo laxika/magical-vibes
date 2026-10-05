@@ -36,4 +36,47 @@ class OkinaNightwatchTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, nightwatch)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, nightwatch)).isEqualTo(3);
     }
+
+    @Test
+    void boostUpdatesImmediatelyAsEitherHandChanges() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        Permanent nightwatch = harness.addToBattlefieldAndReturn(player1, new OkinaNightwatch());
+
+        assertThat(gqs.getEffectivePower(gd, nightwatch)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, nightwatch)).isEqualTo(3);
+
+        harness.setHand(player1, List.of(new OkinaNightwatch()));
+
+        assertThat(gqs.getEffectivePower(gd, nightwatch)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, nightwatch)).isEqualTo(6);
+
+        harness.setHand(player2, List.of(new OkinaNightwatch()));
+
+        assertThat(gqs.getEffectivePower(gd, nightwatch)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, nightwatch)).isEqualTo(3);
+
+        harness.setHand(player2, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, nightwatch)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, nightwatch)).isEqualTo(6);
+
+        harness.setHand(player1, List.of());
+
+        assertThat(gqs.getEffectivePower(gd, nightwatch)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, nightwatch)).isEqualTo(3);
+    }
+
+    @Test
+    void eachNightwatchUsesItsOwnControllersHandSize() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new OkinaNightwatch()));
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new OkinaNightwatch());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new OkinaNightwatch());
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(3);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(6);
+    }
 }
