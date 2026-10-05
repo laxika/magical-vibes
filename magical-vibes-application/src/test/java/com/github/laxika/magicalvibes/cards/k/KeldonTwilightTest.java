@@ -61,6 +61,58 @@ class KeldonTwilightTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(newlyControlled);
     }
 
+    @Test
+    @DisplayName("The controller also sacrifices on their own end step, without affecting the opponent")
+    void controllerSacrificesOnOwnEndStep() {
+        Permanent twilight = harness.addToBattlefieldAndReturn(player1, new KeldonTwilight());
+        Permanent sacrificed = addCreatureReady(player1, new AncientSpider());
+        Permanent opponentCreature = addCreatureReady(player2, new AncientSpider());
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(twilight);
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opponentCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrificed.getCard());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Triggers even with no eligible creatures and excludes a creature entering in response")
+    void creatureEnteringAfterTriggerCannotBeSacrificed() {
+        harness.addToBattlefield(player1, new KeldonTwilight());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        Permanent newlyControlled = harness.addToBattlefieldAndReturn(player2, new AncientSpider());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(newlyControlled);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Each copy independently requires a sacrifice")
+    void multipleCopiesRequireSeparateSacrifices() {
+        harness.addToBattlefield(player1, new KeldonTwilight());
+        harness.addToBattlefield(player2, new KeldonTwilight());
+        Permanent first = addCreatureReady(player2, new AncientSpider());
+        Permanent second = addCreatureReady(player2, new AncientSpider());
+
+        advanceToEndStep(player2);
+        harness.handleMultiplePermanentsChosen(player2, List.of(first.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(first, second);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(first.getCard(), second.getCard());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
