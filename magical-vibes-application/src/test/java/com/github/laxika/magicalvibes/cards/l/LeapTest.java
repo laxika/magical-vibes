@@ -29,8 +29,7 @@ class LeapTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new SpinedWurm()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, wurm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, wurm.getId());
 
         assertThat(gqs.hasKeyword(gd, wurm, Keyword.FLYING)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -44,8 +43,7 @@ class LeapTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new SpinedWurm()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, wurm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, wurm.getId());
 
         assertThat(gqs.hasKeyword(gd, wurm, Keyword.FLYING)).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
@@ -58,8 +56,7 @@ class LeapTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Leap()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castInstant(player1, 0, wurm.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, wurm.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -87,6 +84,28 @@ class LeapTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getId().equals(archer.getId()));
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the target gains flying and the caster draws exactly one card")
+    void onlyTargetGainsFlyingAndCasterDrawsExactlyOneCard() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SpinedWurm());
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new SkyshroudArcher());
+        SpinedWurm drawnCard = new SpinedWurm();
+        SkyshroudArcher remainingCard = new SkyshroudArcher();
+        harness.setHand(player1, List.of(new Leap()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(drawnCard, remainingCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Leap");
     }
 
     @Test
