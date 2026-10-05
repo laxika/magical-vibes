@@ -104,4 +104,76 @@ class MaroTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Maro");
         harness.assertInGraveyard(player1, "Maro");
     }
+
+    @Test
+    @DisplayName("Maro dies when its controller's hand becomes empty")
+    void diesWhenHandBecomesEmpty() {
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addToBattlefield(player1, new Maro());
+        harness.runStateBasedActions();
+        harness.assertOnBattlefield(player1, "Maro");
+
+        harness.setHand(player1, List.of());
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Maro");
+        harness.assertInGraveyard(player1, "Maro");
+    }
+
+    @Test
+    @DisplayName("A +1/+1 counter keeps Maro alive with an empty hand")
+    void counterKeepsAliveWithEmptyHand() {
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        Permanent maro = harness.addToBattlefieldAndReturn(player1, new Maro());
+        maro.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of());
+
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player1, "Maro");
+        harness.assertNotInGraveyard(player1, "Maro");
+        assertThat(gqs.getEffectivePower(gd, maro)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, maro)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Casting Maro counts only cards left in hand after casting")
+    void castingCountsRemainingHand() {
+        harness.setHand(player1, List.of(new Maro(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent maro = findPermanent(player1, "Maro");
+        assertThat(gqs.getEffectivePower(gd, maro)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, maro)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Maro's hand-size ability works in hand, library, graveyard and exile")
+    void characteristicAbilityWorksOutsideBattlefield() {
+        Maro maro = new Maro();
+        harness.setHand(player1, List.of(maro, new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        assertThat(gqs.getEffectiveCardPower(gd, maro)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, maro)).isEqualTo(2);
+
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(maro));
+        assertThat(gqs.getEffectiveCardPower(gd, maro)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, maro)).isEqualTo(1);
+
+        harness.setLibrary(player1, List.of());
+        harness.setGraveyard(player1, List.of(maro));
+        assertThat(gqs.getEffectiveCardPower(gd, maro)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, maro)).isEqualTo(1);
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(maro));
+        harness.setHand(player1, List.of());
+        assertThat(gqs.getEffectiveCardPower(gd, maro)).isEqualTo(0);
+        assertThat(gqs.getEffectiveCardToughness(gd, maro)).isEqualTo(0);
+    }
 }
