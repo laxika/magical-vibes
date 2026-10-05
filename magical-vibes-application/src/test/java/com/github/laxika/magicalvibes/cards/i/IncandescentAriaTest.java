@@ -1,11 +1,10 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.a.AirElemental;
-import com.github.laxika.magicalvibes.cards.g.GiantSpider;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.d.DisciplinedDuelist;
+import com.github.laxika.magicalvibes.cards.e.ElegantEntourage;
+import com.github.laxika.magicalvibes.cards.h.HaloFountain;
+import com.github.laxika.magicalvibes.cards.j.JewelThief;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,18 +12,17 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IncandescentAria.class, AirElemental.class, GiantSpider.class})
+@CardUsed({IncandescentAria.class, ElegantEntourage.class, HaloFountain.class, JewelThief.class,
+        DisciplinedDuelist.class})
 class IncandescentAriaTest extends BaseCardTest {
 
     @Test
     @DisplayName("Deals 3 damage to each nontoken creature on both battlefields")
     void damagesEachNontokenCreature() {
-        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GiantSpider());
-        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new ElegantEntourage());
+        Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new ElegantEntourage());
 
         castIncandescentAria();
 
@@ -35,39 +33,79 @@ class IncandescentAriaTest extends BaseCardTest {
     @Test
     @DisplayName("Does not damage creature tokens")
     void doesNotDamageCreatureTokens() {
-        Permanent ownToken = addTokenCreature(player1, "Soldier Token");
-        Permanent opponentToken = addTokenCreature(player2, "Zombie Token");
+        Permanent ownToken = addTokenCreature(player1);
+        Permanent opponentToken = addTokenCreature(player2);
 
         castIncandescentAria();
 
         assertThat(ownToken.getMarkedDamage()).isZero();
         assertThat(opponentToken.getMarkedDamage()).isZero();
-        harness.assertOnBattlefield(player1, "Soldier Token");
-        harness.assertOnBattlefield(player2, "Zombie Token");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownToken);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentToken);
+    }
+
+    @Test
+    @DisplayName("Lethal damage kills nontoken creatures while tokens and noncreatures are untouched")
+    void killsNontokenCreaturesWithoutHarmingOtherPermanentsOrPlayers() {
+        harness.addToBattlefield(player1, new JewelThief());
+        harness.addToBattlefield(player2, new JewelThief());
+        Permanent ownToken = addTokenCreature(player1);
+        Permanent opponentToken = addTokenCreature(player2);
+        Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new HaloFountain());
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new HaloFountain());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castIncandescentAria();
+
+        harness.assertInGraveyard(player1, "Jewel Thief");
+        harness.assertInGraveyard(player2, "Jewel Thief");
+        harness.assertNotOnBattlefield(player1, "Jewel Thief");
+        harness.assertNotOnBattlefield(player2, "Jewel Thief");
+        assertThat(ownToken.getMarkedDamage()).isZero();
+        assertThat(opponentToken.getMarkedDamage()).isZero();
+        assertThat(ownArtifact.getMarkedDamage()).isZero();
+        assertThat(opponentArtifact.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownToken, ownArtifact);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentToken, opponentArtifact);
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Resolves on an empty battlefield without damaging either player")
+    void resolvesWithNoCreatures() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        castIncandescentAria();
+
+        harness.assertInGraveyard(player1, "Incandescent Aria");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A shield counter prevents Aria's damage to a nontoken creature")
+    void shieldCounterPreventsDamage() {
+        Permanent duelist = harness.enterBattlefieldAndReturn(player2, new DisciplinedDuelist());
+
+        castIncandescentAria();
+
+        assertThat(duelist.getCounterCount(CounterType.SHIELD)).isZero();
+        assertThat(duelist.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Disciplined Duelist");
+        harness.assertNotInGraveyard(player2, "Disciplined Duelist");
     }
 
     private void castIncandescentAria() {
-        harness.setHand(player1, List.of(new IncandescentAria()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.castSorcery(player1, 0, 0);
+        harness.castFromHand(player1, new IncandescentAria(), "{R}{G}{W}");
         harness.passBothPriorities();
     }
 
-    private Permanent addTokenCreature(Player player, String name) {
-        Card card = new Card();
-        card.setName(name);
-        card.setType(CardType.CREATURE);
-        card.setManaCost("");
-        card.setColor(CardColor.WHITE);
-        card.setPower(4);
-        card.setToughness(4);
+    private Permanent addTokenCreature(Player player) {
+        ElegantEntourage card = new ElegantEntourage();
         card.setToken(true);
-
-        Permanent permanent = new Permanent(card);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
-        return permanent;
+        return harness.addToBattlefieldAndReturn(player, card);
     }
 }
