@@ -1,33 +1,25 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.e.ElspethKnightErrant;
-import com.github.laxika.magicalvibes.cards.g.GaleriderSliver;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MetallicSliver;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import java.util.List;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LavabellySliver.class, GaleriderSliver.class, GrizzlyBears.class, MetallicSliver.class, ElspethKnightErrant.class})
+@CardUsed({LavabellySliver.class, GrizzlyBears.class, MetallicSliver.class, ElspethKnightErrant.class})
 class LavabellySliverTest extends BaseCardTest {
 
     @Test
     void sliverEnteringUnderYourControlDealsDamageAndGainsLife() {
         harness.addToBattlefield(player1, new LavabellySliver());
         harness.setLife(player1, 19);
-        harness.setHand(player1, List.of(new MetallicSliver()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MetallicSliver(), "{1}");
         harness.passBothPriorities();
 
         harness.handlePermanentChosen(player1, player2.getId());
@@ -40,10 +32,7 @@ class LavabellySliverTest extends BaseCardTest {
     @Test
     void LavabellySliverTriggersForItself() {
         harness.setLife(player1, 19);
-        harness.setHand(player1, List.of(new LavabellySliver()));
-        addLavabellyMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new LavabellySliver(), "{1}{R}{W}");
         harness.passBothPriorities();
 
         harness.handlePermanentChosen(player1, player2.getId());
@@ -57,11 +46,7 @@ class LavabellySliverTest extends BaseCardTest {
     void nonSliversDoNotGainTheAbility() {
         harness.addToBattlefield(player1, new LavabellySliver());
         harness.setLife(player1, 19);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -74,10 +59,7 @@ class LavabellySliverTest extends BaseCardTest {
         harness.addToBattlefield(player1, new LavabellySliver());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
         planeswalker.setCounterCount(CounterType.LOYALTY, 3);
-        harness.setHand(player1, List.of(new MetallicSliver()));
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MetallicSliver(), "{1}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)
@@ -89,9 +71,93 @@ class LavabellySliverTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
     }
 
-    private void addLavabellyMana() {
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.WHITE, 1);
+    @Test
+    void opposingSliversDoNotGainTheAbility() {
+        harness.addToBattlefield(player1, new LavabellySliver());
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new MetallicSliver(), "{1}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void abilityCanTargetItsController() {
+        harness.castFromHand(player1, new LavabellySliver(), "{1}{R}{W}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void multipleLavabellySliversGrantSeparateIndependentlyTargetedTriggers() {
+        harness.addToBattlefield(player1, new LavabellySliver());
+        harness.addToBattlefield(player1, new LavabellySliver());
+        harness.castFromHand(player1, new MetallicSliver(), "{1}");
+        harness.passBothPriorities();
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
+        harness.handlePermanentChosen(player1, player1.getId());
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void illegalPlaneswalkerTargetPreventsLifeGain() {
+        harness.addToBattlefield(player1, new LavabellySliver());
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ElspethKnightErrant());
+        harness.castFromHand(player1, new MetallicSliver(), "{1}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, planeswalker.getId());
+
+        planeswalker.setCounterCount(CounterType.LOYALTY, 0);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Elspeth, Knight-Errant");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void triggerStillResolvesAfterLavabellySliverDies() {
+        Permanent lavabelly = harness.addToBattlefieldAndReturn(player1, new LavabellySliver());
+        harness.castFromHand(player1, new MetallicSliver(), "{1}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        lavabelly.setMarkedDamage(2);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Lavabelly Sliver");
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void triggerStillResolvesAfterEnteringSliverDies() {
+        harness.addToBattlefield(player1, new LavabellySliver());
+        Permanent enteringSliver = harness.enterBattlefieldAndReturn(player1, new MetallicSliver());
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        enteringSliver.setMarkedDamage(1);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Metallic Sliver");
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
     }
 }
