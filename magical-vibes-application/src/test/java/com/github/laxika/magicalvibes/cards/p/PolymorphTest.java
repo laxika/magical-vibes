@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GatherSpecimens;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         AngelOfMercy.class,
         DrudgeSkeletons.class,
         GrizzlyBears.class,
+        GatherSpecimens.class,
         LlanowarElves.class,
         Millstone.class
 })
@@ -238,7 +239,7 @@ class PolymorphTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
         // Polymorph still goes to graveyard
         harness.assertInGraveyard(player1, "Polymorph");
         // No creature was put onto the battlefield (library wasn't searched)
@@ -246,5 +247,75 @@ class PolymorphTest extends BaseCardTest {
         // Library was not touched
         assertThat(gd.playerDecks.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+    }
+    @Test
+    @DisplayName("A creature redirected by Gather Specimens triggers its entry ability for its actual controller")
+    void redirectedCreatureTriggersForActualController() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+        harness.setHand(player1, List.of(new GatherSpecimens(), new Polymorph()));
+        harness.addMana(player1, ManaColor.BLUE, 10);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        harness.setLibrary(player2, List.of(new AngelOfMercy()));
+
+        harness.castAndResolveInstant(player1, 0);
+        harness.castSorcery(player1, 0, target.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertOnBattlefield(player1, "Angel of Mercy");
+        harness.assertNotOnBattlefield(player2, "Angel of Mercy");
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 10);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the first creature revealed enters; all other library cards remain in the library")
+    void stopsAtFirstCreatureAndPreservesOtherCards() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+        Millstone revealed = new Millstone();
+        GrizzlyBears firstCreature = new GrizzlyBears();
+        DrudgeSkeletons secondCreature = new DrudgeSkeletons();
+        Millstone unrevealed = new Millstone();
+        harness.setLibrary(player1, List.of(revealed, firstCreature, secondCreature, unrevealed));
+        harness.setHand(player1, List.of(new Polymorph()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Drudge Skeletons");
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactlyInAnyOrder(revealed, secondCreature, unrevealed);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .doesNotContain(revealed, firstCreature, secondCreature, unrevealed);
+    }
+
+    @Test
+    @DisplayName("Uses the target's controller at resolution, while the destroyed card goes to its owner's graveyard")
+    void usesControllerAtResolutionRatherThanOwnerOrCastingTimeController() {
+        LlanowarElves stolenCreature = new LlanowarElves();
+        stolenCreature.setOwnerId(player1.getId());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, stolenCreature);
+        GrizzlyBears ownersLibraryCreature = new GrizzlyBears();
+        DrudgeSkeletons controllersLibraryCreature = new DrudgeSkeletons();
+        harness.setLibrary(player1, List.of(ownersLibraryCreature));
+        harness.setLibrary(player2, List.of(controllersLibraryCreature));
+        harness.setHand(player1, List.of(new Polymorph()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castSorcery(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotInGraveyard(player2, "Llanowar Elves");
+        harness.assertOnBattlefield(player2, "Drudge Skeletons");
+        harness.assertNotOnBattlefield(player1, "Drudge Skeletons");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownersLibraryCreature);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
 }
