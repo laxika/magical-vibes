@@ -131,4 +131,63 @@ class MesmericTranceTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(trance);
         harness.assertInGraveyard(player1, "Mesmeric Trance");
     }
+
+    @Test
+    @DisplayName("Discard is paid before the draw resolves")
+    void discardIsAnActivationCost() {
+        harness.addToBattlefield(player1, new MesmericTrance());
+        BalduvianBears discarded = new BalduvianBears();
+        BalduvianBears drawn = new BalduvianBears();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(drawn, new BalduvianBears()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.playerDecks.get(player1.getId())).contains(drawn);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+    }
+
+    @Test
+    @DisplayName("The draw ability may be activated repeatedly without tapping")
+    void canActivateRepeatedly() {
+        harness.addToBattlefield(player1, new MesmericTrance());
+        harness.setHand(player1, List.of(new BalduvianBears()));
+        harness.setLibrary(player1, List.of(new BalduvianBears(), new BalduvianBears(), new BalduvianBears()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertOnBattlefield(player1, "Mesmeric Trance");
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep counts existing age counters and cannot be partially paid")
+    void insufficientManaForExistingAgeCountersSacrifices() {
+        Permanent trance = harness.addToBattlefieldAndReturn(player1, new MesmericTrance());
+        trance.setCounterCount(CounterType.AGE, 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(trance.getCounterCount(CounterType.AGE)).isEqualTo(3);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Mesmeric Trance");
+        harness.assertInGraveyard(player1, "Mesmeric Trance");
+    }
 }
