@@ -115,6 +115,46 @@ class JovensToolsTest extends BaseCardTest {
         assertThat(tools.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Can restrict an opponent's creature")
+    void canRestrictOpponentsCreature() {
+        harness.addToBattlefield(player1, new JovensTools());
+        Permanent attacker = addCreatureReady(player2, new Joven());
+        addCreatureReady(player1, new Joven());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.passBothPriorities();
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player2);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Walls");
+    }
+
+    @Test
+    @DisplayName("Ability resolves even if Joven's Tools is destroyed in response")
+    void abilitySurvivesSourceDestruction() {
+        Permanent tools = harness.addToBattlefieldAndReturn(player1, new JovensTools());
+        Permanent attacker = addCreatureReady(player1, new Joven());
+        Permanent blocker = addCreatureReady(player2, new Joven());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.addMana(player2, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, null, attacker.getId());
+        harness.activateAbility(player2, 0, null, tools.getId());
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Joven's Tools");
+        blocker.setTapped(false);
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Walls");
+    }
+
     /**
      * Activates Joven's Tools targeting a fresh attacker and resolves the "can't be blocked except
      * by Walls" restriction.
