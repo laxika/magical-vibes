@@ -73,8 +73,7 @@ class MarshalingCryTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castFlashback(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveFlashback(player1, 0, null);
 
         assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(4);
@@ -97,5 +96,66 @@ class MarshalingCryTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Marshaling Cry");
         harness.assertInHand(player1, "Blind Phantasm");
+    }
+
+    @Test
+    @DisplayName("Cycling discards immediately without boosting creatures, then permits flashback")
+    void cyclingDiscardsAsCostAndAllowsFlashbackAfterDrawing() {
+        Permanent creature = addCreatureReady(player1, new BlindPhantasm());
+        harness.setHand(player1, List.of(new MarshalingCry()));
+        harness.setLibrary(player1, List.of(new BlindPhantasm()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        harness.assertInGraveyard(player1, "Marshaling Cry");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Blind Phantasm");
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+        harness.assertNotInGraveyard(player1, "Marshaling Cry");
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .anyMatch(card -> card.getName().equals("Marshaling Cry"));
+    }
+
+    @Test
+    @DisplayName("Casting and flashing back in the same turn stacks the boosts")
+    void normalCastThenFlashbackStacksBoosts() {
+        Permanent creature = addCreatureReady(player1, new BlindPhantasm());
+        harness.setHand(player1, List.of(new MarshalingCry()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.assertInGraveyard(player1, "Marshaling Cry");
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castAndResolveFlashback(player1, 0, null);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
     }
 }
