@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.c.CourageousResolve;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -66,10 +66,7 @@ class MisterNegativeTest extends BaseCardTest {
     @Test
     @DisplayName("Only an opponent is offered as the target")
     void onlyOpponentIsTargetable() {
-        harness.setHand(player1, List.of(new MisterNegative()));
-        addManaForCast();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MisterNegative(), "{5}{W}{B}");
         harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =
@@ -78,9 +75,7 @@ class MisterNegativeTest extends BaseCardTest {
     }
 
     private void castMisterNegative() {
-        harness.setHand(player1, List.of(new MisterNegative()));
-        addManaForCast();
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MisterNegative(), "{5}{W}{B}");
         harness.passBothPriorities();
     }
 
@@ -90,9 +85,57 @@ class MisterNegativeTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, accept);
     }
 
-    private void addManaForCast() {
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.BLACK, 1);
+    @Test
+    @DisplayName("Equal life totals do not cause a draw")
+    void equalLifeTotalsDoNotDraw() {
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 10);
+        harness.setLibrary(player1, List.of(new Island()));
+
+        castMisterNegative();
+        chooseOpponentAndResolve(true);
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 10);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Uses life totals at resolution rather than when the ability triggers")
+    void usesLifeTotalsAtResolution() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 7);
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+
+        castMisterNegative();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setLife(player1, 12);
+        harness.setLife(player2, 9);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 9);
+        harness.assertLife(player2, 12);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @CardUsed(CourageousResolve.class)
+    @DisplayName("Neither life total changes when the controller cannot lose life")
+    void cannotLoseLifePreventsEntireExchange() {
+        harness.setLife(player1, 5);
+        harness.setLife(player2, 2);
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island(), new Island()));
+        harness.castFromHand(player1, new CourageousResolve(), "{2}{W}");
+        harness.passBothPriorities();
+
+        castMisterNegative();
+        chooseOpponentAndResolve(true);
+
+        harness.assertLife(player1, 5);
+        harness.assertLife(player2, 2);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
     }
 }
