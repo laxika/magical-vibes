@@ -44,4 +44,48 @@ class JolraelsCentaurTest extends BaseCardTest {
         assertThat(blocker.getEffectivePower()).isEqualTo(2);
         assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
     }
+
+    @Test
+    @DisplayName("Shroud also prevents the controller from targeting Jolrael's Centaur")
+    void shroudPreventsControllerTargeting() {
+        Permanent centaur = addCreatureReady(player1, new JolraelsCentaur());
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, centaur.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("Flanking does not trigger against a blocker with flanking")
+    void flankingDoesNotTriggerAgainstFlankingBlocker() {
+        Permanent centaur = addCreatureReady(player1, new JolraelsCentaur());
+        centaur.setAttacking(true);
+        addCreatureReady(player2, new JolraelsCentaur());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flanking weakens each non-flanking blocker separately")
+    void flankingWeakensEveryNonFlankingBlocker() {
+        Permanent centaur = addCreatureReady(player1, new JolraelsCentaur());
+        centaur.setAttacking(true);
+        Permanent firstBlocker = addCreatureReady(player2, new IronTuskElephant());
+        Permanent secondBlocker = addCreatureReady(player2, new IronTuskElephant());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(firstBlocker.getEffectivePower()).isEqualTo(2);
+        assertThat(firstBlocker.getEffectiveToughness()).isEqualTo(2);
+        assertThat(secondBlocker.getEffectivePower()).isEqualTo(2);
+        assertThat(secondBlocker.getEffectiveToughness()).isEqualTo(2);
+    }
 }
