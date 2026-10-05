@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.n.NissasChosen;
+import com.github.laxika.magicalvibes.cards.s.StoneworkPuma;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({OranRiefTheVastwood.class, NissasChosen.class, StoneworkPuma.class})
 class OranRiefTheVastwoodTest extends BaseCardTest {
 
     @Test
@@ -40,17 +42,17 @@ class OranRiefTheVastwoodTest extends BaseCardTest {
     void putsCountersOnAllGreenCreaturesThatEnteredThisTurn() {
         Permanent oranRief = harness.addToBattlefieldAndReturn(player1, new OranRiefTheVastwood());
         oranRief.setSummoningSick(false);
-        Permanent oldGreenCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent oldGreenCreature = harness.addToBattlefieldAndReturn(player1, new NissasChosen());
         oldGreenCreature.setSummoningSick(false);
 
-        Card newGreenCreature = new GrizzlyBears();
-        castCreature(player1, newGreenCreature, 2);
+        Card newGreenCreature = new NissasChosen();
+        castCreature(player1, newGreenCreature, "{G}{G}");
 
-        Card opponentGreenCreature = new GrizzlyBears();
-        castCreature(player2, opponentGreenCreature, 2);
+        Card opponentGreenCreature = new NissasChosen();
+        castCreature(player2, opponentGreenCreature, "{G}{G}");
 
-        Card newNonGreenCreature = new Memnite();
-        castCreature(player1, newNonGreenCreature, 0);
+        Card newNonGreenCreature = new StoneworkPuma();
+        castCreature(player1, newNonGreenCreature, "{3}");
 
         prepareMainPhase(player1);
         harness.activateAbility(player1, 0, 0, null, null);
@@ -65,11 +67,55 @@ class OranRiefTheVastwoodTest extends BaseCardTest {
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
-    private void castCreature(Player player, Card creature, int manaAmount) {
+    @Test
+    @DisplayName("Includes a green creature that enters after activation but before resolution")
+    void includesCreatureEnteringInResponse() {
+        prepareMainPhase(player1);
+        Permanent oranRief = harness.addToBattlefieldAndReturn(player1, new OranRiefTheVastwood());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        assertThat(oranRief.isTapped()).isTrue();
+        Permanent creature = harness.enterBattlefieldAndReturn(player2, new NissasChosen());
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Each activation can put another counter on the same creature during its entry turn")
+    void separateLandsEachPutACounterOnTheSameCreature() {
+        prepareMainPhase(player1);
+        harness.addToBattlefield(player1, new OranRiefTheVastwood());
+        harness.addToBattlefield(player1, new OranRiefTheVastwood());
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new NissasChosen());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A creature that entered on a previous turn no longer receives counters")
+    void excludesCreatureAfterTurnChanges() {
+        prepareMainPhase(player1);
+        harness.addToBattlefield(player1, new OranRiefTheVastwood());
+        Permanent creature = harness.enterBattlefieldAndReturn(player1, new NissasChosen());
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    private void castCreature(Player player, Card creature, String manaCost) {
         prepareMainPhase(player);
-        harness.setHand(player, List.of(creature));
-        harness.addMana(player, ManaColor.GREEN, manaAmount);
-        harness.castCreature(player, 0);
+        harness.castFromHand(player, creature, manaCost);
         harness.passBothPriorities();
     }
 
