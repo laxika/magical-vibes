@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CounterOpponentFirstSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JaceUnravelerOfSecrets.class, GrizzlyBears.class, Shock.class})
 class JaceUnravelerOfSecretsTest extends BaseCardTest {
 
     @Test
@@ -81,10 +83,15 @@ class JaceUnravelerOfSecretsTest extends BaseCardTest {
         assertThat(gd.emblems).hasSize(1);
         Emblem emblem = gd.emblems.getFirst();
         assertThat(emblem.controllerId()).isEqualTo(player1.getId());
-        assertThat(emblem.staticEffects()).hasSize(1);
-        assertThat(emblem.staticEffects().getFirst())
-                .isInstanceOf(CounterOpponentFirstSpellEachTurnEffect.class);
         harness.assertNotOnBattlefield(player1, "Jace, Unraveler of Secrets");
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
     }
 
     @Test
@@ -163,12 +170,104 @@ class JaceUnravelerOfSecretsTest extends BaseCardTest {
                 .hasMessageContaining("Not enough loyalty");
     }
 
+    @Test
+    @DisplayName("+1 draws the next card after putting the top card on the bottom")
+    void plusOneDrawsAfterBottoming() {
+        addReadyJace(player1);
+        Shock bottomed = new Shock();
+        GrizzlyBears drawn = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(bottomed, drawn));
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(), List.of(0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bottomed);
+    }
+
+    @Test
+    @DisplayName("-2 can return a creature controlled by Jace's controller")
+    void minusTwoBouncesOwnCreature() {
+        addReadyJace(player1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 1, null, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An emblem created after the opponent's first spell does not counter their second")
+    void emblemCreatedAfterFirstSpellDoesNotCounterSecond() {
+        Permanent jace = addReadyJace(player1);
+        jace.setCounterCount(CounterType.LOYALTY, 8);
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(16);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The emblem counters the opponent's first spell again on the next turn")
+    void emblemTriggersAgainNextTurn() {
+        gd.emblems.add(new Emblem(player1.getId(), List.of(
+                new CounterOpponentFirstSpellEachTurnEffect.Marker()
+        ), new JaceUnravelerOfSecrets()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+        assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("-2 does nothing when its target dies in response, but still costs loyalty")
+    void minusTwoTargetDiesInResponse() {
+        Permanent jace = addReadyJace(player1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, bears.getId());
+        harness.castInstant(player2, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+    }
+
     private Permanent addReadyJace(com.github.laxika.magicalvibes.model.Player player) {
-        JaceUnravelerOfSecrets card = new JaceUnravelerOfSecrets();
-        Permanent perm = new Permanent(card);
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new JaceUnravelerOfSecrets());
         perm.setCounterCount(CounterType.LOYALTY, 5);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
