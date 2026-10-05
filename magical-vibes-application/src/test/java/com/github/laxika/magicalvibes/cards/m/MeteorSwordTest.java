@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -63,5 +64,100 @@ class MeteorSwordTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(sword.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Entering Meteor Sword can destroy a noncreature permanent you control")
+    void enteringCanDestroyOwnEquipment() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new MeteorSword());
+        harness.setHand(player1, List.of(new MeteorSword()));
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+
+        harness.castArtifact(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(target.getId()))
+                .hasSize(1);
+        harness.assertInGraveyard(player1, "Meteor Sword");
+        harness.assertOnBattlefield(player1, "Meteor Sword");
+    }
+
+    @Test
+    @DisplayName("Re-equipping moves the boost to the new creature")
+    void reequippingMovesBoost() {
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new MeteorSword());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbility(player1, 0, null, first.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(2);
+
+        harness.activateAbility(player1, 0, null, second.getId());
+        harness.passBothPriorities();
+
+        assertThat(sword.getAttachedTo()).isEqualTo(second.getId());
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("Equip cannot target an opponent's creature")
+    void equipCannotTargetOpponentCreature() {
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new MeteorSword());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(sword.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Equip requires three mana")
+    void equipRequiresThreeMana() {
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new MeteorSword());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(sword.getAttachedTo()).isNull();
+    }
+
+    @Test
+    @DisplayName("Meteor Sword's entry trigger can destroy itself")
+    void entryTriggerCanDestroyItself() {
+        Permanent sword = harness.enterBattlefieldAndReturn(player1, new MeteorSword());
+
+        harness.handlePermanentChosen(player1, sword.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Meteor Sword");
+        harness.assertInGraveyard(player1, "Meteor Sword");
+    }
+
+    @Test
+    @DisplayName("Equip cannot be activated outside a main phase")
+    void equipRequiresMainPhase() {
+        Permanent sword = harness.addToBattlefieldAndReturn(player1, new MeteorSword());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creature.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(sword.getAttachedTo()).isNull();
     }
 }
