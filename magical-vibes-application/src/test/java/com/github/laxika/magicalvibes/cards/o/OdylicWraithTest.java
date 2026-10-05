@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.f.FireWhip;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OdylicWraith.class, GrizzlyBears.class, Forest.class, Swamp.class})
+@CardUsed({OdylicWraith.class, GrizzlyBears.class, Forest.class, Swamp.class, FireWhip.class})
 class OdylicWraithTest extends BaseCardTest {
 
     @Test
@@ -90,14 +91,83 @@ class OdylicWraithTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent attacker = addCreatureReady(player1, new OdylicWraith());
 
-        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(attacker)));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Noncombat damage to an opponent makes that opponent discard one card")
+    void noncombatDamageMakesOpponentDiscard() {
+        Permanent wraith = addCreatureReady(player1, new OdylicWraith());
+        Permanent whip = harness.addToBattlefieldAndReturn(player1, new FireWhip());
+        whip.setAttachedTo(wraith.getId());
+        harness.setHand(player2, List.of(new Forest(), new Swamp()));
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertInGraveyard(player2, "Swamp");
+        harness.assertInHand(player2, "Forest");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Damage to the Wraith's controller makes its controller discard")
+    void noncombatDamageToControllerMakesControllerDiscard() {
+        Permanent wraith = addCreatureReady(player1, new OdylicWraith());
+        Permanent whip = harness.addToBattlefieldAndReturn(player1, new FireWhip());
+        whip.setAttachedTo(wraith.getId());
+        harness.setHand(player1, List.of(new Forest(), new Swamp()));
+        harness.setHand(player2, List.of(new Forest(), new Swamp()));
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertInHand(player1, "Swamp");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Damage dealt by Fire Whip itself does not trigger the enchanted Wraith")
+    void auraDamageDoesNotTriggerWraith() {
+        Permanent wraith = addCreatureReady(player1, new OdylicWraith());
+        Permanent whip = harness.addToBattlefieldAndReturn(player1, new FireWhip());
+        whip.setAttachedTo(wraith.getId());
+        harness.setHand(player2, List.of(new Forest(), new Swamp()));
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        harness.assertInGraveyard(player1, "Fire Whip");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private Permanent addAttackingWraith(Player player) {
