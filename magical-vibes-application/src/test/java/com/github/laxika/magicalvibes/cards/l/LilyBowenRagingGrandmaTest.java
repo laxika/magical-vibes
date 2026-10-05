@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.b.BranchingEvolution;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LilyBowenRagingGrandma.class})
+@CardUsed({LilyBowenRagingGrandma.class, BranchingEvolution.class})
 class LilyBowenRagingGrandmaTest extends BaseCardTest {
 
     @Test
@@ -53,6 +54,57 @@ class LilyBowenRagingGrandmaTest extends BaseCardTest {
 
         assertThat(lily.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife + 19);
+    }
+
+    @Test
+    @DisplayName("Doubling counters applies Branching Evolution to the counters placed")
+    void doublingAppliesCounterReplacement() {
+        harness.addToBattlefield(player1, new BranchingEvolution());
+        Permanent lily = addLilyReady(player1, 2);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(lily.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        Permanent lily = addLilyReady(player1, 2);
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(lily.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Checks power when the upkeep ability resolves")
+    void checksPowerAtResolution() {
+        Permanent lily = addLilyReady(player1, 16);
+        advanceToUpkeep(player1);
+        lily.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 17);
+
+        harness.passBothPriorities();
+
+        assertThat(lily.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertLife(player1, 36);
+    }
+
+    @Test
+    @DisplayName("Doubles the current counters if power falls before resolution")
+    void doublesCurrentCountersAtResolution() {
+        Permanent lily = addLilyReady(player1, 17);
+        advanceToUpkeep(player1);
+        lily.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 16);
+
+        harness.passBothPriorities();
+
+        assertThat(lily.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(32);
+        harness.assertLife(player1, 20);
     }
 
     private Permanent addLilyReady(Player player, int counters) {
