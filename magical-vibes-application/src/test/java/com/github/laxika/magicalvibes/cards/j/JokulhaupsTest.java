@@ -69,4 +69,43 @@ class JokulhaupsTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Balduvian Bears");
     }
+
+    @Test
+    @DisplayName("Regeneration cannot save artifacts or lands from Jokulhaups")
+    void artifactsAndLandsCannotBeRegenerated() {
+        Permanent orb = harness.addToBattlefieldAndReturn(player1, new ZuranOrb());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        orb.setRegenerationShield(1);
+        forest.setRegenerationShield(1);
+
+        harness.castFromHand(player1, new Jokulhaups(), "{4}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Zuran Orb");
+        harness.assertInGraveyard(player1, "Zuran Orb");
+        harness.assertNotOnBattlefield(player2, "Forest");
+        harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("Shroud does not protect creatures from Jokulhaups")
+    void destroysCreaturesWithShroud() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+        bears.getGrantedKeywords().add(Keyword.SHROUD);
+
+        harness.castFromHand(player1, new Jokulhaups(), "{4}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Balduvian Bears");
+        harness.assertInGraveyard(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("Jokulhaups resolves when there are no permanents to destroy")
+    void resolvesOnEmptyBattlefield() {
+        harness.castFromHand(player1, new Jokulhaups(), "{4}{R}{R}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Jokulhaups");
+    }
 }
