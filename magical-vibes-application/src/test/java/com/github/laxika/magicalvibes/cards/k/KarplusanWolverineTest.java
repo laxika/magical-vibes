@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.b.BorealCentaur;
+import com.github.laxika.magicalvibes.cards.s.Skred;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -15,7 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KarplusanWolverine.class, BorealCentaur.class})
+@CardUsed({KarplusanWolverine.class, BorealCentaur.class, Skred.class})
 class KarplusanWolverineTest extends BaseCardTest {
 
     @Test
@@ -64,12 +66,67 @@ class KarplusanWolverineTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The ability can damage its controller")
+    void canTargetController() {
+        declareBlockedCombat(1);
+
+        chooseTargetAndAnswer(player1.getId(), true);
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("The ability can damage a friendly creature outside combat")
+    void canTargetFriendlyCreature() {
+        Permanent friendly = addCreatureReady(player1, new BorealCentaur());
+        addCreatureReady(player1, new KarplusanWolverine());
+        addCreatureReady(player2, new BorealCentaur());
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        chooseTargetAndAnswer(friendly.getId(), true);
+
+        assertThat(friendly.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The ability can deal lethal damage to its own source before combat damage")
+    void canTargetItself() {
+        declareBlockedCombat(1);
+        Permanent wolverine = findPermanent(player1, "Karplusan Wolverine");
+
+        chooseTargetAndAnswer(wolverine.getId(), true);
+
+        harness.assertNotOnBattlefield(player1, "Karplusan Wolverine");
+        harness.assertInGraveyard(player1, "Karplusan Wolverine");
+    }
+
+    @Test
+    @DisplayName("The blocked trigger still deals damage after its source dies")
+    void sourceLeavingDoesNotStopDamage() {
+        declareBlockedCombat(1);
+        Permanent wolverine = findPermanent(player1, "Karplusan Wolverine");
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setHand(player1, List.of(new Skred()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, wolverine.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Karplusan Wolverine");
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
     @DisplayName("An unblocked Karplusan Wolverine does not trigger")
     void unblockedDoesNotTrigger() {
         addCreatureReady(player1, new KarplusanWolverine());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
         harness.passBothPriorities();
 
@@ -87,8 +144,7 @@ class KarplusanWolverineTest extends BaseCardTest {
             assignments.add(new BlockerAssignment(blockerIndex, 0));
         }
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, assignments);
         return blockers;
     }
