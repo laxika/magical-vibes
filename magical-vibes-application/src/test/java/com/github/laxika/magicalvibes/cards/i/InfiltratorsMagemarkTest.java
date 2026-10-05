@@ -154,6 +154,8 @@ class InfiltratorsMagemarkTest extends BaseCardTest {
     @DisplayName("An unenchanted creature is unaffected by Infiltrator's Magemark")
     void unenchantedCreatureIsUnaffected() {
         Permanent attacker = addCreatureReady(player1, new IzzetGuildmage());
+        Permanent enchantedCreature = addCreatureReady(player1, new IzzetGuildmage());
+        addAura(enchantedCreature);
         attacker.setAttacking(true);
         Permanent blocker = addCreatureReady(player2, new IzzetGuildmage());
         prepareDeclareBlockers();
@@ -179,12 +181,47 @@ class InfiltratorsMagemarkTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
     }
 
-    private void addAura(Permanent enchantedCreature) {
-        addAura(player1, enchantedCreature);
+    @Test
+    @DisplayName("An opponent's Aura also makes your creature subject to Magemark's blocking restriction")
+    void opponentAuraEnablesBlockingRestriction() {
+        Permanent attacker = addCreatureReady(player1, new IzzetGuildmage());
+        Permanent magemarkCreature = addCreatureReady(player1, new IzzetGuildmage());
+        addAura(magemarkCreature);
+        Permanent otherAura = harness.addToBattlefieldAndReturn(player2, new FencersMagemark());
+        otherAura.setAttachedTo(attacker.getId());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new IzzetGuildmage());
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can only be blocked by creatures with defender");
     }
 
-    private void addAura(Player controller, Permanent enchantedCreature) {
-        Permanent aura = harness.addToBattlefieldAndReturn(controller, new InfiltratorsMagemark());
+    @Test
+    @DisplayName("Losing the last Aura removes both bonuses while Magemark remains on the battlefield")
+    void losingLastAuraRemovesBonuses() {
+        Permanent attacker = addCreatureReady(player1, new IzzetGuildmage());
+        Permanent magemarkCreature = addCreatureReady(player1, new IzzetGuildmage());
+        addAura(magemarkCreature);
+        Permanent otherAura = harness.addToBattlefieldAndReturn(player2, new FencersMagemark());
+        otherAura.setAttachedTo(attacker.getId());
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(3);
+
+        gd.playerBattlefields.get(player2.getId()).remove(otherAura);
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, attacker)).isEqualTo(2);
+        attacker.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new IzzetGuildmage());
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    private void addAura(Permanent enchantedCreature) {
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new InfiltratorsMagemark());
         aura.setAttachedTo(enchantedCreature.getId());
     }
 
