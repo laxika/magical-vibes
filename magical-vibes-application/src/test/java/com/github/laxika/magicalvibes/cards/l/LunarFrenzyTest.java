@@ -62,8 +62,7 @@ class LunarFrenzyTest extends BaseCardTest {
         harness.castInstantForX(player1, 0, 2, List.of(bear.getId()));
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(bear.getEffectivePower()).isEqualTo(2);
         assertThat(bear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
@@ -90,5 +89,35 @@ class LunarFrenzyTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstantForX(player1, 0, 0, List.of(fountain.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Copies on the stack retain their own X values and targets")
+    void stackedCopiesKeepSeparateXValuesAndTargets() {
+        Permanent firstBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent secondBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LunarFrenzy(), new LunarFrenzy()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castInstantForX(player1, 0, 1, List.of(firstBear.getId()));
+        harness.castInstantForX(player1, 0, 3, List.of(secondBear.getId()));
+        harness.passBothPriorities();
+
+        assertThat(secondBear.getEffectivePower()).isEqualTo(5);
+        assertThat(secondBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(secondBear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(secondBear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(firstBear.getEffectivePower()).isEqualTo(2);
+        assertThat(firstBear.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(firstBear.hasKeyword(Keyword.TRAMPLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(firstBear.getEffectivePower()).isEqualTo(3);
+        assertThat(firstBear.getEffectiveToughness()).isEqualTo(2);
+        assertThat(firstBear.hasKeyword(Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(firstBear.hasKeyword(Keyword.TRAMPLE)).isTrue();
+        assertThat(secondBear.getEffectivePower()).isEqualTo(5);
     }
 }
