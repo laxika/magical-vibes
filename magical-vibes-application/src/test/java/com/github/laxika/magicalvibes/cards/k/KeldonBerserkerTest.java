@@ -88,6 +88,38 @@ class KeldonBerserkerTest extends BaseCardTest {
     }
 
     @Test
+    void tappingLandAfterAttackingDoesNotCreateATrigger() {
+        Permanent berserker = addCreatureReady(player1, new KeldonBerserker());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RhysticCave());
+
+        declareAttackers(player1, List.of(0));
+        assertThat(gd.stack).isEmpty();
+
+        land.tap();
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(berserker.getPowerModifier()).isZero();
+    }
+
+    @Test
+    void onlyAttackingBerserkersGetTheBoost() {
+        Permanent first = addCreatureReady(player1, new KeldonBerserker());
+        Permanent second = addCreatureReady(player1, new KeldonBerserker());
+        Permanent nonattacker = addCreatureReady(player1, new KeldonBerserker());
+
+        declareAttackers(player1, List.of(0, 1));
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(first.getPowerModifier()).isEqualTo(3);
+        assertThat(second.getPowerModifier()).isEqualTo(3);
+        assertThat(nonattacker.getPowerModifier()).isZero();
+        assertThat(first.getToughnessModifier()).isZero();
+        assertThat(second.getToughnessModifier()).isZero();
+    }
+
+    @Test
     void boostWearsOffAtEndOfTurn() {
         Permanent berserker = addCreatureReady(player1, new KeldonBerserker());
 
