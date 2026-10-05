@@ -14,13 +14,16 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LeadTheStampede.class, LlanowarElves.class, GrizzlyBears.class, Shock.class, Plains.class, Swamp.class})
 class LeadTheStampedeTest extends BaseCardTest {
 
     
@@ -28,7 +31,8 @@ class LeadTheStampedeTest extends BaseCardTest {
     @Test
     @DisplayName("Casting Lead the Stampede puts it on the stack")
     void castingPutsOnStack() {
-        harness.setHand(player1, List.of(new LeadTheStampede()));
+        LeadTheStampede spell = new LeadTheStampede();
+        harness.setHand(player1, List.of(spell));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
         harness.castSorcery(player1, 0, 0);
@@ -37,13 +41,13 @@ class LeadTheStampedeTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Lead the Stampede");
+        assertThat(entry.getCard()).isSameAs(spell);
     }
 
     @Test
     @DisplayName("Resolves by offering multi-select of creature cards among top five")
     void resolvesOfferingMultiSelectOfCreatures() {
-        setupTopFive(List.of(
+        harness.setLibrary(player1, List.of(
                 new LlanowarElves(),
                 new Shock(),
                 new GrizzlyBears(),
@@ -53,8 +57,7 @@ class LeadTheStampedeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LeadTheStampede()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
@@ -68,12 +71,11 @@ class LeadTheStampedeTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         Plains plains = new Plains();
         Swamp swamp = new Swamp();
-        setupTopFive(List.of(elves, shock, bears, plains, swamp));
+        harness.setLibrary(player1, List.of(elves, shock, bears, plains, swamp));
         harness.setHand(player1, List.of(new LeadTheStampede()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         // Choose both creature cards
@@ -102,12 +104,11 @@ class LeadTheStampedeTest extends BaseCardTest {
         GrizzlyBears bears = new GrizzlyBears();
         Plains plains = new Plains();
         Swamp swamp = new Swamp();
-        setupTopFive(List.of(elves, shock, bears, plains, swamp));
+        harness.setLibrary(player1, List.of(elves, shock, bears, plains, swamp));
         harness.setHand(player1, List.of(new LeadTheStampede()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         // Choose only one creature
@@ -123,7 +124,7 @@ class LeadTheStampedeTest extends BaseCardTest {
     @Test
     @DisplayName("You may choose no creature cards and still reorder all looked cards to bottom")
     void mayChooseNoCreature() {
-        setupTopFive(List.of(
+        harness.setLibrary(player1, List.of(
                 new LlanowarElves(),
                 new Shock(),
                 new GrizzlyBears(),
@@ -133,8 +134,7 @@ class LeadTheStampedeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LeadTheStampede()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
@@ -149,7 +149,7 @@ class LeadTheStampedeTest extends BaseCardTest {
     @Test
     @DisplayName("If top five has no creature cards, directly reorder them to bottom")
     void noCreaturesDirectlyReordersBottom() {
-        setupTopFive(List.of(
+        harness.setLibrary(player1, List.of(
                 new Shock(),
                 new Plains(),
                 new Swamp(),
@@ -159,8 +159,7 @@ class LeadTheStampedeTest extends BaseCardTest {
         harness.setHand(player1, List.of(new LeadTheStampede()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -171,13 +170,12 @@ class LeadTheStampedeTest extends BaseCardTest {
     @DisplayName("With empty library, Lead the Stampede does nothing")
     void emptyLibraryDoesNothing() {
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.setHand(player1, List.of(new LeadTheStampede()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -189,12 +187,11 @@ class LeadTheStampedeTest extends BaseCardTest {
     void goesToGraveyardAfterResolving() {
         LlanowarElves elves = new LlanowarElves();
         GrizzlyBears bears = new GrizzlyBears();
-        setupTopFive(List.of(elves, new Shock(), bears, new Plains(), new Swamp()));
+        harness.setLibrary(player1, List.of(elves, new Shock(), bears, new Plains(), new Swamp()));
         harness.setHand(player1, List.of(new LeadTheStampede()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         // The spell only reaches the graveyard once its resolution finishes
@@ -213,12 +210,11 @@ class LeadTheStampedeTest extends BaseCardTest {
         GrizzlyBears bears1 = new GrizzlyBears();
         GrizzlyBears bears2 = new GrizzlyBears();
         GrizzlyBears bears3 = new GrizzlyBears();
-        setupTopFive(List.of(elves1, elves2, bears1, bears2, bears3));
+        harness.setLibrary(player1, List.of(elves1, elves2, bears1, bears2, bears3));
         harness.setHand(player1, List.of(new LeadTheStampede()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         GameData gd = harness.getGameData();
         // Choose all five creature cards
@@ -230,10 +226,82 @@ class LeadTheStampedeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
-    private void setupTopFive(List<Card> cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+    @Test
+    @DisplayName("A short library allows selecting a creature and bottoms the single remaining card")
+    void shortLibraryWithOneRemainingCard() {
+        LlanowarElves elves = new LlanowarElves();
+        Shock shock = new Shock();
+        harness.setLibrary(player1, List.of(elves, shock));
+        harness.setHand(player1, List.of(new LeadTheStampede()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(elves.getId()));
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(elves);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(shock);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Lead the Stampede");
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("reveals") && log.contains("Llanowar Elves"));
+    }
+
+    @Test
+    @DisplayName("Only the top five cards are examined and the rest go below untouched cards in chosen order")
+    void untouchedCardsStayAboveReorderedRemainder() {
+        LlanowarElves elves = new LlanowarElves();
+        Shock shock = new Shock();
+        GrizzlyBears bears = new GrizzlyBears();
+        Plains plains = new Plains();
+        Swamp swamp = new Swamp();
+        GrizzlyBears sixth = new GrizzlyBears();
+        Shock seventh = new Shock();
+        harness.setLibrary(player1, List.of(elves, shock, bears, plains, swamp, sixth, seventh));
+        harness.setHand(player1, List.of(new LeadTheStampede()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(sixth.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(elves.getId()));
+
+        GameData gd = harness.getGameData();
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .containsExactly(sixth, seventh, swamp, plains, bears, shock);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(elves);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Lead the Stampede");
+    }
+
+    @Test
+    @DisplayName("Noncreature cards cannot be selected and declining preserves all looked cards")
+    void noncreatureSelectionIsRejectedAndMayDecline() {
+        LlanowarElves elves = new LlanowarElves();
+        Shock shock = new Shock();
+        Plains plains = new Plains();
+        harness.setLibrary(player1, List.of(elves, shock, plains));
+        harness.setHand(player1, List.of(new LeadTheStampede()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(shock.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(plains.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        GameData gd = harness.getGameData();
+        harness.getGameService().handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.CardOrder(List.of(2, 1, 0)));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(plains, shock, elves);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Lead the Stampede");
     }
 
     private int indexOf(List<Card> cards, String name) {
