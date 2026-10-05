@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DoomedDissenter;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MarkovPurifier.class, GrizzlyBears.class})
+@CardUsed({MarkovPurifier.class, DoomedDissenter.class})
 class MarkovPurifierTest extends BaseCardTest {
 
     @Test
@@ -22,7 +22,7 @@ class MarkovPurifierTest extends BaseCardTest {
     void paysToDrawAfterGainingLife() {
         harness.addToBattlefield(player1, new MarkovPurifier());
         harness.setHand(player1, List.of());
-        GrizzlyBears card = new GrizzlyBears();
+        DoomedDissenter card = new DoomedDissenter();
         harness.setLibrary(player1, List.of(card));
         gd.lifeGainedThisTurn.put(player1.getId(), 1);
 
@@ -39,7 +39,7 @@ class MarkovPurifierTest extends BaseCardTest {
         assertThat(gd.pendingEffectResolutionEntry).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Doomed Dissenter");
     }
 
     @Test
@@ -47,7 +47,7 @@ class MarkovPurifierTest extends BaseCardTest {
     void decliningPaymentDoesNotDraw() {
         harness.addToBattlefield(player1, new MarkovPurifier());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new DoomedDissenter()));
         gd.lifeGainedThisTurn.put(player1.getId(), 1);
 
         advanceToEndStep(player1);
@@ -62,7 +62,7 @@ class MarkovPurifierTest extends BaseCardTest {
     void doesNotTriggerWithoutGainingLife() {
         harness.addToBattlefield(player1, new MarkovPurifier());
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new DoomedDissenter()));
 
         advanceToEndStep(player1);
 
@@ -70,10 +70,99 @@ class MarkovPurifierTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Life gained by an opponent does not qualify")
+    void opponentLifeGainDoesNotQualify() {
+        harness.addToBattlefield(player1, new MarkovPurifier());
+        gd.lifeGainedThisTurn.put(player2.getId(), 3);
+
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Does not trigger during an opponent's end step")
+    void doesNotTriggerDuringOpponentsEndStep() {
+        harness.addToBattlefield(player1, new MarkovPurifier());
+        gd.lifeGainedThisTurn.put(player1.getId(), 2);
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Gaining more life allows only one payment and one draw")
+    void moreLifeStillDrawsOnlyOneCard() {
+        harness.addToBattlefield(player1, new MarkovPurifier());
+        harness.setHand(player1, List.of());
+        DoomedDissenter first = new DoomedDissenter();
+        DoomedDissenter second = new DoomedDissenter();
+        harness.setLibrary(player1, List.of(first, second));
+        gd.lifeGainedThisTurn.put(player1.getId(), 7);
+        harness.setLife(player1, 10);
+
+        advanceToEndStep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot draw when the full payment is unavailable")
+    void insufficientManaDoesNotDraw() {
+        harness.addToBattlefield(player1, new MarkovPurifier());
+        harness.setHand(player1, List.of());
+        DoomedDissenter card = new DoomedDissenter();
+        harness.setLibrary(player1, List.of(card));
+        gd.lifeGainedThisTurn.put(player1.getId(), 1);
+
+        advanceToEndStep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Lifelink combat damage enables the end-step draw")
+    void lifelinkEnablesEndStepDraw() {
+        harness.addToBattlefieldAndReturn(player1, new MarkovPurifier()).setSummoningSick(false);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of());
+        DoomedDissenter card = new DoomedDissenter();
+        harness.setLibrary(player1, List.of(card));
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        advanceToEndStep(player1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+    }
+
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 }
