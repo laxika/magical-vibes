@@ -50,10 +50,40 @@ class OverflowingBasinTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
     }
 
+    @Test
+    @DisplayName("Colored mana can pay Overflowing Basin's generic activation cost")
+    void canPayWithColoredMana() {
+        Permanent basin = addReadyBasin();
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(basin.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+    }
+
+    @Test
+    @DisplayName("Overflowing Basin can activate the turn it enters the battlefield")
+    void canActivateOnEntryTurn() {
+        Permanent basin = harness.enterBattlefieldAndReturn(player1, new OverflowingBasin());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(basin.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
     private Permanent addReadyBasin() {
-        Permanent basin = new Permanent(new OverflowingBasin());
+        Permanent basin = harness.addToBattlefieldAndReturn(player1, new OverflowingBasin());
         basin.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(basin);
         return basin;
     }
 }
