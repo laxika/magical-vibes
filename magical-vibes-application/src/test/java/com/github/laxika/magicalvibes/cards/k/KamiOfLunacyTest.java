@@ -37,6 +37,7 @@ class KamiOfLunacyTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(kami.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(kami.getId()));
@@ -53,8 +54,10 @@ class KamiOfLunacyTest extends BaseCardTest {
 
         killKami();
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Lantern Kami");
         harness.assertNotInHand(player1, "Lantern Kami");
@@ -74,7 +77,9 @@ class KamiOfLunacyTest extends BaseCardTest {
 
         var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).contains(cheapSpirit.getId());
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.validCardIds()).containsExactly(cheapSpirit.getId());
         assertThat(choice.validCardIds()).doesNotContain(expensiveSpirit.getId(), opponentSpirit.getId());
     }
 
@@ -87,5 +92,60 @@ class KamiOfLunacyTest extends BaseCardTest {
         killKami();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Soulshift returns a Spirit at the mana value 5 boundary")
+    void returnsSpiritWithManaValueExactlyFive() {
+        harness.addToBattlefield(player1, new KamiOfLunacy());
+        Card spirit = new HikariTwilightGuardian();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        killKami();
+
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Hikari, Twilight Guardian");
+        harness.assertNotInGraveyard(player1, "Hikari, Twilight Guardian");
+    }
+
+    @Test
+    @DisplayName("Soulshift can target a Spirit that dies at the same time")
+    void returnsSpiritThatDiedSimultaneously() {
+        harness.addToBattlefield(player1, new KamiOfLunacy());
+        Card spirit = new LanternKami();
+        harness.addToBattlefield(player1, spirit);
+
+        killKami();
+
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInHand(player1, "Lantern Kami");
+        harness.assertNotOnBattlefield(player1, "Lantern Kami");
+        harness.assertNotInGraveyard(player1, "Lantern Kami");
+    }
+
+    @Test
+    @DisplayName("Soulshift does not return a different Spirit if its target leaves the graveyard")
+    void targetLeavesGraveyardBeforeResolution() {
+        harness.addToBattlefield(player1, new KamiOfLunacy());
+        Card target = new LanternKami();
+        Card otherSpirit = new HikariTwilightGuardian();
+        harness.setGraveyard(player1, List.of(target, otherSpirit));
+
+        killKami();
+
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.setGraveyard(player1, List.of(otherSpirit));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInHand(player1, "Lantern Kami");
+        harness.assertNotInHand(player1, "Hikari, Twilight Guardian");
+        harness.assertInGraveyard(player1, "Hikari, Twilight Guardian");
     }
 }
