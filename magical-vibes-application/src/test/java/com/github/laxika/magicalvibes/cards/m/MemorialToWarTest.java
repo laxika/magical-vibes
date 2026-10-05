@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BalothGorger;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +16,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MemorialToWar.class, Mountain.class, BalothGorger.class})
 class MemorialToWarTest extends BaseCardTest {
-
-    // ===== Enters the battlefield tapped =====
 
     @Test
     @DisplayName("Memorial to War enters the battlefield tapped")
@@ -28,13 +26,11 @@ class MemorialToWarTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castCreature(player1, 0);
+        harness.playLand(player1, 0);
 
         Permanent memorial = findPermanent(player1, "Memorial to War");
         assertThat(memorial.isTapped()).isTrue();
     }
-
-    // ===== Tap for mana =====
 
     @Test
     @DisplayName("Tapping Memorial to War produces red mana")
@@ -42,12 +38,10 @@ class MemorialToWarTest extends BaseCardTest {
         Permanent memorial = addMemorialReady(player1);
         int index = gd.playerBattlefields.get(player1.getId()).indexOf(memorial);
 
-        gs.tapPermanent(gd, player1, index);
+        harness.tapPermanent(player1, index);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
-
-    // ===== Sacrifice ability =====
 
     @Test
     @DisplayName("Activating sacrifice ability puts it on the stack")
@@ -129,11 +123,11 @@ class MemorialToWarTest extends BaseCardTest {
     @DisplayName("Cannot target a creature with sacrifice ability")
     void cannotTargetCreature() {
         addMemorialReady(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BalothGorger());
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
-        UUID creatureId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID creatureId = harness.getPermanentId(player2, "Baloth Gorger");
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -152,16 +146,99 @@ class MemorialToWarTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Sacrifice ability can destroy a land you control")
+    void canDestroyOwnLand() {
+        addMemorialReady(player1);
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player1, "Mountain"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Mountain");
+        harness.assertInGraveyard(player1, "Memorial to War");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Memorial can target itself and is sacrificed before the ability resolves")
+    void canTargetItself() {
+        Permanent memorial = addMemorialReady(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, memorial.getId());
+
+        harness.assertNotOnBattlefield(player1, "Memorial to War");
+        harness.assertInGraveyard(player1, "Memorial to War");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Sacrifice ability requires red mana and leaves costs unpaid on rejection")
+    void cannotActivateWithoutRedMana() {
+        Permanent memorial = addMemorialReady(player1);
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        UUID targetId = harness.getPermanentId(player2, "Mountain");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(memorial.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Memorial to War");
+        harness.assertNotInGraveyard(player1, "Memorial to War");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(5);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A noncreature Memorial can activate its tap ability on the turn it enters")
+    void canActivateDespiteSummoningSicknessFlag() {
+        Permanent memorial = harness.addToBattlefieldAndReturn(player1, new MemorialToWar());
+        memorial.setSummoningSick(true);
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, harness.getPermanentId(player2, "Mountain"));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Memorial to War");
+        harness.assertInGraveyard(player2, "Mountain");
+    }
+
+    @Test
+    @DisplayName("Sacrifice ability cannot be activated with too little generic mana")
+    void cannotActivateWithInsufficientMana() {
+        Permanent memorial = addMemorialReady(player1);
+        harness.addToBattlefield(player2, new Mountain());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        UUID targetId = harness.getPermanentId(player2, "Mountain");
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(memorial.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Memorial to War");
+        harness.assertNotInGraveyard(player1, "Memorial to War");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addMemorialReady(Player player) {
-        MemorialToWar card = new MemorialToWar();
-        Permanent perm = new Permanent(card);
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new MemorialToWar());
+        permanent.setSummoningSick(false);
+        return permanent;
     }
 }
