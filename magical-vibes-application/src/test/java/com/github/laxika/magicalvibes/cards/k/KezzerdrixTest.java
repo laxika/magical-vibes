@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.d.DarkBanishing;
 import com.github.laxika.magicalvibes.cards.f.FightingDrake;
 import com.github.laxika.magicalvibes.cards.h.HornedTurtle;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Kezzerdrix.class, FightingDrake.class, HornedTurtle.class})
+@CardUsed({Kezzerdrix.class, FightingDrake.class, HornedTurtle.class, DarkBanishing.class})
 class KezzerdrixTest extends BaseCardTest {
 
     @Test
@@ -75,8 +77,7 @@ class KezzerdrixTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new Kezzerdrix());
         Permanent blocker = addCreatureReady(player2, new FightingDrake());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(attacker))));
@@ -84,6 +85,25 @@ class KezzerdrixTest extends BaseCardTest {
 
         harness.assertInGraveyard(player2, "Fighting Drake");
         assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing the opponent's last creature after upkeep begins does not create a trigger")
+    void noTriggerWhenOpponentCreatureLeavesAfterUpkeepBegins() {
+        harness.addToBattlefield(player1, new Kezzerdrix());
+        harness.addToBattlefield(player2, new HornedTurtle());
+        harness.setHand(player1, List.of(new DarkBanishing()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        int startingLife = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).isEmpty();
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Horned Turtle"));
+
+        harness.assertInGraveyard(player2, "Horned Turtle");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(startingLife);
     }
 
     @Test
