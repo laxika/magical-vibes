@@ -2,18 +2,22 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.a.AncientTomb;
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.n.NykthosShrineToNyx;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({IncubationDruid.class, Forest.class, Island.class, AncientTomb.class,
+        NykthosShrineToNyx.class, SongOfTheDryads.class})
 class IncubationDruidTest extends BaseCardTest {
 
     @Test
@@ -88,9 +92,111 @@ class IncubationDruidTest extends BaseCardTest {
         assertThat(druid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
+    @Test
+    void tappedLandStillDeterminesManaType() {
+        Permanent druid = addDruid();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        forest.tap();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(druid.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(forest.isTapped()).isTrue();
+    }
+
+    @Test
+    void opponentsLandsDoNotProvideManaTypes() {
+        addDruid();
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Island());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
+    void noLandsProducesNoMana() {
+        Permanent druid = addDruid();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(druid.isTapped()).isTrue();
+        for (ManaColor color : ManaColor.values()) {
+            assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isZero();
+        }
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void multipleCountersStillProduceOnlyThreeMana() {
+        Permanent druid = addDruid();
+        druid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+    }
+
+    @Test
+    void adaptChecksCountersAtResolution() {
+        Permanent druid = addDruid();
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.activateAbility(player1, 0, 1, null, null);
+        druid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        resolveAllTriggers();
+
+        assertThat(druid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void adaptWorksIfLastCounterIsRemovedBeforeResolution() {
+        Permanent druid = addDruid();
+        druid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 5);
+        harness.activateAbility(player1, 0, 1, null, null);
+        druid.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+
+        resolveAllTriggers();
+
+        assertThat(druid.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void landCreatedBySongOfTheDryadsProvidesGreenMana() {
+        addDruid();
+        Permanent enchantedDruid = harness.addToBattlefieldAndReturn(player1, new IncubationDruid());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new SongOfTheDryads());
+        aura.setAttachedTo(enchantedDruid.getId());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    void nykthosProvidesGreenWithPositiveGreenDevotion() {
+        addDruid();
+        harness.addToBattlefield(player1, new NykthosShrineToNyx());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        harness.handleListChoice(player1, "GREEN");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
     private Permanent addDruid() {
-        Permanent druid = addCreatureReady(player1, new IncubationDruid());
-        druid.setSummoningSick(false);
-        return druid;
+        return addCreatureReady(player1, new IncubationDruid());
     }
 }
