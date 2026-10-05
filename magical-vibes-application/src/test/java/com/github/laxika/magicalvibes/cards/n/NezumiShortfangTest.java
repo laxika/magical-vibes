@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.b.BoundByMoonsilver;
+import com.github.laxika.magicalvibes.cards.c.CultOfTheWaxingMoon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.s.SigardaHeronsGrace;
 import com.github.laxika.magicalvibes.cards.s.StabwhiskerTheOdious;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NezumiShortfang.class, StabwhiskerTheOdious.class, NezumiCutthroat.class, Forest.class})
+@CardUsed({NezumiShortfang.class, StabwhiskerTheOdious.class, NezumiCutthroat.class, Forest.class,
+        BoundByMoonsilver.class, CultOfTheWaxingMoon.class, SigardaHeronsGrace.class})
 class NezumiShortfangTest extends BaseCardTest {
 
     @Test
@@ -173,6 +177,79 @@ class NezumiShortfangTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Flipping is allowed even when the creature cannot transform")
+    void flipsWhileBoundByMoonsilver() {
+        Permanent shortfang = addShortfang(player1);
+        harness.setHand(player1, List.of(new BoundByMoonsilver()));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        harness.castAndResolveSorcery(player1, 0, 0, shortfang.getId());
+        harness.setHand(player2, List.of());
+
+        activateShortfang(shortfang);
+
+        assertThat(shortfang.getCard()).isInstanceOf(StabwhiskerTheOdious.class);
+    }
+
+    @Test
+    @DisplayName("Flipping does not trigger abilities that watch permanents transform")
+    void flippingDoesNotTriggerCultOfTheWaxingMoon() {
+        Permanent shortfang = addShortfang(player1);
+        addCreatureReady(player1, new CultOfTheWaxingMoon());
+        harness.setHand(player2, List.of());
+
+        activateShortfang(shortfang);
+        resolveAllTriggers();
+
+        assertThat(shortfang.getCard()).isInstanceOf(StabwhiskerTheOdious.class);
+        assertThat(countPermanents(player1, "Wolf")).isZero();
+    }
+
+    @Test
+    @DisplayName("Flipped upkeep life loss does not target the opponent")
+    void flippedUpkeepAffectsOpponentWithHexproof() {
+        addFlippedShortfang(player1);
+        addCreatureReady(player2, new SigardaHeronsGrace());
+        harness.setHand(player2, List.of());
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 3);
+    }
+
+    @Test
+    @DisplayName("Flipped upkeep counts cards when the trigger resolves")
+    void flippedCountsHandAtResolution() {
+        addFlippedShortfang(player1);
+        harness.setHand(player2, List.of(new Forest(), new Forest(), new Forest()));
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player2, List.of(new Forest()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("The discard ability taps its source as an activation cost")
+    void activationTapsShortfang() {
+        Permanent shortfang = addShortfang(player1);
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, indexOf(player1, shortfang), null, player2.getId());
+
+        assertThat(shortfang.isTapped()).isTrue();
+        assertThat(shortfang.isTransformed()).isFalse();
+        harness.passBothPriorities();
+        assertThat(shortfang.isTapped()).isTrue();
+        assertThat(shortfang.getCard()).isInstanceOf(StabwhiskerTheOdious.class);
     }
 
     private Permanent addShortfang(Player player) {
