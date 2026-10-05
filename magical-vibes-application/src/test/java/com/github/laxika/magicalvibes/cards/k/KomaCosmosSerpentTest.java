@@ -2,15 +2,15 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.m.Mistwalker;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KomaCosmosSerpent.class, Cancel.class, LlanowarElves.class, Mistwalker.class})
 class KomaCosmosSerpentTest extends BaseCardTest {
 
     @Test
@@ -70,8 +71,7 @@ class KomaCosmosSerpentTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(elves.isTapped()).isTrue();
-        assertThat(gd.playerGraveyards.get(player1.getId()))
-                .anyMatch(card -> card.getName().equals("Serpent"));
+        harness.assertInGraveyard(player1, "Mistwalker");
 
         elves.untap();
         int elvesIndex = gd.playerBattlefields.get(player1.getId()).indexOf(elves);
@@ -118,18 +118,90 @@ class KomaCosmosSerpentTest extends BaseCardTest {
                 .hasMessageContaining("permanent");
     }
 
+    @Test
+    void canSacrificeChangelingBeforeIndestructibleResolves() {
+        Permanent koma = addReadyKoma();
+        harness.addToBattlefield(player1, new Mistwalker());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertInGraveyard(player1, "Mistwalker");
+        harness.assertNotOnBattlefield(player1, "Mistwalker");
+        assertThat(koma.getGrantedKeywords()).doesNotContain(Keyword.INDESTRUCTIBLE);
+
+        harness.passBothPriorities();
+
+        assertThat(koma.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
+    }
+
+    @Test
+    void cannotSacrificeOpponentsSerpent() {
+        addReadyKoma();
+        harness.addToBattlefield(player2, new Mistwalker());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player2, "Mistwalker");
+    }
+
+    @Test
+    void alreadyTappedTargetStillHasItsAbilitiesLocked() {
+        addReadyKoma();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        Permanent target = addCreatureReady(player2, new Mistwalker());
+        target.tap();
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        harness.assertNotOnBattlefield(player1, "Koma's Coil");
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+    }
+
+    @Test
+    void lockingKomaDoesNotStopItsUpkeepTrigger() {
+        Permanent koma = addReadyKoma();
+        harness.addToBattlefield(player1, new Mistwalker());
+
+        harness.activateAbility(player1, 0, 0, null, koma.getId());
+        harness.passBothPriorities();
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Koma's Coil")).hasSize(1);
+    }
+
+    @Test
+    void lockingPermanentDoesNotCounterAbilityAlreadyOnStack() {
+        addReadyKoma();
+        harness.addToBattlefield(player1, new Mistwalker());
+        Permanent target = addCreatureReady(player2, new Mistwalker());
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(target.getPowerModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(1);
+        assertThat(target.getToughnessModifier()).isEqualTo(-1);
+    }
+
     private Permanent addReadyKoma() {
         return addCreatureReady(player1, new KomaCosmosSerpent());
     }
 
-    private static Card serpent() {
-        Card card = new Card();
-        card.setName("Serpent");
-        card.setType(CardType.CREATURE);
-        card.setColor(CardColor.BLUE);
-        card.setPower(1);
-        card.setToughness(1);
-        card.setSubtypes(List.of(CardSubtype.SERPENT));
-        return card;
+    private static Mistwalker serpent() {
+        return new Mistwalker();
     }
 }
