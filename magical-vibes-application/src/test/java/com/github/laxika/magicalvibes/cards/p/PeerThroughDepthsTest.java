@@ -117,6 +117,64 @@ class PeerThroughDepthsTest extends BaseCardTest {
                 .containsExactly("Island", "Hana Kami");
     }
 
+    @Test
+    @DisplayName("Only the top five are considered and the rest go below untouched cards")
+    void preservesCardsBelowTopFive() {
+        Card belowFirst = new LavaSpike();
+        Card belowSecond = new ReachThroughMists();
+        List<Card> topFive = List.of(new ReachThroughMists(), new HanaKami(),
+                new LavaSpike(), new Island(), new Swamp());
+        harness.setLibrary(player1, List.of(topFive.get(0), topFive.get(1), topFive.get(2),
+                topFive.get(3), topFive.get(4), belowFirst, belowSecond));
+        cast();
+
+        List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
+        assertThat(offered).containsExactly(topFive.get(0), topFive.get(2));
+        assertThat(gameLogContains("reveals")).isFalse();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topFive.get(0));
+        assertThat(gameLogContains("reveals Reach Through Mists")).isTrue();
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.CardOrder(List.of(3, 2, 1, 0)));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(belowFirst, belowSecond,
+                topFive.get(4), topFive.get(3), topFive.get(2), topFive.get(1));
+        harness.assertInGraveyard(player1, "Peer Through Depths");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The only eligible card can be declined even in a one-card library")
+    void declinesOnlyCard() {
+        Card onlyCard = new ReachThroughMists();
+        harness.setLibrary(player1, List.of(onlyCard));
+        cast();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Peer Through Depths");
+        assertThat(gameLogContains("reveals Reach Through Mists")).isFalse();
+    }
+
+    @Test
+    @DisplayName("Selecting the only card completes resolution without a reorder")
+    void selectsOnlyCard() {
+        Card onlyCard = new LavaSpike();
+        harness.setLibrary(player1, List.of(onlyCard));
+        cast();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Peer Through Depths");
+        assertThat(gameLogContains("reveals Lava Spike")).isTrue();
+    }
+
     private void cast() {
         harness.castFromHand(player1, new PeerThroughDepths(), "{1}{U}");
         harness.passBothPriorities();
