@@ -50,7 +50,6 @@ class ShidakoBroodmistressTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Sakura-Tribe Elder"));
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         Permanent boosted = findPermanent(player2, "Sakura-Tribe Elder");
@@ -84,6 +83,45 @@ class ShidakoBroodmistressTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, 0, null, harness.getPermanentId(player1, "Sakura-Tribe Elder")))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can sacrifice the targeted creature as the cost, leaving an illegal target")
+    void canSacrificeTheTarget() {
+        Permanent shidako = addTransformedEggwatcher(player1);
+        Permanent target = addCreatureReady(player1, new SakuraTribeElder());
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Sakura-Tribe Elder");
+        assertThat(gqs.getEffectivePower(gd, shidako)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, shidako)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick because the cost has no tap symbol")
+    void doesNotRequireUntappedOrReadySource() {
+        Permanent shidako = addTransformedEggwatcher(player1);
+        shidako.setTapped(true);
+        shidako.setSummoningSick(true);
+        Permanent target = addCreatureReady(player1, new SakuraTribeElder());
+        Permanent sacrifice = addCreatureReady(player1, new SakuraTribeElder());
+        harness.forceActivePlayer(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+        assertThat(shidako.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Sakura-Tribe Elder");
     }
 
     private Permanent addTransformedEggwatcher(Player player) {
