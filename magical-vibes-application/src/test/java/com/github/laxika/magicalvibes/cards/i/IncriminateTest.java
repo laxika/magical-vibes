@@ -22,8 +22,7 @@ class IncriminateTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Incriminate()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of(first.getId(), second.getId()));
     }
 
     @Test
@@ -82,6 +81,70 @@ class IncriminateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(own.getId(), theirs.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canTargetOwnCreaturesAndChooseTheSecondCreature() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent giant = addCreatureReady(player1, new HillGiant());
+
+        castIncriminate(bears, giant);
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(bears.getId(), giant.getId());
+        harness.handlePermanentChosen(player1, giant.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(giant.getCard());
+    }
+
+    @Test
+    void sacrificesSecondTargetWhenFirstTargetLeaves() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent giant = addCreatureReady(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Incriminate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0, List.of(bears.getId(), giant.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).remove(bears);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(giant.getCard());
+    }
+
+    @Test
+    void doesNotSacrificeAnUntargetedCreatureWhenBothTargetsLeave() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        Permanent giant = addCreatureReady(player2, new HillGiant());
+        Permanent survivor = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Incriminate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0, List.of(bears.getId(), giant.getId()));
+
+        gd.playerBattlefields.get(player2.getId()).removeAll(List.of(bears, giant));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(survivor);
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(survivor.getCard());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotChooseTheSameCreatureTwice() {
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Incriminate()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(bears.getId(), bears.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
