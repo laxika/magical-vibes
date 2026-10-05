@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.s.SkyshroudFalcon;
 import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({InvasionPlans.class, YouthfulKnight.class})
+@CardUsed({InvasionPlans.class, YouthfulKnight.class, SkyshroudFalcon.class})
 class InvasionPlansTest extends BaseCardTest {
 
     @Test
@@ -126,6 +127,68 @@ class InvasionPlansTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of());
     }
 
+    @Test
+    @DisplayName("Creatures unable to block a flying attacker are not required to block")
+    void onlyLegallyAbleCreaturesMustBlockFlyingAttacker() {
+        harness.addToBattlefield(player1, new InvasionPlans());
+        Permanent attacker = addCreatureReady(player1, new SkyshroudFalcon());
+        Permanent groundBlocker = addCreatureReady(player2, new YouthfulKnight());
+        Permanent flyingBlocker = addCreatureReady(player2, new SkyshroudFalcon());
+        beginCombat(attacker);
+
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int groundIdx = gd.playerBattlefields.get(player2.getId()).indexOf(groundBlocker);
+        int flyingIdx = gd.playerBattlefields.get(player2.getId()).indexOf(flyingBlocker);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
+                List.of(new BlockerAssignment(groundIdx, attackerIdx))))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("must block");
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(flyingIdx, attackerIdx)));
+
+        assertThat(groundBlocker.isBlocking()).isFalse();
+        assertThat(flyingBlocker.getBlockingTargetIds()).containsExactly(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("The attacker may assign every blocker to the same attacking creature")
+    void allBlockersCanBlockOneAttacker() {
+        harness.addToBattlefield(player1, new InvasionPlans());
+        Permanent attacker = addCreatureReady(player1, new YouthfulKnight());
+        Permanent otherAttacker = addCreatureReady(player1, new YouthfulKnight());
+        otherAttacker.setAttacking(true);
+        otherAttacker.setAttackTarget(player2.getId());
+        Permanent firstBlocker = addCreatureReady(player2, new YouthfulKnight());
+        Permanent secondBlocker = addCreatureReady(player2, new YouthfulKnight());
+        beginCombat(attacker);
+
+        int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        int firstIdx = gd.playerBattlefields.get(player2.getId()).indexOf(firstBlocker);
+        int secondIdx = gd.playerBattlefields.get(player2.getId()).indexOf(secondBlocker);
+        gs.declareBlockers(gd, player1, List.of(
+                new BlockerAssignment(firstIdx, attackerIdx),
+                new BlockerAssignment(secondIdx, attackerIdx)));
+
+        assertThat(firstBlocker.getBlockingTargetIds()).containsExactly(attacker.getId());
+        assertThat(secondBlocker.getBlockingTargetIds()).containsExactly(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("Removing Invasion Plans before blockers restores normal blocking choices")
+    void leavingBattlefieldRemovesBothEffects() {
+        Permanent plans = harness.addToBattlefieldAndReturn(player1, new InvasionPlans());
+        Permanent attacker = addCreatureReady(player1, new YouthfulKnight());
+        Permanent blocker = addCreatureReady(player2, new YouthfulKnight());
+        gd.playerBattlefields.get(player1.getId()).remove(plans);
+        gd.playerGraveyards.get(player1.getId()).add(plans.getCard());
+        PendingInteraction.BlockerDeclaration pending = beginCombat(attacker);
+
+        assertThat(pending.decidingPlayerId()).isEqualTo(player2.getId());
+        assertThat(pending.choosingForOpponent()).isFalse();
+        gs.declareBlockers(gd, player2, List.of());
+        assertThat(blocker.isBlocking()).isFalse();
+    }
     private PendingInteraction.BlockerDeclaration beginCombat(Permanent attacker) {
         attacker.setAttacking(true);
         attacker.setAttackTarget(player2.getId());
