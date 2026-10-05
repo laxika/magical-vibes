@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(NimblePilferer.class)
+@CardUsed({NimblePilferer.class})
 class NimblePilfererTest extends BaseCardTest {
 
     @Test
@@ -33,5 +33,31 @@ class NimblePilfererTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Nimble Pilferer");
+    }
+
+    @Test
+    @DisplayName("Flash allows Nimble Pilferer to be cast in response to another creature spell")
+    void flashAllowsCastingWithNonemptyStack() {
+        NimblePilferer response = new NimblePilferer();
+        harness.setHand(player1, List.of(response));
+        harness.setHand(player2, List.of(new NimblePilferer()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castCreature(player2, 0);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getCard()).isSameAs(response);
+        harness.assertNotInHand(player1, "Nimble Pilferer");
+
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Nimble Pilferer");
+        harness.assertOnBattlefield(player2, "Nimble Pilferer");
     }
 }
