@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.s.Stifle;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -53,6 +54,47 @@ class MultanisAcolyteTest extends BaseCardTest {
         advanceToUpkeep(player1);
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertOnBattlefield(player1, "Multani's Acolyte");
+    }
+
+    @Test
+    @CardUsed({MultanisAcolyte.class, MultanisPresence.class, Stifle.class})
+    @DisplayName("Countering the draw trigger does not prevent echo")
+    void counteringDrawTriggerDoesNotPreventEcho() {
+        harness.setLibrary(player1, List.of(new MultanisPresence()));
+        harness.castFromHand(player1, new MultanisAcolyte(), "{G}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player2, List.of(new Stifle()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0, gd.stack.getLast().getCard().getId());
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Multani's Presence");
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Multani's Acolyte");
+    }
+
+    @Test
+    @DisplayName("Echo waits for its controller's upkeep")
+    void echoWaitsForControllersUpkeep() {
+        castAndResolveMultanisAcolyte();
+
+        advanceToUpkeep(player2);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertOnBattlefield(player1, "Multani's Acolyte");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.assertInGraveyard(player1, "Multani's Acolyte");
     }
 
     private void castAndResolveMultanisAcolyte() {
