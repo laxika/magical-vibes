@@ -2,12 +2,15 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -79,6 +82,47 @@ class PlagueRatsTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, enchantedRats)).isFalse();
         assertThat(gqs.getEffectivePower(gd, rats)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, rats)).isEqualTo(1);
+    }
+
+    @Test
+    void ignoresRatsOutsideTheBattlefield() {
+        Permanent rats = addPlagueRats(player1);
+        harness.setHand(player1, List.of(new PlagueRats()));
+        harness.setLibrary(player1, List.of(new PlagueRats()));
+        harness.setGraveyard(player2, List.of(new PlagueRats()));
+        harness.setExile(player2, List.of(new PlagueRats()));
+
+        assertThat(gqs.getEffectivePower(gd, rats)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, rats)).isEqualTo(1);
+    }
+
+    @Test
+    void recalculatesBothRatsWhenAnotherEnters() {
+        Permanent rats = addPlagueRats(player1);
+
+        harness.castFromHand(player1, new PlagueRats(), "{2}{B}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        for (Permanent permanent : gd.playerBattlefields.get(player1.getId())) {
+            assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(2);
+            assertThat(gqs.getEffectiveToughness(gd, permanent)).isEqualTo(2);
+        }
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(rats);
+    }
+
+    @Test
+    void countersApplyAfterTheCreatureCount() {
+        Permanent rats = addPlagueRats(player1);
+        rats.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        assertThat(gqs.getEffectivePower(gd, rats)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, rats)).isEqualTo(3);
+
+        addPlagueRats(player2);
+
+        assertThat(gqs.getEffectivePower(gd, rats)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, rats)).isEqualTo(4);
     }
 
     private Permanent addPlagueRats(Player player) {
