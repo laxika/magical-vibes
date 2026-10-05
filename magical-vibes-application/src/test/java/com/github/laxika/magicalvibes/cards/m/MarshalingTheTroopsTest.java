@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.ForestBear;
+import com.github.laxika.magicalvibes.cards.r.RainOfGore;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -96,11 +97,61 @@ class MarshalingTheTroopsTest extends BaseCardTest {
         harness.assertLife(player1, 24);
     }
 
+    @Test
+    @DisplayName("Already tapped creatures are excluded when untapped creatures are available")
+    void excludesAlreadyTappedCreaturesFromMixedBattlefield() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        Permanent alreadyTapped = harness.addToBattlefieldAndReturn(player1, new ForestBear());
+        alreadyTapped.tap();
+        Permanent untapped = harness.addToBattlefieldAndReturn(player1, new ForestBear());
+
+        castMarshalingTheTroops();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactly(untapped.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(untapped.getId()));
+
+        assertThat(alreadyTapped.isTapped()).isTrue();
+        assertThat(untapped.isTapped()).isTrue();
+        harness.assertLife(player1, 24);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Resolves with an empty battlefield without requesting a choice")
+    void emptyBattlefieldResolvesWithoutChoice() {
+        harness.setLife(player1, 20);
+
+        castMarshalingTheTroops();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @CardUsed({MarshalingTheTroops.class, ForestBear.class, RainOfGore.class})
+    @DisplayName("Rain of Gore replaces the spell's life gain after the creatures are chosen")
+    void rainOfGoreReplacesLifeGainWithLifeLoss() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player2, new RainOfGore());
+        Permanent a = harness.addToBattlefieldAndReturn(player1, new ForestBear());
+        Permanent b = harness.addToBattlefieldAndReturn(player1, new ForestBear());
+
+        castMarshalingTheTroops();
+        harness.handleMultiplePermanentsChosen(player1, List.of(a.getId(), b.getId()));
+
+        assertThat(a.isTapped()).isTrue();
+        assertThat(b.isTapped()).isTrue();
+        harness.assertLife(player1, 12);
+    }
+
     private void castMarshalingTheTroops() {
         harness.setHand(player1, List.of(new MarshalingTheTroops()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
     }
 }
