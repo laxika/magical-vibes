@@ -12,16 +12,12 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PhyrexianSeedling.class, GrizzlyBears.class})
+@CardUsed({PhyrexianSeedling.class, GrizzlyBears.class, PreyUpon.class})
 class PhyrexianSeedlingTest extends BaseCardTest {
 
     @Test
     void entersWithOnePlusOneCounter() {
-        harness.setHand(player1, List.of(new PhyrexianSeedling()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new PhyrexianSeedling(), "{2}{G}");
         harness.passBothPriorities();
 
         Permanent seedling = findPermanent(player1, "Phyrexian Seedling");
@@ -43,5 +39,49 @@ class PhyrexianSeedlingTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    void proliferatesBeforeLethalCombatDamageIsChecked() {
+        Permanent seedling = addCreatureReady(player1, new PhyrexianSeedling());
+        seedling.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        seedling.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        resolveCombat();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(seedling);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.handleMultiplePermanentsChosen(player1, List.of(seedling.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(seedling.getId()));
+
+        assertThat(seedling.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        harness.assertOnBattlefield(player1, "Phyrexian Seedling");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @CardUsed({PhyrexianSeedling.class, GrizzlyBears.class, PreyUpon.class})
+    void noncombatDamageAlsoProliferatesForEachDamageDealt() {
+        Permanent seedling = addCreatureReady(player1, new PhyrexianSeedling());
+        seedling.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PreyUpon()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0, List.of(seedling.getId(), opponent.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        for (int i = 0; i < 3; i++) {
+            harness.handleMultiplePermanentsChosen(player1, List.of(seedling.getId()));
+        }
+
+        assertThat(seedling.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        harness.assertOnBattlefield(player1, "Phyrexian Seedling");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }
