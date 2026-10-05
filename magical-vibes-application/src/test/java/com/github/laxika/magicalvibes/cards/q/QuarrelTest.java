@@ -29,8 +29,7 @@ class QuarrelTest extends BaseCardTest {
 
         UUID sourceId = harness.getPermanentId(player1, "Grizzly Bears");
         UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
-        harness.castInstant(player1, 0, List.of(sourceId, targetId));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(sourceId, targetId));
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Llanowar Elves");
@@ -45,8 +44,7 @@ class QuarrelTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Quarrel()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, List.of(source.getId(), target.getId()));
 
         assertThat(source.getMarkedDamage()).isZero();
         assertThat(target.getMarkedDamage()).isEqualTo(2);
@@ -72,17 +70,89 @@ class QuarrelTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target your own creature as the victim")
     void cannotTargetOwnCreatureAsVictim() {
-        GrizzlyBears source = new GrizzlyBears();
-        GrizzlyBears target = new GrizzlyBears();
-        harness.addToBattlefield(player1, source);
-        harness.addToBattlefield(player1, target);
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new Quarrel()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        List<Permanent> permanents = harness.getGameData().playerBattlefields.get(player1.getId());
         assertThatThrownBy(() -> harness.castInstant(player1, 0,
-                List.of(permanents.get(0).getId(), permanents.get(1).getId())))
+                List.of(source.getId(), target.getId())))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("opponent");
+    }
+
+    @Test
+    void usesSourcePowerAtResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new Quarrel()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        source.setPowerModifier(1);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(3);
+        assertThat(source.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    void negativePowerDealsNoDamage() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        source.setPowerModifier(-3);
+        harness.setHand(player1, List.of(new Quarrel()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, List.of(source.getId(), target.getId()));
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void sourceBecomingOpponentControlledDealsNoDamage() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new Quarrel()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        gd.playerBattlefields.get(player2.getId()).add(source);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Quarrel");
+    }
+
+    @Test
+    void dealsNoDamageWhenSourceLeavesBeforeResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new Quarrel()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(source);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Quarrel");
+    }
+
+    @Test
+    void dealsNoDamageWhenVictimLeavesBeforeResolution() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+        harness.setHand(player1, List.of(new Quarrel()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castInstant(player1, 0, List.of(source.getId(), target.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(source.getMarkedDamage()).isZero();
+        harness.assertInGraveyard(player1, "Quarrel");
     }
 }
