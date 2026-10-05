@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(MistformSeaswift.class)
+@CardUsed({MistformSeaswift.class, AmoeboidChangeling.class})
 class MistformSeaswiftTest extends BaseCardTest {
 
     @Test
@@ -60,9 +61,7 @@ class MistformSeaswiftTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.castCreatureWithMorph(player1, 0);
-        harness.passBothPriorities();
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         Permanent seaswift = findPermanent(player1, "Mistform Seaswift");
         assertThat(seaswift.isFaceDown()).isTrue();
@@ -90,6 +89,46 @@ class MistformSeaswiftTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.effectiveCreatureSubtypes(gd, seaswift)).containsExactly(CardSubtype.ILLUSION);
+    }
+
+    @Test
+    @DisplayName("A later activation replaces the earlier chosen creature type")
+    void laterActivationReplacesEarlierChoice() {
+        Permanent seaswift = addReadySeaswift();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        activateAndChoose(CardSubtype.GOBLIN);
+        activateAndChoose(CardSubtype.WALL);
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, seaswift)).containsExactly(CardSubtype.WALL);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("The creature type ability can be activated while tapped")
+    void typeAbilityWorksWhileTapped() {
+        Permanent seaswift = addReadySeaswift();
+        seaswift.setTapped(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        activateAndChoose(CardSubtype.GOBLIN);
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, seaswift)).containsExactly(CardSubtype.GOBLIN);
+        assertThat(seaswift.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A later effect removing all creature types overrides the chosen type")
+    void laterTypeLossOverridesChosenType() {
+        Permanent seaswift = addReadySeaswift();
+        addCreatureReady(player1, new AmoeboidChangeling());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        activateAndChoose(CardSubtype.GOBLIN);
+        harness.activateAbility(player1, 1, 1, null, seaswift.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, seaswift)).isEmpty();
     }
 
     private Permanent addReadySeaswift() {
