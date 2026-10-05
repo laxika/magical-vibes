@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.b.BaronHelmutZemo;
+import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.y.YellowjacketHeartlessMarauder;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MultiversalIncursion.class, GrizzlyBears.class})
+@CardUsed({MultiversalIncursion.class, GrizzlyBears.class, BaronHelmutZemo.class,
+        Island.class, YellowjacketHeartlessMarauder.class})
 class MultiversalIncursionTest extends BaseCardTest {
 
     @Test
@@ -41,11 +44,53 @@ class MultiversalIncursionTest extends BaseCardTest {
     }
 
     private void castMultiversalIncursion() {
-        harness.setHand(player1, List.of(new MultiversalIncursion()));
-        harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castSorcery(player1, 0, List.of());
+        harness.castFromHand(player1, new MultiversalIncursion(), "{5}{U}{U}");
         harness.passBothPriorities();
+    }
+
+    @Test
+    void copiesOnlyYourCreaturesAndSkipsNoncreaturePermanents() {
+        harness.addToBattlefield(player1, new BaronHelmutZemo());
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new YellowjacketHeartlessMarauder());
+
+        castMultiversalIncursion();
+
+        assertThat(tokensNamed(player1, "Baron Helmut Zemo")).hasSize(1);
+        assertThat(tokensNamed(player1, "Island")).isEmpty();
+        assertThat(tokensNamed(player1, "Yellowjacket, Heartless Marauder")).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void resolvesWithoutCreatures() {
+        harness.addToBattlefield(player1, new Island());
+
+        castMultiversalIncursion();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Multiversal Incursion");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void copiedCreatureSeesOtherCopiesEnteringSimultaneously() {
+        harness.addToBattlefield(player1, new BaronHelmutZemo());
+        Permanent original = harness.addToBattlefieldAndReturn(
+                player1, new YellowjacketHeartlessMarauder());
+
+        castMultiversalIncursion();
+
+        Permanent copy = tokensNamed(player1, "Yellowjacket, Heartless Marauder").getFirst();
+        assertThat(copy.getCard().getSupertypes()).doesNotContain(CardSupertype.LEGENDARY);
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(4);
+        for (int i = 0; i < 3; i++) {
+            harness.passBothPriorities();
+        }
+
+        assertThat(original.getPowerModifier()).isEqualTo(2);
+        assertThat(copy.getPowerModifier()).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
     }
 
     private Permanent addCreatureToken(Player player, String name) {
@@ -55,9 +100,8 @@ class MultiversalIncursionTest extends BaseCardTest {
         card.setType(CardType.CREATURE);
         card.setPower(2);
         card.setToughness(2);
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
@@ -68,9 +112,8 @@ class MultiversalIncursionTest extends BaseCardTest {
         card.setSupertypes(EnumSet.of(CardSupertype.LEGENDARY));
         card.setPower(2);
         card.setToughness(2);
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, card);
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
