@@ -29,8 +29,7 @@ class InvasionOfLorwynTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         castInvasion(target);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
     }
@@ -55,6 +54,77 @@ class InvasionOfLorwynTest extends BaseCardTest {
     }
 
     @Test
+    void cannotTargetYourOwnNonElfCreature() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+
+        assertThatThrownBy(() -> castInvasion(target))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void opponentsLandsDoNotIncreaseThePowerLimit() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+
+        assertThatThrownBy(() -> castInvasion(target))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void targetSurvivesWhenLandCountFallsBeforeTheEnterTriggerResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        castInvasion(target);
+        harness.passBothPriorities();
+
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    void controllerMayDeclineToCastTheDefeatedSiege() {
+        harness.addToBattlefield(player1, new Forest());
+        Permanent battle = harness.addToBattlefieldAndReturn(player1, new InvasionOfLorwyn());
+        battle.setCounterCount(CounterType.DEFENSE, 0);
+
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
+                .checkAfterDefenseRemoved(gd, battle));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(battle.getCard().getId())).isNotNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Winnowing Forces");
+    }
+
+    @Test
+    void winnowingForcesCountsOnlyItsControllersLandsAndDiesWithoutThem() {
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent forces = harness.addToBattlefieldAndReturn(player1, new WinnowingForces());
+
+        assertThat(gqs.getEffectivePower(gd, forces)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, forces)).isEqualTo(1);
+
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forces);
+        harness.assertInGraveyard(player1, "Winnowing Forces");
+    }
+
+    @Test
     void defeatingTheSiegeCastsWinnowingForcesWithLandScaledPowerAndToughness() {
         harness.addToBattlefield(player1, new Forest());
         harness.addToBattlefield(player1, new Forest());
@@ -64,7 +134,9 @@ class InvasionOfLorwynTest extends BaseCardTest {
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
                 .checkAfterDefenseRemoved(gd, battle));
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         Permanent transformed = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() instanceof WinnowingForces)
