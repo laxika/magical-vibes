@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FightAsOne;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -9,11 +10,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MythosOfNethroi.class, GrizzlyBears.class, MindStone.class, Forest.class})
+@CardUsed({MythosOfNethroi.class, GrizzlyBears.class, MindStone.class, Forest.class, FightAsOne.class})
 class MythosOfNethroiTest extends BaseCardTest {
 
     @Test
@@ -22,7 +22,7 @@ class MythosOfNethroiTest extends BaseCardTest {
         var target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castWithMana(ManaColor.BLACK, ManaColor.COLORLESS);
 
-        castMythos(target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
@@ -33,7 +33,7 @@ class MythosOfNethroiTest extends BaseCardTest {
         var target = harness.addToBattlefieldAndReturn(player2, new MindStone());
         castWithMana(ManaColor.BLACK, ManaColor.COLORLESS);
 
-        castMythos(target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertOnBattlefield(player2, "Mind Stone");
     }
@@ -47,7 +47,7 @@ class MythosOfNethroiTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        castMythos(target.getId());
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Mind Stone");
     }
@@ -72,8 +72,87 @@ class MythosOfNethroiTest extends BaseCardTest {
         harness.addMana(player1, secondGeneric, 1);
     }
 
-    private void castMythos(UUID targetId) {
-        harness.castInstant(player1, 0, targetId);
+    @Test
+    void doesNotDestroyNoncreatureWhenOnlyGreenWasSpent() {
+        var target = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        castWithMana(ManaColor.GREEN, ManaColor.COLORLESS);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Mind Stone");
+        harness.assertInGraveyard(player1, "Mythos of Nethroi");
+    }
+
+    @Test
+    void doesNotDestroyNoncreatureWhenOnlyWhiteWasSpent() {
+        var target = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        castWithMana(ManaColor.WHITE, ManaColor.COLORLESS);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertOnBattlefield(player2, "Mind Stone");
+        harness.assertInGraveyard(player1, "Mythos of Nethroi");
+    }
+
+    @Test
+    void stillDestroysCreatureWhenGreenAndWhiteWereSpent() {
+        var target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castWithMana(ManaColor.GREEN, ManaColor.WHITE);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    void canDestroyOwnNoncreatureWhenGreenAndWhiteWereSpent() {
+        var target = harness.addToBattlefieldAndReturn(player1, new MindStone());
+        castWithMana(ManaColor.GREEN, ManaColor.WHITE);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertInGraveyard(player1, "Mind Stone");
+        harness.assertNotOnBattlefield(player1, "Mind Stone");
+    }
+
+    @Test
+    void doesNotDestroyCreatureThatGainsIndestructibleInResponse() {
+        var target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castWithMana(ManaColor.GREEN, ManaColor.WHITE);
+        harness.castInstant(player1, 0, target.getId());
+        harness.setHand(player2, List.of(new FightAsOne()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castModalInstantWithModes(player2, 0, 1, 2, new int[]{1}, List.of(target.getId()));
         harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertNotInGraveyard(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Mythos of Nethroi");
+    }
+
+    @Test
+    void cannotTargetLandEvenWhenGreenAndWhiteAreAvailable() {
+        var target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        castWithMana(ManaColor.GREEN, ManaColor.WHITE);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("nonland permanent");
+    }
+
+    @Test
+    void greenAndWhiteAddedAfterCastingDoNotEnableDestruction() {
+        var target = harness.addToBattlefieldAndReturn(player2, new MindStone());
+        castWithMana(ManaColor.BLACK, ManaColor.COLORLESS);
+        harness.castInstant(player1, 0, target.getId());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Mind Stone");
+        harness.assertInGraveyard(player1, "Mythos of Nethroi");
     }
 }
