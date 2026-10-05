@@ -2,10 +2,14 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
+import com.github.laxika.magicalvibes.cards.p.Panharmonicon;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MangarasTome.class, Disenchant.class, ObNixilisUnshackled.class})
+@CardUsed({MangarasTome.class, Disenchant.class, ObNixilisUnshackled.class, Panharmonicon.class})
 class MangarasTomeTest extends BaseCardTest {
 
     private List<Card> deck() {
@@ -216,11 +220,115 @@ class MangarasTomeTest extends BaseCardTest {
         activateTome();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
 
         assertThat(handNames()).containsExactly("Mangara's Tome");
+    }
+
+    @Test
+    @DisplayName("The shuffled face-down pile is hidden from both players")
+    void shuffledPileCannotBeInspected() throws Exception {
+        castTome(List.of(new Disenchant(), new Disenchant(), new Disenchant(),
+                new Disenchant(), new MangarasTome()));
+        for (int i = 0; i < 5; i++) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        UUID tomeId = harness.getPermanentId(player1, "Mangara's Tome");
+        harness.publishState();
+        var mapper = new JacksonConfig().objectMapper();
+        GameStateMessage controllerState = mapper.readValue(harness.getConn1()
+                .getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        GameStateMessage opponentState = mapper.readValue(harness.getConn2()
+                .getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        for (GameStateMessage state : List.of(controllerState, opponentState)) {
+            var tomeView = state.battlefields().stream().flatMap(List::stream)
+                    .filter(permanent -> permanent.id().equals(tomeId)).findFirst().orElseThrow();
+            assertThat(tomeView.faceDownExiledCards()).isEmpty();
+            assertThat(tomeView.faceDownExiledCount()).isEqualTo(5);
+        }
+    }
+
+    @Test
+    @DisplayName("Replacements from different Tomes let the drawing player choose which pile to use")
+    void drawingPlayerChoosesBetweenDifferentTomes() {
+        setupWithPile(List.of(new Disenchant()));
+        harness.addToBattlefield(player1, new MangarasTome());
+        var secondTome = gd.playerBattlefields.get(player1.getId()).get(1);
+        gd.addToExile(player1.getId(), new MangarasTome(), secondTome.getId(), true);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Disenchant()));
+
+        activateTome();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 1, 0, null);
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(handNames()).isEmpty();
+        assertThat(deck()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A doubled entrance creates two piles and one replaced draw takes a card from each")
+    void doubledEntranceKeepsSeparatePiles() {
+        harness.addToBattlefield(player1, new Panharmonicon());
+        castTome(List.of(new Disenchant(), new Disenchant(), new Disenchant(), new Disenchant(),
+                new Disenchant(), new MangarasTome(), new MangarasTome(), new MangarasTome(),
+                new MangarasTome(), new MangarasTome()));
+        for (int i = 0; i < 5; i++) {
+            harness.handleCardChosen(player1, 0);
+        }
+        resolveAllTriggers();
+        for (int i = 0; i < 5; i++) {
+            harness.handleCardChosen(player1, 0);
+        }
+
+        UUID tomeId = harness.getPermanentId(player1, "Mangara's Tome");
+        assertThat(gd.getCardsExiledByPermanent(tomeId)).hasSize(10);
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 1, 0, null);
+        harness.passBothPriorities();
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(handNames()).containsExactlyInAnyOrder("Disenchant", "Mangara's Tome");
+        assertThat(gd.getCardsExiledByPermanent(tomeId)).hasSize(8);
+        assertThat(deck()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A resolved replacement still uses its pile after the Tome is destroyed")
+    void resolvedReplacementSurvivesTomeRemoval() {
+        UUID tomeId = setupWithPile(List.of(new Disenchant()));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new MangarasTome()));
+        activateTome();
+
+        var tome = findPermanent(player1, "Mangara's Tome");
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, tome));
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(handNames()).containsExactly("Disenchant");
+        assertThat(gd.getCardsExiledByPermanent(tomeId)).isEmpty();
+        assertThat(deck()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The Tome replaces a draw even when the library is empty")
+    void replacementWithEmptyLibraryDoesNotLoseGame() {
+        setupWithPile(List.of(new Disenchant()));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of());
+
+        activateTome();
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(handNames()).containsExactly("Disenchant");
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        assertThat(deck()).isEmpty();
     }
 }
