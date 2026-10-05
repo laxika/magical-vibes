@@ -73,10 +73,50 @@ class MostWantedTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Most Wanted can be cast in response to removal on an opponent's turn")
+    void canBeCastInResponseOnOpponentsTurn() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.castInstant(player2, 0, enchanted.getId());
+
+        harness.setHand(player1, List.of(new MostWanted()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Most Wanted").getAttachedTo()).isEqualTo(enchanted.getId());
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(3);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(enchanted);
+        assertThat(countTreasures(player1)).isEqualTo(2);
+        assertThat(countTreasures(player2)).isZero();
+    }
+
+    @Test
+    @DisplayName("An unrelated creature dying does not create Treasures")
+    void unrelatedCreatureDeathDoesNotCreateTreasures() {
+        Permanent enchanted = addCreatureReady(player1, new GrizzlyBears());
+        Permanent unrelated = addCreatureReady(player2, new GrizzlyBears());
+        addAura(player1, enchanted);
+
+        destroyCreature(unrelated);
+
+        assertThat(countTreasures(player1)).isZero();
+        assertThat(countTreasures(player2)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(enchanted);
+    }
+
     private void addAura(Player controller, Permanent enchanted) {
-        Permanent aura = new Permanent(new MostWanted());
+        Permanent aura = harness.addToBattlefieldAndReturn(controller, new MostWanted());
         aura.setAttachedTo(enchanted.getId());
-        gd.playerBattlefields.get(controller.getId()).add(aura);
     }
 
     private void destroyCreature(Permanent enchanted) {
@@ -85,9 +125,8 @@ class MostWantedTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castInstant(player1, 0, enchanted.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, enchanted.getId());
+        resolveAllTriggers();
     }
 
     private long countTreasures(Player player) {
