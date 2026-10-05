@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -14,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PathToExile.class, GrizzlyBears.class, Forest.class, Island.class, Mountain.class})
 class PathToExileTest extends BaseCardTest {
 
     private void givePath() {
@@ -36,8 +36,7 @@ class PathToExileTest extends BaseCardTest {
         setupLibrary(player2);
         givePath();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         // Removed from battlefield and put into exile — not the graveyard.
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -60,10 +59,9 @@ class PathToExileTest extends BaseCardTest {
         setupLibrary(player2);
         givePath();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
-        harness.getGameService().handleInteractionAnswer(gd, player2, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().hasType(CardType.LAND)
@@ -78,8 +76,7 @@ class PathToExileTest extends BaseCardTest {
         setupLibrary(player1);
         givePath();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         assertThat(gd.exiledCards).anyMatch(e -> e.card().getName().equals("Grizzly Bears"));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
@@ -97,9 +94,48 @@ class PathToExileTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Declining the optional search does not search or shuffle")
+    void decliningSearchDoesNotShuffle() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        setupLibrary(player2);
+        givePath();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player2, false);
+        } else {
+            harness.handleCardChosen(player2, -1);
+        }
+
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.gameLog).noneMatch(entry ->
+                entry.plainText().contains("searches their library")
+                        || entry.plainText().contains("Library is shuffled"));
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A target that leaves before resolution grants no search")
+    void missingTargetGrantsNoSearch() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        setupLibrary(player2);
+        givePath();
+
+        harness.castInstant(player1, 0, target.getId());
+        harness.getPermanentRemovalService().removePermanentToExile(gd, target);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player2.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Island", "Mountain", "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Path to Exile");
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+    }
+
     private void setupLibrary(Player player) {
-        List<Card> deck = gd.playerDecks.get(player.getId());
-        deck.clear();
-        deck.addAll(List.of(new Island(), new Mountain(), new GrizzlyBears()));
+        harness.setLibrary(player, List.of(new Island(), new Mountain(), new GrizzlyBears()));
     }
 }
