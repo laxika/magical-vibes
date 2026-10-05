@@ -2,15 +2,12 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.b.BorosSignet;
 import com.github.laxika.magicalvibes.cards.e.ElvesOfDeepShadow;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,17 +30,13 @@ class NullstoneGargoyleTest extends BaseCardTest {
     @DisplayName("Creature spells do not count as the first noncreature spell")
     void ignoresCreatureSpells() {
         harness.addToBattlefield(player1, new NullstoneGargoyle());
-        harness.setHand(player2, List.of(new ElvesOfDeepShadow(), new BorosSignet()));
-        harness.addMana(player2, ManaColor.GREEN, 1);
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
         prepareCast(player2);
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new ElvesOfDeepShadow(), "{G}");
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Elves of Deep Shadow");
 
-        harness.castArtifact(player2, 0);
-        harness.passBothPriorities();
+        castBorosSignet(player2);
         harness.assertInGraveyard(player2, "Boros Signet");
     }
 
@@ -70,6 +63,42 @@ class NullstoneGargoyleTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
         castBorosSignet(player2);
         harness.assertInGraveyard(player2, "Boros Signet");
+    }
+
+    @Test
+    @DisplayName("The counter trigger resolves even after Gargoyle leaves the battlefield")
+    void triggerSurvivesSourceLeavingBattlefield() {
+        var gargoyle = harness.addToBattlefieldAndReturn(player1, new NullstoneGargoyle());
+        prepareCast(player2);
+        harness.castFromHand(player2, new BorosSignet(), "{2}");
+
+        gd.playerBattlefields.get(player1.getId()).remove(gargoyle);
+        gd.playerGraveyards.get(player1.getId()).add(gargoyle.getCard());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Boros Signet");
+        harness.assertNotOnBattlefield(player2, "Boros Signet");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Multiple Gargoyles trigger for the same first spell and ignore later spells")
+    void multipleGargoylesCounterOnlyTheSameFirstSpell() {
+        harness.addToBattlefield(player1, new NullstoneGargoyle());
+        harness.addToBattlefield(player2, new NullstoneGargoyle());
+        prepareCast(player1);
+        harness.castFromHand(player1, new BorosSignet(), "{2}");
+
+        assertThat(gd.stack).hasSize(3);
+        harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        harness.assertInGraveyard(player1, "Boros Signet");
+        assertThat(gd.stack).isEmpty();
+
+        castBorosSignet(player2);
+        harness.assertOnBattlefield(player2, "Boros Signet");
     }
 
     private void castBorosSignet(Player player) {
