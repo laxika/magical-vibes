@@ -93,6 +93,43 @@ class OpalAcrolithTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Opal Acrolith can animate again after becoming an enchantment")
+    void triggersAgainAfterBecomingEnchantment() {
+        Permanent opal = addOpalAcrolith();
+        prepareOpponentCast();
+        castOpponentCreature();
+        resolveAllTriggers();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.isEnchantment(gd, opal)).isTrue();
+        assertThat(gqs.isCreature(gd, opal)).isFalse();
+
+        castOpponentCreature();
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
+        assertThat(gqs.isEnchantment(gd, opal)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, opal)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, opal)).isEqualTo(4);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, opal)).containsExactly(CardSubtype.SOLDIER);
+    }
+
+    @Test
+    @DisplayName("The zero-mana ability is usable while already an enchantment")
+    void canActivateWhileAlreadyEnchantment() {
+        Permanent opal = addOpalAcrolith();
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isEnchantment(gd, opal)).isTrue();
+        assertThat(gqs.isCreature(gd, opal)).isFalse();
+    }
+
+    @Test
     @DisplayName("A noncreature spell does not trigger Opal Acrolith")
     void doesNotTriggerForNoncreatureSpell() {
         Permanent opal = addOpalAcrolith();
