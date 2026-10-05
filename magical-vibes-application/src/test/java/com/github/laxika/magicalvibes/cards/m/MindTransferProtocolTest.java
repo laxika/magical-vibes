@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -63,12 +64,55 @@ class MindTransferProtocolTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an artifact or creature");
     }
 
+    @Test
+    void countersModifyTheAnimatedBasePowerAndToughness() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setLibrary(player1, List.of(new Island()));
+
+        cast(target);
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(7);
+    }
+
+    @Test
+    void noncreatureArtifactStopsBeingACreatureAtCleanup() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+        harness.setLibrary(player1, List.of(new Island()));
+        cast(target);
+
+        assertThat(gqs.isCreature(gd, target)).isTrue();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, target)).isFalse();
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+    }
+
+    @Test
+    void doesNotDrawWhenTargetLeavesBeforeResolution() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Card draw = new Island();
+        harness.setLibrary(player1, List.of(draw));
+        harness.setHand(player1, List.of(new MindTransferProtocol()));
+        addCastMana();
+        harness.castInstant(player1, 0, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        harness.assertInGraveyard(player1, "Mind Transfer Protocol");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private void cast(Permanent target) {
         harness.setHand(player1, List.of(new MindTransferProtocol()));
-        harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        addCastMana();
+        harness.castAndResolveInstant(player1, 0, target.getId());
     }
 
     private void addCastMana() {
