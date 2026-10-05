@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.x.Xenograft;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,15 +13,60 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MasterSplicer.class, Xenograft.class})
 class MasterSplicerTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Master Splicer receives its own bonus when Xenograft makes it a Golem")
+    void boostsItselfWhenItBecomesAGolem() {
+        harness.addToBattlefield(player1, new MasterSplicer());
+        harness.castFromHand(player1, new Xenograft(), "{4}{U}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "GOLEM");
+
+        Permanent splicer = findPermanent(player1, "Master Splicer");
+        assertThat(gqs.getEffectivePower(gd, splicer)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, splicer)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Multiple Master Splicers stack their bonuses on each Golem")
+    void multipleSplicersStackBonuses() {
+        harness.castFromHand(player1, new MasterSplicer(), "{3}{W}");
+        resolveAllTriggers();
+        harness.castFromHand(player1, new MasterSplicer(), "{3}{W}");
+        resolveAllTriggers();
+
+        List<Permanent> golems = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken())
+                .toList();
+        assertThat(golems).hasSize(2);
+        for (Permanent golem : golems) {
+            assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(5);
+            assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(5);
+        }
+    }
+
+    @Test
+    @DisplayName("The token trigger resolves even after Master Splicer leaves")
+    void triggerResolvesWithoutSource() {
+        harness.castFromHand(player1, new MasterSplicer(), "{3}{W}");
+        harness.passBothPriorities();
+        Permanent splicer = findPermanent(player1, "Master Splicer");
+        gd.playerBattlefields.get(player1.getId()).remove(splicer);
+        resolveAllTriggers();
+
+        Permanent golem = findPermanent(player1, "Phyrexian Golem");
+        assertThat(gqs.getEffectivePower(gd, golem)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, golem)).isEqualTo(3);
+        assertThat(golem.getCard().getColor()).isNull();
+        assertThat(golem.getCard().isToken()).isTrue();
+    }
 
     @Test
     @DisplayName("ETB creates a 3/3 colorless Phyrexian Golem artifact creature token")
     void etbCreatesGolemToken() {
-        harness.setHand(player1, List.of(new MasterSplicer()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MasterSplicer(), "{3}{W}");
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
@@ -39,10 +85,7 @@ class MasterSplicerTest extends BaseCardTest {
     @Test
     @DisplayName("Golem token gets +1/+1 from Master Splicer's static ability, becoming 4/4")
     void golemTokenGetsPlusOnePlusOne() {
-        harness.setHand(player1, List.of(new MasterSplicer()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MasterSplicer(), "{3}{W}");
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
@@ -69,10 +112,8 @@ class MasterSplicerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MasterSplicer());
 
         // Put a Golem on the opponent's battlefield
-        harness.setHand(player2, List.of(new MasterSplicer()));
-        harness.addMana(player2, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new MasterSplicer(), "{3}{W}");
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
@@ -87,10 +128,7 @@ class MasterSplicerTest extends BaseCardTest {
     @Test
     @DisplayName("Boost is lost when Master Splicer leaves the battlefield")
     void boostLostWhenMasterSplicerLeaves() {
-        harness.setHand(player1, List.of(new MasterSplicer()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MasterSplicer(), "{3}{W}");
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
