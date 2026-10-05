@@ -132,6 +132,52 @@ class MantaRayTest extends BaseCardTest {
                 .anyMatch(log -> log.contains("declares 1 blocker"));
     }
 
+    @Test
+    @DisplayName("An opponent's Island does not prevent sacrifice")
+    void opponentsIslandDoesNotPreventSacrifice() {
+        harness.addToBattlefield(player2, new Island());
+        harness.addToBattlefield(player1, new Forest());
+        harness.castFromHand(player1, new MantaRay(), "{1}{U}{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Manta Ray");
+        harness.assertInGraveyard(player1, "Manta Ray");
+    }
+
+    @Test
+    @DisplayName("Can block while the attacking player controls no Island")
+    void canBlockWithoutAttackersIsland() {
+        harness.addToBattlefield(player2, new Island());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.setAttacking(true);
+        Permanent ray = addCreatureReady(player2, new MantaRay());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex(ray), attackerIndex(bears))));
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .anyMatch(log -> log.contains("declares 1 blocker"));
+    }
+
+    @Test
+    @DisplayName("Can attack when the defender's land becomes an Island")
+    void canAttackWhenDefendersLandBecomesIsland() {
+        harness.addToBattlefield(player1, new Island());
+        harness.addToBattlefield(player2, new Forest());
+        Permanent forest = findPermanent(player2, "Forest");
+        harness.setHand(player1, List.of(new SeasClaim()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        Permanent ray = addCreatureReady(player1, new MantaRay());
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(attackerIndex(ray)));
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
+
     private int attackerIndex(Permanent attacker) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
     }
