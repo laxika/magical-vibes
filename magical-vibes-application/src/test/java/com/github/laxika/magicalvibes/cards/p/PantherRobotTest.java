@@ -47,4 +47,47 @@ class PantherRobotTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
+
+    @Test
+    @DisplayName("Affinity allows a free cast when artifact count exceeds the mana cost")
+    void excessArtifactsAllowFreeCast() {
+        for (int i = 0; i < 11; i++) {
+            harness.addToBattlefield(player1, new PantherRobot());
+        }
+        harness.setHand(player1, List.of(new PantherRobot()));
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(12);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Affinity counts tapped artifact creatures")
+    void tappedArtifactCreaturesReduceCost() {
+        for (int i = 0; i < 6; i++) {
+            harness.addToBattlefieldAndReturn(player1, new PantherRobot()).setTapped(true);
+        }
+        harness.setHand(player1, List.of(new PantherRobot()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("Affinity ignores artifact cards in hand, graveyard, and exile")
+    void artifactsOutsideBattlefieldDoNotReduceCost() {
+        harness.setHand(player1, List.of(new PantherRobot(), new PantherRobot()));
+        harness.setGraveyard(player1, List.of(new PantherRobot()));
+        harness.setExile(player1, List.of(new PantherRobot()));
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
 }
