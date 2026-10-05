@@ -16,6 +16,54 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({LightningArmyOfOne.class, GrizzlyBears.class, Shock.class})
 class LightningArmyOfOneTest extends BaseCardTest {
+    @Test
+    @DisplayName("Stagger doubles a normal-strike attacker's damage in the same combat")
+    void staggerAppliesBetweenCombatDamageSteps() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new LightningArmyOfOne());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 1));
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+    }
+
+    @Test
+    @DisplayName("Stagger doubles damage from sources controlled by the damaged player")
+    void staggerDoublesOpponentsOwnDamage() {
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new LightningArmyOfOne());
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+    }
+
+    @Test
+    @DisplayName("Stagger continues after Lightning leaves the battlefield")
+    void staggerPersistsAfterLightningDies() {
+        harness.setLife(player2, 20);
+        Permanent lightning = addCreatureReady(player1, new LightningArmyOfOne());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castInstant(player1, 0, lightning.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Lightning, Army of One");
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
+    }
 
     @Test
     @DisplayName("Stagger doubles damage to the damaged player and their permanents")
