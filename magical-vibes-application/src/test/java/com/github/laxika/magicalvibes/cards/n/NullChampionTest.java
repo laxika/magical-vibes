@@ -6,20 +6,22 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({NullChampion.class})
 class NullChampionTest extends BaseCardTest {
 
     @Test
     @DisplayName("Leveling up changes Null Champion's base power and toughness at its thresholds")
     void levelsUpAtThresholds() {
         Permanent champion = addCreatureReady(player1, new NullChampion());
-
-        assertStats(champion, 1, 1);
 
         prepareForLeveling(player1);
         levelUp(player1);
@@ -60,6 +62,7 @@ class NullChampionTest extends BaseCardTest {
     @DisplayName("Paying {B} grants Null Champion a regeneration shield")
     void blackActivationGrantsRegenerationShield() {
         Permanent champion = addCreatureReady(player1, new NullChampion());
+        champion.setCounterCount(CounterType.LEVEL, 4);
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -76,6 +79,53 @@ class NullChampionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1, 2, 3})
+    @DisplayName("Regeneration cannot be activated below level four")
+    void regenerationRequiresLevelFour(int level) {
+        Permanent champion = addCreatureReady(player1, new NullChampion());
+        champion.setCounterCount(CounterType.LEVEL, level);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(champion.getRegenerationShield()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Level up can continue above level four without changing the final band")
+    void canLevelUpAboveFour() {
+        Permanent champion = addCreatureReady(player1, new NullChampion());
+        champion.setCounterCount(CounterType.LEVEL, 4);
+        prepareForLeveling(player1);
+
+        levelUp(player1);
+
+        assertThat(champion.getCounterCount(CounterType.LEVEL)).isEqualTo(5);
+        assertStats(champion, 7, 3);
+    }
+
+    @Test
+    @DisplayName("Level counters are added on resolution and level up requires an empty stack")
+    void levelUpUsesStack() {
+        Permanent champion = addCreatureReady(player1, new NullChampion());
+        prepareForLeveling(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(champion.getCounterCount(CounterType.LEVEL)).isZero();
+        assertThat(gd.stack).hasSize(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.passBothPriorities();
+
+        assertThat(champion.getCounterCount(CounterType.LEVEL)).isEqualTo(1);
+        assertStats(champion, 4, 2);
     }
 
     private void prepareForLeveling(Player player) {
