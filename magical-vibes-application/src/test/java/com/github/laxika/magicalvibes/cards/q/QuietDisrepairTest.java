@@ -38,8 +38,8 @@ class QuietDisrepairTest extends BaseCardTest {
         Permanent aura = castOn(artifact);
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
         harness.handleListChoice(player1, DESTROY_MODE);
+        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(artifact.getCard());
@@ -53,8 +53,8 @@ class QuietDisrepairTest extends BaseCardTest {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
         advanceToUpkeep(player1);
-        harness.passBothPriorities();
         harness.handleListChoice(player1, GAIN_LIFE_MODE);
+        harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchantment);
@@ -76,15 +76,47 @@ class QuietDisrepairTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
     }
 
+    @Test
+    void choosesModeBeforePlayersCanRespondAndGainsLifeOnlyOnResolution() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new VeilstoneAmulet());
+        castOn(artifact);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+        int opponentLifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player1, GAIN_LIFE_MODE);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(opponentLifeBefore);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
+    }
+
+    @Test
+    void destroyModeCanDestroyAnEnchantmentYouControl() {
+        Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new MuragandaPetroglyphs());
+        Permanent aura = castOn(enchantment);
+
+        advanceToUpkeep(player1);
+        harness.handleListChoice(player1, DESTROY_MODE);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(enchantment, aura);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(enchantment, aura);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(enchantment.getCard(), aura.getCard());
+    }
+
     private Permanent castOn(Permanent target) {
         harness.setHand(player1, List.of(new QuietDisrepair()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castEnchantment(player1, 0, target.getId());
         harness.passBothPriorities();
-        return gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard() instanceof QuietDisrepair)
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, "Quiet Disrepair");
     }
 }
