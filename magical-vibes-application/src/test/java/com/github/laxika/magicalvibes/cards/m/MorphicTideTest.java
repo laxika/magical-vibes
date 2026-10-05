@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.o.OrbOfDreams;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.p.Panopticon;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -21,7 +23,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MorphicTide.class, Panopticon.class, GrizzlyBears.class, GloriousAnthem.class})
+@CardUsed({MorphicTide.class, Panopticon.class, GrizzlyBears.class, GloriousAnthem.class,
+        Pacifism.class, OrbOfDreams.class})
 class MorphicTideTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -41,8 +44,8 @@ class MorphicTideTest extends BaseCardTest {
     void shufflesOwnedPermanentsAndReturnsCreatureAndEnchantmentPermanents() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GloriousAnthem());
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
         gd.planechase.deck.addFirst(new MorphicTide());
 
         harness.inMutationScope(() -> planar.reveal(gd, true));
@@ -66,8 +69,8 @@ class MorphicTideTest extends BaseCardTest {
                 .setCounterCount(CounterType.DEFENSE, 5);
         harness.addToBattlefieldAndReturn(player1, secondBattle)
                 .setCounterCount(CounterType.DEFENSE, 5);
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
         gd.planechase.deck.addFirst(new MorphicTide());
 
         harness.inMutationScope(() -> planar.reveal(gd, true));
@@ -85,6 +88,78 @@ class MorphicTideTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondBattle, firstBattle);
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void revealedAuraAttachesToCreatureFromFirstBatch() {
+        var creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        var aura = harness.addToBattlefieldAndReturn(player1, new Pacifism());
+        aura.setAttachedTo(creature.getId());
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        gd.planechase.deck.addFirst(new MorphicTide());
+
+        harness.inMutationScope(() -> planar.reveal(gd, true));
+        harness.passBothPriorities();
+
+        var returnedCreature = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Grizzly Bears"));
+        var returnedAura = gqs.findPermanentById(gd, harness.getPermanentId(player1, "Pacifism"));
+        assertThat(returnedCreature).isNotNull();
+        assertThat(returnedAura).isNotNull();
+        assertThat(returnedAura.getAttachedTo()).isEqualTo(returnedCreature.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void auraWithoutLegalAttachmentIsPutOnBottomInsteadOfEntering() {
+        Pacifism pacifism = new Pacifism();
+        Card token = new GrizzlyBears();
+        token.setToken(true);
+        harness.addToBattlefield(player1, token);
+        harness.setLibrary(player1, List.of(pacifism));
+        harness.setLibrary(player2, List.of());
+        gd.planechase.deck.addFirst(new MorphicTide());
+
+        harness.inMutationScope(() -> planar.reveal(gd, true));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(pacifism);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(pacifism);
+    }
+
+    @Test
+    void firstBatchReplacementEffectsApplyToLaterEnchantmentBatch() {
+        harness.addToBattlefield(player1, new OrbOfDreams());
+        harness.addToBattlefield(player1, new GloriousAnthem());
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        gd.planechase.deck.addFirst(new MorphicTide());
+
+        harness.inMutationScope(() -> planar.reveal(gd, true));
+        harness.passBothPriorities();
+
+        assertThat(gqs.findPermanentById(gd, harness.getPermanentId(player1, "Orb of Dreams")).isTapped()).isFalse();
+        assertThat(gqs.findPermanentById(gd, harness.getPermanentId(player1, "Glorious Anthem")).isTapped()).isTrue();
+    }
+
+    @Test
+    void opposingAuraIsShuffledEvenWhenItsHostOwnerIsProcessedFirst() {
+        var creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Pacifism pacifism = new Pacifism();
+        harness.addToBattlefieldAndReturn(player2, pacifism).setAttachedTo(creature.getId());
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+        gd.planechase.deck.addFirst(new MorphicTide());
+
+        harness.inMutationScope(() -> planar.reveal(gd, true));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(pacifism);
+        var returnedAura = gqs.findPermanentById(gd, harness.getPermanentId(player2, "Pacifism"));
+        assertThat(returnedAura).isNotNull();
+        assertThat(returnedAura.getAttachedTo())
+                .isEqualTo(gqs.findPermanentById(gd, harness.getPermanentId(player1, "Grizzly Bears")).getId());
     }
 
     private Card battle(String name) {
