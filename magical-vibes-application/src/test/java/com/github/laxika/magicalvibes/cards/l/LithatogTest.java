@@ -145,4 +145,43 @@ class LithatogTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("No permanent to sacrifice matching: a land");
     }
+
+    @Test
+    @DisplayName("Both sacrifices are paid immediately and their boosts stack on resolution")
+    void sacrificesAreCostsAndBoostsStackBeforeResolution() {
+        Permanent lithatog = harness.addToBattlefieldAndReturn(player1, new Lithatog());
+        harness.addToBattlefield(player1, new CatalystStone());
+        harness.addToBattlefield(player1, new Forest());
+        int powerBefore = gqs.getEffectivePower(gd, lithatog);
+        int toughnessBefore = gqs.getEffectiveToughness(gd, lithatog);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Catalyst Stone");
+        harness.assertInGraveyard(player1, "Catalyst Stone");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, lithatog)).isEqualTo(powerBefore);
+        assertThat(gqs.getEffectiveToughness(gd, lithatog)).isEqualTo(toughnessBefore);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Forest");
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gqs.getEffectivePower(gd, lithatog)).isEqualTo(powerBefore);
+        assertThat(gqs.getEffectiveToughness(gd, lithatog)).isEqualTo(toughnessBefore);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.getEffectivePower(gd, lithatog)).isEqualTo(powerBefore + 1);
+        assertThat(gqs.getEffectiveToughness(gd, lithatog)).isEqualTo(toughnessBefore + 1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gqs.getEffectivePower(gd, lithatog)).isEqualTo(powerBefore + 2);
+        assertThat(gqs.getEffectiveToughness(gd, lithatog)).isEqualTo(toughnessBefore + 2);
+    }
+
 }
