@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
+import com.github.laxika.magicalvibes.cards.f.Firebolt;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MomentsPeace.class, DuskImp.class})
+@CardUsed({MomentsPeace.class, DuskImp.class, Firebolt.class})
 class MomentsPeaceTest extends BaseCardTest {
 
     @Test
@@ -42,8 +43,7 @@ class MomentsPeaceTest extends BaseCardTest {
         var blockedAttacker = addCreatureReady(player2, new DuskImp());
         var unblockedAttacker = addCreatureReady(player2, new DuskImp());
         var blocker = addCreatureReady(player1, new DuskImp());
-        declareAttackers(player2, List.of(0, 1));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2, List.of(0, 1));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
@@ -86,5 +86,20 @@ class MomentsPeaceTest extends BaseCardTest {
                 .noneMatch(graveyardCard -> graveyardCard.getId().equals(card.getId()));
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(exiledCard -> exiledCard.getId().equals(card.getId()));
+    }
+
+    @Test
+    @DisplayName("Moment's Peace does not prevent noncombat damage")
+    void doesNotPreventNoncombatDamage() {
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new MomentsPeace(), new Firebolt()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
     }
 }
