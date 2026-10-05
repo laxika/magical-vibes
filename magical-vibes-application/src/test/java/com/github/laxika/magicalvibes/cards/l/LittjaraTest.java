@@ -61,6 +61,48 @@ class LittjaraTest extends BaseCardTest {
         assertThat(opposingBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    void upkeepCreatesTokenForTheNewActivePlayer() {
+        setupPlanarWithLittjara();
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Shapeshifter")).isEmpty();
+        assertThat(findPermanents(player2, "Shapeshifter")).hasSize(1);
+    }
+
+    @Test
+    void chaosCountersChangelingsForDifferentCreatureTypeChoices() {
+        PlanechaseService planar = setupPlanarDeckWithLittjara();
+        harness.inMutationScope(() -> planar.reveal(gd, true));
+        harness.passBothPriorities();
+        var token = findPermanents(player1, "Shapeshifter").getFirst();
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.BEAR.name());
+        assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.GOBLIN.name());
+        assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void chaosAllowsChoosingTypeWithNoMatchingCreatures() {
+        PlanechaseService planar = setupPlanarWithLittjara();
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardSubtype.BEAR.name());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player1, "Shapeshifter")).isEmpty();
+    }
+
     private PlanechaseService setupPlanarDeckWithLittjara() {
         PlanechaseService planar = setupPlanarState();
         gd.planechase.deck.add(new Littjara());
