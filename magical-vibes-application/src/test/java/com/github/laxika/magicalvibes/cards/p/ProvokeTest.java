@@ -79,6 +79,78 @@ class ProvokeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Draws a card even when the targeted creature is already untapped")
+    void drawsWhenTargetIsAlreadyUntapped() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SpinedWurm());
+
+        castProvoke(target);
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Spined Wurm");
+    }
+
+    @Test
+    @DisplayName("Does not draw when the only target leaves the battlefield before resolution")
+    void doesNotDrawWhenTargetLeaves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SpinedWurm());
+        harness.setHand(player1, List.of(new Provoke()));
+        harness.setLibrary(player1, List.of(new SpinedWurm()));
+        addManaForProvoke();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.setGraveyard(player2, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Provoke");
+    }
+
+    @Test
+    @DisplayName("Does not untap or draw if the caster gains control of the target before resolution")
+    void doesNotResolveWhenTargetBecomesControlledByCaster() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SpinedWurm());
+        target.tap();
+        harness.setHand(player1, List.of(new Provoke()));
+        harness.setLibrary(player1, List.of(new SpinedWurm()));
+        addManaForProvoke();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castInstant(player1, 0, target.getId());
+
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerBattlefields.get(player1.getId()).add(target);
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Provoke");
+    }
+
+    @Test
+    @DisplayName("A creature tapped again after Provoke resolves is not required to block")
+    void doesNotRequireBlockWhenTargetIsTappedAgain() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SpinedWurm());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new SpinedWurm());
+        castProvoke(target);
+        target.tap();
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(target.isBlocking()).isFalse();
+        harness.passBothPriorities();
+    }
+
     private void castProvoke(Permanent target) {
         harness.setHand(player1, List.of(new Provoke()));
         harness.setLibrary(player1, List.of(new SpinedWurm()));
