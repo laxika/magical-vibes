@@ -62,6 +62,7 @@ class PhantomWingsTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Kaijin of the Vanishing Touch");
         harness.assertNotOnBattlefield(player1, "Phantom Wings");
         harness.assertInGraveyard(player1, "Phantom Wings");
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isFalse();
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -79,6 +80,8 @@ class PhantomWingsTest extends BaseCardTest {
         Permanent wings = harness.addToBattlefieldAndReturn(player1, new PhantomWings());
         wings.setAttachedTo(creature.getId());
 
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
@@ -88,10 +91,12 @@ class PhantomWingsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Sacrificing an unattached Aura does not return a creature")
-    void sacrificingUnattachedAuraDoesNotReturnCreature() {
-        harness.addToBattlefield(player1, new KaijinOfTheVanishingTouch());
-        harness.addToBattlefield(player1, new PhantomWings());
+    @DisplayName("A tapped Phantom Wings can still be sacrificed to return its enchanted creature")
+    void sacrificingTappedAuraReturnsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new KaijinOfTheVanishingTouch());
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new PhantomWings());
+        wings.setAttachedTo(creature.getId());
+        wings.setTapped(true);
 
         harness.activateAbility(player1, 1, null, null);
         harness.assertNotOnBattlefield(player1, "Phantom Wings");
@@ -99,8 +104,56 @@ class PhantomWingsTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        harness.assertOnBattlefield(player1, "Kaijin of the Vanishing Touch");
-        harness.assertNotInHand(player1, "Kaijin of the Vanishing Touch");
+        harness.assertNotOnBattlefield(player1, "Kaijin of the Vanishing Touch");
+        harness.assertInHand(player1, "Kaijin of the Vanishing Touch");
+    }
+
+    @Test
+    @DisplayName("A second bounce does nothing after the enchanted creature has already left")
+    void enchantedCreatureLeavesBeforeAbilityResolves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new KaijinOfTheVanishingTouch());
+        Permanent firstWings = harness.addToBattlefieldAndReturn(player1, new PhantomWings());
+        firstWings.setAttachedTo(creature.getId());
+        Permanent secondWings = harness.addToBattlefieldAndReturn(player1, new PhantomWings());
+        secondWings.setAttachedTo(creature.getId());
+        Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new KaijinOfTheVanishingTouch());
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(otherCreature);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(otherCreature);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .contains(firstWings.getCard(), secondWings.getCard());
+    }
+
+    @Test
+    @DisplayName("Phantom Wings does not enter when its creature target leaves before resolution")
+    void auraDoesNotResolveAfterTargetLeaves() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new KaijinOfTheVanishingTouch());
+        Permanent wings = harness.addToBattlefieldAndReturn(player1, new PhantomWings());
+        wings.setAttachedTo(creature.getId());
+        PhantomWings spell = new PhantomWings();
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Kaijin of the Vanishing Touch");
+        harness.assertNotOnBattlefield(player1, "Phantom Wings");
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(wings.getCard(), spell);
     }
 
     @Test
