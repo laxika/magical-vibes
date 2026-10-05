@@ -2,10 +2,8 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,14 +13,13 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LordWindgrace.class, Forest.class, Mountain.class, GrizzlyBears.class})
+@CardUsed({LordWindgrace.class, Forest.class, GrizzlyBears.class})
 class LordWindgraceTest extends BaseCardTest {
 
     @Test
@@ -130,6 +127,101 @@ class LordWindgraceTest extends BaseCardTest {
         assertThat(windgrace.getCounterCount(CounterType.LOYALTY)).isZero();
     }
 
+    @Test
+    void plusTwoDrawsWithEmptyHand() {
+        addReadyWindgrace(5);
+        Card drawnCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnCard, new Forest()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void plusTwoDrawsDuringTheSameResolution() {
+        addReadyWindgrace(5);
+        Card discardedCard = new Forest();
+        Card firstDraw = new GrizzlyBears();
+        Card secondDraw = new Forest();
+        harness.setHand(player1, List.of(discardedCard));
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw, new Forest()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw, secondDraw);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void minusThreeAllowsZeroGraveyardTargets() {
+        Permanent windgrace = addReadyWindgrace(5);
+        harness.setGraveyard(player1, List.of());
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(windgrace.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void minusThreeRejectsOpponentsLand() {
+        addReadyWindgrace(5);
+        Card land = new Forest();
+        harness.setGraveyard(player2, List.of(land));
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(
+                player1, 0, 1, List.of(land.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void minusThreeReturnsRemainingLegalLandUntapped() {
+        addReadyWindgrace(5);
+        Card firstLand = new Forest();
+        Card secondLand = new Forest();
+        harness.setGraveyard(player1, List.of(firstLand, secondLand));
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 1,
+                List.of(firstLand.getId(), secondLand.getId()));
+        harness.setGraveyard(player1, List.of(secondLand));
+        harness.setHand(player1, List.of(firstLand));
+
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Forest")).hasSize(1);
+        assertThat(findPermanent(player1, "Forest").getCard()).isSameAs(secondLand);
+        assertThat(findPermanent(player1, "Forest").isTapped()).isFalse();
+    }
+
+    @Test
+    void minusElevenCreatesTokensWithZeroTargets() {
+        addReadyWindgrace(11);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Cat Warrior")).isEqualTo(6);
+    }
+
+    @Test
+    void minusElevenCreatesNoTokensWhenAllTargetsBecomeIllegal() {
+        addReadyWindgrace(11);
+        Permanent target = addReadyPermanent(player2, new GrizzlyBears());
+        harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of(target.getId()));
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        gd.playerGraveyards.get(player2.getId()).add(target.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Cat Warrior")).isZero();
+    }
+
     private Permanent addReadyWindgrace(int loyalty) {
         return addReadyPermanent(player1, new LordWindgrace(), loyalty);
     }
@@ -139,10 +231,8 @@ class LordWindgraceTest extends BaseCardTest {
     }
 
     private Permanent addReadyPermanent(Player player, Card card, int loyalty) {
-        Permanent permanent = new Permanent(card);
+        Permanent permanent = addCreatureReady(player, card);
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);
-        permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;
