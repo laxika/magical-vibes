@@ -75,6 +75,24 @@ class MerrowCommerceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Untaps Merfolk that entered after the end-step ability triggered")
+    void checksControlledMerfolkWhenTriggerResolves() {
+        harness.addToBattlefield(player1, new MerrowCommerce());
+
+        reachEndStep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new DeeptreadMerrow());
+        merfolk.tap();
+        assertThat(merfolk.isTapped()).isTrue();
+
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
+
+        assertThat(merfolk.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Does not trigger during an opponent's end step")
     void doesNotTriggerDuringOpponentsEndStep() {
         harness.addToBattlefield(player1, new MerrowCommerce());
