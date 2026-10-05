@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IronManArmoredAvenger.class, GrizzlyBears.class, Island.class})
+@CardUsed({IronManArmoredAvenger.class, GrizzlyBears.class, Island.class,
+        HolyStrength.class, LeoninScimitar.class})
 class IronManArmoredAvengerTest extends BaseCardTest {
 
     @Test
@@ -93,11 +95,117 @@ class IronManArmoredAvengerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, modifiedAttacker, Keyword.FLYING)).isFalse();
     }
 
+    @Test
+    @DisplayName("Iron Man can receive the counter from its own draw trigger")
+    void drawTriggerCanTargetIronMan() {
+        Permanent ironMan = harness.addToBattlefieldAndReturn(player1, new IronManArmoredAvenger());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, ironMan.getId());
+        resolveAllTriggers();
+
+        assertThat(ironMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An opponent's draw does not trigger Iron Man")
+    void opponentDrawDoesNotPutCounters() {
+        Permanent ironMan = harness.addToBattlefieldAndReturn(player1, new IronManArmoredAvenger());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        advanceToDraw(player2);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(ironMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Drawing multiple cards outside the draw step triggers once for each card")
+    void eachCardDrawnTriggersOnAnOpponentsTurn() {
+        Permanent ironMan = harness.addToBattlefieldAndReturn(player1, new IronManArmoredAvenger());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 2));
+        for (int i = 0; i < 2; i++) {
+            harness.passBothPriorities();
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player1, ironMan.getId());
+        }
+        resolveAllTriggers();
+
+        assertThat(ironMan.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Equipment and friendly Auras modify attackers, but opposing Auras do not")
+    void equipmentAndAuraControllerDetermineModification() {
+        addCreatureReady(player1, new IronManArmoredAvenger());
+        Permanent equipped = addCreatureReady(player1, new GrizzlyBears());
+        Permanent friendlyAuraCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingAuraCreature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player2, new LeoninScimitar());
+        equipment.setAttachedTo(equipped.getId());
+        Permanent friendlyAura = harness.addToBattlefieldAndReturn(player1, new HolyStrength());
+        friendlyAura.setAttachedTo(friendlyAuraCreature.getId());
+        Permanent opposingAura = harness.addToBattlefieldAndReturn(player2, new HolyStrength());
+        opposingAura.setAttachedTo(opposingAuraCreature.getId());
+
+        declareAttackers(player1, List.of(0, 1, 2, 3));
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, equipped, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, friendlyAuraCreature, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opposingAuraCreature, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The set of creatures granted flying stays fixed after resolution")
+    void flyingPersistsAfterModificationAndAttackingEnd() {
+        addCreatureReady(player1, new IronManArmoredAvenger());
+        Permanent modified = addCreatureReady(player1, new GrizzlyBears());
+        Permanent unmodified = addCreatureReady(player1, new GrizzlyBears());
+        modified.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        declareAttackers(player1, List.of(0, 1, 2));
+        resolveAllTriggers();
+        modified.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        modified.setAttacking(false);
+        unmodified.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        assertThat(gqs.hasKeyword(gd, modified, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, unmodified, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Modification is checked when the attack trigger resolves")
+    void modificationIsCheckedAtResolution() {
+        addCreatureReady(player1, new IronManArmoredAvenger());
+        Permanent losesCounter = addCreatureReady(player1, new GrizzlyBears());
+        Permanent gainsCounter = addCreatureReady(player1, new GrizzlyBears());
+        losesCounter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(player1, List.of(0, 1, 2)));
+        assertThat(gd.stack).isNotEmpty();
+        losesCounter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+        gainsCounter.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        resolveAllTriggers();
+
+        assertThat(gqs.hasKeyword(gd, losesCounter, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, gainsCounter, Keyword.FLYING)).isTrue();
+    }
+
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2;
         harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.DRAW);
     }
 }
