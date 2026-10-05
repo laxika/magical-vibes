@@ -2,10 +2,11 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.b.BirdsOfParadise;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HealingSalve;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -15,11 +16,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OrcishArtillery.class, BirdsOfParadise.class, GrizzlyBears.class})
+@CardUsed({OrcishArtillery.class, BirdsOfParadise.class, GrizzlyBears.class, JaceBeleren.class,
+        HealingSalve.class})
 class OrcishArtilleryTest extends BaseCardTest {
 
     // ===== Activating ability =====
@@ -114,12 +117,11 @@ class OrcishArtilleryTest extends BaseCardTest {
     @DisplayName("Deals 2 damage to target creature, destroying a 0/1, and 3 damage to controller")
     void deals2DamageDestroying1ToughnessAnd3ToController() {
         harness.setLife(player1, 20);
-        harness.addToBattlefield(player2, new BirdsOfParadise());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new BirdsOfParadise());
 
         addCreatureReady(player1, new OrcishArtillery());
 
-        UUID targetId = harness.getPermanentId(player2, "Birds of Paradise");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Birds of Paradise");
@@ -131,12 +133,11 @@ class OrcishArtilleryTest extends BaseCardTest {
     @DisplayName("Deals 2 damage to target creature, 2/2 creature is destroyed, and 3 damage to controller")
     void deals2DamageDestroying2ToughnessAnd3ToController() {
         harness.setLife(player1, 20);
-        harness.addToBattlefield(player2, new GrizzlyBears());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         addCreatureReady(player1, new OrcishArtillery());
 
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
-        harness.activateAbility(player1, 0, null, targetId);
+        harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
@@ -218,10 +219,73 @@ class OrcishArtilleryTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
         // Controller does NOT take damage when ability fizzles
         harness.assertLife(player1, 20);
     }
 
+    @Test
+    @DisplayName("Can damage itself as a creature while also damaging its controller")
+    void canTargetItsOwnPermanent() {
+        harness.setLife(player1, 20);
+        Permanent artillery = addCreatureReady(player1, new OrcishArtillery());
+
+        harness.activateAbility(player1, 0, null, artillery.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Orcish Artillery");
+        assertThat(artillery.getMarkedDamage()).isEqualTo(2);
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("The activating player takes the controller damage when player two activates")
+    void opponentControllerTakesThreeDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addCreatureReady(player2, new OrcishArtillery());
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("Preventing all target damage does not prevent the controller damage")
+    void preventedTargetDamageStillDealsControllerDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new OrcishArtillery());
+        harness.setHand(player1, List.of(new HealingSalve()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.assertLife(player1, 17);
+    }
+
+    @Test
+    @DisplayName("The controller damage can be prevented without preventing target damage")
+    void controllerDamageCanBePrevented() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        addCreatureReady(player1, new OrcishArtillery());
+        harness.setHand(player1, List.of(new HealingSalve()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castInstant(player1, 0, 1, player1.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
+    }
 }
 
