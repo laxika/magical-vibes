@@ -22,8 +22,7 @@ class MyrRetrieverTest extends BaseCardTest {
     private void destroyMyrRetriever(Permanent myrRetriever) {
         harness.setHand(player1, List.of(new ElectrostaticBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, myrRetriever.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, myrRetriever.getId());
     }
 
     @Test
@@ -47,6 +46,27 @@ class MyrRetrieverTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Another Myr Retriever is a legal target despite having the same name")
+    void returnsAnotherMyrRetriever() {
+        Permanent myrRetriever = harness.addToBattlefieldAndReturn(player1, new MyrRetriever());
+        Card otherRetriever = new MyrRetriever();
+        harness.setGraveyard(player1, List.of(otherRetriever));
+
+        destroyMyrRetriever(myrRetriever);
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(otherRetriever.getId());
+
+        harness.handleMultipleCardsChosen(player1, List.of(otherRetriever.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(otherRetriever);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(myrRetriever.getCard())
+                .doesNotContain(otherRetriever);
+    }
+
+    @Test
     @DisplayName("The death trigger excludes Myr Retriever itself")
     void excludesItselfFromTargets() {
         Permanent myrRetriever = harness.addToBattlefieldAndReturn(player1, new MyrRetriever());
@@ -58,7 +78,7 @@ class MyrRetrieverTest extends BaseCardTest {
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice.validCardIds()).contains(artifact.getId());
-        assertThat(choice.validCardIds()).doesNotContain(myrRetriever.getId());
+        assertThat(choice.validCardIds()).doesNotContain(myrRetriever.getCard().getId());
     }
 
     @Test
