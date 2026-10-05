@@ -57,8 +57,7 @@ class LifespinnerTest extends BaseCardTest {
         }
         Permanent nonSpirit = addCreatureReady(player1, new FrostOgre());
 
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(
+        harness.setLibrary(player1, List.of(
                 new KodamaOfTheCenterTree(),
                 new KamiOfFalseHope(),
                 new IwamoriOfTheOpenFist(),
@@ -92,5 +91,66 @@ class LifespinnerTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         harness.assertOnBattlefield(player1, "Kodama of the Center Tree");
+    }
+
+    @Test
+    @DisplayName("Lifespinner can sacrifice itself and its ability still resolves")
+    void canSacrificeItself() {
+        Permanent lifespinner = addCreatureReady(player1, new Lifespinner());
+        Permanent first = addSpirit();
+        Permanent second = addSpirit();
+        harness.setLibrary(player1, List.of(new KodamaOfTheCenterTree()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, lifespinner.getId());
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+
+        harness.assertInGraveyard(player1, "Lifespinner");
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Kodama of the Center Tree");
+        harness.assertNotOnBattlefield(player1, "Lifespinner");
+    }
+
+    @Test
+    @DisplayName("Opponent's Spirits cannot help pay the sacrifice cost")
+    void cannotSacrificeOpponentsSpirits() {
+        Permanent lifespinner = addCreatureReady(player1, new Lifespinner());
+        addSpirit();
+        addCreatureReady(player2, new GnarledMass());
+        addCreatureReady(player2, new GnarledMass());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough permanents to sacrifice");
+        assertThat(lifespinner.isTapped()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("May fail to find even with a legendary Spirit in the library")
+    void canDeclineToFind() {
+        addCreatureReady(player1, new Lifespinner());
+        List<UUID> spiritIds = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            spiritIds.add(addSpirit().getId());
+        }
+        harness.setLibrary(player1, List.of(new KodamaOfTheCenterTree(), new FrostOgre()));
+
+        harness.activateAbility(player1, 0, null, null);
+        for (UUID spiritId : spiritIds) {
+            harness.handlePermanentChosen(player1, spiritId);
+        }
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, -1);
+
+        harness.assertNotOnBattlefield(player1, "Kodama of the Center Tree");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
     }
 }
