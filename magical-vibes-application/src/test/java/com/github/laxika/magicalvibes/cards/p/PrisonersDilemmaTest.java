@@ -51,6 +51,66 @@ class PrisonersDilemmaTest extends BaseCardTest {
     }
 
     @Test
+    void multipleOpponentsChoosingSilenceEachTakeFourDamage() {
+        Player player3 = addThirdPlayer();
+        castFromHand();
+
+        choose(player2, ChoiceContext.PrisonersDilemmaChoice.SILENCE);
+        choose(player3, ChoiceContext.PrisonersDilemmaChoice.SILENCE);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 16);
+        harness.assertLife(player3, 16);
+        harness.assertInGraveyard(player1, "Prisoner's Dilemma");
+    }
+
+    @Test
+    void multipleOpponentsChoosingSnitchEachTakeEightDamage() {
+        Player player3 = addThirdPlayer();
+        castFromHand();
+
+        choose(player2, ChoiceContext.PrisonersDilemmaChoice.SNITCH);
+        choose(player3, ChoiceContext.PrisonersDilemmaChoice.SNITCH);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 12);
+        harness.assertLife(player3, 12);
+    }
+
+    @Test
+    void mixedChoicesAlsoDamageTheLaterSilenceChooser() {
+        Player player3 = addThirdPlayer();
+        castFromHand();
+
+        choose(player2, ChoiceContext.PrisonersDilemmaChoice.SNITCH);
+        choose(player3, ChoiceContext.PrisonersDilemmaChoice.SILENCE);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertLife(player3, 8);
+    }
+
+    @Test
+    void choicesStaySecretAndDamageWaitsUntilEveryOpponentHasChosen() {
+        Player player3 = addThirdPlayer();
+        castFromHand();
+
+        choose(player2, ChoiceContext.PrisonersDilemmaChoice.SILENCE);
+
+        assertThat(gameLogContains("reveals the choices")).isFalse();
+        assertThat(gameLogContains("Bob chose silence")).isFalse();
+        harness.assertLife(player2, 20);
+        harness.assertLife(player3, 20);
+
+        choose(player3, ChoiceContext.PrisonersDilemmaChoice.SNITCH);
+
+        assertThat(gameLogContains("Bob chose silence")).isTrue();
+        assertThat(gameLogContains("Charlie chose snitch")).isTrue();
+        harness.assertLife(player2, 8);
+        harness.assertLife(player3, 20);
+    }
+
+    @Test
     void flashbackUsesItsAlternateCostAndExilesTheSpell() {
         PrisonersDilemma dilemma = new PrisonersDilemma();
         harness.setGraveyard(player1, List.of(dilemma));
@@ -66,20 +126,13 @@ class PrisonersDilemmaTest extends BaseCardTest {
     }
 
     private void castFromHand() {
-        harness.setHand(player1, List.of(new PrisonersDilemma()));
-        addMana();
-        harness.castSorcery(player1, 0);
+        harness.castFromHand(player1, new PrisonersDilemma(), "{3}{R}{R}");
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
     }
 
     private void choose(Player player, String choice) {
         harness.handleListChoice(player, choice);
-    }
-
-    private void addMana() {
-        harness.addMana(player1, ManaColor.RED, 2);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
     }
 
     private void addFlashbackMana() {
