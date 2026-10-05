@@ -40,7 +40,6 @@ class KrarkClanGruntTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(grunt.getPowerModifier()).isZero();
@@ -90,5 +89,46 @@ class KrarkClanGruntTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Welding Jar");
         assertThat(grunt.getPowerModifier()).isZero();
         assertThat(gqs.hasKeyword(gd, grunt, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The artifact is sacrificed as a cost before the boost resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent grunt = harness.addToBattlefieldAndReturn(player1, new KrarkClanGrunt());
+        Permanent otherGrunt = harness.addToBattlefieldAndReturn(player1, new KrarkClanGrunt());
+        harness.addToBattlefield(player1, new WeldingJar());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Welding Jar");
+        harness.assertInGraveyard(player1, "Welding Jar");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(grunt.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, grunt, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(grunt.getPowerModifier()).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, grunt, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(otherGrunt.getPowerModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, otherGrunt, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Grunt can sacrifice a tapped artifact")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent grunt = harness.addToBattlefieldAndReturn(player1, new KrarkClanGrunt());
+        grunt.setTapped(true);
+        grunt.setSummoningSick(true);
+        Permanent jar = harness.addToBattlefieldAndReturn(player1, new WeldingJar());
+        jar.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Welding Jar");
+        assertThat(grunt.getPowerModifier()).isEqualTo(1);
+        assertThat(grunt.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, grunt, Keyword.FIRST_STRIKE)).isTrue();
     }
 }
