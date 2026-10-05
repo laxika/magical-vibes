@@ -64,4 +64,38 @@ class PaleBearsTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("An Island controlled only by the attacker does not prevent blocking Pale Bears")
+    void canBeBlockedWhenOnlyAttackerControlsIsland() {
+        Permanent attacker = addCreatureReady(player1, new PaleBears());
+        harness.addToBattlefield(player1, new Island());
+        Permanent blocker = addCreatureReady(player2, new PaleBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped Island still prevents blocking Pale Bears")
+    void cannotBeBlockedWithTappedIsland() {
+        Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
+        island.tap();
+        Permanent attacker = addCreatureReady(player1, new PaleBears());
+        Permanent blocker = addCreatureReady(player2, new PaleBears());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
 }
