@@ -1,19 +1,20 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TimberpackWolf;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.f.FieryImpulse;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.m.MacabreWaltz;
+import com.github.laxika.magicalvibes.cards.m.MantleOfWebs;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +22,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NissasPilgrimage.class, Forest.class, Plains.class, Island.class,
+        TimberpackWolf.class, FieryImpulse.class, MacabreWaltz.class, MantleOfWebs.class})
 class NissasPilgrimageTest extends BaseCardTest {
 
     @Test
@@ -50,8 +53,8 @@ class NissasPilgrimageTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -66,22 +69,21 @@ class NissasPilgrimageTest extends BaseCardTest {
     void spellMasteryThreeCards() {
         setupAndCast();
         setupLibrary();
-        harness.getGameData().playerGraveyards.get(player1.getId())
-                .addAll(List.of(new LightningBolt(), new LightningBolt()));
+        harness.setGraveyard(player1, List.of(new FieryImpulse(), new FieryImpulse()));
 
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         int handBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.HAND);
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
@@ -103,7 +105,7 @@ class NissasPilgrimageTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int battlefieldBefore = gd.playerBattlefields.get(player1.getId()).size();
 
-        harness.getGameService().handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
@@ -114,14 +116,130 @@ class NissasPilgrimageTest extends BaseCardTest {
     @DisplayName("A library with only non-Forest basics prompts no search")
     void noForestsNoPrompt() {
         setupAndCast();
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Plains(), new Island(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Plains(), new Island(), new TimberpackWolf()));
 
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("One prior sorcery does not count the resolving Pilgrimage for spell mastery")
+    void resolvingSpellDoesNotCountItself() {
+        setupAndCast();
+        setupLibrary();
+        harness.setGraveyard(player1, List.of(new MacabreWaltz()));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Nissa's Pilgrimage");
+    }
+
+    @Test
+    @DisplayName("An instant and a sorcery added after casting enable spell mastery")
+    void mixedSpellTypesCountAtResolution() {
+        setupAndCast();
+        setupLibrary();
+        harness.setGraveyard(player1, List.of(new FieryImpulse(), new MacabreWaltz()));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Nonspell cards and opposing graveyards do not enable spell mastery")
+    void onlyControllersInstantsAndSorceriesCount() {
+        setupAndCast();
+        setupLibrary();
+        harness.setGraveyard(player1,
+                List.of(new FieryImpulse(), new TimberpackWolf(), new Forest(), new MantleOfWebs()));
+        harness.setGraveyard(player2, List.of(new FieryImpulse(), new MacabreWaltz()));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("A single available Forest enters tapped with nothing put into hand")
+    void onlyOneForestAvailable() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new Forest(), new Plains()));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement().satisfies(p -> assertThat(p.isTapped()).isTrue());
+        assertThat(gd.playerDecks.get(player1.getId())).singleElement().isInstanceOf(Plains.class);
+    }
+
+    @Test
+    @DisplayName("The hand search may be declined after finding one Forest")
+    void mayFindOnlyOneForest() {
+        setupAndCast();
+        setupLibrary();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(4);
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Nissa's Pilgrimage");
+    }
+
+    @Test
+    @DisplayName("Spell mastery still allows stopping after finding two Forests")
+    void spellMasteryMayFindOnlyTwoForests() {
+        setupAndCast();
+        setupLibrary();
+        harness.setGraveyard(player1, List.of(new FieryImpulse(), new MacabreWaltz()));
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player1, "Nissa's Pilgrimage");
+    }
+
+    @Test
+    @DisplayName("An empty library completes resolution without prompting")
+    void emptyLibraryCompletesResolution() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+        harness.assertInGraveyard(player1, "Nissa's Pilgrimage");
     }
 
     private void setupAndCast() {
@@ -131,8 +249,7 @@ class NissasPilgrimageTest extends BaseCardTest {
     }
 
     private void setupLibrary() {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(List.of(new Forest(), new Forest(), new Forest(), new Plains(), new GrizzlyBears()));
+        harness.setLibrary(player1,
+                List.of(new Forest(), new Forest(), new Forest(), new Plains(), new TimberpackWolf()));
     }
 }
