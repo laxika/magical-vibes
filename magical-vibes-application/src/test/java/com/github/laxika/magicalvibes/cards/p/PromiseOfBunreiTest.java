@@ -81,6 +81,42 @@ class PromiseOfBunreiTest extends BaseCardTest {
                 .hasSize(4);
     }
 
+    @Test
+    @DisplayName("A Spirit token dying triggers another Promise of Bunrei")
+    void tokenDeathCreatesFourMoreSpirits() {
+        harness.addToBattlefield(player1, new PromiseOfBunrei());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HandOfHonor());
+        putIntoGraveyard(creature);
+        harness.passBothPriorities();
+
+        Permanent spirit = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Spirit"))
+                .findFirst().orElseThrow();
+        harness.addToBattlefield(player1, new PromiseOfBunrei());
+        putIntoGraveyard(spirit);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Promise of Bunrei");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Spirit"))
+                .hasSize(7);
+    }
+
+    @Test
+    @DisplayName("Each Promise sacrifices itself and creates its own four Spirits")
+    void multiplePromisesEachCreateFourSpirits() {
+        harness.addToBattlefield(player1, new PromiseOfBunrei());
+        harness.addToBattlefield(player1, new PromiseOfBunrei());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new HandOfHonor());
+        putIntoGraveyard(creature);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Promise of Bunrei");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Spirit"))
+                .hasSize(8);
+    }
     private void putIntoGraveyard(Permanent permanent) {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, permanent));
     }
