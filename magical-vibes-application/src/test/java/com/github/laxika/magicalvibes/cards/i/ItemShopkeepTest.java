@@ -62,4 +62,50 @@ class ItemShopkeepTest extends BaseCardTest {
 
         assertThat(gqs.hasKeyword(gd, attacker, Keyword.MENACE)).isFalse();
     }
+
+    @Test
+    @DisplayName("Item Shopkeep can target itself when attacking and equipped")
+    void canTargetItself() {
+        Permanent shopkeep = addCreatureReady(player1, new ItemShopkeep());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        equipment.setAttachedTo(shopkeep.getId());
+
+        declareAttackers(List.of(0));
+        harness.handlePermanentChosen(player1, shopkeep.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, shopkeep, Keyword.MENACE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature that loses its Equipment before resolution is an illegal target")
+    void losingEquipmentBeforeResolutionInvalidatesTarget() {
+        addCreatureReady(player1, new ItemShopkeep());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        equipment.setAttachedTo(attacker.getId());
+
+        declareAttackers(List.of(1));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        equipment.setAttachedTo(null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.MENACE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Losing Equipment after resolution does not remove granted menace")
+    void losingEquipmentAfterResolutionKeepsMenace() {
+        addCreatureReady(player1, new ItemShopkeep());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        equipment.setAttachedTo(attacker.getId());
+
+        declareAttackers(List.of(1));
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+        equipment.setAttachedTo(null);
+
+        assertThat(gqs.hasKeyword(gd, attacker, Keyword.MENACE)).isTrue();
+    }
 }
