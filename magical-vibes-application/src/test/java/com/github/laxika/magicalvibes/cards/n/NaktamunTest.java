@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -103,6 +105,75 @@ class NaktamunTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(inHand);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onTop);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Embalm exiles its source before resolution and creates a white Zombie copy")
+    void embalmPaysExileCostAndTransformsToken() {
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateGraveyardAbility(player1, 0);
+
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(bears.getId())
+                && entry.ownerId().equals(player1.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement().satisfies(token -> {
+            assertThat(token.getCard().isToken()).isTrue();
+            assertThat(token.getCard().getColors()).containsExactly(CardColor.WHITE);
+            assertThat(token.getCard().getSubtypes()).contains(CardSubtype.BEAR, CardSubtype.ZOMBIE);
+            assertThat(token.getCard().getManaCost()).isEmpty();
+        });
+    }
+
+    @Test
+    @DisplayName("Granted embalm cannot be activated outside a main phase")
+    void embalmRequiresSorceryTiming() {
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Leaving Naktamun removes its granted embalm ability")
+    void embalmGrantEndsWhenPlaneLeaves() {
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        gd.planechase.faceUp.clear();
+
+        assertThatThrownBy(() -> harness.activateGraveyardAbility(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(bears);
+    }
+
+    @Test
+    @DisplayName("Chaos does not draw a card when no card can be discarded")
+    void chaosWithEmptyHandDoesNotDraw() {
+        Card onTop = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(onTop));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(onTop);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
