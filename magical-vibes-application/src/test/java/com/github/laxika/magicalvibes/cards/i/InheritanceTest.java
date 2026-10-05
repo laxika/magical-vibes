@@ -18,10 +18,36 @@ import static org.assertj.core.api.Assertions.assertThat;
 class InheritanceTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Two copies trigger independently and each requires its own payment")
+    void twoCopiesRequireSeparatePayments() {
+        harness.addToBattlefield(player1, new Inheritance());
+        harness.addToBattlefield(player1, new Inheritance());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     void cannotDrawWithoutEnoughMana() {
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new Inheritance()));
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        harness.addToBattlefield(player1, new Inheritance());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -40,9 +66,8 @@ class InheritanceTest extends BaseCardTest {
     @Test
     @DisplayName("Paying {3} when a creature dies draws a card")
     void payingDrawsACard() {
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new Inheritance()));
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        harness.addToBattlefield(player1, new Inheritance());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -62,9 +87,8 @@ class InheritanceTest extends BaseCardTest {
     @Test
     @DisplayName("Declining to pay draws nothing")
     void decliningDrawsNothing() {
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new Inheritance()));
-        Permanent bears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player1.getId()).add(bears);
+        harness.addToBattlefield(player1, new Inheritance());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -84,9 +108,8 @@ class InheritanceTest extends BaseCardTest {
     @Test
     @DisplayName("Triggers when an opponent's creature dies too")
     void triggersOnOpponentCreatureDeath() {
-        gd.playerBattlefields.get(player1.getId()).add(new Permanent(new Inheritance()));
-        Permanent opponentBears = new Permanent(new GrizzlyBears());
-        gd.playerBattlefields.get(player2.getId()).add(opponentBears);
+        harness.addToBattlefield(player1, new Inheritance());
+        Permanent opponentBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
