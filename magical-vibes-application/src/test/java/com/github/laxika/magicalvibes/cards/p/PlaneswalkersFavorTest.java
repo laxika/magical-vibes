@@ -36,7 +36,6 @@ class PlaneswalkersFavorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(revealed);
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower);
@@ -144,7 +143,7 @@ class PlaneswalkersFavorTest extends BaseCardTest {
     }
 
     @Test
-    void cannotBeActivatedOutsideSorcerySpeed() {
+    void canBeActivatedDuringUpkeep() {
         harness.addToBattlefieldAndReturn(player1, new PlaneswalkersFavor());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new StoneKavu());
         harness.setHand(player2, List.of(new Gainsay()));
@@ -152,10 +151,71 @@ class PlaneswalkersFavorTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.UPKEEP);
-        harness.clearPriorityPassed();
+        int originalPower = gqs.getEffectivePower(gd, target);
+        int originalToughness = gqs.getEffectiveToughness(gd, target);
 
-        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(
-                player1, 0, 0, List.of(player2.getId(), target.getId())))
-                .isInstanceOf(IllegalStateException.class);
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId(), target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(originalToughness + 2);
+    }
+
+    @Test
+    void canBeActivatedDuringOpponentsTurn() {
+        harness.addToBattlefield(player1, new PlaneswalkersFavor());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new StoneKavu());
+        harness.setHand(player2, List.of(new Gainsay()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        int originalPower = gqs.getEffectivePower(gd, target);
+        int originalToughness = gqs.getEffectiveToughness(gd, target);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId(), target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(originalToughness + 2);
+    }
+
+    @Test
+    void canActivateAgainInResponseAndBoostsStack() {
+        harness.addToBattlefield(player1, new PlaneswalkersFavor());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new StoneKavu());
+        Gainsay revealed = new Gainsay();
+        harness.setHand(player2, List.of(revealed));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        int originalPower = gqs.getEffectivePower(gd, target);
+        int originalToughness = gqs.getEffectiveToughness(gd, target);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId(), target.getId()));
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId(), target.getId()));
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower + 4);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(originalToughness + 4);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(revealed);
+    }
+
+    @Test
+    void stillRevealsWhenCreatureTargetLeavesBattlefield() {
+        harness.addToBattlefield(player1, new PlaneswalkersFavor());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new StoneKavu());
+        Gainsay revealed = new Gainsay();
+        harness.setHand(player2, List.of(revealed));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 0, List.of(player2.getId(), target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        harness.setGraveyard(player1, List.of(target.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("reveals Gainsay at random.")).isTrue();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(revealed);
+        assertThat(gd.stack).isEmpty();
     }
 }
