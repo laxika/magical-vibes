@@ -4,9 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextUpkeep;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,8 +27,7 @@ class MindRavelTest extends BaseCardTest {
     void targetDiscardsAndSchedulesDraw() {
         prepare();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
@@ -50,16 +47,13 @@ class MindRavelTest extends BaseCardTest {
     void drawResolvesAtNextUpkeep() {
         prepare();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player2, 0);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
         int deckBefore = gd.playerDecks.get(player1.getId()).size();
 
-        StepTriggerService stepTriggerService = GameTestEngineContext.get().getBean(StepTriggerService.class);
-        gd.activePlayerId = player2.getId();
-        harness.inMutationScope(() -> stepTriggerService.handleUpkeepTriggers(gd));
+        advanceToUpkeep(player2);
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -74,8 +68,7 @@ class MindRavelTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MindRavel(), discardedCard));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
@@ -90,8 +83,7 @@ class MindRavelTest extends BaseCardTest {
     void delayedDrawWaitsForPriority() {
         prepare();
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleCardChosen(player2, 0);
 
         int handBefore = gd.playerHands.get(player1.getId()).size();
@@ -117,12 +109,54 @@ class MindRavelTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
         harness.setHand(player2, List.of());
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The delayed draw triggers only once, even after another upkeep")
+    void delayedDrawTriggersOnlyOnce() {
+        prepare();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        var chosenCard = gd.playerHands.get(player2.getId()).get(1);
+        harness.handleCardChosen(player2, 1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(chosenCard);
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(chosenCard);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        int deckAfterDraw = gd.playerDecks.get(player1.getId()).size();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckAfterDraw);
+    }
+
+    @Test
+    @DisplayName("The caster draws when their own extra turn is the next turn")
+    void delayedDrawOnCastersNextTurn() {
+        prepare();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 0);
+
+        int deckBefore = gd.playerDecks.get(player1.getId()).size();
+        gd.turnNumber++;
+        advanceToUpkeep(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
+        assertThat(gd.getDelayedActions(DrawCardsAtNextUpkeep.class)).isEmpty();
     }
 }
