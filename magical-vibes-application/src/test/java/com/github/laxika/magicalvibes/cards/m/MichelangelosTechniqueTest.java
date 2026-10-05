@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,8 +35,7 @@ class MichelangelosTechniqueTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MichelangelosTechnique()));
         addMana(4, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         PendingInteraction.LibraryRevealChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
@@ -64,8 +64,7 @@ class MichelangelosTechniqueTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MichelangelosTechnique()));
         addMana(4, 1);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
                 player1, List.of(grizzlyBears.getId(), serraAngel.getId())))
@@ -79,7 +78,7 @@ class MichelangelosTechniqueTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Sneak returns an unblocked attacker and enters tapped and attacking")
+    @DisplayName("Sneak returns an unblocked attacker to pay the alternate cost")
     void sneakSwapsTheUnblockedAttacker() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
         attacker.setAttacking(true);
@@ -99,13 +98,115 @@ class MichelangelosTechniqueTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
     }
 
+    @Test
+    void mayChooseNoCreaturesFromAShortLibrary() {
+        Card bears = new GrizzlyBears();
+        Card forest = new Forest();
+        setLibrary(bears, forest);
+        harness.setHand(player1, List.of(new MichelangelosTechnique()));
+        addMana(4, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(bears, forest);
+        harness.assertInGraveyard(player1, "Michelangelo's Technique");
+    }
+
+    @Test
+    void onlyLooksAtTopEightAndLeavesUntouchedCardsAboveTheRemainder() {
+        Card bears = new GrizzlyBears();
+        List<Card> lookedAt = List.of(bears, new Forest(), new Forest(), new Forest(),
+                new Forest(), new Forest(), new Forest(), new Forest());
+        Card ninth = new SerraAngel();
+        Card tenth = new LlanowarElves();
+        List<Card> library = new ArrayList<>(lookedAt);
+        library.addAll(List.of(ninth, tenth));
+        harness.setLibrary(player1, library);
+        harness.setHand(player1, List.of(new MichelangelosTechnique()));
+        addMana(4, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(ninth.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(9).startsWith(ninth, tenth);
+        assertThat(gd.playerDecks.get(player1.getId()).subList(2, 9))
+                .containsExactlyInAnyOrderElementsOf(lookedAt.subList(1, 8));
+        Permanent entered = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(bears.getId()))
+                .findFirst().orElseThrow();
+        assertThat(entered.isTapped()).isFalse();
+        assertThat(entered.isAttacking()).isFalse();
+    }
+
+    @Test
+    void rejectsMoreThanTwoCreaturesEvenWithinManaValueLimit() {
+        Card first = new LlanowarElves();
+        Card second = new LlanowarElves();
+        Card third = new LlanowarElves();
+        setLibrary(first, second, third);
+        harness.setHand(player1, List.of(new MichelangelosTechnique()));
+        addMana(4, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+                List.of(first.getId(), second.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(third);
+    }
+
+    @Test
+    void resolvesWithAnEmptyLibrary() {
+        setLibrary();
+        harness.setHand(player1, List.of(new MichelangelosTechnique()));
+        addMana(4, 1);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertInGraveyard(player1, "Michelangelo's Technique");
+    }
+
+    @Test
+    void creaturesFoundByASneakedSorceryEnterUntappedAndNotAttacking() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+        Card elves = new LlanowarElves();
+        setLibrary(elves);
+        harness.setHand(player1, List.of(new MichelangelosTechnique()));
+        addMana(3, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.castWithAlternateCost(player1, 0, List.of(attacker.getId()));
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(elves.getId()));
+
+        Permanent entered = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(elves.getId()))
+                .findFirst().orElseThrow();
+        assertThat(entered.isTapped()).isFalse();
+        assertThat(entered.isAttacking()).isFalse();
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Michelangelo's Technique");
+    }
+
     private void addMana(int colorless, int green) {
         harness.addMana(player1, ManaColor.COLORLESS, colorless);
         harness.addMana(player1, ManaColor.GREEN, green);
     }
 
     private void setLibrary(Card... cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(List.of(cards));
+        harness.setLibrary(player1, List.of(cards));
     }
 }
