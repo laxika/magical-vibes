@@ -45,6 +45,7 @@ class KamiOfThePalaceFieldsTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player1, "Kami of the Painted Road");
         harness.assertInGraveyard(player1, "Sakura-Tribe Elder");
@@ -53,7 +54,7 @@ class KamiOfThePalaceFieldsTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Soulshift may be declined")
+    @DisplayName("Soulshift may be declined on resolution after choosing a target")
     void soulshiftCanBeDeclined() {
         harness.addToBattlefield(player1, new KamiOfThePalaceFields());
         Card eligible = new KamiOfThePaintedRoad();
@@ -61,11 +62,44 @@ class KamiOfThePalaceFieldsTest extends BaseCardTest {
 
         killKami();
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInGraveyard(player1, "Kami of the Painted Road");
         harness.assertNotInHand(player1, "Kami of the Painted Road");
+    }
+
+    @Test
+    @DisplayName("Soulshift requires a target when an eligible Spirit is available")
+    void soulshiftRequiresTarget() {
+        harness.addToBattlefield(player1, new KamiOfThePalaceFields());
+        harness.setGraveyard(player1, List.of(new KamiOfThePaintedRoad()));
+
+        killKami();
+
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.maxCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Soulshift cannot return a target that left the graveyard before resolution")
+    void soulshiftDoesNotReturnRemovedTarget() {
+        harness.addToBattlefield(player1, new KamiOfThePalaceFields());
+        Card eligible = new KamiOfThePaintedRoad();
+        harness.setGraveyard(player1, List.of(eligible));
+
+        killKami();
+        harness.handleMultipleCardsChosen(player1, List.of(eligible.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(eligible));
+        harness.passBothPriorities();
+
+        harness.assertNotInHand(player1, "Kami of the Painted Road");
+        harness.assertNotInGraveyard(player1, "Kami of the Painted Road");
     }
 
     @Test
