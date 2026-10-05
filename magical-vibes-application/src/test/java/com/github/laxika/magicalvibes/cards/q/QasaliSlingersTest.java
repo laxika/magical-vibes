@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.q;
 
+import com.github.laxika.magicalvibes.cards.c.Conspiracy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IngeniousLeonin;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
-import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,13 +13,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({QasaliSlingers.class, IngeniousLeonin.class, GrizzlyBears.class,
-        LeoninScimitar.class, RuleOfLaw.class})
+        LeoninScimitar.class, RuleOfLaw.class, Conspiracy.class})
 class QasaliSlingersTest extends BaseCardTest {
 
     @Test
@@ -65,10 +64,7 @@ class QasaliSlingersTest extends BaseCardTest {
     void nonCatEntryDoesNotTrigger() {
         addSlingers();
         harness.addToBattlefield(player2, new LeoninScimitar());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -79,9 +75,11 @@ class QasaliSlingersTest extends BaseCardTest {
     @DisplayName("The trigger cannot target a creature")
     void triggerCannotTargetCreature() {
         addSlingers();
+        harness.addToBattlefield(player2, new LeoninScimitar());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castCat();
 
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -90,14 +88,61 @@ class QasaliSlingersTest extends BaseCardTest {
     @DisplayName("Qasali Slingers triggers when it enters")
     void selfEntryTriggers() {
         harness.addToBattlefield(player2, new LeoninScimitar());
-        harness.setHand(player1, java.util.List.of(new QasaliSlingers()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new QasaliSlingers(), "{4}{G}");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+    }
+
+    @Test
+    void selfEntryTriggersEvenWhenConspiracyMakesSlingersANonCat() {
+        Permanent conspiracy = harness.addToBattlefieldAndReturn(player1, new Conspiracy());
+        conspiracy.setChosenSubtype(CardSubtype.GOBLIN);
+        harness.addToBattlefield(player2, new LeoninScimitar());
+
+        harness.castFromHand(player1, new QasaliSlingers(), "{4}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        chooseTarget("Leonin Scimitar");
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertInGraveyard(player2, "Leonin Scimitar");
+    }
+
+    @Test
+    void opponentCatEntryDoesNotTrigger() {
+        addSlingers();
+        harness.addToBattlefield(player2, new LeoninScimitar());
+
+        harness.enterBattlefieldAndReturn(player2, new IngeniousLeonin());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Leonin Scimitar");
+    }
+
+    @Test
+    void mayDestroyAnArtifactYouControl() {
+        addSlingers();
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+
+        castCat();
+        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+    }
+
+    @Test
+    void catEntryWithNoLegalTargetsLeavesNoInteractionOrAbilityOnStack() {
+        addSlingers();
+
+        castCat();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Ingenious Leonin");
     }
 
     private void addSlingers() {
@@ -105,10 +150,7 @@ class QasaliSlingersTest extends BaseCardTest {
     }
 
     private void castCat() {
-        harness.setHand(player1, List.of(new IngeniousLeonin()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new IngeniousLeonin(), "{4}{W}");
         harness.passBothPriorities();
     }
 
