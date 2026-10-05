@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -84,6 +86,37 @@ class LokisScepterTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("ETB can untap your own creature without removing its existing subtype")
+    void canTargetOwnCreature() {
+        Permanent target = addCreatureReady(player1, new GrizzlyBears());
+        target.tap();
+        castScepter(target.getId());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(target.isTapped()).isFalse();
+        assertThat(target.hasKeyword(Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.BEAR)).isTrue();
+        assertThat(gqs.hasEffectiveSubtype(gd, target, CardSubtype.VILLAIN)).isTrue();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
+    @DisplayName("A newly entered Scepter can produce each color without using the stack")
+    void newlyEnteredScepterProducesAnyColor(ManaColor color) {
+        harness.addToBattlefield(player1, new LokisScepter());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, color.name());
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(color)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+    }
     private void castScepter(java.util.UUID targetId) {
         harness.setHand(player1, java.util.List.of(new LokisScepter()));
         harness.addMana(player1, ManaColor.RED, 1);
