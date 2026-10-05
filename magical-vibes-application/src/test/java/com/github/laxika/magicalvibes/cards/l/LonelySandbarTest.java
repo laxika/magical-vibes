@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -30,12 +29,13 @@ class LonelySandbarTest extends BaseCardTest {
     @Test
     @DisplayName("Tapping produces one blue mana")
     void tappingProducesBlueMana() {
-        Permanent land = addLandReady(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new LonelySandbar());
 
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(land.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
@@ -67,9 +67,40 @@ class LonelySandbarTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
-    private Permanent addLandReady(Player player) {
-        Permanent land = harness.addToBattlefieldAndReturn(player, new LonelySandbar());
-        land.setSummoningSick(false);
-        return land;
+    @Test
+    @DisplayName("A land that entered tapped cannot produce mana immediately")
+    void tappedLandCannotProduceMana() {
+        harness.setHand(player1, List.of(new LonelySandbar()));
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cycling pays mana and discards before its draw resolves")
+    void cyclingPaysCostsBeforeDrawing() {
+        LonelySandbar sandbar = new LonelySandbar();
+        GlorySeeker drawnCard = new GlorySeeker();
+        harness.setHand(player1, List.of(sandbar));
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(sandbar);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 }
