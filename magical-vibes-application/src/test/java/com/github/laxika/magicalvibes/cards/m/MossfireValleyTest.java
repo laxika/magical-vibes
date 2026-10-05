@@ -66,4 +66,24 @@ class MossfireValleyTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
         assertThat(valley.isTapped()).isTrue();
     }
+
+    @Test
+    @DisplayName("Mana produced by one Mossfire Valley can pay for another Valley's activation")
+    void producedManaCanFundAnotherValley() {
+        Permanent firstValley = harness.addToBattlefieldAndReturn(player1, new MossfireValley());
+        Permanent secondValley = harness.addToBattlefieldAndReturn(player1, new MossfireValley());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isBetween(1, 2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isBetween(1, 2);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(firstValley.isTapped()).isTrue();
+        assertThat(secondValley.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
