@@ -134,4 +134,54 @@ class LashknifeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, nonCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("Can tap the summoning-sick target itself to pay the alternate cost")
+    void canTapSummoningSickTargetForAlternateCost() {
+        harness.addToBattlefield(player1, new Plains());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SilkenfistFighter());
+        harness.setHand(player1, List.of(new Lashknife()));
+
+        harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of(target.getId()));
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(findPermanent(player1, "Lashknife").getAttachedTo()).isEqualTo(target.getId());
+    }
+
+    @Test
+    @DisplayName("Cannot tap an opponent's creature to pay the alternate cost")
+    void cannotTapOpponentCreatureForAlternateCost() {
+        harness.addToBattlefield(player1, new Plains());
+        Permanent target = addCreatureReady(player1, new SilkenfistFighter());
+        Permanent opponentCreature = addCreatureReady(player2, new SilkenfistFighter());
+        harness.setHand(player1, List.of(new Lashknife()));
+
+        assertThatThrownBy(() -> harness.castInstantWithAlternateCost(
+                player1, 0, target.getId(), List.of(opponentCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(opponentCreature.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Grants first strike only to the enchanted creature")
+    void grantsFirstStrikeOnlyToEnchantedCreature() {
+        harness.addToBattlefield(player1, new Plains());
+        Permanent target = addCreatureReady(player2, new SilkenfistFighter());
+        Permanent costCreature = addCreatureReady(player1, new SilkenfistFighter());
+        Permanent otherCreature = addCreatureReady(player2, new SilkenfistFighter());
+        harness.setHand(player1, List.of(new Lashknife()));
+
+        harness.castInstantWithAlternateCost(player1, 0, target.getId(), List.of(costCreature.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, costCreature, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, otherCreature, Keyword.FIRST_STRIKE)).isFalse();
+    }
 }
