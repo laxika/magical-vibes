@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.p.PhyrexianDragonEngine;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -33,8 +34,8 @@ class MishraClaimedByGixTest extends BaseCardTest {
                 gd.playerBattlefields.get(player1.getId()).indexOf(bear)));
         harness.passBothPriorities();
 
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player1, 22);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -252,8 +253,8 @@ class MishraClaimedByGixTest extends BaseCardTest {
         assertThat(gqs.findPermanentById(gd, mishra.getId())).isSameAs(mishra);
         assertThat(gqs.findPermanentById(gd, engine.getId())).isSameAs(engine);
         assertThat(findPermanents(player1, "Mishra, Lost to Phyrexia")).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(21);
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -286,6 +287,55 @@ class MishraClaimedByGixTest extends BaseCardTest {
         assertThat(gqs.findPermanentById(gd, realEngine.getId())).isSameAs(realEngine);
         assertThat(gd.exiledCards).anyMatch(e -> e.card().getId().equals(mishra.getOriginalCard().getId()));
         assertThat(gd.exiledCards).anyMatch(e -> e.card().getId().equals(metamorph.getId()));
+    }
+
+    @Test
+    void meldingUnearthedEngineDoesNotExileTheResultAtEndStep() {
+        addCreatureReady(player1, new MishraClaimedByGix());
+        harness.setGraveyard(player1, List.of(new PhyrexianDragonEngine()));
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.setLife(player2, 40);
+
+        harness.activateGraveyardAbility(player1, 0);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+        chooseNonTargetingBackModes();
+        resolveAllTriggers();
+
+        Permanent melded = findPermanent(player1, "Mishra, Lost to Phyrexia");
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gqs.findPermanentById(gd, melded.getId())).isSameAs(melded);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void returningMeldedResultToHandReturnsBothFrontFaces() {
+        addCreatureReady(player1, new MishraClaimedByGix());
+        addCreatureReady(player1, new PhyrexianDragonEngine());
+        harness.setLife(player2, 40);
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+        chooseNonTargetingBackModes();
+        resolveAllTriggers();
+        Permanent melded = findPermanent(player1, "Mishra, Lost to Phyrexia");
+        harness.setHand(player1, List.of(new MachineOverMatter()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, melded.getId());
+
+        harness.assertNotOnBattlefield(player1, "Mishra, Lost to Phyrexia");
+        harness.assertInHand(player1, "Mishra, Claimed by Gix");
+        harness.assertInHand(player1, "Phyrexian Dragon Engine");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
     }
 
     private void chooseNonTargetingBackModes() {
