@@ -1,18 +1,26 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.ColossalMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RhoxBrute;
+import com.github.laxika.magicalvibes.cards.t.Terminate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MayaelsAria.class, GrizzlyBears.class, RhoxBrute.class, ColossalMight.class, Terminate.class})
 class MayaelsAriaTest extends BaseCardTest {
 
     /** A vanilla creature with the given power (toughness matched to power). */
@@ -110,6 +118,84 @@ class MayaelsAriaTest extends BaseCardTest {
         advanceToUpkeep(player2);
 
         assertThat(gd.stack).isEmpty();
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void qualifiesWhenCreatureIsPumpedInResponse() {
+        harness.addToBattlefield(player1, new MayaelsAria());
+        Permanent brute = harness.addToBattlefieldAndReturn(player1, new RhoxBrute());
+        harness.setHand(player1, List.of(new ColossalMight()));
+        int startingLife = gd.getLife(player1.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAndResolveInstant(player1, 0, brute.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(brute.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void doesNothingWhenQualifyingCreatureIsDestroyedInResponse() {
+        harness.addToBattlefield(player1, new MayaelsAria());
+        Permanent large = harness.addToBattlefieldAndReturn(player1, new RhoxBrute());
+        large.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 16);
+        Permanent small = harness.addToBattlefieldAndReturn(player1, new RhoxBrute());
+        harness.setHand(player1, List.of(new Terminate()));
+        int startingLife = gd.getLife(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, large.getId());
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(large);
+        assertThat(small.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void opponentCreaturesDoNotQualifyControllerForAnyReward() {
+        harness.addToBattlefield(player1, new MayaelsAria());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new RhoxBrute());
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new RhoxBrute());
+        opposing.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 16);
+        int startingLife = gd.getLife(player1.getId());
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(own.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(opposing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(16);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    void countersAffectOnlyControlledCreatures() {
+        Permanent aria = harness.addToBattlefieldAndReturn(player1, new MayaelsAria());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new RhoxBrute());
+        own.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent opposing = harness.addToBattlefieldAndReturn(player2, new RhoxBrute());
+        int startingLife = gd.getLife(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(own.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(opposing.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(aria.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(startingLife);
         assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
     }
 }
