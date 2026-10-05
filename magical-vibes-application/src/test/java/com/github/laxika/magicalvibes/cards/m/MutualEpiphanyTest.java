@@ -46,4 +46,48 @@ class MutualEpiphanyTest extends BaseCardTest {
         assertThat(gd.planechase.faceUp).singleElement().extracting(object -> object.getCard())
                 .isInstanceOf(Panopticon.class);
     }
+
+    @Test
+    void encounterWaitsForPriorityBeforeDrawingOrPlaneswalking() {
+        int player1HandBefore = gd.playerHands.get(player1.getId()).size();
+        int player2HandBefore = gd.playerHands.get(player2.getId()).size();
+        gd.planechase.deck.addFirst(new MutualEpiphany());
+
+        harness.inMutationScope(() -> planar.reveal(gd, true));
+        harness.passPriority(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(player1HandBefore);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(player2HandBefore);
+        assertThat(gd.planechase.faceUp).singleElement().extracting(object -> object.getCard())
+                .isInstanceOf(MutualEpiphany.class);
+
+        harness.passPriority(player2);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(player1HandBefore + 4);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(player2HandBefore + 4);
+        assertThat(gd.planechase.faceUp).singleElement().extracting(object -> object.getCard())
+                .isInstanceOf(Panopticon.class);
+    }
+
+    @Test
+    void nextPlanesArrivalDrawResolvesSeparatelyForThePlanarController() {
+        harness.forceActivePlayer(player2);
+        gd.planechase.controllerId = player2.getId();
+        int player1HandBefore = gd.playerHands.get(player1.getId()).size();
+        int player2HandBefore = gd.playerHands.get(player2.getId()).size();
+        gd.planechase.deck.addFirst(new MutualEpiphany());
+
+        harness.inMutationScope(() -> planar.reveal(gd, true));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(player1HandBefore + 4);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(player2HandBefore + 4);
+        assertThat(gd.planechase.faceUp).singleElement().extracting(object -> object.getCard())
+                .isInstanceOf(Panopticon.class);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(player1HandBefore + 4);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(player2HandBefore + 5);
+    }
 }
