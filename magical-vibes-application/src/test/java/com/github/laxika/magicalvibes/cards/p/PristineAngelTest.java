@@ -111,6 +111,75 @@ class PristineAngelTest extends BaseCardTest {
         assertThat(angel.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Untapping in response to its controller's spell makes the Angel an illegal target")
+    void untapTriggerRestoresProtectionBeforeSpellResolves() {
+        Permanent angel = addAngel(player1);
+        angel.tap();
+        harness.setHand(player1, List.of(new EchoingDecay()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, angel.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(angel.isTapped()).isFalse();
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(4);
+        harness.assertInGraveyard(player1, "Echoing Decay");
+    }
+
+    @Test
+    @DisplayName("Declining the untap allows the controller's colored spell to resolve on the Angel")
+    void decliningUntapAllowsTargetedSpellToResolve() {
+        Permanent angel = addAngel(player1);
+        angel.tap();
+        harness.setHand(player1, List.of(new EchoingDecay()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstant(player1, 0, angel.getId());
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(angel.isTapped()).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, angel)).isEqualTo(2);
+        harness.assertInGraveyard(player1, "Echoing Decay");
+    }
+
+    @Test
+    @DisplayName("Protection does not prevent a nontargeted toughness reduction")
+    void protectionDoesNotStopEchoingDecayOnAnotherAngel() {
+        Permanent target = addAngel(player2);
+        target.tap();
+        Permanent protectedAngel = addAngel(player2);
+        harness.setHand(player1, List.of(new EchoingDecay()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, protectedAngel)).isEqualTo(2);
+        assertThat(protectedAngel.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Untapped Angel prevents combat damage from a colorless artifact creature")
+    void protectionFromArtifactsPreventsCombatDamage() {
+        Permanent attacker = addCreatureReady(player1, new Memnarch());
+        attacker.setAttacking(true);
+        Permanent angel = addAngel(player2);
+        angel.setBlocking(true);
+        angel.addBlockingTarget(0);
+
+        resolveCombat();
+
+        harness.assertOnBattlefield(player2, "Pristine Angel");
+        assertThat(angel.getMarkedDamage()).isZero();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(4);
+    }
+
     private Permanent addAngel(Player player) {
         return addCreatureReady(player, new PristineAngel());
     }
