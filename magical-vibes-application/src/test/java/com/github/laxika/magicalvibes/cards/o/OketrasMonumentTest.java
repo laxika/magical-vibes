@@ -1,13 +1,19 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
+import com.github.laxika.magicalvibes.cards.d.DissentersDeliverance;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.s.SacredCat;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,9 +22,9 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({OketrasMonument.class, AngelOfMercy.class, GrizzlyBears.class, HillGiant.class,
+        Shock.class, SacredCat.class, DissentersDeliverance.class})
 class OketrasMonumentTest extends BaseCardTest {
-
-    // ===== Cost reduction: white creature spells cost {1} less =====
 
     @Test
     @DisplayName("White creature spells you cast cost {1} less")
@@ -60,8 +66,6 @@ class OketrasMonumentTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Trigger: create a 1/1 white Warrior with vigilance on each creature cast =====
-
     @Test
     @DisplayName("Casting a creature spell creates a 1/1 white Warrior with vigilance")
     void castingCreatureCreatesWarriorToken() {
@@ -89,9 +93,104 @@ class OketrasMonumentTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertNotOnBattlefield(player1, "Warrior");
+    }
+
+    @Test
+    @DisplayName("A white creature with no generic cost still requires white mana")
+    void reductionDoesNotPayColoredMana() {
+        harness.addToBattlefield(player1, new OketrasMonument());
+        harness.setHand(player1, List.of(new SacredCat()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        harness.assertNotOnBattlefield(player1, "Warrior");
+    }
+
+    @Test
+    @DisplayName("An opponent's Monument neither reduces your costs nor triggers for your creatures")
+    void opponentMonumentDoesNotApply() {
+        harness.addToBattlefield(player2, new OketrasMonument());
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Angel of Mercy");
+        harness.assertNotOnBattlefield(player1, "Warrior");
+        harness.assertNotOnBattlefield(player2, "Warrior");
+    }
+
+    @Test
+    @DisplayName("A white creature cast creates the complete Warrior token before the creature resolves")
+    void whiteCreatureCreatesWarriorBeforeResolving() {
+        harness.addToBattlefield(player1, new OketrasMonument());
+        harness.setHand(player1, List.of(new SacredCat()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+
+        Permanent warrior = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().isToken())
+                .findFirst().orElseThrow();
+        assertThat(warrior.getCard().getColors()).containsExactly(CardColor.WHITE);
+        assertThat(warrior.getCard().hasType(CardType.CREATURE)).isTrue();
+        assertThat(warrior.getCard().getSubtypes()).containsExactly(CardSubtype.WARRIOR);
+        assertThat(gqs.getEffectivePower(gd, warrior)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, warrior)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, warrior, Keyword.VIGILANCE)).isTrue();
+        assertThat(warrior.isTapped()).isFalse();
+        harness.assertNotOnBattlefield(player1, "Sacred Cat");
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("The cast trigger still creates a Warrior after Monument leaves the battlefield")
+    void triggerSurvivesSourceLeavingBattlefield() {
+        harness.addToBattlefield(player1, new OketrasMonument());
+        harness.setHand(player1, List.of(new SacredCat(), new DissentersDeliverance()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+
+        harness.castAndResolveInstant(player1, 0,
+                harness.getPermanentId(player1, "Oketra's Monument"));
+        harness.assertInGraveyard(player1, "Oketra's Monument");
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Warrior");
+        harness.assertNotOnBattlefield(player1, "Oketra's Monument");
+        harness.assertNotOnBattlefield(player1, "Sacred Cat");
+    }
+
+    @Test
+    @DisplayName("Each creature cast creates its own Warrior")
+    void triggersForEveryCreatureCast() {
+        harness.addToBattlefield(player1, new OketrasMonument());
+        harness.setHand(player1, List.of(new SacredCat(), new SacredCat()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard().isToken() && p.getCard().getName().equals("Warrior"))
+                .hasSize(2);
     }
 }
