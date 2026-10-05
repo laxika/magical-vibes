@@ -101,6 +101,100 @@ class QuicksilverDaggerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void opponentsEnchantedCreatureDrawsForItsController() {
+        Permanent creature = addCreatureReady(player2, new GaeasSkyfolk());
+        addAura(creature);
+        harness.setLibrary(player2, List.of(new GaeasSkyfolk()));
+        int auraControllerHandSize = gd.playerHands.get(player1.getId()).size();
+        int creatureControllerHandSize = gd.playerHands.get(player2.getId()).size();
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player2, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(creatureControllerHandSize + 1);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(auraControllerHandSize);
+    }
+
+    @Test
+    void abilityCanTargetItsController() {
+        Permanent creature = addReadyCreature();
+        addAura(creature);
+        harness.setLibrary(player1, List.of(new GaeasSkyfolk()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+    }
+
+    @Test
+    void abilityCannotTargetACreature() {
+        Permanent creature = addReadyCreature();
+        addAura(creature);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GaeasSkyfolk());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(creature.isTapped()).isFalse();
+    }
+
+    @Test
+    void activatedAbilityStillResolvesAfterAuraLeaves() {
+        Permanent creature = addReadyCreature();
+        Permanent aura = addAura(creature);
+        harness.setLibrary(player1, List.of(new GaeasSkyfolk()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(aura);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+    }
+
+    @Test
+    void activatedAbilityStillResolvesAfterCreatureLeaves() {
+        Permanent creature = addReadyCreature();
+        addAura(creature);
+        harness.setLibrary(player1, List.of(new GaeasSkyfolk()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore + 1);
+    }
+
+    @Test
+    void noCardIsDrawnWhenTheOnlyTargetLeavesBeforeResolution() {
+        Permanent creature = addReadyCreature();
+        addAura(creature);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+        harness.setLibrary(player1, List.of(new GaeasSkyfolk()));
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
     private Permanent addReadyCreature() {
         return addCreatureReady(player1, new GaeasSkyfolk());
     }
