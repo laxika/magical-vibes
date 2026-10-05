@@ -15,7 +15,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -31,8 +30,7 @@ class KamiOfThePaintedRoadTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DesperateRitual()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0, (UUID) null);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "RED");
@@ -94,8 +92,7 @@ class KamiOfThePaintedRoadTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DesperateRitual()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleListChoice(player1, "RED");
         resolveAllTriggers();
 
@@ -116,8 +113,7 @@ class KamiOfThePaintedRoadTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DesperateRitual()));
         harness.addMana(player1, ManaColor.RED, 2);
 
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
         harness.handleListChoice(player1, "BLUE");
         resolveAllTriggers();
 
@@ -128,5 +124,50 @@ class KamiOfThePaintedRoadTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.hasProtectionFrom(gd, kami, CardColor.BLUE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Separate cast triggers grant cumulative protection until end of turn")
+    void repeatedTriggersKeepBothChosenColors() {
+        Permanent kami = addCreatureReady(player1, new KamiOfThePaintedRoad());
+        harness.setHand(player1, List.of(new DesperateRitual(), new DesperateRitual()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0);
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "RED");
+        resolveAllTriggers();
+
+        harness.castInstant(player1, 0);
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "BLUE");
+        resolveAllTriggers();
+
+        assertThat(gqs.hasProtectionFrom(gd, kami, CardColor.RED)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, kami, CardColor.BLUE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasProtectionFrom(gd, kami, CardColor.RED)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, kami, CardColor.BLUE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The cast trigger protects only its source, even from the source's own color")
+    void protectionAppliesOnlyToSource() {
+        Permanent kami = addCreatureReady(player1, new KamiOfThePaintedRoad());
+        Permanent otherCreature = addCreatureReady(player1, new HarshDeceiver());
+        harness.setHand(player1, List.of(new DesperateRitual()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0);
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "WHITE");
+        resolveAllTriggers();
+
+        assertThat(gqs.hasProtectionFrom(gd, kami, CardColor.WHITE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, otherCreature, CardColor.WHITE)).isFalse();
     }
 }
