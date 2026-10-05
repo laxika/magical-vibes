@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -17,7 +18,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({KaldraCompleat.class, GrizzlyBears.class})
+@CardUsed({KaldraCompleat.class, GrizzlyBears.class, DarksteelMyr.class})
 class KaldraCompleatTest extends BaseCardTest {
 
     @Test
@@ -80,8 +81,74 @@ class KaldraCompleatTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KaldraCompleat()));
         harness.addMana(player1, ManaColor.COLORLESS, 7);
         harness.castArtifact(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Lethally damaged blockers die before the exile trigger resolves")
+    void lethalDamageDoesNotExileCreatureFromGraveyard() {
+        castKaldraCompleat();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        dealCombatDamageToBlocker(germ, blocker, 2);
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(blocker.getCard());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(germ);
+    }
+
+    @Test
+    @DisplayName("Combat damage exiles an indestructible blocker")
+    void exilesIndestructibleBlocker() {
+        castKaldraCompleat();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
+        Permanent blocker = addCreatureReady(player2, new DarksteelMyr());
+
+        dealCombatDamageToBlocker(germ, blocker, 1);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(blocker.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(blocker.getCard());
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+    }
+
+    @Test
+    @DisplayName("Moving the Equipment kills the unboosted Germ and grants the new host its abilities")
+    void newHostReceivesBoostAndExileAbility() {
+        castKaldraCompleat();
+        Permanent germ = findPermanent(player1, "Phyrexian Germ");
+        Permanent host = addCreatureReady(player1, new GrizzlyBears());
+        Permanent kaldra = findPermanent(player1, "Kaldra Compleat");
+
+        harness.addMana(player1, ManaColor.COLORLESS, 7);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(kaldra), null,
+                host.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(germ);
+        assertThat(gqs.getEffectivePower(gd, host)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, host)).isEqualTo(7);
+        Permanent blocker = addCreatureReady(player2, new DarksteelMyr());
+        dealCombatDamageToBlocker(host, blocker, 1);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(blocker.getCard());
+    }
+
+    private void dealCombatDamageToBlocker(Permanent attacker, Permanent blocker, int damage) {
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(attackerIndex);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        harness.handleCombatDamageAssigned(player1, attackerIndex,
+                Map.of(blocker.getId(), damage,
+                        player2.getId(), gqs.getEffectivePower(gd, attacker) - damage));
     }
 
     private Card largeTestCreature() {
