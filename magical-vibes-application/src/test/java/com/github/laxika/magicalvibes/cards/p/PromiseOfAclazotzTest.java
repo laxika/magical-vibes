@@ -20,14 +20,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PromiseOfAclazotz.class, FoulRebirth.class, GrizzlyBears.class})
+@CardUsed({PromiseOfAclazotz.class, FoulRebirth.class, GrizzlyBears.class, Card.class})
 class PromiseOfAclazotzTest extends BaseCardTest {
 
     @Test
     void frontFaceSacrificesNonDemonAndPopulates() {
         Permanent promise = harness.addToBattlefieldAndReturn(player1, new PromiseOfAclazotz());
-        Permanent creatureToken = harness.addToBattlefieldAndReturn(
-                player1, tokenCreature("Spirit", CardSubtype.SPIRIT));
+        harness.addToBattlefield(player1, tokenCreature("Spirit", CardSubtype.SPIRIT));
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         advanceToEndStep(player1);
@@ -47,6 +46,7 @@ class PromiseOfAclazotzTest extends BaseCardTest {
 
         advanceToEndStep(player1);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(demon);
@@ -75,11 +75,89 @@ class PromiseOfAclazotzTest extends BaseCardTest {
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
     }
 
+    @Test
+    void decliningSacrificeDoesNotPopulate() {
+        harness.addToBattlefield(player1, new PromiseOfAclazotz());
+        Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCreature("Spirit", CardSubtype.SPIRIT));
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2).contains(token);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void sacrificingOnlyCreatureTokenLeavesNothingToPopulate() {
+        Permanent promise = harness.addToBattlefieldAndReturn(player1, new PromiseOfAclazotz());
+        Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCreature("Spirit", CardSubtype.SPIRIT));
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, token.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(promise);
+    }
+
+    @Test
+    void sacrificeStillHappensWithoutCreatureTokensToPopulate() {
+        Permanent promise = harness.addToBattlefieldAndReturn(player1, new PromiseOfAclazotz());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opposingToken = harness.addToBattlefieldAndReturn(player2, tokenCreature("Spirit", CardSubtype.SPIRIT));
+
+        advanceToEndStep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, creature.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(promise);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature.getCard());
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(opposingToken);
+    }
+
+    @Test
+    void doesNotTriggerOnOpponentsEndStep() {
+        harness.addToBattlefield(player1, new PromiseOfAclazotz());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+    }
+
+    @Test
+    void adventureWithoutEligibleCreatureCreatesNoTokenAndStillAllowsEnchantmentCast() {
+        Permanent demon = harness.addToBattlefieldAndReturn(player1, demon());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        PromiseOfAclazotz card = new PromiseOfAclazotz();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(demon);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromExile(player1, card.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Promise of Aclazotz");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+    }
+
     private void advanceToEndStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 
     private static Card tokenCreature(String name, CardSubtype subtype) {
