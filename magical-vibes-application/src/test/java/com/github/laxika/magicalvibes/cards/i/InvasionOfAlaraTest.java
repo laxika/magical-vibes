@@ -6,11 +6,14 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -96,7 +99,95 @@ class InvasionOfAlaraTest extends BaseCardTest {
     }
 
     private void setLibrary(List<com.github.laxika.magicalvibes.model.Card> cards) {
-        gd.playerDecks.get(player1.getId()).clear();
-        gd.playerDecks.get(player1.getId()).addAll(cards);
+        harness.setLibrary(player1, cards);
+    }
+
+    @Test
+    @DisplayName("Returns all exiled cards to the library when none qualify")
+    void noQualifyingCardsReturnToLibrary() {
+        Plains first = new Plains();
+        InvasionOfAlara second = new InvasionOfAlara();
+        setLibrary(List.of(first, second));
+
+        castInvasion();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Skips nonland cards with mana value greater than four")
+    void skipsExpensiveNonlandCards() {
+        InvasionOfAlara expensive = new InvasionOfAlara();
+        GrizzlyBears first = new GrizzlyBears();
+        HillGiant second = new HillGiant();
+        Plains untouched = new Plains();
+        setLibrary(List.of(expensive, first, second, untouched));
+        castInvasion();
+
+        var search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactly(first, second);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(untouched, expensive);
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard() == first
+                && entry.getEntryType() == StackEntryType.CREATURE_SPELL);
+    }
+
+    @Test
+    @DisplayName("Declining to cast the only qualifying card puts it in hand")
+    void declineOnlyQualifyingCardPutsItIntoHand() {
+        CounselOfTheSoratami card = new CounselOfTheSoratami();
+        Plains land = new Plains();
+        setLibrary(List.of(land, card));
+        castInvasion();
+
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(card);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(land);
+        assertThat(gd.exiledCards).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Awaken the Maelstrom cannot be cast without an opponent's permanent to target")
+    void defeatWithoutLegalTargetsLeavesBattleExiled() {
+        setLibrary(List.of());
+        castInvasion();
+        gd.playerBattlefields.get(player2.getId()).clear();
+        var battle = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof InvasionOfAlara)
+                .findFirst().orElseThrow();
+        battle.setCounterCount(CounterType.DEFENSE, 0);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
+                .checkAfterDefenseRemoved(gd, battle));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCards).extracting(entry -> entry.card()).contains(battle.getCard());
+        assertThat(gd.stack).noneMatch(entry -> entry.getEntryType() == StackEntryType.SORCERY_SPELL);
+    }
+
+    @Test
+    @DisplayName("Defeating the Siege offers a choice before casting its targeted back face")
+    void defeatOffersCastChoice() {
+        setLibrary(List.of());
+        castInvasion();
+        harness.addToBattlefield(player2, new Plains());
+        var battle = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() instanceof InvasionOfAlara)
+                .findFirst().orElseThrow();
+        battle.setCounterCount(CounterType.DEFENSE, 0);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
+                .checkAfterDefenseRemoved(gd, battle));
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNotNull();
     }
 }
