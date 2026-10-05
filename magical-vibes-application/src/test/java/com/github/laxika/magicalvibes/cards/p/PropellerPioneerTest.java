@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.t.TidyConclusion;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,13 +15,14 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({PropellerPioneer.class, TidyConclusion.class})
 class PropellerPioneerTest extends BaseCardTest {
 
     @Test
     @DisplayName("Fabricate mode puts a +1/+1 counter on Propeller Pioneer")
     void fabricateCountersMode() {
         castPioneer(0);
-        resolveCreatureAndEtb();
+        resolveAllTriggers();
 
         Permanent pioneer = findPermanent(player1, "Propeller Pioneer");
         assertThat(pioneer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -31,7 +34,7 @@ class PropellerPioneerTest extends BaseCardTest {
     @DisplayName("Fabricate mode creates a 1/1 colorless Servo artifact creature token")
     void fabricateServoMode() {
         castPioneer(1);
-        resolveCreatureAndEtb();
+        resolveAllTriggers();
 
         List<Permanent> servos = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SERVO))
@@ -45,14 +48,26 @@ class PropellerPioneerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, servo)).isEqualTo(1);
     }
 
+    @Test
+    @DisplayName("Fabricate creates a Servo if Pioneer dies before its trigger resolves")
+    void fabricateCreatesServoWhenSourceDies() {
+        castPioneer(0);
+        harness.passBothPriorities();
+
+        Permanent pioneer = findPermanent(player1, "Propeller Pioneer");
+        harness.setHand(player2, List.of(new TidyConclusion()));
+        harness.addMana(player2, ManaColor.BLACK, 5);
+        harness.castAndResolveInstant(player2, 0, pioneer.getId());
+        harness.assertInGraveyard(player1, "Propeller Pioneer");
+
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Servo")).isEqualTo(1);
+    }
+
     private void castPioneer(int mode) {
         harness.setHand(player1, List.of(new PropellerPioneer()));
         harness.addMana(player1, ManaColor.WHITE, 4);
         harness.castCreature(player1, 0, mode);
     }
 
-    private void resolveCreatureAndEtb() {
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-    }
 }
