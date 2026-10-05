@@ -19,7 +19,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FountainOfYouth.class, GrizzlyBears.class, HowlingMine.class, Hurricane.class, Pariah.class})
+@CardUsed({FountainOfYouth.class, GrizzlyBears.class, HowlingMine.class, Hurricane.class,
+        PaladinEnVec.class, Pariah.class, PlagueStinger.class, Shock.class, TyphoidRats.class})
 class PariahTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -33,7 +34,7 @@ class PariahTest extends BaseCardTest {
         harness.setHand(player1, List.of(pariah));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -50,7 +51,7 @@ class PariahTest extends BaseCardTest {
         harness.setHand(player1, List.of(pariah));
         harness.addMana(player1, ManaColor.WHITE, 3);
 
-        gs.playCard(gd, player1, 0, 0, bearsPerm.getId(), null);
+        harness.castEnchantment(player1, 0, bearsPerm.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -74,8 +75,7 @@ class PariahTest extends BaseCardTest {
         // Player1 has an unblocked attacker (2/2)
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         // Player2 life should remain at 20 (damage redirected to creature)
@@ -96,10 +96,9 @@ class PariahTest extends BaseCardTest {
         // Player1 has an unblocked attacker (2/2)
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         // No blockers
-        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
         // Player2 life should remain at 20 (damage redirected to creature)
@@ -119,8 +118,7 @@ class PariahTest extends BaseCardTest {
         // Player1 has an unblocked attacker (2/2)
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         // Enchanted creature (2/2) takes 2 damage -> dies
@@ -141,9 +139,8 @@ class PariahTest extends BaseCardTest {
         // Player1 has an unblocked attacker (2/2)
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
 
-        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
         // Enchanted creature (2/2) takes 2 damage -> dies
@@ -164,8 +161,7 @@ class PariahTest extends BaseCardTest {
         // Player1 has an unblocked attacker (2/2) — enough to kill the 2/2
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         // Pariah should be in graveyard (orphaned aura cleanup)
@@ -185,9 +181,8 @@ class PariahTest extends BaseCardTest {
         // Player1 has an unblocked attacker (2/2) — enough to kill the 2/2
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
 
-        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
         // Pariah should be in graveyard (orphaned aura cleanup)
@@ -212,8 +207,7 @@ class PariahTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Hurricane()));
         harness.addMana(player1, ManaColor.GREEN, 2);
 
-        harness.castSorcery(player1, 0, 1);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1);
 
         // Player1 takes 0 (redirected to creature), player2 takes 1
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -250,8 +244,7 @@ class PariahTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Hurricane()));
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.castSorcery(player1, 0, 1);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 1);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
@@ -292,8 +285,7 @@ class PariahTest extends BaseCardTest {
         // Player1 has an unblocked attacker (2/2)
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         // Player2 takes 2 combat damage
@@ -308,9 +300,8 @@ class PariahTest extends BaseCardTest {
         // Player1 has an unblocked attacker (2/2)
         addCreatureReady(player1, new GrizzlyBears());
 
-        declareAttackers(List.of(0));
+        declareAttackersAndPrepareBlockers(List.of(0));
 
-        prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
 
         // Player2 takes 2 combat damage
@@ -327,8 +318,7 @@ class PariahTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Hurricane()));
         harness.addMana(player1, ManaColor.GREEN, 3);
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -347,8 +337,7 @@ class PariahTest extends BaseCardTest {
         pariah.setAttachedTo(enchantedCreature.getId());
         addCreatureReady(player1, new PlagueStinger());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -367,8 +356,7 @@ class PariahTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(protectedCreature.getMarkedDamage()).isZero();
@@ -384,8 +372,7 @@ class PariahTest extends BaseCardTest {
         pariah.setAttachedTo(enchantedCreature.getId());
         addCreatureReady(player1, new TyphoidRats());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
@@ -393,5 +380,50 @@ class PariahTest extends BaseCardTest {
                 .noneMatch(permanent -> permanent.getId().equals(enchantedCreature.getId()));
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(card -> card.getId().equals(enchantedCreature.getCard().getId()));
+    }
+
+    @Test
+    @DisplayName("Multiple Pariahs let the affected player choose which creature receives damage")
+    void multiplePariahsOfferRedirectionChoice() {
+        Permanent firstCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent secondCreature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent firstPariah = harness.addToBattlefieldAndReturn(player2, new Pariah());
+        firstPariah.setAttachedTo(firstCreature.getId());
+        Permanent secondPariah = harness.addToBattlefieldAndReturn(player2, new Pariah());
+        secondPariah.setAttachedTo(secondCreature.getId());
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(firstCreature, secondCreature);
+        harness.handlePermanentChosen(player2, secondCreature.getId());
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .contains(firstCreature).doesNotContain(secondCreature);
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Later damage reaches the player after redirected damage kills the enchanted creature")
+    void laterDamageReachesPlayerAfterEnchantedCreatureDies() {
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        Permanent pariah = harness.addToBattlefieldAndReturn(player2, new Pariah());
+        pariah.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 20);
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Pariah");
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
     }
 }
