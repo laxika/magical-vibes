@@ -33,9 +33,7 @@ class LuBuMasterAtArmsTest extends BaseCardTest {
     void creatureWithoutHorsemanshipCannotBlock() {
         Permanent blocker = addCreatureReady(player2, new AlertShuInfantry());
         Permanent luBu = addCreatureReady(player1, new LuBuMasterAtArms());
-        luBu.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
@@ -49,14 +47,26 @@ class LuBuMasterAtArmsTest extends BaseCardTest {
     void creatureWithHorsemanshipCanBlock() {
         Permanent blocker = addCreatureReady(player2, new ShuCavalry());
         Permanent luBu = addCreatureReady(player1, new LuBuMasterAtArms());
-        luBu.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
                 gd.playerBattlefields.get(player1.getId()).indexOf(luBu))));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Lu Bu can block a creature without horsemanship the turn he enters")
+    void canBlockCreatureWithoutHorsemanshipImmediately() {
+        addCreatureReady(player1, new AlertShuInfantry());
+        Permanent luBu = harness.addToBattlefieldAndReturn(player2, new LuBuMasterAtArms());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(luBu.isBlocking()).isTrue();
+        harness.assertLife(player2, 20);
     }
 }
