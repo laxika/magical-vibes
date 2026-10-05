@@ -184,8 +184,7 @@ class MarjhanTest extends BaseCardTest {
     @Test
     @DisplayName("A land that becomes an Island satisfies Marjhan's Island condition")
     void landThatBecomesIslandSatisfiesCondition() {
-        harness.addToBattlefield(player1, new Forest());
-        Permanent forest = gd.playerBattlefields.get(player1.getId()).getFirst();
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.setHand(player1, List.of(new SeasClaim(), new Marjhan()));
         harness.addMana(player1, ManaColor.BLUE, 8);
 
@@ -225,18 +224,81 @@ class MarjhanTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("An opponent's Island does not prevent the sacrifice trigger")
+    void opponentsIslandDoesNotPreventSacrifice() {
+        harness.addToBattlefield(player2, new Island());
+        harness.setHand(player1, List.of(new Marjhan()));
+        harness.addMana(player1, ManaColor.BLUE, 7);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Marjhan");
+        harness.assertInGraveyard(player1, "Marjhan");
+    }
+
+    @Test
+    @DisplayName("Losing the last Island triggers Marjhan's sacrifice")
+    void losingLastIslandTriggersSacrifice() {
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        addMarjhan(player1, false);
+
+        gd.playerBattlefields.get(player1.getId()).remove(island);
+        harness.runStateBasedActions();
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Marjhan");
+        harness.assertInGraveyard(player1, "Marjhan");
+    }
+
+    @Test
+    @DisplayName("The untap ability cannot be activated during an opponent's upkeep")
+    void untapAbilityRejectedDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new Island());
+        Permanent marjhan = addMarjhan(player1, true);
+        harness.addToBattlefield(player1, new EbonyRhino());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(marjhan);
+        assertThatThrownBy(() -> harness.activateAbility(player1, index, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(marjhan.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Ebony Rhino");
+    }
+
+    @Test
+    @DisplayName("An illegal target on resolution prevents both damage and the power reduction")
+    void noPowerReductionWhenTargetStopsAttacking() {
+        harness.addToBattlefield(player1, new Island());
+        Permanent marjhan = addMarjhan(player1, false);
+        Permanent rhino = addCreatureReady(player2, new EbonyRhino());
+        declareAttack(rhino);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        int index = gd.playerBattlefields.get(player1.getId()).indexOf(marjhan);
+        harness.activateAbility(player1, index, 1, null, rhino.getId());
+        rhino.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(marjhan.getPowerModifier()).isZero();
+        assertThat(rhino.getMarkedDamage()).isZero();
+    }
+
     private void declareAttack(Permanent attacker) {
         int index = gd.playerBattlefields.get(player2.getId()).indexOf(attacker);
         declareAttackers(player2, List.of(index));
     }
 
     private Permanent addMarjhan(Player player, boolean tapped) {
-        Permanent perm = new Permanent(new Marjhan());
-        perm.setSummoningSick(false);
+        Permanent perm = addCreatureReady(player, new Marjhan());
         if (tapped) {
             perm.tap();
         }
-        gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
 
