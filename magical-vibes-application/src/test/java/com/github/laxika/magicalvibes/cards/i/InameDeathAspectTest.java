@@ -94,6 +94,38 @@ class InameDeathAspectTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Accepting the search with an empty library finishes without a card choice")
+    void emptyLibraryFinishesSearch() {
+        setupAndCast(List.of());
+
+        resolveToMayPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Searching all Spirits leaves the opponent's library untouched")
+    void searchOnlyUsesControllersLibrary() {
+        WanderingOnes opposingSpirit = new WanderingOnes();
+        harness.setLibrary(player2, List.of(opposingSpirit));
+        setupAndCast(List.of(new KamiOfOldStone(), new WanderingOnes()));
+
+        resolveToMayPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingSpirit);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
     private void setupAndCast(List<Card> library) {
         harness.castFromHand(player1, new InameDeathAspect(), "{4}{B}{B}");
         harness.setLibrary(player1, library);
