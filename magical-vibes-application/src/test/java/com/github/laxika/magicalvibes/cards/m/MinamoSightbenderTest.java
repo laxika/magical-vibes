@@ -108,4 +108,91 @@ class MinamoSightbenderTest extends BaseCardTest {
 
         assertThat(raider.isCantBeBlocked()).isFalse();
     }
+    @Test
+    @DisplayName("X may exceed the target's power")
+    void allowsPowerBelowX() {
+        addCreatureReady(player1, new MinamoSightbender());
+        Permanent target = addCreatureReady(player1, new AkkiRaider());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 3, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBeBlocked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("X=0 can target a creature with zero power")
+    void allowsZeroX() {
+        Permanent source = addCreatureReady(player1, new MinamoSightbender());
+        source.setPowerModifier(-1);
+
+        harness.activateAbility(player1, 0, 0, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.isCantBeBlocked()).isTrue();
+        assertThat(source.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Power is checked again when the ability resolves")
+    void becomesIllegalWhenPowerRisesAboveXBeforeResolution() {
+        Permanent source = addCreatureReady(player1, new MinamoSightbender());
+        Permanent target = addCreatureReady(player1, new AkkiRaider());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 2, target.getId());
+        target.setPowerModifier(1);
+        harness.passBothPriorities();
+
+        assertThat(target.isCantBeBlocked()).isFalse();
+        assertThat(source.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("A later power increase does not remove the resolved blocking restriction")
+    void remainsUnblockableWhenPowerRisesAfterResolution() {
+        addCreatureReady(player1, new MinamoSightbender());
+        Permanent target = addCreatureReady(player1, new AkkiRaider());
+        addCreatureReady(player2, new GnarledMass());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 2, target.getId());
+        harness.passBothPriorities();
+        target.setPowerModifier(1);
+        declareAttackersAndPrepareBlockers(List.of(1));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 1))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Sightbender cannot pay the tap cost")
+    void rejectsActivationWhileSummoningSick() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MinamoSightbender());
+        source.setSummoningSick(true);
+        Permanent target = addCreatureReady(player1, new AkkiRaider());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(source.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A tapped Sightbender cannot activate again")
+    void rejectsActivationWhileTapped() {
+        Permanent source = addCreatureReady(player1, new MinamoSightbender());
+        source.setTapped(true);
+        Permanent target = addCreatureReady(player1, new AkkiRaider());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(2);
+    }
 }
