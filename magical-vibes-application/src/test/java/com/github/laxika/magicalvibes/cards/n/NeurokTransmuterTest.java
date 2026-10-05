@@ -19,6 +19,35 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class NeurokTransmuterTest extends BaseCardTest {
 
     @Test
+    void secondAbilityRejectsNoncreatureArtifact() {
+        harness.addToBattlefield(player1, new NeurokTransmuter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DarksteelIngot());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Target must be an artifact creature");
+    }
+
+    @Test
+    void laterFirstAbilityRestoresArtifactType() {
+        harness.addToBattlefield(player1, new NeurokTransmuter());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new DarksteelGargoyle());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.activateAbility(player1, 0, 1, null, target.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.isArtifact(gd, target)).isFalse();
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isArtifact(gd, target)).isTrue();
+        assertThat(gqs.isCreature(gd, target)).isTrue();
+        assertThat(gqs.getEffectiveColors(gd, target)).containsExactly(CardColor.BLUE);
+    }
+
+    @Test
     @DisplayName("The first ability makes a creature an artifact until end of turn")
     void makesCreatureAnArtifact() {
         harness.addToBattlefield(player1, new NeurokTransmuter());
