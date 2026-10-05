@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.b.BoggartArsonists;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({JawsOfStone.class, Mountain.class, BoggartArsonists.class})
@@ -33,9 +31,8 @@ class JawsOfStoneTest extends BaseCardTest {
         harness.castSorcery(player1, 0, Map.of(boggart.getId(), 2, player2.getId(), 1));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         harness.assertNotOnBattlefield(player2, "Boggart Arsonists");
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        harness.assertLife(player2, 19);
     }
 
     @Test
@@ -52,8 +49,7 @@ class JawsOfStoneTest extends BaseCardTest {
         harness.castSorcery(player1, 0, Map.of(player2.getId(), 4));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(16);
+        harness.assertLife(player2, 16);
     }
 
     @Test
@@ -71,8 +67,7 @@ class JawsOfStoneTest extends BaseCardTest {
         harness.castSorcery(player1, 0, Map.of(player2.getId(), 2));
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        harness.assertLife(player2, 18);
     }
 
     @Test
@@ -98,7 +93,7 @@ class JawsOfStoneTest extends BaseCardTest {
         harness.castSorcery(player1, 0, Map.of());
         harness.passBothPriorities();
 
-        assertThat(harness.getGameData().playerLifeTotals.get(player2.getId())).isEqualTo(20);
+        harness.assertLife(player2, 20);
     }
 
     @Test
@@ -132,8 +127,46 @@ class JawsOfStoneTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        GameData gd = harness.getGameData();
         // Damage was fixed at cast time, so the opponent still takes 3.
-        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    void additionalMountainsDoNotIncreaseDamage() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setHand(player1, List.of(new JawsOfStone()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castSorcery(player1, 0, Map.of(player2.getId(), 1));
+        harness.addToBattlefield(player1, new Mountain());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void doesNotRedistributeDamageFromDepartedTarget() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        harness.addToBattlefield(player1, new Mountain());
+        Permanent boggart = harness.addToBattlefieldAndReturn(player2, new BoggartArsonists());
+        harness.setHand(player1, List.of(new JawsOfStone()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castSorcery(player1, 0, Map.of(boggart.getId(), 2, player2.getId(), 1));
+        harness.getGameData().playerBattlefields.get(player2.getId()).remove(boggart);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void cannotChooseNoTargetsWithMountains() {
+        harness.addToBattlefield(player1, new Mountain());
+        harness.setHand(player1, List.of(new JawsOfStone()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, Map.of()))
+                .isInstanceOf(IllegalStateException.class);
     }
 }
