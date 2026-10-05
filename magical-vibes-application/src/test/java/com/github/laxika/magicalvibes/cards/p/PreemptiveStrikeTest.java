@@ -27,8 +27,7 @@ class PreemptiveStrikeTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, militia.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, militia.getId());
 
         harness.assertInGraveyard(player1, "Volunteer Militia");
         harness.assertNotOnBattlefield(player1, "Volunteer Militia");
@@ -70,5 +69,36 @@ class PreemptiveStrikeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Preemptive Strike");
+    }
+
+    @Test
+    @DisplayName("Can counter its controller's own creature spell")
+    void countersOwnCreatureSpell() {
+        VolunteerMilitia militia = new VolunteerMilitia();
+        harness.setHand(player1, List.of(militia, new PreemptiveStrike()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player1, 0, militia.getId());
+
+        harness.assertInGraveyard(player1, "Volunteer Militia");
+        harness.assertNotOnBattlefield(player1, "Volunteer Militia");
+        harness.assertInGraveyard(player1, "Preemptive Strike");
+    }
+
+    @Test
+    @DisplayName("Cannot target a creature already on the battlefield")
+    void cannotTargetCreaturePermanent() {
+        VolunteerMilitia militia = new VolunteerMilitia();
+        harness.addToBattlefield(player1, militia);
+        harness.setHand(player2, List.of(new PreemptiveStrike()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, militia.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Volunteer Militia");
+        harness.assertInHand(player2, "Preemptive Strike");
     }
 }
