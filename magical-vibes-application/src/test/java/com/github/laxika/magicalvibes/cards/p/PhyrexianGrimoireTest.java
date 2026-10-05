@@ -143,4 +143,60 @@ class PhyrexianGrimoireTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("The top two cards are determined at resolution even if the source has left the battlefield")
+    void usesCurrentGraveyardAfterSourceLeavesBattlefield() {
+        TrainedArmodon bottom = new TrainedArmodon();
+        TrainedArmodon formerTop = new TrainedArmodon();
+        PhyrexianGrimoire grimoire = new PhyrexianGrimoire();
+        TrainedArmodon opponentCard = new TrainedArmodon();
+        harness.setGraveyard(player1, List.of(bottom, formerTop));
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setHand(player1, List.of());
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.forceActivePlayer(player1);
+        harness.addToBattlefield(player1, grimoire);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        // Model the source being destroyed while its activated ability is on the stack.
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of(bottom, formerTop, grimoire));
+        harness.passBothPriorities();
+
+        assertThat(activeGraveyardChoice().cardPool()).containsExactly(grimoire, formerTop);
+        harness.handleGraveyardCardChosen(player2, 1);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(formerTop);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(grimoire);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(bottom);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Only the targeted opponent can choose, and an invalid answer leaves the choice available")
+    void rejectedAnswersDoNotConsumeOpponentChoice() {
+        TrainedArmodon bottom = new TrainedArmodon();
+        TrainedArmodon top = new TrainedArmodon();
+        harness.setGraveyard(player1, List.of(bottom, top));
+
+        activate();
+
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player2, 2))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(activeGraveyardChoice().cardPool()).containsExactly(top, bottom);
+
+        harness.handleGraveyardCardChosen(player2, 0);
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(top);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bottom);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
 }
