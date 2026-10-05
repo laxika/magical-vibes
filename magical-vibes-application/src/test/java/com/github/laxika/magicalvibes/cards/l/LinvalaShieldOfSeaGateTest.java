@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
+import com.github.laxika.magicalvibes.cards.s.SkyclaveRelic;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -22,7 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LinvalaShieldOfSeaGate.class, BoggartBrute.class, FaerieMiscreant.class,
-        FountainOfYouth.class, FugitiveWizard.class, GrizzlyBears.class, Plains.class, SoulWarden.class})
+        FountainOfYouth.class, FugitiveWizard.class, GrizzlyBears.class, Plains.class, SoulWarden.class,
+        SkyclaveRelic.class})
 class LinvalaShieldOfSeaGateTest extends BaseCardTest {
 
     @Test
@@ -104,6 +106,163 @@ class LinvalaShieldOfSeaGateTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bears, Keyword.HEXPROOF)).isFalse();
     }
 
+    @Test
+    @DisplayName("Linvala herself can supply the Wizard in a full party")
+    void linvalaSuppliesWizard() {
+        harness.addToBattlefield(player1, new LinvalaShieldOfSeaGate());
+        harness.addToBattlefield(player1, new SoulWarden());
+        harness.addToBattlefield(player1, new FaerieMiscreant());
+        harness.addToBattlefield(player1, new BoggartBrute());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(als.canAttack(gd, target, player2.getId())).isFalse();
+        assertThat(bls.canBlock(gd, target)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The combat trigger does not fire during an opponent's turn")
+    void doesNotTriggerOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new LinvalaShieldOfSeaGate());
+        addFullParty();
+        harness.addToBattlefield(player2, new FountainOfYouth());
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("The combat trigger cannot target a permanent you control")
+    void cannotTargetOwnPermanent() {
+        harness.addToBattlefield(player1, new LinvalaShieldOfSeaGate());
+        addFullParty();
+        Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+        Permanent opponentArtifact = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+
+        advanceToCombat(player1);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownArtifact.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid permanent");
+        harness.handlePermanentChosen(player1, opponentArtifact.getId());
+        harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Losing the full party before resolution prevents the lock")
+    void fullPartyIsCheckedAgainOnResolution() {
+        harness.addToBattlefield(player1, new LinvalaShieldOfSeaGate());
+        harness.addToBattlefield(player1, new SoulWarden());
+        harness.addToBattlefield(player1, new FaerieMiscreant());
+        harness.addToBattlefield(player1, new BoggartBrute());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Hexproof");
+        harness.passBothPriorities();
+
+        assertThat(als.canAttack(gd, target, player2.getId())).isTrue();
+        assertThat(bls.canBlock(gd, target)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A resolved lock survives Linvala leaving and expires at your next turn")
+    void lockSurvivesSourceAndExpiresAtNextTurn() {
+        harness.addToBattlefield(player1, new LinvalaShieldOfSeaGate());
+        addFullParty();
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Hexproof");
+
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        assertThat(als.canAttack(gd, target, player2.getId())).isFalse();
+        assertThat(bls.canBlock(gd, target)).isFalse();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+        assertThat(als.canAttack(gd, target, player2.getId())).isTrue();
+        assertThat(bls.canBlock(gd, target)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Sacrifice is paid immediately and only current friendly creatures gain hexproof")
+    void sacrificeProtectsOnlyCreaturesPresentAtResolution() {
+        harness.addToBattlefield(player1, new LinvalaShieldOfSeaGate());
+        Permanent friendly = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new FountainOfYouth());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.assertInGraveyard(player1, "Linvala, Shield of Sea Gate");
+        assertThat(gqs.hasKeyword(gd, friendly, Keyword.HEXPROOF)).isFalse();
+        Permanent beforeResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Hexproof");
+        Permanent afterResolution = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(gqs.hasKeyword(gd, friendly, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, beforeResolution, Keyword.HEXPROOF)).isTrue();
+        assertThat(gqs.hasKeyword(gd, afterResolution, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, artifact, Keyword.HEXPROOF)).isFalse();
+        assertThat(gqs.hasKeyword(gd, friendly, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The combat lock also prevents mana abilities")
+    void lockPreventsManaAbilities() {
+        harness.addToBattlefield(player1, new LinvalaShieldOfSeaGate());
+        addFullParty();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SkyclaveRelic());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.passPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be activated");
+        assertThat(target.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Indestructible protects all friendly creatures for only the current turn")
+    void indestructibleProtectsAllFriendlyCreaturesUntilEndOfTurn() {
+        harness.addToBattlefield(player1, new LinvalaShieldOfSeaGate());
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
+        Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Indestructible");
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.INDESTRUCTIBLE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opponent, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, first, Keyword.HEXPROOF)).isFalse();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gqs.hasKeyword(gd, first, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, second, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
     private void addFullParty() {
         harness.addToBattlefield(player1, new SoulWarden());
         harness.addToBattlefield(player1, new FaerieMiscreant());
@@ -115,6 +274,6 @@ class LinvalaShieldOfSeaGateTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 }
