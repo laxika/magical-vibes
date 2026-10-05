@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.k;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.AquitectsWill;
+import com.github.laxika.magicalvibes.cards.a.AshayaSoulOfTheWild;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.j.JadeGuardian;
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.r.RaptorCompanion;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,16 +18,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KumenasSpeaker.class, Island.class, JadeGuardian.class, RaptorCompanion.class,
+        AshayaSoulOfTheWild.class, AquitectsWill.class})
 class KumenasSpeakerTest extends BaseCardTest {
-
-    // ===== Base stats without condition met =====
 
     @Test
     @DisplayName("Base 1/1 when no other Merfolk or Island is controlled")
     void noBoostWhenAlone() {
-        harness.addToBattlefield(player1, new KumenasSpeaker());
+        Permanent speaker = harness.addToBattlefieldAndReturn(player1, new KumenasSpeaker());
 
-        Permanent speaker = findPermanent(player1, "Kumena's Speaker");
         assertThat(gqs.getEffectivePower(gd, speaker)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, speaker)).isEqualTo(1);
     }
@@ -31,58 +34,46 @@ class KumenasSpeakerTest extends BaseCardTest {
     @Test
     @DisplayName("No boost with a non-Merfolk, non-Island creature")
     void noBoostWithIrrelevantCreature() {
-        harness.addToBattlefield(player1, new KumenasSpeaker());
-        harness.addToBattlefield(player1, new GrizzlyBears());
+        Permanent speaker = harness.addToBattlefieldAndReturn(player1, new KumenasSpeaker());
+        harness.addToBattlefield(player1, new RaptorCompanion());
 
-        Permanent speaker = findPermanent(player1, "Kumena's Speaker");
         assertThat(gqs.getEffectivePower(gd, speaker)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, speaker)).isEqualTo(1);
     }
 
-    // ===== Boost with another Merfolk =====
-
     @Test
     @DisplayName("Gets +1/+1 when controller controls another Merfolk")
     void boostWithAnotherMerfolk() {
-        harness.addToBattlefield(player1, new KumenasSpeaker());
+        Permanent speaker = harness.addToBattlefieldAndReturn(player1, new KumenasSpeaker());
         harness.addToBattlefield(player1, new JadeGuardian());
 
-        Permanent speaker = findPermanent(player1, "Kumena's Speaker");
         assertThat(gqs.getEffectivePower(gd, speaker)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, speaker)).isEqualTo(2);
     }
-
-    // ===== Boost with an Island =====
 
     @Test
     @DisplayName("Gets +1/+1 when controller controls an Island")
     void boostWithIsland() {
-        harness.addToBattlefield(player1, new KumenasSpeaker());
+        Permanent speaker = harness.addToBattlefieldAndReturn(player1, new KumenasSpeaker());
         harness.addToBattlefield(player1, new Island());
 
-        Permanent speaker = findPermanent(player1, "Kumena's Speaker");
         assertThat(gqs.getEffectivePower(gd, speaker)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, speaker)).isEqualTo(2);
     }
 
-    // ===== Boost does not stack =====
-
     @Test
     @DisplayName("Boost is +1/+1 even when controlling both another Merfolk and an Island")
     void boostDoesNotStackWithMerfolkAndIsland() {
-        harness.addToBattlefield(player1, new KumenasSpeaker());
+        Permanent speaker = harness.addToBattlefieldAndReturn(player1, new KumenasSpeaker());
         harness.addToBattlefield(player1, new JadeGuardian());
         harness.addToBattlefield(player1, new Island());
 
-        Permanent speaker = findPermanent(player1, "Kumena's Speaker");
         assertThat(gqs.getEffectivePower(gd, speaker)).isEqualTo(2); // 1 base + 1 boost, not +2
         assertThat(gqs.getEffectiveToughness(gd, speaker)).isEqualTo(2);
     }
 
-    // ===== "Another" — self doesn't count =====
-
     @Test
-    @DisplayName("Two Kumena's Speakers alone do not boost each other (each has one other Merfolk)")
+    @DisplayName("Two Kumena's Speakers boost each other")
     void twoSpeakersBoostEachOther() {
         harness.addToBattlefield(player1, new KumenasSpeaker());
         harness.addToBattlefield(player1, new KumenasSpeaker());
@@ -97,15 +88,12 @@ class KumenasSpeakerTest extends BaseCardTest {
         }
     }
 
-    // ===== Opponent's permanents don't count =====
-
     @Test
     @DisplayName("Opponent's Merfolk does not grant the boost")
     void opponentMerfolkDoesNotCount() {
-        harness.addToBattlefield(player1, new KumenasSpeaker());
+        Permanent speaker = harness.addToBattlefieldAndReturn(player1, new KumenasSpeaker());
         harness.addToBattlefield(player2, new JadeGuardian());
 
-        Permanent speaker = findPermanent(player1, "Kumena's Speaker");
         assertThat(gqs.getEffectivePower(gd, speaker)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, speaker)).isEqualTo(1);
     }
@@ -113,43 +101,33 @@ class KumenasSpeakerTest extends BaseCardTest {
     @Test
     @DisplayName("Opponent's Island does not grant the boost")
     void opponentIslandDoesNotCount() {
-        harness.addToBattlefield(player1, new KumenasSpeaker());
+        Permanent speaker = harness.addToBattlefieldAndReturn(player1, new KumenasSpeaker());
         harness.addToBattlefield(player2, new Island());
 
-        Permanent speaker = findPermanent(player1, "Kumena's Speaker");
         assertThat(gqs.getEffectivePower(gd, speaker)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, speaker)).isEqualTo(1);
     }
-
-    // ===== Loses boost when condition no longer met =====
 
     @Test
     @DisplayName("Loses boost when the other Merfolk leaves the battlefield")
     void losesBoostWhenMerfolkLeaves() {
-        harness.addToBattlefield(player1, new KumenasSpeaker());
-        harness.addToBattlefield(player1, createMerfolk());
+        Permanent speaker = harness.addToBattlefieldAndReturn(player1, new KumenasSpeaker());
+        Permanent merfolk = harness.addToBattlefieldAndReturn(player1, new JadeGuardian());
 
-        Permanent speaker = findPermanent(player1, "Kumena's Speaker");
         assertThat(gqs.getEffectivePower(gd, speaker)).isEqualTo(2);
 
-        // Remove the Merfolk
-        gd.playerBattlefields.get(player1.getId())
-                .removeIf(p -> !p.getCard().getName().equals("Kumena's Speaker")
-                        && p.getCard().getSubtypes().contains(CardSubtype.MERFOLK));
+        gd.playerBattlefields.get(player1.getId()).remove(merfolk);
 
         assertThat(gqs.getEffectivePower(gd, speaker)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, speaker)).isEqualTo(1);
     }
 
-    // ===== Static boost survives end-of-turn reset =====
-
     @Test
     @DisplayName("Static boost survives end-of-turn modifier reset")
     void staticBoostSurvivesEndOfTurnReset() {
-        harness.addToBattlefield(player1, new KumenasSpeaker());
+        Permanent speaker = harness.addToBattlefieldAndReturn(player1, new KumenasSpeaker());
         harness.addToBattlefield(player1, new Island());
 
-        Permanent speaker = findPermanent(player1, "Kumena's Speaker");
         assertThat(gqs.getEffectivePower(gd, speaker)).isEqualTo(2);
 
         speaker.resetModifiers();
@@ -158,12 +136,37 @@ class KumenasSpeakerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, speaker)).isEqualTo(2);
     }
 
-    // ===== Helper methods =====
+    @Test
+    @DisplayName("Speaker itself satisfies the Island condition when it retains its ability")
+    @CardUsed({KumenasSpeaker.class, AshayaSoulOfTheWild.class, AquitectsWill.class, Island.class})
+    void speakerItselfCanBeTheIsland() {
+        Permanent speaker = harness.addToBattlefieldAndReturn(player1, new KumenasSpeaker());
+        harness.addToBattlefield(player1, new AshayaSoulOfTheWild());
+        harness.setHand(player1, List.of(new AquitectsWill()));
+        harness.setLibrary(player1, List.of(new Island()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-    private Card createMerfolk() {
-        Card card = new GrizzlyBears();
-        card.setSubtypes(List.of(CardSubtype.MERFOLK));
-        return card;
+        assertThat(gqs.getEffectivePower(gd, speaker)).isEqualTo(1);
+        harness.castAndResolveSorcery(player1, 0, 0, speaker.getId());
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, speaker)).contains(CardSubtype.ISLAND);
+        assertThat(gqs.getEffectivePower(gd, speaker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, speaker)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Loses boost when the only Island leaves the battlefield")
+    void losesBoostWhenIslandLeaves() {
+        Permanent speaker = harness.addToBattlefieldAndReturn(player1, new KumenasSpeaker());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        assertThat(gqs.getEffectivePower(gd, speaker)).isEqualTo(2);
+
+        gd.playerBattlefields.get(player1.getId()).remove(island);
+
+        assertThat(gqs.getEffectivePower(gd, speaker)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, speaker)).isEqualTo(1);
     }
 
 }
