@@ -73,9 +73,7 @@ class MarrowGnawerTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, ratOf(player1).getId());
         harness.passBothPriorities();
 
-        List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> "Rat".equals(p.getCard().getName()))
-                .toList();
+        List<Permanent> tokens = findPermanents(player1, "Rat");
         assertThat(tokens).isNotEmpty();
         assertThat(tokens).allMatch(token -> gqs.hasKeyword(gd, token, Keyword.FEAR));
     }
@@ -126,6 +124,81 @@ class MarrowGnawerTest extends BaseCardTest {
         assertThat(countRats(player1)).isZero();
     }
 
+    @Test
+    @DisplayName("Rats entering before resolution increase the number of tokens")
+    void countsRatsAtResolution() {
+        addReadyGnawer(player1);
+        Permanent sacrificedRat = harness.addToBattlefieldAndReturn(player1, new NezumiRonin());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, sacrificedRat.getId());
+        harness.addToBattlefield(player1, new NezumiRonin());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Rat")).isEqualTo(2);
+        assertThat(countRats(player1)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Sacrificing Marrow-Gnawer still creates tokens for the surviving Rats")
+    void sacrificingSourceStillResolves() {
+        Permanent gnawer = addReadyGnawer(player1);
+        harness.addToBattlefield(player1, new NezumiRonin());
+        harness.addToBattlefield(player1, new NezumiRonin());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, gnawer.getId());
+        harness.assertInGraveyard(player1, "Marrow-Gnawer");
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Rat")).isEqualTo(2);
+        assertThat(countRats(player1)).isEqualTo(4);
+        assertThat(findPermanents(player1, "Rat"))
+                .allMatch(token -> !gqs.hasKeyword(gd, token, Keyword.FEAR));
+    }
+
+    @Test
+    @DisplayName("An opponent's Rat cannot pay the sacrifice cost")
+    void cannotSacrificeOpponentsRat() {
+        addReadyGnawer(player1);
+        Permanent ownRat = harness.addToBattlefieldAndReturn(player1, new NezumiRonin());
+        Permanent opponentsRat = harness.addToBattlefieldAndReturn(player2, new NezumiRonin());
+
+        harness.activateAbility(player1, 0, null, null);
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentsRat.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handlePermanentChosen(player1, ownRat.getId());
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Rat")).isEqualTo(1);
+        assertThat(countRats(player2)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the tap cost")
+    void summoningSicknessPreventsActivation() {
+        harness.addToBattlefield(player1, new MarrowGnawer());
+        harness.addToBattlefield(player1, new NezumiRonin());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(countRats(player1)).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activating the ability taps Marrow-Gnawer")
+    void activationPaysTapCost() {
+        Permanent gnawer = addReadyGnawer(player1);
+        Permanent rat = harness.addToBattlefieldAndReturn(player1, new NezumiRonin());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handlePermanentChosen(player1, rat.getId());
+
+        assertThat(gnawer.isTapped()).isTrue();
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Rat")).isEqualTo(1);
+    }
     private Permanent addReadyGnawer(Player player) {
         return addCreatureReady(player, new MarrowGnawer());
     }
