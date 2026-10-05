@@ -70,4 +70,39 @@ class MightyMutanimalsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("The created token triggers alliance and can receive its counter")
+    void createdTokenCanReceiveAllianceCounter() {
+        harness.setHand(player1, List.of(new MightyMutanimals()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent source = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        Permanent token = gd.playerBattlefields.get(player1.getId()).getLast();
+        harness.handlePermanentChosen(player1, token.getId());
+        harness.passBothPriorities();
+
+        assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(token.getEffectivePower()).isEqualTo(3);
+        assertThat(token.getEffectiveToughness()).isEqualTo(3);
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature entering does not trigger alliance")
+    void opponentCreatureEnteringDoesNotTriggerAlliance() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new MightyMutanimals());
+
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }
