@@ -65,4 +65,89 @@ class OuraTheImitatorTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bears);
     }
+
+    @Test
+    void cannotLookAtNonFaerieNonInstantOnTop() {
+        harness.addToBattlefield(player1, new OuraTheImitator());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .noneMatch(message -> message.contains("Grizzly Bears"));
+        assertThat(harness.getConn2().getSentMessages())
+                .noneMatch(message -> message.contains("Grizzly Bears"));
+    }
+
+    @Test
+    void instantOnTopIsVisibleOnlyToControllerOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new OuraTheImitator());
+        harness.setLibrary(player1, List.of(new DarkRitual()));
+        harness.forceActivePlayer(player2);
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[{")
+                        && message.contains("Dark Ritual"));
+        assertThat(harness.getConn2().getSentMessages())
+                .noneMatch(message -> message.contains("Dark Ritual"));
+    }
+
+    @Test
+    void faerieOnTopIsVisibleOnlyToController() {
+        harness.addToBattlefield(player1, new OuraTheImitator());
+        harness.setLibrary(player1, List.of(new FaerieSeer()));
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .anyMatch(message -> message.contains("\"revealedLibraryTopCards\":[[{")
+                        && message.contains("Faerie Seer"));
+        assertThat(harness.getConn2().getSentMessages())
+                .noneMatch(message -> message.contains("Faerie Seer"));
+    }
+
+    @Test
+    void castsFaerieFromLibraryOnOpponentsTurn() {
+        harness.addToBattlefield(player1, new OuraTheImitator());
+        harness.setLibrary(player1, List.of(new FaerieSeer()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveFromLibraryTop(player1);
+
+        harness.assertOnBattlefield(player1, "Faerie Seer");
+    }
+
+    @Test
+    void libraryCastingPermissionEndsWhenOuraLeaves() {
+        harness.addToBattlefield(player1, new OuraTheImitator());
+        DarkRitual ritual = new DarkRitual();
+        harness.setLibrary(player1, List.of(ritual));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        gd.playerBattlefields.get(player1.getId()).clear();
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player1))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ritual);
+    }
+
+    @Test
+    void ouraInLibraryDoesNotRevealItselfWithoutBattlefieldPermission() {
+        harness.setLibrary(player1, List.of(new OuraTheImitator()));
+        harness.clearMessages();
+
+        harness.publishState();
+
+        assertThat(harness.getConn1().getSentMessages())
+                .noneMatch(message -> message.contains("Oura, the Imitator"));
+        assertThat(harness.getConn2().getSentMessages())
+                .noneMatch(message -> message.contains("Oura, the Imitator"));
+    }
 }
