@@ -117,6 +117,59 @@ class OrderOfTheGoldenCricketTest extends BaseCardTest {
         assertThat(cricket.hasKeyword(Keyword.FLYING)).isFalse();
     }
 
+    @Test
+    @DisplayName("Paying grants flying only to the attacking Cricket")
+    void onlyAttackingCricketGainsFlying() {
+        Permanent attacker = addReadyCricket(player1);
+        Permanent nonAttacker = addReadyCricket(player1);
+        Permanent defender = addReadyCricket(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, true));
+
+        assertThat(attacker.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(nonAttacker.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(defender.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The attacking controller pays even when player two attacks")
+    void playerTwoPaysForOwnAttackTrigger() {
+        Permanent cricket = addReadyCricket(player2);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.WHITE, 1);
+
+        declareAttackers(player2, List.of(0));
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player2, true));
+
+        assertThat(cricket.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Declining payment preserves white mana")
+    void decliningPreservesMana() {
+        Permanent cricket = addReadyCricket(player1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        declareAttackers(player1, List.of(0));
+        harness.passBothPriorities();
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> harness.handleMayAbilityChosen(player1, false));
+
+        assertThat(cricket.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
     private Permanent addReadyCricket(Player player) {
         return addCreatureReady(player, new OrderOfTheGoldenCricket());
     }
