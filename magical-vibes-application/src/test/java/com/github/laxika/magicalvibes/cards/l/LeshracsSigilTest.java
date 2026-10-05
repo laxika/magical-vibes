@@ -165,4 +165,73 @@ class LeshracsSigilTest extends BaseCardTest {
         harness.assertInHand(player1, "Leshrac's Sigil");
         harness.assertNotOnBattlefield(player1, "Leshrac's Sigil");
     }
+
+    @Test
+    @DisplayName("Payment occurs on resolution and the controller chooses exactly one card")
+    void paysOnResolutionAndChoosesAmongCards() {
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setHand(player2, List.of(new FyndhornElves(), new Incinerate(), new DarkRitual()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(2);
+        harness.assertInHand(player2, "Incinerate");
+        harness.assertInHand(player2, "Dark Ritual");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player2, "Dark Ritual");
+        harness.assertNotInHand(player2, "Dark Ritual");
+        harness.assertInHand(player2, "Incinerate");
+        harness.assertNotInGraveyard(player2, "Incinerate");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("One black mana and one colorless mana cannot pay the trigger's cost")
+    void insufficientBlackManaDoesNotLookOrDiscard() {
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.setHand(player2, List.of(new FyndhornElves(), new Incinerate()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(harness.getConn1().getMessagesContaining("REVEAL_HAND")).isEmpty();
+        harness.assertInHand(player2, "Incinerate");
+        harness.assertNotInGraveyard(player2, "Incinerate");
+    }
+
+    @Test
+    @DisplayName("A green-spell trigger still resolves after the Sigil returns to hand")
+    void triggerResolvesAfterSourceReturnsToHand() {
+        setUpOpponentTurn();
+        harness.addMana(player1, ManaColor.BLACK, 4);
+        harness.setHand(player2, List.of(new FyndhornElves(), new Incinerate()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+
+        harness.castCreature(player2, 0);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Leshrac's Sigil");
+        harness.assertNotOnBattlefield(player1, "Leshrac's Sigil");
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertInGraveyard(player2, "Incinerate");
+        harness.assertNotInHand(player2, "Incinerate");
+    }
 }
