@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,12 +42,34 @@ class IntrepidAceTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Intrepid Ace does not get its boost while both attacking and blocking")
-    void losesBoostWhileBothAttackingAndBlocking() {
+    @DisplayName("Intrepid Ace deals two combat damage and regains its boost after combat")
+    void dealsTwoDamageAndRegainsBoostAfterCombat() {
         Permanent ace = addCreatureReady(player1, new IntrepidAce());
-        ace.setAttacking(true);
-        ace.setBlocking(true);
+        harness.setLife(player2, 20);
 
+        harness.withAutoStop(TurnStep.END_OF_COMBAT, () -> {
+            declareAttackers(List.of(0));
+            harness.passUntil(player1, TurnStep.END_OF_COMBAT);
+        });
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
         assertThat(gqs.getEffectivePower(gd, ace)).isEqualTo(2);
+
+        harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
+
+        assertThat(gqs.getEffectivePower(gd, ace)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("An idle Intrepid Ace keeps its boost when another Intrepid Ace attacks")
+    void combatConditionAppliesOnlyToEachIndividualAce() {
+        Permanent attacker = addCreatureReady(player1, new IntrepidAce());
+        Permanent idle = addCreatureReady(player1, new IntrepidAce());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareAttackers(List.of(0)));
+
+        assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(2);
+        assertThat(gqs.getEffectivePower(gd, idle)).isEqualTo(4);
     }
 }
