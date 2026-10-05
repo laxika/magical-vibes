@@ -3,14 +3,11 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.h.HornedCheetah;
 import com.github.laxika.magicalvibes.cards.s.SunscapeApprentice;
 import com.github.laxika.magicalvibes.cards.t.ThornscapeApprentice;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -20,6 +17,7 @@ class JadeLeechTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Green spells you cast cost {G} more")
+    @CardUsed({JadeLeech.class, ThornscapeApprentice.class, HornedCheetah.class})
     class OwnGreenSpellsTaxed {
 
         @Test
@@ -57,11 +55,45 @@ class JadeLeechTest extends BaseCardTest {
         @DisplayName("The additional green mana cannot be paid with colorless mana")
         void greenSpellTaxRequiresGreenMana() {
             harness.addToBattlefield(player1, new JadeLeech());
-            harness.setHand(player1, List.of(new ThornscapeApprentice()));
-            harness.addMana(player1, ManaColor.GREEN, 1);
-            harness.addMana(player1, ManaColor.COLORLESS, 1);
+            assertThatThrownBy(() -> harness.castFromHand(player1, new ThornscapeApprentice(), "{1}{G}"))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("not playable");
+        }
 
-            assertThatThrownBy(() -> harness.castCreature(player1, 0))
+        @Test
+        void multipleLeechesEachAddGreenMana() {
+            harness.addToBattlefield(player1, new JadeLeech());
+            harness.addToBattlefield(player1, new JadeLeech());
+
+            assertThatThrownBy(() -> harness.castFromHand(player1, new ThornscapeApprentice(), "{G}{G}"))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("not playable");
+        }
+
+        @Test
+        void multipleLeechTaxesCanBePaid() {
+            harness.addToBattlefield(player1, new JadeLeech());
+            harness.addToBattlefield(player1, new JadeLeech());
+
+            harness.castFromHand(player1, new ThornscapeApprentice(), "{G}{G}{G}");
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        }
+
+        @Test
+        void jadeLeechDoesNotTaxItselfWhileBeingCast() {
+            harness.castFromHand(player1, new JadeLeech(), "{2}{G}{G}");
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        }
+
+        @Test
+        void existingLeechTaxesAnotherLeech() {
+            harness.addToBattlefield(player1, new JadeLeech());
+
+            assertThatThrownBy(() -> harness.castFromHand(player1, new JadeLeech(), "{2}{G}{G}"))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("not playable");
         }
@@ -69,6 +101,7 @@ class JadeLeechTest extends BaseCardTest {
 
     @Nested
     @DisplayName("Only the controller's green spells are taxed")
+    @CardUsed({JadeLeech.class, SunscapeApprentice.class, ThornscapeApprentice.class})
     class OpponentAndNonGreenNotTaxed {
 
         @Test
