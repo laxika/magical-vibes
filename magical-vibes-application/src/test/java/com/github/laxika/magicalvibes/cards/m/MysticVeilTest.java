@@ -7,10 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,9 +21,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MysticVeilTest extends BaseCardTest {
 
     private Permanent attachVeil(Permanent host) {
-        Permanent aura = new Permanent(new MysticVeil());
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new MysticVeil());
         aura.setAttachedTo(host.getId());
-        gd.playerBattlefields.get(player1.getId()).add(aura);
         return aura;
     }
 
@@ -60,7 +57,7 @@ class MysticVeilTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Boomerang()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 0, bears.getId(), null))
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, bears.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
     }
@@ -76,7 +73,8 @@ class MysticVeilTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
 
         harness.assertOnBattlefield(player1, "Mystic Veil");
     }
@@ -96,7 +94,10 @@ class MysticVeilTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Mystic Veil");
 
-        GameTestEngineContext.get().getBean(TurnCleanupService.class).applyCleanupResets(gd);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+        harness.assertOnBattlefield(player1, "Mystic Veil");
+        harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Mystic Veil");
         harness.assertInGraveyard(player1, "Mystic Veil");
@@ -116,5 +117,52 @@ class MysticVeilTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("Casting in response grants shroud before the opposing spell resolves")
+    void castInResponseMakesOpposingTargetIllegal() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.castInstant(player2, 0, bears.getId());
+        harness.setHand(player1, List.of(new MysticVeil()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.SHROUD)).isTrue();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Boomerang");
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.CLEANUP);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Mystic Veil");
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.SHROUD)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Can enchant an opponent's creature without granting shroud to other creatures")
+    void canEnchantOpposingCreature() {
+        Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opposingBears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MysticVeil()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, opposingBears.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mystic Veil");
+        assertThat(gqs.hasKeyword(gd, opposingBears, Keyword.SHROUD)).isTrue();
+        assertThat(gqs.hasKeyword(gd, ownBears, Keyword.SHROUD)).isFalse();
+        harness.setHand(player2, List.of(new Boomerang()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        assertThatThrownBy(() -> harness.castInstant(player2, 0, opposingBears.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
     }
 }
