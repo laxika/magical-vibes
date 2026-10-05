@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.c.ClawsOfGix;
 import com.github.laxika.magicalvibes.cards.p.PouncingCheetah;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -17,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OpalArchangel.class, Cathodion.class, ClawsOfGix.class})
+@CardUsed({OpalArchangel.class, Cathodion.class, ClawsOfGix.class, PouncingCheetah.class})
 class OpalArchangelTest extends BaseCardTest {
 
     private Permanent addOpalArchangel() {
@@ -31,15 +30,11 @@ class OpalArchangelTest extends BaseCardTest {
     }
 
     private void castOpponentCreature() {
-        harness.setHand(player2, List.of(new Cathodion()));
-        harness.addMana(player2, ManaColor.COLORLESS, 3);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new Cathodion(), "{3}");
     }
 
     private void castOpponentFlashCreature() {
-        harness.setHand(player2, List.of(new PouncingCheetah()));
-        harness.addMana(player2, ManaColor.GREEN, 3);
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new PouncingCheetah(), "{2}{G}");
     }
 
     @Test
@@ -94,9 +89,7 @@ class OpalArchangelTest extends BaseCardTest {
     void doesNotTriggerForControllerCreatureSpell() {
         Permanent opal = addOpalArchangel();
 
-        harness.setHand(player1, List.of(new Cathodion()));
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new Cathodion(), "{3}");
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gqs.isEnchantment(gd, opal)).isTrue();
@@ -104,7 +97,6 @@ class OpalArchangelTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(PouncingCheetah.class)
     @DisplayName("A queued trigger does nothing if Opal Archangel is no longer an enchantment when it resolves")
     void queuedTriggerChecksEnchantmentAgainAtResolution() {
         Permanent opal = addOpalArchangel();
@@ -120,5 +112,24 @@ class OpalArchangelTest extends BaseCardTest {
                 .map(entry -> entry.plainText())
                 .filter(log -> log.contains("becomes a 5/5 creature")))
                 .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Opal Archangel remains an Angel with flying and vigilance on the next turn")
+    void transformationPersistsAcrossTurns() {
+        Permanent opal = addOpalArchangel();
+        prepareOpponentCast();
+        castOpponentCreature();
+        resolveAllTriggers();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
+        assertThat(gqs.isEnchantment(gd, opal)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, opal)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opal)).isEqualTo(5);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, opal)).containsExactly(CardSubtype.ANGEL);
+        assertThat(gqs.hasKeyword(gd, opal, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, opal, Keyword.VIGILANCE)).isTrue();
     }
 }
