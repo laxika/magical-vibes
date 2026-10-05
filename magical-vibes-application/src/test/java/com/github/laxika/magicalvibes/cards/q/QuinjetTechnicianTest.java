@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -59,6 +61,49 @@ class QuinjetTechnicianTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(viv.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void secondAbilityManaCannotCastCreatureSpell() {
+        addReadyTechnician();
+        harness.setHand(player1, List.of(new QuinjetTechnician()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerUpAbilityOnlyMana(ManaColor.RED))
+                .isEqualTo(2);
+    }
+
+    @Test
+    void firstAbilityTapsSourceAndPreventsSecondActivation() {
+        Permanent technician = addReadyTechnician();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(technician.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerUpAbilityOnlyMana(ManaColor.RED)).isZero();
+    }
+
+    @Test
+    void secondAbilityTapsSourceAndPreventsFirstActivation() {
+        Permanent technician = addReadyTechnician();
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(technician.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getPowerUpAbilityOnlyMana(ManaColor.RED))
+                .isEqualTo(2);
     }
 
     private Permanent addReadyTechnician() {
