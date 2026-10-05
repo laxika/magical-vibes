@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AetherMembrane;
 import com.github.laxika.magicalvibes.cards.s.SealOfPrimordium;
+import com.github.laxika.magicalvibes.cards.s.StonewoodInvocation;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Melancholy.class, AetherMembrane.class, SealOfPrimordium.class})
+@CardUsed({Melancholy.class, AetherMembrane.class, SealOfPrimordium.class, StonewoodInvocation.class})
 class MelancholyTest extends BaseCardTest {
 
     @Test
@@ -115,10 +116,61 @@ class MelancholyTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Enter trigger still taps the enchanted creature after it gains shroud")
+    void enterTriggerDoesNotTargetEnchantedCreature() {
+        Permanent creature = addCreatureReady(player2, new AetherMembrane());
+        harness.setHand(player1, List.of(new Melancholy()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.setHand(player2, List.of(new StonewoodInvocation()));
+        harness.addMana(player2, ManaColor.GREEN, 4);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        assertThat(creature.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Melancholy");
+
+        harness.castAndResolveInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(creature.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Melancholy");
+    }
+
+    @Test
+    @DisplayName("Melancholy only prevents the enchanted creature from untapping")
+    void otherCreaturesStillUntap() {
+        Permanent enchanted = addCreatureReady(player2, new AetherMembrane());
+        Permanent other = addCreatureReady(player2, new AetherMembrane());
+        enchanted.tap();
+        other.tap();
+        attachMelancholy(player1, enchanted);
+
+        harness.performUntapStep(player2);
+
+        assertThat(enchanted.isTapped()).isTrue();
+        assertThat(other.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Controller may decline upkeep payment even when black mana is available")
+    void canDeclineAffordablePayment() {
+        Permanent creature = addCreatureReady(player2, new AetherMembrane());
+        attachMelancholy(player1, creature);
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Melancholy");
+        harness.assertInGraveyard(player1, "Melancholy");
+        harness.assertOnBattlefield(player2, "Aether Membrane");
+    }
+
     private Permanent attachMelancholy(Player auraController, Permanent enchanted) {
-        Permanent aura = new Permanent(new Melancholy());
+        Permanent aura = harness.addToBattlefieldAndReturn(auraController, new Melancholy());
         aura.setAttachedTo(enchanted.getId());
-        gd.playerBattlefields.get(auraController.getId()).add(aura);
         return aura;
     }
 
