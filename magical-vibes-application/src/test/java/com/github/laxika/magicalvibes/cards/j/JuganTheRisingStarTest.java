@@ -14,9 +14,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({JuganTheRisingStar.class, RendSpirit.class, DeathcurseOgre.class, HumbleBudoka.class})
 class JuganTheRisingStarTest extends BaseCardTest {
@@ -104,13 +104,62 @@ class JuganTheRisingStarTest extends BaseCardTest {
 
         gd.pendingETBDamageAssignments = Map.of(bears.getId(), 3, shroudedBudoka.getId(), 2);
 
+        assertThatThrownBy(() -> {
+            killJugan(jugan);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+        }).isInstanceOf(RuntimeException.class);
+
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(shroudedBudoka.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A distribution announced at death cannot be redirected during resolution")
+    void deathDistributionIsLockedBeforeResolution() {
+        Permanent jugan = addCreatureReady(player1, new JuganTheRisingStar());
+        Permanent originalRecipient = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
+        Permanent otherRecipient = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
+        gd.pendingETBDamageAssignments = Map.of(originalRecipient.getId(), 5);
+
         killJugan(jugan);
 
+        gd.pendingETBDamageAssignments = Map.of(otherRecipient.getId(), 5);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
-        assertThat(shroudedBudoka.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(originalRecipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(otherRecipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A distribution totaling more than five counters is rejected")
+    void deathDistributionRejectsTooManyCounters() {
+        Permanent jugan = addCreatureReady(player1, new JuganTheRisingStar());
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
+        gd.pendingETBDamageAssignments = Map.of(recipient.getId(), 6);
+
+        assertThatThrownBy(() -> {
+            killJugan(jugan);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+        }).isInstanceOf(RuntimeException.class);
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A nonempty distribution totaling fewer than five counters is rejected")
+    void deathDistributionRejectsTooFewCounters() {
+        Permanent jugan = addCreatureReady(player1, new JuganTheRisingStar());
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
+        gd.pendingETBDamageAssignments = Map.of(recipient.getId(), 4);
+
+        assertThatThrownBy(() -> {
+            killJugan(jugan);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+        }).isInstanceOf(RuntimeException.class);
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private void killJugan(Permanent jugan) {
@@ -120,8 +169,6 @@ class JuganTheRisingStarTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        UUID juganId = jugan.getId();
-        gs.playCard(gd, player1, 0, 0, juganId, null);
-        harness.passBothPriorities(); // Rend Spirit resolves → Jugan dies → death trigger on stack
+        harness.castAndResolveInstant(player1, 0, jugan.getId());
     }
 }
