@@ -181,10 +181,73 @@ class PhyrexianSplicerTest extends BaseCardTest {
         assertThat(gnomes.hasKeyword(Keyword.FLYING)).isTrue();
     }
 
+    @Test
+    @DisplayName("The recipient still gains flying if another activation removes the donor's flying first")
+    void recipientGainsFlyingWhenDonorLosesFlyingInResponse() {
+        Permanent splicer = addReadySplicer();
+        Permanent respondingSplicer = addReadySplicer();
+        Permanent donor = addCreatureReady(player2, new WindDrake());
+        Permanent recipient = addCreatureReady(player1, new JackalPup());
+        Permanent respondingRecipient = addCreatureReady(player2, new JackalPup());
+        readyMain(4);
+
+        harness.activateAbilityWithMultiTargets(player1, indexOf(splicer), 0,
+                List.of(donor.getId(), recipient.getId()));
+        harness.ensurePriority(player1);
+        harness.activateAbilityWithMultiTargets(player1, indexOf(respondingSplicer), 0,
+                List.of(donor.getId(), respondingRecipient.getId()));
+        harness.passBothPriorities();
+
+        assertThat(donor.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(respondingRecipient.hasKeyword(Keyword.FLYING)).isTrue();
+
+        harness.passBothPriorities();
+
+        assertThat(recipient.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(donor.hasKeyword(Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A recipient that already has flying is legal and retains its printed flying after cleanup")
+    void recipientMayAlreadyHaveChosenAbility() {
+        Permanent splicer = addReadySplicer();
+        Permanent donor = addCreatureReady(player2, new WindDrake());
+        Permanent recipient = addCreatureReady(player1, new WindDrake());
+        readyMain(2);
+
+        harness.activateAbilityWithMultiTargets(player1, indexOf(splicer), 0,
+                List.of(donor.getId(), recipient.getId()));
+        harness.passBothPriorities();
+
+        assertThat(donor.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(recipient.hasKeyword(Keyword.FLYING)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(donor.hasKeyword(Keyword.FLYING)).isTrue();
+        assertThat(recipient.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Removing the Splicer in response does not stop its activated ability")
+    void resolvesAfterSourceLeaves() {
+        Permanent splicer = addReadySplicer();
+        Permanent donor = addCreatureReady(player2, new WindDrake());
+        Permanent recipient = addCreatureReady(player1, new JackalPup());
+        readyMain(2);
+
+        harness.activateAbilityWithMultiTargets(player1, indexOf(splicer), 0,
+                List.of(donor.getId(), recipient.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(splicer);
+        harness.passBothPriorities();
+
+        assertThat(donor.hasKeyword(Keyword.FLYING)).isFalse();
+        assertThat(recipient.hasKeyword(Keyword.FLYING)).isTrue();
+    }
+
     private Permanent addReadySplicer() {
-        Permanent splicer = addCreatureReady(player1, new PhyrexianSplicer());
-        splicer.setSummoningSick(false);
-        return splicer;
+        return addCreatureReady(player1, new PhyrexianSplicer());
     }
 
     private void readyMain(int mana) {
