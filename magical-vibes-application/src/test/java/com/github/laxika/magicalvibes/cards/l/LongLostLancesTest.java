@@ -73,22 +73,89 @@ class LongLostLancesTest extends BaseCardTest {
         assertThat(lances.getAttachedTo()).isEqualTo(creature.getId());
     }
 
+    @Test
+    void unattachedLancesGrantKeywordsToCreatureWithOpponentsEquipment() {
+        addLancesReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent scimitar = addScimitarReady(player2);
+        scimitar.setAttachedTo(creature.getId());
+        harness.forceActivePlayer(player1);
+
+        assertHasFirstStrikeAndVigilance(creature);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+    }
+
+    @Test
+    void lancesBoostOpponentsEquippedCreatureWithoutGrantingKeywords() {
+        Permanent lances = addLancesReady(player1);
+        Permanent creature = addCreatureReady(player2, new GrizzlyBears());
+        lances.setAttachedTo(creature.getId());
+        harness.forceActivePlayer(player1);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+
+        harness.forceActivePlayer(player2);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+    }
+
+    @Test
+    void reequippingMovesBoostAndKeywordsToNewCreature() {
+        Permanent lances = addLancesReady(player1);
+        Permanent original = addCreatureReady(player1, new GrizzlyBears());
+        Permanent replacement = addCreatureReady(player1, new GrizzlyBears());
+        lances.setAttachedTo(original.getId());
+        harness.forceActivePlayer(player1);
+        assertHasFirstStrikeAndVigilance(original);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, replacement.getId());
+        harness.passBothPriorities();
+
+        assertThat(lances.getAttachedTo()).isEqualTo(replacement.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, original, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, original, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, replacement)).isEqualTo(4);
+        assertHasFirstStrikeAndVigilance(replacement);
+    }
+
+    @Test
+    void keywordsUpdateWhenActivePlayerChanges() {
+        Permanent lances = addLancesReady(player1);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        lances.setAttachedTo(creature.getId());
+        harness.forceActivePlayer(player1);
+        assertHasFirstStrikeAndVigilance(creature);
+
+        harness.forceActivePlayer(player2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+
+        harness.forceActivePlayer(player1);
+        assertHasFirstStrikeAndVigilance(creature);
+    }
+
     private void assertHasFirstStrikeAndVigilance(Permanent creature) {
         assertThat(gqs.hasKeyword(gd, creature, Keyword.FIRST_STRIKE)).isTrue();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
     }
 
     private Permanent addLancesReady(Player player) {
-        Permanent permanent = new Permanent(new LongLostLances());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new LongLostLances());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 
     private Permanent addScimitarReady(Player player) {
-        Permanent permanent = new Permanent(new LeoninScimitar());
+        Permanent permanent = harness.addToBattlefieldAndReturn(player, new LeoninScimitar());
         permanent.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }
 }
