@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.s.SpinelessThug;
+import com.github.laxika.magicalvibes.cards.p.PlatinumAngel;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MurderousBetrayal.class, MoggToady.class, SpinelessThug.class})
+@CardUsed({MurderousBetrayal.class, MoggToady.class, SpinelessThug.class, PlatinumAngel.class})
 class MurderousBetrayalTest extends BaseCardTest {
 
     private Permanent betrayal(int life) {
@@ -126,5 +127,77 @@ class MurderousBetrayalTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
         harness.assertInGraveyard(player2, "Mogg Toady");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can destroy a nonblack creature you control")
+    void destroysOwnCreature() {
+        Permanent enchantment = betrayal(20);
+        Permanent toady = harness.addToBattlefieldAndReturn(player1, new MoggToady());
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(enchantment);
+        harness.activateAbility(player1, idx, null, toady.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertNotOnBattlefield(player1, "Mogg Toady");
+        harness.assertInGraveyard(player1, "Mogg Toady");
+        harness.assertOnBattlefield(player1, "Murderous Betrayal");
+    }
+
+    @Test
+    @DisplayName("Each activation recalculates the life cost and does not tap the enchantment")
+    void repeatedActivationsRecalculateLifeCost() {
+        Permanent enchantment = betrayal(21);
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new MoggToady());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new MoggToady());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(enchantment);
+        harness.activateAbility(player1, idx, null, first.getId());
+        harness.assertLife(player1, 10);
+        harness.activateAbility(player1, idx, null, second.getId());
+        harness.assertLife(player1, 5);
+        assertThat(enchantment.isTapped()).isFalse();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Mogg Toady");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(card -> card.getName().equals("Mogg Toady"))
+                .hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
+
+    @Test
+    @DisplayName("Can pay zero life at zero life while Platinum Angel prevents losing")
+    void activatesAtZeroLife() {
+        harness.addToBattlefield(player1, new PlatinumAngel());
+        Permanent enchantment = betrayal(0);
+        Permanent toady = harness.addToBattlefieldAndReturn(player2, new MoggToady());
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(enchantment);
+        harness.activateAbility(player1, idx, null, toady.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 0);
+        harness.assertNotOnBattlefield(player2, "Mogg Toady");
+        harness.assertInGraveyard(player2, "Mogg Toady");
+    }
+
+    @Test
+    @DisplayName("Can pay zero life at minus one life while Platinum Angel prevents losing")
+    void activatesAtNegativeLifeWithZeroRoundedCost() {
+        harness.addToBattlefield(player1, new PlatinumAngel());
+        Permanent enchantment = betrayal(-1);
+        Permanent toady = harness.addToBattlefieldAndReturn(player2, new MoggToady());
+
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(enchantment);
+        harness.activateAbility(player1, idx, null, toady.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, -1);
+        harness.assertNotOnBattlefield(player2, "Mogg Toady");
+        harness.assertInGraveyard(player2, "Mogg Toady");
     }
 }
