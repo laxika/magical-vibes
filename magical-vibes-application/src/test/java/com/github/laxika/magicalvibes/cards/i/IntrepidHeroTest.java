@@ -118,4 +118,61 @@ class IntrepidHeroTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Air Elemental");
         harness.assertNotInGraveyard(player2, "Air Elemental");
     }
+
+    @Test
+    @DisplayName("Cannot activate while summoning sick")
+    void cannotActivateWhileSummoningSick() {
+        Permanent hero = harness.addToBattlefieldAndReturn(player1, new IntrepidHero());
+        hero.setSummoningSick(true);
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(hero), 0, null, elemental.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(hero.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot activate while already tapped")
+    void cannotActivateWhileAlreadyTapped() {
+        Permanent hero = setup();
+        hero.setTapped(true);
+        Permanent elemental = harness.addToBattlefieldAndReturn(player2, new AirElemental());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, idxOf(hero), 0, null, elemental.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Air Elemental");
+    }
+
+    @Test
+    @DisplayName("Can destroy a creature whose counters raise its power to four")
+    void destroysCreatureWhoseCountersRaisePowerToFour() {
+        Permanent hero = setup();
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        giant.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        harness.activateAbility(player1, idxOf(hero), 0, null, giant.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Hill Giant");
+        harness.assertInGraveyard(player2, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("Can destroy itself when its power is four")
+    void canDestroyItselfWhenPowerIsFour() {
+        Permanent hero = setup();
+        hero.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+
+        harness.activateAbility(player1, idxOf(hero), 0, null, hero.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Intrepid Hero");
+        harness.assertInGraveyard(player1, "Intrepid Hero");
+    }
 }
