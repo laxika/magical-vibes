@@ -66,12 +66,94 @@ class OftNabbedGoatTest extends BaseCardTest {
         harness.clearPriorityPassed();
 
         harness.castInstant(player2, 0, goat.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
         harness.assertInGraveyard(player1, "Oft-Nabbed Goat");
+    }
+
+    @Test
+    void cannotActivateOutsideMainPhase() {
+        addCreatureReady(player1, new OftNabbedGoat());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateWithSpellOnStack() {
+        addCreatureReady(player1, new OftNabbedGoat());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void deathWithoutCountersDoesNotDrawOrLoseLife() {
+        Permanent goat = addCreatureReady(player1, new OftNabbedGoat());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 3);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        for (int i = 0; i < 3; i++) {
+            harness.castInstant(player2, 0, goat.getId());
+            resolveAllTriggers();
+        }
+
+        harness.assertInGraveyard(player1, "Oft-Nabbed Goat");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    void stolenGoatPaysItsOwnerAndDrainsItsNewController() {
+        OftNabbedGoat card = new OftNabbedGoat();
+        card.setOwnerId(player1.getId());
+        Permanent goat = addCreatureReady(player1, card);
+        goat.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setHand(player2, List.of(new Shock()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(goat);
+        assertThatThrownBy(() -> harness.activateAbility(player2, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Only your opponents may activate this ability");
+        harness.castInstant(player2, 0, goat.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Oft-Nabbed Goat");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(16);
     }
 }
