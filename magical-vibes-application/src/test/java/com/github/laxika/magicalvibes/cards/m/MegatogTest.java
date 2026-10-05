@@ -79,4 +79,62 @@ class MegatogTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The artifact is sacrificed as a cost before the boost resolves")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent megatog = addCreatureReady(player1, new Megatog());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+        assertThat(countPermanents(player1, "Leonin Scimitar")).isZero();
+        assertThat(megatog.getPowerModifier()).isZero();
+        assertThat(megatog.getToughnessModifier()).isZero();
+        assertThat(gqs.hasKeyword(gd, megatog, Keyword.TRAMPLE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(megatog.getPowerModifier()).isEqualTo(3);
+        assertThat(megatog.getToughnessModifier()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, megatog, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Repeated activations accumulate their boosts")
+    void repeatedActivationsAccumulate() {
+        Permanent megatog = addCreatureReady(player1, new Megatog());
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.addToBattlefield(player1, new LeoninScimitar());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(megatog.getPowerModifier()).isEqualTo(6);
+        assertThat(megatog.getToughnessModifier()).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, megatog, Keyword.TRAMPLE)).isTrue();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Leonin Scimitar"))
+                .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Megatog can activate its ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent megatog = harness.addToBattlefieldAndReturn(player1, new Megatog());
+        megatog.setSummoningSick(true);
+        megatog.setTapped(true);
+        harness.addToBattlefield(player1, new LeoninScimitar());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(megatog.getPowerModifier()).isEqualTo(3);
+        assertThat(megatog.getToughnessModifier()).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, megatog, Keyword.TRAMPLE)).isTrue();
+        harness.assertInGraveyard(player1, "Leonin Scimitar");
+    }
+
 }
