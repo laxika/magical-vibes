@@ -55,7 +55,68 @@ class MyFollowersAscendTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isTrue();
     }
 
+    @Test
+    void chosenCreatureReceivesAllBenefitsAndOtherCreaturesReceiveNone() {
+        Permanent first = addCreatureReady(player1, new GrizzlyBears());
+        Permanent chosen = addCreatureReady(player1, new GrizzlyBears());
+        Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
+
+        resolveScheme();
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(chosen.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, chosen, Keyword.VIGILANCE)).isTrue();
+        for (Permanent other : List.of(first, opponent)) {
+            assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+            assertThat(gqs.hasKeyword(gd, other, Keyword.FLYING)).isFalse();
+            assertThat(gqs.hasKeyword(gd, other, Keyword.VIGILANCE)).isFalse();
+        }
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(first, chosen);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void createsTokenWhenLastCreatureLeavesBeforeResolution() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        queueScheme();
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        Permanent token = gd.playerBattlefields.get(player1.getId()).getFirst();
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(4);
+        assertThat(gqs.getEffectiveColors(gd, token)).isEmpty();
+        assertThat(gqs.isCreature(gd, token)).isTrue();
+        assertThat(gqs.isArtifact(gd, token)).isTrue();
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, token, Keyword.VIGILANCE)).isTrue();
+    }
+
+    @Test
+    void benefitsCreatureThatEntersBeforeResolutionInsteadOfCreatingToken() {
+        queueScheme();
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(creature);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FLYING)).isTrue();
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.VIGILANCE)).isTrue();
+    }
+
     private void resolveScheme() {
+        queueScheme();
+        harness.passBothPriorities();
+    }
+
+    private void queueScheme() {
         Card scheme = new MyFollowersAscend();
         gd.stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -63,6 +124,5 @@ class MyFollowersAscendTest extends BaseCardTest {
                 player1.getId(),
                 scheme.getName(),
                 scheme.getEffects(EffectSlot.SPELL)));
-        harness.passBothPriorities();
     }
 }
