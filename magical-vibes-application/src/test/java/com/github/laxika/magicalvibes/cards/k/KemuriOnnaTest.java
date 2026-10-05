@@ -105,6 +105,62 @@ class KemuriOnnaTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("The enter trigger can target its controller and discards only the chosen card")
+    void enterTriggerCanTargetController() {
+        harness.setHand(player1, List.of(new KemuriOnna(), new HandOfHonor(), new SpiritualVisit()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0, player1.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player1, "Spiritual Visit");
+        harness.assertInHand(player1, "Hand of Honor");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertOnBattlefield(player1, "Kemuri-Onna");
+    }
+
+    @Test
+    @DisplayName("Targeting a player with an empty hand resolves without a discard choice")
+    void emptyHandDoesNotRequireDiscardChoice() {
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new KemuriOnna()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Kemuri-Onna");
+    }
+
+    @Test
+    @DisplayName("Returning Kemuri-Onna resolves before the Arcane spell and does not stop that spell")
+    void returnResolvesBeforeArcaneSpell() {
+        addKemuriOnna();
+        harness.castFromHand(player1, new SpiritualVisit(), "{W}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Kemuri-Onna");
+        harness.assertInHand(player1, "Kemuri-Onna");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Spiritual Visit");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
     private void addKemuriOnna() {
         harness.addToBattlefield(player1, new KemuriOnna());
     }
