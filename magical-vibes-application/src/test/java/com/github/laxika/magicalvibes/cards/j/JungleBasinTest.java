@@ -70,16 +70,30 @@ class JungleBasinTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
 
-        UUID forestId = gd.playerBattlefields.get(player1.getId()).stream()
-                .filter(p -> p.getCard().getName().equals("Forest"))
-                .map(Permanent::getId)
-                .findFirst().orElseThrow();
+        UUID forestId = harness.getPermanentId(player1, "Forest");
         harness.handleMultiplePermanentsChosen(player1, List.of(forestId));
 
         harness.assertOnBattlefield(player1, "Jungle Basin");
         assertThat(countPermanents(player1, "Forest")).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId()).stream()
                 .filter(c -> c.getName().equals("Forest")).count()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Returns only the untapped Forest when another Forest is tapped")
+    void returnsOnlyUntappedForest() {
+        Permanent tappedForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        tappedForest.tap();
+        Permanent untappedForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        playAndResolveEtb();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertOnBattlefield(player1, "Jungle Basin");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(tappedForest).doesNotContain(untappedForest);
+        assertThat(gd.playerHands.get(player1.getId())).contains(untappedForest.getCard()).doesNotContain(tappedForest.getCard());
+        assertThat(tappedForest.isTapped()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
