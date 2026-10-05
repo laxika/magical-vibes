@@ -51,11 +51,37 @@ class KyrenGliderTest extends BaseCardTest {
         addCreatureReady(player1, new KyrenGlider());
         Permanent blocker = addCreatureReady(player2, new CloudSprite());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Kyren Glider cannot block even an attacker with flying")
+    void cannotBlockFlyingAttacker() {
+        Permanent glider = addCreatureReady(player2, new KyrenGlider());
+        addCreatureReady(player1, new CloudSprite());
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid blocker index");
+        assertThat(glider.isBlocking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Kyren Glider can attack and deal unblocked combat damage")
+    void dealsUnblockedCombatDamage() {
+        addCreatureReady(player1, new KyrenGlider());
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 19);
     }
 }
