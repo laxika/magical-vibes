@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.c.CircleOfProtectionBlack;
+import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.cards.s.SnowCoveredForest;
 import com.github.laxika.magicalvibes.cards.u.UrzasBauble;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MinionOfLeshrac.class, BalduvianBears.class, SnowCoveredForest.class, UrzasBauble.class})
+@CardUsed({MinionOfLeshrac.class, BalduvianBears.class, CircleOfProtectionBlack.class,
+        PlatinumEmperion.class, SnowCoveredForest.class, UrzasBauble.class})
 class MinionOfLeshracTest extends BaseCardTest {
 
     private Permanent addMinionReady(Player owner) {
@@ -116,7 +118,6 @@ class MinionOfLeshracTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({CircleOfProtectionBlack.class})
     @DisplayName("Prevented upkeep damage does not tap the Minion")
     void preventedUpkeepDamageDoesNotTapMinion() {
         Permanent minion = addMinionReady(player1);
@@ -185,5 +186,63 @@ class MinionOfLeshracTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, self.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("Upkeep damage taps the Minion even when your life total cannot change")
+    void damageWithoutLifeLossStillTapsMinion() {
+        Permanent minion = addMinionReady(player1);
+        harness.addToBattlefield(player1, new PlatinumEmperion());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertLife(player1, lifeBefore);
+        assertThat(minion.isTapped()).isTrue();
+        harness.assertOnBattlefield(player1, "Platinum Emperion");
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot be sacrificed for the upkeep ability")
+    void opponentsCreatureDoesNotAvoidPenalty() {
+        Permanent minion = addMinionReady(player1);
+        harness.addToBattlefield(player2, new BalduvianBears());
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertLife(player1, lifeBefore - 5);
+        assertThat(minion.isTapped()).isTrue();
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
+    }
+
+    @Test
+    @DisplayName("The activated ability can destroy your own creature and taps its source")
+    void destroysOwnCreatureAndPaysTapCost() {
+        Permanent minion = addMinionReady(player1);
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, new BalduvianBears());
+
+        harness.activateAbility(player1, 0, 0, null, bear.getId());
+        assertThat(minion.isTapped()).isTrue();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Balduvian Bears");
+        harness.assertInGraveyard(player1, "Balduvian Bears");
+        harness.assertOnBattlefield(player1, "Minion of Leshrac");
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Minion cannot activate its tap ability")
+    void summoningSicknessPreventsActivation() {
+        harness.addToBattlefield(player1, new MinionOfLeshrac());
+        Permanent bear = harness.addToBattlefieldAndReturn(player2, new BalduvianBears());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, bear.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Balduvian Bears");
     }
 }
