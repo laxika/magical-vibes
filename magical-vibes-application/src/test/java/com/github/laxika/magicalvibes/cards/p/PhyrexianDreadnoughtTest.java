@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({Enfeeblement.class, PhyrexianDreadnought.class, JungleWurm.class,
         RayOfCommand.class, TeekasDragon.class, ViashinoWarrior.class,
-        WallOfRoots.class, ZhalfirinKnight.class})
+        WallOfRoots.class, ZhalfirinKnight.class, MorticianBeetle.class})
 class PhyrexianDreadnoughtTest extends BaseCardTest {
 
     private void castDreadnought() {
@@ -33,13 +33,15 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Auto-sacrifices when the controller's other creatures cannot reach total power 12")
-    void autoSacrificesWithoutEnoughPower() {
+    @DisplayName("The controller can decline when other creatures cannot reach total power 12")
+    void declinesWithoutEnoughOtherPower() {
         harness.addToBattlefield(player1, new TeekasDragon());
         harness.addToBattlefield(player1, new JungleWurm());
         castDreadnought();
 
-        // 5 + 5 = 10 power available, so there is nothing to choose.
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Phyrexian Dreadnought");
         harness.assertOnBattlefield(player1, "Teeka's Dragon");
@@ -64,7 +66,7 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Phyrexian Dreadnought");
         harness.assertInGraveyard(player1, "Teeka's Dragon");
         harness.assertInGraveyard(player1, "Jungle Wurm");
-        // The knight was not chosen, so it survives.
+        // The other knight was not chosen, so it survives.
         assertThat(countPermanents(player1, "Zhalfirin Knight")).isEqualTo(1);
     }
 
@@ -123,8 +125,8 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Negative power counts against the required total")
-    void negativePowerCountsAgainstTotal() {
+    @DisplayName("An unchosen negative-power creature does not prevent a legal sacrifice")
+    void unchosenNegativePowerDoesNotPreventPayment() {
         Permanent wall = harness.addToBattlefieldAndReturn(player1, new WallOfRoots());
         harness.addToBattlefield(player1, new TeekasDragon());
         harness.addToBattlefield(player1, new JungleWurm());
@@ -137,8 +139,16 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
 
         castDreadnought();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
-        harness.assertInGraveyard(player1, "Phyrexian Dreadnought");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(
+                harness.getPermanentId(player1, "Teeka's Dragon"),
+                harness.getPermanentId(player1, "Jungle Wurm"),
+                harness.getPermanentId(player1, "Zhalfirin Knight")));
+
+        harness.assertOnBattlefield(player1, "Phyrexian Dreadnought");
+        harness.assertInGraveyard(player1, "Teeka's Dragon");
+        harness.assertInGraveyard(player1, "Jungle Wurm");
+        harness.assertInGraveyard(player1, "Zhalfirin Knight");
         harness.assertOnBattlefield(player1, "Wall of Roots");
     }
 
@@ -180,8 +190,7 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 3);
         harness.passPriority(player1);
-        harness.castInstant(player2, 0, dreadnought.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, dreadnought.getId());
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(permanent -> permanent.getId().equals(dreadnought.getId()));
@@ -193,7 +202,66 @@ class PhyrexianDreadnoughtTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Phyrexian Dreadnought");
     }
 
-    @CardUsed({MorticianBeetle.class})
+    @Test
+    @DisplayName("Dreadnought alone is a legal twelve-power sacrifice payment")
+    void canChooseDreadnoughtAsTheOnlySacrifice() {
+        castDreadnought();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(
+                harness.getPermanentId(player1, "Phyrexian Dreadnought")));
+
+        harness.assertInGraveyard(player1, "Phyrexian Dreadnought");
+        harness.assertNotOnBattlefield(player1, "Phyrexian Dreadnought");
+    }
+
+    @Test
+    @DisplayName("Dreadnought itself can be included in the sacrifice payment")
+    void canSacrificeDreadnoughtAlongWithAnotherCreature() {
+        harness.addToBattlefield(player1, new TeekasDragon());
+        harness.addToBattlefield(player1, new JungleWurm());
+        harness.addToBattlefield(player1, new ZhalfirinKnight());
+        castDreadnought();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(
+                harness.getPermanentId(player1, "Phyrexian Dreadnought"),
+                harness.getPermanentId(player1, "Zhalfirin Knight")));
+
+        harness.assertInGraveyard(player1, "Phyrexian Dreadnought");
+        harness.assertInGraveyard(player1, "Zhalfirin Knight");
+        harness.assertOnBattlefield(player1, "Teeka's Dragon");
+        harness.assertOnBattlefield(player1, "Jungle Wurm");
+    }
+
+    @Test
+    @DisplayName("The original controller can still pay after Dreadnought changes controller")
+    void canPayAfterDreadnoughtChangesController() {
+        harness.addToBattlefield(player1, new TeekasDragon());
+        harness.addToBattlefield(player1, new JungleWurm());
+        harness.addToBattlefield(player1, new ZhalfirinKnight());
+        harness.castFromHand(player1, new PhyrexianDreadnought(), "{1}");
+        harness.passBothPriorities();
+
+        Permanent dreadnought = findPermanent(player1, "Phyrexian Dreadnought");
+        harness.setHand(player2, List.of(new RayOfCommand()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, dreadnought.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(
+                harness.getPermanentId(player1, "Teeka's Dragon"),
+                harness.getPermanentId(player1, "Jungle Wurm"),
+                harness.getPermanentId(player1, "Zhalfirin Knight")));
+
+        harness.assertInGraveyard(player1, "Teeka's Dragon");
+        harness.assertInGraveyard(player1, "Jungle Wurm");
+        harness.assertInGraveyard(player1, "Zhalfirin Knight");
+        harness.assertOnBattlefield(player2, "Phyrexian Dreadnought");
+    }
+
     @Test
     @DisplayName("Creatures chosen for the trigger are sacrificed simultaneously")
     void sacrificesChosenCreaturesSimultaneously() {
