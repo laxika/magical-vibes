@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.a.AshnodsCylix;
 import com.github.laxika.magicalvibes.cards.b.BenthicExplorers;
 import com.github.laxika.magicalvibes.cards.l.LimDLsHighGuard;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -92,5 +93,67 @@ class PhyrexianBoonTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a creature");
+    }
+
+    @Test
+    @DisplayName("The modifier follows color changes, including multicolored and colorless creatures")
+    void modifierFollowsCurrentColors() {
+        Permanent creature = addCreatureReady(player2, new BenthicExplorers());
+        int basePower = gqs.getEffectivePower(gd, creature);
+        int baseToughness = gqs.getEffectiveToughness(gd, creature);
+        attach(creature);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(basePower - 1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(baseToughness - 2);
+
+        creature.setColorOverridden(true);
+        creature.getTransientColors().add(CardColor.BLACK);
+        creature.getTransientColors().add(CardColor.BLUE);
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(basePower + 2);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(baseToughness + 1);
+
+        creature.getTransientColors().clear();
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(basePower - 1);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(baseToughness - 2);
+    }
+
+    @Test
+    @DisplayName("Multiple Boons add their bonuses only to the enchanted creature")
+    void multipleBoonsStackOnBlackCreature() {
+        Permanent enchanted = addCreatureReady(player1, new LimDLsHighGuard());
+        Permanent other = addCreatureReady(player1, new LimDLsHighGuard());
+        int basePower = gqs.getEffectivePower(gd, enchanted);
+        int baseToughness = gqs.getEffectiveToughness(gd, enchanted);
+
+        attach(enchanted);
+        attach(enchanted);
+
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(basePower + 4);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(baseToughness + 2);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(baseToughness);
+    }
+
+    @Test
+    @DisplayName("Two Boons kill a nonblack creature with four toughness and both Auras go to the graveyard")
+    void stackedPenaltiesKillCreatureAndRemoveAuras() {
+        Permanent creature = addCreatureReady(player2, new BenthicExplorers());
+        harness.setHand(player1, List.of(new PhyrexianBoon(), new PhyrexianBoon()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Benthic Explorers");
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Benthic Explorers");
+        harness.assertInGraveyard(player2, "Benthic Explorers");
+        harness.assertNotOnBattlefield(player1, "Phyrexian Boon");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card instanceof PhyrexianBoon)
+                .hasSize(2);
     }
 }
