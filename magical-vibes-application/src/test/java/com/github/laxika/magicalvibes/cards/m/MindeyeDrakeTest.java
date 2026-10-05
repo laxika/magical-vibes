@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MindeyeDrake.class, DoomBlade.class})
 class MindeyeDrakeTest extends BaseCardTest {
 
     @Test
@@ -51,5 +53,49 @@ class MindeyeDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore - 5);
+    }
+
+    @Test
+    @DisplayName("Death trigger mills the top five cards into the chosen player's graveyard")
+    void millsTopFiveCardsOnly() {
+        List<MindeyeDrake> library = List.of(new MindeyeDrake(), new MindeyeDrake(),
+                new MindeyeDrake(), new MindeyeDrake(), new MindeyeDrake(), new MindeyeDrake());
+        harness.setLibrary(player1, library);
+        harness.setGraveyard(player1, List.of());
+        int otherLibrarySize = gd.playerDecks.get(player2.getId()).size();
+        var drake = harness.addToBattlefieldAndReturn(player2, new MindeyeDrake());
+        drake.setMarkedDamage(5);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player2, "Mindeye Drake");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
+        harness.handlePermanentChosen(player2, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(library.get(5));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .containsExactlyInAnyOrderElementsOf(library.subList(0, 5));
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(otherLibrarySize);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Death trigger mills all remaining cards when fewer than five remain")
+    void millsShortLibrary() {
+        List<MindeyeDrake> library = List.of(new MindeyeDrake(), new MindeyeDrake());
+        harness.setLibrary(player1, library);
+        harness.setGraveyard(player1, List.of());
+        var drake = harness.addToBattlefieldAndReturn(player2, new MindeyeDrake());
+        drake.setMarkedDamage(5);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, player1.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrderElementsOf(library);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
