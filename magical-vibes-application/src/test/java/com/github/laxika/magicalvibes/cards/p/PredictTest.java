@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.b.BruvacTheGrandiloquent;
 import com.github.laxika.magicalvibes.cards.c.CarefulStudy;
 import com.github.laxika.magicalvibes.cards.c.Concentrate;
 import com.github.laxika.magicalvibes.model.Card;
@@ -27,8 +28,7 @@ class PredictTest extends BaseCardTest {
         harness.setLibrary(player2, targetLibrary);
         harness.setLibrary(player1, drawCards);
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
     }
 
     @Test
@@ -78,8 +78,7 @@ class PredictTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Predict()));
         harness.setLibrary(player1, List.of(top, drawOne, drawTwo));
         harness.addMana(player1, ManaColor.BLUE, 2);
-        harness.castInstant(player1, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player1.getId());
 
         harness.handleListChoice(player1, "Peek");
 
@@ -97,5 +96,61 @@ class PredictTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Naming a card does not expose names from hidden opponent zones")
+    void nameChoiceDoesNotExposeHiddenCards() {
+        cast(new Peek(), List.of(new CarefulStudy()));
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).satisfiesAnyOf(
+                options -> assertThat(options).doesNotContain("Peek"),
+                options -> assertThat(options).contains("Concentrate"));
+    }
+
+    @Test
+    @DisplayName("The name-choice prompt offers legal card names absent from the game")
+    void nameChoiceOffersCardsAbsentFromGame() {
+        cast(new Peek(), List.of(new CarefulStudy()));
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.options()).contains("Concentrate");
+    }
+
+    @Test
+    @CardUsed({BruvacTheGrandiloquent.class})
+    @DisplayName("A matching second card milled by Bruvac draws two cards")
+    void matchingSecondMilledCardDrawsTwoCards() {
+        Card first = new Concentrate();
+        Card second = new Peek();
+        Card drawOne = new CarefulStudy();
+        Card drawTwo = new Concentrate();
+        harness.addToBattlefield(player1, new BruvacTheGrandiloquent());
+        cast(List.of(first, second), List.of(drawOne, drawTwo));
+
+        harness.handleListChoice(player1, "Peek");
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first, second);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawOne, drawTwo);
+    }
+
+    @Test
+    @CardUsed({BruvacTheGrandiloquent.class})
+    @DisplayName("Multiple matching cards milled by Bruvac still draw only two cards")
+    void multipleMatchingMilledCardsDrawOnlyTwoCards() {
+        Card first = new Peek();
+        Card second = new Peek();
+        Card drawOne = new CarefulStudy();
+        Card drawTwo = new Concentrate();
+        Card remaining = new Peek();
+        harness.addToBattlefield(player1, new BruvacTheGrandiloquent());
+        cast(List.of(first, second), List.of(drawOne, drawTwo, remaining));
+
+        harness.handleListChoice(player1, "Peek");
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(first, second);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawOne, drawTwo);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
     }
 }
