@@ -56,11 +56,83 @@ class ProtectionMagicTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Can resolve without choosing any targets")
+    void canResolveWithNoTargets() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(List.of());
+
+        assertThat(creature.getCounterCount(CounterType.SHIELD)).isZero();
+        harness.assertInGraveyard(player1, "Protection Magic");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Puts counters on two chosen creatures and leaves others unchanged")
+    void canTargetExactlyTwoCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent unchosen = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        cast(List.of(first.getId(), second.getId()));
+
+        assertThat(first.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+        assertThat(second.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+        assertThat(unchosen.getCounterCount(CounterType.SHIELD)).isZero();
+    }
+
+    @Test
+    @DisplayName("Cannot choose more than three creatures")
+    void cannotTargetFourCreatures() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent third = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent fourth = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ProtectionMagic()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(first.getId(), second.getId(), third.getId(), fourth.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot target the same creature more than once")
+    void cannotRepeatTarget() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ProtectionMagic()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0,
+                List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Still puts a shield counter on remaining targets when one leaves the battlefield")
+    void resolvesForRemainingTargets() {
+        Permanent removed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent remaining = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ProtectionMagic()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, List.of(removed.getId(), remaining.getId()));
+
+        gd.playerBattlefields.get(player1.getId()).remove(removed);
+        harness.passBothPriorities();
+
+        assertThat(remaining.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
+        assertThat(removed.getCounterCount(CounterType.SHIELD)).isZero();
+        harness.assertInGraveyard(player1, "Protection Magic");
+    }
+
     private void cast(List<UUID> targetIds) {
         harness.setHand(player1, List.of(new ProtectionMagic()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0, targetIds);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, targetIds);
     }
 }
