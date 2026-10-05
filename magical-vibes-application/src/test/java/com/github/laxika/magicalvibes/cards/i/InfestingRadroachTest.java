@@ -23,7 +23,7 @@ class InfestingRadroachTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage gives the damaged player that many rad counters")
     void combatDamageGivesRadCountersEqualToDamage() {
-        Permanent roach = addCreatureReady(player1, new InfestingRadroach());
+        addCreatureReady(player1, new InfestingRadroach());
 
         declareAttackers(player1, List.of(0));
         resolveCombat();
@@ -43,7 +43,7 @@ class InfestingRadroachTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, player2.getId());
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
@@ -66,6 +66,91 @@ class InfestingRadroachTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(roach);
+    }
+
+    @Test
+    @DisplayName("The graveyard return can be declined")
+    void mayDeclineGraveyardReturn() {
+        InfestingRadroach roach = new InfestingRadroach();
+        harness.setGraveyard(player1, List.of(roach));
+        harness.addToBattlefield(player2, new Millstone());
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new Forest()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 0, null, player2.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(roach);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(roach);
+    }
+
+    @Test
+    @DisplayName("Milling your own nonland card does not trigger the return")
+    void ownMillDoesNotTrigger() {
+        InfestingRadroach roach = new InfestingRadroach();
+        harness.setGraveyard(player1, List.of(roach));
+        harness.addToBattlefield(player1, new Millstone());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(roach);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(roach);
+    }
+
+    @Test
+    @DisplayName("Each nonland card milled gives a separate opportunity to return")
+    void eachNonlandCardTriggersSeparately() {
+        InfestingRadroach roach = new InfestingRadroach();
+        harness.setGraveyard(player1, List.of(roach));
+        harness.addToBattlefield(player2, new Millstone());
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 0, null, player2.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(roach);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(roach);
+    }
+
+    @Test
+    @DisplayName("A pending return cannot retrieve a new graveyard incarnation")
+    void pendingReturnCannotRetrieveCardThatLeftAndReenteredGraveyard() {
+        InfestingRadroach roach = new InfestingRadroach();
+        harness.setGraveyard(player1, List.of(roach));
+        gd.markGraveyardEntry(roach);
+        harness.addToBattlefield(player2, new Millstone());
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new Forest()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(roach));
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(roach));
+        gd.markGraveyardEntry(roach);
+
+        resolveAllTriggers();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(roach);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(roach);
     }
 
     @Test
