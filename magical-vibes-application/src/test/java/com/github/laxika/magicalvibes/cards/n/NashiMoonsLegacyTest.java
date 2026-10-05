@@ -43,7 +43,6 @@ class NashiMoonsLegacyTest extends BaseCardTest {
         BogRats rat = new BogRats();
         harness.setGraveyard(player1, List.of(rat));
         harness.addMana(player1, ManaColor.BLACK, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         declareAttackers(List.of(0));
         harness.handleMultipleCardsChosen(player1, List.of(rat.getId()));
@@ -51,12 +50,80 @@ class NashiMoonsLegacyTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(permanent -> permanent.getCard().getName().equals("Bog Rats")
-                        && permanent.getCard().isToken());
+        assertThat(findPermanent(player1, "Bog Rats").getCard().isToken()).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anyMatch(card -> card.getId().equals(rat.getId()));
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
-        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @DisplayName("A copied Rat cannot be cast without the mana to pay its cost")
+    void cannotCastRatCopyWithoutMana() {
+        addCreatureReady(player1, new NashiMoonsLegacy());
+        BogRats rat = new BogRats();
+        harness.setGraveyard(player1, List.of(rat));
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(rat.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Bog Rats")).isZero();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(rat);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Declining to cast still exiles the original legendary card")
+    void decliningCopyStillExilesLegendaryCard() {
+        addCreatureReady(player1, new NashiMoonsLegacy());
+        YomijiWhoBarsTheWay legendary = new YomijiWhoBarsTheWay();
+        harness.setGraveyard(player1, List.of(legendary));
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(legendary.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(countPermanents(player1, "Yomiji, Who Bars the Way")).isZero();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(legendary);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The attack trigger permits choosing no target")
+    void mayChooseNoTarget() {
+        addCreatureReady(player1, new NashiMoonsLegacy());
+        BogRats rat = new BogRats();
+        harness.setGraveyard(player1, List.of(rat));
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(rat);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(countPermanents(player1, "Bog Rats")).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A target that leaves the graveyard before resolution is not copied")
+    void removedTargetIsNotCopied() {
+        addCreatureReady(player1, new NashiMoonsLegacy());
+        BogRats rat = new BogRats();
+        harness.setGraveyard(player1, List.of(rat));
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(rat.getId()));
+        harness.setGraveyard(player1, List.of());
+        harness.setHand(player1, List.of(rat));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(rat);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
+        assertThat(countPermanents(player1, "Bog Rats")).isZero();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
