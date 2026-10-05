@@ -90,6 +90,40 @@ class LifegiftTest extends BaseCardTest {
         harness.assertLife(player1, 20);
     }
 
+    @Test
+    @DisplayName("An opponent's land entering without being played benefits only Lifegift's controller")
+    void opponentsLandEnteringWithoutBeingPlayedTriggers() {
+        addLifegift(player1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.enterBattlefieldAndReturn(player2, new GodsEyeGateToTheReikai());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Each player's Lifegift offers its controller an independent choice")
+    void opposingLifegiftsHaveIndependentChoices() {
+        addLifegift(player1);
+        harness.addToBattlefield(player2, new Lifegift());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new GodsEyeGateToTheReikai()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 20);
+    }
+
     private void addLifegift(com.github.laxika.magicalvibes.model.Player player) {
         harness.addToBattlefield(player, new Lifegift());
         harness.forceActivePlayer(player);
