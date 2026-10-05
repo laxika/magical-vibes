@@ -13,6 +13,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,8 +31,7 @@ class KineticOozeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
         gs.playCard(gd, player1, 0, 4, null, null, List.of(artifact.getId()), List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(findOoze(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(gd.playerBattlefields.get(player2.getId())).extracting(p -> p.getCard().getName())
@@ -47,8 +48,7 @@ class KineticOozeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
 
         gs.playCard(gd, player1, 0, 5, null, null, List.of(enchantment.getId()), List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).extracting(card -> card.getName())
                 .containsExactly("Sol Ring");
@@ -69,8 +69,7 @@ class KineticOozeTest extends BaseCardTest {
 
         gs.playCard(gd, player1, 0, 10, null, null,
                 List.of(artifact.getId(), first.getId(), second.getId()), List.of());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -87,6 +86,115 @@ class KineticOozeTest extends BaseCardTest {
         assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 4, null, null,
                 List.of(creature.getId()), List.of()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void destroysAtExactManaValueWithoutDrawingBelowFive() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        harness.setLibrary(player1, List.of(new SolRing()));
+        harness.setHand(player1, List.of(new KineticOoze()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        gs.playCard(gd, player1, 0, 1, null, null, List.of(artifact.getId()), List.of());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Sol Ring");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(findOoze(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void rejectsArtifactAboveX() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new Millstone());
+        harness.setHand(player1, List.of(new KineticOoze()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 1, null, null,
+                List.of(artifact.getId()), List.of())).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void drawsAtNineWithoutDoublingOtherCreatures() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new KineticOoze());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        harness.setLibrary(player1, List.of(new SolRing()));
+        harness.setHand(player1, List.of(new KineticOoze()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 9);
+
+        gs.playCard(gd, player1, 0, 9, null, null, List.of(artifact.getId()), List.of());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Sol Ring");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(findOoze(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(9);
+    }
+
+    @Test
+    void doesNotDrawWhenTheOnlyTargetBecomesIllegal() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        harness.setLibrary(player1, List.of(new SolRing()));
+        harness.setHand(player1, List.of(new KineticOoze()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        gs.playCard(gd, player1, 0, 5, null, null, List.of(artifact.getId()), List.of());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(findOoze(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
+    }
+
+    @Test
+    void stillDrawsAndDoublesWhenAnotherTargetRemainsLegal() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new KineticOoze());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        harness.setLibrary(player1, List.of(new SolRing()));
+        harness.setHand(player1, List.of(new KineticOoze()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        gs.playCard(gd, player1, 0, 10, null, null,
+                List.of(artifact.getId(), creature.getId()), List.of());
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player2.getId()).remove(artifact);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Sol Ring");
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
+        assertThat(findOoze(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(10);
+    }
+
+    @Test
+    void doublesOneHundredOtherCreatures() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player2, new SolRing());
+        List<Permanent> creatures = new ArrayList<>();
+        List<UUID> targets = new ArrayList<>();
+        targets.add(artifact.getId());
+        for (int i = 0; i < 100; i++) {
+            Permanent creature = harness.addToBattlefieldAndReturn(player2, new KineticOoze());
+            creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+            creatures.add(creature);
+            targets.add(creature.getId());
+        }
+        harness.setLibrary(player1, List.of(new SolRing()));
+        harness.setHand(player1, List.of(new KineticOoze()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 10);
+
+        gs.playCard(gd, player1, 0, 10, null, null, targets, List.of());
+        resolveAllTriggers();
+
+        assertThat(creatures).allSatisfy(creature ->
+                assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2));
+        assertThat(findOoze(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(10);
+        harness.assertInHand(player1, "Sol Ring");
     }
 
     private Permanent findOoze(com.github.laxika.magicalvibes.model.Player player) {
