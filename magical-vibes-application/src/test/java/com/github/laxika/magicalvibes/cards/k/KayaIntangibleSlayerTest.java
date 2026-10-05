@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +23,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({KayaIntangibleSlayer.class, AngelsFeather.class, AuraOfSilence.class,
+        GrizzlyBears.class, Pacifism.class})
 class KayaIntangibleSlayerTest extends BaseCardTest {
 
     @Test
@@ -91,16 +93,77 @@ class KayaIntangibleSlayerTest extends BaseCardTest {
     @DisplayName("-3 exiles an Aura without creating a copy")
     void minusThreeDoesNotCopyAura() {
         addReadyKaya(4);
-        Card auraCard = new Pacifism();
-        auraCard.setOwnerId(player2.getId());
-        Permanent aura = new Permanent(auraCard);
-        gd.playerBattlefields.get(player2.getId()).add(aura);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new Pacifism());
+        aura.setAttachedTo(creature.getId());
 
         harness.activateAbility(player1, 0, 2, null, aura.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(aura);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(aura.getCard());
         assertThat(findPermanents(player1, "Pacifism")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("-3 creates a lasting creature copy, retaining its other creature types")
+    void minusThreeCreatureCopySurvivesEndStep() {
+        addReadyKaya(4);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        harness.activateAbility(player1, 0, 2, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(creature.getCard());
+        Permanent token = findPermanent(player1, "Grizzly Bears");
+        assertThat(token.getCard().isToken()).isTrue();
+        assertThat(token.getCard().getSubtypes()).contains(CardSubtype.BEAR, CardSubtype.SPIRIT);
+        assertThat(token.getCard().getColors()).containsExactly(CardColor.WHITE);
+        assertThat(token.getCard().getKeywords()).contains(Keyword.FLYING);
+        assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(1);
+        assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(token);
+    }
+
+    @Test
+    @DisplayName("0 still draws two cards when the opponent declines scry")
+    void zeroAllowsOpponentToDeclineScry() {
+        addReadyKaya(4);
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        GrizzlyBears topCard = new GrizzlyBears();
+        GrizzlyBears bottomCard = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(topCard, bottomCard));
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(topCard, bottomCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("-3 can exile and copy a creature you control")
+    void minusThreeCanCopyOwnCreature() {
+        addReadyKaya(4);
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.activateAbility(player1, 0, 2, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        assertThat(findPermanent(player1, "Grizzly Bears").getCard().isToken()).isTrue();
+        assertThat(findPermanents(player2, "Grizzly Bears")).isEmpty();
     }
 
     @Test
@@ -114,10 +177,9 @@ class KayaIntangibleSlayerTest extends BaseCardTest {
     }
 
     private Permanent addReadyKaya(int loyalty) {
-        Permanent kaya = new Permanent(new KayaIntangibleSlayer());
+        Permanent kaya = harness.addToBattlefieldAndReturn(player1, new KayaIntangibleSlayer());
         kaya.setCounterCount(CounterType.LOYALTY, loyalty);
         kaya.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(kaya);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return kaya;
