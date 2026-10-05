@@ -2,16 +2,20 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AshcoatBear;
 import com.github.laxika.magicalvibes.cards.b.BonesplitterSliver;
+import com.github.laxika.magicalvibes.cards.s.Snapback;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PsionicSliver.class, BonesplitterSliver.class, AshcoatBear.class})
+@CardUsed({PsionicSliver.class, BonesplitterSliver.class, AshcoatBear.class, Snapback.class})
 class PsionicSliverTest extends BaseCardTest {
 
     @Test
@@ -79,5 +83,53 @@ class PsionicSliverTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 1, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void canTargetItselfAndReceivesAllFiveDamage() {
+        Permanent source = addCreatureReady(player1, new PsionicSliver());
+
+        harness.activateAbility(player1, 0, null, source.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.getMarkedDamage()).isEqualTo(5);
+        harness.assertInGraveyard(player1, "Psionic Sliver");
+    }
+
+    @Test
+    void illegalOnlyTargetPreventsSelfDamageAsWell() {
+        Permanent source = addCreatureReady(player1, new PsionicSliver());
+        Permanent target = addCreatureReady(player2, new AshcoatBear());
+        harness.setHand(player2, List.of(new Snapback()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player2, "Ashcoat Bear");
+        harness.assertOnBattlefield(player1, "Psionic Sliver");
+        assertThat(source.getMarkedDamage()).isZero();
+        assertThat(source.isTapped()).isTrue();
+    }
+
+    @Test
+    void abilityStillDealsDamageAfterSourceLeavesBattlefield() {
+        Permanent source = addCreatureReady(player1, new PsionicSliver());
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new Snapback()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.ensurePriority(player2);
+        harness.castAndResolveInstant(player2, 0, source.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertInHand(player1, "Psionic Sliver");
+        harness.assertNotInGraveyard(player1, "Psionic Sliver");
     }
 }
