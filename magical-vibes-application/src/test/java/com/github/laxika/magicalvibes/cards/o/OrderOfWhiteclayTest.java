@@ -106,6 +106,81 @@ class OrderOfWhiteclayTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void cannotPayUntapCostWhileSummoningSick() {
+        Permanent order = addTapped(player1, new OrderOfWhiteclay());
+        order.setSummoningSick(true);
+        Card target = new BallynockCohort();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        enterMainWithPriority(player1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(order.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void paysManaAndUntapsBeforeResolutionEvenIfTargetLeavesGraveyard() {
+        Permanent order = addTapped(player1, new OrderOfWhiteclay());
+        Card target = new BallynockCohort();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        enterMainWithPriority(player1);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+
+        assertThat(order.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
+        harness.assertInGraveyard(player1, "Ballynock Cohort");
+        harness.assertNotOnBattlefield(player1, "Ballynock Cohort");
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Ballynock Cohort");
+        assertThat(order.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void abilityResolvesAfterSourceLeavesBattlefield() {
+        Permanent order = addTapped(player1, new OrderOfWhiteclay());
+        Card target = new BallynockCohort();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.WHITE, 3);
+        enterMainWithPriority(player1);
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(order);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Ballynock Cohort");
+        harness.assertNotInGraveyard(player1, "Ballynock Cohort");
+    }
+
+    @Test
+    void cannotActivateWithoutEnoughWhiteMana() {
+        Permanent order = addTapped(player1, new OrderOfWhiteclay());
+        Card target = new BallynockCohort();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        enterMainWithPriority(player1);
+
+        assertThatThrownBy(() ->
+                harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(target.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(order.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Ballynock Cohort");
+    }
+
     private Permanent addTapped(Player player, Card card) {
         Permanent perm = addCreatureReady(player, card);
         perm.tap();
