@@ -100,6 +100,62 @@ class PutridImpTest extends BaseCardTest {
                 .hasMessageContaining("Must discard a card");
     }
 
+    @Test
+    @DisplayName("Paying the discard cost immediately enables threshold")
+    void discardCostEnablesThresholdBeforeFlyingResolves() {
+        Permanent imp = addReadyImp(player1);
+        harness.setGraveyard(player1, graveyardCards(6));
+        harness.setHand(player1, List.of(new CabalSurgeon()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(7);
+        assertThat(gqs.getEffectivePower(gd, imp)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, imp)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, imp, Keyword.FLYING)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, imp, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Losing threshold removes the boost and restores blocking")
+    void losingThresholdRestoresBlocking() {
+        Permanent imp = addReadyImp(player2);
+        harness.setGraveyard(player2, graveyardCards(7));
+        assertThat(gqs.getEffectivePower(gd, imp)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, imp)).isEqualTo(2);
+
+        harness.setGraveyard(player2, graveyardCards(6));
+
+        assertThat(gqs.getEffectivePower(gd, imp)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, imp)).isEqualTo(1);
+        Permanent attacker = addReadyCreature(player1);
+        attacker.setAttacking(true);
+        prepareDeclareBlockers(player1);
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+    }
+
+    @Test
+    @DisplayName("A tapped summoning-sick Putrid Imp can activate its discard ability")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent imp = harness.addToBattlefieldAndReturn(player1, new PutridImp());
+        imp.setSummoningSick(true);
+        imp.setTapped(true);
+        harness.setHand(player1, List.of(new CabalSurgeon()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Cabal Surgeon");
+        assertThat(gqs.hasKeyword(gd, imp, Keyword.FLYING)).isTrue();
+        assertThat(imp.isTapped()).isTrue();
+    }
+
     private Permanent addReadyImp(Player player) {
         return addCreatureReady(player, new PutridImp());
     }
