@@ -216,8 +216,8 @@ class LoomingShadeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Ability fizzles if Looming Shade is removed before resolution")
-    void abilityFizzlesIfSourceRemoved() {
+    @DisplayName("Ability resolves without boosting anything if its source has left the battlefield")
+    void abilityDoesNothingIfSourceRemoved() {
         addCreatureReady(player1, new LoomingShade());
         harness.addMana(player1, ManaColor.BLACK, 1);
 
@@ -332,6 +332,49 @@ class LoomingShadeTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough mana");
+    }
+
+    @Test
+    @DisplayName("Multiple activations can be stacked and each gives its own boost on resolution")
+    void stackedActivationsResolveIndependently() {
+        Permanent shade = addLoomingShadeReady(player1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(shade.getPowerModifier()).isZero();
+        assertThat(shade.getToughnessModifier()).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(shade.getPowerModifier()).isEqualTo(1);
+        assertThat(shade.getToughnessModifier()).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(shade.getPowerModifier()).isEqualTo(2);
+        assertThat(shade.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The ability can be activated during an opponent's turn")
+    void canActivateDuringOpponentsTurn() {
+        Permanent shade = addLoomingShadeReady(player1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(shade.getPowerModifier()).isEqualTo(1);
+        assertThat(shade.getToughnessModifier()).isEqualTo(1);
     }
 
     private Permanent addLoomingShadeReady(Player player) {
