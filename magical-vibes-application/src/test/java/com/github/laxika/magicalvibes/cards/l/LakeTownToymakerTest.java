@@ -84,11 +84,80 @@ class LakeTownToymakerTest extends BaseCardTest {
         assertThat(target.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
     }
 
+    @Test
+    void doesNotTriggerAfterOnlyOneDraw() {
+        harness.addToBattlefield(player1, new LakeTownToymaker());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Island()));
+        drawCard(player1);
+
+        advanceToCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void opponentsDrawsDoNotSatisfyCondition() {
+        harness.addToBattlefield(player1, new LakeTownToymaker());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        drawTwoCards(player2);
+
+        advanceToCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void doesNotTriggerDuringOpponentsCombat() {
+        harness.addToBattlefield(player1, new LakeTownToymaker());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        drawTwoCards(player1);
+
+        advanceToCombat(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void noLegalTargetWhenToymakerIsOnlyCreature() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new LakeTownToymaker());
+        drawTwoCards(player1);
+
+        advanceToCombat(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gqs.getEffectivePower(gd, source)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, source, Keyword.FIRST_STRIKE)).isFalse();
+    }
+
+    @Test
+    void moreThanTwoDrawsStillGrantsOnlyOneBoost() {
+        harness.addToBattlefield(player1, new LakeTownToymaker());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new Island(), new Island(), new Island()));
+        drawCard(player1);
+        drawCard(player1);
+        drawCard(player1);
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(2);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.FIRST_STRIKE)).isTrue();
+    }
+
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 
     private void drawTwoCards(Player player) {
