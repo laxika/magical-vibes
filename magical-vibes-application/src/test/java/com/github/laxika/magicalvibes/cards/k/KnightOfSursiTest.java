@@ -94,6 +94,64 @@ class KnightOfSursiTest extends BaseCardTest {
         assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("Suspend removes one counter on its owner's upkeep, not the opponent's")
+    void suspendCountsOnlyOwnerUpkeeps() {
+        KnightOfSursi card = suspendCard();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 3);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 2);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+    }
+
+    @Test
+    @DisplayName("Casting normally does not grant suspend's haste")
+    void normalCastingDoesNotGrantHaste() {
+        harness.castFromHand(player1, new KnightOfSursi(), "{3}{W}");
+        harness.passBothPriorities();
+
+        Permanent permanent = findPermanent(player1, "Knight of Sursi");
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isFalse();
+        assertThat(permanent.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Flanking weakens each nonflanking blocker separately")
+    void flankingWeakensEveryBlocker() {
+        addCreatureReady(player1, new KnightOfSursi());
+        Permanent first = addCreatureReady(player2, new WhipSpineDrake());
+        Permanent second = addCreatureReady(player2, new WhipSpineDrake());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveAllTriggers();
+
+        assertThat(first.getEffectivePower()).isEqualTo(2);
+        assertThat(first.getEffectiveToughness()).isEqualTo(2);
+        assertThat(second.getEffectivePower()).isEqualTo(2);
+        assertThat(second.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A blocker with flanking is not weakened by flanking")
+    void flankingDoesNotWeakenFlankingBlocker() {
+        addCreatureReady(player1, new KnightOfSursi());
+        Permanent blocker = addCreatureReady(player2, new KnightOfSursi());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveAllTriggers();
+
+        assertThat(blocker.getEffectivePower()).isEqualTo(2);
+        assertThat(blocker.getEffectiveToughness()).isEqualTo(2);
+    }
+
     private KnightOfSursi suspendCard() {
         KnightOfSursi card = new KnightOfSursi();
         harness.setHand(player1, List.of(card));
