@@ -82,6 +82,48 @@ class KoboldDrillSergeantTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, laterKobold, Keyword.TRAMPLE)).isTrue();
     }
 
+    @Test
+    @DisplayName("Multiple Sergeants boost each other and stack their toughness bonuses")
+    void multipleSergeantsBoostEachOtherAndStack() {
+        Permanent kobold = createKobold(player1);
+        int basePower = gqs.getEffectivePower(gd, kobold);
+        int baseToughness = gqs.getEffectiveToughness(gd, kobold);
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new KoboldDrillSergeant());
+        int firstPower = gqs.getEffectivePower(gd, first);
+        int firstToughness = gqs.getEffectiveToughness(gd, first);
+        assertThat(gqs.hasKeyword(gd, first, Keyword.TRAMPLE)).isFalse();
+
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new KoboldDrillSergeant());
+
+        assertThat(gqs.getEffectivePower(gd, kobold)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, kobold)).isEqualTo(baseToughness + 2);
+        assertThat(gqs.hasKeyword(gd, kobold, Keyword.TRAMPLE)).isTrue();
+        for (Permanent sergeant : java.util.List.of(first, second)) {
+            assertThat(gqs.getEffectivePower(gd, sergeant)).isEqualTo(firstPower);
+            assertThat(gqs.getEffectiveToughness(gd, sergeant)).isEqualTo(firstToughness + 1);
+            assertThat(gqs.hasKeyword(gd, sergeant, Keyword.TRAMPLE)).isTrue();
+        }
+    }
+
+    @Test
+    @DisplayName("The toughness bonus and trample end when the Sergeant dies")
+    void bonusesEndWhenSergeantDies() {
+        Permanent kobold = createKobold(player1);
+        int basePower = gqs.getEffectivePower(gd, kobold);
+        int baseToughness = gqs.getEffectiveToughness(gd, kobold);
+        Permanent sergeant = harness.addToBattlefieldAndReturn(player1, new KoboldDrillSergeant());
+        assertThat(gqs.getEffectiveToughness(gd, kobold)).isEqualTo(baseToughness + 1);
+        assertThat(gqs.hasKeyword(gd, kobold, Keyword.TRAMPLE)).isTrue();
+
+        sergeant.setMarkedDamage(gqs.getEffectiveToughness(gd, sergeant));
+        harness.runStateBasedActions();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(sergeant);
+        assertThat(gqs.getEffectivePower(gd, kobold)).isEqualTo(basePower);
+        assertThat(gqs.getEffectiveToughness(gd, kobold)).isEqualTo(baseToughness);
+        assertThat(gqs.hasKeyword(gd, kobold, Keyword.TRAMPLE)).isFalse();
+    }
+
     private Permanent createKobold(com.github.laxika.magicalvibes.model.Player player) {
         return harness.addToBattlefieldAndReturn(player, new KoboldTaskmaster());
     }
