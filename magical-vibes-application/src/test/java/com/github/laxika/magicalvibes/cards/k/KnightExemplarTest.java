@@ -2,12 +2,15 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.b.BlackKnight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({KnightExemplar.class, BlackKnight.class, GrizzlyBears.class, WrathOfGod.class,
+        LightningBolt.class, Unsummon.class})
 class KnightExemplarTest extends BaseCardTest {
 
     // ===== Static effect: buffs other Knights you control =====
@@ -133,9 +138,7 @@ class KnightExemplarTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(2);
         assertThat(gqs.hasKeyword(gd, knight, Keyword.INDESTRUCTIBLE)).isFalse();
 
-        harness.setHand(player1, List.of(new KnightExemplar()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KnightExemplar(), "{1}{W}{W}");
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, knight)).isEqualTo(3);
@@ -164,8 +167,8 @@ class KnightExemplarTest extends BaseCardTest {
     // ===== Indestructible prevents destruction =====
 
     @Test
-    @DisplayName("Indestructible Knight survives targeted destroy effect")
-    void indestructibleKnightSurvivesTargetedDestroy() {
+    @DisplayName("Indestructible Knight survives simultaneous destruction of its Exemplar")
+    void indestructibleKnightSurvivesSimultaneousDestruction() {
         harness.addToBattlefield(player1, new KnightExemplar());
         harness.addToBattlefield(player1, new BlackKnight());
 
@@ -173,13 +176,9 @@ class KnightExemplarTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, knight, Keyword.INDESTRUCTIBLE)).isTrue();
 
         // Cast Wrath of God to try to destroy everything
-        harness.setHand(player2, List.of(new WrathOfGod()));
-        harness.addMana(player2, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        harness.castSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
 
         // Black Knight should survive (indestructible from Knight Exemplar)
@@ -198,13 +197,9 @@ class KnightExemplarTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         // Cast Wrath of God
-        harness.setHand(player2, List.of(new WrathOfGod()));
-        harness.addMana(player2, ManaColor.WHITE, 4);
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
-
-        harness.castSorcery(player2, 0, 0);
+        harness.castFromHand(player2, new WrathOfGod(), "{2}{W}{W}");
         harness.passBothPriorities();
 
         // Both Knight Exemplars buff each other → both indestructible → both survive
@@ -217,4 +212,47 @@ class KnightExemplarTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
 
+    @Test
+    @DisplayName("Indestructible does not prevent a Knight from being returned to hand")
+    void indestructibleKnightCanBeBounced() {
+        harness.addToBattlefield(player1, new KnightExemplar());
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new BlackKnight());
+
+        harness.setHand(player2, List.of(new Unsummon()));
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, knight.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Knight Exemplar");
+        harness.assertNotOnBattlefield(player1, "Black Knight");
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card instanceof BlackKnight);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A Knight survives lethal damage but dies when its Exemplar is bounced")
+    void lethalDamageBecomesFatalWhenExemplarLeaves() {
+        Permanent exemplar = harness.addToBattlefieldAndReturn(player1, new KnightExemplar());
+        Permanent knight = harness.addToBattlefieldAndReturn(player1, new BlackKnight());
+
+        harness.setHand(player2, List.of(new LightningBolt(), new Unsummon()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.BLUE, 1);
+        harness.castInstant(player2, 0, knight.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Black Knight");
+        assertThat(knight.getMarkedDamage()).isEqualTo(3);
+
+        harness.castInstant(player2, 0, exemplar.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Knight Exemplar");
+        harness.assertNotOnBattlefield(player1, "Black Knight");
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card instanceof BlackKnight);
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(card -> card instanceof KnightExemplar);
+    }
 }
