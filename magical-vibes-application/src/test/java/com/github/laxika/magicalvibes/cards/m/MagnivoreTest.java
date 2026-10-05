@@ -114,6 +114,59 @@ class MagnivoreTest extends BaseCardTest {
         assertThat(perm.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Magnivore survives with sorceries only in the opponent's graveyard")
+    void survivesWithOnlyOpponentSorceries() {
+        harness.setGraveyard(player2, createSorceryCards(2));
+        harness.castFromHand(player1, new Magnivore(), "{2}{R}{R}");
+        harness.passBothPriorities();
+
+        Permanent perm = findPermanent(player1, "Magnivore");
+        assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Magnivore dies when the last sorcery leaves all graveyards")
+    void diesWhenLastSorceryLeavesGraveyards() {
+        harness.setGraveyard(player2, createSorceryCards(1));
+        harness.castFromHand(player1, new Magnivore(), "{2}{R}{R}");
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Magnivore");
+
+        harness.setGraveyard(player2, List.of());
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Magnivore");
+        harness.assertInGraveyard(player1, "Magnivore");
+    }
+
+    @Test
+    @DisplayName("Magnivore's defining ability works in hand, library, graveyard, and exile")
+    void definingAbilityWorksOutsideBattlefield() {
+        Magnivore inHand = new Magnivore();
+        Magnivore inLibrary = new Magnivore();
+        Magnivore inGraveyard = new Magnivore();
+        Magnivore inExile = new Magnivore();
+        harness.setHand(player1, List.of(inHand));
+        harness.setLibrary(player1, List.of(inLibrary));
+        harness.setGraveyard(player1, List.of(new MindBurst(), inGraveyard));
+        harness.setGraveyard(player2, createSorceryCards(2));
+        harness.setExile(player1, List.of(inExile));
+
+        for (Magnivore card : List.of(inHand, inLibrary, inGraveyard, inExile)) {
+            assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(3);
+            assertThat(gqs.getEffectiveCardToughness(gd, card)).isEqualTo(3);
+        }
+
+        harness.setGraveyard(player2, List.of());
+
+        for (Magnivore card : List.of(inHand, inLibrary, inGraveyard, inExile)) {
+            assertThat(gqs.getEffectiveCardPower(gd, card)).isEqualTo(1);
+            assertThat(gqs.getEffectiveCardToughness(gd, card)).isEqualTo(1);
+        }
+    }
+
     private List<Card> createSorceryCards(int count) {
         List<Card> sorceries = new ArrayList<>();
         for (int i = 0; i < count; i++) {
