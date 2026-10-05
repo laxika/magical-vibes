@@ -73,4 +73,63 @@ class LovestruckBeastTest extends BaseCardTest {
         assertThatCode(() -> declareAttackers(player1, List.of(0)))
                 .doesNotThrowAnyException();
     }
+
+    @Test
+    void creatureCanBeCastFromExileAfterAdventure() {
+        LovestruckBeast card = new LovestruckBeast();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castAdventure(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castFromExile(player1, card.getId());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Lovestruck Beast");
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken()).hasSize(1);
+    }
+
+    @Test
+    void tapped1x1CreatureEnablesAttack() {
+        addCreatureReady(player1, new LovestruckBeast());
+        Permanent goblin = addCreatureReady(player1, new RagingGoblin());
+        goblin.setTapped(true);
+
+        assertThatCode(() -> declareAttackers(player1, List.of(0)))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void creatureWithOnlyPowerEqualToOneDoesNotEnableAttack() {
+        addCreatureReady(player1, new LovestruckBeast());
+        Permanent goblin = addCreatureReady(player1, new RagingGoblin());
+        goblin.setToughnessModifier(1);
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void creatureWithOnlyToughnessEqualToOneDoesNotEnableAttack() {
+        addCreatureReady(player1, new LovestruckBeast());
+        Permanent goblin = addCreatureReady(player1, new RagingGoblin());
+        goblin.setPowerModifier(1);
+
+        assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void beastCanEnableItsOwnAttackWhenItsCurrentPowerAndToughnessAreOne() {
+        Permanent beast = addCreatureReady(player1, new LovestruckBeast());
+        beast.setPowerModifier(-4);
+        beast.setToughnessModifier(-4);
+
+        assertThatCode(() -> declareAttackers(player1, List.of(0)))
+                .doesNotThrowAnyException();
+    }
 }
