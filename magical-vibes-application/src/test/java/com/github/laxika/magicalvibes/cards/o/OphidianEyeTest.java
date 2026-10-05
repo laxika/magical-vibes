@@ -65,8 +65,7 @@ class OphidianEyeTest extends BaseCardTest {
         attachOphidianEye(player1, creature);
 
         harness.activateAbility(player1, 0, null, player2.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
@@ -78,8 +77,7 @@ class OphidianEyeTest extends BaseCardTest {
         attachOphidianEye(player1, creature);
 
         harness.activateAbility(player1, 0, null, player1.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
@@ -92,8 +90,7 @@ class OphidianEyeTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
 
         harness.activateAbility(player2, 0, null, player1.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
@@ -147,6 +144,80 @@ class OphidianEyeTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Ophidian Eye");
         harness.assertNotOnBattlefield(player1, "Ophidian Eye");
+    }
+
+    @Test
+    @DisplayName("An opposing creature damaging its own controller draws for Ophidian Eye's controller")
+    void opponentCreatureDamagingItsControllerDrawsForAuraController() {
+        Permanent creature = addCreatureReady(player2, new FledglingMawcor());
+        attachOphidianEye(player1, creature);
+        harness.forceActivePlayer(player2);
+        int auraControllerHandSize = gd.playerHands.get(player1.getId()).size();
+        int creatureControllerHandSize = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbility(player2, 0, null, player2.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(auraControllerHandSize + 1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(creatureControllerHandSize);
+    }
+
+    @Test
+    @DisplayName("Combat damage to Ophidian Eye's controller does not trigger")
+    void combatDamageToAuraControllerDoesNotTrigger() {
+        Permanent creature = addCreatureReady(player2, new AshcoatBear());
+        attachOphidianEye(player1, creature);
+        creature.setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Damage to a creature does not trigger Ophidian Eye")
+    void noncombatDamageToCreatureDoesNotTrigger() {
+        Permanent creature = addCreatureReady(player1, new FledglingMawcor());
+        Permanent target = addCreatureReady(player2, new AshcoatBear());
+        attachOphidianEye(player1, creature);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        resolveAllTriggers();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Flash allows Ophidian Eye to resolve in response to an opposing creature's damage ability")
+    void flashRespondsToDamageAbility() {
+        Permanent creature = addCreatureReady(player2, new FledglingMawcor());
+        harness.setHand(player1, List.of(new OphidianEye()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+        int creatureControllerHandSize = gd.playerHands.get(player2.getId()).size();
+
+        harness.activateAbility(player2, 0, null, player2.getId());
+        harness.passPriority(player2);
+        harness.castEnchantment(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Ophidian Eye").getAttachedTo()).isEqualTo(creature.getId());
+        harness.assertLife(player2, 20);
+
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(creatureControllerHandSize);
     }
 
     private void attachOphidianEye(Player controller, Permanent creature) {
