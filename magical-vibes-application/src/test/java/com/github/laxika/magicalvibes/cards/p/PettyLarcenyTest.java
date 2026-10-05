@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -84,11 +86,75 @@ class PettyLarcenyTest extends BaseCardTest {
                 .hasMessageContaining("Target must be an opponent");
     }
 
+    @Test
+    @DisplayName("Creates a Treasure even when the opponent's library is empty")
+    void createsTreasureWithEmptyLibrary() {
+        harness.setLibrary(player2, List.of());
+
+        castPettyLarceny();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("May play an exiled land but must obey the land play limit")
+    void playsExiledLandWithNormalLandLimit() {
+        Island first = new Island();
+        Island second = new Island();
+        harness.setLibrary(player2, List.of(first, second));
+        castPettyLarceny();
+
+        harness.castFromExile(player1, first.getId());
+
+        harness.assertOnBattlefield(player1, "Island");
+        assertThat(gd.findExiledCard(first.getId())).isNull();
+        assertThatThrownBy(() -> harness.castFromExile(player1, second.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(second);
+        assertThat(findPermanents(player1, "Island")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Freerunning is unavailable without qualifying combat damage")
+    void cannotFreerunWithoutQualifyingDamage() {
+        harness.setHand(player1, List.of(new PettyLarceny()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        harness.assertInHand(player1, "Petty Larceny");
+    }
+
+    @Test
+    @DisplayName("The caster may still inspect the face-down cards while the opponent has priority")
+    void canInspectExiledCardsWithoutPriority() throws Exception {
+        Island first = new Island();
+        Island second = new Island();
+        harness.setLibrary(player2, List.of(first, second));
+        castPettyLarceny();
+        harness.ensurePriority(player2);
+        harness.publishState();
+
+        var mapper = new JacksonConfig().objectMapper();
+        GameStateMessage casterState = mapper.readValue(
+                harness.getConn1().getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(),
+                GameStateMessage.class);
+        GameStateMessage opponentState = mapper.readValue(
+                harness.getConn2().getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(),
+                GameStateMessage.class);
+
+        assertThat(casterState.lookedAtExileCards()).extracting(view -> view.id())
+                .containsExactlyInAnyOrder(first.getId(), second.getId());
+        assertThat(opponentState.lookedAtExileCards()).isEmpty();
+    }
+
     private void castPettyLarceny() {
         harness.setHand(player1, List.of(new PettyLarceny()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
     }
 }
