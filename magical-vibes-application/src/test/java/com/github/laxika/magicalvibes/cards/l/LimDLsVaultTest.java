@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LimDLsVault.class, CarrierPigeons.class, ErrandOfDuty.class, Exile.class,
         Inheritance.class, IvoryGargoyle.class, JuniperOrderAdvocate.class,
-        KjeldoranEscort.class, KjeldoranHomeGuard.class})
+        KjeldoranEscort.class, KjeldoranHomeGuard.class, FontOfAgonies.class, PlatinumEmperion.class})
 class LimDLsVaultTest extends BaseCardTest {
 
     private void castVault(List<Card> library) {
@@ -160,13 +160,56 @@ class LimDLsVaultTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An empty library looks at nothing and prompts nothing")
-    void emptyLibraryDoesNothing() {
+    @DisplayName("An empty library still permits life payments and must be shuffled")
+    void emptyLibraryStillPermitsLifePaymentsAndShuffles() {
         castVault(new ArrayList<>());
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        harness.handleMayAbilityChosen(player1, true);
+        order(List.of());
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(19);
+
+        harness.handleMayAbilityChosen(player1, false);
+        order(List.of());
+
+        assertThat(gameLogContains(player1.getUsername() + " shuffles their library.")).isTrue();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The chosen bottom order determines which cards are seen again when the library wraps")
+    void bottomOrderControlsNextLook() {
+        List<Card> library = library8();
+        List<Card> expected = List.of(library.get(5), library.get(6), library.get(7),
+                library.get(4), library.get(3));
+        castVault(library);
+
+        harness.handleMayAbilityChosen(player1, true);
+        order(List.of(4, 3, 2, 1, 0));
+        harness.handleMayAbilityChosen(player1, false);
+        order(List.of(0, 1, 2, 3, 4));
+
+        assertThat(gd.playerDecks.get(player1.getId()).subList(0, 5)).containsExactlyElementsOf(expected);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrderElementsOf(library);
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("The controller can pay their last life, but cannot repeat again at zero life")
+    void canPayLastLifeButCannotPayAtZero() {
+        castVault(library8());
+        harness.setLife(player1, 1);
+
+        harness.handleMayAbilityChosen(player1, true);
+        order(List.of(0, 1, 2, 3, 4));
+        harness.assertLife(player1, 0);
+
+        assertThatThrownBy(() -> harness.handleMayAbilityChosen(player1, true))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.handleMayAbilityChosen(player1, false);
+        order(List.of(0, 1, 2, 3, 4));
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(8);
     }
 
     @Test
