@@ -58,6 +58,26 @@ class MysticSnakeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("ETB can counter its controller's own spell")
+    void etbCountersControllersOwnSpell() {
+        Darkness darkness = new Darkness();
+        harness.castFromHand(player1, darkness, "{B}");
+        harness.castFromHand(player1, new MysticSnake(), "{1}{G}{U}{U}");
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().interaction
+                .activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactly(darkness.getId());
+
+        harness.handlePermanentChosen(player1, darkness.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Darkness");
+        harness.assertOnBattlefield(player1, "Mystic Snake");
+        assertThat(harness.getGameData().stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("ETB trigger is skipped when no spell is on the stack")
     void etbTriggerIsSkippedWithoutSpellTarget() {
         harness.castFromHand(player1, new MysticSnake(), "{1}{G}{U}{U}");
