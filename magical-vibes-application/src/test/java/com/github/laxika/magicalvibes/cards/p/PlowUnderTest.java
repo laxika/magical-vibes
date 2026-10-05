@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -115,6 +117,71 @@ class PlowUnderTest extends BaseCardTest {
         giveMana();
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(forestId, forestId)))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The lands' owner chooses their order on top of the library")
+    void ownerChoosesOrderOfBothLands() {
+        Forest forest = new Forest();
+        Mountain mountain = new Mountain();
+        harness.addToBattlefield(player2, forest);
+        harness.addToBattlefield(player2, mountain);
+        UUID forestId = harness.getPermanentId(player2, "Forest");
+        UUID mountainId = harness.getPermanentId(player2, "Mountain");
+        List<Card> originalDeck = List.copyOf(gd.playerDecks.get(player2.getId()));
+
+        harness.setHand(player1, List.of(new PlowUnder()));
+        giveMana();
+        harness.castAndResolveSorcery(player1, 0, List.of(forestId, mountainId));
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
+        PendingInteraction.LibraryReorder reorder =
+                gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
+        assertThat(reorder.playerId()).isEqualTo(player2.getId());
+        assertThat(reorder.deckOwnerId()).isEqualTo(player2.getId());
+        assertThat(reorder.toBottom()).isFalse();
+        assertThat(reorder.cards()).containsExactlyInAnyOrder(forest, mountain);
+
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(
+                List.of(reorder.cards().indexOf(forest), reorder.cards().indexOf(mountain))));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId()).subList(0, 2)).containsExactly(forest, mountain);
+        assertThat(gd.playerDecks.get(player2.getId()).subList(2, originalDeck.size() + 2))
+                .containsExactlyElementsOf(originalDeck);
+        harness.assertInGraveyard(player1, "Plow Under");
+    }
+
+    @Test
+    @DisplayName("Does not resolve when both targets have left the battlefield")
+    void doesNotResolveWithNoLegalTargets() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.addToBattlefield(player2, new Mountain());
+        UUID forestId = harness.getPermanentId(player2, "Forest");
+        UUID mountainId = harness.getPermanentId(player2, "Mountain");
+        List<Card> originalDeck = List.copyOf(gd.playerDecks.get(player2.getId()));
+
+        harness.setHand(player1, List.of(new PlowUnder()));
+        giveMana();
+        harness.castSorcery(player1, 0, List.of(forestId, mountainId));
+        gd.playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(originalDeck);
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Plow Under");
+    }
+
+    @Test
+    @DisplayName("Cannot cast with only one target land")
+    void requiresTwoTargetLands() {
+        harness.addToBattlefield(player2, new Forest());
+        UUID forestId = harness.getPermanentId(player2, "Forest");
+        harness.setHand(player1, List.of(new PlowUnder()));
+        giveMana();
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, List.of(forestId)))
                 .isInstanceOf(IllegalStateException.class);
     }
 }
