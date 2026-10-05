@@ -1,28 +1,23 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.c.ColossusOfSardia;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HowlingMine;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.PreyUpon;
 import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
 import com.github.laxika.magicalvibes.cards.v.Vorstclaw;
-import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MaarikaBrutalGladiator.class, ColossusOfSardia.class, Forest.class, GrizzlyBears.class, HowlingMine.class, PreyUpon.class, WrathOfGod.class, LlanowarElves.class, PropheticPrism.class, Vorstclaw.class})
+@CardUsed({MaarikaBrutalGladiator.class, Forest.class, GrizzlyBears.class, PreyUpon.class, LlanowarElves.class, PropheticPrism.class, Vorstclaw.class})
 class MaarikaBrutalGladiatorTest extends BaseCardTest {
 
     @Test
@@ -67,9 +62,8 @@ class MaarikaBrutalGladiatorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PreyUpon()));
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, List.of(
+        harness.castAndResolveSorcery(player1, 0, List.of(
                 maarika.getId(), harness.getPermanentId(player2, "Llanowar Elves")));
-        harness.passBothPriorities();
         resolveAllTriggers();
 
         harness.assertInGraveyard(player2, "Llanowar Elves");
@@ -86,13 +80,67 @@ class MaarikaBrutalGladiatorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new PreyUpon()));
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 1);
 
-        harness.castSorcery(player1, 0, List.of(
+        harness.castAndResolveSorcery(player1, 0, List.of(
                 maarika.getId(), harness.getPermanentId(player2, "Vorstclaw")));
-        harness.passBothPriorities();
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Maarika, Brutal Gladiator");
         harness.assertInGraveyard(player2, "Vorstclaw");
         harness.assertOnBattlefield(player2, "Prophetic Prism");
+    }
+
+    @Test
+    @DisplayName("Excess combat damage also causes the damaged creature's controller to sacrifice")
+    void sacrificesAfterExcessCombatDamage() {
+        addCreatureReady(player1, new MaarikaBrutalGladiator());
+        addCreatureReady(player2, new LlanowarElves());
+        harness.addToBattlefield(player2, new PropheticPrism());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Maarika, Brutal Gladiator");
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertInGraveyard(player2, "Prophetic Prism");
+    }
+
+    @Test
+    @DisplayName("Excess damage from another creature does not trigger Maarika")
+    void otherCreatureDealingExcessDamageDoesNotTrigger() {
+        addCreatureReady(player1, new MaarikaBrutalGladiator());
+        Permanent fighter = addCreatureReady(player1, new Vorstclaw());
+        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player2, new PropheticPrism());
+        harness.setHand(player1, List.of(new PreyUpon()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(
+                fighter.getId(), harness.getPermanentId(player2, "Llanowar Elves")));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertOnBattlefield(player2, "Prophetic Prism");
+    }
+
+    @Test
+    @DisplayName("The sacrifice cannot take a creature or land when no eligible permanent exists")
+    void noEligiblePermanentDoesNotSacrificeCreatureOrLand() {
+        Permanent maarika = addCreatureReady(player1, new MaarikaBrutalGladiator());
+        harness.addToBattlefield(player2, new LlanowarElves());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player1, List.of(new PreyUpon()));
+        harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.GREEN, 1);
+
+        harness.castAndResolveSorcery(player1, 0, List.of(
+                maarika.getId(), harness.getPermanentId(player2, "Llanowar Elves")));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Forest");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 }
