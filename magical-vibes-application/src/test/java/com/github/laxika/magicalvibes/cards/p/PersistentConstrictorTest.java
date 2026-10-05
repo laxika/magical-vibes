@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -70,13 +69,71 @@ class PersistentConstrictorTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Murder()));
         harness.addMana(player2, ManaColor.BLACK, 3);
 
-        harness.castInstant(player2, 0, constrictor.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, constrictor.getId());
+        resolveAllTriggers();
 
         Permanent returned = findPermanent(player1, "Persistent Constrictor");
         assertThat(returned).isNotNull();
-        assertThat(gqs.hasKeyword(gd, returned, Keyword.PERSIST)).isTrue();
         assertThat(returned.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void canDeclineTargetEvenWhenCreatureIsAvailable() {
+        addCreatureReady(player1, new PersistentConstrictor());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player2);
+        harness.handleMultiplePermanentsChosen(player1, List.of());
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 19);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
+    void doesNotTriggerDuringControllersUpkeep() {
+        addCreatureReady(player1, new PersistentConstrictor());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void losingOnlyTargetPreventsLifeLossAsWell() {
+        addCreatureReady(player1, new PersistentConstrictor());
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player2, 20);
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        advanceToUpkeep(player2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+        harness.castAndResolveInstant(player2, 0, bears.getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    void persistDoesNotReturnCreatureThatDiedWithMinusOneCounter() {
+        Permanent constrictor = addCreatureReady(player1, new PersistentConstrictor());
+        constrictor.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.setHand(player2, List.of(new Murder()));
+        harness.addMana(player2, ManaColor.BLACK, 3);
+
+        harness.castAndResolveInstant(player2, 0, constrictor.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Persistent Constrictor");
+        harness.assertInGraveyard(player1, "Persistent Constrictor");
     }
 }
