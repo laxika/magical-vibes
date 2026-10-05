@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -38,9 +37,9 @@ class NightmareIncursionTest extends BaseCardTest {
                 List.of(new GrizzlyBears(), new Shock(), new Swamp(), new GrizzlyBears()));
 
         // Search allows exiling up to 3 cards; pick three (each pick re-presents from index 0)
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(3);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
@@ -52,8 +51,8 @@ class NightmareIncursionTest extends BaseCardTest {
     void exilesAllWhenLibrarySmallerThanX() {
         castIncursionTargeting(3, player2, List.of(new GrizzlyBears(), new Shock()));
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
@@ -76,8 +75,8 @@ class NightmareIncursionTest extends BaseCardTest {
     void canTargetSelf() {
         castIncursionTargeting(2, player1, List.of(new GrizzlyBears(), new Shock(), new GrizzlyBears()));
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
@@ -88,7 +87,7 @@ class NightmareIncursionTest extends BaseCardTest {
     void mayChooseFewerThanSwampCount() {
         castIncursionTargeting(3, player2, List.of(new GrizzlyBears(), new Shock()));
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(2);
@@ -101,9 +100,56 @@ class NightmareIncursionTest extends BaseCardTest {
         harness.addToBattlefield(player2, new Swamp());
         castIncursionTargeting(1, player2, List.of(new GrizzlyBears(), new Shock()));
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+    @Test
+    @DisplayName("May stop searching after choosing fewer than X cards")
+    void mayStopAfterOneCard() {
+        Card chosen = new Shock();
+        Card remaining = new GrizzlyBears();
+        Card land = new Swamp();
+        castIncursionTargeting(3, player2, List.of(remaining, chosen, land));
+
+        harness.handleCardChosen(player1, 1);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(chosen);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyInAnyOrder(remaining, land);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(2).doesNotContain(chosen);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        harness.assertInGraveyard(player1, "Nightmare Incursion");
+    }
+
+    @Test
+    @DisplayName("An empty target library finishes without a choice")
+    void emptyLibraryFinishesSearch() {
+        castIncursionTargeting(2, player2, List.of());
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        harness.assertInGraveyard(player1, "Nightmare Incursion");
+    }
+
+    @Test
+    @DisplayName("Counts Swamps at resolution rather than when cast")
+    void countsSwampsAtResolution() {
+        harness.addToBattlefield(player1, new Swamp());
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new Shock(), new Swamp()));
+        harness.setHand(player1, List.of(new NightmareIncursion()));
+        harness.addMana(player1, ManaColor.BLACK, 6);
+        harness.castSorcery(player1, 0, player2.getId());
+
+        harness.addToBattlefield(player1, new Swamp());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 }
