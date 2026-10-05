@@ -98,16 +98,47 @@ class ManOWarTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Enters without an ETB trigger when no creature can be targeted")
-    void entersWithoutEtbTriggerWhenNoCreatureCanBeTargeted() {
-        harness.setHand(player1, List.of(new ManOWar()));
-        harness.addMana(player1, ManaColor.BLUE, 3);
+    @DisplayName("Must return itself when it is the only creature")
+    void returnsItselfWhenOnlyCreature() {
+        harness.castFromHand(player1, new ManOWar(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Man-o'-War"));
+        harness.passBothPriorities();
 
-        harness.castCreature(player1, 0);
+        harness.assertNotOnBattlefield(player1, "Man-o'-War");
+        harness.assertInHand(player1, "Man-o'-War");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can choose itself even when another creature is present")
+    void canChooseItselfWithOtherCreaturePresent() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.castFromHand(player1, new ManOWar(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Man-o'-War"));
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Man-o'-War");
+        harness.assertNotOnBattlefield(player1, "Man-o'-War");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Chooses a legal ETB target after a suggested target leaves before entry")
+    void choosesLegalTargetAfterSuggestedTargetLeavesBeforeEntry() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castManOWar(player2, "Grizzly Bears");
+        harness.getPermanentRemovalService().removePermanentToHand(gd, target);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Man-o'-War");
-        assertThat(gd.stack).isEmpty();
+        harness.handlePermanentChosen(player1, harness.getPermanentId(player1, "Man-o'-War"));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Man-o'-War");
+        harness.assertInHand(player1, "Man-o'-War");
+        harness.assertInHand(player2, "Grizzly Bears");
     }
 
     @Test
