@@ -25,8 +25,7 @@ class PlanarIncisionTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         givePlanarIncision();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         Permanent returned = findPermanent(player2, "Grizzly Bears");
         assertThat(returned.getId()).isNotEqualTo(target.getId());
@@ -41,8 +40,7 @@ class PlanarIncisionTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new UrzasBauble());
         givePlanarIncision();
 
-        harness.castInstant(player1, 0, target.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, target.getId());
 
         Permanent returned = findPermanent(player1, "Urza's Bauble");
         assertThat(returned.getId()).isNotEqualTo(target.getId());
@@ -58,6 +56,64 @@ class PlanarIncisionTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an artifact or creature");
+    }
+
+    @Test
+    void returnsStolenCreatureToItsOwnerWithCounter() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        givePlanarIncision();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        Permanent returned = findPermanent(player2, "Grizzly Bears");
+        assertThat(returned.getId()).isNotEqualTo(target.getId());
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void returnLosesOldCountersAndTappedState() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+        target.tap();
+        givePlanarIncision();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        Permanent returned = findPermanent(player1, "Grizzly Bears");
+        assertThat(returned.getId()).isNotEqualTo(target.getId());
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    void exiledTokenDoesNotReturn() {
+        GrizzlyBears token = new GrizzlyBears();
+        token.setToken(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, token);
+        givePlanarIncision();
+
+        harness.castAndResolveInstant(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(token);
+    }
+
+    @Test
+    void sacrificedTargetDoesNotReturn() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new UrzasBauble());
+        givePlanarIncision();
+        harness.castInstant(player1, 0, target.getId());
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Urza's Bauble");
+        harness.assertInGraveyard(player1, "Urza's Bauble");
+        harness.assertInGraveyard(player1, "Planar Incision");
     }
 
     private void givePlanarIncision() {
