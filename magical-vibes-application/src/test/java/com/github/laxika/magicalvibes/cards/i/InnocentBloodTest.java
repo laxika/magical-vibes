@@ -91,6 +91,44 @@ class InnocentBloodTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Mountain");
     }
 
+    @Test
+    @DisplayName("An automatic sacrifice waits until the other player chooses")
+    void automaticSacrificeWaitsForOtherPlayerChoice() {
+        harness.addToBattlefield(player1, new DuskImp());
+        Permanent wall = harness.addToBattlefieldAndReturn(player2, new AngelicWall());
+        harness.addToBattlefield(player2, new DuskImp());
+
+        castInnocentBlood();
+
+        harness.assertOnBattlefield(player1, "Dusk Imp");
+        harness.assertOnBattlefield(player2, "Angelic Wall");
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+
+        harness.handleMultiplePermanentsChosen(player2, List.of(wall.getId()));
+
+        harness.assertInGraveyard(player1, "Dusk Imp");
+        harness.assertInGraveyard(player2, "Angelic Wall");
+        harness.assertOnBattlefield(player2, "Dusk Imp");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The caster can have no creatures while the opponent still sacrifices")
+    void casterWithoutCreaturesStillMakesOpponentSacrifice() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new DuskImp());
+
+        castInnocentBlood();
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertInGraveyard(player2, "Dusk Imp");
+        harness.assertInGraveyard(player1, "Innocent Blood");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void castInnocentBlood() {
         harness.forceActivePlayer(player1);
         harness.castFromHand(player1, new InnocentBlood(), "{B}");
