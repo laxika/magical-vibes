@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TrueBeliever;
 import com.github.laxika.magicalvibes.model.GameLogSegment;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Forest.class, GrizzlyBears.class, MindRot.class})
+@CardUsed({Forest.class, GrizzlyBears.class, MindRot.class, TrueBeliever.class})
 class MindRotTest extends BaseCardTest {
 
     @Test
@@ -227,5 +228,91 @@ class MindRotTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(entry -> entry.segments().stream().anyMatch(segment ->
                 segment instanceof GameLogSegment.CardSegment cardSegment
                         && cardSegment.card() == secondDiscard));
+    }
+
+    @Test
+    @DisplayName("Target can discard later cards while keeping the first card")
+    void targetCanKeepFirstCard() {
+        Forest keptCard = new Forest();
+        GrizzlyBears firstDiscard = new GrizzlyBears();
+        MindRot secondDiscard = new MindRot();
+        harness.setHand(player2, List.of(keptCard, firstDiscard, secondDiscard));
+        harness.setHand(player1, List.of(new MindRot()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, 2);
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(keptCard);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
+    }
+
+    @Test
+    @DisplayName("Target cannot decline either mandatory discard")
+    void targetCannotDeclineDiscard() {
+        GrizzlyBears firstDiscard = new GrizzlyBears();
+        Forest secondDiscard = new Forest();
+        harness.setHand(player2, List.of(firstDiscard, secondDiscard));
+        harness.setHand(player1, List.of(new MindRot()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleCardChosen(player2, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(firstDiscard, secondDiscard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(secondDiscard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(firstDiscard);
+
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactlyInAnyOrder(firstDiscard, secondDiscard);
+    }
+
+    @Test
+    @DisplayName("Cannot target a player with shroud")
+    void cannotTargetPlayerWithShroud() {
+        harness.addToBattlefield(player2, new TrueBeliever());
+        harness.setHand(player1, List.of(new MindRot()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("shroud");
+
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mind Rot does not resolve if its target gains shroud")
+    void targetGainingShroudPreventsDiscard() {
+        GrizzlyBears firstCard = new GrizzlyBears();
+        Forest secondCard = new Forest();
+        MindRot spell = new MindRot();
+        harness.setHand(player2, List.of(firstCard, secondCard));
+        harness.setHand(player1, List.of(spell));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.addToBattlefield(player2, new TrueBeliever());
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(firstCard, secondCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
     }
 }
