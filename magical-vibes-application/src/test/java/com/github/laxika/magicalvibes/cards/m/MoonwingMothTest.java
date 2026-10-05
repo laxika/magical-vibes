@@ -67,4 +67,38 @@ class MoonwingMothTest extends BaseCardTest {
         assertThat(moth.getPowerModifier()).isZero();
         assertThat(moth.getToughnessModifier()).isEqualTo(2);
     }
+    @Test
+    @DisplayName("Can activate while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent moth = harness.addToBattlefieldAndReturn(player1, new MoonwingMoth());
+        moth.setSummoningSick(true);
+        moth.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(moth.getToughnessModifier()).isZero();
+        harness.passBothPriorities();
+
+        assertThat(moth.getPowerModifier()).isZero();
+        assertThat(moth.getToughnessModifier()).isEqualTo(1);
+        assertThat(moth.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Boost affects only the source Moth")
+    void boostsOnlySource() {
+        Permanent otherMoth = addCreatureReady(player1, new MoonwingMoth());
+        Permanent source = addCreatureReady(player1, new MoonwingMoth());
+        Permanent opposingMoth = addCreatureReady(player2, new MoonwingMoth());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getPowerModifier()).isZero();
+        assertThat(source.getToughnessModifier()).isEqualTo(1);
+        assertThat(otherMoth.getToughnessModifier()).isZero();
+        assertThat(opposingMoth.getToughnessModifier()).isZero();
+    }
 }
