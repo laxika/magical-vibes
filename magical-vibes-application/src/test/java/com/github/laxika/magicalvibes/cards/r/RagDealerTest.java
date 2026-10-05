@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,7 +26,7 @@ class RagDealerTest extends BaseCardTest {
         Card card1 = new HumbleBudoka();
         Card card2 = new BlessedBreath();
         Card card3 = new Forest();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(card1, card2, card3)));
+        harness.setGraveyard(player2, List.of(card1, card2, card3));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbilityWithGraveyardTargets(player1, dealerIndex(dealer), 0,
@@ -44,7 +43,7 @@ class RagDealerTest extends BaseCardTest {
         Permanent dealer = addCreatureReady(player1, new RagDealer());
         Card card1 = new HumbleBudoka();
         Card card2 = new BlessedBreath();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(card1, card2)));
+        harness.setGraveyard(player1, List.of(card1, card2));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbilityWithGraveyardTargets(player1, dealerIndex(dealer), 0,
@@ -80,8 +79,8 @@ class RagDealerTest extends BaseCardTest {
         Permanent dealer = addCreatureReady(player1, new RagDealer());
         Card mine = new HumbleBudoka();
         Card theirs = new BlessedBreath();
-        harness.setGraveyard(player1, new ArrayList<>(List.of(mine)));
-        harness.setGraveyard(player2, new ArrayList<>(List.of(theirs)));
+        harness.setGraveyard(player1, List.of(mine));
+        harness.setGraveyard(player2, List.of(theirs));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, dealerIndex(dealer), 0,
@@ -98,7 +97,7 @@ class RagDealerTest extends BaseCardTest {
         Card card2 = new BlessedBreath();
         Card card3 = new Forest();
         Card card4 = new HumbleBudoka();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(card1, card2, card3, card4)));
+        harness.setGraveyard(player2, List.of(card1, card2, card3, card4));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, dealerIndex(dealer), 0,
@@ -112,7 +111,7 @@ class RagDealerTest extends BaseCardTest {
     void activatingTapsDealer() {
         Permanent dealer = addCreatureReady(player1, new RagDealer());
         Card card1 = new HumbleBudoka();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(card1)));
+        harness.setGraveyard(player2, List.of(card1));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbilityWithGraveyardTargets(player1, dealerIndex(dealer), 0, List.of(card1.getId()));
@@ -125,7 +124,7 @@ class RagDealerTest extends BaseCardTest {
     void cannotActivateWithoutEnoughMana() {
         Permanent dealer = addCreatureReady(player1, new RagDealer());
         Card card1 = new HumbleBudoka();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(card1)));
+        harness.setGraveyard(player2, List.of(card1));
         harness.addMana(player1, ManaColor.BLACK, 2);
 
         assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, dealerIndex(dealer), 0,
@@ -139,7 +138,7 @@ class RagDealerTest extends BaseCardTest {
         Permanent dealer = addCreatureReady(player1, new RagDealer());
         Card card1 = new HumbleBudoka();
         Card card2 = new BlessedBreath();
-        harness.setGraveyard(player2, new ArrayList<>(List.of(card1, card2)));
+        harness.setGraveyard(player2, List.of(card1, card2));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.activateAbilityWithGraveyardTargets(player1, dealerIndex(dealer), 0,
@@ -154,6 +153,87 @@ class RagDealerTest extends BaseCardTest {
 
     private int dealerIndex(Permanent dealer) {
         return gd.playerBattlefields.get(player1.getId()).indexOf(dealer);
+    }
+
+    @Test
+    void cannotChooseTheSameCardTwice() {
+        Permanent dealer = addCreatureReady(player1, new RagDealer());
+        Card card = new HumbleBudoka();
+        harness.setGraveyard(player2, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, dealerIndex(dealer), 0,
+                List.of(card.getId(), card.getId())))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("same card twice");
+    }
+
+    @Test
+    void cannotActivateWhileTapped() {
+        Permanent dealer = addCreatureReady(player1, new RagDealer());
+        dealer.setTapped(true);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, dealerIndex(dealer), 0,
+                List.of())).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void cannotActivateWithSummoningSickness() {
+        Permanent dealer = addCreatureReady(player1, new RagDealer());
+        dealer.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, dealerIndex(dealer), 0,
+                List.of())).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void genericManaCannotPayTheBlackRequirement() {
+        Permanent dealer = addCreatureReady(player1, new RagDealer());
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithGraveyardTargets(player1, dealerIndex(dealer), 0,
+                List.of())).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void abilityStillResolvesAfterDealerLeavesBattlefield() {
+        Permanent dealer = addCreatureReady(player1, new RagDealer());
+        Card card = new HumbleBudoka();
+        harness.setGraveyard(player2, List.of(card));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbilityWithGraveyardTargets(player1, dealerIndex(dealer), 0, List.of(card.getId()));
+        gd.playerBattlefields.get(player1.getId()).remove(dealer);
+        harness.setGraveyard(player1, List.of(dealer.getCard()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player2.getId()))
+                .extracting(Card::getId).containsExactly(card.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .extracting(Card::getId).containsExactly(dealer.getCard().getId());
+    }
+
+    @Test
+    void noCardsAreExiledWhenAllTargetsLeaveTheGraveyard() {
+        Permanent dealer = addCreatureReady(player1, new RagDealer());
+        Card target = new HumbleBudoka();
+        Card untargeted = new BlessedBreath();
+        harness.setGraveyard(player2, List.of(target, untargeted));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+
+        harness.activateAbilityWithGraveyardTargets(player1, dealerIndex(dealer), 0, List.of(target.getId()));
+        harness.setGraveyard(player2, List.of(untargeted));
+        harness.setHand(player2, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getId).containsExactly(untargeted.getId());
+        assertThat(dealer.isTapped()).isTrue();
     }
 
 }
