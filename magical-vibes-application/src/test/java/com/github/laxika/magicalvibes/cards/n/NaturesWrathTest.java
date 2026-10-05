@@ -4,8 +4,12 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BogWraith;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GatherSpecimens;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.cards.s.ShiftingSky;
+import com.github.laxika.magicalvibes.cards.u.UrborgTombOfYawgmoth;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({NaturesWrath.class, AirElemental.class, BogWraith.class, FugitiveWizard.class,
-        GrizzlyBears.class, Island.class, Swamp.class})
+        GrizzlyBears.class, Island.class, Swamp.class, GatherSpecimens.class, ShiftingSky.class, UrborgTombOfYawgmoth.class})
 class NaturesWrathTest extends BaseCardTest {
 
     private void putWrathOnBattlefield(Player controller) {
@@ -141,5 +145,106 @@ class NaturesWrathTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Nature's Wrath");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void blueCreatureCanBePaidForBySacrificingIsland() {
+        putWrathOnBattlefield(player2);
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.castFromHand(player1, new FugitiveWizard(), "{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(activeChoice().validIds()).contains(island.getId()).hasSize(2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(island.getId()));
+
+        harness.assertInGraveyard(player1, "Island");
+        harness.assertOnBattlefield(player1, "Fugitive Wizard");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void blackCreatureCanBePaidForBySacrificingSwamp() {
+        putWrathOnBattlefield(player2);
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.castFromHand(player1, new BogWraith(), "{3}{B}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(activeChoice().validIds()).contains(swamp.getId()).hasSize(2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(swamp.getId()));
+
+        harness.assertInGraveyard(player1, "Swamp");
+        harness.assertOnBattlefield(player1, "Bog Wraith");
+    }
+
+    @Test
+    void controllerOwnBlueCreatureAlsoTriggersSacrifice() {
+        putWrathOnBattlefield(player1);
+        harness.castFromHand(player1, new FugitiveWizard(), "{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Fugitive Wizard");
+        harness.assertOnBattlefield(player1, "Nature's Wrath");
+    }
+
+    @Test
+    void enteringCreatureUsesColorGrantedByShiftingSky() {
+        putWrathOnBattlefield(player2);
+        Permanent sky = harness.addToBattlefieldAndReturn(player2, new ShiftingSky());
+        sky.setChosenColor(CardColor.BLUE);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void creatureMadeGreenBeforeEnteringDoesNotTriggerBlueSacrifice() {
+        putWrathOnBattlefield(player2);
+        Permanent sky = harness.addToBattlefieldAndReturn(player2, new ShiftingSky());
+        sky.setChosenColor(CardColor.GREEN);
+        harness.addToBattlefield(player1, new Island());
+        harness.castFromHand(player1, new FugitiveWizard(), "{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Island");
+        harness.assertOnBattlefield(player1, "Fugitive Wizard");
+        assertThat(activeChoice()).isNull();
+    }
+
+    @Test
+    void islandMadeSwampByUrborgTriggersBothSacrifices() {
+        putWrathOnBattlefield(player2);
+        harness.addToBattlefield(player2, new UrborgTombOfYawgmoth());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+        harness.setHand(player1, List.of(new Island()));
+        harness.playLand(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(swamp.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Swamp");
+        harness.assertInGraveyard(player1, "Island");
+    }
+
+    @Test
+    void sacrificeIsRequiredFromPlayerPuttingCreatureOntoBattlefieldDespiteReplacement() {
+        putWrathOnBattlefield(player2);
+        harness.addToBattlefield(player1, new Island());
+        harness.castFromHand(player2, new GatherSpecimens(), "{3}{U}{U}{U}");
+        harness.passBothPriorities();
+        harness.castFromHand(player1, new FugitiveWizard(), "{U}");
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Island");
+        harness.assertOnBattlefield(player2, "Fugitive Wizard");
     }
 }
