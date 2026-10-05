@@ -58,6 +58,68 @@ class LeelaSevateemWarriorTest extends BaseCardTest {
         assertThat(leela.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Triggers for every opponent draw outside their draw step")
+    void triggersForEveryDrawOutsideDrawStep() {
+        Permanent leela = harness.addToBattlefieldAndReturn(player1, new LeelaSevateemWarrior());
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        draw(player2);
+        draw(player2);
+
+        assertThat(leela.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        assertThat(leela.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Triggers for an opponent's first draw during someone else's draw step")
+    void triggersDuringControllersDrawStep() {
+        Permanent leela = harness.addToBattlefieldAndReturn(player1, new LeelaSevateemWarrior());
+        harness.setLibrary(player2, List.of(new Forest()));
+        prepareDrawStep(player1);
+
+        draw(player2);
+        resolveAllTriggers();
+
+        assertThat(leela.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Earlier upkeep draws do not remove the first draw-step draw exception")
+    void upkeepDrawDoesNotConsumeDrawStepException() {
+        Permanent leela = harness.addToBattlefieldAndReturn(player1, new LeelaSevateemWarrior());
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        draw(player2);
+        resolveAllTriggers();
+        prepareDrawStep(player2);
+        draw(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(leela.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Counts a first draw-step draw that happened before Leela entered")
+    void triggersAfterEnteringFollowingFirstDraw() {
+        harness.setLibrary(player2, List.of(new Forest(), new Forest()));
+        prepareDrawStep(player2);
+        draw(player2);
+        Permanent leela = harness.addToBattlefieldAndReturn(player1, new LeelaSevateemWarrior());
+
+        draw(player2);
+        resolveAllTriggers();
+
+        assertThat(leela.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
     private void prepareDrawStep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2;
