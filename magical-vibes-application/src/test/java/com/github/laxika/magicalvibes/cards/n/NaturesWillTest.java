@@ -107,4 +107,49 @@ class NaturesWillTest extends BaseCardTest {
                 .filter(log -> log.plainText().contains("Nature's Will's triggered ability goes on the stack")))
                 .hasSize(1);
     }
+
+    @Test
+    @DisplayName("An opponent's Nature's Will does not trigger for your creatures")
+    void doesNotTriggerForOpponentsCreatures() {
+        harness.addToBattlefield(player2, new NaturesWill());
+        Permanent myLand = addUntappedLand(player1);
+        Permanent theirLand = addTappedLand(player2);
+        addAttackingBears();
+
+        runCombatDamage();
+
+        harness.assertLife(player2, 18);
+        assertThat(gd.stack).isEmpty();
+        assertThat(myLand.isTapped()).isFalse();
+        assertThat(theirLand.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Your lands still untap when the damaged player controls no lands")
+    void untapsOwnLandsWhenDefenderHasNoLands() {
+        harness.addToBattlefield(player1, new NaturesWill());
+        Permanent myLand = addTappedLand(player1);
+        addAttackingBears();
+
+        runCombatDamage();
+
+        harness.assertLife(player2, 18);
+        assertThat(myLand.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The trigger affects lands present at resolution")
+    void affectsLandsEnteringAfterCombatDamage() {
+        harness.addToBattlefield(player1, new NaturesWill());
+        addAttackingBears();
+
+        resolveCombat();
+        assertThat(gd.stack).hasSize(1);
+        Permanent myLand = addTappedLand(player1);
+        Permanent theirLand = addUntappedLand(player2);
+        harness.getStackResolutionService().resolveTopOfStack(gd);
+
+        assertThat(myLand.isTapped()).isFalse();
+        assertThat(theirLand.isTapped()).isTrue();
+    }
 }
