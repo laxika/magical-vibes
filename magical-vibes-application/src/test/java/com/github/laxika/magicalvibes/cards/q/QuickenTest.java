@@ -97,4 +97,53 @@ class QuickenTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
+
+    @Test
+    @DisplayName("Multiple Quickens all apply to the same next sorcery")
+    void multipleGrantsAreConsumedTogether() {
+        resolveQuicken();
+        resolveQuicken();
+
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new CullingSun(), "{2}{W}{W}{B}");
+        assertThat(gd.stack).hasSize(1);
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new CullingSun(), "{2}{W}{W}{B}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Casting a sorcery at normal timing still consumes the permission")
+    void normalSorceryCastConsumesGrant() {
+        resolveQuicken();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromHand(player1, new CullingSun(), "{2}{W}{W}{B}");
+        assertThat(gd.stack).hasSize(1);
+
+        assertThatThrownBy(() -> harness.castFromHand(player1, new CullingSun(), "{2}{W}{W}{B}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Permission works on the opponent's turn and belongs only to the controller")
+    void worksOnOpponentsTurnOnlyForController() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        harness.clearPriorityPassed();
+        resolveQuicken();
+
+        assertThatThrownBy(() -> harness.castFromHand(player2, new CullingSun(), "{2}{W}{W}{B}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+
+        harness.castFromHand(player1, new CullingSun(), "{2}{W}{W}{B}");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
+    }
 }
