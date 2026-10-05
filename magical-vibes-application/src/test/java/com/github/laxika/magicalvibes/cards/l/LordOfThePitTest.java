@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -14,9 +15,12 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LordOfThePit.class, GrizzlyBears.class, GiantSpider.class, JayemdaeTome.class})
+@CardUsed({LordOfThePit.class, GrizzlyBears.class, GiantSpider.class, JayemdaeTome.class,
+        LoxodonWarhammer.class, Unsummon.class})
 class LordOfThePitTest extends BaseCardTest {
     @Test
     @DisplayName("Deals 7 damage to controller when no other creatures are present")
@@ -38,7 +42,7 @@ class LordOfThePitTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("Lord of the Pit deals 7 damage"));
+        assertThat(gameLogContains("Lord of the Pit deals 7 damage")).isTrue();
     }
 
     @Test
@@ -215,7 +219,56 @@ class LordOfThePitTest extends BaseCardTest {
 
         // Damage from black source is prevented
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("is prevented"));
+        assertThat(gameLogContains("is prevented")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Lifelink offsets upkeep damage even when it would otherwise be lethal")
+    void upkeepDamageAppliesGrantedLifelink() {
+        Permanent lord = harness.addToBattlefieldAndReturn(player1, new LordOfThePit());
+        Permanent warhammer = harness.addToBattlefieldAndReturn(player1, new LoxodonWarhammer());
+        warhammer.setAttachedTo(lord.getId());
+        harness.setLife(player1, 3);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 3);
+        assertThat(gd.status).isNotEqualTo(GameStatus.FINISHED);
+    }
+
+    @Test
+    @DisplayName("Removing the only other creature in response causes upkeep damage")
+    void sacrificeAvailabilityIsCheckedAtResolution() {
+        harness.addToBattlefield(player1, new LordOfThePit());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 13);
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Lord of the Pit");
+    }
+
+    @Test
+    @DisplayName("The upkeep trigger still deals damage after Lord leaves the battlefield")
+    void triggerResolvesAfterSourceLeaves() {
+        Permanent lord = harness.addToBattlefieldAndReturn(player1, new LordOfThePit());
+        harness.setHand(player1, List.of(new Unsummon()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.setLife(player1, 20);
+
+        advanceToUpkeep(player1);
+        harness.castAndResolveInstant(player1, 0, lord.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 13);
+        harness.assertInHand(player1, "Lord of the Pit");
     }
 
     @Test
