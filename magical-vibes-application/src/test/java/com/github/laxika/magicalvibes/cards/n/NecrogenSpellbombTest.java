@@ -91,4 +91,47 @@ class NecrogenSpellbombTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Necrogen Spellbomb");
     }
+    @Test
+    @DisplayName("Sacrifice is paid before the target player chooses exactly one card to discard")
+    void sacrificesAtActivationAndTargetChoosesOneCard() {
+        harness.addToBattlefield(player1, new NecrogenSpellbomb());
+        var retainedCard = new NecrogenSpellbomb();
+        var discardedCard = new NecrogenSpellbomb();
+        harness.setHand(player2, List.of(retainedCard, discardedCard));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+
+        harness.assertNotOnBattlefield(player1, "Necrogen Spellbomb");
+        harness.assertInGraveyard(player1, "Necrogen Spellbomb");
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retainedCard, discardedCard);
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(retainedCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discardedCard);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A tapped Spellbomb can be sacrificed to draw using colored mana for the generic cost")
+    void tappedSpellbombDrawsUsingColoredMana() {
+        harness.addToBattlefield(player1, new NecrogenSpellbomb());
+        findPermanent(player1, "Necrogen Spellbomb").tap();
+        harness.setHand(player1, List.of());
+        var drawnCard = new NecrogenSpellbomb();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Necrogen Spellbomb");
+        harness.assertInGraveyard(player1, "Necrogen Spellbomb");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
 }
