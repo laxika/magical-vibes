@@ -97,4 +97,42 @@ class KurgadonTest extends BaseCardTest {
 
         assertThat(kurgadon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
+
+    @Test
+    void doesNotTriggerForXCreatureWithManaValueBelowSix() {
+        Permanent kurgadon = harness.addToBattlefieldAndReturn(player1, new Kurgadon());
+        harness.setHand(player1, List.of(new HangarbackWalker()));
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castArtifact(player1, 0, 2);
+        resolveAllTriggers();
+
+        assertThat(kurgadon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void eachKurgadonGetsItsOwnCountersBeforeCreatureSpellResolves() {
+        Permanent first = harness.addToBattlefieldAndReturn(player1, new Kurgadon());
+        Permanent second = harness.addToBattlefieldAndReturn(player1, new Kurgadon());
+        harness.castFromHand(player1, new ElvishAberration(), "{5}{G}");
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        harness.assertNotOnBattlefield(player1, "Elvish Aberration");
+        resolveAllTriggers();
+        harness.assertOnBattlefield(player1, "Elvish Aberration");
+    }
+
+    @Test
+    void doesNotTriggerWhenCreatureEntersWithoutBeingCast() {
+        Permanent kurgadon = harness.addToBattlefieldAndReturn(player1, new Kurgadon());
+
+        harness.enterBattlefieldAndReturn(player1, new ElvishAberration());
+        resolveAllTriggers();
+
+        assertThat(kurgadon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
 }
