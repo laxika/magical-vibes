@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.p;
-import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
+import com.github.laxika.magicalvibes.cards.v.VampireHexmage;
 import com.github.laxika.magicalvibes.cards.i.InstillInfection;
+import com.github.laxika.magicalvibes.cards.m.MindControl;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,9 +20,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({ProteanHydra.class, GrizzlyBears.class, Shock.class, InstillInfection.class,
+        GiantGrowth.class, VampireHexmage.class, MindControl.class})
 class ProteanHydraTest extends BaseCardTest {
-
-    // ===== Enters with X +1/+1 counters =====
 
     @Test
     @DisplayName("Casting with X=3 enters with 3 +1/+1 counters")
@@ -49,13 +52,10 @@ class ProteanHydraTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Protean Hydra");
     }
 
-    // ===== Damage prevention removes +1/+1 counters =====
-
     @Test
     @DisplayName("Shock damage is prevented and removes +1/+1 counters instead")
     void shockDamageRemovesCounters() {
-        harness.addToBattlefield(player2, new ProteanHydra());
-        Permanent hydra = findHydra(player2);
+        Permanent hydra = harness.addToBattlefieldAndReturn(player2, new ProteanHydra());
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5); // 5/5
 
         harness.setHand(player1, List.of(new Shock()));
@@ -74,19 +74,15 @@ class ProteanHydraTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage is prevented and removes +1/+1 counters")
     void combatDamageRemovesCounters() {
-        ProteanHydra hydraCard = new ProteanHydra();
-        Permanent blocker = new Permanent(hydraCard);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new ProteanHydra());
         blocker.setSummoningSick(false);
         blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5); // 5/5
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player2.getId()).add(blocker);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player1.getId()).add(attacker);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -99,13 +95,10 @@ class ProteanHydraTest extends BaseCardTest {
         assertThat(survivingHydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
-    // ===== Damage beyond counter count =====
-
     @Test
     @DisplayName("Damage exceeding counter count only removes available counters, all damage still prevented")
     void damageExceedingCountersOnlyRemovesAvailable() {
-        harness.addToBattlefield(player2, new ProteanHydra());
-        Permanent hydra = findHydra(player2);
+        Permanent hydra = harness.addToBattlefieldAndReturn(player2, new ProteanHydra());
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1); // 1/1
 
         harness.setHand(player1, List.of(new Shock()));
@@ -116,18 +109,14 @@ class ProteanHydraTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // All damage is prevented, but only 1 counter can be removed (Shock deals 2)
-        // Hydra survives as 0/0 but should die to state-based actions
-        // Actually, with 0 +1/+1 counters it's 0/0 and dies
+        // With no counters remaining, its zero toughness causes it to die.
         harness.assertNotOnBattlefield(player2, "Protean Hydra");
     }
-
-    // ===== Delayed regrowth trigger =====
 
     @Test
     @DisplayName("When +1/+1 counters are removed, delayed trigger adds double counters at end step")
     void delayedRegrowthAtEndStep() {
-        harness.addToBattlefield(player1, new ProteanHydra());
-        Permanent hydra = findHydra(player1);
+        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new ProteanHydra());
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5); // 5/5
 
         harness.setHand(player2, List.of(new Shock()));
@@ -149,32 +138,43 @@ class ProteanHydraTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("No delayed trigger when hydra has no counters to remove")
+    @DisplayName("Damage with no counters is still prevented and does not cause regrowth")
     void noTriggerWhenNoCountersToRemove() {
-        harness.addToBattlefield(player1, new ProteanHydra());
-        Permanent hydra = findHydra(player1);
-        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0); // 0/0 but keep alive manually
+        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new ProteanHydra());
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, hydra.getId());
+        harness.passBothPriorities();
 
-        // Verify no pending delayed counters
-        assertThat(gd.getDelayedActions(DelayedPlusOneCounters.class)).isEmpty();
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castInstant(player2, 0, hydra.getId());
+        harness.passBothPriorities();
+        resolveAllDelayedTriggers();
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.castInstant(player2, 0, hydra.getId());
+        harness.passBothPriorities();
+        assertThat(hydra.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
+
+        advanceToEndStep(player1);
+        resolveAllDelayedTriggers();
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Hydra regrows after combat damage")
     void regrowsAfterCombatDamage() {
-        ProteanHydra hydraCard = new ProteanHydra();
-        Permanent blocker = new Permanent(hydraCard);
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new ProteanHydra());
         blocker.setSummoningSick(false);
         blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5); // 5/5
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
-        gd.playerBattlefields.get(player1.getId()).add(blocker);
 
-        GrizzlyBears bears = new GrizzlyBears();
-        Permanent attacker = new Permanent(bears);
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         attacker.setSummoningSick(false);
         attacker.setAttacking(true);
-        gd.playerBattlefields.get(player2.getId()).add(attacker);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
@@ -194,17 +194,14 @@ class ProteanHydraTest extends BaseCardTest {
         assertThat(findHydra(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
     }
 
-    // ===== SBA counter annihilation triggers regrowth (ruling #3, #5) =====
-
     @Test
     @DisplayName("-1/-1 counter on Hydra annihilates with +1/+1 counter via SBA, triggering regrowth")
     void minusOneCounterAnnihilationTriggersRegrowth() {
-        harness.addToBattlefield(player1, new ProteanHydra());
-        Permanent hydra = findHydra(player1);
+        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new ProteanHydra());
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5); // 5/5
 
         // Add a card to player2's library so InstillInfection's draw doesn't lose the game
-        gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
 
         // Cast InstillInfection targeting Hydra (puts 1 -1/-1 counter + draws a card)
         harness.setHand(player2, List.of(new InstillInfection()));
@@ -230,13 +227,78 @@ class ProteanHydraTest extends BaseCardTest {
         assertThat(result.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Each removed counter puts an immediate regrowth ability on the stack")
+    void counterRemovalTriggersBeforeEndStep() {
+        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new ProteanHydra());
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, hydra.getId());
+        harness.passBothPriorities();
+
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        harness.passBothPriorities();
+        advanceToEndStep(player1);
+        resolveAllDelayedTriggers();
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
+    }
+
+    @Test
+    @DisplayName("Counters removed by Vampire Hexmage also regrow")
+    void nonDamageCounterRemovalRegrows() {
+        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new ProteanHydra());
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castInstant(player1, 0, hydra.getId());
+        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new VampireHexmage());
+        harness.activateAbility(player2, 0, null, hydra.getId());
+        harness.passBothPriorities();
+        resolveAllDelayedTriggers();
+
+        harness.assertOnBattlefield(player1, "Protean Hydra");
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        advanceToEndStep(player1);
+        resolveAllDelayedTriggers();
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Regrowth retains its original controller when Hydra changes control")
+    void delayedRegrowthRetainsController() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent hydra = harness.addToBattlefieldAndReturn(player1, new ProteanHydra());
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+        harness.setHand(player2, List.of(new Shock(), new MindControl()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, hydra.getId());
+        harness.passBothPriorities();
+        resolveAllDelayedTriggers();
+
+        harness.addMana(player2, ManaColor.BLUE, 5);
+        harness.castEnchantment(player2, 0, hydra.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Protean Hydra");
+        advanceToEndStep(player2);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack).allSatisfy(entry ->
+                assertThat(entry.getControllerId()).isEqualTo(player1.getId()));
+        resolveAllDelayedTriggers();
+        assertThat(findHydra(player2).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
+    }
 
     private void advanceToEndStep(com.github.laxika.magicalvibes.model.Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // advances POSTCOMBAT_MAIN -> END_STEP, fires handler
+        harness.passUntil(activePlayer, TurnStep.END_STEP);
     }
 
     /**
