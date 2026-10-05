@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.c.CapashenUnicorn;
 import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PhantasmalTerrain.class, Forest.class, Mountain.class, CapashenUnicorn.class, CityOfBrass.class})
+@CardUsed({PhantasmalTerrain.class, Forest.class, Mountain.class, GrizzlyBears.class, CityOfBrass.class})
 class PhantasmalTerrainTest extends BaseCardTest {
 
     @Test
@@ -126,12 +127,11 @@ class PhantasmalTerrainTest extends BaseCardTest {
     @DisplayName("Cannot cast Phantasmal Terrain targeting a non-land permanent")
     void cannotTargetNonLand() {
         harness.addToBattlefield(player1, new Forest()); // valid target so spell is playable
-        harness.addToBattlefield(player1, new CapashenUnicorn());
-        Permanent unicorn = findPermanent(player1, "Capashen Unicorn");
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new PhantasmalTerrain()));
         harness.addMana(player1, ManaColor.BLUE, 2);
 
-        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, unicorn.getId()))
+        assertThatThrownBy(() -> harness.castEnchantment(player1, 0, creature.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be a land");
     }
@@ -164,5 +164,46 @@ class PhantasmalTerrainTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handleListChoice(player1, "BEAR"))
                 .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("A changed City of Brass produces chosen mana without its printed damage trigger")
+    void changedCityProducesManaWithoutDamage() {
+        Permanent city = harness.addToBattlefieldAndReturn(player1, new CityOfBrass());
+        harness.setHand(player1, List.of(new PhantasmalTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, city.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "FOREST");
+
+        harness.tapPermanent(player1, 0);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
+        assertThat(gqs.hasEffectiveSupertype(gd, city, CardSupertype.BASIC)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The later Aura determines the land type and removing it restores the earlier choice")
+    void laterAuraOverridesEarlierChoice() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setHand(player1, List.of(new PhantasmalTerrain(), new PhantasmalTerrain()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "ISLAND");
+        harness.castEnchantment(player1, 0, forest.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "SWAMP");
+
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.SWAMP);
+        assertThat(gqs.hasEffectiveSupertype(gd, forest, CardSupertype.BASIC)).isTrue();
+        Permanent laterAura = gd.playerBattlefields.get(player1.getId()).getLast();
+        gd.playerBattlefields.get(player1.getId()).remove(laterAura);
+        assertThat(gqs.effectiveBasicLandTypes(gd, forest)).containsExactly(CardSubtype.ISLAND);
+        harness.tapPermanent(player1, 0);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
     }
 }
