@@ -99,10 +99,131 @@ class PriestOfTheHauntedEdgeTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    void snowLandsAreCountedAtResolutionAndAmountThenStaysFixed() {
+        addReadyPriest(player1);
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new SnowCoveredSwamp());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PriestOfTheHauntedEdge());
+        forceMainPhase(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.assertNotOnBattlefield(player1, "Priest of the Haunted Edge");
+        harness.assertInGraveyard(player1, "Priest of the Haunted Edge");
+        gd.playerBattlefields.get(player1.getId()).remove(land);
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isZero();
+        assertThat(target.getToughnessModifier()).isZero();
+        harness.addToBattlefield(player1, new SnowCoveredSwamp());
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(4);
+    }
+
+    @Test
+    void snowCreaturesDoNotCountAndOwnCreaturesCanBeTargeted() {
+        addReadyPriest(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new PriestOfTheHauntedEdge());
+        harness.addToBattlefield(player1, new SnowCoveredSwamp());
+        forceMainPhase(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.getPowerModifier()).isEqualTo(-1);
+        assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(3);
+    }
+
+    @Test
+    void reducingToughnessToZeroPutsCreatureInGraveyard() {
+        addReadyPriest(player1);
+        for (int i = 0; i < 4; i++) {
+            harness.addToBattlefield(player1, new SnowCoveredSwamp());
+        }
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PriestOfTheHauntedEdge());
+        forceMainPhase(player1);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player2, "Priest of the Haunted Edge");
+        harness.assertInGraveyard(player2, "Priest of the Haunted Edge");
+    }
+
+    @Test
+    void summoningSicknessPreventsActivationWithoutSacrificingPriest() {
+        harness.addToBattlefield(player1, new PriestOfTheHauntedEdge());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PriestOfTheHauntedEdge());
+        forceMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Priest of the Haunted Edge");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void tappedPriestCannotActivate() {
+        Permanent priest = addReadyPriest(player1);
+        priest.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PriestOfTheHauntedEdge());
+        forceMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Priest of the Haunted Edge");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotActivateDuringOpponentsMainPhase() {
+        addReadyPriest(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PriestOfTheHauntedEdge());
+        forceMainPhase(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Priest of the Haunted Edge");
+    }
+
+    @Test
+    void cannotActivateWithAnotherAbilityOnStack() {
+        addReadyPriest(player1);
+        addReadyPriest(player1);
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PriestOfTheHauntedEdge());
+        forceMainPhase(player1);
+        harness.activateAbility(player1, 0, null, target.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void abilityDoesNotAffectTargetThatLeavesAndReturns() {
+        addReadyPriest(player1);
+        harness.addToBattlefield(player1, new SnowCoveredSwamp());
+        PriestOfTheHauntedEdge targetCard = new PriestOfTheHauntedEdge();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, targetCard);
+        forceMainPhase(player1);
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(target);
+        Permanent returned = harness.addToBattlefieldAndReturn(player2, targetCard);
+
+        harness.passBothPriorities();
+
+        assertThat(returned.getPowerModifier()).isZero();
+        assertThat(returned.getToughnessModifier()).isZero();
+        harness.assertInGraveyard(player1, "Priest of the Haunted Edge");
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addReadyPriest(Player player) {
-        Permanent priest = new Permanent(new PriestOfTheHauntedEdge());
+        Permanent priest = harness.addToBattlefieldAndReturn(player, new PriestOfTheHauntedEdge());
         priest.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(priest);
         return priest;
     }
 
