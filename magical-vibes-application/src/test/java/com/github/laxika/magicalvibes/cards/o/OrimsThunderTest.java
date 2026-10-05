@@ -132,4 +132,69 @@ class OrimsThunderTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player1, 0, creatureId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("When kicked, deals the enchantment's mana value as damage to your own creature")
+    void kickedEnchantmentDamagesOwnCreature() {
+        harness.addToBattlefield(player2, new FerventCharge());
+        harness.addToBattlefield(player1, new PenumbraWurm());
+        harness.setHand(player1, List.of(new OrimsThunder()));
+        addOrimsThunderMana();
+
+        UUID enchantmentId = harness.getPermanentId(player2, "Fervent Charge");
+        UUID creatureId = harness.getPermanentId(player1, "Penumbra Wurm");
+        harness.castKickedInstantWithSacrifices(player1, 0, enchantmentId, List.of(creatureId), List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Fervent Charge");
+        assertThat(findPermanent(player1, "Penumbra Wurm").getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("The same artifact creature can be chosen for both targets")
+    void kickedCanTargetSameArtifactCreatureTwice() {
+        harness.addToBattlefield(player2, new Dodecapod());
+        harness.setHand(player1, List.of(new OrimsThunder()));
+        addOrimsThunderMana();
+
+        UUID artifactId = harness.getPermanentId(player2, "Dodecapod");
+        harness.castKickedInstantWithSacrifices(player1, 0, artifactId, List.of(artifactId), List.of());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Dodecapod");
+        harness.assertNotOnBattlefield(player2, "Dodecapod");
+        harness.assertInGraveyard(player1, "Orim's Thunder");
+    }
+
+    @Test
+    @DisplayName("Regenerating the artifact does not stop the kicked damage")
+    void kickedDealsDamageEvenWhenArtifactRegenerates() {
+        harness.addToBattlefield(player2, new Dodecapod());
+        harness.addToBattlefield(player2, new PenumbraWurm());
+        findPermanent(player2, "Dodecapod").setRegenerationShield(1);
+        harness.setHand(player1, List.of(new OrimsThunder()));
+        addOrimsThunderMana();
+
+        UUID artifactId = harness.getPermanentId(player2, "Dodecapod");
+        UUID creatureId = harness.getPermanentId(player2, "Penumbra Wurm");
+        harness.castKickedInstantWithSacrifices(player1, 0, artifactId, List.of(creatureId), List.of());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Dodecapod");
+        assertThat(findPermanent(player2, "Dodecapod").isTapped()).isTrue();
+        assertThat(findPermanent(player2, "Dodecapod").getRegenerationShield()).isZero();
+        assertThat(findPermanent(player2, "Penumbra Wurm").getMarkedDamage()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Kicking requires a creature target even when the destruction target is legal")
+    void kickedRequiresCreatureTarget() {
+        harness.addToBattlefield(player2, new FerventCharge());
+        harness.setHand(player1, List.of(new OrimsThunder()));
+        addOrimsThunderMana();
+
+        UUID enchantmentId = harness.getPermanentId(player2, "Fervent Charge");
+        assertThatThrownBy(() -> harness.castKickedInstant(player1, 0, enchantmentId))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }
