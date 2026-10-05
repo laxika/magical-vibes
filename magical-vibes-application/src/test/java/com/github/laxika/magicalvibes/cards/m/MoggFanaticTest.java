@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.ChandraNalaar;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -122,9 +121,7 @@ class MoggFanaticTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target creature, destroying a 1/1")
     void deals1DamageDestroying1Toughness() {
         addReadyMoggFanatic(player1);
-        harness.addToBattlefield(player2, new LlanowarElves());
-
-        UUID targetId = harness.getPermanentId(player2, "Llanowar Elves");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new LlanowarElves()).getId();
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
@@ -136,9 +133,7 @@ class MoggFanaticTest extends BaseCardTest {
     @DisplayName("Deals 1 damage to target creature, 2/2 creature survives")
     void deals1DamageDoesNotKill2Toughness() {
         addReadyMoggFanatic(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         harness.activateAbility(player1, 0, null, targetId);
         harness.passBothPriorities();
 
@@ -162,8 +157,7 @@ class MoggFanaticTest extends BaseCardTest {
     @DisplayName("Cannot target a noncreature, nonplaneswalker permanent")
     void cannotTargetNonCreatureNonPlaneswalkerPermanent() {
         addReadyMoggFanatic(player1);
-        harness.addToBattlefield(player2, new Forest());
-        UUID targetId = harness.getPermanentId(player2, "Forest");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Forest()).getId();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetId))
                 .isInstanceOf(IllegalStateException.class);
@@ -212,9 +206,7 @@ class MoggFanaticTest extends BaseCardTest {
     @DisplayName("Ability fizzles if target creature is removed before resolution")
     void fizzlesIfTargetCreatureRemoved() {
         addReadyMoggFanatic(player1);
-        harness.addToBattlefield(player2, new GrizzlyBears());
-
-        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()).getId();
         harness.activateAbility(player1, 0, null, targetId);
 
         // Remove target before resolution
@@ -223,7 +215,7 @@ class MoggFanaticTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
     }
 
     // ===== Mogg Fanatic goes to graveyard on sacrifice =====
@@ -240,7 +232,50 @@ class MoggFanaticTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Mogg Fanatic");
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Can target itself, but its ability fizzles after it is sacrificed")
+    void canTargetItselfBeforePayingSacrificeCost() {
+        Permanent mogg = harness.addToBattlefieldAndReturn(player1, new MoggFanatic());
+
+        harness.activateAbility(player1, 0, null, mogg.getId());
+
+        harness.assertInGraveyard(player1, "Mogg Fanatic");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gameLogContains("fizzles")).isTrue();
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Can deal damage to a creature its controller controls")
+    void canDamageFriendlyCreature() {
+        harness.addToBattlefield(player1, new MoggFanatic());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new LlanowarElves());
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Mogg Fanatic");
+        harness.assertInGraveyard(player1, "Llanowar Elves");
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+    }
+
+    @Test
+    @DisplayName("Rejecting an illegal target does not sacrifice Mogg Fanatic")
+    void illegalTargetDoesNotPaySacrificeCost() {
+        harness.addToBattlefield(player1, new MoggFanatic());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Mogg Fanatic");
+        harness.assertNotInGraveyard(player1, "Mogg Fanatic");
+        assertThat(gd.stack).isEmpty();
+    }
 
     private Permanent addReadyMoggFanatic(Player player) {
         return addCreatureReady(player, new MoggFanatic());
