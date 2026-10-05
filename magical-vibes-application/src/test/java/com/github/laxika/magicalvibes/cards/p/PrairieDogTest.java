@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.cards.b.BurstOfStrength;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.t.TrainedArynx;
+import com.github.laxika.magicalvibes.cards.s.ShootTheSheriff;
+import com.github.laxika.magicalvibes.cards.t.TakeUpTheShield;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PrairieDog.class, BurstOfStrength.class, GrizzlyBears.class})
+@CardUsed({PrairieDog.class, TrainedArynx.class,
+        ShootTheSheriff.class, TakeUpTheShield.class})
 class PrairieDogTest extends BaseCardTest {
 
     @Test
@@ -33,8 +35,8 @@ class PrairieDogTest extends BaseCardTest {
     @DisplayName("Does not put a counter on itself after a hand spell was cast")
     void doesNotPutCounterAfterHandSpell() {
         Permanent dog = addPrairieDog();
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.setHand(player1, List.of(new TrainedArynx()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -48,22 +50,21 @@ class PrairieDogTest extends BaseCardTest {
     @DisplayName("Adds one extra +1/+1 counter to a controlled creature until end of turn")
     void addsAnExtraCounterUntilEndOfTurn() {
         addPrairieDog();
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new TrainedArynx());
         activateCounterReplacement();
 
-        harness.setHand(player1, List.of(new BurstOfStrength()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, bears.getId());
-        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new TakeUpTheShield()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, recipient.getId());
 
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Counter replacement wears off at end of turn")
     void counterReplacementWearsOffAtEndOfTurn() {
         addPrairieDog();
-        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new TrainedArynx());
         activateCounterReplacement();
 
         harness.forceStep(TurnStep.END_STEP);
@@ -73,12 +74,97 @@ class PrairieDogTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.setHand(player1, List.of(new BurstOfStrength()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.castInstant(player1, 0, bears.getId());
+        harness.setHand(player1, List.of(new TakeUpTheShield()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, recipient.getId());
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(PrairieDog.class)
+    void doesNotTriggerDuringOpponentsEndStep() {
+        Permanent dog = addPrairieDog();
+        advanceToEndStep(player2);
+        assertThat(dog.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @CardUsed({PrairieDog.class, TakeUpTheShield.class})
+    void rechecksHandCastingWhenEndStepTriggerResolves() {
+        Permanent dog = addPrairieDog();
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.setHand(player1, List.of(new TakeUpTheShield()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, dog.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(dog.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed(PrairieDog.class)
+    void multipleActivationsEachAddOneCounterToEndStepPlacement() {
+        Permanent dog = addPrairieDog();
+        activateCounterReplacement();
+        activateCounterReplacement();
+        advanceToEndStep(player1);
+        assertThat(dog.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+    }
+
+    @Test
+    @CardUsed({PrairieDog.class, TakeUpTheShield.class, ShootTheSheriff.class})
+    void replacementPersistsAfterSourceLeavesBattlefield() {
+        Permanent source = addPrairieDog();
+        Permanent recipient = addPrairieDog();
+        activateCounterReplacement();
+        destroyDog(source);
+
+        harness.setHand(player1, List.of(new TakeUpTheShield()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, recipient.getId());
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({PrairieDog.class, TakeUpTheShield.class, ShootTheSheriff.class})
+    void replacementResolvesEvenIfSourceWasRemovedInResponse() {
+        Permanent source = addPrairieDog();
+        Permanent recipient = addPrairieDog();
+        harness.addMana(player1, ManaColor.WHITE, 5);
+        harness.activateAbility(player1, 0, null, null);
+        destroyDog(source);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new TakeUpTheShield()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player1, 0, recipient.getId());
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @CardUsed({PrairieDog.class, TakeUpTheShield.class})
+    void doesNotIncreaseCountersPlacedByOpponentOnYourCreature() {
+        Permanent dog = addPrairieDog();
+        activateCounterReplacement();
+        harness.setHand(player2, List.of(new TakeUpTheShield()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castAndResolveInstant(player2, 0, dog.getId());
+
+        assertThat(dog.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    private void destroyDog(Permanent dog) {
+        harness.setHand(player2, List.of(new ShootTheSheriff()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player2, 0, dog.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(dog);
     }
 
     private Permanent addPrairieDog() {
