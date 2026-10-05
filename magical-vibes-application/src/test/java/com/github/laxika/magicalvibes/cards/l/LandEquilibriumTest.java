@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -112,8 +111,7 @@ class LandEquilibriumTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
-        harness.getGameService().handleInteractionAnswer(gd, player2,
-                new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .hasSize(3)
@@ -122,5 +120,64 @@ class LandEquilibriumTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(permanent -> permanent.getCard() instanceof Forest);
         harness.assertInGraveyard(player2, "Forest");
+    }
+
+    @Test
+    @DisplayName("The controller may put a land under an opponent's control without a sacrifice")
+    void controllerPuttingLandUnderOpponentsControlDoesNotApply() {
+        harness.addToBattlefield(player1, new LandEquilibrium());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setHand(player1, List.of(new YavimayaDryad()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(2);
+        harness.assertNotInGraveyard(player2, "Forest");
+        harness.assertNotInGraveyard(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("The opponent can choose the entering land instead of an existing land")
+    void opponentCanChooseEnteringLand() {
+        harness.addToBattlefield(player1, new LandEquilibrium());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent existing = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.setHand(player2, List.of(new Island()));
+        harness.forceActivePlayer(player2);
+
+        harness.playLand(player2, 0);
+        harness.handlePermanentChosen(player2, harness.getPermanentId(player2, "Island"));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(existing);
+        harness.assertInGraveyard(player2, "Island");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each copy requires a sacrifice even after the first sacrifice lowers the land count")
+    void multipleCopiesEachRequireSacrifice() {
+        harness.addToBattlefield(player1, new LandEquilibrium());
+        harness.addToBattlefield(player1, new LandEquilibrium());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setHand(player2, List.of(new Island()));
+        harness.forceActivePlayer(player2);
+
+        harness.playLand(player2, 0);
+        harness.handlePermanentChosen(player2, harness.getPermanentId(player2, "Island"));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
+        harness.assertInGraveyard(player2, "Island");
+        harness.assertInGraveyard(player2, "Forest");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 }
