@@ -7,11 +7,13 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({NessianHornbeetle.class})
 class NessianHornbeetleTest extends BaseCardTest {
 
     @Test
@@ -74,11 +76,62 @@ class NessianHornbeetleTest extends BaseCardTest {
         assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @DisplayName("Rechecks the other creature's power when the ability resolves")
+    void doesNothingWhenOtherCreatureFallsBelowFourBeforeResolution() {
+        Permanent beetle = addCreatureReady(player1, new NessianHornbeetle());
+        Permanent other = addCreatureReady(player1, new NessianHornbeetle());
+        other.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).hasSize(1);
+        other.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.passBothPriorities();
+
+        assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A different qualifying creature can satisfy the condition at resolution")
+    void anotherQualifyingCreatureCanReplaceTheOriginal() {
+        Permanent beetle = addCreatureReady(player1, new NessianHornbeetle());
+        Permanent original = addCreatureReady(player1, new NessianHornbeetle());
+        original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).hasSize(1);
+        original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        Permanent replacement = addCreatureReady(player1, new NessianHornbeetle());
+        replacement.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(original.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(replacement.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Gaining a qualifying creature after combat begins does not create a trigger")
+    void conditionMustBeMetWhenCombatBegins() {
+        Permanent beetle = addCreatureReady(player1, new NessianHornbeetle());
+        Permanent other = addCreatureReady(player1, new NessianHornbeetle());
+        other.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        advanceToCombat(player1);
+        assertThat(gd.stack).isEmpty();
+        other.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        harness.passBothPriorities();
+
+        assertThat(beetle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntil(activePlayer, TurnStep.BEGINNING_OF_COMBAT);
     }
 
     private Card makeCreature(String name, int power, int toughness) {
