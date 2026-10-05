@@ -88,6 +88,53 @@ class PhantomInterferenceTest extends BaseCardTest {
                 .hasMessageContaining("spell");
     }
 
+    @Test
+    @DisplayName("The spell's controller may decline to pay even with enough mana")
+    void countersSpellWhenControllerDeclinesPayment() {
+        GrizzlyBears bears = castBears(4);
+
+        castCounterMode(bears, 2);
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Choosing the token mode requires its additional {3}")
+    void tokenModeRequiresAdditionalMana() {
+        harness.setHand(player1, List.of(new PhantomInterference()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 1, 2, new int[]{0}, List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mana");
+
+        harness.assertInHand(player1, "Phantom Interference");
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Choosing both modes requires both additional costs")
+    void bothModesRequireAllAdditionalMana() {
+        GrizzlyBears bears = castBears(2);
+        harness.setHand(player1, List.of(new PhantomInterference()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.castModalInstantWithModes(
+                player1, 0, 1, 2, new int[]{0, 1}, bears.getId(), List.of()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("mana");
+
+        harness.assertInHand(player1, "Phantom Interference");
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
     private void cast(int[] modes, List<java.util.UUID> targets, int totalMana) {
         harness.setHand(player1, List.of(new PhantomInterference()));
         harness.addMana(player1, ManaColor.BLUE, 1);
