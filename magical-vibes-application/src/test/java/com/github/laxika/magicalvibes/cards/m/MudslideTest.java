@@ -28,7 +28,7 @@ class MudslideTest extends BaseCardTest {
         Permanent warrior = addTapped(player1, new KjeldoranWarrior());       // no flying
         Permanent skyknight = addTapped(player1, new KjeldoranSkyknight());   // flying
 
-        advanceToNextTurn(player2); // roll into player1's untap step
+        harness.performUntapStep(player1);
 
         assertThat(warrior.isTapped()).isTrue();
         assertThat(skyknight.isTapped()).isFalse();
@@ -40,7 +40,7 @@ class MudslideTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Mudslide());
         Permanent forest = addTapped(player1, new Forest());
 
-        advanceToNextTurn(player2);
+        harness.performUntapStep(player1);
 
         assertThat(forest.isTapped()).isFalse();
     }
@@ -137,6 +137,49 @@ class MudslideTest extends BaseCardTest {
         assertThat(warrior.isTapped()).isTrue();
     }
 
+    @Test
+    @DisplayName("Untapped lands can fund the optional payment during upkeep resolution")
+    void offersPaymentWhenManaCanBeProducedDuringResolution() {
+        harness.addToBattlefield(player1, new Mudslide());
+        Permanent warrior = addTapped(player1, new KjeldoranWarrior());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(warrior.isTapped()).isTrue();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Only chosen tapped non-fliers untap and each chosen creature costs two mana")
+    void choosingSubsetPaysOnlyForChosenCreature() {
+        harness.addToBattlefield(player1, new Mudslide());
+        Permanent chosen = addTapped(player1, new KjeldoranWarrior());
+        Permanent unchosen = addTapped(player1, new KjeldoranWarrior());
+        advanceToUpkeep(player1);
+        Permanent untapped = harness.addToBattlefieldAndReturn(player1, new KjeldoranWarrior());
+        Permanent flier = addTapped(player1, new KjeldoranSkyknight());
+        Permanent forest = addTapped(player1, new Forest());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.passBothPriorities();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(chosen.getId(), unchosen.getId());
+
+        harness.withAutoStop(TurnStep.UPKEEP,
+                () -> harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId())));
+
+        assertThat(chosen.isTapped()).isFalse();
+        assertThat(unchosen.isTapped()).isTrue();
+        assertThat(untapped.isTapped()).isFalse();
+        assertThat(flier.isTapped()).isTrue();
+        assertThat(forest.isTapped()).isTrue();
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
+
     private Permanent addTapped(Player player, Card card) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
@@ -144,14 +187,4 @@ class MudslideTest extends BaseCardTest {
         return perm;
     }
 
-    private void advanceToNextTurn(Player currentActivePlayer) {
-        harness.forceActivePlayer(currentActivePlayer);
-        harness.setHand(player1, List.of());
-        harness.setHand(player2, List.of());
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // END_STEP -> CLEANUP
-        harness.clearPriorityPassed();
-        harness.passBothPriorities(); // CLEANUP -> next turn (advanceTurn runs the untap step)
-    }
 }
