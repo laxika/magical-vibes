@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.AmoeboidChangeling;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(MistformSkyreaver.class)
+@CardUsed({MistformSkyreaver.class, AmoeboidChangeling.class})
 class MistformSkyreaverTest extends BaseCardTest {
 
     @Test
@@ -66,6 +67,47 @@ class MistformSkyreaverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gqs.effectiveCreatureSubtypes(gd, skyreaver)).containsExactly(CardSubtype.ILLUSION);
+    }
+
+    @Test
+    @DisplayName("The ability can be activated while tapped and summoning sick")
+    void canActivateWhileTappedAndSummoningSick() {
+        Permanent skyreaver = addReadySkyreaver();
+        skyreaver.setTapped(true);
+        skyreaver.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        activateAndChoose(CardSubtype.GOBLIN);
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, skyreaver)).containsExactly(CardSubtype.GOBLIN);
+        assertThat(skyreaver.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A later activation replaces the type chosen by an earlier activation")
+    void laterActivationReplacesEarlierChoice() {
+        Permanent skyreaver = addReadySkyreaver();
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        activateAndChoose(CardSubtype.GOBLIN);
+        activateAndChoose(CardSubtype.WALL);
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, skyreaver)).containsExactly(CardSubtype.WALL);
+    }
+
+    @Test
+    @CardUsed(AmoeboidChangeling.class)
+    @DisplayName("A later effect removing all creature types overrides the chosen type")
+    void laterTypeRemovalOverridesChosenType() {
+        Permanent skyreaver = addReadySkyreaver();
+        addCreatureReady(player1, new AmoeboidChangeling());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        activateAndChoose(CardSubtype.GOBLIN);
+        harness.activateAbility(player1, 1, 1, null, skyreaver.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.effectiveCreatureSubtypes(gd, skyreaver)).isEmpty();
     }
 
     private Permanent addReadySkyreaver() {
