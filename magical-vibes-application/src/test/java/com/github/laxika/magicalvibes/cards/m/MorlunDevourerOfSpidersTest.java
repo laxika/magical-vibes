@@ -63,4 +63,44 @@ class MorlunDevourerOfSpidersTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("The enter trigger gains life through lifelink")
+    void enterDamageGainsLife() {
+        harness.setHand(player1, List.of(new MorlunDevourerOfSpiders()));
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0, 3, player2.getId());
+        harness.passBothPriorities();
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 20);
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 13);
+        harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("X zero enters without counters and neither deals damage nor gains life")
+    void zeroXDoesNotChangeLife() {
+        harness.setHand(player1, List.of(new MorlunDevourerOfSpiders()));
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 20);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castCreature(player1, 0, 0, player2.getId());
+        harness.passBothPriorities();
+
+        Permanent morlun = gd.playerBattlefields.get(player1.getId()).get(0);
+        assertThat(morlun.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 10);
+        harness.assertLife(player2, 20);
+    }
 }
