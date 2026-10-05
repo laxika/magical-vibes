@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BaronyVampire;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LordOfAtlantis;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TextReplacement;
@@ -35,11 +36,12 @@ class NewBloodTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleListChoice(player1, "MERFOLK");
-        harness.handleListChoice(player1, "VAMPIRE");
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(lord);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(lord);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(lord.getTextReplacements()).containsExactly(new TextReplacement("Merfolk", "Vampire"));
+        assertThat(gqs.effectiveCreatureSubtypes(gd, lord)).containsExactly(CardSubtype.VAMPIRE);
         assertThat(gqs.getEffectivePower(gd, vampire)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, vampire)).isEqualTo(3);
     }
@@ -74,5 +76,89 @@ class NewBloodTest extends BaseCardTest {
                 player1, 0, land.getId(), List.of(vampire.getId())))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(vampire.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Cannot pay the additional cost with an already tapped Vampire")
+    void rejectsTappedVampireAdditionalCost() {
+        Permanent vampire = addCreatureReady(player1, new BaronyVampire());
+        vampire.setTapped(true);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new NewBlood()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        assertThatThrownBy(() -> harness.castSorceryTappingPermanents(
+                player1, 0, target.getId(), List.of(vampire.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(vampire.isTapped()).isTrue();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Cannot pay the additional cost with an opponent's Vampire")
+    void rejectsOpponentsVampireAdditionalCost() {
+        addCreatureReady(player1, new BaronyVampire());
+        Permanent vampire = addCreatureReady(player2, new BaronyVampire());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new NewBlood()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        assertThatThrownBy(() -> harness.castSorceryTappingPermanents(
+                player1, 0, target.getId(), List.of(vampire.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(vampire.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A summoning-sick Vampire can pay the additional cost")
+    void canTapSummoningSickVampire() {
+        Permanent vampire = harness.addToBattlefieldAndReturn(player1, new BaronyVampire());
+        vampire.setSummoningSick(true);
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new NewBlood()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorceryTappingPermanents(player1, 0, target.getId(), List.of(vampire.getId()));
+        assertThat(vampire.isTapped()).isTrue();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "BEAR");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.VAMPIRE);
+    }
+
+    @Test
+    @DisplayName("Can choose Vampire itself as the type to replace")
+    void canChooseVampireAsOriginalType() {
+        Permanent vampire = addCreatureReady(player1, new BaronyVampire());
+        Permanent target = addCreatureReady(player2, new BaronyVampire());
+        harness.setHand(player1, List.of(new NewBlood()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorceryTappingPermanents(player1, 0, target.getId(), List.of(vampire.getId()));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "VAMPIRE");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.VAMPIRE);
+    }
+
+    @Test
+    @DisplayName("Choosing a type absent from the creature does not change its types")
+    void canChooseAbsentCreatureType() {
+        Permanent vampire = addCreatureReady(player1, new BaronyVampire());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new NewBlood()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castSorceryTappingPermanents(player1, 0, target.getId(), List.of(vampire.getId()));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "DRAGON");
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
+        assertThat(gqs.effectiveCreatureSubtypes(gd, target)).containsExactly(CardSubtype.BEAR);
     }
 }
