@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -123,11 +124,7 @@ class PrismaticStrandsTest extends BaseCardTest {
     }
 
     private void castAndChooseColor(String color) {
-        harness.setHand(player1, List.of(new PrismaticStrands()));
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
-
-        harness.castInstant(player1, 0);
+        harness.castFromHand(player1, new PrismaticStrands(), "{2}{W}");
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, color);
@@ -187,9 +184,56 @@ class PrismaticStrandsTest extends BaseCardTest {
     }
 
     private void castAndChooseColorForJudReview(String color) {
-        harness.castFromHand(player1, new PrismaticStrands(), "{2}{W}");
+        castAndChooseColor(color);
+    }
+
+    @Test
+    @DisplayName("Prevention applies to matching sources controlled by the opponent")
+    void preventsOpponentsMatchingDamage() {
+        castAndChooseColor("RED");
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        harness.setHand(player2, List.of(new LavaDart(), new LavaDart()));
+        harness.addMana(player2, ManaColor.RED, 2);
+
+        harness.castInstant(player2, 0, player1.getId());
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player1, color);
+        harness.castInstant(player2, 0, hawk.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertOnBattlefield(player1, "Suntail Hawk");
+        assertThat(hawk.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Flashback establishes the same chosen-color damage prevention")
+    void flashbackPreventsMatchingDamage() {
+        Permanent hawk = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
+        harness.setGraveyard(player1, List.of(new PrismaticStrands()));
+        harness.castFlashbackWithTapCost(player1, 0, List.of(hawk.getId()));
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "RED");
+
+        harness.setHand(player2, List.of(new LavaDart()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Chosen-color prevention expires when the turn ends")
+    void preventionExpiresAtEndOfTurn() {
+        castAndChooseColor("RED");
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        harness.setHand(player2, List.of(new LavaDart()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
     }
 }
