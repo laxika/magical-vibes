@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GossamerPhantasm;
+import com.github.laxika.magicalvibes.cards.e.Enslave;
 import com.github.laxika.magicalvibes.cards.u.UrborgTombOfYawgmoth;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IntetTheDreamer.class, GossamerPhantasm.class, UrborgTombOfYawgmoth.class})
+@CardUsed({IntetTheDreamer.class, GossamerPhantasm.class, UrborgTombOfYawgmoth.class, Enslave.class})
 class IntetTheDreamerTest extends BaseCardTest {
 
     @Test
@@ -125,6 +128,123 @@ class IntetTheDreamerTest extends BaseCardTest {
 
         assertThat(gd.getCardsExiledByPermanent(intet.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);
+    }
+
+    @Test
+    void originalControllerCanStillPlayAfterIntetChangesControl() {
+        Permanent intet = addAttackingIntet();
+        Card topCard = new GossamerPhantasm();
+        harness.setLibrary(player1, List.of(topCard));
+        resolveCombatToMayPrompt();
+        payForTrigger();
+
+        stealIntet(intet);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castFromExile(player1, topCard.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Gossamer Phantasm");
+    }
+
+    @Test
+    void newControllerCannotPlayCardsExiledByPreviousController() {
+        Permanent intet = addAttackingIntet();
+        Card topCard = new GossamerPhantasm();
+        harness.setLibrary(player1, List.of(topCard));
+        resolveCombatToMayPrompt();
+        payForTrigger();
+
+        stealIntet(intet);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        assertThatThrownBy(() -> harness.castFromExile(player2, topCard.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+    }
+
+    @Test
+    void exilingPlayerCanStillLookAfterIntetLeavesBattlefield() {
+        Permanent intet = addAttackingIntet();
+        Card topCard = new GossamerPhantasm();
+        harness.setLibrary(player1, List.of(topCard));
+        resolveCombatToMayPrompt();
+        payForTrigger();
+
+        intet.setMarkedDamage(6);
+        harness.runStateBasedActions();
+        harness.publishState();
+
+        GameStateMessage state = new JacksonConfig().objectMapper().readValue(harness.getConn1()
+                .getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        assertThat(state.lookedAtExileCards()).anyMatch(card -> card.id().equals(topCard.getId()));
+        GameStateMessage opponentState = new JacksonConfig().objectMapper().readValue(harness.getConn2()
+                .getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        assertThat(opponentState.lookedAtExileCards()).noneMatch(card -> card.id().equals(topCard.getId()));
+    }
+
+    @Test
+    void payingWithAnEmptyLibraryDoesNotExile() {
+        Permanent intet = addAttackingIntet();
+        harness.setLibrary(player1, List.of());
+        resolveCombatToMayPrompt();
+        payForTrigger();
+
+        assertThat(gd.getCardsExiledByPermanent(intet.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Intet, the Dreamer");
+    }
+
+    @Test
+    void exiledCreatureStillRequiresNormalCastingTiming() {
+        addAttackingIntet();
+        Card topCard = new GossamerPhantasm();
+        harness.setLibrary(player1, List.of(topCard));
+        resolveCombatToMayPrompt();
+        payForTrigger();
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        assertThatThrownBy(() -> harness.castFromExile(player1, topCard.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(topCard.getId())).isNotNull();
+    }
+
+    @Test
+    void changingControlDoesNotTransferPermissionToLook() {
+        Permanent intet = addAttackingIntet();
+        Card topCard = new GossamerPhantasm();
+        harness.setLibrary(player1, List.of(topCard));
+        resolveCombatToMayPrompt();
+        payForTrigger();
+        stealIntet(intet);
+        harness.publishState();
+
+        GameStateMessage state = new JacksonConfig().objectMapper().readValue(harness.getConn1()
+                .getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        assertThat(state.battlefields().stream().flatMap(List::stream)
+                .flatMap(permanent -> permanent.faceDownExiledCards().stream()).map(card -> card.id()))
+                .contains(topCard.getId());
+        GameStateMessage opponentState = new JacksonConfig().objectMapper().readValue(harness.getConn2()
+                .getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+        assertThat(opponentState.battlefields().stream().flatMap(List::stream)
+                .flatMap(permanent -> permanent.faceDownExiledCards().stream()).map(card -> card.id()))
+                .doesNotContain(topCard.getId());
+    }
+
+    private void stealIntet(Permanent intet) {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Enslave()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+        harness.castEnchantment(player2, 0, intet.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player2, "Intet, the Dreamer");
     }
 
     private Permanent addAttackingIntet() {
