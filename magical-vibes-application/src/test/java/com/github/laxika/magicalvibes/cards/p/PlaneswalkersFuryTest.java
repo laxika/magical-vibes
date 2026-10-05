@@ -94,4 +94,101 @@ class PlaneswalkersFuryTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("main phase");
     }
+
+    @Test
+    void usesOpponentsHandAtResolution() {
+        harness.addToBattlefield(player1, new PlaneswalkersFury());
+        harness.setHand(player2, List.of(new CrosissCatacombs()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        Gainsay revealed = new Gainsay();
+        harness.setHand(player2, List.of(revealed));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 2);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(revealed);
+        assertThat(gameLogContains("reveals Gainsay at random")).isTrue();
+    }
+
+    @Test
+    void resolvesAfterSourceLeavesBattlefield() {
+        PlaneswalkersFury fury = new PlaneswalkersFury();
+        harness.addToBattlefield(player1, fury);
+        harness.setHand(player2, List.of(new Gainsay()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.setGraveyard(player1, List.of(fury));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, lifeBefore - 2);
+    }
+
+    @Test
+    void cannotActivateWithAnotherAbilityOnStack() {
+        harness.addToBattlefield(player1, new PlaneswalkersFury());
+        harness.setHand(player2, List.of(new Gainsay()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void cannotActivateDuringOpponentsMainPhase() {
+        harness.addToBattlefield(player1, new PlaneswalkersFury());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    void genericManaCannotReplaceRequiredRedMana() {
+        harness.addToBattlefield(player1, new PlaneswalkersFury());
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void revealsOnlyOneCardAndLeavesEntireHandIntact() {
+        harness.addToBattlefield(player1, new PlaneswalkersFury());
+        Gainsay spell = new Gainsay();
+        CrosissCatacombs land = new CrosissCatacombs();
+        harness.setHand(player2, List.of(spell, land));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 1);
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(spell, land);
+        var reveals = gd.gameLog.stream()
+                .map(entry -> entry.plainText())
+                .filter(text -> text.contains("reveals ") && text.contains(" at random."))
+                .toList();
+        assertThat(reveals).hasSize(1);
+        harness.assertLife(player2, lifeBefore - (reveals.getFirst().contains("Gainsay") ? 2 : 0));
+    }
 }
