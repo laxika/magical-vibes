@@ -77,6 +77,61 @@ class LostHoursTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(top);
     }
 
+    @Test
+    void doesNothingWhenTargetHandIsEmpty() {
+        Card top = new NessianCourser();
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(top));
+
+        castLostHours();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(top);
+        harness.assertInGraveyard(player1, "Lost Hours");
+    }
+
+    @Test
+    void casterChoosesExactlyOneOfMultipleNonlandCards() {
+        Card first = new NessianCourser();
+        Card chosen = new NessianCourser();
+        Card land = new ZoeticCavern();
+        Card top = new NessianCourser();
+        Card second = new NessianCourser();
+        harness.setHand(player2, List.of(first, land, chosen));
+        harness.setLibrary(player2, List.of(top, second));
+
+        castLostHours();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class)
+                .validIndices()).containsExactly(0, 2);
+        harness.handleCardChosen(player1, 2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(first, land);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(top, second, chosen);
+        harness.assertInGraveyard(player1, "Lost Hours");
+        harness.assertNotInGraveyard(player2, "Nessian Courser");
+    }
+
+    @Test
+    void canTargetItsController() {
+        Card chosen = new NessianCourser();
+        Card land = new ZoeticCavern();
+        Card top = new NessianCourser();
+        Card second = new NessianCourser();
+        harness.setHand(player1, List.of(new LostHours(), land, chosen));
+        harness.setLibrary(player1, List.of(top, second));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, player1.getId());
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top, second, chosen);
+        harness.assertInGraveyard(player1, "Lost Hours");
+    }
     private void castLostHours() {
         harness.setHand(player1, List.of(new LostHours()));
         harness.addMana(player1, ManaColor.BLACK, 1);
