@@ -80,4 +80,71 @@ class NoMercyTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Pyromancy");
         harness.assertInGraveyard(player1, "Giant Cockroach");
     }
+
+    @Test
+    @DisplayName("No Mercy destroys its controller's own creature when it damages them")
+    void ownCreatureDamageDestroysSource() {
+        harness.addToBattlefield(player1, new NoMercy());
+        Permanent source = addCreatureReady(player1, new ThornwindFaeries());
+
+        harness.activateAbility(player1, 1, null, player1.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(source);
+        harness.assertInGraveyard(player1, "Thornwind Faeries");
+        harness.assertOnBattlefield(player1, "No Mercy");
+    }
+
+    @Test
+    @DisplayName("Damage to a player other than No Mercy's controller does not trigger it")
+    void damageToOtherPlayerDoesNotDestroySource() {
+        harness.addToBattlefield(player2, new NoMercy());
+        Permanent source = addCreatureReady(player1, new ThornwindFaeries());
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(source);
+        harness.assertNotInGraveyard(player1, "Thornwind Faeries");
+    }
+
+    @Test
+    @DisplayName("Damage to a creature controlled by No Mercy's controller does not trigger it")
+    void damageToCreatureDoesNotDestroySource() {
+        harness.addToBattlefield(player2, new NoMercy());
+        Permanent recipient = addCreatureReady(player2, new GiantCockroach());
+        Permanent source = addCreatureReady(player1, new ThornwindFaeries());
+
+        harness.activateAbility(player1, 0, null, recipient.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(recipient.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(source);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(recipient);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("No Mercy destroys every creature that simultaneously deals combat damage to its controller")
+    void simultaneousCombatDamageDestroysEverySource() {
+        harness.addToBattlefield(player2, new NoMercy());
+        Permanent first = addCreatureReady(player1, new GiantCockroach());
+        Permanent second = addCreatureReady(player1, new GiantCockroach());
+        first.setAttacking(true);
+        second.setAttacking(true);
+
+        resolveCombat(player1);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 12);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(first, second);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(card -> card.getName().equals("Giant Cockroach")).hasSize(2);
+    }
 }
