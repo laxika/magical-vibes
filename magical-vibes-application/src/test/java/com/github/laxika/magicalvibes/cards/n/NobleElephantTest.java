@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({NobleElephant.class, FemerefKnight.class, MtendaHerder.class})
 class NobleElephantTest extends BaseCardTest {
@@ -38,8 +39,7 @@ class NobleElephantTest extends BaseCardTest {
         Permanent elephant = addCreatureReady(player1, new NobleElephant());
         Permanent blocker = addCreatureReady(player2, new MtendaHerder());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
 
@@ -55,6 +55,80 @@ class NobleElephantTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(elephant);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(blocker.getCard());
+    }
+
+    @Test
+    void blockingOneMemberBlocksTheEntireBand() {
+        Permanent elephant = addCreatureReady(player1, new NobleElephant());
+        Permanent knight = addCreatureReady(player1, new FemerefKnight());
+        Permanent blocker = addCreatureReady(player2, new MtendaHerder());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareBand(List.of(0, 1), List.of(List.of(0, 1))));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.getBlockingTargetIds()).containsExactlyInAnyOrder(elephant.getId(), knight.getId());
+    }
+
+    @Test
+    void cannotBandWithTwoCreaturesWithoutBanding() {
+        addCreatureReady(player1, new NobleElephant());
+        addCreatureReady(player1, new FemerefKnight());
+        addCreatureReady(player1, new MtendaHerder());
+
+        assertThatThrownBy(() -> declareBand(List.of(0, 1, 2), List.of(List.of(0, 1, 2))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("at most one creature without banding");
+    }
+
+    @Test
+    void bandControllerAssignsBlockerDamageAndOnlyElephantTramples() {
+        harness.setLife(player2, 20);
+        Permanent elephant = addCreatureReady(player1, new NobleElephant());
+        Permanent knight = addCreatureReady(player1, new FemerefKnight());
+        Permanent blocker = addCreatureReady(player2, new MtendaHerder());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
+                () -> declareBand(List.of(0, 1), List.of(List.of(0, 1))));
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveCombat();
+
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(blocker.getId(), 1, player2.getId(), 1));
+        PendingInteraction.CombatDamageAssignment prompt =
+                gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
+        assertThat(prompt).isNotNull();
+        assertThat(prompt.playerId()).isEqualTo(player1.getId());
+        assertThat(prompt.totalDamage()).isEqualTo(1);
+        harness.handleCombatDamageAssigned(player1, 0, Map.of(knight.getId(), 1));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(elephant, knight);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(blocker);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    void bandingBlockerLetsDefenderAssignTramplersDamage() {
+        harness.setLife(player2, 20);
+        Permanent attacker = addCreatureReady(player1, new NobleElephant());
+        Permanent elephant = addCreatureReady(player2, new NobleElephant());
+        Permanent knight = addCreatureReady(player2, new FemerefKnight());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+        resolveCombat();
+
+        PendingInteraction.CombatDamageAssignment prompt =
+                gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
+        assertThat(prompt).isNotNull();
+        assertThat(prompt.playerId()).isEqualTo(player2.getId());
+        harness.handleCombatDamageAssigned(player2, 0, Map.of(knight.getId(), 2));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(elephant).doesNotContain(knight);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(attacker);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
     private void declareBand(List<Integer> attackerIndices, List<List<Integer>> bands) {
