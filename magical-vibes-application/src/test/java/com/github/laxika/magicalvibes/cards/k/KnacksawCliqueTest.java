@@ -143,6 +143,125 @@ class KnacksawCliqueTest extends BaseCardTest {
         assertThat(gd.exilePlayPermissions).isEmpty();
     }
 
+    @Test
+    @DisplayName("A summoning-sick creature cannot pay the untap cost")
+    void cannotActivateWithSummoningSickness() {
+        Permanent clique = addTapped(player1, new KnacksawClique());
+        clique.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        enterMainWithPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(clique.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An exiled spell still requires its normal mana cost")
+    void castsExiledSpellOnlyAfterPayingNormalCost() {
+        addTapped(player1, new KnacksawClique());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        KnacksawClique top = new KnacksawClique();
+        harness.setLibrary(player2, List.of(top));
+        enterMainWithPriority(player1);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(top);
+        assertThat(gd.exilePlayPermissions).containsEntry(top.getId(), player1.getId());
+
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castFromExile(player1, top.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(top.getId()));
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(top);
+        assertThat(gd.exilePlayPermissions).doesNotContainKey(top.getId());
+    }
+
+    @Test
+    @DisplayName("Play permission does not let a land be played on the opponent's turn")
+    void cannotPlayExiledLandOnOpponentsTurn() {
+        addTapped(player1, new KnacksawClique());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        MoonringIsland top = new MoonringIsland();
+        harness.setLibrary(player2, List.of(top));
+        enterMainWithPriority(player2);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Cannot play a land");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(top);
+    }
+
+    @Test
+    @DisplayName("An exiled creature must still be cast at sorcery speed")
+    void cannotCastExiledCreatureOutsideMainPhase() {
+        addTapped(player1, new KnacksawClique());
+        harness.addMana(player1, ManaColor.BLUE, 6);
+        KnacksawClique top = new KnacksawClique();
+        harness.setLibrary(player2, List.of(top));
+        enterMainWithPriority(player1);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery-speed");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(top);
+    }
+
+    @Test
+    @DisplayName("Play permission does not grant an additional land play")
+    void cannotPlayExiledLandAfterUsingLandPlay() {
+        addTapped(player1, new KnacksawClique());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.setHand(player1, List.of(new MoonringIsland()));
+        MoonringIsland top = new MoonringIsland();
+        harness.setLibrary(player2, List.of(top));
+        enterMainWithPriority(player1);
+        harness.playLand(player1, 0);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.castFromExile(player1, top.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Cannot play a land");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(top);
+    }
+
+    @Test
+    @DisplayName("The ability and play permission survive the source leaving the battlefield")
+    void resolvesAndAllowsPlayWithoutSource() {
+        addTapped(player1, new KnacksawClique());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        MoonringIsland top = new MoonringIsland();
+        harness.setLibrary(player2, List.of(top));
+        enterMainWithPriority(player1);
+
+        harness.activateAbility(player1, 0, 0, null, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+        harness.castFromExile(player1, top.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getId().equals(top.getId()));
+        assertThat(gd.getPlayerExiledCards(player2.getId())).doesNotContain(top);
+    }
+
     private Permanent addTapped(Player player, Card card) {
         Permanent perm = addCreatureReady(player, card);
         perm.tap();
