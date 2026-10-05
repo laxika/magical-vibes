@@ -203,6 +203,63 @@ class OraclesAttendantsTest extends BaseCardTest {
         return permanent;
     }
 
+    @Test
+    @DisplayName("Redirected damage can be redirected again by another Attendants ability")
+    void appliesSecondRedirectToRedirectedDamage() {
+        Permanent first = addCreatureReady(player1, new OraclesAttendants());
+        Permanent second = addCreatureReady(player1, new OraclesAttendants());
+        Permanent hydra = addReadyHydra(player1);
+        Permanent protectedCreature = addCreatureReady(player2, new FlintGolem());
+
+        harness.activateAbility(player1, indexOf(player1, first), null, protectedCreature.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hydra.getId());
+        harness.activateAbility(player1, indexOf(player1, second), null, first.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hydra.getId());
+
+        harness.activateAbility(player1, indexOf(player1, hydra), null, protectedCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(protectedCreature.getMarkedDamage()).isZero();
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(second.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Attendants can target itself without preventing the damage")
+    void selfTargetStillTakesDamage() {
+        Permanent attendants = addCreatureReady(player1, new OraclesAttendants());
+        Permanent hydra = addReadyHydra(player1);
+
+        harness.activateAbility(player1, indexOf(player1, attendants), null, attendants.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hydra.getId());
+        harness.activateAbility(player1, indexOf(player1, hydra), null, attendants.getId());
+        harness.passBothPriorities();
+
+        assertThat(attendants.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Damage to a creature other than the target is not redirected")
+    void doesNotRedirectDamageToAnotherCreature() {
+        Permanent attendants = addCreatureReady(player1, new OraclesAttendants());
+        Permanent hydra = addReadyHydra(player1);
+        Permanent protectedCreature = addCreatureReady(player2, new FlintGolem());
+        Permanent otherCreature = addCreatureReady(player2, new FlintGolem());
+
+        harness.activateAbility(player1, indexOf(player1, attendants), null, protectedCreature.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hydra.getId());
+        harness.activateAbility(player1, indexOf(player1, hydra), null, otherCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(protectedCreature.getMarkedDamage()).isZero();
+        assertThat(otherCreature.getMarkedDamage()).isEqualTo(1);
+        assertThat(attendants.getMarkedDamage()).isZero();
+    }
+
     private int indexOf(Player player, Permanent perm) {
         return gd.playerBattlefields.get(player.getId()).indexOf(perm);
     }
