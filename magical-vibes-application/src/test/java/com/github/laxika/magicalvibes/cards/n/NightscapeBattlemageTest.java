@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.a.ArcticMerfolk;
 import com.github.laxika.magicalvibes.cards.f.ForsakenCity;
 import com.github.laxika.magicalvibes.cards.m.MaggotCarrier;
+import com.github.laxika.magicalvibes.cards.s.SaprolingInfestation;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NightscapeBattlemage.class, ForsakenCity.class, ArcticMerfolk.class, MaggotCarrier.class})
+@CardUsed({NightscapeBattlemage.class, ForsakenCity.class, ArcticMerfolk.class, MaggotCarrier.class, SaprolingInfestation.class})
 class NightscapeBattlemageTest extends BaseCardTest {
 
     @Test
@@ -57,7 +58,7 @@ class NightscapeBattlemageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NightscapeBattlemage()));
         addMana(4, ManaColor.BLACK, ManaColor.BLUE);
 
-        castWithAdditionalCosts(List.of("{2}{U}"));
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{2}{U}"));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
@@ -105,7 +106,7 @@ class NightscapeBattlemageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NightscapeBattlemage()));
         addMana(4, ManaColor.BLACK, ManaColor.BLUE);
 
-        castWithAdditionalCosts(List.of("{2}{U}"));
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{2}{U}"));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -121,7 +122,7 @@ class NightscapeBattlemageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new NightscapeBattlemage()));
         addMana(4, ManaColor.BLACK, ManaColor.BLUE);
 
-        castWithAdditionalCosts(List.of("{2}{U}"));
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{2}{U}"));
         harness.passBothPriorities();
 
         harness.handlePermanentChosen(player1, player1.getId());
@@ -150,8 +151,60 @@ class NightscapeBattlemageTest extends BaseCardTest {
         }
     }
 
-    private void castWithAdditionalCosts(List<String> payments) {
-        castWithAdditionalCosts(payments, null, List.of(), false);
+    @Test
+    @DisplayName("Paying both kickers creates two independent ETB abilities")
+    void bothKickersCreateSeparateAbilities() {
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new ForsakenCity());
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new ArcticMerfolk());
+        harness.setHand(player1, List.of(new NightscapeBattlemage()));
+        addMana(6, ManaColor.BLACK, ManaColor.RED, ManaColor.BLUE);
+
+        castWithAdditionalCosts(List.of("{2}{U}"), land.getId(), List.of(), true);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player2, "Forsaken City");
+        harness.assertInHand(player2, "Arctic Merfolk");
+    }
+
+    @Test
+    @DisplayName("Paying only the blue kicker triggers abilities that care about kicking spells")
+    void blueKickerTriggersSaprolingInfestation() {
+        harness.addToBattlefield(player1, new SaprolingInfestation());
+        harness.setHand(player1, List.of(new NightscapeBattlemage()));
+        addMana(4, ManaColor.BLACK, ManaColor.BLUE);
+
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{2}{U}"));
+        resolveAllTriggers();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, player1.getId());
+            resolveAllTriggers();
+        }
+
+        assertThat(findPermanents(player1, "Saproling")).hasSize(1);
+        harness.assertOnBattlefield(player1, "Nightscape Battlemage");
+    }
+
+    @Test
+    @DisplayName("Blue kicker can return a creature controlled by its caster")
+    void blueKickerReturnsOwnCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new ArcticMerfolk());
+        harness.setHand(player1, List.of(new NightscapeBattlemage()));
+        addMana(4, ManaColor.BLACK, ManaColor.BLUE);
+
+        harness.castCreatureWithRepeatedCosts(player1, 0, List.of("{2}{U}"));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Arctic Merfolk");
+        harness.assertInHand(player1, "Arctic Merfolk");
+        harness.assertOnBattlefield(player1, "Nightscape Battlemage");
     }
 
     private void castWithAdditionalCosts(List<String> payments, java.util.UUID targetId,
