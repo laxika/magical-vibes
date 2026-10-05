@@ -54,8 +54,7 @@ class MasterOfArmsTest extends BaseCardTest {
         Permanent firstBlocker = addCreatureReady(player2, new RedwoodTreefolk());
         Permanent secondBlocker = addCreatureReady(player2, new RedwoodTreefolk());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)));
@@ -95,10 +94,63 @@ class MasterOfArmsTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Cannot target a creature blocking another Master of Arms")
+    void blockerOfAnotherMasterCannotBeTargeted() {
+        addCreatureReady(player1, new MasterOfArms());
+        addCreatureReady(player1, new MasterOfArms());
+        Permanent blocker = addCreatureReady(player2, new RedwoodTreefolk());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+        resolveAllTriggers();
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, blocker.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An already tapped blocker remains a legal target")
+    void canTargetAlreadyTappedBlocker() {
+        addCreatureReady(player1, new MasterOfArms());
+        Permanent blocker = addCreatureReady(player2, new RedwoodTreefolk());
+
+        blockMasterWith(0);
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+
+        assertThat(blocker.isTapped()).isTrue();
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Tapping a blocker does not prevent its combat damage")
+    void tappedBlockerStillDealsCombatDamage() {
+        addCreatureReady(player1, new MasterOfArms());
+        Permanent blocker = addCreatureReady(player2, new RedwoodTreefolk());
+
+        blockMasterWith(0);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.activateAbility(player1, 0, null, blocker.getId());
+        harness.passBothPriorities();
+        assertThat(blocker.isTapped()).isTrue();
+        assertThat(blocker.isBlocking()).isTrue();
+
+        resolveCombat();
+
+        harness.assertInGraveyard(player1, "Master of Arms");
+        harness.assertOnBattlefield(player2, "Redwood Treefolk");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
+
     /** Attacks with the Master and blocks it with player2's creature at {@code blockerIndex}. */
     private void blockMasterWith(int blockerIndex) {
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, 0)));
         resolveAllTriggers();
     }
