@@ -1,12 +1,17 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({Karma.class, Swamp.class})
+import java.util.List;
+
+@CardUsed({Karma.class, Swamp.class, Demystify.class})
 class KarmaTest extends BaseCardTest {
 
     @Test
@@ -87,5 +92,39 @@ class KarmaTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger
 
         harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Counts tapped Swamps as well as untapped Swamps")
+    void countsTappedSwamps() {
+        harness.addToBattlefield(player1, new Karma());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player1, new Swamp());
+
+        advanceToUpkeep(player1);
+        swamp.setTapped(true);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("An upkeep trigger still deals damage after Karma is destroyed")
+    void triggerResolvesAfterKarmaLeavesBattlefield() {
+        Permanent karma = harness.addToBattlefieldAndReturn(player1, new Karma());
+        harness.addToBattlefield(player2, new Swamp());
+        harness.addToBattlefield(player2, new Swamp());
+
+        advanceToUpkeep(player2);
+        harness.setHand(player2, List.of(new Demystify()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player2, 0, karma.getId());
+        harness.assertInGraveyard(player1, "Karma");
+        harness.assertNotOnBattlefield(player1, "Karma");
+        harness.assertLife(player2, 20);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 20);
     }
 }
