@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.d.DragonEgg;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({LathlissDragonQueen.class, DragonEgg.class, GreenwoodSentinel.class})
 class LathlissDragonQueenTest extends BaseCardTest {
 
     @Test
@@ -60,7 +62,7 @@ class LathlissDragonQueenTest extends BaseCardTest {
     void nonDragonDoesNotTrigger() {
         harness.addToBattlefield(player1, new LathlissDragonQueen());
         harness.addMana(player1, ManaColor.GREEN, 2);
-        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new GreenwoodSentinel()));
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
@@ -89,7 +91,7 @@ class LathlissDragonQueenTest extends BaseCardTest {
         Permanent lathliss = harness.addToBattlefieldAndReturn(player1, new LathlissDragonQueen());
         lathliss.setSummoningSick(false);
         Permanent dragon = harness.addToBattlefieldAndReturn(player1, new DragonEgg());
-        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GreenwoodSentinel());
         Permanent opponentDragon = harness.addToBattlefieldAndReturn(player2, new DragonEgg());
         harness.forceActivePlayer(player1);
         harness.addMana(player1, ManaColor.RED, 1);
@@ -110,6 +112,68 @@ class LathlissDragonQueenTest extends BaseCardTest {
 
         assertThat(lathliss.getPowerModifier()).isEqualTo(0);
         assertThat(dragon.getPowerModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Repeated activations boost token Dragons while Lathliss is summoning sick")
+    void repeatedActivationsBoostTokenDragons() {
+        Permanent lathliss = harness.addToBattlefieldAndReturn(player1, new LathlissDragonQueen());
+        castDragonEgg(player1);
+        Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(lathliss.getPowerModifier()).isEqualTo(2);
+        assertThat(token.getPowerModifier()).isEqualTo(2);
+        assertThat(token.getToughnessModifier()).isZero();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Dragons entering after the pump resolves do not receive its bonus")
+    void laterDragonsDoNotReceiveResolvedBonus() {
+        Permanent lathliss = harness.addToBattlefieldAndReturn(player1, new LathlissDragonQueen());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        castDragonEgg(player1);
+
+        assertThat(lathliss.getPowerModifier()).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent != lathliss)
+                .hasSize(2)
+                .allSatisfy(permanent -> {
+                    assertThat(permanent.getPowerModifier()).isZero();
+                    assertThat(permanent.getToughnessModifier()).isZero();
+                });
+    }
+
+    @Test
+    @DisplayName("A pending pump includes a Dragon and token entering before resolution")
+    void pendingPumpIncludesNewDragonAndItsToken() {
+        harness.addToBattlefield(player1, new LathlissDragonQueen());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.enterBattlefieldAndReturn(player1, new DragonEgg());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(3)
+                .allSatisfy(permanent -> {
+                    assertThat(permanent.getPowerModifier()).isEqualTo(1);
+                    assertThat(permanent.getToughnessModifier()).isZero();
+                });
     }
 
     private void castDragonEgg(Player player) {
