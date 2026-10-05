@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.d.DancingScimitar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.g.GuardianBeast;
 import com.github.laxika.magicalvibes.cards.i.IronStar;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -21,7 +22,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Juxtapose.class, DancingScimitar.class, GrizzlyBears.class, AirElemental.class,
-        IronStar.class, Millstone.class})
+        IronStar.class, Millstone.class, GuardianBeast.class})
 class JuxtaposeTest extends BaseCardTest {
 
     private void castJuxtapose() {
@@ -31,12 +32,39 @@ class JuxtaposeTest extends BaseCardTest {
     private void castJuxtapose(UUID targetPlayerId) {
         harness.setHand(player1, List.of(new Juxtapose()));
         harness.addMana(player1, ManaColor.BLUE, 4);
-        harness.castSorcery(player1, 0, targetPlayerId);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, targetPlayerId);
     }
 
     private boolean controls(UUID playerId, UUID permanentId) {
         return gd.playerBattlefields.get(playerId).stream().anyMatch(p -> p.getId().equals(permanentId));
+    }
+
+    @Test
+    @DisplayName("Neither artifact changes controller when the caster's artifact cannot be exchanged")
+    void protectedCasterArtifactPreventsEntireArtifactExchange() {
+        harness.addToBattlefield(player1, new GuardianBeast());
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new IronStar());
+
+        castJuxtapose();
+
+        assertThat(controls(player1.getId(), mine.getId())).isTrue();
+        assertThat(controls(player2.getId(), theirs.getId())).isTrue();
+        harness.assertInGraveyard(player1, "Juxtapose");
+    }
+
+    @Test
+    @DisplayName("Neither artifact changes controller when the target player's artifact cannot be exchanged")
+    void protectedTargetArtifactPreventsEntireArtifactExchange() {
+        harness.addToBattlefield(player2, new GuardianBeast());
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        Permanent theirs = harness.addToBattlefieldAndReturn(player2, new IronStar());
+
+        castJuxtapose();
+
+        assertThat(controls(player1.getId(), mine.getId())).isTrue();
+        assertThat(controls(player2.getId(), theirs.getId())).isTrue();
+        harness.assertInGraveyard(player1, "Juxtapose");
     }
 
     @Test
