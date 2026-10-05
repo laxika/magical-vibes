@@ -98,4 +98,61 @@ class KillerBeesTest extends BaseCardTest {
                 .hasMessageContaining("Not enough mana");
     }
 
+    @Test
+    @DisplayName("Multiple activations on the stack each boost only when they resolve")
+    void stackedActivationsResolveSeparately() {
+        Permanent bees = addCreatureReady(player1, new KillerBees());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(bees.getEffectivePower()).isZero();
+        assertThat(bees.getEffectiveToughness()).isEqualTo(1);
+
+        harness.passBothPriorities();
+
+        assertThat(bees.getEffectivePower()).isEqualTo(1);
+        assertThat(bees.getEffectiveToughness()).isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(bees.getEffectivePower()).isEqualTo(2);
+        assertThat(bees.getEffectiveToughness()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("A tapped Killer Bees can activate its ability and stays tapped")
+    void canActivateWhileTapped() {
+        Permanent bees = addCreatureReady(player1, new KillerBees());
+        bees.tap();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(bees.isTapped()).isTrue();
+        assertThat(bees.getEffectivePower()).isEqualTo(1);
+        assertThat(bees.getEffectiveToughness()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("The ability boosts only its source, not other copies of Killer Bees")
+    void boostsOnlyTheActivatingPermanent() {
+        Permanent otherBees = addCreatureReady(player1, new KillerBees());
+        Permanent sourceBees = addCreatureReady(player1, new KillerBees());
+        Permanent opposingBees = addCreatureReady(player2, new KillerBees());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(sourceBees.getEffectivePower()).isEqualTo(1);
+        assertThat(sourceBees.getEffectiveToughness()).isEqualTo(2);
+        assertThat(otherBees.getEffectivePower()).isZero();
+        assertThat(otherBees.getEffectiveToughness()).isEqualTo(1);
+        assertThat(opposingBees.getEffectivePower()).isZero();
+        assertThat(opposingBees.getEffectiveToughness()).isEqualTo(1);
+    }
+
 }
