@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.a.AngelOfJubilation;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -92,10 +92,50 @@ class PlumbTheForbiddenTest extends BaseCardTest {
     }
 
     private void setupLibrary(int count) {
-        List<Card> deck = gd.playerDecks.get(player1.getId());
-        deck.clear();
-        for (int i = 0; i < count; i++) {
-            deck.add(new Island());
-        }
+        harness.setLibrary(player1, IntStream.range(0, count)
+                .mapToObj(i -> new Island()).toList());
+    }
+
+    @Test
+    @DisplayName("Angel of Jubilation does not prevent the spell's life loss when no cost is paid")
+    void canDeclineSacrificeUnderAngelOfJubilation() {
+        harness.addToBattlefield(player1, new AngelOfJubilation());
+        setupLibrary(1);
+        prepareSpell();
+
+        cast(List.of());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertOnBattlefield(player1, "Angel of Jubilation");
+    }
+
+    @Test
+    @DisplayName("Cannot sacrifice an opponent's creature")
+    void rejectsOpponentsCreature() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        prepareSpell();
+
+        assertThatThrownBy(() -> cast(List.of(creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(creature);
+        harness.assertInHand(player1, "Plumb the Forbidden");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cannot count the same creature twice for the sacrifice cost")
+    void rejectsDuplicateSacrifice() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        prepareSpell();
+
+        assertThatThrownBy(() -> cast(List.of(creature.getId(), creature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(creature);
+        harness.assertInHand(player1, "Plumb the Forbidden");
+        assertThat(gd.stack).isEmpty();
     }
 }
