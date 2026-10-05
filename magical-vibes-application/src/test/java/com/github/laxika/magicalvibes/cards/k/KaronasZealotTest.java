@@ -44,8 +44,8 @@ class KaronasZealotTest extends BaseCardTest {
 
         turnFaceUp(zealot, target);
 
-        declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
-        prepareDeclareBlockers(player2);
+        declareAttackersAndPrepareBlockers(player2,
+                List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker)));
         gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player1.getId()).indexOf(zealot),
                 gd.playerBattlefields.get(player2.getId()).indexOf(attacker))));
@@ -87,6 +87,79 @@ class KaronasZealotTest extends BaseCardTest {
                 .doesNotContain(plains.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
+    }
+
+    @Test
+    void damageIsRedirectedAgainWhenTheDestinationHasItsOwnRedirection() {
+        Permanent firstZealot = castFaceDown();
+        castFaceDown();
+        Permanent secondZealot = findPermanents(player1, "Karona's Zealot").getLast();
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+
+        turnFaceUp(secondZealot, target);
+        turnFaceUp(firstZealot, secondZealot);
+
+        ping(pyromancer, firstZealot);
+
+        assertThat(firstZealot.getMarkedDamage()).isZero();
+        assertThat(secondZealot.getMarkedDamage()).isZero();
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void laterDamageIsNotRedirectedAfterTheDestinationDies() {
+        Permanent zealot = castFaceDown();
+        Permanent target = addCreatureReady(player2, new ProdigalPyromancer());
+        Permanent firstPyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        Permanent secondPyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+
+        turnFaceUp(zealot, target);
+        ping(firstPyromancer, zealot);
+
+        assertThat(zealot.getMarkedDamage()).isZero();
+        harness.assertNotOnBattlefield(player2, "Prodigal Pyromancer");
+        harness.assertInGraveyard(player2, "Prodigal Pyromancer");
+
+        ping(secondPyromancer, zealot);
+
+        assertThat(zealot.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    void targetingItselfLeavesIncomingDamageOnTheZealot() {
+        Permanent zealot = castFaceDown();
+        Permanent pyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+
+        turnFaceUp(zealot, zealot);
+        ping(pyromancer, zealot);
+
+        assertThat(zealot.getMarkedDamage()).isEqualTo(1);
+        harness.assertOnBattlefield(player1, "Karona's Zealot");
+    }
+
+    @Test
+    void damageBeforeTheTurnFaceUpTriggerResolvesIsNotRedirected() {
+        Permanent zealot = castFaceDown();
+        Permanent target = addCreatureReady(player2, new HillGiant());
+        Permanent firstPyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+        Permanent secondPyromancer = addCreatureReady(player1, new ProdigalPyromancer());
+
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(zealot));
+        harness.handlePermanentChosen(player1, target.getId());
+
+        ping(firstPyromancer, zealot);
+
+        assertThat(zealot.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.getMarkedDamage()).isZero();
+
+        harness.passBothPriorities();
+        ping(secondPyromancer, zealot);
+
+        assertThat(zealot.getMarkedDamage()).isEqualTo(1);
+        assertThat(target.getMarkedDamage()).isEqualTo(1);
     }
 
     private Permanent castFaceDown() {
