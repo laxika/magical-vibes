@@ -35,6 +35,40 @@ class KarplusanGiantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Snow land is tapped as a cost before the boost resolves")
+    void tapsLandBeforeResolution() {
+        Permanent giant = addCreatureReady(player1, new KarplusanGiant());
+        Permanent snow = addSnowMountain();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(snow.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(3);
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("A tapped Giant can activate its ability")
+    void canActivateWhileTapped() {
+        Permanent giant = addCreatureReady(player1, new KarplusanGiant());
+        giant.tap();
+        Permanent snow = addSnowMountain();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(giant.isTapped()).isTrue();
+        assertThat(snow.isTapped()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, giant)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, giant)).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Can activate while summoning sick because the source is not tapped")
     void canActivateWhileSummoningSick() {
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new KarplusanGiant());
