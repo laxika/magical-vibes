@@ -32,8 +32,7 @@ class NightshadeAssassinTest extends BaseCardTest {
         addCreatureMana();
 
         harness.castCreature(player1, 0, 0, wurm.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
                 (PendingInteraction.RevealAnyNumberOfCardsFromHandChoice)
@@ -58,8 +57,7 @@ class NightshadeAssassinTest extends BaseCardTest {
         addCreatureMana();
 
         harness.castCreature(player1, 0, 0, wurm.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
                 (PendingInteraction.RevealAnyNumberOfCardsFromHandChoice)
@@ -80,11 +78,46 @@ class NightshadeAssassinTest extends BaseCardTest {
         addCreatureMana();
 
         harness.castCreature(player1, 0, 0, wurm.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Revealing only some eligible cards leaves every card in hand")
+    void mayRevealOnlySomeEligibleCards() {
+        Permanent wurm = harness.addToBattlefieldAndReturn(player1, new HavenwoodWurm());
+        DarkWithering revealed = new DarkWithering();
+        HauntingHymn unrevealed = new HauntingHymn();
+        harness.setHand(player1, List.of(new NightshadeAssassin(), revealed, unrevealed));
+        addCreatureMana();
+
+        harness.castCreature(player1, 0, 0, wurm.getId());
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(revealed.getId()));
+
+        assertThat(gqs.getEffectivePower(gd, wurm)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(5);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(revealed, unrevealed);
+    }
+
+    @Test
+    @DisplayName("Reducing a creature's toughness to zero puts it into the graveyard")
+    void lethalToughnessReductionKillsTarget() {
+        harness.addToBattlefield(player2, new BenalishCavalry());
+        DarkWithering first = new DarkWithering();
+        HauntingHymn second = new HauntingHymn();
+        harness.setHand(player1, List.of(new NightshadeAssassin(), first, second));
+        addCreatureMana();
+
+        harness.castCreature(player1, 0, 0, harness.getPermanentId(player2, "Benalish Cavalry"));
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+
+        harness.assertNotOnBattlefield(player2, "Benalish Cavalry");
+        harness.assertInGraveyard(player2, "Benalish Cavalry");
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(first, second);
     }
 
     @Test
@@ -96,8 +129,7 @@ class NightshadeAssassinTest extends BaseCardTest {
         addCreatureMana();
 
         harness.castCreature(player1, 0, 0, wurm.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         PendingInteraction.RevealAnyNumberOfCardsFromHandChoice choice =
                 (PendingInteraction.RevealAnyNumberOfCardsFromHandChoice)
@@ -119,8 +151,9 @@ class NightshadeAssassinTest extends BaseCardTest {
         addCreatureMana();
 
         harness.castCreature(player1, 0, 0, wurm.getId());
-        gd.playerBattlefields.get(player2.getId()).remove(wurm);
         harness.passBothPriorities();
+        assertThat(gd.stack).hasSize(1);
+        gd.playerBattlefields.get(player2.getId()).remove(wurm);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
@@ -191,8 +224,7 @@ class NightshadeAssassinTest extends BaseCardTest {
         addCreatureMana();
 
         harness.castCreature(player1, 0, 0, wurm.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
         harness.handleMultipleCardsChosen(player1, List.of(blackCard.getId()));
 
         assertThat(gqs.getEffectiveToughness(gd, wurm)).isEqualTo(5);
@@ -230,8 +262,7 @@ class NightshadeAssassinTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castInstant(player2, 0, player1.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player2, 0, player1.getId());
         harness.handleCardChosen(player1, 0);
         return assassin;
     }
