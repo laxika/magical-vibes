@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.c.CharcoalDiamond;
+import com.github.laxika.magicalvibes.cards.e.EcologistsTerrarium;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
+import com.github.laxika.magicalvibes.cards.g.GoldenTailDisciple;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MobilizerMech;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({OkibaSalvage.class, GrizzlyBears.class, MobilizerMech.class,
-        CharcoalDiamond.class, GloriousAnthem.class})
+        CharcoalDiamond.class, GloriousAnthem.class, GoldenTailDisciple.class, EcologistsTerrarium.class})
 class OkibaSalvageTest extends BaseCardTest {
 
     @Test
@@ -33,8 +34,7 @@ class OkibaSalvageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new OkibaSalvage()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         assertThat(findReturned(creature).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -49,8 +49,7 @@ class OkibaSalvageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new OkibaSalvage()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, vehicle.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, vehicle.getId());
 
         assertThat(findReturned(vehicle).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
@@ -63,8 +62,7 @@ class OkibaSalvageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new OkibaSalvage()));
         harness.addMana(player1, ManaColor.BLACK, 5);
 
-        harness.castSorcery(player1, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
 
         assertThat(findReturned(creature).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -81,11 +79,101 @@ class OkibaSalvageTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    void returnedVehicleCanSupplyTheRequiredArtifact() {
+        Card vehicle = new MobilizerMech();
+        harness.setGraveyard(player1, List.of(vehicle));
+        harness.addToBattlefield(player1, new GoldenTailDisciple());
+        harness.setHand(player1, List.of(new OkibaSalvage()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, vehicle.getId());
+
+        assertThat(findReturned(vehicle).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertNotInGraveyard(player1, "Mobilizer Mech");
+    }
+
+    @Test
+    void returnedCreatureCanSupplyTheRequiredEnchantment() {
+        Card creature = new GoldenTailDisciple();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addToBattlefield(player1, new EcologistsTerrarium());
+        harness.setHand(player1, List.of(new OkibaSalvage()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+
+        assertThat(findReturned(creature).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        harness.assertNotInGraveyard(player1, "Golden-Tail Disciple");
+    }
+
+    @Test
+    void artifactAloneDoesNotGrantCounters() {
+        Card vehicle = new MobilizerMech();
+        harness.setGraveyard(player1, List.of(vehicle));
+        harness.addToBattlefield(player1, new EcologistsTerrarium());
+        harness.setHand(player1, List.of(new OkibaSalvage()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, vehicle.getId());
+
+        assertThat(findReturned(vehicle).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void opponentsArtifactDoesNotSatisfyCondition() {
+        Card creature = new GoldenTailDisciple();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.addToBattlefield(player2, new EcologistsTerrarium());
+        harness.setHand(player1, List.of(new OkibaSalvage()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castAndResolveSorcery(player1, 0, creature.getId());
+
+        assertThat(findReturned(creature).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void cannotTargetOpponentsGraveyard() {
+        Card vehicle = new MobilizerMech();
+        harness.setGraveyard(player2, List.of(vehicle));
+        harness.setHand(player1, List.of(new OkibaSalvage()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, vehicle.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void countersConditionIsCheckedAtResolution() {
+        Card vehicle = new MobilizerMech();
+        harness.setGraveyard(player1, List.of(vehicle));
+        harness.setHand(player1, List.of(new OkibaSalvage()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castSorcery(player1, 0, vehicle.getId());
+
+        harness.addToBattlefield(player1, new GoldenTailDisciple());
+        harness.passBothPriorities();
+
+        assertThat(findReturned(vehicle).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void targetRemovedFromGraveyardIsNotReturned() {
+        Card vehicle = new MobilizerMech();
+        harness.setGraveyard(player1, List.of(vehicle));
+        harness.setHand(player1, List.of(new OkibaSalvage()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.castSorcery(player1, 0, vehicle.getId());
+
+        harness.setGraveyard(player1, List.of());
+        harness.setExile(player1, List.of(vehicle));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Mobilizer Mech");
+    }
+
     private Permanent findReturned(Card card) {
-        GameData gameData = harness.getGameData();
-        return gameData.playerBattlefields.get(player1.getId()).stream()
-                .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
-                .findFirst()
-                .orElseThrow();
+        return findPermanent(player1, card.getName());
     }
 }
