@@ -24,8 +24,7 @@ class NorwoodWarriorTest extends BaseCardTest {
         Permanent warrior = addCreatureReady(player1, new NorwoodWarrior());
         addCreatureReady(player2, new BearCub());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).hasSize(1);
@@ -40,8 +39,7 @@ class NorwoodWarriorTest extends BaseCardTest {
         Permanent warrior = addCreatureReady(player1, new NorwoodWarrior());
         addCreatureReady(player2, new BearCub());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveAllTriggers();
 
@@ -58,8 +56,7 @@ class NorwoodWarriorTest extends BaseCardTest {
         addCreatureReady(player2, new BearCub());
         addCreatureReady(player2, new BearCub());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(
                 new BlockerAssignment(0, 0),
                 new BlockerAssignment(1, 0)
@@ -78,6 +75,20 @@ class NorwoodWarriorTest extends BaseCardTest {
 
         prepareDeclareBlockers();
         gs.declareBlockers(gd, player2, List.of());
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(warrior.getPowerModifier()).isZero();
+        assertThat(warrior.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @DisplayName("Blocking another creature does not give Norwood Warrior a boost")
+    void blockingCreatesNoTrigger() {
+        addCreatureReady(player1, new BearCub());
+        Permanent warrior = addCreatureReady(player2, new NorwoodWarrior());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
         assertThat(gd.stack).isEmpty();
         assertThat(warrior.getPowerModifier()).isZero();
