@@ -53,10 +53,7 @@ class QuakeAgentOfSHIELDTest extends BaseCardTest {
     @DisplayName("Casting a creature spell does not trigger the ability")
     void creatureSpellDoesNotTrigger() {
         harness.addToBattlefield(player1, new QuakeAgentOfSHIELD());
-        harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.addMana(player1, ManaColor.GREEN, 2);
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
@@ -72,6 +69,78 @@ class QuakeAgentOfSHIELDTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Quake can target itself with its mandatory trigger")
+    void canTapItself() {
+        Permanent quake = harness.addToBattlefieldAndReturn(player1, new QuakeAgentOfSHIELD());
+        castNoncreatureSpell();
+
+        harness.handlePermanentChosen(player1, quake.getId());
+        harness.passBothPriorities();
+
+        assertThat(quake.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An already tapped creature is a legal target")
+    void canTargetTappedCreature() {
+        harness.addToBattlefield(player1, new QuakeAgentOfSHIELD());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        target.setTapped(true);
+        castNoncreatureSpell();
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A noncreature artifact spell triggers before that spell resolves")
+    void artifactSpellTriggers() {
+        Permanent quake = harness.addToBattlefieldAndReturn(player1, new QuakeAgentOfSHIELD());
+        harness.castFromHand(player1, new AccordersShield(), "{0}");
+
+        harness.handlePermanentChosen(player1, quake.getId());
+        harness.passBothPriorities();
+
+        assertThat(quake.isTapped()).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ARTIFACT_SPELL);
+        harness.assertNotOnBattlefield(player1, "Accorder's Shield");
+    }
+
+    @Test
+    @DisplayName("An opponent casting a noncreature spell does not trigger Quake")
+    void opponentSpellDoesNotTrigger() {
+        Permanent quake = harness.addToBattlefieldAndReturn(player1, new QuakeAgentOfSHIELD());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, player1.getId());
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(quake.isTapped()).isFalse();
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("Playing a land does not count as casting a noncreature spell")
+    void landPlayDoesNotTrigger() {
+        Permanent quake = harness.addToBattlefieldAndReturn(player1, new QuakeAgentOfSHIELD());
+        harness.setHand(player1, List.of(new Island()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(quake.isTapped()).isFalse();
+        harness.assertOnBattlefield(player1, "Island");
     }
 
     private void castNoncreatureSpell() {
