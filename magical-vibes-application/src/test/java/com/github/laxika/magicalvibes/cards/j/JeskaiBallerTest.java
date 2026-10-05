@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -46,10 +45,7 @@ class JeskaiBallerTest extends BaseCardTest {
     @DisplayName("The cast trigger resolves before the rebounding creature spell")
     void castTriggerResolvesBeforeCreatureSpell() {
         JeskaiBaller baller = new JeskaiBaller();
-        harness.setHand(player1, List.of(baller));
-        addBallerMana();
-
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, baller, "{2}{W}");
 
         assertThat(athleteTokens()).isEmpty();
         harness.passBothPriorities();
@@ -58,18 +54,50 @@ class JeskaiBallerTest extends BaseCardTest {
         assertThat(gd.findExiledCard(baller.getId())).isNull();
     }
 
-    private JeskaiBaller castFromHand() {
-        JeskaiBaller baller = new JeskaiBaller();
-        harness.setHand(player1, List.of(baller));
-        addBallerMana();
-        harness.castCreature(player1, 0);
+    @Test
+    @DisplayName("Declining rebound leaves the card exiled without another opportunity")
+    void decliningReboundDoesNotOfferItAgain() {
+        JeskaiBaller baller = castFromHand();
+
+        advanceToUpkeep(player2);
         resolveAllTriggers();
-        return baller;
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.findExiledCard(baller.getId())).isNotNull();
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(athleteTokens()).hasSize(1);
+        harness.assertNotOnBattlefield(player1, "Jeskai Baller");
+        assertThat(gd.findExiledCard(baller.getId())).isNotNull();
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(athleteTokens()).hasSize(1);
+        assertThat(gd.findExiledCard(baller.getId())).isNotNull();
     }
 
-    private void addBallerMana() {
-        harness.addMana(player1, ManaColor.WHITE, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 2);
+    @Test
+    @DisplayName("Entering the battlefield without casting does not create an Athlete")
+    void enteringWithoutCastingDoesNotCreateToken() {
+        harness.enterBattlefieldAndReturn(player1, new JeskaiBaller());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Jeskai Baller");
+        assertThat(athleteTokens()).isEmpty();
+    }
+
+    private JeskaiBaller castFromHand() {
+        JeskaiBaller baller = new JeskaiBaller();
+        harness.castFromHand(player1, baller, "{2}{W}");
+        resolveAllTriggers();
+        return baller;
     }
 
     private List<Permanent> athleteTokens() {
