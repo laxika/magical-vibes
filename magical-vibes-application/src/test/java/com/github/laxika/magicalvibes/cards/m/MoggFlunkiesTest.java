@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -20,12 +19,7 @@ class MoggFlunkiesTest extends BaseCardTest {
     @DisplayName("Mogg Flunkies can't attack alone")
     void cantAttackAlone() {
         addCreatureReady(player1, new MoggFlunkies());
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -62,12 +56,7 @@ class MoggFlunkiesTest extends BaseCardTest {
         addCreatureReady(player1, new MoggFlunkies());
         addCreatureReady(player1, new MoggFlunkies());
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
-
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -108,5 +97,37 @@ class MoggFlunkiesTest extends BaseCardTest {
 
         assertThat(flunkies.isBlocking()).isTrue();
         assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Mogg Flunkies can block the same attacker together")
+    void canBlockSameAttackerTogether() {
+        addCreatureReady(player1, new MoggFlunkies());
+        addCreatureReady(player1, new MoggFlunkies());
+        Permanent firstBlocker = addCreatureReady(player2, new MoggFlunkies());
+        Permanent secondBlocker = addCreatureReady(player2, new MoggFlunkies());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gs.declareBlockers(gd, player2, List.of(
+                new BlockerAssignment(0, 0),
+                new BlockerAssignment(1, 0)
+        ));
+
+        assertThat(firstBlocker.isBlocking()).isTrue();
+        assertThat(secondBlocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Mogg Flunkies remains attacking after its companion leaves combat")
+    void remainsAttackingAfterCompanionLeavesCombat() {
+        addCreatureReady(player1, new MoggFlunkies());
+        Permanent companion = addCreatureReady(player1, new MoggFlunkies());
+
+        declareAttackersAndPrepareBlockers(List.of(0, 1));
+        gd.playerBattlefields.get(player1.getId()).remove(companion);
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }
 }
