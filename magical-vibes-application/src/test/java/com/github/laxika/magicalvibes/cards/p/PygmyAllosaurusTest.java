@@ -41,8 +41,7 @@ class PygmyAllosaurusTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player1, new PygmyAllosaurus());
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
@@ -58,13 +57,31 @@ class PygmyAllosaurusTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new BalduvianBears());
         harness.addToBattlefield(player1, new Swamp());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(blockerIndex, attackerIndex)));
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A tapped defending Swamp still enables swampwalk")
+    void tappedSwampStillPreventsBlocking() {
+        Permanent attacker = addCreatureReady(player1, new PygmyAllosaurus());
+        Permanent blocker = addCreatureReady(player2, new BalduvianBears());
+        Permanent swamp = harness.addToBattlefieldAndReturn(player2, new Swamp());
+        swamp.setTapped(true);
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        int blockerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(attacker);
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
     }
 }
