@@ -64,9 +64,72 @@ class LegionVanguardTest extends BaseCardTest {
     }
 
     private Permanent addReadyVanguard() {
-        Permanent vanguard = new Permanent(new LegionVanguard());
+        Permanent vanguard = harness.addToBattlefieldAndReturn(player1, new LegionVanguard());
         vanguard.setSummoningSick(false);
-        gd.playerBattlefields.get(player1.getId()).add(vanguard);
         return vanguard;
+    }
+
+    @Test
+    void canPutExploredNonlandIntoGraveyard() {
+        Permanent vanguard = addReadyVanguard();
+        harness.addToBattlefield(player1, new LegionVanguard());
+        LegionVanguard exploredCard = new LegionVanguard();
+        harness.setLibrary(player1, List.of(exploredCard));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(vanguard);
+        assertThat(vanguard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(vanguard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
+                .contains(exploredCard.getId());
+    }
+
+    @Test
+    void exploringEmptyLibraryStillAddsCounter() {
+        Permanent vanguard = addReadyVanguard();
+        harness.addToBattlefield(player1, new LegionVanguard());
+        harness.setLibrary(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(vanguard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void canActivateWhileSummoningSickAndTapped() {
+        Permanent vanguard = harness.addToBattlefieldAndReturn(player1, new LegionVanguard());
+        vanguard.setSummoningSick(true);
+        vanguard.setTapped(true);
+        harness.addToBattlefield(player1, new LegionVanguard());
+        Forest forest = new Forest();
+        harness.setLibrary(player1, List.of(forest));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).contains(forest.getId());
+        assertThat(vanguard.isTapped()).isTrue();
+    }
+
+    @Test
+    void cannotSacrificeOpponentsCreature() {
+        addReadyVanguard();
+        harness.addToBattlefield(player2, new LegionVanguard());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player2, "Legion Vanguard");
     }
 }
