@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HolyDay;
+import com.github.laxika.magicalvibes.cards.e.ElvishWarrior;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OversoldCemetery.class, GrizzlyBears.class, HolyDay.class})
+@CardUsed({OversoldCemetery.class, ElvishWarrior.class, Naturalize.class})
 class OversoldCemeteryTest extends BaseCardTest {
 
     @Test
@@ -21,7 +21,7 @@ class OversoldCemeteryTest extends BaseCardTest {
     void triggersWithFourCreatureCards() {
         harness.addToBattlefield(player1, new OversoldCemetery());
         harness.setGraveyard(player1, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior()));
 
         advanceToUpkeep(player1);
 
@@ -29,11 +29,11 @@ class OversoldCemeteryTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Offers at most one optional creature target")
-    void offersAtMostOneOptionalTarget() {
+    @DisplayName("Requires exactly one creature target when the ability triggers")
+    void requiresOneTarget() {
         harness.addToBattlefield(player1, new OversoldCemetery());
         List<Card> creatures = List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears());
+                new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior());
         harness.setGraveyard(player1, creatures);
 
         advanceToUpkeep(player1);
@@ -41,7 +41,7 @@ class OversoldCemeteryTest extends BaseCardTest {
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.minCount()).isZero();
+        assertThat(choice.minCount()).isEqualTo(1);
         assertThat(choice.maxCount()).isEqualTo(1);
         assertThat(choice.validCardIds())
                 .containsExactlyElementsOf(creatures.stream().map(Card::getId).toList());
@@ -51,17 +51,19 @@ class OversoldCemeteryTest extends BaseCardTest {
     @DisplayName("Returns the chosen creature card to hand")
     void returnsChosenCreatureToHand() {
         harness.addToBattlefield(player1, new OversoldCemetery());
-        Card target = new GrizzlyBears();
+        Card target = new ElvishWarrior();
         harness.setGraveyard(player1, List.of(
-                new HolyDay(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), target));
+                new Naturalize(), new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior(), target));
 
         advanceToUpkeep(player1);
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
-        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Elvish Warrior");
         assertThat(gd.playerHands.get(player1.getId())).contains(target);
-        harness.assertInGraveyard(player1, "Holy Day");
+        harness.assertInGraveyard(player1, "Naturalize");
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
     }
 
@@ -70,7 +72,7 @@ class OversoldCemeteryTest extends BaseCardTest {
     void doesNotTriggerBelowThreshold() {
         harness.addToBattlefield(player1, new OversoldCemetery());
         harness.setGraveyard(player1, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new HolyDay()));
+                new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior(), new Naturalize()));
 
         advanceToUpkeep(player1);
 
@@ -83,7 +85,7 @@ class OversoldCemeteryTest extends BaseCardTest {
     void doesNotTriggerFromOpponentsGraveyard() {
         harness.addToBattlefield(player1, new OversoldCemetery());
         harness.setGraveyard(player2, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior()));
 
         advanceToUpkeep(player1);
 
@@ -91,17 +93,22 @@ class OversoldCemeteryTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Can decline the optional graveyard target")
-    void canDeclineTarget() {
+    @DisplayName("Can decline returning the chosen creature when the ability resolves")
+    void canDeclineOnResolution() {
         harness.addToBattlefield(player1, new OversoldCemetery());
+        Card target = new ElvishWarrior();
         harness.setGraveyard(player1, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                target, new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior()));
 
         advanceToUpkeep(player1);
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
-        harness.assertNotInHand(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Elvish Warrior");
     }
 
     @Test
@@ -109,7 +116,7 @@ class OversoldCemeteryTest extends BaseCardTest {
     void onlyCreatureCardsAreTargets() {
         harness.addToBattlefield(player1, new OversoldCemetery());
         harness.setGraveyard(player1, List.of(
-                new HolyDay(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+                new Naturalize(), new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior()));
 
         advanceToUpkeep(player1);
 
@@ -117,6 +124,60 @@ class OversoldCemeteryTest extends BaseCardTest {
                 PendingInteraction.MultiGraveyardChoice.class);
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-        assertThat(choice.cards()).extracting(Card::getName).containsOnly("Grizzly Bears");
+        assertThat(choice.cards()).extracting(Card::getName).containsOnly("Elvish Warrior");
+    }
+
+    @Test
+    @DisplayName("Does not trigger during the opponent's upkeep")
+    void doesNotTriggerDuringOpponentsUpkeep() {
+        harness.addToBattlefield(player1, new OversoldCemetery());
+        harness.setGraveyard(player1, List.of(
+                new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior()));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    @DisplayName("Does nothing if the creature threshold is lost before resolution")
+    void rechecksThresholdOnResolution() {
+        harness.addToBattlefield(player1, new OversoldCemetery());
+        Card target = new ElvishWarrior();
+        Card removed = new ElvishWarrior();
+        harness.setGraveyard(player1, List.of(
+                target, removed, new ElvishWarrior(), new ElvishWarrior()));
+
+        advanceToUpkeep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        gd.playerGraveyards.get(player1.getId()).remove(removed);
+        harness.setExile(player1, List.of(removed));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target).hasSize(3);
+        harness.assertNotInHand(player1, "Elvish Warrior");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Does not return a target that leaves the graveyard before resolution")
+    void targetMustRemainInGraveyard() {
+        harness.addToBattlefield(player1, new OversoldCemetery());
+        Card target = new ElvishWarrior();
+        harness.setGraveyard(player1, List.of(
+                target, new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior(), new ElvishWarrior()));
+
+        advanceToUpkeep(player1);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        gd.playerGraveyards.get(player1.getId()).remove(target);
+        harness.setExile(player1, List.of(target));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(target);
+        harness.assertNotInHand(player1, "Elvish Warrior");
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
