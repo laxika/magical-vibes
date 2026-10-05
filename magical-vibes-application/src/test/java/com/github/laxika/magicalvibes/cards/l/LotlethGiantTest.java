@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.d.DeadWeight;
+import com.github.laxika.magicalvibes.cards.d.DouserOfLights;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({LotlethGiant.class, DouserOfLights.class, DeadWeight.class})
 class LotlethGiantTest extends BaseCardTest {
 
     @Test
@@ -18,7 +20,7 @@ class LotlethGiantTest extends BaseCardTest {
     void etbDealsDamageForCreatureCardsInGraveyard() {
         harness.setLife(player2, 20);
         harness.setGraveyard(player1, List.of(
-                new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(), new Forest()));
+                new DouserOfLights(), new DouserOfLights(), new DouserOfLights(), new DeadWeight()));
 
         castLotlethGiant(player2.getId());
 
@@ -29,8 +31,8 @@ class LotlethGiantTest extends BaseCardTest {
     @DisplayName("ETB counts only its controller's creature cards")
     void etbIgnoresOpponentGraveyardAndNoncreatureCards() {
         harness.setLife(player2, 20);
-        harness.setGraveyard(player1, List.of(new Forest()));
-        harness.setGraveyard(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setGraveyard(player1, List.of(new DeadWeight()));
+        harness.setGraveyard(player2, List.of(new DouserOfLights(), new DouserOfLights()));
 
         castLotlethGiant(player2.getId());
 
@@ -46,6 +48,39 @@ class LotlethGiantTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Target must be an opponent");
+    }
+
+    @Test
+    @DisplayName("ETB counts creature cards added before the trigger resolves")
+    void countsCreaturesAtResolution() {
+        harness.setLife(player2, 20);
+        harness.setGraveyard(player1, List.of(new DouserOfLights()));
+        harness.setHand(player1, List.of(new LotlethGiant()));
+        addManaForLotlethGiant();
+        harness.castCreature(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        harness.setGraveyard(player1, List.of(new DouserOfLights(), new DouserOfLights(), new DeadWeight()));
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("ETB deals no damage if the graveyard is emptied before resolution")
+    void dealsNoDamageAfterGraveyardIsEmptied() {
+        harness.setLife(player2, 20);
+        harness.setGraveyard(player1, List.of(new DouserOfLights(), new DouserOfLights()));
+        harness.setHand(player1, List.of(new LotlethGiant()));
+        addManaForLotlethGiant();
+        harness.castCreature(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.setGraveyard(player1, List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
     }
 
     private void castLotlethGiant(java.util.UUID targetId) {
