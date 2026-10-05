@@ -46,4 +46,31 @@ class PriestOfGixTest extends BaseCardTest {
     private void castPriestOfGix() {
         harness.castFromHand(player1, new PriestOfGix(), "{2}{B}");
     }
+
+    @Test
+    @DisplayName("Priest of Gix adds no mana until its ETB trigger resolves")
+    void manaWaitsForTriggerResolution() {
+        castPriestOfGix();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Priest of Gix adds mana to player two when player two casts it")
+    void otherControllerReceivesMana() {
+        harness.forceActivePlayer(player2);
+        harness.castFromHand(player2, new PriestOfGix(), "{2}{B}");
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Priest of Gix");
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+    }
 }
