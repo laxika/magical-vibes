@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -78,7 +76,52 @@ class NoxiousToadTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve death trigger
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no cards to discard"));
+        assertThat(gameLogContains("no cards to discard")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Opponent chooses which card to discard")
+    void opponentChoosesCardToDiscard() {
+        harness.setHand(player2, List.of(new GrizzlyBears(), new NoxiousToad()));
+
+        setupCombatWhereToadDies();
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+
+        harness.assertInHand(player2, "Grizzly Bears");
+        harness.assertNotInHand(player2, "Noxious Toad");
+        harness.assertInGraveyard(player2, "Noxious Toad");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Toad controlled by the defending player makes the attacking player discard")
+    void defendingControllersOpponentDiscards() {
+        harness.setHand(player1, List.of(new GrizzlyBears(), new NoxiousToad()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Permanent toad = addCreatureReady(player2, new NoxiousToad());
+        toad.setBlocking(true);
+        toad.addBlockingTarget(0);
+
+        resolveCombat();
+        harness.assertInGraveyard(player2, "Noxious Toad");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertInGraveyard(player1, "Noxious Toad");
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     private void setupCombatWhereToadDies() {
