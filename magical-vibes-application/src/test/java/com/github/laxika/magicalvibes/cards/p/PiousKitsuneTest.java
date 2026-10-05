@@ -67,6 +67,56 @@ class PiousKitsuneTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Checks for Eight-and-a-Half-Tails when the upkeep ability resolves")
+    void gainsLifeWhenEightAndAHalfTailsEntersAfterTrigger() {
+        Permanent kitsune = addCreatureReady(player1, new PiousKitsune());
+        kitsune.setCounterCount(CounterType.DEVOTION, 2);
+
+        advanceToUpkeep(player1);
+        addCreatureReady(player1, new EightAndAHalfTails());
+        harness.passBothPriorities();
+
+        assertThat(kitsune.getCounterCount(CounterType.DEVOTION)).isEqualTo(3);
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Removing a counter in response changes the upkeep life gain")
+    void usesCounterCountAtResolution() {
+        Permanent kitsune = addCreatureReady(player1, new PiousKitsune());
+        addCreatureReady(player2, new EightAndAHalfTails());
+        kitsune.setCounterCount(CounterType.DEVOTION, 2);
+
+        advanceToUpkeep(player1);
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(kitsune.getCounterCount(CounterType.DEVOTION)).isOne();
+        assertThat(kitsune.isTapped()).isTrue();
+        harness.assertLife(player1, 20);
+
+        resolveAllTriggers();
+
+        assertThat(kitsune.getCounterCount(CounterType.DEVOTION)).isEqualTo(2);
+        harness.assertLife(player1, 23);
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents activating the tap ability")
+    void cannotActivateWhileSummoningSick() {
+        Permanent kitsune = addCreatureReady(player1, new PiousKitsune());
+        kitsune.setSummoningSick(true);
+        kitsune.setCounterCount(CounterType.DEVOTION, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(kitsune.isTapped()).isFalse();
+        assertThat(kitsune.getCounterCount(CounterType.DEVOTION)).isOne();
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
     @DisplayName("Cannot activate the tap ability while Pious Kitsune is tapped")
     void cannotActivateWhileTapped() {
         Permanent kitsune = addCreatureReady(player1, new PiousKitsune());
