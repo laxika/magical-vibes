@@ -35,9 +35,7 @@ class PureIntentionsTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId()))
-                .extracting(card -> card.getName())
-                .contains("Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
     }
 
@@ -65,9 +63,7 @@ class PureIntentionsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
-        assertThat(gd.playerHands.get(player1.getId()))
-                .extracting(card -> card.getName())
-                .contains("Forest");
+        harness.assertInHand(player1, "Forest");
     }
 
     @Test
@@ -85,10 +81,11 @@ class PureIntentionsTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
 
+        harness.assertInGraveyard(player2, "Pure Intentions");
+        resolveAllTriggers();
+
         harness.assertNotInGraveyard(player2, "Pure Intentions");
-        assertThat(gd.playerHands.get(player2.getId()))
-                .extracting(card -> card.getName())
-                .contains("Pure Intentions");
+        harness.assertInHand(player2, "Pure Intentions");
     }
 
     @Test
@@ -105,6 +102,7 @@ class PureIntentionsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Pure Intentions");
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         gs.advanceStep(gd);
+        resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Pure Intentions");
     }
@@ -133,5 +131,75 @@ class PureIntentionsTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Pure Intentions");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Does not return cards discarded before Pure Intentions resolved")
+    void doesNotReturnCardsFromAnEarlierDiscardEvent() {
+        harness.setHand(player1, List.of(new GrizzlyBears(), new PureIntentions(), new Sift()));
+        harness.setHand(player2, List.of(new Distress(), new Distress()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.BLACK, 4);
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0);
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Sift");
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A discarded copy returned immediately does not return the cast copy at the end step")
+    void delayedReturnDoesNotReturnAnotherCopy() {
+        harness.setHand(player1, List.of(new PureIntentions()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0);
+        harness.setHand(player1, List.of(new PureIntentions()));
+        harness.setHand(player2, List.of(new Distress()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Pure Intentions");
+        harness.assertInGraveyard(player1, "Pure Intentions");
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Pure Intentions");
+    }
+
+    @Test
+    @DisplayName("The discard protection expires after the turn in which it resolved")
+    void protectionExpiresAfterTheTurn() {
+        harness.setHand(player1, List.of(new PureIntentions(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0);
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new Distress()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveSorcery(player2, 0, player1.getId());
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertNotInHand(player1, "Grizzly Bears");
     }
 }
