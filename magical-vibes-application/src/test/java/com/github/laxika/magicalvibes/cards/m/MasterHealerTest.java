@@ -204,6 +204,64 @@ class MasterHealerTest extends BaseCardTest {
         harness.assertLife(player2, 20);
     }
 
+    @Test
+    @DisplayName("Can prevent damage to itself after tapping")
+    void preventsDamageToItself() {
+        addHealerReady();
+        Permanent healer = findPermanent(player1, "Master Healer");
+
+        harness.activateAbility(player1, 0, null, healer.getId());
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0, healer.getId());
+        harness.castAndResolveInstant(player1, 0, healer.getId());
+        assertThat(healer.getMarkedDamage()).isZero();
+
+        harness.castAndResolveInstant(player1, 0, healer.getId());
+        assertThat(healer.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player1, "Master Healer");
+    }
+
+    @Test
+    @DisplayName("Can prevent damage to its controller")
+    void preventsDamageToController() {
+        addHealerReady();
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+        harness.passBothPriorities();
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, player1.getId());
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Activated prevention resolves after the healer dies in response")
+    void abilityResolvesAfterSourceDies() {
+        addHealerReady();
+        Permanent healer = findPermanent(player1, "Master Healer");
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player1, 0, healer.getId());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.castAndResolveInstant(player1, 0, healer.getId());
+        harness.assertNotOnBattlefield(player1, "Master Healer");
+        harness.assertInGraveyard(player1, "Master Healer");
+        resolveAllTriggers();
+
+        harness.setLife(player2, 20);
+        castShockAtPlayer2();
+        castShockAtPlayer2();
+        harness.assertLife(player2, 20);
+        castShockAtPlayer2();
+        harness.assertLife(player2, 18);
+    }
+
     private void castShockAtPlayer2() {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
