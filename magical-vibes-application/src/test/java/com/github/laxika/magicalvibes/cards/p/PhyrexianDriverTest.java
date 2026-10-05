@@ -48,7 +48,6 @@ class PhyrexianDriverTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(mercenary.getPowerModifier()).isEqualTo(0);
@@ -72,5 +71,27 @@ class PhyrexianDriverTest extends BaseCardTest {
         assertThat(existingMercenary.getToughnessModifier()).isEqualTo(1);
         assertThat(mercenaries.getLast().getPowerModifier()).isEqualTo(0);
         assertThat(mercenaries.getLast().getToughnessModifier()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("Each Driver boosts the other Driver and boosts accumulate on other Mercenaries")
+    void multipleDriversExcludeOnlyTheirOwnSource() {
+        Permanent mercenary = harness.addToBattlefieldAndReturn(player1, new SpinelessThug());
+
+        harness.castFromHand(player1, new PhyrexianDriver(), "{2}{B}");
+        resolveAllTriggers();
+        Permanent firstDriver = findPermanent(player1, "Phyrexian Driver");
+
+        harness.castFromHand(player1, new PhyrexianDriver(), "{2}{B}");
+        resolveAllTriggers();
+
+        List<Permanent> drivers = findPermanents(player1, "Phyrexian Driver");
+        assertThat(drivers).hasSize(2);
+        assertThat(firstDriver.getPowerModifier()).isEqualTo(1);
+        assertThat(firstDriver.getToughnessModifier()).isEqualTo(1);
+        assertThat(drivers.getLast().getPowerModifier()).isEqualTo(0);
+        assertThat(drivers.getLast().getToughnessModifier()).isEqualTo(0);
+        assertThat(mercenary.getPowerModifier()).isEqualTo(2);
+        assertThat(mercenary.getToughnessModifier()).isEqualTo(2);
     }
 }
