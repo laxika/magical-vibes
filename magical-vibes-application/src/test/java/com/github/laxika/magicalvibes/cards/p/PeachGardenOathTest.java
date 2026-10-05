@@ -71,4 +71,37 @@ class PeachGardenOathTest extends BaseCardTest {
 
         harness.assertLife(player1, 22);
     }
+
+    @Test
+    @DisplayName("Counts tapped creatures but excludes lands and opposing creatures")
+    void countsOnlyControlledCreaturesOnMixedBattlefield() {
+        harness.addToBattlefieldAndReturn(player1, new GlorySeeker()).setTapped(true);
+        harness.addToBattlefield(player1, new GlorySeeker());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player2, new GlorySeeker());
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLife(player1, 10);
+        harness.setLife(player2, 15);
+
+        harness.castFromHand(player1, new PeachGardenOath(), "{W}");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 15);
+    }
+
+    @Test
+    @DisplayName("Does not count a creature that left before resolution")
+    void excludesCreatureThatLeftBeforeResolution() {
+        var creature = harness.addToBattlefieldAndReturn(player1, new GlorySeeker());
+        harness.addToBattlefield(player1, new GlorySeeker());
+        harness.setLife(player1, 20);
+        harness.castFromHand(player1, new PeachGardenOath(), "{W}");
+
+        gd.playerBattlefields.get(player1.getId()).remove(creature);
+        gd.playerGraveyards.get(player1.getId()).add(creature.getCard());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+    }
 }
