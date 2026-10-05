@@ -58,6 +58,32 @@ class InnerChamberGuardTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple blockers trigger Bushido only once, and the bonus waits for resolution")
+    void multipleBlockersGiveOnlyOneBonusAfterResolution() {
+        Permanent guard = addCreatureReady(player1, new InnerChamberGuard());
+        Permanent firstBlocker = addCreatureReady(player2, new InnerChamberGuard());
+        Permanent secondBlocker = addCreatureReady(player2, new InnerChamberGuard());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> {
+            gs.declareBlockers(gd, player2, List.of(
+                    new BlockerAssignment(0, 0), new BlockerAssignment(1, 0)));
+
+            assertThat(gqs.getEffectivePower(gd, guard)).isZero();
+            assertThat(gqs.getEffectiveToughness(gd, guard)).isEqualTo(2);
+
+            resolveAllTriggers();
+        });
+
+        assertThat(gqs.getEffectivePower(gd, guard)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, guard)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, firstBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, firstBlocker)).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, secondBlocker)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, secondBlocker)).isEqualTo(4);
+    }
+
+    @Test
     @DisplayName("Bushido bonus wears off at end of turn")
     void bushidoBonusWearsOffAtEndOfTurn() {
         Permanent guard = addCreatureReady(player1, new InnerChamberGuard());
