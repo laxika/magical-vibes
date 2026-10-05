@@ -124,4 +124,55 @@ class LoxodonStalwartTest extends BaseCardTest {
 
         assertThat(stalwart.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("The ability can be activated while summoning sick")
+    void canActivateWhileSummoningSick() {
+        Permanent stalwart = harness.addToBattlefieldAndReturn(player1, new LoxodonStalwart());
+        stalwart.setSummoningSick(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(stalwart.isTapped()).isFalse();
+        assertThat(stalwart.getEffectivePower()).isEqualTo(3);
+        assertThat(stalwart.getEffectiveToughness()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Activation pays white mana immediately but the boost waits for resolution")
+    void paysManaBeforeBoostResolves() {
+        Permanent stalwart = addCreatureReady(player1, new LoxodonStalwart());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(stalwart.getEffectiveToughness()).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        harness.passBothPriorities();
+
+        assertThat(stalwart.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The ability boosts only its source, not other copies")
+    void boostsOnlyTheActivatedCopy() {
+        Permanent source = addCreatureReady(player1, new LoxodonStalwart());
+        Permanent other = addCreatureReady(player1, new LoxodonStalwart());
+        Permanent opposing = addCreatureReady(player2, new LoxodonStalwart());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(source.getEffectiveToughness()).isEqualTo(4);
+        assertThat(other.getEffectiveToughness()).isEqualTo(3);
+        assertThat(opposing.getEffectiveToughness()).isEqualTo(3);
+    }
 }
