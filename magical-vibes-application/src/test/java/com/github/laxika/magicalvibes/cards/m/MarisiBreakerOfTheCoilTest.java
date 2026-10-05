@@ -57,4 +57,65 @@ class MarisiBreakerOfTheCoilTest extends BaseCardTest {
         assertThat(als.getMustAttackRequirementCount(gd, otherDamagedCreature)).isEqualTo(1);
         assertThat(als.getMustAttackRequirementCount(gd, ownCreature)).isZero();
     }
+    @Test
+    void opponentsCanCastOutsideCombat() {
+        harness.addToBattlefield(player1, new MarisiBreakerOfTheCoil());
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of(new GiantGrowth()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        assertThatCode(() -> harness.castAndResolveInstant(player2, 0, target.getId()))
+                .doesNotThrowAnyException();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(5);
+    }
+
+    @Test
+    void marisisOwnCombatDamageGoadsCreaturesPresentAtResolutionOnly() {
+        Permanent marisi = addCreatureReady(player1, new MarisiBreakerOfTheCoil());
+        marisi.setAttacking(true);
+        marisi.setAttackTarget(player2.getId());
+        Permanent original = addCreatureReady(player2, new GrizzlyBears());
+
+        resolveCombat();
+        Permanent beforeResolution = addCreatureReady(player2, new GrizzlyBears());
+        resolveAllTriggers();
+        Permanent afterResolution = addCreatureReady(player2, new GrizzlyBears());
+
+        assertThat(als.getMustAttackRequirementCount(gd, original)).isEqualTo(1);
+        assertThat(als.getMustAttackRequirementCount(gd, beforeResolution)).isEqualTo(1);
+        assertThat(als.getMustAttackRequirementCount(gd, afterResolution)).isZero();
+    }
+
+    @Test
+    void multipleCombatDamageTriggersDoNotMultiplyGoadRequirements() {
+        Permanent marisi = addCreatureReady(player1, new MarisiBreakerOfTheCoil());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        Permanent defender = addCreatureReady(player2, new GrizzlyBears());
+        marisi.setAttacking(true);
+        marisi.setAttackTarget(player2.getId());
+        attacker.setAttacking(true);
+        attacker.setAttackTarget(player2.getId());
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(als.getMustAttackRequirementCount(gd, defender)).isEqualTo(1);
+    }
+
+    @Test
+    void goadLastsThroughOpponentsTurnAndExpiresAtControllersNextTurn() {
+        Permanent marisi = addCreatureReady(player1, new MarisiBreakerOfTheCoil());
+        Permanent defender = addCreatureReady(player2, new GrizzlyBears());
+        marisi.setAttacking(true);
+        marisi.setAttackTarget(player2.getId());
+        resolveCombat();
+        resolveAllTriggers();
+
+        advanceToUpkeep(player2);
+        assertThat(als.getMustAttackRequirementCount(gd, defender)).isEqualTo(1);
+        advanceToUpkeep(player1);
+        assertThat(als.getMustAttackRequirementCount(gd, defender)).isZero();
+    }
 }
