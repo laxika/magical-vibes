@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.o.OboroPalaceInTheClouds;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -90,5 +91,46 @@ class PainsRewardTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+    }
+
+    @Test
+    void casterCanRetakeHighBidAfterMultipleRaises() {
+        setFourCardLibrary(player1);
+        int opponentHandSizeBefore = gd.playerHands.get(player2.getId()).size();
+
+        cast();
+
+        harness.handleXValueChosen(player1, 1);
+        harness.handleXValueChosen(player2, 2);
+        harness.handleXValueChosen(player1, 3);
+        harness.handleXValueChosen(player2, 4);
+        harness.handleXValueChosen(player1, 6);
+        harness.handleXValueChosen(player2, 0);
+
+        harness.assertLife(player1, 14);
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSizeBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void opponentAtZeroLifeStillDrawsBeforeLosingTheGame() {
+        harness.setLife(player2, 3);
+        setFourCardLibrary(player2);
+        int opponentHandSizeBefore = gd.playerHands.get(player2.getId()).size();
+
+        cast();
+
+        harness.handleXValueChosen(player1, 0);
+        harness.handleXValueChosen(player2, 3);
+        harness.handleXValueChosen(player1, 0);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 0);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSizeBefore + 4);
+        assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }
