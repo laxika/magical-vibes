@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.ChromaticStar;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -67,6 +68,61 @@ class MechanShieldmateTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        assertThat(shieldmate.isAttacking()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Its own entry satisfies the condition but does not bypass summoning sickness")
+    void ownEntryDoesNotGrantHaste() {
+        harness.setHand(player1, List.of(new MechanShieldmate()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent shieldmate = findPermanent(player1, "Mechan Shieldmate");
+
+        assertThatThrownBy(() -> declareAttackers(List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid attacker index");
+        assertThat(shieldmate.isAttacking()).isFalse();
+
+        shieldmate.setSummoningSick(false);
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(shieldmate.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An artifact that left the battlefield still satisfies the condition")
+    void artifactEntryStillCountsAfterItLeaves() {
+        Permanent shieldmate = addCreatureReady(player1, new MechanShieldmate());
+        harness.setHand(player1, List.of(new MechanShieldmate()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent entered = findPermanents(player1, "Mechan Shieldmate").get(1);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService()
+                .removePermanentToGraveyard(gd, entered));
+        harness.assertInGraveyard(player1, "Mechan Shieldmate");
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(shieldmate.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("An artifact entering on a previous turn does not permit attacking")
+    void previousTurnArtifactDoesNotHelp() {
+        Permanent shieldmate = addCreatureReady(player1, new MechanShieldmate());
+        harness.setHand(player1, List.of(new MechanShieldmate()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
+        harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
 
         assertThatThrownBy(() -> declareAttackers(List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
