@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.cards.f.FrenzySliver;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -50,13 +49,53 @@ class LymphSliverTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new LymphSliver());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-        harness.beginBlockerDeclarationInput();
+        prepareDeclareBlockers(player1);
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         harness.passBothPriorities();
 
         assertThat(blocker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Multiple Lymph Slivers grant separate instances of absorb")
+    void multipleInstancesPreventDamageSeparately() {
+        Permanent first = addCreatureReady(player1, new LymphSliver());
+        Permanent second = addCreatureReady(player2, new LymphSliver());
+        Permanent otherSliver = addCreatureReady(player2, new FrenzySliver());
+        harness.setHand(player1, List.of(new ArcBlade(), new ArcBlade(), new ArcBlade()));
+        harness.addMana(player1, ManaColor.RED, 15);
+
+        harness.castSorcery(player1, 0, first.getId());
+        harness.passBothPriorities();
+        harness.castSorcery(player1, 0, second.getId());
+        harness.passBothPriorities();
+        harness.castSorcery(player1, 0, otherSliver.getId());
+        harness.passBothPriorities();
+
+        assertThat(first.getMarkedDamage()).isZero();
+        assertThat(second.getMarkedDamage()).isZero();
+        assertThat(otherSliver.getMarkedDamage()).isZero();
+        harness.assertOnBattlefield(player2, "Frenzy Sliver");
+    }
+
+    @Test
+    @DisplayName("Slivers lose absorb when Lymph Sliver leaves the battlefield")
+    void losesAbsorbWhenSourceLeavesBattlefield() {
+        Permanent source = addCreatureReady(player1, new LymphSliver());
+        Permanent otherSliver = addCreatureReady(player2, new FrenzySliver());
+        harness.setHand(player1, List.of(new ArcBlade(), new ArcBlade(), new ArcBlade(), new ArcBlade()));
+        harness.addMana(player1, ManaColor.RED, 20);
+
+        for (int i = 0; i < 3; i++) {
+            harness.castSorcery(player1, 0, source.getId());
+            harness.passBothPriorities();
+        }
+        harness.assertInGraveyard(player1, "Lymph Sliver");
+
+        harness.castSorcery(player1, 0, otherSliver.getId());
+        harness.passBothPriorities();
+
+        assertThat(otherSliver.getMarkedDamage()).isEqualTo(2);
+        harness.assertInGraveyard(player2, "Frenzy Sliver");
     }
 }
