@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.k.KamiOfTheHunt;
+import com.github.laxika.magicalvibes.cards.s.SakuraTribeElder;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MoonringMirror.class, Forest.class, GrizzlyBears.class, LlanowarElves.class})
+@CardUsed({MoonringMirror.class, Forest.class, KamiOfTheHunt.class, SakuraTribeElder.class})
 class MoonringMirrorTest extends BaseCardTest {
 
     private UUID addMirror() {
@@ -25,7 +26,7 @@ class MoonringMirrorTest extends BaseCardTest {
         return harness.getPermanentId(player1, "Moonring Mirror");
     }
 
-    // The player draws a card; ON_CONTROLLER_DRAWS puts the exile trigger on the stack (CR 603.5).
+    // Drawing finishes before the triggered ability exiles the next card.
     private void drawAndResolveTrigger(Player player) {
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player.getId()));
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
@@ -36,8 +37,7 @@ class MoonringMirrorTest extends BaseCardTest {
     void drawExilesTopCardFaceDown() {
         UUID permId = addMirror();
         harness.setHand(player1, new ArrayList<>());
-        gd.playerDecks.get(player1.getId()).clear();
-        for (int i = 0; i < 3; i++) gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
 
         drawAndResolveTrigger(player1);
 
@@ -64,18 +64,17 @@ class MoonringMirrorTest extends BaseCardTest {
     @DisplayName("Accepting the upkeep trigger swaps the hand with the cards exiled with the mirror")
     void upkeepSwapsHandWithExiledCards() {
         UUID permId = addMirror();
-        gd.playerDecks.get(player1.getId()).clear();
-        for (int i = 0; i < 4; i++) gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         drawAndResolveTrigger(player1);
         drawAndResolveTrigger(player1);
         List<UUID> exiledBefore = gd.getCardsExiledByPermanent(permId).stream().map(Card::getId).toList();
         assertThat(exiledBefore).hasSize(2);
 
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears(), new LlanowarElves())));
+        harness.setHand(player1, new ArrayList<>(List.of(new KamiOfTheHunt(), new SakuraTribeElder())));
 
         gd.turnNumber = 2;
         advanceToUpkeep(player1);
-        harness.passBothPriorities(); // resolve upkeep trigger → may prompt
+        harness.passBothPriorities(); // Resolve the upkeep trigger to its optional choice.
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId()))
@@ -83,20 +82,17 @@ class MoonringMirrorTest extends BaseCardTest {
                 .allMatch(c -> exiledBefore.contains(c.getId()));
         assertThat(gd.getCardsExiledByPermanent(permId))
                 .extracting(Card::getName)
-                .containsExactlyInAnyOrder("Grizzly Bears", "Llanowar Elves");
+                .containsExactlyInAnyOrder("Kami of the Hunt", "Sakura-Tribe Elder");
     }
 
     @Test
     @DisplayName("Declining the upkeep trigger leaves hand and exiled cards untouched")
     void upkeepDeclineKeepsEverythingInPlace() {
         UUID permId = addMirror();
-        gd.playerDecks.get(player1.getId()).clear();
-        // Exactly enough cards for the seeding draw (one drawn, one exiled) so the library is empty
-        // at the upkeep and the draw step adds nothing to the counts under test.
-        for (int i = 0; i < 2; i++) gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         drawAndResolveTrigger(player1);
 
-        harness.setHand(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player1, new ArrayList<>(List.of(new KamiOfTheHunt())));
 
         gd.turnNumber = 2;
         advanceToUpkeep(player1);
@@ -104,7 +100,7 @@ class MoonringMirrorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId()))
-                .singleElement().matches(c -> c.getName().equals("Grizzly Bears"));
+                .singleElement().matches(c -> c.getName().equals("Kami of the Hunt"));
         assertThat(gd.getCardsExiledByPermanent(permId)).hasSize(1);
     }
 
@@ -112,8 +108,7 @@ class MoonringMirrorTest extends BaseCardTest {
     @DisplayName("With an empty hand the upkeep trigger still returns the exiled cards")
     void upkeepWithEmptyHandStillReturnsExiledCards() {
         UUID permId = addMirror();
-        gd.playerDecks.get(player1.getId()).clear();
-        for (int i = 0; i < 2; i++) gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         drawAndResolveTrigger(player1);
 
         harness.setHand(player1, new ArrayList<>());
@@ -131,14 +126,13 @@ class MoonringMirrorTest extends BaseCardTest {
     @DisplayName("The upkeep trigger returns only cards owned by the controller")
     void upkeepReturnsOnlyCardsOwnedByController() {
         UUID permId = addMirror();
-        gd.playerDecks.get(player1.getId()).clear();
-        for (int i = 0; i < 2; i++) gd.playerDecks.get(player1.getId()).add(new Forest());
+        harness.setLibrary(player1, List.of(new Forest(), new Forest()));
         drawAndResolveTrigger(player1);
         assertThat(gd.getCardsExiledByPermanent(permId)).hasSize(1);
-        Card opponentOwned = new LlanowarElves();
+        Card opponentOwned = new SakuraTribeElder();
         gd.addToExile(player2.getId(), opponentOwned, permId);
 
-        Card handCard = new GrizzlyBears();
+        Card handCard = new KamiOfTheHunt();
         harness.setHand(player1, new ArrayList<>(List.of(handCard)));
 
         gd.turnNumber = 2;
@@ -152,5 +146,106 @@ class MoonringMirrorTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(permId))
                 .extracting(Card::getId)
                 .contains(opponentOwned.getId(), handCard.getId());
+    }
+    @Test
+    @DisplayName("Drawing the last library card leaves nothing for the exile trigger")
+    void drawingLastCardDoesNotExileAnything() {
+        UUID mirrorId = addMirror();
+        Card lastCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(lastCard));
+
+        drawAndResolveTrigger(player1);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(lastCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(mirrorId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two mirrors exile separate cards after the same draw")
+    void multipleMirrorsTrackSeparateExiledCards() {
+        UUID firstId = addMirror();
+        harness.addToBattlefield(player1, new MoonringMirror());
+        UUID secondId = findPermanents(player1, "Moonring Mirror").get(1).getId();
+        Card drawn = new Forest();
+        Card firstExiled = new KamiOfTheHunt();
+        Card secondExiled = new SakuraTribeElder();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawn, firstExiled, secondExiled));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
+        assertThat(gd.exiledCards).isEmpty();
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(gd.getCardsExiledByPermanent(firstId)).containsExactly(secondExiled);
+        assertThat(gd.getCardsExiledByPermanent(secondId)).containsExactly(firstExiled);
+        assertThat(gd.exiledCards).allMatch(ExiledCardEntry::faceDown);
+    }
+
+    @Test
+    @DisplayName("Accepting with no previously exiled cards exiles the whole hand face down")
+    void emptyExiledPileStillExilesHand() {
+        UUID mirrorId = addMirror();
+        Card handCard = new KamiOfTheHunt();
+        harness.setHand(player1, List.of(handCard));
+        gd.turnNumber = 2;
+
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(mirrorId)).containsExactly(handCard);
+        assertThat(gd.exiledCards).filteredOn(e -> mirrorId.equals(e.sourcePermanentId()))
+                .allMatch(ExiledCardEntry::faceDown);
+    }
+
+    @Test
+    @DisplayName("The mirror does not trigger during its opponent's upkeep")
+    void opponentUpkeepDoesNotTrigger() {
+        UUID mirrorId = addMirror();
+        Card handCard = new KamiOfTheHunt();
+        harness.setHand(player1, List.of(handCard));
+        gd.turnNumber = 2;
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(handCard);
+        assertThat(gd.getCardsExiledByPermanent(mirrorId)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A later upkeep can return the hand exiled by an earlier upkeep")
+    void subsequentUpkeepReturnsPreviouslyExiledHand() {
+        UUID mirrorId = addMirror();
+        Card originalHand = new KamiOfTheHunt();
+        Card replacementHand = new SakuraTribeElder();
+        harness.setHand(player1, List.of(originalHand));
+        gd.turnNumber = 2;
+
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+        });
+        assertThat(gd.getCardsExiledByPermanent(mirrorId)).containsExactly(originalHand);
+
+        harness.setHand(player1, List.of(replacementHand));
+        gd.turnNumber = 3;
+        harness.withAutoStop(TurnStep.UPKEEP, () -> {
+            advanceToUpkeep(player1);
+            harness.passBothPriorities();
+            harness.handleMayAbilityChosen(player1, true);
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(originalHand);
+        assertThat(gd.getCardsExiledByPermanent(mirrorId)).containsExactly(replacementHand);
     }
 }
