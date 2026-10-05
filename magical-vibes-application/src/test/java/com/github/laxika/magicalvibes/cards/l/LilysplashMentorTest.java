@@ -78,4 +78,85 @@ class LilysplashMentorTest extends BaseCardTest {
     private Permanent addReadyMentor() {
         return addCreatureReady(player1, new LilysplashMentor());
     }
+
+    @Test
+    void canTargetAnotherMentorAndResetsItsCounters() {
+        addReadyMentor();
+        Permanent target = addReadyMentor();
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+        target.tap();
+        addActivationMana(1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).get(1);
+        assertThat(returned.getId()).isNotEqualTo(target.getId());
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(returned.isTapped()).isFalse();
+        assertThat(returned.isSummoningSick()).isTrue();
+    }
+
+    @Test
+    void returnsBorrowedCreatureToItsOwner() {
+        addReadyMentor();
+        Permanent target = addReadyMentor();
+        gd.stolenCreatures.put(target.getId(), player2.getId());
+        addActivationMana(1);
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        Permanent returned = findPermanent(player2, "Lilysplash Mentor");
+        assertThat(returned.getId()).isNotEqualTo(target.getId());
+        assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void cannotActivateDuringCombat() {
+        addReadyMentor();
+        Permanent target = addReadyMentor();
+        harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
+        addActivationMana(1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("sorcery speed");
+    }
+
+    @Test
+    void cannotActivateWhileStackIsNotEmpty() {
+        addReadyMentor();
+        Permanent target = addReadyMentor();
+        addActivationMana(2);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("stack is empty");
+        harness.passBothPriorities();
+    }
+
+    @Test
+    void doesNotFlickerTargetThatChangesControllerBeforeResolution() {
+        addReadyMentor();
+        Permanent target = addReadyMentor();
+        addActivationMana(1);
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(target);
+        gd.playerBattlefields.get(player2.getId()).add(target);
+        gd.stolenCreatures.put(target.getId(), player1.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    private void addActivationMana(int activations) {
+        harness.addMana(player1, ManaColor.GREEN, activations);
+        harness.addMana(player1, ManaColor.BLUE, activations);
+        harness.addMana(player1, ManaColor.COLORLESS, activations);
+    }
 }
