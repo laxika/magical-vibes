@@ -43,9 +43,7 @@ class MirriCatWarriorTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
         Permanent mirri = addCreatureReady(player1, new MirriCatWarrior());
-        mirri.setAttacking(true);
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         int blockerIdx = gd.playerBattlefields.get(player2.getId()).indexOf(blocker);
         int attackerIdx = gd.playerBattlefields.get(player1.getId()).indexOf(mirri);
@@ -60,10 +58,8 @@ class MirriCatWarriorTest extends BaseCardTest {
     void forestwalkAllowsBlockingWhenDefenderHasNoForest() {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
 
-        Permanent mirri = addCreatureReady(player1, new MirriCatWarrior());
-        mirri.setAttacking(true);
-
-        prepareDeclareBlockers();
+        addCreatureReady(player1, new MirriCatWarrior());
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
 
@@ -96,5 +92,48 @@ class MirriCatWarriorTest extends BaseCardTest {
 
         assertThat(mirri.getMarkedDamage()).isZero();
         harness.assertInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A Forest controlled by Mirri's controller does not prevent blocking")
+    void ownForestDoesNotPreventBlocking() {
+        harness.addToBattlefield(player1, new Forest());
+        addCreatureReady(player1, new MirriCatWarrior());
+        Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(List.of(1));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 1)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Unblocked Mirri deals damage only once despite first strike")
+    void unblockedFirstStrikeDealsDamageOnlyOnce() {
+        harness.setLife(player2, 20);
+        Permanent mirri = addCreatureReady(player1, new MirriCatWarrior());
+
+        declareAttackers(List.of(0));
+        resolveCombat();
+
+        harness.assertLife(player2, 18);
+        assertThat(mirri.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Mirri's first strike kills an attacker before it deals regular damage")
+    void firstStrikeWorksWhileBlocking() {
+        Permanent mirri = addCreatureReady(player1, new MirriCatWarrior());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.setLife(player1, 20);
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat(player2);
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(mirri);
+        assertThat(mirri.getMarkedDamage()).isZero();
+        harness.assertLife(player1, 20);
     }
 }
