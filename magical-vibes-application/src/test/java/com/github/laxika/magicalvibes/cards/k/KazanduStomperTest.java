@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -62,11 +61,49 @@ class KazanduStomperTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Kazandu Stomper");
     }
 
+    @Test
+    void resolvesWithoutAChoiceWhenNoLandsAreControlled() {
+        harness.addToBattlefield(player2, new Forest());
+        castStomper();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Kazandu Stomper");
+        harness.assertOnBattlefield(player2, "Forest");
+        harness.assertNotInHand(player1, "Forest");
+    }
+
+    @Test
+    void canReturnOnlyOneLandWhenSeveralAreControlled() {
+        Permanent firstForest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+        castStomper();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstForest.getId()));
+
+        assertThat(findPermanents(player1, "Forest")).hasSize(2);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void returnsAControlledLandToItsOwnersHand() {
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        gd.stolenCreatures.put(forest.getId(), player2.getId());
+        castStomper();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.assertNotInHand(player1, "Forest");
+        harness.assertInHand(player2, "Forest");
+        harness.assertOnBattlefield(player1, "Kazandu Stomper");
+    }
+
     private void castStomper() {
-        harness.setHand(player1, List.of(new KazanduStomper()));
-        harness.addMana(player1, ManaColor.GREEN, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new KazanduStomper(), "{5}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
