@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.f.FrenziedRaptor;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArmoredKincaller;
+import com.github.laxika.magicalvibes.cards.s.SunshotMilitia;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,52 +15,96 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ItzquinthFirstbornOfGishath.class, FrenziedRaptor.class, GrizzlyBears.class})
+@CardUsed({ItzquinthFirstbornOfGishath.class, ArmoredKincaller.class, SunshotMilitia.class})
 class ItzquinthFirstbornOfGishathTest extends BaseCardTest {
 
     @Test
     @DisplayName("Paying {2} makes a Dinosaur deal damage equal to its power to another creature")
     void payingTwoDealsDinosaurPowerDamage() {
-        Permanent dinosaur = harness.addToBattlefieldAndReturn(player1, new FrenziedRaptor());
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent dinosaur = harness.addToBattlefieldAndReturn(player1, new ArmoredKincaller());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SunshotMilitia());
 
         castItzquinth(dinosaur, target, true);
 
-        harness.assertInGraveyard(player1, "Grizzly Bears");
-        harness.assertOnBattlefield(player1, "Frenzied Raptor");
+        harness.assertInGraveyard(player1, "Sunshot Militia");
+        harness.assertOnBattlefield(player1, "Armored Kincaller");
+        assertThat(dinosaur.getMarkedDamage()).isZero();
     }
 
     @Test
     @DisplayName("Declining the payment does not deal damage")
     void decliningPaymentDoesNothing() {
-        Permanent dinosaur = harness.addToBattlefieldAndReturn(player1, new FrenziedRaptor());
-        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent dinosaur = harness.addToBattlefieldAndReturn(player1, new ArmoredKincaller());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new SunshotMilitia());
 
         castItzquinth(dinosaur, target, false);
 
-        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Sunshot Militia");
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
     @DisplayName("The first target must be a Dinosaur you control")
     void firstTargetMustBeControlledDinosaur() {
-        Permanent bear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent nonDinosaur = harness.addToBattlefieldAndReturn(player1, new SunshotMilitia());
+        Permanent opposingDinosaur = harness.addToBattlefieldAndReturn(player2, new ArmoredKincaller());
 
-        castItzquinth(null, null, false);
+        castItzquinth(null, null, true);
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validPermanentIds()).doesNotContain(bear.getId());
+        assertThat(choice.validPermanentIds())
+                .contains(harness.getPermanentId(player1, "Itzquinth, Firstborn of Gishath"))
+                .doesNotContain(nonDinosaur.getId(), opposingDinosaur.getId());
     }
 
     @Test
     @DisplayName("The second target must be another creature")
     void secondTargetMustBeAnotherCreature() {
-        Permanent dinosaur = harness.addToBattlefieldAndReturn(player1, new FrenziedRaptor());
-        castItzquinth(dinosaur, null, false);
+        Permanent dinosaur = harness.addToBattlefieldAndReturn(player1, new ArmoredKincaller());
+        castItzquinth(dinosaur, null, true);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, dinosaur.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Itzquinth can deal its own power as damage to an opponent's creature")
+    void enteringItzquinthCanBeDamageSource() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new SunshotMilitia());
+
+        castItzquinth(null, null, true);
+        harness.handlePermanentChosen(player1,
+                harness.getPermanentId(player1, "Itzquinth, Firstborn of Gishath"));
+        harness.handlePermanentChosen(player1, target.getId());
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(target.getMarkedDamage()).isEqualTo(2);
+        harness.assertOnBattlefield(player2, "Sunshot Militia");
+    }
+
+    @Test
+    @DisplayName("Declining payment requires no targets even when there is no other creature")
+    void canDeclineWithoutAnotherCreature() {
+        castItzquinth(null, null, false);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.assertOnBattlefield(player1, "Itzquinth, Firstborn of Gishath");
+    }
+
+    @Test
+    @DisplayName("Payment resolves before targets are selected")
+    void paymentPrecedesTargetSelection() {
+        harness.addToBattlefield(player2, new SunshotMilitia());
+
+        castItzquinth(null, null, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
     }
 
     private void castItzquinth(Permanent dinosaur, Permanent target, boolean pay) {
@@ -73,14 +117,22 @@ class ItzquinthFirstbornOfGishathTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, pay);
+
+        if (!pay) {
+            return;
+        }
 
         if (dinosaur != null) {
             harness.handlePermanentChosen(player1, dinosaur.getId());
         }
         if (target != null) {
             harness.handlePermanentChosen(player1, target.getId());
+            assertThat(target.getMarkedDamage()).isZero();
+            assertThat(gd.stack).hasSize(1);
             harness.passBothPriorities();
-            harness.handleMayAbilityChosen(player1, pay);
         }
     }
 }
