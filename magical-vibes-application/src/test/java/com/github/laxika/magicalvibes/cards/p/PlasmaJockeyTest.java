@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.Strangle;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PlasmaJockey.class, GrizzlyBears.class})
+@CardUsed({PlasmaJockey.class, GrizzlyBears.class, Strangle.class})
 class PlasmaJockeyTest extends BaseCardTest {
 
     @Test
@@ -54,8 +55,8 @@ class PlasmaJockeyTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(jockey);
     }
@@ -78,11 +79,80 @@ class PlasmaJockeyTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(jockey);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Plasma Jockey");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Blitz grants haste immediately without an enter-the-battlefield trigger")
+    void blitzAppliesDuringSpellResolution() {
+        harness.setHand(player1, List.of(new PlasmaJockey()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        harness.passBothPriorities();
+
+        Permanent jockey = findPermanent(player1, "Plasma Jockey");
+        assertThat(gqs.hasKeyword(gd, jockey, Keyword.HASTE)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Blitz haste remains after cleanup if the permanent remains on the battlefield")
+    void blitzHasteDoesNotExpireAtCleanup() {
+        harness.setHand(player1, List.of(new PlasmaJockey()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        resolveAllTriggers();
+        Permanent jockey = findPermanent(player1, "Plasma Jockey");
+        assertThat(gqs.hasKeyword(gd, jockey, Keyword.HASTE)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.clearPriorityPassed();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(jockey);
+        assertThat(gqs.hasKeyword(gd, jockey, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A normally cast Plasma Jockey does not draw when it dies")
+    void normalCastDoesNotDrawOnDeath() {
+        harness.setHand(player1, List.of(new PlasmaJockey(), new Strangle()));
+        harness.setLibrary(player1, List.of(new PlasmaJockey()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.castAndResolveSorcery(player1, 0, findPermanent(player1, "Plasma Jockey").getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Plasma Jockey");
+        harness.assertNotInHand(player1, "Plasma Jockey");
+    }
+
+    @Test
+    @DisplayName("A blitzed Plasma Jockey draws when killed before the end step")
+    void blitzDrawsOnDeathBeforeEndStep() {
+        harness.setHand(player1, List.of(new PlasmaJockey(), new Strangle()));
+        harness.setLibrary(player1, List.of(new PlasmaJockey()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of());
+        resolveAllTriggers();
+        harness.castAndResolveSorcery(player1, 0, findPermanent(player1, "Plasma Jockey").getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Plasma Jockey");
+        harness.assertInHand(player1, "Plasma Jockey");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }
