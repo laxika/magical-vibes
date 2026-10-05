@@ -46,4 +46,16 @@ class LuMengWuGeneralTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Lu Meng can block a creature without horsemanship")
+    void canBlockCreatureWithoutHorsemanship() {
+        addCreatureReady(player1, new ShuFootSoldiers());
+        Permanent blocker = addCreatureReady(player2, new LuMengWuGeneral());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
 }
