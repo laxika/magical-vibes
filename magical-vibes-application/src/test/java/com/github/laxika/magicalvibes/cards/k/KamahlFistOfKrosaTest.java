@@ -63,7 +63,6 @@ class KamahlFistOfKrosaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, land)).isFalse();
@@ -111,7 +110,6 @@ class KamahlFistOfKrosaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
         harness.passBothPriorities();
 
         assertThat(kamahl.getEffectivePower()).isEqualTo(kamahlPower);
@@ -131,6 +129,70 @@ class KamahlFistOfKrosaTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, battlefieldIndex(kamahl), 0, null, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An animated land receives the boost, and reanimating it preserves the boost and trample")
+    void reanimationPreservesBoost() {
+        Permanent kamahl = addPermanent(player1, new KamahlFistOfKrosa());
+        Permanent land = addPermanent(player1, new Forest());
+
+        harness.addMana(player1, ManaColor.GREEN, 7);
+        harness.activateAbility(player1, battlefieldIndex(kamahl), 0, null, land.getId());
+        harness.passBothPriorities();
+        harness.activateAbility(player1, battlefieldIndex(kamahl), 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, land, Keyword.TRAMPLE)).isTrue();
+
+        harness.activateAbility(player1, battlefieldIndex(kamahl), 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isLand(gd, land)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(4);
+        assertThat(gqs.hasKeyword(gd, land, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A land animated after the boost resolves does not receive that boost or trample")
+    void laterAnimationDoesNotReceiveEarlierBoost() {
+        Permanent kamahl = addPermanent(player1, new KamahlFistOfKrosa());
+        Permanent land = addPermanent(player1, new Forest());
+
+        harness.addMana(player1, ManaColor.GREEN, 6);
+        harness.activateAbility(player1, battlefieldIndex(kamahl), 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, battlefieldIndex(kamahl), 0, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, land)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, land, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Repeated boosts stack and do not affect creatures entering afterward")
+    void repeatedBoostsStackOnlyOnExistingCreatures() {
+        Permanent kamahl = addPermanent(player1, new KamahlFistOfKrosa());
+        Permanent creature = addPermanent(player1, new ElvishWarrior());
+
+        harness.addMana(player1, ManaColor.GREEN, 10);
+        harness.activateAbility(player1, battlefieldIndex(kamahl), 1, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, battlefieldIndex(kamahl), 1, null, null);
+        harness.passBothPriorities();
+        Permanent laterCreature = harness.enterBattlefieldAndReturn(player1, new ElvishWarrior());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(8);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(9);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, laterCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, laterCreature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, laterCreature, Keyword.TRAMPLE)).isFalse();
     }
 
     private Permanent addPermanent(Player player, Card card) {
