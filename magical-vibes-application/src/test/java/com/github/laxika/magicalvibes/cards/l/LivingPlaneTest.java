@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.m.MishrasFactory;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -12,9 +13,70 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LivingPlane.class, Forest.class, Mountain.class, GrizzlyBears.class, GloriousAnthem.class})
+@CardUsed({LivingPlane.class, Forest.class, Mountain.class, GrizzlyBears.class, GloriousAnthem.class,
+        MishrasFactory.class})
 class LivingPlaneTest extends BaseCardTest {
+
+    @Test
+    void laterLivingPlaneOverridesEarlierFactoryAnimation() {
+        Permanent factory = harness.addToBattlefieldAndReturn(player1, new MishrasFactory());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.castFromHand(player1, new LivingPlane(), "{2}{G}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, factory)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, factory)).isEqualTo(1);
+        assertThat(gqs.isLand(gd, factory)).isTrue();
+        assertThat(gqs.isCreature(gd, factory)).isTrue();
+    }
+
+    @Test
+    void laterFactoryAnimationOverridesLivingPlane() {
+        Permanent factory = harness.addToBattlefieldAndReturn(player1, new MishrasFactory());
+        harness.castFromHand(player1, new LivingPlane(), "{2}{G}{G}");
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, factory)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, factory)).isEqualTo(2);
+        assertThat(gqs.isLand(gd, factory)).isTrue();
+    }
+
+    @Test
+    void newlyEnteredAnimatedLandCannotTapForMana() {
+        harness.addToBattlefield(player1, new LivingPlane());
+        Permanent forest = harness.enterBattlefieldAndReturn(player1, new Forest());
+
+        assertThatThrownBy(() -> harness.tapPermanent(player1, 1))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+        assertThat(forest.isTapped()).isFalse();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+    }
+
+    @Test
+    void newerLivingPlaneReplacesOlderWorldAcrossPlayers() {
+        harness.addToBattlefield(player2, new LivingPlane());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+
+        harness.castFromHand(player1, new LivingPlane(), "{2}{G}{G}");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Living Plane");
+        harness.assertNotOnBattlefield(player2, "Living Plane");
+        harness.assertOnBattlefield(player1, "Living Plane");
+        assertThat(gqs.isCreature(gd, forest)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(1);
+    }
 
     @Test
     @DisplayName("Lands of both players become 1/1 creatures that are still lands")
