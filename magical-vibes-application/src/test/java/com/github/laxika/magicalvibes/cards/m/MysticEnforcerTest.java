@@ -130,6 +130,41 @@ class MysticEnforcerTest extends BaseCardTest {
         harness.assertLife(player1, 19);
     }
 
+    @Test
+    @DisplayName("Gains threshold immediately when its controller's graveyard reaches seven cards")
+    void gainsThresholdWhileOnBattlefield() {
+        fillGraveyard(player1, 6);
+        Permanent enforcer = addEnforcer(player1);
+
+        assertThat(gqs.getEffectivePower(gd, enforcer)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, enforcer)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, enforcer, Keyword.FLYING)).isFalse();
+
+        gd.playerGraveyards.get(player1.getId()).add(new DuskImp());
+
+        assertThat(gqs.getEffectivePower(gd, enforcer)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, enforcer)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, enforcer, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Threshold boosts only Mystic Enforcer, even above seven cards")
+    void thresholdBonusDoesNotAffectOtherCreatures() {
+        fillGraveyard(player1, 8);
+        Permanent enforcer = addEnforcer(player1);
+        Permanent ownVermin = addCreatureReady(player1, new InfectedVermin());
+        Permanent opposingVermin = addCreatureReady(player2, new InfectedVermin());
+
+        assertThat(gqs.getEffectivePower(gd, enforcer)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, enforcer)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, enforcer, Keyword.FLYING)).isTrue();
+        for (Permanent vermin : List.of(ownVermin, opposingVermin)) {
+            assertThat(gqs.getEffectivePower(gd, vermin)).isEqualTo(1);
+            assertThat(gqs.getEffectiveToughness(gd, vermin)).isEqualTo(1);
+            assertThat(gqs.hasKeyword(gd, vermin, Keyword.FLYING)).isFalse();
+        }
+    }
+
     private Permanent addEnforcer(Player player) {
         return addCreatureReady(player, new MysticEnforcer());
     }
