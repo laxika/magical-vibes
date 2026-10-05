@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.a.ArgothianSprite;
 import com.github.laxika.magicalvibes.cards.p.PhyrexianDragonEngine;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -12,14 +14,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MishraClaimedByGix.class, MishraLostToPhyrexia.class, PhyrexianDragonEngine.class,
+        ArgothianSprite.class, MachineOverMatter.class})
 class MishraClaimedByGixTest extends BaseCardTest {
 
     @Test
     @DisplayName("Attacking with two creatures drains each opponent for two and gains two life")
     void attacksDrainForNumberOfAttackers() {
-        Permanent mishra = addReady(player1, new MishraClaimedByGix());
-        Permanent bear = addReady(player1, new GrizzlyBears());
-        addReady(player2, new GrizzlyBears());
+        Permanent mishra = addCreatureReady(player1, new MishraClaimedByGix());
+        Permanent bear = addCreatureReady(player1, new ArgothianSprite());
+        addCreatureReady(player2, new ArgothianSprite());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
 
@@ -35,15 +39,15 @@ class MishraClaimedByGixTest extends BaseCardTest {
     @Test
     @DisplayName("Melds attacking Mishra with an attacking Phyrexian Dragon Engine")
     void meldsWhenBothPartsAttack() {
-        Permanent mishra = addReady(player1, new MishraClaimedByGix());
-        Permanent dragonEngine = addReady(player1, new PhyrexianDragonEngine());
-        Permanent ownCreature = addReady(player1, new GrizzlyBears());
-        addReady(player2, new GrizzlyBears());
+        Permanent mishra = addCreatureReady(player1, new MishraClaimedByGix());
+        Permanent dragonEngine = addCreatureReady(player1, new PhyrexianDragonEngine());
+        Permanent ownCreature = addCreatureReady(player1, new ArgothianSprite());
+        addCreatureReady(player2, new ArgothianSprite());
 
         declareAttackers(List.of(
                 gd.playerBattlefields.get(player1.getId()).indexOf(mishra),
                 gd.playerBattlefields.get(player1.getId()).indexOf(dragonEngine)));
-        resolveUntilInputOrStackEmpty();
+        resolveAllTriggers();
         harness.handleListChoice(player1, "Mishra deals 3 damage to any target");
         harness.handleListChoice(player1,
                 "Creatures you control gain menace and trample until end of turn");
@@ -63,12 +67,12 @@ class MishraClaimedByGixTest extends BaseCardTest {
     @Test
     @DisplayName("Mishra's back face resolves exactly three distinct modes")
     void backFaceChoosesThreeDistinctModes() {
-        Permanent ownCreature = addReady(player1, new GrizzlyBears());
-        Permanent opposingCreature = addReady(player2, new GrizzlyBears());
-        Permanent mishra = addReady(player1, new MishraLostToPhyrexia());
+        Permanent ownCreature = addCreatureReady(player1, new ArgothianSprite());
+        Permanent opposingCreature = addCreatureReady(player2, new ArgothianSprite());
+        Permanent mishra = addCreatureReady(player1, new MishraLostToPhyrexia());
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(mishra)));
-        resolveUntilInputOrStackEmpty();
+        resolveAllTriggers();
         chooseNonTargetingBackModes();
 
         assertThat(gqs.hasKeyword(gd, ownCreature, Keyword.MENACE)).isTrue();
@@ -79,6 +83,159 @@ class MishraClaimedByGixTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Powerstone")).allMatch(Permanent::isTapped);
     }
 
+    @Test
+    void drainsWhenMishraDoesNotAttack() {
+        addCreatureReady(player1, new MishraClaimedByGix());
+        addCreatureReady(player1, new ArgothianSprite());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(1));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+        harness.assertOnBattlefield(player1, "Mishra, Claimed by Gix");
+    }
+
+    @Test
+    void countsAttackersAtResolutionAfterOneIsReturnedToHand() {
+        addCreatureReady(player1, new MishraClaimedByGix());
+        Permanent sprite = addCreatureReady(player1, new ArgothianSprite());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new MachineOverMatter()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        declareAttackers(List.of(0, 1));
+        harness.castInstant(player1, 0, sprite.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Argothian Sprite");
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void removedPartnerPreventsMeldButDoesNotPreventDrain() {
+        addCreatureReady(player1, new MishraClaimedByGix());
+        Permanent partner = addCreatureReady(player1, new PhyrexianDragonEngine());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new MachineOverMatter()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        declareAttackers(List.of(0, 1));
+        harness.castInstant(player1, 0, partner.getId());
+        resolveAllTriggers();
+
+        harness.assertInHand(player1, "Phyrexian Dragon Engine");
+        harness.assertOnBattlefield(player1, "Mishra, Claimed by Gix");
+        assertThat(findPermanents(player1, "Mishra, Lost to Phyrexia")).isEmpty();
+        harness.assertLife(player1, 21);
+        harness.assertLife(player2, 19);
+    }
+
+    @Test
+    void doesNotMeldWithNonattackingPartner() {
+        addCreatureReady(player1, new MishraClaimedByGix());
+        addCreatureReady(player1, new PhyrexianDragonEngine());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Mishra, Claimed by Gix");
+        harness.assertOnBattlefield(player1, "Phyrexian Dragon Engine");
+        assertThat(findPermanents(player1, "Mishra, Lost to Phyrexia")).isEmpty();
+    }
+
+    @Test
+    void doesNotMeldWithPartnerOwnedByOpponent() {
+        addCreatureReady(player1, new MishraClaimedByGix());
+        PhyrexianDragonEngine stolen = new PhyrexianDragonEngine();
+        stolen.setOwnerId(player2.getId());
+        addCreatureReady(player1, stolen);
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Mishra, Claimed by Gix");
+        harness.assertOnBattlefield(player1, "Phyrexian Dragon Engine");
+        assertThat(findPermanents(player1, "Mishra, Lost to Phyrexia")).isEmpty();
+    }
+
+    @Test
+    void meldsWithAttackingPartnerInsteadOfEarlierNonattackingPartner() {
+        Permanent mishra = addCreatureReady(player1, new MishraClaimedByGix());
+        Permanent idlePartner = addCreatureReady(player1, new PhyrexianDragonEngine());
+        Permanent attackingPartner = addCreatureReady(player1, new PhyrexianDragonEngine());
+
+        declareAttackers(List.of(0, 2));
+        resolveAllTriggers();
+        chooseNonTargetingBackModes();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .contains(idlePartner).doesNotContain(mishra, attackingPartner);
+        assertThat(findPermanent(player1, "Mishra, Lost to Phyrexia").getMeldComponentCards())
+                .contains(attackingPartner.getOriginalCard()).doesNotContain(idlePartner.getOriginalCard());
+    }
+
+    @Test
+    void tokenPartnerIsExiledButCannotMeld() {
+        addCreatureReady(player1, new MishraClaimedByGix());
+        PhyrexianDragonEngine tokenCopy = new PhyrexianDragonEngine();
+        tokenCopy.setToken(true);
+        addCreatureReady(player1, tokenCopy);
+
+        declareAttackers(List.of(0, 1));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Mishra, Lost to Phyrexia")).isEmpty();
+        assertThat(findPermanents(player1, "Mishra, Claimed by Gix")).isEmpty();
+        assertThat(findPermanents(player1, "Phyrexian Dragon Engine")).isEmpty();
+        assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getName().equals("Mishra, Claimed by Gix"));
+    }
+
+    @Test
+    void backFaceAttackModesAreChosenBeforePassingPriority() {
+        addCreatureReady(player1, new MishraLostToPhyrexia());
+
+        declareAttackers(List.of(0));
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        chooseNonTargetingBackModes();
+        resolveAllTriggers();
+        assertThat(findPermanents(player1, "Powerstone")).hasSize(2);
+    }
+
+    @Test
+    void backFaceTargetedModesDiscardDamageAndDestroy() {
+        addCreatureReady(player1, new MishraLostToPhyrexia());
+        Permanent artifact = addCreatureReady(player2, new PhyrexianDragonEngine());
+        harness.setHand(player2, List.of(new ArgothianSprite(), new ArgothianSprite()));
+        harness.setLife(player2, 20);
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        harness.handleListChoice(player1, "Target opponent discards two cards");
+        harness.handleListChoice(player1, "Mishra deals 3 damage to any target");
+        harness.handleListChoice(player1, "Destroy target artifact or planeswalker");
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, artifact.getId());
+        resolveAllTriggers();
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        harness.assertLife(player2, 17);
+        harness.assertInGraveyard(player2, "Phyrexian Dragon Engine");
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .filteredOn(card -> card.getName().equals("Argothian Sprite")).hasSize(2);
+    }
+
     private void chooseNonTargetingBackModes() {
         harness.handleListChoice(player1,
                 "Creatures you control gain menace and trample until end of turn");
@@ -87,14 +244,4 @@ class MishraClaimedByGixTest extends BaseCardTest {
         harness.handleListChoice(player1, "Create two tapped Powerstone tokens");
     }
 
-    private void resolveUntilInputOrStackEmpty() {
-        while (!gd.interaction.isAwaitingInput() && !gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
-    }
-
-    private Permanent addReady(com.github.laxika.magicalvibes.model.Player player,
-            com.github.laxika.magicalvibes.model.Card card) {
-        return addCreatureReady(player, card);
-    }
 }
