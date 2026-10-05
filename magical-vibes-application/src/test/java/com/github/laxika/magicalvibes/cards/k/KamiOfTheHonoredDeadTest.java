@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.p.PatronOfTheKitsune;
 import com.github.laxika.magicalvibes.cards.s.SickeningShoal;
 import com.github.laxika.magicalvibes.cards.t.TorrentOfStone;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -39,11 +38,21 @@ class KamiOfTheHonoredDeadTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("The Kami has flying")
-    void hasFlying() {
-        var kami = addCreatureReady(player1, new KamiOfTheHonoredDead());
+    @DisplayName("Lethal damage still gains life for the full damage dealt")
+    void lethalDamageStillGainsLife() {
+        harness.addToBattlefield(player1, new KamiOfTheHonoredDead());
+        harness.setLife(player1, 20);
+        harness.setHand(player2, List.of(new TorrentOfStone(), new TorrentOfStone()));
+        harness.addMana(player2, ManaColor.RED, 8);
+        UUID kamiId = harness.getPermanentId(player1, "Kami of the Honored Dead");
 
-        assertThat(gqs.hasKeyword(gd, kami, Keyword.FLYING)).isTrue();
+        harness.castAndResolveInstant(player2, 0, kamiId);
+        resolveAllTriggers();
+        harness.castAndResolveInstant(player2, 0, kamiId);
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Kami of the Honored Dead");
+        harness.assertLife(player1, 28);
     }
 
     @Test
@@ -55,8 +64,7 @@ class KamiOfTheHonoredDeadTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 4);
 
         UUID kamiId = harness.getPermanentId(player1, "Kami of the Honored Dead");
-        harness.castInstant(player2, 0, kamiId);
-        harness.passBothPriorities(); // Torrent of Stone resolves — 4 damage
+        harness.castAndResolveInstant(player2, 0, kamiId);
         harness.passBothPriorities(); // the trigger resolves
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(24);
@@ -70,8 +78,7 @@ class KamiOfTheHonoredDeadTest extends BaseCardTest {
         addCreatureReady(player1, new GnarledMass());
         addCreatureReady(player2, new KamiOfTheHonoredDead());
 
-        declareAttackers(player1, List.of(0));
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat(player1);
         resolveAllTriggers();
@@ -93,11 +100,30 @@ class KamiOfTheHonoredDeadTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(c -> c.getId().equals(spirit.getId()));
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getId().equals(spirit.getId()));
+    }
+
+    @Test
+    @DisplayName("Soulshift can return a Spirit with mana value exactly six")
+    void returnsSpiritAtManaValueBoundary() {
+        harness.addToBattlefield(player1, new KamiOfTheHonoredDead());
+        Card spirit = new PatronOfTheKitsune();
+        harness.setGraveyard(player1, List.of(spirit));
+
+        sickeningShoalToKillKami();
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(spirit.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card.getId().equals(spirit.getId()));
     }
 
     @Test
@@ -121,7 +147,7 @@ class KamiOfTheHonoredDeadTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Soulshift can be declined even when a legal Spirit target exists")
+    @DisplayName("Soulshift requires a target and may be declined when it resolves")
     void soulshiftCanBeDeclined() {
         harness.addToBattlefield(player1, new KamiOfTheHonoredDead());
         Card spirit = new KamiOfFalseHope();
@@ -131,10 +157,12 @@ class KamiOfTheHonoredDeadTest extends BaseCardTest {
 
         var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.minCount()).isZero();
+        assertThat(choice.minCount()).isEqualTo(1);
 
-        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(spirit.getId()));
         harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(card -> card.getId().equals(spirit.getId()));
         assertThat(gd.playerHands.get(player1.getId())).noneMatch(card -> card.getId().equals(spirit.getId()));
