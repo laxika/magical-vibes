@@ -21,8 +21,7 @@ class NezumiBoneReaderTest extends BaseCardTest {
     @DisplayName("Sacrificing a creature makes the target player discard a card")
     void targetPlayerDiscards() {
         setupBoneReader();
-        harness.addToBattlefield(player1, new WanderingOnes());
-        UUID wanderingOnesId = harness.getPermanentId(player1, "Wandering Ones");
+        UUID wanderingOnesId = harness.addToBattlefieldAndReturn(player1, new WanderingOnes()).getId();
         harness.setHand(player2, List.of(new WanderingOnes()));
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -68,8 +67,7 @@ class NezumiBoneReaderTest extends BaseCardTest {
     @DisplayName("Can target only a player")
     void cannotTargetPermanent() {
         setupBoneReader();
-        harness.addToBattlefield(player2, new WanderingOnes());
-        UUID wanderingOnesId = harness.getPermanentId(player2, "Wandering Ones");
+        UUID wanderingOnesId = harness.addToBattlefieldAndReturn(player2, new WanderingOnes()).getId();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, wanderingOnesId))
                 .isInstanceOf(IllegalStateException.class);
@@ -94,6 +92,82 @@ class NezumiBoneReaderTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Cannot activate during the opponent's main phase")
+    void cannotActivateDuringOpponentsTurn() {
+        setupBoneReader();
+        harness.forceActivePlayer(player2);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Nezumi Bone-Reader");
+    }
+
+    @Test
+    @DisplayName("Cannot activate while another ability is on the stack")
+    void cannotActivateWithNonemptyStack() {
+        setupBoneReader();
+        UUID sacrificeId = harness.addToBattlefieldAndReturn(player1, new WanderingOnes()).getId();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setHand(player2, List.of(new WanderingOnes()));
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.handlePermanentChosen(player1, sacrificeId);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertOnBattlefield(player1, "Nezumi Bone-Reader");
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+    }
+
+    @Test
+    @DisplayName("An empty hand does not prevent activation or refund the sacrifice")
+    void canTargetPlayerWithEmptyHand() {
+        setupBoneReader();
+        harness.setHand(player2, List.of());
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.assertInGraveyard(player1, "Nezumi Bone-Reader");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The target chooses exactly one card from their hand")
+    void targetChoosesOneCard() {
+        setupBoneReader();
+        harness.setHand(player2, List.of(new WanderingOnes(), new NezumiBoneReader()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInHand(player2, "Wandering Ones");
+        harness.assertInGraveyard(player2, "Nezumi Bone-Reader");
+        harness.assertNotInGraveyard(player2, "Wandering Ones");
+    }
+
+    @Test
+    @DisplayName("A tapped, summoning-sick Bone-Reader can activate in the postcombat main phase")
+    void canActivateWhileTappedAndSummoningSick() {
+        harness.addToBattlefieldAndReturn(player1, new NezumiBoneReader()).setTapped(true);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.setHand(player2, List.of(new WanderingOnes()));
+
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player1, "Nezumi Bone-Reader");
+        harness.assertInGraveyard(player2, "Wandering Ones");
     }
 
     private void setupBoneReader() {
