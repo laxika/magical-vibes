@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.g.GrayOgre;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
+import com.github.laxika.magicalvibes.cards.m.MysticSubdual;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({OboshThePreypiercer.class, GrayOgre.class, GrizzlyBears.class, Incinerate.class,
-        SerraAngel.class, Shock.class})
+        SerraAngel.class, Shock.class, MysticSubdual.class})
 class OboshThePreypiercerTest extends BaseCardTest {
 
     @Test
@@ -87,5 +88,28 @@ class OboshThePreypiercerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    void doublesItsOwnCombatDamage() {
+        addCreatureReady(player1, new OboshThePreypiercer());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(14);
+    }
+
+    @Test
+    void doesNotDoubleCombatDamageAfterLosingAllAbilities() {
+        Permanent obosh = addCreatureReady(player1, new OboshThePreypiercer());
+        harness.setHand(player1, List.of(new MysticSubdual()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, obosh.getId());
+        harness.passBothPriorities();
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
     }
 }
