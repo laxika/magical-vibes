@@ -81,6 +81,66 @@ class PhantatogTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrifice is paid immediately and the boost waits for resolution")
+    void sacrificeIsPaidBeforeResolution() {
+        Permanent phantatog = harness.addToBattlefieldAndReturn(player1, new Phantatog());
+        harness.addToBattlefield(player1, new EarnestFellowship());
+        phantatog.setTapped(true);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertNotOnBattlefield(player1, "Earnest Fellowship");
+        harness.assertInGraveyard(player1, "Earnest Fellowship");
+        assertThat(phantatog.getPowerModifier()).isZero();
+        assertThat(phantatog.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(phantatog.getPowerModifier()).isEqualTo(1);
+        assertThat(phantatog.getToughnessModifier()).isEqualTo(1);
+        assertThat(phantatog.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A noncreature card can be discarded and is paid before resolution")
+    void discardNoncreatureIsPaidBeforeResolution() {
+        Permanent phantatog = harness.addToBattlefieldAndReturn(player1, new Phantatog());
+        harness.setHand(player1, List.of(new EarnestFellowship()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertNotInHand(player1, "Earnest Fellowship");
+        harness.assertInGraveyard(player1, "Earnest Fellowship");
+        assertThat(phantatog.getPowerModifier()).isZero();
+        assertThat(phantatog.getToughnessModifier()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(phantatog.getPowerModifier()).isEqualTo(1);
+        assertThat(phantatog.getToughnessModifier()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The discard ability can be activated repeatedly and its boosts accumulate")
+    void repeatedDiscardsAccumulate() {
+        Permanent phantatog = harness.addToBattlefieldAndReturn(player1, new Phantatog());
+        harness.setHand(player1, List.of(new Phantatog(), new EarnestFellowship()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Phantatog");
+        harness.assertInGraveyard(player1, "Earnest Fellowship");
+        assertThat(phantatog.getPowerModifier()).isEqualTo(2);
+        assertThat(phantatog.getToughnessModifier()).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Cannot activate without a matching cost")
     void cannotActivateWithoutCost() {
         harness.addToBattlefield(player1, new Phantatog());
