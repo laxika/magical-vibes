@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HumbleBudoka;
+import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MyojinOfLifesWeb.class, HumbleBudoka.class, Forest.class})
+@CardUsed({MyojinOfLifesWeb.class, HumbleBudoka.class, Forest.class, SoulWarden.class})
 class MyojinOfLifesWebTest extends BaseCardTest {
 
     @Test
@@ -128,6 +129,70 @@ class MyojinOfLifesWebTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Not enough counters");
+    }
+
+    @Test
+    @DisplayName("All chosen creatures enter simultaneously and see each other enter")
+    void chosenCreaturesSeeEachOtherEnter() {
+        addReadyMyojin(player1);
+        harness.setLife(player1, 20);
+        harness.setHand(player1, List.of(new SoulWarden(), new SoulWarden()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("The controller may stop after putting only some eligible creatures onto the battlefield")
+    void canChooseOnlySomeCreatures() {
+        addReadyMyojin(player1);
+        Card chosen = new HumbleBudoka();
+        Card remaining = new HumbleBudoka();
+        harness.setHand(player1, List.of(chosen, remaining));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(remaining);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> p.getCard() == chosen)
+                .hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A summoning-sick tapped Myojin can activate during an opponent's turn and pays its counter immediately")
+    void activatesWithoutTappingAtInstantSpeed() {
+        Permanent myojin = addReadyMyojin(player1);
+        myojin.setSummoningSick(true);
+        myojin.setTapped(true);
+        harness.setHand(player1, List.of(new HumbleBudoka()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(myojin.getCounterCount(CounterType.DIVINITY)).isZero();
+        assertThat(gqs.hasKeyword(gd, myojin, Keyword.INDESTRUCTIBLE)).isFalse();
+        assertThat(myojin.isTapped()).isTrue();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Humble Budoka");
     }
 
     private Permanent addReadyMyojin(Player player) {
