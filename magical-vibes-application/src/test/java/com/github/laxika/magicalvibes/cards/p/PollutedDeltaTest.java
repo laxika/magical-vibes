@@ -102,6 +102,60 @@ class PollutedDeltaTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
+    @Test
+    @DisplayName("Choosing a Swamp moves exactly one card from your library and leaves the opponent's library alone")
+    void choosesSwampFromControllersLibrary() {
+        Swamp swamp = new Swamp();
+        Island island = new Island();
+        Mountain opposingCard = new Mountain();
+        harness.addToBattlefield(player1, new PollutedDelta());
+        harness.setLibrary(player1, List.of(island, swamp));
+        harness.setLibrary(player2, List.of(opposingCard));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertOnBattlefield(player1, "Swamp");
+        harness.assertNotOnBattlefield(player1, "Island");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement().satisfies(permanent -> assertThat(permanent.isTapped()).isFalse());
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(island);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(opposingCard);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An empty library does not prevent paying the costs and resolving the search")
+    void searchWithEmptyLibrary() {
+        harness.addToBattlefield(player1, new PollutedDelta());
+        harness.setLibrary(player1, List.of());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertInGraveyard(player1, "Polluted Delta");
+        harness.assertNotOnBattlefield(player1, "Polluted Delta");
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("An unaffordable life payment rejects activation without tapping or sacrificing the land")
+    void cannotActivateWithoutEnoughLife() {
+        Permanent delta = harness.addToBattlefieldAndReturn(player1, new PollutedDelta());
+        harness.setLife(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertLife(player1, 0);
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(delta);
+        assertThat(delta.isTapped()).isFalse();
+        harness.assertNotInGraveyard(player1, "Polluted Delta");
+    }
+
     private void activateSearch() {
         harness.addToBattlefield(player1, new PollutedDelta());
         harness.setLibrary(player1, List.of(new Island(), new Swamp(), new Mountain(), new BarrenMoor(),
