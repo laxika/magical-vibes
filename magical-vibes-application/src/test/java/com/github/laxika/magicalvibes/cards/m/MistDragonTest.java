@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.s.Soar;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -9,9 +10,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(MistDragon.class)
+@CardUsed({MistDragon.class, Soar.class})
 class MistDragonTest extends BaseCardTest {
 
     @Test
@@ -34,9 +37,7 @@ class MistDragonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.CLEANUP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
 
         assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isTrue();
     }
@@ -99,18 +100,64 @@ class MistDragonTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(dragon);
 
-        advanceTurn(); // player2's turn
+        harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(dragon);
 
-        advanceTurn(); // player1's untap step — Mist Dragon phases in
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(dragon);
         assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isTrue();
     }
 
-    private void advanceTurn() {
-        harness.forceStep(TurnStep.CLEANUP);
+    @Test
+    @DisplayName("A later Soar grants flying after Mist Dragon loses it")
+    void laterAuraGrantsFlyingAfterLoss() {
+        Permanent dragon = addCreatureReady(player1, new MistDragon());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isFalse();
+
+        harness.setHand(player1, List.of(new Soar()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.clearPriorityPassed();
+        harness.castEnchantment(player1, 0, dragon.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Mist Dragon can remove flying granted by an earlier Soar")
+    void laterLossRemovesAuraFlying() {
+        Permanent dragon = addCreatureReady(player1, new MistDragon());
+        harness.setHand(player1, List.of(new Soar()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, dragon.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isTrue();
+
+        harness.clearPriorityPassed();
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An ability resolving while Mist Dragon is phased out cannot grant flying")
+    void pendingFlyingGrantDoesNotAffectPhasedOutDragon() {
+        Permanent dragon = addCreatureReady(player1, new MistDragon());
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.phasedOutPermanents.get(player1.getId())).contains(dragon);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.UPKEEP);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(dragon);
+        assertThat(gqs.hasKeyword(gd, dragon, Keyword.FLYING)).isFalse();
     }
 
 }
