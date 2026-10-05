@@ -102,6 +102,28 @@ class OniPossessionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing another creature leaves the enchanted creature and Aura intact")
+    void canSacrificeAnotherCreature() {
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player1, new HumbleBudoka());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new WanderingOnes());
+        attachPossession(player1, enchanted);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, other.getId());
+
+        harness.assertInGraveyard(player1, "Wandering Ones");
+        harness.assertNotOnBattlefield(player1, "Wandering Ones");
+        harness.assertOnBattlefield(player1, "Humble Budoka");
+        harness.assertOnBattlefield(player1, "Oni Possession");
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(5);
+        assertThat(gqs.hasKeyword(gd, enchanted, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.effectiveCreatureSubtypes(gd, enchanted))
+                .containsExactlyInAnyOrder(CardSubtype.DEMON, CardSubtype.SPIRIT);
+    }
+
+    @Test
     @DisplayName("Does not trigger during an opponent's upkeep")
     void doesNotTriggerDuringOpponentUpkeep() {
         Permanent budoka = harness.addToBattlefieldAndReturn(player1, new HumbleBudoka());
@@ -123,8 +145,7 @@ class OniPossessionTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(p -> p.getCard() instanceof OniPossession);
+        harness.assertNotOnBattlefield(player1, "Oni Possession");
         harness.assertInGraveyard(player1, "Oni Possession");
     }
 
