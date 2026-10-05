@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.j;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({JaceMemoryAdept.class, RuneclawBear.class})
 class JaceMemoryAdeptTest extends BaseCardTest {
 
     @Test
@@ -105,20 +107,72 @@ class JaceMemoryAdeptTest extends BaseCardTest {
                 .hasMessageContaining("Not enough loyalty");
     }
 
+    @Test
+    void plusOneCanTargetControllerAndDrawsBeforeMilling() {
+        addReadyJace(player1, 4);
+        stockLibrary(player1, 2);
+        Card topCard = gd.playerDecks.get(player1.getId()).getFirst();
+        Card secondCard = gd.playerDecks.get(player1.getId()).get(1);
+
+        harness.activateAbility(player1, 0, 0, null, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(topCard);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(secondCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void zeroMillsOnlyAvailableCards() {
+        addReadyJace(player1, 4);
+        stockLibrary(player2, 3);
+
+        harness.activateAbility(player1, 0, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
+    }
+
+    @Test
+    void ultimateCanChooseNoTargetsAndStillPaysLoyalty() {
+        Permanent jace = addReadyJace(player1, 8);
+        stockLibrary(player1, 30);
+        stockLibrary(player2, 30);
+
+        harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of());
+        harness.passBothPriorities();
+
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(30);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(30);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void ultimateCannotTargetTheSamePlayerTwice() {
+        addReadyJace(player1, 8);
+
+        assertThatThrownBy(() -> harness.activateAbilityWithMultiTargets(player1, 0, 2,
+                List.of(player2.getId(), player2.getId())))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void stockLibrary(Player player, int count) {
         List<Card> library = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            library.add(new GrizzlyBears());
+            library.add(new RuneclawBear());
         }
         harness.setLibrary(player, library);
         harness.setHand(player, List.of());
     }
 
     private Permanent addReadyJace(Player player, int loyalty) {
-        Permanent perm = new Permanent(new JaceMemoryAdept());
+        Permanent perm = harness.addToBattlefieldAndReturn(player, new JaceMemoryAdept());
         perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return perm;
