@@ -79,4 +79,50 @@ class PriorityAvengerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");
     }
+
+    @Test
+    @DisplayName("The restriction returns after the last stack entry resolves")
+    void blocksInstantsAgainAfterStackEmpties() {
+        harness.addToBattlefield(player1, new PriorityAvenger());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new Shock()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("Instants can be cast on an empty stack after Priority Avenger dies")
+    void restrictionEndsWhenAvengerLeavesBattlefield() {
+        harness.addToBattlefield(player1, new PriorityAvenger());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new Shock(), new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        var avengerId = harness.getPermanentId(player1, "Priority Avenger");
+
+        harness.castCreature(player1, 0);
+        harness.castAndResolveInstant(player1, 0, avengerId);
+        harness.castAndResolveInstant(player1, 0, avengerId);
+        harness.assertInGraveyard(player1, "Priority Avenger");
+        harness.assertNotOnBattlefield(player1, "Priority Avenger");
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        harness.assertLife(player2, 18);
+    }
 }
