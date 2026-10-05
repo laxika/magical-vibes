@@ -75,14 +75,79 @@ class PropagandaTest extends BaseCardTest {
     @DisplayName("Attacking a planeswalker controlled by Propaganda's controller is not taxed")
     void doesNotTaxAttacksAgainstPlaneswalker() {
         harness.addToBattlefield(player1, new Propaganda());
-        Permanent planeswalker = harness.addToBattlefieldAndReturn(player1, new ChandraNalaar());
-        planeswalker.setCounterCount(CounterType.LOYALTY, 6);
+        Permanent planeswalker = harness.enterBattlefieldAndReturn(player1, new ChandraNalaar());
         addCreatureReady(player2, new GrizzlyBears());
 
         declareAttackers(player2, List.of(0), Map.of(0, planeswalker.getId()));
 
         assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
         assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Multiple Propagandas add their attack costs together")
+    void multipleCopiesRequireFourManaPerAttacker() {
+        harness.addToBattlefield(player1, new Propaganda());
+        harness.addToBattlefield(player1, new Propaganda());
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> declareAttackers(player2, List.of(0)))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana to pay attack tax");
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isEqualTo(3);
+        assertThat(attacker.isTapped()).isFalse();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("Only declared attackers incur the tax")
+    void undeclaredCreatureDoesNotIncreaseCost() {
+        harness.addToBattlefield(player1, new Propaganda());
+        addCreatureReady(player2, new GrizzlyBears());
+        Permanent nonattacker = addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player2, ManaColor.GREEN, 2);
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(nonattacker.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A mixed attack pays only for the creature attacking the player")
+    void mixedAttackTaxesOnlyPlayerTarget() {
+        harness.addToBattlefield(player1, new Propaganda());
+        Permanent planeswalker = harness.enterBattlefieldAndReturn(player1, new ChandraNalaar());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        declareAttackers(player2, List.of(0, 1), Map.of(1, planeswalker.getId()));
+
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotal()).isZero();
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Propaganda stops taxing attacks after leaving the battlefield")
+    void removedPropagandaDoesNotTax() {
+        Permanent propaganda = harness.addToBattlefieldAndReturn(player1, new Propaganda());
+        addCreatureReady(player2, new GrizzlyBears());
+        gd.playerBattlefields.get(player1.getId()).remove(propaganda);
+        gd.playerGraveyards.get(player1.getId()).add(propaganda.getCard());
+
+        declareAttackers(player2, List.of(0));
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(18);
     }
 
     private void declareAttackers(Player player, List<Integer> attackerIndices, Map<Integer, UUID> attackTargets) {
