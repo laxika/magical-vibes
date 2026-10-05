@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -35,13 +36,14 @@ class IntermediateChirographyTest extends BaseCardTest {
                 .containsExactlyInAnyOrder(CardColor.WHITE, CardColor.BLACK);
         assertThat(inklings.getFirst().getEffectivePower()).isEqualTo(2);
         assertThat(inklings.getFirst().getEffectiveToughness()).isEqualTo(1);
+        assertThat(inklings.getFirst().getCard().getKeywords()).contains(Keyword.FLYING);
     }
 
     @Test
     @DisplayName("At level 2, the first life loss each turn puts a counter on a creature you control")
     void firstLifeLossPutsCounterOnceEachTurn() {
         Permanent chirography = harness.addToBattlefieldAndReturn(player1, new IntermediateChirography());
-        chirography.setCounterCount(CounterType.LEVEL, 1);
+        chirography.setClassLevel(2);
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         loseLifeWithShock(player1);
@@ -58,7 +60,7 @@ class IntermediateChirographyTest extends BaseCardTest {
     @Test
     @DisplayName("At level 3, a modified creature dying creates an Inkling at the next end step")
     void modifiedCreatureDeathCreatesInkling() {
-        Permanent chirography = levelThreeChirography();
+        levelThreeChirography();
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
@@ -84,8 +86,80 @@ class IntermediateChirographyTest extends BaseCardTest {
 
     private Permanent levelThreeChirography() {
         Permanent chirography = harness.addToBattlefieldAndReturn(player1, new IntermediateChirography());
-        chirography.setCounterCount(CounterType.LEVEL, 2);
+        chirography.setClassLevel(3);
         return chirography;
+    }
+
+    @Test
+    void canGainBothLevelsThroughTheirActivatedAbilities() {
+        Permanent chirography = harness.addToBattlefieldAndReturn(player1, new IntermediateChirography());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(chirography.getClassLevel()).isEqualTo(2);
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        assertThat(chirography.getClassLevel()).isEqualTo(3);
+        assertThat(chirography.getCounterCount(CounterType.LEVEL)).isZero();
+    }
+
+    @Test
+    void levelOneDoesNotTriggerOnLifeLoss() {
+        harness.addToBattlefield(player1, new IntermediateChirography());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        loseLifeWithShock(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void lifeLostBeforeGainingLevelTwoStillCountsAsFirstLossOfTurn() {
+        harness.addToBattlefield(player1, new IntermediateChirography());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        loseLifeWithShock(player1);
+
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        loseLifeWithShock(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void modifiedOpponentCreatureDeathDoesNotCreateInkling() {
+        levelThreeChirography();
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        destroyWithMurder(player1, creature);
+        advanceToEndStep(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(controlledInklings(player1)).isEmpty();
+    }
+
+    @Test
+    void modifiedCreatureDeathTriggersDuringOpponentsEndStep() {
+        levelThreeChirography();
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+
+        destroyWithMurder(player2, creature);
+        advanceToEndStep(player2);
+        harness.passBothPriorities();
+
+        assertThat(controlledInklings(player1)).hasSize(1);
     }
 
     private void loseLifeWithShock(Player player) {
@@ -94,8 +168,7 @@ class IntermediateChirographyTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player, List.of(new Shock()));
         harness.addMana(player, ManaColor.RED, 1);
-        harness.castInstant(player, 0, player.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player, 0, player.getId());
     }
 
     private void destroyWithMurder(Player player, Permanent creature) {
@@ -105,8 +178,7 @@ class IntermediateChirographyTest extends BaseCardTest {
         harness.setHand(player, List.of(new Murder()));
         harness.addMana(player, ManaColor.BLACK, 2);
         harness.addMana(player, ManaColor.COLORLESS, 1);
-        harness.castInstant(player, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player, 0, creature.getId());
         harness.passBothPriorities();
     }
 
