@@ -3,16 +3,15 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MarduHordechief.class})
 class MarduHordechiefTest extends BaseCardTest {
 
     @Test
@@ -44,9 +43,54 @@ class MarduHordechiefTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mardu Hordechief");
     }
 
+    @Test
+    @DisplayName("An opponent attacking does not satisfy your raid condition")
+    void opponentsAttackDoesNotEnableRaid() {
+        gd.playersDeclaredAttackersThisTurn.add(player2.getId());
+
+        castMarduHordechief();
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(findPermanents(player1, "Warrior")).isEmpty();
+        assertThat(findPermanents(player2, "Warrior")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Raid creates the token only when the triggered ability resolves")
+    void tokenCreationUsesTheStack() {
+        gd.playersDeclaredAttackersThisTurn.add(player1.getId());
+
+        castMarduHordechief();
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Mardu Hordechief");
+        assertThat(findPermanents(player1, "Warrior")).isEmpty();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        Permanent token = findPermanent(player1, "Warrior");
+        assertThat(findPermanents(player1, "Warrior")).hasSize(1);
+        assertThat(findPermanents(player2, "Warrior")).isEmpty();
+        assertThat(token.isTapped()).isFalse();
+        assertThat(token.isAttacking()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Entering without being cast still triggers raid")
+    void enteringWithoutCastingTriggersRaid() {
+        gd.playersDeclaredAttackersThisTurn.add(player1.getId());
+
+        harness.enterBattlefieldAndReturn(player1, new MarduHordechief());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Warrior")).hasSize(1);
+        assertThat(findPermanents(player2, "Warrior")).isEmpty();
+    }
+
     private void castMarduHordechief() {
-        harness.setHand(player1, List.of(new MarduHordechief()));
-        harness.addMana(player1, ManaColor.WHITE, 3);
-        harness.castCreature(player1, 0);
+        harness.castFromHand(player1, new MarduHordechief(), "{2}{W}");
     }
 }
