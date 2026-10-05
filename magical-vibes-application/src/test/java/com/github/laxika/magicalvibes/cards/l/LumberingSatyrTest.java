@@ -103,4 +103,41 @@ class LumberingSatyrTest extends BaseCardTest {
 
         assertThat(blocker.isBlocking()).isTrue();
     }
+
+    @Test
+    @DisplayName("Forestwalk remains until the last Lumbering Satyr leaves")
+    void forestwalkRemainsWhileAnotherSatyrIsPresent() {
+        Permanent firstSatyr = harness.addToBattlefieldAndReturn(player1, new LumberingSatyr());
+        Permanent secondSatyr = harness.addToBattlefieldAndReturn(player2, new LumberingSatyr());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new FreshVolunteers());
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FORESTWALK)).isTrue();
+
+        gd.playerBattlefields.get(player1.getId()).remove(firstSatyr);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FORESTWALK)).isTrue();
+        assertThat(gqs.hasKeyword(gd, secondSatyr, Keyword.FORESTWALK)).isTrue();
+
+        gd.playerBattlefields.get(player2.getId()).remove(secondSatyr);
+
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.FORESTWALK)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent's creature cannot be blocked when the Satyr's controller has a Forest")
+    void opposingCreatureUsesGrantedForestwalkAgainstSatyrController() {
+        Permanent blocker = addCreatureReady(player1, new LumberingSatyr());
+        harness.addToBattlefield(player1, new Forest());
+        Permanent attacker = addCreatureReady(player2, new FreshVolunteers());
+        attacker.setAttacking(true);
+
+        prepareDeclareBlockers(player2);
+
+        int blockerIndex = gd.playerBattlefields.get(player1.getId()).indexOf(blocker);
+        int attackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(attacker);
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1,
+                List.of(new BlockerAssignment(blockerIndex, attackerIndex))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("can't be blocked");
+    }
 }
