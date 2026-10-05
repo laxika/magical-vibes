@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HavengulLich;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PhoenixOfAsh.class, GrizzlyBears.class})
+@CardUsed({PhoenixOfAsh.class, GrizzlyBears.class, HavengulLich.class})
 class PhoenixOfAshTest extends BaseCardTest {
 
     @Test
@@ -84,5 +86,59 @@ class PhoenixOfAshTest extends BaseCardTest {
 
         assertThat(phoenix.getPowerModifier()).isZero();
         assertThat(phoenix.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    void escapingRecordsEscapeOnTheResolvedPermanent() {
+        harness.setGraveyard(player1, List.of(new PhoenixOfAsh(), new PhoenixOfAsh(),
+                new PhoenixOfAsh(), new PhoenixOfAsh()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFromGraveyard(player1, 0, List.of(1, 2, 3));
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Phoenix of Ash").isEscaped()).isTrue();
+    }
+
+    @Test
+    @CardUsed({PhoenixOfAsh.class, HavengulLich.class})
+    void castingWithLichPermissionDoesNotGrantEscapeCounter() {
+        addCreatureReady(player1, new HavengulLich());
+        PhoenixOfAsh phoenix = new PhoenixOfAsh();
+        harness.setGraveyard(player1, List.of(phoenix));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, phoenix.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castFromGraveyard(player1, phoenix.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent returnedPhoenix = findPermanent(player1, "Phoenix of Ash");
+        assertThat(returnedPhoenix.isEscaped()).isFalse();
+        assertThat(returnedPhoenix.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    void repeatedActivationsStackWithoutTappingTheCreature() {
+        Permanent phoenix = addCreatureReady(player1, new PhoenixOfAsh());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(phoenix.getPowerModifier()).isEqualTo(4);
+        assertThat(phoenix.getToughnessModifier()).isZero();
+        assertThat(phoenix.isTapped()).isFalse();
     }
 }
