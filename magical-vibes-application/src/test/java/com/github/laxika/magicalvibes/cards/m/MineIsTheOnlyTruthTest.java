@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.o.OrzhovSignet;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -14,49 +13,121 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MineIsTheOnlyTruth.class, GrizzlyBears.class})
+@CardUsed({MineIsTheOnlyTruth.class, OrzhovSignet.class})
 class MineIsTheOnlyTruthTest extends BaseCardTest {
 
     @Test
     void controllerDrawsWhenAnyPlayerCastsASpell() {
-        harness.addToBattlefield(player1, new MineIsTheOnlyTruth());
+        addFaceUpScheme();
         harness.setHand(player1, List.of());
-        harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        harness.setHand(player2, List.of(new GrizzlyBears()));
-        harness.addMana(player2, ManaColor.GREEN, 2);
+        OrzhovSignet drawnCard = new OrzhovSignet();
+        harness.setLibrary(player1, List.of(drawnCard));
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
 
-        harness.castCreature(player2, 0);
+        harness.castFromHand(player2, new OrzhovSignet(), "{2}");
         harness.passBothPriorities();
 
-        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test
     void schemeIsAbandonedAtUpkeepAfterControllerDrewLastTurn() {
-        Permanent scheme = harness.addToBattlefieldAndReturn(player1, new MineIsTheOnlyTruth());
+        MineIsTheOnlyTruth scheme = addFaceUpScheme();
         gd.cardsDrawnLastTurn.put(player1.getId(), 1);
-        beginUpkeepAndCollectTriggers();
+        beginUpkeepAndCollectTriggers(player1);
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(scheme);
-        assertThat(gd.playerGraveyards.get(player1.getId())).contains(scheme.getCard());
+        assertThat(gd.playerCommandZones.get(player1.getId())).contains(scheme);
+        assertThat(gd.faceDownCommandZoneCards).contains(scheme.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(scheme);
     }
 
     @Test
     void schemeStaysWhenControllerDidNotDrawLastTurn() {
-        Permanent scheme = harness.addToBattlefieldAndReturn(player1, new MineIsTheOnlyTruth());
-        beginUpkeepAndCollectTriggers();
-        harness.passBothPriorities();
+        MineIsTheOnlyTruth scheme = addFaceUpScheme();
+        beginUpkeepAndCollectTriggers(player1);
 
-        assertThat(gd.playerBattlefields.get(player1.getId())).contains(scheme);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerCommandZones.get(player1.getId())).contains(scheme);
+        assertThat(gd.faceDownCommandZoneCards).doesNotContain(scheme.getId());
     }
 
-    private void beginUpkeepAndCollectTriggers() {
+    @Test
+    void controllerAlsoDrawsForTheirOwnSpell() {
+        addFaceUpScheme();
+        OrzhovSignet drawnCard = new OrzhovSignet();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player1, new OrzhovSignet(), "{2}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    void opponentsUpkeepDoesNotAbandonScheme() {
+        MineIsTheOnlyTruth scheme = addFaceUpScheme();
+        gd.cardsDrawnLastTurn.put(player1.getId(), 1);
+
+        beginUpkeepAndCollectTriggers(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.faceDownCommandZoneCards).doesNotContain(scheme.getId());
+    }
+
+    @Test
+    void drawingThisTurnDoesNotSatisfyLastTurnCondition() {
+        MineIsTheOnlyTruth scheme = addFaceUpScheme();
+        gd.cardsDrawnThisTurn.put(player1.getId(), 1);
+
+        beginUpkeepAndCollectTriggers(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.faceDownCommandZoneCards).doesNotContain(scheme.getId());
+    }
+
+    @Test
+    void opponentsDrawLastTurnDoesNotSatisfyCondition() {
+        MineIsTheOnlyTruth scheme = addFaceUpScheme();
+        gd.cardsDrawnLastTurn.put(player2.getId(), 1);
+
+        beginUpkeepAndCollectTriggers(player1);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.faceDownCommandZoneCards).doesNotContain(scheme.getId());
+    }
+
+    @Test
+    void faceDownSchemeDoesNotTriggerForSpells() {
+        MineIsTheOnlyTruth scheme = addFaceUpScheme();
+        gd.faceDownCommandZoneCards.add(scheme.getId());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new OrzhovSignet()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castFromHand(player2, new OrzhovSignet(), "{2}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    private MineIsTheOnlyTruth addFaceUpScheme() {
+        MineIsTheOnlyTruth scheme = new MineIsTheOnlyTruth();
+        scheme.setOwnerId(player1.getId());
+        gd.playerCommandZones.get(player1.getId()).add(scheme);
+        return scheme;
+    }
+
+    private void beginUpkeepAndCollectTriggers(Player activePlayer) {
         gd.turnNumber = 2;
-        harness.forceActivePlayer(player1);
+        harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
         StepTriggerService steps = GameTestEngineContext.get().getBean(StepTriggerService.class);
