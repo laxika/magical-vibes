@@ -46,6 +46,45 @@ class PromisingDuskmageTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    void drawsForItsControllerWhenItDiesFromLethalDamageWithOneCounter() {
+        Forest libraryCard = new Forest();
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(libraryCard, new Forest()));
+        Permanent duskmage = harness.addToBattlefieldAndReturn(player2, new PromisingDuskmage());
+        duskmage.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        duskmage.setMarkedDamage(4);
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player2, "Promising Duskmage");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
+    }
+
+    @Test
+    void doesNotTriggerWhenItDiesWithOnlyAMinusOneCounter() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Forest()));
+        Permanent duskmage = harness.addToBattlefieldAndReturn(player1, new PromisingDuskmage());
+        duskmage.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        duskmage.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+
+        harness.assertInGraveyard(player1, "Promising Duskmage");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
     private void destroyDuskmage(Permanent duskmage) {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -53,8 +92,7 @@ class PromisingDuskmageTest extends BaseCardTest {
         duskmage.tap();
         harness.setHand(player2, List.of(new Assassinate()));
         harness.addMana(player2, ManaColor.BLACK, 3);
-        harness.castSorcery(player2, 0, duskmage.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player2, 0, duskmage.getId());
         harness.assertInGraveyard(player1, "Promising Duskmage");
     }
 }
