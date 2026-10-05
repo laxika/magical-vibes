@@ -118,6 +118,37 @@ class MerrowBonegnawerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A black-green hybrid spell paid with green mana still triggers the untap")
+    void untapsWhenHybridSpellIsPaidWithGreenMana() {
+        Permanent bonegnawer = addCreatureReady(player1, new MerrowBonegnawer());
+        bonegnawer.tap();
+        harness.setHand(player1, List.of(new OdiousTrow()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(bonegnawer.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("An opponent casting a black spell does not trigger the untap")
+    void opponentsBlackSpellDoesNotTrigger() {
+        Permanent bonegnawer = addCreatureReady(player1, new MerrowBonegnawer());
+        bonegnawer.tap();
+        harness.forceActivePlayer(player2);
+
+        harness.castFromHand(player2, new LingeringTormentor(), "{3}{B}");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.MayAbilityChoice.class)).isNull();
+        harness.passBothPriorities();
+        assertThat(bonegnawer.isTapped()).isTrue();
+    }
+
+    @Test
     @DisplayName("Casting a non-black spell does not trigger the untap")
     void nonBlackSpellDoesNotTrigger() {
         Permanent bonegnawer = addCreatureReady(player1, new MerrowBonegnawer());
