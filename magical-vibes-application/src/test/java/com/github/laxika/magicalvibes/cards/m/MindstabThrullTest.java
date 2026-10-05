@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -12,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MindstabThrull.class})
+@CardUsed({MindstabThrull.class, Unsummon.class})
 class MindstabThrullTest extends BaseCardTest {
 
     private Permanent addAttacker() {
@@ -70,21 +73,27 @@ class MindstabThrullTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("\"If you do\" gate — Thrull removed in response means no sacrifice and no discard")
+    @DisplayName("Returning the Thrull to hand in response prevents the sacrifice and discard")
     void unblockedNoDiscardWhenThrullLeavesBeforeResolution() {
+        harness.setHand(player1, List.of(new Unsummon()));
         harness.setHand(player2, List.of(new MindstabThrull(), new MindstabThrull(), new MindstabThrull()));
         Permanent thrull = addAttacker();
-        declareUnblockedAttack(thrull);
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex(thrull)));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS,
+                () -> gs.declareBlockers(gd, player2, List.of()));
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
-        // The Thrull is removed while the trigger waits on the may choice — with no sacrifice the
-        // contingent discard must not happen.
-        gd.playerBattlefields.get(player1.getId()).remove(thrull);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, thrull.getId());
+        resolveAllTriggers();
 
+        harness.assertInHand(player1, "Mindstab Thrull");
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertNotInGraveyard(player1, "Mindstab Thrull");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
     }
 
@@ -96,10 +105,7 @@ class MindstabThrullTest extends BaseCardTest {
         Permanent blocker = addCreatureReady(player2, new MindstabThrull());
 
         Permanent attacker = addAttacker();
-        declareAttackers(List.of(attackerIndex(attacker)));
-        resolveAllTriggers();
-
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex(attacker)));
 
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(
                 gd.playerBattlefields.get(player2.getId()).indexOf(blocker), attackerIndex(attacker))));
@@ -116,8 +122,7 @@ class MindstabThrullTest extends BaseCardTest {
         addCreatureReady(player2, new MindstabThrull());
         Permanent attacker = addAttacker();
 
-        declareAttackers(List.of(attackerIndex(attacker)));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(attackerIndex(attacker)));
         gs.declareBlockers(gd, player2, List.of());
         resolveAllTriggers();
 
@@ -158,5 +163,55 @@ class MindstabThrullTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Mindstab Thrull");
         harness.assertInGraveyard(player1, "Mindstab Thrull");
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The defending player chooses exactly three cards from a larger hand")
+    void defendingPlayerChoosesThreeAndKeepsTheRemainingCard() {
+        MindstabThrull kept = new MindstabThrull();
+        MindstabThrull firstDiscard = new MindstabThrull();
+        MindstabThrull secondDiscard = new MindstabThrull();
+        MindstabThrull thirdDiscard = new MindstabThrull();
+        harness.setHand(player1, List.of(new MindstabThrull()));
+        harness.setHand(player2, List.of(kept, firstDiscard, secondDiscard, thirdDiscard));
+        declareUnblockedAttack(addAttacker());
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 1);
+        harness.handleCardChosen(player2, 1);
+        resolveCombat();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(kept);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .containsExactly(firstDiscard, secondDiscard, thirdDiscard);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        harness.assertInGraveyard(player1, "Mindstab Thrull");
+        harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("When player two attacks, player two sacrifices and player one discards")
+    void defendingPlayerIsCorrectWhenPlayerTwoAttacks() {
+        harness.setHand(player1, List.of(new MindstabThrull(), new MindstabThrull(), new MindstabThrull()));
+        harness.setHand(player2, List.of(new MindstabThrull()));
+        addCreatureReady(player2, new MindstabThrull());
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        resolveCombat(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        harness.assertInGraveyard(player2, "Mindstab Thrull");
+        harness.assertNotOnBattlefield(player2, "Mindstab Thrull");
+        harness.assertLife(player1, 20);
     }
 }
