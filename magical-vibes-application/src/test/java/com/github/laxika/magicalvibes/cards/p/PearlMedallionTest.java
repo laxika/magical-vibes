@@ -71,6 +71,49 @@ class PearlMedallionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple Medallions stack their reductions")
+    void multipleMedallionsReduceTheSameSpell() {
+        harness.addToBattlefield(player1, new PearlMedallion());
+        harness.addToBattlefield(player1, new PearlMedallion());
+        harness.setHand(player1, List.of(new HannasCustody()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castEnchantment(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Excess generic reduction does not remove colored costs")
+    void excessReductionDoesNotPayForWhiteMana() {
+        harness.addToBattlefield(player1, new PearlMedallion());
+        harness.addToBattlefield(player1, new PearlMedallion());
+        harness.setHand(player1, List.of(new ArmoredPegasus()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Medallion in the graveyard does not reduce costs")
+    void medallionInGraveyardDoesNotReduceCosts() {
+        harness.setGraveyard(player1, List.of(new PearlMedallion()));
+        harness.setHand(player1, List.of(new ArmoredPegasus()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        assertThatThrownBy(() -> harness.castCreature(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("White noncreature spells are reduced")
     void whiteNoncreatureSpellsCostOneLess() {
         harness.addToBattlefield(player1, new PearlMedallion());
