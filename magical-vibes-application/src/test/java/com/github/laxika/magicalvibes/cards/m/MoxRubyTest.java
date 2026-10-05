@@ -8,8 +8,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(MoxRuby.class)
+@CardUsed({MoxRuby.class})
 class MoxRubyTest extends BaseCardTest {
 
     @Test
@@ -20,6 +21,37 @@ class MoxRubyTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(mox.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Mox Ruby cannot produce more mana")
+    void cannotActivateWhileTapped() {
+        Permanent mox = harness.addToBattlefieldAndReturn(player1, new MoxRuby());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(mox.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Mox Ruby can produce mana again after untapping")
+    void canActivateAgainAfterUntapping() {
+        Permanent mox = harness.addToBattlefieldAndReturn(player1, new MoxRuby());
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        gd.playerManaPools.get(player1.getId()).clear();
+        harness.performUntapStep(player1);
+        assertThat(mox.isTapped()).isFalse();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.RED)).isZero();
         assertThat(mox.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
     }
