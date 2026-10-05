@@ -25,13 +25,53 @@ class MoltenDisasterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new MoltenDisaster()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castSorcery(player1, 0, 2);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 2);
 
         harness.assertLife(player1, 18);
         harness.assertLife(player2, 18);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Air Elemental");
+    }
+
+    @Test
+    void damagesNonFlyingCreaturesOnBothSidesButSparesFlyingCreaturesEvenAtLethalX() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new AirElemental());
+        harness.addToBattlefield(player2, new AirElemental());
+        harness.setHand(player1, List.of(new MoltenDisaster()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castAndResolveSorcery(player1, 0, 4);
+
+        harness.assertLife(player1, 16);
+        harness.assertLife(player2, 16);
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertOnBattlefield(player1, "Air Elemental");
+        harness.assertOnBattlefield(player2, "Air Elemental");
+        harness.assertInGraveyard(player1, "Molten Disaster");
+    }
+
+    @Test
+    void kickedSpellWithZeroXDealsNoDamage() {
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new MoltenDisaster()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.castKickedSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player1, "Molten Disaster");
     }
 
     @Test
