@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
@@ -17,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ObsessiveAstronomer.class, Forest.class, GrizzlyBears.class, Island.class, Mountain.class})
+@CardUsed({ObsessiveAstronomer.class, Forest.class, Island.class, Mountain.class})
 class ObsessiveAstronomerTest extends BaseCardTest {
 
     @Test
@@ -30,6 +29,8 @@ class ObsessiveAstronomerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
     @Test
@@ -39,7 +40,7 @@ class ObsessiveAstronomerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Forest(), new Island()));
         harness.setLibrary(player1, List.of(new Mountain(), new Forest()));
 
-        makeItNight();
+        advanceToNextUpkeep();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
         harness.handleXValueChosen(player1, 2);
@@ -57,13 +58,13 @@ class ObsessiveAstronomerTest extends BaseCardTest {
     @Test
     void triggersWhenNightBecomesDayAndMayDiscardZero() {
         gd.dayNight = DayNight.NIGHT;
-        gd.recordSpellCast(player2.getId(), new GrizzlyBears());
-        gd.recordSpellCast(player2.getId(), new GrizzlyBears());
+        gd.recordSpellCast(player1.getId(), new ObsessiveAstronomer());
+        gd.recordSpellCast(player1.getId(), new ObsessiveAstronomer());
         harness.addToBattlefield(player1, new ObsessiveAstronomer());
         harness.setHand(player1, List.of(new Island()));
         harness.setLibrary(player1, List.of(new Mountain()));
 
-        makeItDay();
+        advanceToNextUpkeep();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
         harness.handleXValueChosen(player1, 0);
@@ -73,19 +74,127 @@ class ObsessiveAstronomerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName).containsExactly("Mountain");
     }
 
-    private void makeItNight() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
+    @Test
+    void enteringAtNightDoesNotMakeItDayOrTriggerRummaging() {
+        gd.dayNight = DayNight.NIGHT;
+        harness.setHand(player1, List.of(new ObsessiveAstronomer(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Forest");
     }
 
-    private void makeItDay() {
+    @Test
+    void enteringDuringDayDoesNotTriggerRummaging() {
+        gd.dayNight = DayNight.DAY;
+        harness.setHand(player1, List.of(new ObsessiveAstronomer(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Forest");
+    }
+
+    @Test
+    void mayDiscardOnlyOneCardFromALargerHand() {
+        gd.dayNight = DayNight.DAY;
+        harness.addToBattlefield(player1, new ObsessiveAstronomer());
+        harness.setHand(player1, List.of(new Forest(), new Island(), new Mountain()));
+        harness.setLibrary(player1, List.of(new ObsessiveAstronomer(), new Forest()));
+
+        advanceToNextUpkeep();
+        harness.handleXValueChosen(player1, 1);
+        harness.handleCardChosen(player1, 1);
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName)
+                .containsExactlyInAnyOrder("Forest", "Mountain", "Obsessive Astronomer");
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getName).containsExactly("Island");
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName).containsExactly("Forest");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void emptyHandDoesNotDrawOrRequireAChoice() {
+        gd.dayNight = DayNight.DAY;
+        harness.addToBattlefield(player1, new ObsessiveAstronomer());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new Mountain()));
+
+        advanceToNextUpkeep();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getName).containsExactly("Mountain");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    void opponentsSpellsDoNotMakeNightBecomeDay() {
+        gd.dayNight = DayNight.NIGHT;
+        gd.recordSpellCast(player2.getId(), new ObsessiveAstronomer());
+        gd.recordSpellCast(player2.getId(), new ObsessiveAstronomer());
+        harness.addToBattlefield(player1, new ObsessiveAstronomer());
+        harness.setHand(player1, List.of(new Island()));
+
+        advanceToNextUpkeep();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.NIGHT);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Island");
+    }
+
+    @Test
+    void becomingDayForTheFirstTimeDoesNotTriggerRummaging() {
+        harness.setHand(player1, List.of(new ObsessiveAstronomer(), new Forest()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.dayNight).isEqualTo(DayNight.DAY);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Forest");
+    }
+
+    @Test
+    void controllerDiscardsAndDrawsWhenTheOtherPlayersTurnEnds() {
+        gd.dayNight = DayNight.DAY;
+        harness.addToBattlefield(player2, new ObsessiveAstronomer());
+        harness.setHand(player1, List.of(new Island()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new Mountain(), new Forest()));
+
+        advanceToNextUpkeep();
+        harness.handleXValueChosen(player2, 1);
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getName).containsExactly("Island");
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName).containsExactly("Mountain");
+        assertThat(gd.playerGraveyards.get(player2.getId())).extracting(Card::getName).containsExactly("Forest");
+        assertThat(gd.playerDecks.get(player2.getId())).extracting(Card::getName).containsExactly("Forest");
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    private void advanceToNextUpkeep() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.passUntil(player2, TurnStep.UPKEEP);
+        resolveAllTriggers();
     }
 }
