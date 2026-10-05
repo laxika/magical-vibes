@@ -5,22 +5,26 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
+import com.github.laxika.magicalvibes.cards.a.Artillerize;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PraetorsGrasp.class, GrizzlyBears.class, Shock.class, Swamp.class, Artillerize.class})
 class PraetorsGraspTest extends BaseCardTest {
 
-    // ===== Library search =====
 
     @Test
     @DisplayName("Presents library search showing all cards in opponent's library")
@@ -28,14 +32,12 @@ class PraetorsGraspTest extends BaseCardTest {
         Card bears = new GrizzlyBears();
         Card shock = new Shock();
         Card swamp = new Swamp();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).addAll(List.of(bears, shock, swamp));
+        harness.setLibrary(player2, List.of(bears, shock, swamp));
 
         harness.setHand(player1, List.of(new PraetorsGrasp()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
@@ -43,20 +45,17 @@ class PraetorsGraspTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
     }
 
-    // ===== Exile with play permission =====
 
     @Test
-    @DisplayName("Chosen card is exiled under caster's exile zone with play permission")
+    @DisplayName("Chosen card is exiled face down with ownership preserved and caster play permission")
     void chosenCardIsExiledWithPlayPermission() {
         Card bears = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(bears);
+        harness.setLibrary(player2, List.of(bears));
 
         harness.setHand(player1, List.of(new PraetorsGrasp()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         // Choose the card
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
@@ -80,14 +79,12 @@ class PraetorsGraspTest extends BaseCardTest {
     @DisplayName("Opponent's library is shuffled after search")
     void libraryIsShuffledAfterSearch() {
         Card bears = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(bears);
+        harness.setLibrary(player2, List.of(bears));
 
         harness.setHand(player1, List.of(new PraetorsGrasp()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
@@ -95,53 +92,46 @@ class PraetorsGraspTest extends BaseCardTest {
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffled") || log.contains("Library is shuffled"));
     }
 
-    // ===== Empty library =====
 
     @Test
     @DisplayName("Empty opponent library skips search")
     void emptyLibrarySkipsSearch() {
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
 
         harness.setHand(player1, List.of(new PraetorsGrasp()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
-    // ===== Sorcery after resolution =====
 
     @Test
     @DisplayName("Praetor's Grasp goes to caster's graveyard after resolving")
     void goesToGraveyardAfterResolving() {
-        gd.playerDecks.get(player2.getId()).clear();
+        harness.setLibrary(player2, List.of());
 
         harness.setHand(player1, List.of(new PraetorsGrasp()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.stack).isEmpty();
         harness.assertInGraveyard(player1, "Praetor's Grasp");
     }
 
-    // ===== Play from exile =====
 
     @Test
     @DisplayName("Caster can play exiled card from exile")
     void canPlayExiledCard() {
         Card bears = new GrizzlyBears();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(bears);
+        harness.setLibrary(player2, List.of(bears));
 
         harness.setHand(player1, List.of(new PraetorsGrasp()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Now player1 should be able to cast the exiled Grizzly Bears
@@ -162,17 +152,65 @@ class PraetorsGraspTest extends BaseCardTest {
     }
 
     @Test
+    void unrestrictedSearchCannotBeDeclined() {
+        Card swamp = new Swamp();
+        harness.setLibrary(player2, List.of(swamp));
+        harness.setHand(player1, List.of(new PraetorsGrasp()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThatThrownBy(() -> gs.handleInteractionAnswer(gd, player1,
+                new InteractionAnswer.LibraryCardChosen(-1))).isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        assertThat(gd.findExiledCard(swamp.getId())).isNotNull();
+    }
+
+    @Test
+    void castingRequiresTheCardsColoredManaAndFailedAttemptKeepsPermission() {
+        Card bears = new GrizzlyBears();
+        harness.setLibrary(player2, List.of(bears));
+        harness.setHand(player1, List.of(new PraetorsGrasp()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        assertThatThrownBy(() -> gs.playCardFromExile(gd, player1, bears.getId(), null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.findExiledCard(bears.getId())).isNotNull();
+        assertThat(gd.exilePlayPermissions.get(bears.getId())).isEqualTo(player1.getId());
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        gs.playCardFromExile(gd, player1, bears.getId(), null, null);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void canInitiateCastingAnExiledSpellWithAnAdditionalSacrificeCost() {
+        Card artillerize = new Artillerize();
+        harness.setLibrary(player2, List.of(artillerize));
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new PraetorsGrasp()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        assertThatCode(() -> gs.playCardFromExile(gd, player1, artillerize.getId(), null, player2.getId()))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
     @DisplayName("Exiled card is removed from exile when played")
     void exiledCardRemovedFromExile() {
         Card swamp = new Swamp();
-        gd.playerDecks.get(player2.getId()).clear();
-        gd.playerDecks.get(player2.getId()).add(swamp);
+        harness.setLibrary(player2, List.of(swamp));
 
         harness.setHand(player1, List.of(new PraetorsGrasp()));
         harness.addMana(player1, ManaColor.BLACK, 3);
 
-        harness.castSorcery(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
 
         // Play the exiled land
