@@ -67,4 +67,48 @@ class PollutedMireTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(mire);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("A newly played Polluted Mire cannot tap for mana")
+    void cannotTapForManaWhileTapped() {
+        harness.setHand(player1, List.of(new PollutedMire()));
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.playLand(player1, 0);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId()).getFirst().isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cycling on an opponent's turn pays and discards before the draw resolves")
+    void cyclingOnOpponentsTurnPaysCostsBeforeResolution() {
+        PollutedMire mire = new PollutedMire();
+        GaeasCradle draw = new GaeasCradle();
+        harness.setHand(player1, List.of(mire));
+        harness.setLibrary(player1, List.of(draw));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.END_STEP);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(mire);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isZero();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(draw);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(mire);
+        assertThat(gd.stack).isEmpty();
+    }
 }
