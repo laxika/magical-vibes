@@ -119,4 +119,64 @@ class OrcishHealerTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("black or green");
     }
+
+    @Test
+    @DisplayName("The black mana ability regenerates an opponent's green creature through lethal damage")
+    void blackModeRegeneratesOpponentsGreenCreature() {
+        Permanent healer = addCreatureReady(player1, new OrcishHealer());
+        Permanent gnats = addCreatureReady(player2, new YavimayaGnats());
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.activateAbility(player1, 0, 1, null, gnats.getId());
+        harness.passBothPriorities();
+
+        assertThat(healer.isTapped()).isTrue();
+        assertThat(gnats.isTapped()).isFalse();
+        gnats.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        harness.assertOnBattlefield(player2, "Yavimaya Gnats");
+        harness.assertNotInGraveyard(player2, "Yavimaya Gnats");
+        assertThat(gnats.isTapped()).isTrue();
+        assertThat(gnats.getMarkedDamage()).isZero();
+        assertThat(gnats.getRegenerationShield()).isZero();
+    }
+
+    @Test
+    @DisplayName("The green mana ability can regenerate an opponent's black creature")
+    void greenModeRegeneratesOpponentsBlackCreature() {
+        Permanent healer = addCreatureReady(player1, new OrcishHealer());
+        Permanent specter = addCreatureReady(player2, new AbyssalSpecter());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, 2, null, specter.getId());
+        harness.passBothPriorities();
+
+        assertThat(healer.isTapped()).isTrue();
+        assertThat(specter.getRegenerationShield()).isEqualTo(1);
+        assertThat(specter.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Prevention also stops regeneration shields created after it resolves")
+    void preventionStopsLaterRegenerationShield() {
+        addCreatureReady(player1, new OrcishHealer());
+        Permanent gnats = addCreatureReady(player1, new YavimayaGnats());
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.activateAbility(player1, 0, 0, null, gnats.getId());
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 1, 0, null, null);
+        harness.passBothPriorities();
+
+        gnats.setMarkedDamage(1);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Yavimaya Gnats");
+        harness.assertInGraveyard(player1, "Yavimaya Gnats");
+    }
 }
