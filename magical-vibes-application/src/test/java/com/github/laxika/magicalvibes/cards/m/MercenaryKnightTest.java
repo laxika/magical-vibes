@@ -45,8 +45,7 @@ class MercenaryKnightTest extends BaseCardTest {
     void onlyCreatureCardsCanBeDiscarded() {
         harness.castFromHand(player1, new MercenaryKnight(), "{2}{B}");
         harness.setHand(player1, List.of(new Forest(), new GrizzlyBears()));
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -66,13 +65,46 @@ class MercenaryKnightTest extends BaseCardTest {
     void autoSacrificesWithNoCreatureInHand() {
         harness.castFromHand(player1, new MercenaryKnight(), "{2}{B}");
         harness.setHand(player1, List.of(new Forest(), new Forest()));
-        harness.passBothPriorities(); // resolve creature spell → ETB on stack
-        harness.passBothPriorities(); // resolve ETB → auto-sacrifice
+        resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Mercenary Knight");
         harness.assertInGraveyard(player1, "Mercenary Knight");
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's creature card cannot prevent sacrifice with an empty hand")
+    void opponentCreatureDoesNotPreventSacrifice() {
+        harness.castFromHand(player1, new MercenaryKnight(), "{2}{B}");
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Mercenary Knight");
+        harness.assertInGraveyard(player1, "Mercenary Knight");
+        harness.assertInHand(player2, "Grizzly Bears");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The controller chooses exactly one creature card to discard")
+    void choosesOneOfSeveralCreatures() {
+        harness.castFromHand(player1, new MercenaryKnight(), "{2}{B}");
+        harness.setHand(player1, List.of(new GrizzlyBears(), new MercenaryKnight(), new Forest()));
+        resolveAllTriggers();
+
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 1);
+
+        harness.assertOnBattlefield(player1, "Mercenary Knight");
+        harness.assertInGraveyard(player1, "Mercenary Knight");
+        harness.assertNotInGraveyard(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Grizzly Bears");
+        harness.assertInHand(player1, "Forest");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     /**
@@ -82,8 +114,7 @@ class MercenaryKnightTest extends BaseCardTest {
     private void castKnightWithCreatureInHand() {
         harness.castFromHand(player1, new MercenaryKnight(), "{2}{B}");
         harness.setHand(player1, List.of(new GrizzlyBears()));
-        harness.passBothPriorities(); // resolve creature spell → ETB on stack
-        harness.passBothPriorities(); // resolve ETB → may ability prompt
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
