@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed(PhantasmalForces.class)
+@CardUsed({PhantasmalForces.class})
 class PhantasmalForcesTest extends BaseCardTest {
 
     @Test
@@ -63,5 +63,37 @@ class PhantasmalForcesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Phantasmal Forces");
+    }
+
+    @Test
+    void mayDeclineEvenWithBlueManaAvailable() {
+        harness.addToBattlefield(player1, new PhantasmalForces());
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        harness.assertNotOnBattlefield(player1, "Phantasmal Forces");
+        harness.assertInGraveyard(player1, "Phantasmal Forces");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
+    }
+
+    @Test
+    void eachCopyRequiresItsOwnPayment() {
+        harness.addToBattlefield(player1, new PhantasmalForces());
+        harness.addToBattlefield(player1, new PhantasmalForces());
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
+        harness.assertOnBattlefield(player1, "Phantasmal Forces");
+        harness.assertInGraveyard(player1, "Phantasmal Forces");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
     }
 }
