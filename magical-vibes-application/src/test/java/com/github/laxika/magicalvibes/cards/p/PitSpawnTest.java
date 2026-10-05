@@ -41,8 +41,7 @@ class PitSpawnTest extends BaseCardTest {
         addCreatureReady(player1, new PitSpawn());
         addCreatureReady(player2, new ForceOfNature());
 
-        declareAttackers(List.of(0));
-        prepareDeclareBlockers();
+        declareAttackersAndPrepareBlockers(List.of(0));
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
         resolveAllTriggers();
@@ -108,5 +107,52 @@ class PitSpawnTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInGraveyard(player1, "Pit Spawn");
+    }
+
+    @Test
+    @DisplayName("A creature killed by Pit Spawn's damage stays in the graveyard")
+    void lethalDamageDoesNotExileCreatureFromGraveyard() {
+        harness.addToBattlefield(player1, new PitSpawn());
+        harness.addToBattlefield(player2, new Grollub());
+        harness.setHand(player1, List.of(new PreyUpon()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castSorcery(player1, 0,
+                List.of(harness.getPermanentId(player1, "Pit Spawn"),
+                        harness.getPermanentId(player2, "Grollub")));
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Pit Spawn");
+        harness.assertInGraveyard(player2, "Grollub");
+        assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Pit Spawn does not demand payment during an opponent's upkeep")
+    void opponentUpkeepDoesNotTriggerPayment() {
+        harness.addToBattlefield(player1, new PitSpawn());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player1, "Pit Spawn");
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("One black mana and one green mana cannot pay the upkeep cost")
+    void upkeepPaymentRequiresTwoBlackMana() {
+        harness.addToBattlefield(player1, new PitSpawn());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Pit Spawn");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
     }
 }
