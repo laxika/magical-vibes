@@ -65,4 +65,78 @@ class KratosGodOfWarTest extends BaseCardTest {
         harness.passUntil(activePlayer, TurnStep.END_STEP);
         resolveAllTriggers();
     }
+
+    @Test
+    @DisplayName("Kratos counts itself on its controller's end step if it did not attack")
+    void countsItselfOnControllersEndStep() {
+        harness.addToBattlefield(player1, new KratosGodOfWar());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLife(player1, 20);
+
+        resolveEndStep(player1);
+
+        harness.assertLife(player1, 18);
+    }
+
+    @Test
+    @DisplayName("An empty battlefield causes no end-step damage")
+    void noDamageWithoutCreatures() {
+        harness.addToBattlefield(player2, new KratosGodOfWar());
+        harness.setLife(player1, 20);
+
+        resolveEndStep(player1);
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("Kratos can attack immediately, deals double-strike damage, and is not counted afterward")
+    void attacksWithHasteAndDoubleStrike() {
+        harness.addToBattlefield(player1, new KratosGodOfWar());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat(player1);
+
+        harness.assertLife(player2, 16);
+
+        resolveEndStep(player1);
+
+        harness.assertLife(player1, 20);
+    }
+
+    @Test
+    @DisplayName("A creature entering after combat is counted even though it could not have attacked")
+    void countsCreatureEnteringAfterCombat() {
+        harness.addToBattlefield(player2, new KratosGodOfWar());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setLife(player1, 20);
+
+        declareAttackersAndPrepareBlockers(player1, List.of(0));
+        gs.declareBlockers(gd, player2, List.of());
+        resolveCombat(player1);
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        resolveEndStep(player1);
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Creature count is evaluated when the end-step trigger resolves")
+    void countsCreaturesAtResolution() {
+        harness.addToBattlefield(player2, new KratosGodOfWar());
+        harness.setLife(player1, 20);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.END_STEP,
+                () -> harness.passUntil(player1, TurnStep.END_STEP));
+
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 19);
+    }
 }
