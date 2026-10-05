@@ -3,12 +3,12 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Mortivore.class, GrizzlyBears.class, Plains.class, MindRot.class, GloriousAnthem.class})
+@CardUsed({Mortivore.class, GrizzlyBears.class, Plains.class, MindRot.class, GloriousAnthem.class, Shock.class})
 class MortivoreTest extends BaseCardTest {
 
     @Test
@@ -234,6 +234,7 @@ class MortivoreTest extends BaseCardTest {
     @Test
     @DisplayName("Can activate regeneration ability while Mortivore is tapped")
     void canActivateRegenerationWhileTapped() {
+        harness.setGraveyard(player1, createCreatureCards(2));
         Permanent perm = addCreatureReady(player1, new Mortivore());
         perm.tap();
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -248,6 +249,7 @@ class MortivoreTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot activate regeneration ability with only nonblack mana")
     void cannotActivateRegenerationWithOnlyNonblackMana() {
+        harness.setGraveyard(player1, createCreatureCards(2));
         addCreatureReady(player1, new Mortivore());
         harness.addMana(player1, ManaColor.GREEN, 1);
 
@@ -269,11 +271,7 @@ class MortivoreTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         // Mortivore should survive via regeneration
         harness.assertOnBattlefield(player1, "Mortivore");
@@ -296,11 +294,7 @@ class MortivoreTest extends BaseCardTest {
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
         attacker.setAttacking(true);
 
-        harness.forceActivePlayer(player2);
-        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
-        harness.clearPriorityPassed();
-
-        harness.passBothPriorities();
+        resolveCombat(player2);
 
         // Both creatures trade — Mortivore has no regeneration shield
         harness.assertNotOnBattlefield(player1, "Mortivore");
@@ -323,6 +317,64 @@ class MortivoreTest extends BaseCardTest {
         // mort1 should now be 4/4 (3 original creatures + Mortivore in graveyard)
         assertThat(gqs.getEffectivePower(gd, mort1)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, mort1)).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Activated regeneration saves Mortivore from lethal spell damage and clears damage")
+    void regenerationSavesFromLethalSpellDamage() {
+        harness.setGraveyard(player1, createCreatureCards(2));
+        Permanent mortivore = addCreatureReady(player1, new Mortivore());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(mortivore.isTapped()).isFalse();
+        harness.setHand(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.castAndResolveInstant(player2, 0, mortivore.getId());
+
+        harness.assertOnBattlefield(player1, "Mortivore");
+        assertThat(mortivore.isTapped()).isTrue();
+        assertThat(mortivore.getMarkedDamage()).isZero();
+        assertThat(mortivore.getRegenerationShield()).isZero();
+
+        harness.castAndResolveInstant(player2, 0, mortivore.getId());
+        harness.assertNotOnBattlefield(player1, "Mortivore");
+        harness.assertInGraveyard(player1, "Mortivore");
+    }
+
+    @Test
+    @DisplayName("Regeneration cannot save Mortivore when its toughness drops to zero")
+    void regenerationDoesNotPreventZeroToughnessDeath() {
+        harness.setGraveyard(player1, createCreatureCards(1));
+        Permanent mortivore = addCreatureReady(player1, new Mortivore());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.setGraveyard(player1, List.of());
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Mortivore");
+        harness.assertInGraveyard(player1, "Mortivore");
+        assertThat(mortivore.getRegenerationShield()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Mortivore's characteristic ability works in hand and counts itself in the graveyard")
+    void characteristicAbilityWorksOutsideBattlefield() {
+        Mortivore mortivore = new Mortivore();
+        harness.setHand(player1, List.of(mortivore));
+        harness.setGraveyard(player2, createCreatureCards(2));
+
+        assertThat(gqs.getEffectiveCardPower(gd, mortivore)).isEqualTo(2);
+        assertThat(gqs.getEffectiveCardToughness(gd, mortivore)).isEqualTo(2);
+
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(mortivore));
+
+        assertThat(gqs.getEffectiveCardPower(gd, mortivore)).isEqualTo(3);
+        assertThat(gqs.getEffectiveCardToughness(gd, mortivore)).isEqualTo(3);
     }
 
     private List<Card> createCreatureCards(int count) {
