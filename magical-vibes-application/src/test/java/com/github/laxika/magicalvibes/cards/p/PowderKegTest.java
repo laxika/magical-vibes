@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -12,6 +13,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -107,9 +110,52 @@ class PowderKegTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
+    @Test
+    @DisplayName("Zero fuse counters destroy a face-down creature regardless of its front-face cost")
+    void zeroFuseCountersDestroyFaceDownCreature() {
+        addReadyKeg(player1);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("Two fuse counters spare a face-down creature with a two-mana front face")
+    void twoFuseCountersSpareFaceDownCreature() {
+        Permanent keg = addReadyKeg(player1);
+        keg.setCounterCount(CounterType.FUSE, 2);
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        creature.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+    }
+
+    @Test
+    @DisplayName("A newly entered noncreature Powder Keg can activate and is sacrificed before resolution")
+    void newlyEnteredKegCanActivateAndPaysSacrificeImmediately() {
+        harness.addToBattlefield(player1, new PowderKeg());
+        harness.addToBattlefield(player2, new Ornithopter());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Powder Keg");
+        harness.assertNotOnBattlefield(player1, "Powder Keg");
+        harness.assertOnBattlefield(player2, "Ornithopter");
+
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Ornithopter");
+    }
+
     private Permanent addReadyKeg(Player owner) {
-        Permanent keg = harness.addToBattlefieldAndReturn(owner, new PowderKeg());
-        keg.setSummoningSick(false);
-        return keg;
+        return addCreatureReady(owner, new PowderKeg());
     }
 }
