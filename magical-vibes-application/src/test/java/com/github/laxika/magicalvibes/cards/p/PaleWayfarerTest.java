@@ -109,6 +109,59 @@ class PaleWayfarerTest extends BaseCardTest {
         assertThat(target.getProtectionFromColorsUntilEndOfTurn()).doesNotContain(CardColor.RED);
     }
 
+    @Test
+    @DisplayName("Untap cost is paid immediately and Pale Wayfarer can target itself")
+    void canTargetItselfAndUntapsBeforeResolution() {
+        Permanent wayfarer = addTapped(player1, new PaleWayfarer());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        enterMainWithPriority(player1);
+
+        harness.activateAbility(player1, 0, 0, null, wayfarer.getId());
+
+        assertThat(wayfarer.isTapped()).isFalse();
+        assertThat(wayfarer.getProtectionFromColorsUntilEndOfTurn()).isEmpty();
+
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(wayfarer.getProtectionFromColorsUntilEndOfTurn()).contains(CardColor.WHITE);
+    }
+
+    @Test
+    @DisplayName("Summoning sickness prevents paying the untap cost")
+    void cannotActivateWithSummoningSickness() {
+        Permanent wayfarer = harness.addToBattlefieldAndReturn(player1, new PaleWayfarer());
+        wayfarer.setSummoningSick(true);
+        wayfarer.tap();
+        Permanent target = addCreatureReady(player1, new SafeholdElite());
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        enterMainWithPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("summoning sickness");
+
+        assertThat(wayfarer.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Activation requires two white mana even with enough total mana")
+    void cannotActivateWithoutEnoughWhiteMana() {
+        Permanent wayfarer = addTapped(player1, new PaleWayfarer());
+        Permanent target = addCreatureReady(player1, new SafeholdElite());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        enterMainWithPriority(player1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, target.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Not enough mana");
+
+        assertThat(wayfarer.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
     private Permanent addTapped(Player player, Card card) {
         Permanent perm = addCreatureReady(player, card);
         perm.tap();
