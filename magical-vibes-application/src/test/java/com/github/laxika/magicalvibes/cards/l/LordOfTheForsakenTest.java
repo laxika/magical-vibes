@@ -74,4 +74,55 @@ class LordOfTheForsakenTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    void canTargetItsControllerAndSacrificeAnotherLord() {
+        addCreatureReady(player1, new LordOfTheForsaken());
+        Permanent sacrificed = addCreatureReady(player1, new LordOfTheForsaken());
+        harness.setLibrary(player1, List.of(new LordOfTheForsaken(), new LordOfTheForsaken()));
+        harness.setGraveyard(player1, List.of());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.activateAbility(player1, 0, null, player1.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getId().equals(sacrificed.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+        harness.assertOnBattlefield(player1, "Lord of the Forsaken");
+    }
+
+    @Test
+    void cannotSacrificeAnOpponentsCreature() {
+        addCreatureReady(player1, new LordOfTheForsaken());
+        addCreatureReady(player2, new LordOfTheForsaken());
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.assertOnBattlefield(player1, "Lord of the Forsaken");
+        harness.assertOnBattlefield(player2, "Lord of the Forsaken");
+    }
+
+    @Test
+    void manaAbilityResolvesImmediatelyAndCanBeRepeatedWhileTapped() {
+        Permanent lord = harness.addToBattlefieldAndReturn(player1, new LordOfTheForsaken());
+        lord.setTapped(true);
+        harness.setLife(player1, 20);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        harness.assertLife(player1, 18);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).getGraveyardOnlyMana(ManaColor.COLORLESS))
+                .isEqualTo(2);
+        assertThat(lord.isTapped()).isTrue();
+    }
 }
