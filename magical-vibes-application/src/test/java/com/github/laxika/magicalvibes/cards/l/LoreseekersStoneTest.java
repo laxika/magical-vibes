@@ -48,4 +48,59 @@ class LoreseekersStoneTest extends BaseCardTest {
 
         assertThat(stone.isTapped()).isFalse();
     }
+
+    @Test
+    @DisplayName("An empty hand costs only three mana regardless of the opponent's hand")
+    void emptyHandPaysOnlyBaseCost() {
+        harness.addToBattlefield(player1, new LoreseekersStone());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Playing a land before activating reduces the hand-size cost")
+    void usesHandSizeAtActivation() {
+        harness.addToBattlefield(player1, new LoreseekersStone());
+        harness.setHand(player1, List.of(new Forest(), new Forest()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest()));
+        harness.playLand(player1, 0);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A tapped Stone cannot activate even with enough mana")
+    void cannotActivateWhenTapped() {
+        Permanent stone = harness.addToBattlefieldAndReturn(player1, new LoreseekersStone());
+        stone.tap();
+        harness.setHand(player1, List.of());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
+    }
 }
