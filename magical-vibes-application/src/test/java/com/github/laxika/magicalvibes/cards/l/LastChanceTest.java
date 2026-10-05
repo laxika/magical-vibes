@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.s.SundialOfTheInfinite;
 import com.github.laxika.magicalvibes.cards.u.UginsNexus;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LastChance.class, PlatinumAngel.class})
+@CardUsed({LastChance.class, PlatinumAngel.class, UginsNexus.class, SundialOfTheInfinite.class})
 class LastChanceTest extends BaseCardTest {
 
     private void castLastChance() {
@@ -130,10 +129,8 @@ class LastChanceTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
-        harness.castSorcery(player1, 0, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, 0);
+        harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(gd.extraTurns).containsExactly(player1.getId(), player1.getId());
         assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).hasSize(2);
@@ -146,6 +143,7 @@ class LastChanceTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
 
+        advanceToExtraTurn();
         advanceToEndStep();
 
         assertThat(gd.stack).hasSize(1);
@@ -158,17 +156,38 @@ class LastChanceTest extends BaseCardTest {
     @CardUsed(SundialOfTheInfinite.class)
     @DisplayName("Ending the extra turn before its end step prevents the delayed loss")
     void endingExtraTurnBeforeEndStepPreventsLoss() {
-        Permanent sundial = harness.addToBattlefieldAndReturn(player1, new SundialOfTheInfinite());
-        sundial.setSummoningSick(false);
+        harness.addToBattlefield(player1, new SundialOfTheInfinite());
         castLastChance();
 
         advanceToExtraTurn();
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.forceStep(TurnStep.END_STEP);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
         assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+    }
+
+    @Test
+    @CardUsed(SundialOfTheInfinite.class)
+    @DisplayName("Ending the extra turn in response to the loss trigger exiles it")
+    void endingExtraTurnExilesLossTrigger() {
+        harness.addToBattlefield(player1, new SundialOfTheInfinite());
+        castLastChance();
+        advanceToExtraTurn();
+        advanceToEndStep();
+
+        assertThat(gd.stack).hasSize(1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getDelayedActions(LoseGameAtEndStep.class)).isEmpty();
+        assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
+        advanceToOpponentTurn();
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.status).isEqualTo(GameStatus.RUNNING);
     }
 }
