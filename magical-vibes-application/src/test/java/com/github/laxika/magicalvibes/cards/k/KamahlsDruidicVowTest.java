@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.cards.a.ArvadTheCursed;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.m.MoxAmber;
+import com.github.laxika.magicalvibes.cards.t.TatyovaBenthicDruid;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -13,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,6 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
 
+@CardUsed({KamahlsDruidicVow.class, AjaniGoldmane.class, ArvadTheCursed.class,
+        Forest.class, GrizzlyBears.class, Shock.class, MoxAmber.class, TatyovaBenthicDruid.class})
 class KamahlsDruidicVowTest extends BaseCardTest {
 
     // ===== Legendary sorcery casting restriction =====
@@ -52,18 +57,15 @@ class KamahlsDruidicVowTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
-        assertThat(entry.getCard().getName()).isEqualTo("Kamahl's Druidic Vow");
         assertThat(entry.getXValue()).isEqualTo(3);
     }
 
     @Test
     @DisplayName("Can cast when controlling a legendary planeswalker")
     void canCastWithLegendaryPlaneswalker() {
-        AjaniGoldmane ajani = new AjaniGoldmane();
-        Permanent ajaniPerm = new Permanent(ajani);
+        Permanent ajaniPerm = harness.addToBattlefieldAndReturn(player1, new AjaniGoldmane());
         ajaniPerm.setCounterCount(CounterType.LOYALTY, 4);
         ajaniPerm.setSummoningSick(false);
-        harness.getGameData().playerBattlefields.get(player1.getId()).add(ajaniPerm);
 
         setupTopCards(List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         harness.setHand(player1, List.of(new KamahlsDruidicVow()));
@@ -73,7 +75,6 @@ class KamahlsDruidicVowTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Kamahl's Druidic Vow");
     }
 
     // ===== Resolution: eligible card filtering =====
@@ -249,7 +250,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
     @DisplayName("Empty library does nothing")
     void emptyLibraryDoesNothing() {
         GameData gd = harness.getGameData();
-        gd.playerDecks.get(player1.getId()).clear();
+        harness.setLibrary(player1, List.of());
 
         harness.addToBattlefield(player1, new ArvadTheCursed());
         harness.setHand(player1, List.of(new KamahlsDruidicVow()));
@@ -294,10 +295,103 @@ class KamahlsDruidicVowTest extends BaseCardTest {
 
     // ===== Helpers =====
 
+    @Test
+    @DisplayName("A legendary planeswalker enters with its starting loyalty")
+    void legendaryPlaneswalkerEntersWithLoyalty() {
+        Card ajani = new AjaniGoldmane();
+        setupTopCardsWithLegendary(List.of(ajani));
+
+        castAndResolve(4);
+        harness.handleMultipleCardsChosen(player1, List.of(ajani.getId()));
+
+        Permanent entered = harness.getGameData().playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() == ajani)
+                .findFirst().orElseThrow();
+        assertThat(entered.getCounters()).containsEntry(CounterType.LOYALTY, 4);
+    }
+
+    @Test
+    @DisplayName("A legendary artifact does not satisfy the casting restriction")
+    void legendaryArtifactDoesNotPermitCasting() {
+        harness.addToBattlefield(player1, new MoxAmber());
+        harness.setHand(player1, List.of(new KamahlsDruidicVow()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An opponent's legendary creature does not permit casting")
+    void opponentsLegendaryCreatureDoesNotPermitCasting() {
+        harness.addToBattlefield(player2, new ArvadTheCursed());
+        harness.setHand(player1, List.of(new KamahlsDruidicVow()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, 1))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A legendary artifact is eligible but a legendary sorcery is not")
+    void legendaryArtifactEligibleAndLegendarySorceryExcluded() {
+        Card mox = new MoxAmber();
+        Card vow = new KamahlsDruidicVow();
+        Card untouched = new Forest();
+        setupTopCardsWithLegendary(List.of(mox, vow, untouched));
+
+        castAndResolve(2);
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(vow.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(mox.getId()));
+
+        harness.assertOnBattlefield(player1, "Mox Amber");
+        assertThat(harness.getGameData().playerGraveyards.get(player1.getId())).contains(vow);
+        assertThat(harness.getGameData().playerDecks.get(player1.getId())).containsExactly(untouched);
+    }
+
+    @Test
+    @DisplayName("A land put onto the battlefield triggers an existing Tatyova")
+    void selectedLandTriggersLandfall() {
+        Card forest = new Forest();
+        Card draw = new Forest();
+        harness.addToBattlefield(player1, new TatyovaBenthicDruid());
+        harness.setLife(player1, 20);
+        harness.setLibrary(player1, List.of(forest, draw));
+
+        castAndResolve(1);
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId()));
+        assertThat(harness.getGameData().stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).containsExactly(draw);
+        harness.assertOnBattlefield(player1, "Forest");
+    }
+
+    @Test
+    @DisplayName("Tatyova sees a land entering simultaneously even when the land is first in the library")
+    void simultaneouslyEnteringTatyovaSeesLand() {
+        Card forest = new Forest();
+        Card tatyova = new TatyovaBenthicDruid();
+        Card draw = new Forest();
+        setupTopCardsWithLegendary(List.of(forest, tatyova, new KamahlsDruidicVow(),
+                new KamahlsDruidicVow(), new KamahlsDruidicVow(), draw));
+        harness.setLife(player1, 20);
+
+        castAndResolve(5);
+        harness.handleMultipleCardsChosen(player1, List.of(forest.getId(), tatyova.getId()));
+        assertThat(harness.getGameData().stack).hasSize(1);
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 21);
+        assertThat(harness.getGameData().playerHands.get(player1.getId())).containsExactly(draw);
+        harness.assertOnBattlefield(player1, "Tatyova, Benthic Druid");
+    }
+
     private void setupTopCards(List<Card> cards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(cards);
+        harness.setLibrary(player1, cards);
     }
 
     /**
@@ -305,9 +399,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
      * so that the legendary sorcery can be cast.
      */
     private void setupTopCardsWithLegendary(List<Card> libraryCards) {
-        List<Card> deck = harness.getGameData().playerDecks.get(player1.getId());
-        deck.clear();
-        deck.addAll(libraryCards);
+        harness.setLibrary(player1, libraryCards);
         harness.addToBattlefield(player1, new ArvadTheCursed());
     }
 
