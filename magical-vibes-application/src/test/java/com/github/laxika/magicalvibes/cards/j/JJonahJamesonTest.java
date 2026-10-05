@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.cards.a.AirtightAlibi;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.f.FathomFleetCaptain;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({JJonahJameson.class, DoomBlade.class, FathomFleetCaptain.class, GrizzlyBears.class})
+@CardUsed({JJonahJameson.class, DoomBlade.class, FathomFleetCaptain.class, GrizzlyBears.class, AirtightAlibi.class})
 class JJonahJamesonTest extends BaseCardTest {
 
     @Test
@@ -50,8 +51,7 @@ class JJonahJamesonTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new DoomBlade()));
         harness.addMana(player1, ManaColor.BLACK, 2);
-        harness.castInstant(player1, 0, jonah.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, jonah.getId());
 
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();
         assertThat(bls.canBlock(gd, target)).isFalse();
@@ -79,6 +79,64 @@ class JJonahJamesonTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Each menace attacker creates its own Treasure")
+    void createsTreasureForEachMenaceAttacker() {
+        addCreatureReady(player1, new FathomFleetCaptain());
+        Permanent suspected = addCreatureReady(player1, new GrizzlyBears());
+        castJonah(suspected);
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 1, 3));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("An opponent's menace attacker does not create a Treasure")
+    void doesNotTriggerForOpposingAttacker() {
+        addCreatureReady(player1, new JJonahJameson());
+        addCreatureReady(player2, new FathomFleetCaptain());
+
+        declareAttackers(player2, List.of(0));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Treasure")).isEmpty();
+        assertThat(findPermanents(player2, "Treasure")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Airtight Alibi removes suspicion applied by Jameson")
+    void alibiRemovesSuspicion() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castJonah(target);
+        castAlibi(target);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isFalse();
+        assertThat(bls.canBlock(gd, target)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature enchanted with Airtight Alibi cannot become suspected")
+    void respectsCannotBecomeSuspected() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        castAlibi(target);
+        castJonah(target);
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isFalse();
+        assertThat(bls.canBlock(gd, target)).isTrue();
+    }
+
+    private void castAlibi(Permanent target) {
+        harness.setHand(player1, List.of(new AirtightAlibi()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, target.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
     }
 
     private Permanent castJonah(Permanent target) {
