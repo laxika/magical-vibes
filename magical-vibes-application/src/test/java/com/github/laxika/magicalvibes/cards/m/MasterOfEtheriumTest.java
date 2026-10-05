@@ -5,14 +5,16 @@ import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({MasterOfEtherium.class, GrizzlyBears.class, Ornithopter.class, Spellbook.class})
 class MasterOfEtheriumTest extends BaseCardTest {
-
-    // ===== P/T = number of artifacts you control =====
 
     @Test
     @DisplayName("P/T is 1/1 when only itself is on the battlefield (it is an artifact)")
@@ -54,8 +56,6 @@ class MasterOfEtheriumTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(1);
     }
-
-    // ===== Lord: other artifact creatures you control get +1/+1 =====
 
     @Test
     @DisplayName("Other artifact creatures you control get +1/+1")
@@ -109,5 +109,53 @@ class MasterOfEtheriumTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, masterA)).isEqualTo(3);
         assertThat(gqs.getEffectivePower(gd, masterB)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, masterB)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Losing an artifact immediately reduces Master's power and toughness")
+    void ptDecreasesWhenArtifactLeaves() {
+        Permanent master = harness.addToBattlefieldAndReturn(player1, new MasterOfEtherium());
+        Permanent book = harness.addToBattlefieldAndReturn(player1, new Spellbook());
+
+        assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(2);
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, book);
+
+        assertThat(gqs.getEffectivePower(gd, master)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, master)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Other artifact creatures lose the bonus when Master leaves")
+    void bonusEndsWhenMasterLeaves() {
+        Permanent master = harness.addToBattlefieldAndReturn(player1, new MasterOfEtherium());
+        Permanent thopter = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+
+        assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(3);
+
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, master);
+
+        assertThat(gqs.getEffectivePower(gd, thopter)).isEqualTo(0);
+        assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Master in the graveyard counts only its owner's battlefield artifacts")
+    void characteristicAbilityWorksInGraveyard() {
+        MasterOfEtherium master = new MasterOfEtherium();
+        harness.setGraveyard(player1, List.of(master));
+        harness.addToBattlefield(player2, new Spellbook());
+
+        assertThat(gqs.getEffectiveCardPower(gd, master)).isZero();
+        assertThat(gqs.getEffectiveCardToughness(gd, master)).isZero();
+
+        Permanent thopter = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+
+        assertThat(gqs.getEffectiveCardPower(gd, master)).isEqualTo(1);
+        assertThat(gqs.getEffectiveCardToughness(gd, master)).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, thopter)).isZero();
+        assertThat(gqs.getEffectiveToughness(gd, thopter)).isEqualTo(2);
     }
 }
