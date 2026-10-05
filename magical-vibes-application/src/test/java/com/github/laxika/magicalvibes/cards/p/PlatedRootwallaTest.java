@@ -17,6 +17,81 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class PlatedRootwallaTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Activation limit applies while the first activation is still on the stack")
+    void cannotActivateAgainBeforeResolution() {
+        Permanent rootwalla = addCreatureReady(player1, new PlatedRootwalla());
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(3);
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("only once each turn");
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Each Plated Rootwalla has its own activation limit")
+    void separateCopiesCanEachActivate() {
+        Permanent first = addCreatureReady(player1, new PlatedRootwalla());
+        Permanent second = addCreatureReady(player1, new PlatedRootwalla());
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(3);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, first)).isEqualTo(6);
+        assertThat(gqs.getEffectivePower(gd, second)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, second)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Pump can be activated on an opponent's turn while tapped")
+    void canActivateOnOpponentsTurnWhileTapped() {
+        Permanent rootwalla = addCreatureReady(player1, new PlatedRootwalla());
+        rootwalla.setTapped(true);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(6);
+        assertThat(rootwalla.isTapped()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A rejected activation without green mana does not consume the activation limit")
+    void failedManaPaymentDoesNotConsumeActivation() {
+        Permanent rootwalla = addCreatureReady(player1, new PlatedRootwalla());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, rootwalla)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, rootwalla)).isEqualTo(6);
+    }
+
+    @Test
     @DisplayName("Pump ability grants +3/+3 until end of turn")
     void pumpAbilityGrantsBoost() {
         Permanent rootwalla = addCreatureReady(player1, new PlatedRootwalla());
