@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -109,6 +110,52 @@ class InfiltratorIlKorTest extends BaseCardTest {
         declareBlock(blocker);
 
         assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The first upkeep removes only one time counter without offering a cast")
+    void firstUpkeepRemovesOnlyOneCounter() {
+        InfiltratorIlKor card = suspendCard();
+
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(card.getId(), 1);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(card);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Infiltrator il-Kor cannot be suspended during upkeep")
+    void cannotSuspendDuringUpkeep() {
+        InfiltratorIlKor card = new InfiltratorIlKor();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(card);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
+    }
+
+    @Test
+    @DisplayName("Casting Infiltrator il-Kor normally does not grant suspend haste")
+    void normalCastDoesNotGrantHaste() {
+        InfiltratorIlKor card = new InfiltratorIlKor();
+        harness.setHand(player1, List.of(card));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent permanent = findPermanent(player1, card.getName());
+        assertThat(gqs.hasKeyword(gd, permanent, Keyword.HASTE)).isFalse();
+        assertThat(permanent.isSummoningSick()).isTrue();
     }
 
     private InfiltratorIlKor suspendCard() {
