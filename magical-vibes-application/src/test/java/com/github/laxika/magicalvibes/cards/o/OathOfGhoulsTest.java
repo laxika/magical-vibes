@@ -117,6 +117,49 @@ class OathOfGhoulsTest extends BaseCardTest {
     }
 
     @Test
+    void abilityDoesNotResolveWhenOpponentGainsEnoughCreatureCards() {
+        harness.addToBattlefield(player1, new OathOfGhouls());
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setGraveyard(player2, List.of(new GrizzlyBears()));
+
+        advanceToUpkeep(player2);
+        harness.handlePermanentChosen(player2, player1.getId());
+        harness.setGraveyard(player1, List.of(new Forest(), new GrizzlyBears()));
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        harness.assertNotInHand(player2, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void creatureToReturnIsChosenFromTheGraveyardAtResolution() {
+        Card original = new GrizzlyBears();
+        Card replacement = new GrizzlyBears();
+        harness.addToBattlefield(player1, new OathOfGhouls());
+        harness.setGraveyard(player1, List.of(new Forest()));
+        harness.setGraveyard(player2, List.of(original));
+
+        advanceToUpkeep(player2);
+        harness.handlePermanentChosen(player2, player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        harness.setGraveyard(player2, List.of(new Forest(), replacement));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).validIndices())
+                .containsExactly(1);
+        harness.handleGraveyardCardChosen(player2, 1);
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(replacement).doesNotContain(original);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .extracting(Card::getName)
+                .containsExactly("Forest");
+    }
+
+    @Test
     void returnChoiceOnlyOffersCreatureCards() {
         harness.addToBattlefield(player1, new OathOfGhouls());
         harness.setGraveyard(player1, List.of(new Forest()));
