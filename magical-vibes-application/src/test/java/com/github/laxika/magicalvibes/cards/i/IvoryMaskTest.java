@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.a.AnabaShaman;
 import com.github.laxika.magicalvibes.cards.l.LavaAxe;
+import com.github.laxika.magicalvibes.cards.m.Millstone;
+import com.github.laxika.magicalvibes.cards.o.OrcishArtillery;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -13,12 +16,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import com.github.laxika.magicalvibes.cards.b.BeaconOfImmortality;
-import com.github.laxika.magicalvibes.cards.m.Millstone;
-import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.GameData;
 
-@CardUsed({IvoryMask.class, LavaAxe.class, AnabaShaman.class, Millstone.class, Shock.class, BeaconOfImmortality.class})
+@CardUsed({IvoryMask.class, LavaAxe.class, AnabaShaman.class, Millstone.class, Shock.class, OrcishArtillery.class})
 class IvoryMaskTest extends BaseCardTest {
 
     @Test
@@ -81,9 +80,7 @@ class IvoryMaskTest extends BaseCardTest {
     @DisplayName("Controller can be targeted again after Ivory Mask leaves the battlefield")
     void canTargetControllerAfterRemoval() {
         IvoryMask mask = new IvoryMask();
-        harness.addToBattlefield(player1, mask);
-
-        Permanent perm = findPermanent(player1, "Ivory Mask");
+        Permanent perm = harness.addToBattlefieldAndReturn(player1, mask);
         gd.playerBattlefields.get(player1.getId()).remove(perm);
         gd.playerGraveyards.get(player1.getId()).add(mask);
 
@@ -111,5 +108,64 @@ class IvoryMaskTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("shroud");
+    }
+
+    @Test
+    @DisplayName("Shroud makes an already targeted player illegal on resolution")
+    void gainingShroudBeforeResolutionStopsSpell() {
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+
+        harness.addToBattlefield(player1, new IvoryMask());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertInGraveyard(player2, "Shock");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Ivory Mask on the stack does not grant shroud yet")
+    void spellCanTargetControllerBeforeMaskResolves() {
+        harness.setHand(player1, List.of(new IvoryMask()));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castEnchantment(player1, 0);
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castInstant(player2, 0, player1.getId());
+
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18);
+        harness.assertOnBattlefield(player1, "Ivory Mask");
+    }
+
+    @Test
+    @DisplayName("Ivory Mask does not protect creatures its controller controls")
+    void controlledCreatureCanStillBeTargeted() {
+        harness.addToBattlefield(player1, new IvoryMask());
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new AnabaShaman());
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castInstant(player2, 0, creature.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Anaba Shaman");
+        harness.assertOnBattlefield(player1, "Ivory Mask");
+    }
+
+    @Test
+    @DisplayName("Shroud does not prevent untargeted damage to the controller")
+    void untargetedDamageStillAffectsController() {
+        harness.addToBattlefield(player1, new IvoryMask());
+        addCreatureReady(player1, new OrcishArtillery());
+
+        harness.activateAbility(player1, 1, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 18);
     }
 }
