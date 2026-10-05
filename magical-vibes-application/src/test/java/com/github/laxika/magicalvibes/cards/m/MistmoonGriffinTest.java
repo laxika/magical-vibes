@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.r.RedwoodTreefolk;
+import com.github.laxika.magicalvibes.cards.p.PhyrexianFurnace;
 import com.github.laxika.magicalvibes.cards.t.Thunderbolt;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MistmoonGriffin.class, RedwoodTreefolk.class, Thunderbolt.class})
+@CardUsed({MistmoonGriffin.class, RedwoodTreefolk.class, Thunderbolt.class, PhyrexianFurnace.class})
 class MistmoonGriffinTest extends BaseCardTest {
 
     /** Kills the Griffin so its death trigger resolves. */
@@ -29,8 +31,7 @@ class MistmoonGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("Dying Griffin is exiled and the top creature card of its controller's graveyard is reanimated")
     void diesExilesItselfAndReanimatesTopCreatureCard() {
-        harness.addToBattlefield(player1, new MistmoonGriffin());
-        Card griffinCard = gd.playerBattlefields.get(player1.getId()).getFirst().getCard();
+        Card griffinCard = harness.addToBattlefieldAndReturn(player1, new MistmoonGriffin()).getCard();
         Card bottomCreature = new RedwoodTreefolk();
         Card topCreature = new RedwoodTreefolk();
         // The second Treefolk is the last card put into the graveyard, so it is the top creature card.
@@ -75,8 +76,7 @@ class MistmoonGriffinTest extends BaseCardTest {
     @Test
     @DisplayName("The Griffin never reanimates itself — it is exiled before the top creature card is looked up")
     void doesNotReanimateItself() {
-        harness.addToBattlefield(player1, new MistmoonGriffin());
-        Card griffinCard = gd.playerBattlefields.get(player1.getId()).getFirst().getCard();
+        Card griffinCard = harness.addToBattlefieldAndReturn(player1, new MistmoonGriffin()).getCard();
         harness.setGraveyard(player1, List.of());
 
         thunderboltAndResolveDeathTrigger();
@@ -100,5 +100,52 @@ class MistmoonGriffinTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(Card::getId)
                 .containsExactly(opponentCreature.getId());
+    }
+
+    @Test
+    @DisplayName("Reanimation still happens if the Griffin is exiled in response to its death trigger")
+    void reanimatesEvenWhenSourceLeavesGraveyardInResponse() {
+        Card griffin = harness.addToBattlefieldAndReturn(player1, new MistmoonGriffin()).getCard();
+        harness.addToBattlefield(player1, new PhyrexianFurnace());
+        Card creature = new RedwoodTreefolk();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setLibrary(player1, List.of(new Thunderbolt()));
+        harness.setHand(player1, List.of(new Thunderbolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castModalInstant(player1, 0, 1,
+                List.of(gd.playerBattlefields.get(player1.getId()).getFirst().getId()));
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, griffin.getId(), Zone.GRAVEYARD);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(griffin);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).containsExactly(creature);
+    }
+
+    @Test
+    @DisplayName("The top creature is determined when the death trigger resolves")
+    void usesCurrentTopCreatureAfterGraveyardChangesInResponse() {
+        Card griffin = harness.addToBattlefieldAndReturn(player1, new MistmoonGriffin()).getCard();
+        harness.addToBattlefield(player1, new PhyrexianFurnace());
+        Card bottomCreature = new RedwoodTreefolk();
+        Card topCreature = new RedwoodTreefolk();
+        harness.setGraveyard(player1, List.of(bottomCreature, topCreature));
+        harness.setLibrary(player1, List.of(new Thunderbolt()));
+        harness.setHand(player1, List.of(new Thunderbolt()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castModalInstant(player1, 0, 1,
+                List.of(gd.playerBattlefields.get(player1.getId()).getFirst().getId()));
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateAbility(player1, 0, 1, null, topCreature.getId(), Zone.GRAVEYARD);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(griffin, topCreature);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).containsExactly(bottomCreature);
     }
 }
