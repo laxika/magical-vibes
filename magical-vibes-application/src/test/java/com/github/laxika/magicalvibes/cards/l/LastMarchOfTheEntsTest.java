@@ -34,8 +34,7 @@ class LastMarchOfTheEntsTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 8);
 
-        harness.castSorcery(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveSorcery(player1, 0, List.of());
 
         PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PutUpToCardsFromHandOntoBattlefieldChoice.class);
@@ -60,7 +59,7 @@ class LastMarchOfTheEntsTest extends BaseCardTest {
         LastMarchOfTheEnts spell = new LastMarchOfTheEnts();
         Forest forest = new Forest();
         harness.setHand(player1, List.of(spell));
-        harness.setLibrary(player1, List.of(forest));
+        harness.setLibrary(player1, List.of(forest, new Forest(), new Forest(), new Forest()));
         harness.addMana(player1, ManaColor.GREEN, 8);
 
         Counterspell counterspell = new Counterspell();
@@ -76,5 +75,71 @@ class LastMarchOfTheEntsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(spell);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(counterspell);
+    }
+
+    @Test
+    void putsCreaturesFromHandEvenWithoutControlledCreatures() {
+        GrizzlyBears bears = new GrizzlyBears();
+        Forest libraryCard = new Forest();
+        harness.addToBattlefield(player2, new SerraAngel());
+        harness.setHand(player1, List.of(new LastMarchOfTheEnts(), bears));
+        harness.setLibrary(player1, List.of(libraryCard));
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        harness.castAndResolveSorcery(player1, 0, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getCard)
+                .containsExactly(bears);
+    }
+
+    @Test
+    void canPutNewlyDrawnCreaturesOntoBattlefield() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        SerraAngel drawnAngel = new SerraAngel();
+        Forest drawnForest = new Forest();
+        harness.setHand(player1, List.of(new LastMarchOfTheEnts()));
+        harness.setLibrary(player1, List.of(drawnAngel, drawnForest));
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        harness.castAndResolveSorcery(player1, 0, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of(drawnAngel.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnForest);
+        assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getCard)
+                .contains(drawnAngel);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void canDeclineToPutAnyCreaturesOntoBattlefield() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(new LastMarchOfTheEnts(), bears));
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        harness.castAndResolveSorcery(player1, 0, List.of());
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
+        assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void usesGreatestToughnessAtResolutionRatherThanCasting() {
+        harness.addToBattlefield(player1, new SerraAngel());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new LastMarchOfTheEnts()));
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest()));
+        harness.addMana(player1, ManaColor.GREEN, 8);
+
+        harness.castSorcery(player1, 0);
+        gd.playerBattlefields.get(player1.getId()).remove(0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
     }
 }
