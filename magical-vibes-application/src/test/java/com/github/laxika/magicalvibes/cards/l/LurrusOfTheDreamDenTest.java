@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.s.StonecoilSerpent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -18,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LurrusOfTheDreamDen.class, GrizzlyBears.class, DarksteelRelic.class,
-        Forest.class, CrawWurm.class, LightningBolt.class})
+        Forest.class, CrawWurm.class, LightningBolt.class, StonecoilSerpent.class})
 class LurrusOfTheDreamDenTest extends BaseCardTest {
 
     @Test
@@ -103,6 +104,65 @@ class LurrusOfTheDreamDenTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Chosen X must keep the permanent spell's mana value at most two")
+    void rejectsXAboveManaValueLimit() {
+        harness.addToBattlefield(player1, new LurrusOfTheDreamDen());
+        harness.setGraveyard(player1, List.of(new StonecoilSerpent()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        prepareMainPhase(player1);
+        harness.ensurePriority(player1);
+
+        assertThatThrownBy(() -> gs.playFlashbackSpell(gd, player1, 0, 3, null))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Casting with X equal to two is permitted")
+    void permitsXAtManaValueLimit() {
+        harness.addToBattlefield(player1, new LurrusOfTheDreamDen());
+        harness.setGraveyard(player1, List.of(new StonecoilSerpent()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        prepareMainPhase(player1);
+        harness.ensurePriority(player1);
+
+        gs.playFlashbackSpell(gd, player1, 0, 2, null);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Stonecoil Serpent");
+    }
+
+    @Test
+    @DisplayName("Permission does not bypass creature spell timing")
+    void rejectsCreatureOutsideMainPhase() {
+        harness.addToBattlefield(player1, new LurrusOfTheDreamDen());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        prepareMainPhase(player1);
+        harness.forceStep(TurnStep.UPKEEP);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A failed mana payment does not consume the permission")
+    void failedCastDoesNotConsumePermission() {
+        harness.addToBattlefield(player1, new LurrusOfTheDreamDen());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        prepareMainPhase(player1);
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromGraveyard(player1, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     private void prepareMainPhase(com.github.laxika.magicalvibes.model.Player activePlayer) {
