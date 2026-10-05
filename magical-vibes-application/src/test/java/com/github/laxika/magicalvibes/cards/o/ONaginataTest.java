@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ONaginata.class, ArabaMothrider.class, KamiOfTheTendedGarden.class, RavingOniSlave.class})
+@CardUsed({ONaginata.class, ArabaMothrider.class, KamiOfTheTendedGarden.class, RavingOniSlave.class, Hydrosurge.class})
 class ONaginataTest extends BaseCardTest {
 
     @Test
@@ -97,7 +97,6 @@ class ONaginataTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed(Hydrosurge.class)
     void becomesUnattachedWhenEquippedCreaturePowerDropsBelowThree() {
         Permanent creature = addCreatureReady(player1, new KamiOfTheTendedGarden());
         Permanent naginata = addReadyNaginata(player1);
@@ -105,11 +104,78 @@ class ONaginataTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new Hydrosurge()));
         harness.addMana(player1, ManaColor.BLUE, 1);
-        harness.castInstant(player1, 0, 0, creature.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, creature.getId());
 
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-1);
         assertThat(naginata.getAttachedTo()).isNull();
+    }
+
+    @Test
+    void equipChecksPowerAgainWhenItResolves() {
+        Permanent naginata = addReadyNaginata(player1);
+        Permanent creature = addCreatureReady(player1, new RavingOniSlave());
+        harness.setHand(player1, List.of(new Hydrosurge()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(naginata.getAttachedTo()).isNull();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(-2);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void failedEquipMovePreservesTheOriginalAttachment() {
+        Permanent naginata = addReadyNaginata(player1);
+        Permanent original = addCreatureReady(player1, new RavingOniSlave());
+        Permanent target = addCreatureReady(player1, new ArabaMothrider());
+        naginata.setAttachedTo(original.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(naginata.getAttachedTo()).isEqualTo(original.getId());
+        assertThat(gqs.getEffectivePower(gd, original)).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, original, Keyword.TRAMPLE)).isTrue();
+        assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.TRAMPLE)).isFalse();
+    }
+
+    @Test
+    void attachmentLegalityIncludesEquipmentPowerBonuses() {
+        Permanent creature = addCreatureReady(player1, new RavingOniSlave());
+        Permanent first = addReadyNaginata(player1);
+        Permanent second = addReadyNaginata(player1);
+        first.setAttachedTo(creature.getId());
+        second.setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new Hydrosurge()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(4);
+        assertThat(first.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(second.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    void equipCostCanBePaidWithColoredMana() {
+        Permanent naginata = addReadyNaginata(player1);
+        Permanent creature = addCreatureReady(player1, new RavingOniSlave());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.passBothPriorities();
+
+        assertThat(naginata.getAttachedTo()).isEqualTo(creature.getId());
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(6);
+        assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(3);
+        assertThat(gqs.hasKeyword(gd, creature, Keyword.TRAMPLE)).isTrue();
     }
 
     private Permanent addReadyNaginata(Player player) {
