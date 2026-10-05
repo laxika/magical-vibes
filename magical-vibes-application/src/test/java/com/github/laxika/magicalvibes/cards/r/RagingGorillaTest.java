@@ -121,4 +121,26 @@ class RagingGorillaTest extends BaseCardTest {
         assertThat(gorilla.getPowerModifier()).isZero();
         assertThat(gorilla.getToughnessModifier()).isZero();
     }
+    @Test
+    @DisplayName("The toughness reduction makes previously marked damage lethal when the trigger resolves")
+    void markedDamageBecomesLethalOnResolution() {
+        Permanent gorilla = addCreatureReady(player1, new RagingGorilla());
+        gorilla.setAttacking(true);
+        gorilla.setMarkedDamage(1);
+        addCreatureReady(player2, new PhyrexianWalker());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gorilla.getPowerModifier()).isZero();
+        assertThat(gorilla.getToughnessModifier()).isZero();
+        harness.assertOnBattlefield(player1, "Raging Gorilla");
+
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Raging Gorilla");
+        harness.assertInGraveyard(player1, "Raging Gorilla");
+        harness.assertOnBattlefield(player2, "Phyrexian Walker");
+    }
 }
