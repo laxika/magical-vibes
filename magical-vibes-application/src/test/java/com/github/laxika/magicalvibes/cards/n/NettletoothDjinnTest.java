@@ -1,14 +1,18 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.b.Boomerang;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NettletoothDjinn.class})
+@CardUsed({NettletoothDjinn.class, Boomerang.class})
 class NettletoothDjinnTest extends BaseCardTest {
 
     @Test
@@ -59,6 +63,39 @@ class NettletoothDjinnTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("A Djinn controlled by the second player damages that player on their upkeep")
+    void damagesSecondPlayerOnTheirUpkeep() {
+        addCreatureReady(player2, new NettletoothDjinn());
+
+        advanceToUpkeep(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(19);
+    }
+
+    @Test
+    @DisplayName("Returning the Djinn to hand does not stop its pending upkeep damage")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        Permanent djinn = addCreatureReady(player1, new NettletoothDjinn());
+        harness.setHand(player1, List.of(new Boomerang()));
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, djinn.getId());
+
+        harness.assertNotOnBattlefield(player1, "Nettletooth Djinn");
+        harness.assertInHand(player1, "Nettletooth Djinn");
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(19);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
     }
 }
