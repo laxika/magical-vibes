@@ -3,12 +3,15 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TeachByExample;
+import com.github.laxika.magicalvibes.cards.t.TendThePests;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@CardUsed({Jadzi.class, Forest.class, GrizzlyBears.class, Shock.class})
 class JadziTest extends BaseCardTest {
 
     @Test
@@ -27,8 +31,7 @@ class JadziTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
 
         harness.assertOnBattlefield(player1, topLand.getName());
         assertThat(gd.landsPlayedThisTurn.getOrDefault(player1.getId(), 0)).isZero();
@@ -44,8 +47,7 @@ class JadziTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
 
         harness.handleMayAbilityChosen(player1, true);
@@ -63,8 +65,7 @@ class JadziTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
@@ -80,8 +81,7 @@ class JadziTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.castInstant(player1, 0, player2.getId());
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0, player2.getId());
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
 
@@ -108,9 +108,7 @@ class JadziTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castModalSorcery(player1, 0, 1, List.of());
         harness.passBothPriorities();
-        if (!gd.interaction.isAwaitingInput() && !gd.stack.isEmpty()) {
-            harness.passBothPriorities();
-        }
+        resolveAllTriggers();
 
         harness.handleCardChosen(player1, 0);
         harness.handleMayAbilityChosen(player1, true);
@@ -137,5 +135,126 @@ class JadziTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals(jadzi.getCard().getName()));
+    }
+
+    @Test
+    void journeyReturnsDuringItsResolutionWithoutASeparateTrigger() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        for (int i = 0; i < 8; i++) {
+            harness.addToBattlefield(player1, new Forest());
+        }
+        Jadzi journey = new Jadzi();
+        GrizzlyBears discarded = new GrizzlyBears();
+        harness.setHand(player1, List.of(journey, discarded));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castModalSorcery(player1, 0, 1, List.of());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(journey);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void journeyBelowEightLandsDoesNotOfferDiscard() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        for (int i = 0; i < 7; i++) {
+            harness.addToBattlefield(player1, new Forest());
+        }
+        Jadzi journey = new Jadzi();
+        GrizzlyBears retained = new GrizzlyBears();
+        harness.setHand(player1, List.of(journey, retained));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castModalSorcery(player1, 0, 1, List.of());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(journey);
+    }
+
+    @Test
+    @CardUsed({TendThePests.class})
+    void magecraftCannotCastASacrificeSpellWithoutACreature() {
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        Permanent jadzi = addCreatureReady(player1, new Jadzi());
+        TendThePests top = new TendThePests();
+        harness.setLibrary(player1, List.of(top, new Forest()));
+        harness.castInstant(player1, 0, player2.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(jadzi);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+        resolveAllTriggers();
+
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(top);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(top);
+    }
+
+    @Test
+    @CardUsed({TeachByExample.class})
+    void magecraftTriggersForBothCastingAndCopyingAnInstant() {
+        harness.setHand(player1, List.of(new TeachByExample(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castAndResolveInstant(player1, 0);
+        addCreatureReady(player1, new Jadzi());
+        Forest first = new Forest();
+        Forest second = new Forest();
+        harness.setLibrary(player1, List.of(first, second, new GrizzlyBears()));
+        harness.castInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .extracting(Permanent::getCard).contains(first, second);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isInstanceOf(GrizzlyBears.class);
+    }
+
+    @Test
+    void journeyMayDeclineDiscardWithEightLands() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        for (int i = 0; i < 8; i++) {
+            harness.addToBattlefield(player1, new Forest());
+        }
+        Jadzi journey = new Jadzi();
+        GrizzlyBears retained = new GrizzlyBears();
+        harness.setHand(player1, List.of(journey, retained));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castModalSorcery(player1, 0, 1, List.of());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(retained);
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(journey);
+    }
+
+    @Test
+    void magecraftWithAnEmptyLibraryDoesNothing() {
+        addCreatureReady(player1, new Jadzi());
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        harness.assertOnBattlefield(player1, "Jadzi, Oracle of Arcavios");
     }
 }
