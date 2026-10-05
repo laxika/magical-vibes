@@ -35,8 +35,7 @@ class PanglacialShinobiTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castInstant(player1, 0);
-        harness.passBothPriorities();
+        harness.castAndResolveInstant(player1, 0);
 
         GameData gameData = harness.getGameData();
         PendingInteraction.LibrarySearch search =
@@ -57,6 +56,49 @@ class PanglacialShinobiTest extends BaseCardTest {
         assertThat(entered.isTapped()).isTrue();
         assertThat(entered.isAttacking()).isTrue();
         assertThat(entered.getAttackTarget()).isEqualTo(player2.getId());
+    }
+
+    @Test
+    void canFindShinobiWithoutActivatingLibraryNinjutsu() {
+        PanglacialShinobi shinobi = new PanglacialShinobi();
+        harness.setHand(player1, List.of(new Entomb()));
+        harness.setLibrary(player1, List.of(shinobi));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, indexOfCard(search.params().cards(), shinobi));
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(shinobi);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void canFindAttackerShuffledIntoLibraryWhileActivatingLibraryNinjutsu() {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        declareAttackers(List.of(0));
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        PanglacialShinobi shinobi = new PanglacialShinobi();
+        harness.setHand(player1, List.of(new Entomb()));
+        harness.setLibrary(player1, List.of(shinobi, new Forest()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0);
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, indexOfCard(search.params().cards(), shinobi));
+        harness.handlePermanentChosen(player1, attacker.getId());
+
+        search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        harness.handleCardChosen(player1, indexOfCard(search.params().cards(), attacker.getCard()));
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(attacker.getCard());
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, harness::passBothPriorities);
+        assertThat(findPermanent(player1, "Panglacial Shinobi").isAttacking()).isTrue();
     }
 
     @Test
