@@ -25,13 +25,11 @@ class MagetasBoonTest extends BaseCardTest {
         Permanent boar = addCreatureReady(player2, new PygmyRazorback());
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.clearPriorityPassed();
 
         harness.setHand(player1, List.of(new MagetasBoon()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        harness.getGameService().passPriority(harness.getGameData(), player2);
         harness.castEnchantment(player1, 0, boar.getId());
 
         assertThat(gd.stack).hasSize(1);
@@ -101,6 +99,45 @@ class MagetasBoonTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Mageta's Boon");
         harness.assertNotOnBattlefield(player1, "Mageta's Boon");
+    }
+
+    @Test
+    @DisplayName("Multiple copies boost only the enchanted creature and their bonuses stack")
+    void multipleCopiesStackOnlyOnEnchantedCreature() {
+        Permanent enchanted = addCreatureReady(player1, new PygmyRazorback());
+        Permanent other = addCreatureReady(player1, new PygmyRazorback());
+        harness.setHand(player1, List.of(new MagetasBoon(), new MagetasBoon()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+        harness.castEnchantment(player1, 0, enchanted.getId());
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, enchanted)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, enchanted)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Mageta's Boon goes to its owner's graveyard when its enchanted creature leaves")
+    void auraGoesToGraveyardWhenEnchantedCreatureLeaves() {
+        Permanent boar = addCreatureReady(player2, new PygmyRazorback());
+        harness.setHand(player1, List.of(new MagetasBoon()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castEnchantment(player1, 0, boar.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Mageta's Boon");
+
+        gd.playerBattlefields.get(player2.getId()).remove(boar);
+        harness.runStateBasedActions();
+
+        harness.assertNotOnBattlefield(player1, "Mageta's Boon");
+        harness.assertInGraveyard(player1, "Mageta's Boon");
+        harness.assertNotInGraveyard(player2, "Mageta's Boon");
     }
 
     @Test
