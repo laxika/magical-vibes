@@ -38,18 +38,58 @@ class ImpossibleManTest extends BaseCardTest {
     void copyRevertsAtEndOfTurn() {
         Permanent impossibleMan = harness.addToBattlefieldAndReturn(player1, new ImpossibleMan());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        int originalToughness = impossibleMan.getCard().getToughness();
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        harness.forceStep(TurnStep.END_STEP);
-        harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        assertThat(impossibleMan.getCard().getToughness()).isEqualTo(bears.getCard().getToughness());
+        assertThat(impossibleMan.getCard().getToughness()).isNotEqualTo(originalToughness);
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        assertThat(impossibleMan.getCard().getToughness()).isEqualTo(bears.getCard().getToughness());
+        harness.passUntil(player2, TurnStep.UPKEEP);
 
         assertThat(impossibleMan.getCard().getName()).isEqualTo("Impossible Man");
         assertThat(impossibleMan.getCard().hasType(CardType.CREATURE)).isTrue();
+        assertThat(impossibleMan.getCard().getToughness()).isEqualTo(originalToughness);
+    }
+
+    @Test
+    @DisplayName("Can copy an opponent's permanent without changing controller")
+    void copiesOpponentsPermanent() {
+        Permanent impossibleMan = harness.addToBattlefieldAndReturn(player1, new ImpossibleMan());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, forest.getId());
+        harness.passBothPriorities();
+
+        assertThat(impossibleMan.getCard().getName()).isEqualTo("Impossible Man");
+        assertThat(impossibleMan.getCard().hasType(CardType.LAND)).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(impossibleMan);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(forest).doesNotContain(impossibleMan);
+    }
+
+    @Test
+    @DisplayName("Does not copy a target that leaves before resolution")
+    void targetLeavesBeforeResolution() {
+        Permanent impossibleMan = harness.addToBattlefieldAndReturn(player1, new ImpossibleMan());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, 0, null, forest.getId());
+        gd.playerBattlefields.get(player2.getId()).remove(forest);
+        gd.playerGraveyards.get(player2.getId()).add(forest.getCard());
+        harness.passBothPriorities();
+
+        assertThat(impossibleMan.getCard().hasType(CardType.CREATURE)).isTrue();
+        assertThat(impossibleMan.getCard().hasType(CardType.LAND)).isFalse();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test
