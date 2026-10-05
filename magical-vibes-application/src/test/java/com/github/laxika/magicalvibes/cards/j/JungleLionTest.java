@@ -21,10 +21,9 @@ class JungleLionTest extends BaseCardTest {
     void cannotBeDeclaredAsBlocker() {
         addCreatureReady(player2, new JungleLion());
 
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        attacker.setAttacking(true);
+        addCreatureReady(player1, new GrizzlyBears());
 
-        prepareDeclareBlockers(player1);
+        declareAttackersAndPrepareBlockers(List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .isInstanceOf(IllegalStateException.class)
@@ -40,5 +39,25 @@ class JungleLionTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(lion.isAttacking()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Jungle Lion does not prevent another creature from blocking")
+    void otherCreatureCanBlock() {
+        Permanent lion = addCreatureReady(player1, new JungleLion());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+
+        declareAttackersAndPrepareBlockers(player2, List.of(0));
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("Invalid blocker index");
+
+        prepareDeclareBlockers(player2);
+        gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(1, 0)));
+
+        assertThat(lion.isBlocking()).isFalse();
+        assertThat(bears.isBlocking()).isTrue();
     }
 }
