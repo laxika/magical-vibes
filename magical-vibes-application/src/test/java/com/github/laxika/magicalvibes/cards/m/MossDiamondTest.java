@@ -46,4 +46,34 @@ class MossDiamondTest extends BaseCardTest {
                 .hasMessageContaining("already tapped");
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isZero();
     }
+
+    @Test
+    @DisplayName("Untapped newly entered Diamond produces exactly one green immediately and must untap to activate again")
+    void manaResolvesImmediatelyAndRequiresUntappingBetweenActivations() {
+        Permanent diamond = harness.enterBattlefieldAndReturn(player1, new MossDiamond());
+        assertThat(diamond.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+        diamond.untap();
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player2.getId()).getTotalAllMana()).isZero();
+        assertThat(diamond.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("already tapped");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+
+        diamond.untap();
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+        assertThat(diamond.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
 }
