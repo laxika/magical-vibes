@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -57,5 +59,48 @@ class LlanowarCavalryTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
 
         assertThat(cavalry.isTapped()).isFalse();
+    }
+
+    @Test
+    void vigilanceAllowsAttackingWithoutTapping() {
+        Permanent cavalry = addCreatureReady(player1, new LlanowarCavalry());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThat(cavalry.isAttacking()).isTrue();
+        assertThat(cavalry.isTapped()).isFalse();
+    }
+
+    @Test
+    void tappedSummoningSickCavalryCanActivateWithoutUntapping() {
+        Permanent cavalry = harness.addToBattlefieldAndReturn(player1, new LlanowarCavalry());
+        cavalry.setSummoningSick(true);
+        cavalry.setTapped(true);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.VIGILANCE)).isTrue();
+        assertThat(cavalry.isTapped()).isTrue();
+    }
+
+    @Test
+    void abilityGrantsVigilanceOnlyToItsSource() {
+        Permanent cavalry = addCreatureReady(player1, new LlanowarCavalry());
+        Permanent otherCavalry = addCreatureReady(player1, new LlanowarCavalry());
+        Permanent opposingCavalry = addCreatureReady(player2, new LlanowarCavalry());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, cavalry, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, otherCavalry, Keyword.VIGILANCE)).isFalse();
+        assertThat(gqs.hasKeyword(gd, opposingCavalry, Keyword.VIGILANCE)).isFalse();
     }
 }
