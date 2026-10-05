@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
-
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -147,7 +145,40 @@ class LeyDruidTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("fizzles"));
+        assertThat(gameLogContains("fizzles")).isTrue();
+    }
+
+    @Test
+    @DisplayName("Ability resolves after Ley Druid leaves the battlefield")
+    void resolvesAfterSourceLeaves() {
+        Permanent druid = addCreatureReady(player1, new LeyDruid());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        target.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(druid);
+        gd.playerGraveyards.get(player1.getId()).add(druid.getCard());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Untaps only the targeted land and keeps Ley Druid tapped")
+    void untapsOnlyTargetedLand() {
+        Permanent druid = addCreatureReady(player1, new LeyDruid());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player2, new Forest());
+        target.tap();
+        otherLand.tap();
+
+        harness.activateAbility(player1, 0, null, target.getId());
+        harness.passBothPriorities();
+
+        assertThat(target.isTapped()).isFalse();
+        assertThat(otherLand.isTapped()).isTrue();
+        assertThat(druid.isTapped()).isTrue();
     }
 
 }
