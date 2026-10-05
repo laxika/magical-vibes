@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.a.AetherShockwave;
 import com.github.laxika.magicalvibes.cards.c.CurtainOfLight;
+import com.github.laxika.magicalvibes.cards.d.DosanTheFallingLeaf;
 import com.github.laxika.magicalvibes.cards.i.IdeasUnbound;
 import com.github.laxika.magicalvibes.cards.o.OppressiveWill;
 import com.github.laxika.magicalvibes.cards.s.SpiritualVisit;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -18,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KahoMinamoHistorian.class, SpiritualVisit.class, OppressiveWill.class,
-        CurtainOfLight.class, AetherShockwave.class, IdeasUnbound.class})
+        CurtainOfLight.class, AetherShockwave.class, IdeasUnbound.class, DosanTheFallingLeaf.class})
 class KahoMinamoHistorianTest extends BaseCardTest {
 
     @Test
@@ -139,8 +141,103 @@ class KahoMinamoHistorianTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.playerBattlefields.get(player1.getId()))
-                .noneMatch(permanent -> permanent.getCard().getName().equals("Spirit"));
+        harness.assertNotOnBattlefield(player1, "Spirit");
         assertThat(gd.getCardsExiledByPermanent(kaho.getId())).containsExactly(visit);
+    }
+
+    @Test
+    void maySearchForZeroInstants() {
+        SpiritualVisit visit = new SpiritualVisit();
+        harness.setLibrary(player1, List.of(visit));
+        harness.setHand(player1, List.of(new KahoMinamoHistorian()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, -1);
+
+        Permanent kaho = findPermanent(player1, "Kaho, Minamo Historian");
+        assertThat(gd.getCardsExiledByPermanent(kaho.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(visit);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void cannotCastAnExiledSpellWithoutLegalTargets() {
+        Permanent kaho = harness.addToBattlefieldAndReturn(player1, new KahoMinamoHistorian());
+        kaho.setSummoningSick(false);
+        OppressiveWill spell = new OppressiveWill();
+        gd.addToExile(player1.getId(), spell, kaho.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player1, 0, 0, 3, null);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(kaho.getId())).containsExactly(spell);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    void controllerCanCastAnExiledCardOwnedByAnotherPlayer() {
+        Permanent kaho = harness.addToBattlefieldAndReturn(player2, new KahoMinamoHistorian());
+        kaho.setSummoningSick(false);
+        SpiritualVisit visit = new SpiritualVisit();
+        gd.addToExile(player1.getId(), visit, kaho.getId());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player2, 0, 0, 1, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player2, "Spirit");
+        harness.assertInGraveyard(player1, "Spiritual Visit");
+        harness.assertNotInGraveyard(player2, "Spiritual Visit");
+        assertThat(gd.getCardsExiledByPermanent(kaho.getId())).isEmpty();
+    }
+
+    @Test
+    void cannotCastAnUnlinkedExiledCard() {
+        Permanent kaho = harness.addToBattlefieldAndReturn(player1, new KahoMinamoHistorian());
+        kaho.setSummoningSick(false);
+        SpiritualVisit visit = new SpiritualVisit();
+        harness.setExile(player1, List.of(visit));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, 1, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(visit);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    void cannotBypassDosansCastingRestrictionDuringOpponentsTurn() {
+        Permanent kaho = harness.addToBattlefieldAndReturn(player1, new KahoMinamoHistorian());
+        kaho.setSummoningSick(false);
+        harness.addToBattlefield(player2, new DosanTheFallingLeaf());
+        SpiritualVisit visit = new SpiritualVisit();
+        gd.addToExile(player1.getId(), visit, kaho.getId());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateAbility(player1, 0, 0, 1, null);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getCardsExiledByPermanent(kaho.getId())).containsExactly(visit);
+        harness.assertNotOnBattlefield(player1, "Spirit");
     }
 }
