@@ -18,6 +18,28 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class NeedForSpeedTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A tapped land is sacrificed immediately and only the target gains haste on resolution")
+    void tappedLandIsPaidBeforeTargetGainsHaste() {
+        harness.addToBattlefield(player1, new NeedForSpeed());
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        land.setTapped(true);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new AvenFlock());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new AvenFlock());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+
+        harness.assertInGraveyard(player1, "Forest");
+        harness.assertNotOnBattlefield(player1, "Forest");
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isFalse();
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, target, Keyword.HASTE)).isTrue();
+        assertThat(gqs.hasKeyword(gd, other, Keyword.HASTE)).isFalse();
+    }
+
+    @Test
     @DisplayName("Sacrificing a land grants haste to the target creature until end of turn")
     void sacrificeLandGrantsHasteToTargetCreature() {
         harness.addToBattlefield(player1, new NeedForSpeed());
