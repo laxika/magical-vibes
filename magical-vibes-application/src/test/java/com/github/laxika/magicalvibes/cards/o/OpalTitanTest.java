@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.c.Cathodion;
+import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.g.GorillaWarrior;
 import com.github.laxika.magicalvibes.cards.h.HussarPatrol;
+import com.github.laxika.magicalvibes.cards.t.Thoughtlace;
 import com.github.laxika.magicalvibes.cards.v.VoltaicKey;
 import com.github.laxika.magicalvibes.cards.w.WoollyThoctar;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -11,6 +13,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,8 +22,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OpalTitan.class, WoollyThoctar.class, GorillaWarrior.class, Cathodion.class, VoltaicKey.class})
+@CardUsed({OpalTitan.class, WoollyThoctar.class, GorillaWarrior.class, Cathodion.class,
+        VoltaicKey.class, HussarPatrol.class, Counterspell.class, Clone.class, Thoughtlace.class})
 class OpalTitanTest extends BaseCardTest {
 
     private Permanent addOpalTitan() {
@@ -175,5 +180,100 @@ class OpalTitanTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, opal)).isTrue();
         assertThat(gqs.isEnchantment(gd, opal)).isFalse();
         assertThat(gqs.hasProtectionFrom(gd, opal, CardColor.GREEN)).isTrue();
+    }
+
+    @Test
+    @CardUsed(Clone.class)
+    @DisplayName("Copying an animated Opal Titan produces an unanimated enchantment")
+    void copyingAnimatedTitanDoesNotCopyAnimation() {
+        Permanent opal = addOpalTitan();
+        prepareOpponentCast();
+        castOpponentGorillaWarrior();
+        resolveAllTriggers();
+
+        harness.castFromHand(player2, new Clone(), "{3}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handlePermanentChosen(player2, opal.getId());
+
+        Permanent copy = findPermanent(player2, "Opal Titan");
+        assertThat(gqs.isEnchantment(gd, copy)).isTrue();
+        assertThat(gqs.isCreature(gd, copy)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, copy, CardColor.GREEN)).isFalse();
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, opal, CardColor.GREEN)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature of the triggering spell's color cannot block Opal Titan")
+    void protectionPreventsBlockingByTriggeringColor() {
+        Permanent opal = addOpalTitan();
+        prepareOpponentCast();
+        castOpponentGorillaWarrior();
+        resolveAllTriggers();
+        opal.setAttacking(true);
+
+        prepareDeclareBlockers();
+
+        assertThatThrownBy(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("protection");
+    }
+
+    @Test
+    @DisplayName("A colorless creature can block Opal Titan with protection from green")
+    void protectionAllowsBlockingByUnprotectedColor() {
+        Permanent opal = addOpalTitan();
+        prepareOpponentCast();
+        castOpponentGorillaWarrior();
+        resolveAllTriggers();
+        Permanent blocker = addCreatureReady(player2, new Cathodion());
+        opal.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+
+        assertThat(blocker.isBlocking()).isTrue();
+    }
+
+    @Test
+    @CardUsed(Thoughtlace.class)
+    @DisplayName("Protection uses the creature spell's colors when the trigger resolves")
+    void protectionUsesCurrentSpellColors() {
+        Permanent opal = addOpalTitan();
+        prepareOpponentCast();
+        GorillaWarrior spell = new GorillaWarrior();
+        harness.castFromHand(player2, spell, "{2}{G}");
+        harness.setHand(player1, List.of(new Thoughtlace()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, spell.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, opal, CardColor.BLUE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, opal, CardColor.GREEN)).isFalse();
+    }
+
+    @Test
+    @CardUsed({Thoughtlace.class, Counterspell.class})
+    @DisplayName("Protection uses the last colors of a creature spell changed before being countered")
+    void protectionUsesLastKnownSpellColorsAfterCountering() {
+        Permanent opal = addOpalTitan();
+        prepareOpponentCast();
+        GorillaWarrior spell = new GorillaWarrior();
+        harness.castFromHand(player2, spell, "{2}{G}");
+        harness.setHand(player1, List.of(new Thoughtlace()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, spell.getId());
+
+        harness.setHand(player1, List.of(new Counterspell()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castInstant(player1, 0, spell.getId());
+        resolveAllTriggers();
+
+        assertThat(gqs.isCreature(gd, opal)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, opal, CardColor.BLUE)).isTrue();
+        assertThat(gqs.hasProtectionFrom(gd, opal, CardColor.GREEN)).isFalse();
     }
 }
