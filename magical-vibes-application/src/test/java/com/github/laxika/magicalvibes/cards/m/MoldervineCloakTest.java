@@ -100,6 +100,73 @@ class MoldervineCloakTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 
+    @Test
+    @DisplayName("Casting Moldervine Cloak on an opponent's creature boosts only that creature")
+    void enchantsOpponentsCreature() {
+        Permanent ownCreature = addCreatureReady(player1, new CivicWayfinder());
+        Permanent opposingCreature = addCreatureReady(player2, new CivicWayfinder());
+        harness.setHand(player1, List.of(new MoldervineCloak()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, opposingCreature.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Moldervine Cloak").getAttachedTo())
+                .isEqualTo(opposingCreature.getId());
+        assertThat(gqs.getEffectivePower(gd, opposingCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectiveToughness(gd, opposingCreature)).isEqualTo(5);
+        assertThat(gqs.getEffectivePower(gd, ownCreature)).isEqualTo(2);
+        assertThat(gqs.getEffectiveToughness(gd, ownCreature)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Dredge mills exactly two cards and returns only the chosen Cloak")
+    void dredgeLeavesRemainingLibraryAndNewlyMilledCloak() {
+        MoldervineCloak chosenCloak = new MoldervineCloak();
+        MoldervineCloak milledCloak = new MoldervineCloak();
+        Card secondCard = new Forest();
+        Card remainingCard = new CivicWayfinder();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(chosenCloak));
+        harness.setLibrary(player1, List.of(milledCloak, secondCard, remainingCard));
+
+        resolveDraw();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(chosenCloak);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(milledCloak, secondCard);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remainingCard);
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A Cloak milled by dredge can replace the next draw of a multiple-card draw")
+    void newlyMilledCloakCanReplaceNextDraw() {
+        MoldervineCloak firstCloak = new MoldervineCloak();
+        MoldervineCloak secondCloak = new MoldervineCloak();
+        Card firstForest = new Forest();
+        Card secondForest = new Forest();
+        Card wayfinder = new CivicWayfinder();
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of(firstCloak));
+        harness.setLibrary(player1, List.of(secondCloak, firstForest, secondForest, wayfinder));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 2));
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCloak);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstCloak, secondCloak);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(firstForest, secondForest, wayfinder);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.cardsDrawnThisTurn.getOrDefault(player1.getId(), 0)).isZero();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
     private void resolveDraw() {
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
     }
