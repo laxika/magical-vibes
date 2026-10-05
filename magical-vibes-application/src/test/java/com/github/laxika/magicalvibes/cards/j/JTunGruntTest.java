@@ -139,4 +139,75 @@ class JTunGruntTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownFirst, ownSecond);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("Multiple age counters can be paid from the same graveyard without reusing cards")
+    void paysMultipleTimesFromSameGraveyard() {
+        Permanent grunt = harness.addToBattlefieldAndReturn(player1, new JTunGrunt());
+        grunt.setCounterCount(CounterType.AGE, 1);
+        Card first = new SnowCoveredForest();
+        Card second = new SnowCoveredForest();
+        Card third = new SnowCoveredForest();
+        Card fourth = new SnowCoveredForest();
+        Card libraryCard = new SnowCoveredForest();
+        harness.setGraveyard(player2, List.of(first, second, third, fourth));
+        harness.setLibrary(player2, List.of(libraryCard));
+
+        advanceToUpkeep(player1);
+
+        assertThat(grunt.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        harness.passBothPriorities();
+        assertThat(grunt.getCounterCount(CounterType.AGE)).isEqualTo(2);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId(), first.getId()));
+
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(
+                player1, List.of(first.getId(), third.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+
+        harness.handleMultipleCardsChosen(player1, List.of(fourth.getId(), third.getId()));
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(grunt);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard, second, first, fourth, third);
+    }
+
+    @Test
+    @DisplayName("Four cards split three and one between graveyards cannot pay two age counters")
+    void cannotPayHigherUpkeepWithUnpairedCards() {
+        Permanent grunt = harness.addToBattlefieldAndReturn(player1, new JTunGrunt());
+        grunt.setCounterCount(CounterType.AGE, 1);
+        Card first = new SnowCoveredForest();
+        Card second = new SnowCoveredForest();
+        Card third = new SnowCoveredForest();
+        Card opponentCard = new SnowCoveredForest();
+        harness.setGraveyard(player1, List.of(first, second, third));
+        harness.setGraveyard(player2, List.of(opponentCard));
+        harness.setLibrary(player1, List.of());
+        harness.setLibrary(player2, List.of());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(grunt);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second, third, grunt.getCard());
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentCard);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cumulative upkeep does not trigger during an opponent's upkeep")
+    void doesNotTriggerOnOpponentsUpkeep() {
+        Permanent grunt = harness.addToBattlefieldAndReturn(player1, new JTunGrunt());
+        grunt.setCounterCount(CounterType.AGE, 1);
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(grunt.getCounterCount(CounterType.AGE)).isEqualTo(1);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(grunt);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 }
