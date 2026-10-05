@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -15,15 +16,14 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({PegasusCourser.class, GrizzlyBears.class})
 class PegasusCourserTest extends BaseCardTest {
-
-    // ===== Attack trigger: grant flying =====
 
     @Test
     @DisplayName("Attacking with Pegasus Courser queues target selection for another attacking creature")
     void attackTriggerQueuesForTargetSelection() {
-        Permanent courser = addCourserReady(player1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new PegasusCourser());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
 
@@ -35,7 +35,7 @@ class PegasusCourserTest extends BaseCardTest {
     @Test
     @DisplayName("Targeted attacking creature gains flying until end of turn")
     void targetedCreatureGainsFlying() {
-        Permanent courser = addCourserReady(player1);
+        addCreatureReady(player1, new PegasusCourser());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
@@ -52,8 +52,8 @@ class PegasusCourserTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target Pegasus Courser itself (another restriction)")
     void cannotTargetItself() {
-        Permanent courser = addCourserReady(player1);
-        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent courser = addCreatureReady(player1, new PegasusCourser());
+        addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
 
@@ -66,7 +66,7 @@ class PegasusCourserTest extends BaseCardTest {
     @Test
     @DisplayName("No trigger when attacking alone (no valid targets)")
     void noTriggerWhenAttackingAlone() {
-        Permanent courser = addCourserReady(player1);
+        addCreatureReady(player1, new PegasusCourser());
 
         declareAttackers(player1, List.of(0));
 
@@ -77,8 +77,8 @@ class PegasusCourserTest extends BaseCardTest {
     @Test
     @DisplayName("Cannot target a non-attacking creature")
     void cannotTargetNonAttackingCreature() {
-        Permanent courser = addCourserReady(player1);
-        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new PegasusCourser());
+        addCreatureReady(player1, new GrizzlyBears());
         Permanent stayBack = addCreatureReady(player1, new GrizzlyBears());
 
         // Only courser (index 0) and attacker (index 1) attack; stayBack (index 2) stays back
@@ -93,7 +93,7 @@ class PegasusCourserTest extends BaseCardTest {
     @Test
     @DisplayName("Attack trigger puts triggered ability on the stack")
     void attackPutsTriggeredAbilityOnStack() {
-        Permanent courser = addCourserReady(player1);
+        addCreatureReady(player1, new PegasusCourser());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         declareAttackers(player1, List.of(0, 1));
@@ -108,12 +108,51 @@ class PegasusCourserTest extends BaseCardTest {
                 .isTrue();
     }
 
-    // ===== Helpers =====
+    @Test
+    @DisplayName("Granted flying expires at end of turn")
+    void flyingExpiresAtEndOfTurn() {
+        Permanent courser = addCreatureReady(player1, new PegasusCourser());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-    private Permanent addCourserReady(Player player) {
-        Permanent perm = new Permanent(new PegasusCourser());
-        perm.setSummoningSick(false);
-        gd.playerBattlefields.get(player.getId()).add(perm);
-        return perm;
+        declareAttackers(player1, List.of(0, 1));
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, courser, Keyword.FLYING)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Trigger does not grant flying if its target stops attacking before resolution")
+    void targetMustStillBeAttackingOnResolution() {
+        addCreatureReady(player1, new PegasusCourser());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 1));
+        harness.handlePermanentChosen(player1, bears.getId());
+        bears.setAttacking(false);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Attack trigger resolves after Pegasus Courser leaves the battlefield")
+    void triggerResolvesWithoutSource() {
+        Permanent courser = addCreatureReady(player1, new PegasusCourser());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(0, 1));
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(courser);
+        gd.playerGraveyards.get(player1.getId()).add(courser.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue();
     }
 }
