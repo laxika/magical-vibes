@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TsaboTavoc;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -57,7 +56,7 @@ class JodahTheUnifierDmuTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
 
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Empress Galina");
@@ -65,8 +64,8 @@ class JodahTheUnifierDmuTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Declining the free cast puts all exiled cards on the bottom")
-    void declinedFoundCardReturnsToLibrary() {
+    @DisplayName("Declining the free cast leaves the qualifying card in exile")
+    void declinedFoundCardRemainsExiled() {
         setupJodah();
         Card skipped = new Forest();
         Card found = new EmpressGalina();
@@ -77,10 +76,10 @@ class JodahTheUnifierDmuTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        harness.handleCardChosen(player1, -1);
 
-        assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(skipped, found);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(found);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(skipped);
     }
 
     @Test
