@@ -1,28 +1,20 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@CardUsed({MedomaiTheAgeless.class})
 class MedomaiTheAgelessTest extends BaseCardTest {
-
-    private void enableAutoStop() {
-        Set<TurnStep> stops1 = ConcurrentHashMap.newKeySet();
-        stops1.add(TurnStep.PRECOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player1.getId(), stops1);
-        Set<TurnStep> stops2 = ConcurrentHashMap.newKeySet();
-        stops2.add(TurnStep.PRECOMBAT_MAIN);
-        gd.playerAutoStopSteps.put(player2.getId(), stops2);
-    }
 
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
@@ -32,24 +24,78 @@ class MedomaiTheAgelessTest extends BaseCardTest {
     @Test
     @DisplayName("Combat damage queues an extra turn, where Medomai cannot attack")
     void combatDamageQueuesExtraTurnAndPreventsAttackDuringIt() {
-        enableAutoStop();
-        Permanent medomai = addCreatureReady(player1, new MedomaiTheAgeless());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            Permanent medomai = addCreatureReady(player1, new MedomaiTheAgeless());
 
-        declareAttackers(player1, List.of(0));
-        resolveAllTriggers();
+            declareAttackers(player1, List.of(0));
+            resolveAllTriggers();
 
-        assertThat(gd.extraTurns).containsExactly(player1.getId());
+            assertThat(gd.extraTurns).containsExactly(player1.getId());
 
-        advanceTurn();
+            advanceTurn();
 
-        assertThat(gd.currentTurnIsExtraTurn).isTrue();
-        assertThat(medomai.isTapped()).isFalse();
-        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        harness.clearPriorityPassed();
-        harness.beginAttackerDeclarationInput();
+            assertThat(gd.currentTurnIsExtraTurn).isTrue();
+            assertThat(medomai.isTapped()).isFalse();
+            assertThatThrownBy(() -> declareAttackers(player1, List.of(0)))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Invalid attacker index");
+        });
+    }
 
-        assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid attacker index");
+    @Test
+    @DisplayName("Combat damage grants the extra turn to Medomai's controller")
+    void opponentControlledMedomaiGrantsOpponentExtraTurn() {
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            addCreatureReady(player2, new MedomaiTheAgeless());
+
+            declareAttackers(player2, List.of(0));
+            resolveAllTriggers();
+
+            assertThat(gd.extraTurns).containsExactly(player2.getId());
+            advanceTurn();
+            assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+            assertThat(gd.currentTurnIsExtraTurn).isTrue();
+        });
+    }
+
+    @Test
+    @DisplayName("Blocked combat damage does not grant either player an extra turn")
+    void blockedCombatDoesNotGrantExtraTurn() {
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            addCreatureReady(player1, new MedomaiTheAgeless());
+            addCreatureReady(player2, new MedomaiTheAgeless());
+
+            declareAttackersAndPrepareBlockers(player1, List.of(0));
+            gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+            resolveCombat();
+            resolveAllTriggers();
+
+            assertThat(gd.extraTurns).isEmpty();
+            harness.assertNotOnBattlefield(player1, "Medomai the Ageless");
+            harness.assertNotOnBattlefield(player2, "Medomai the Ageless");
+        });
+    }
+
+    @Test
+    @DisplayName("Medomai can attack again on its controller's next normal turn")
+    void canAttackAgainAfterExtraTurnEnds() {
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            addCreatureReady(player1, new MedomaiTheAgeless());
+            declareAttackers(player1, List.of(0));
+            resolveAllTriggers();
+
+            advanceTurn();
+            assertThat(gd.currentTurnIsExtraTurn).isTrue();
+            advanceTurn();
+            assertThat(gd.activePlayerId).isEqualTo(player2.getId());
+            assertThat(gd.currentTurnIsExtraTurn).isFalse();
+            advanceTurn();
+            assertThat(gd.activePlayerId).isEqualTo(player1.getId());
+            assertThat(gd.currentTurnIsExtraTurn).isFalse();
+
+            declareAttackers(player1, List.of(0));
+            resolveAllTriggers();
+            assertThat(gd.extraTurns).containsExactly(player1.getId());
+        });
     }
 }
