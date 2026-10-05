@@ -24,4 +24,15 @@ class NeedlepeakSpiderTest extends BaseCardTest {
         assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
                 .doesNotThrowAnyException();
     }
+
+    @Test
+    @DisplayName("Reach does not prevent a creature without flying from blocking Needlepeak Spider")
+    void canBeBlockedByCreatureWithoutFlying() {
+        addCreatureReady(player1, new NeedlepeakSpider());
+        addCreatureReady(player2, new NeedlepeakSpider());
+        declareAttackersAndPrepareBlockers(List.of(0));
+
+        assertThatCode(() -> gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0))))
+                .doesNotThrowAnyException();
+    }
 }
