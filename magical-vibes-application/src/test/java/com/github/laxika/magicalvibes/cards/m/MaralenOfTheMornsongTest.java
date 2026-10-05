@@ -102,4 +102,49 @@ class MaralenOfTheMornsongTest extends BaseCardTest {
         assertThat(gd.getLife(player1.getId())).isEqualTo(lifeBefore - 3);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
+
+    @Test
+    @DisplayName("Draw effects are prevented for both players outside the draw step")
+    void drawEffectsArePreventedForBothPlayers() {
+        harness.addToBattlefield(player1, new MaralenOfTheMornsong());
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        Card firstCard = new ElvishWarrior();
+        Card secondCard = new IndomitableAncients();
+        harness.setLibrary(player1, List.of(firstCard));
+        harness.setLibrary(player2, List.of(secondCard));
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.inMutationScope(() -> {
+            harness.getDrawService().resolveDrawCard(gd, player1.getId());
+            harness.getDrawService().resolveDrawCard(gd, player2.getId());
+        });
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(firstCard);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(secondCard);
+    }
+
+    @Test
+    @DisplayName("The draw-step trigger resolves after Maralen leaves the battlefield")
+    void triggerResolvesAfterSourceLeavesBattlefield() {
+        harness.addToBattlefield(player1, new MaralenOfTheMornsong());
+        harness.setHand(player2, List.of());
+        Card chosenCard = new ElvishWarrior();
+        harness.setLibrary(player2, List.of(chosenCard));
+        int lifeBefore = gd.getLife(player2.getId());
+
+        advanceToDraw(player2);
+        gd.playerBattlefields.get(player1.getId()).clear();
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(chosenCard);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }
